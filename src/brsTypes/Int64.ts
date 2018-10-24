@@ -210,6 +210,6 @@ export class Int64 implements Numeric {
     }
 
     toJSON() {
-        return this.value;
+        return this.toString();
     }
 }

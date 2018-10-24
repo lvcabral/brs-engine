@@ -95,10 +95,10 @@ export interface BrsValue {
     toString(): string;
 
     /**
-     * Converts the current value to a JSON representation.
-     * @returns A JSON representation of this value.
+     * Converts the current value to a JSON-formatted string.
+     * @returns A JSON-formatted string representation of this value.
      */
-    toJSON(): any;
+    toJSON(): string | undefined;
 }
 
 /** Internal representation of a string in BrightScript. */
@@ -179,7 +179,7 @@ export class BrsBoolean implements BrsValue {
     }
 
     toJSON() {
-        return this.value;
+        return this.toString();
     }
 
     /**

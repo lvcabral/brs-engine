@@ -211,6 +211,6 @@ export class Int32 implements Numeric {
     }
 
     toJSON() {
-        return this.value;
+        return this.toString();
     }
 }

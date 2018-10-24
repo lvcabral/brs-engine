@@ -609,16 +609,11 @@ function primary(): Expression {
         case match(Lexeme.LeftSquare):
             let elements: Expression[] = [];
 
-            while (match(Lexeme.Newline));
-
             if (!match(Lexeme.RightSquare)) {
                 elements.push(expression());
                 while (match(Lexeme.Comma, Lexeme.Newline)) {
-                    while (match(Lexeme.Newline));
-
                     // TODO: check on a Roku to see if a trailing comma before the `]` is allowed
-                    // allow a trailing comma at the end of a list of elements
-                    if (check(Lexeme.RightSquare)) {
+                    if (match(Lexeme.RightSquare)) {
                         break;
                     }
 
