@@ -208,8 +208,4 @@ export class Int64 implements Numeric {
     toString(): string {
         return this.value.toString();
     }
-
-    toJSON() {
-        return this.toString();
-    }
 }

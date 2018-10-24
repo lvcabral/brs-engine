@@ -93,12 +93,6 @@ export interface BrsValue {
      * @returns A human-readable representation of this value.
      */
     toString(): string;
-
-    /**
-     * Converts the current value to a JSON-formatted string.
-     * @returns A JSON-formatted string representation of this value.
-     */
-    toJSON(): string | undefined;
 }
 
 /** Internal representation of a string in BrightScript. */
@@ -129,10 +123,6 @@ export class BrsString implements BrsValue {
 
     toString() {
         return this.value;
-    }
-
-    toJSON() {
-        return this.toString();
     }
 
     concat(other: BrsString) {
@@ -176,10 +166,6 @@ export class BrsBoolean implements BrsValue {
 
     toString() {
         return this.value.toString();
-    }
-
-    toJSON() {
-        return this.toString();
     }
 
     /**
@@ -239,10 +225,6 @@ export class BrsInvalid implements BrsValue {
     toString() {
         return "invalid";
     }
-
-    toJSON() {
-        return this.toString();
-    }
 }
 
 /** Internal representation of uninitialized BrightScript variables. */
@@ -274,9 +256,5 @@ export class Uninitialized implements BrsValue {
 
     toString() {
         return "<UNINITIALIZED>";
-    }
-
-    toJSON() {
-        return undefined;
     }
 }

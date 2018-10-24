@@ -200,8 +200,4 @@ export class Float implements Numeric {
     toString(): string {
         return this.value.toString();
     }
-
-    toJSON() {
-        return this.toString();
-    }
 }
