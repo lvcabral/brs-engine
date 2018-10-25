@@ -16,7 +16,8 @@ import {
     isBrsCallable,
     BrsValue,
     Uninitialized,
-    BrsArray
+    BrsArray,
+    isIterable
 } from "../brsTypes";
 
 import * as Expr from "../parser/Expression";
@@ -556,7 +557,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitForEach(statement: Stmt.ForEach): BrsType {
-        console.error("foreach loops not yet implemented");
+        let target = this.evaluate(statement.target);
+        if (!isIterable(target)) {
+            throw BrsError.make(
+                `Attempting to iterate across values of non-iterable type ` +
+                    ValueKind.toString(target.kind),
+                statement.item.line
+            );
+        }
+
+        target.getElements().forEach(element => {
+            this.environment.define(Scope.Function, statement.item.text!, element);
+            this.execute(statement.body);
+        });
 
         return BrsInvalid.Instance;
     }

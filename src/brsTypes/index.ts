@@ -58,8 +58,20 @@ export function isBrsCallable(value: BrsType): value is Callable {
     return value.kind === ValueKind.Callable;
 }
 
+/**
+ * Determines whether or not the provided value is an instance of a interable BrightScript type.
+ * @param value the BrightScript value in question.
+ * @returns `true` if `value` can be iterated across, otherwise `false`.
+ */
+export function isIterable(value: BrsType): value is Iterable {
+    return value.kind === ValueKind.Array;
+}
+
 /** The set of BrightScript numeric types. */
 export type BrsNumber = Int32 | Int64 | Float | Double;
+
+/** The set of BrightScript iterable types. */
+export type Iterable = BrsArray;
 
 /** The set of all supported types in BrightScript. */
 export type BrsType =

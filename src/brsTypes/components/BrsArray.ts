@@ -1,8 +1,8 @@
 import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsType } from "..";
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent, BrsIterable } from "./BrsComponent";
 
-export class BrsArray implements BrsValue, BrsComponent {
+export class BrsArray implements BrsValue, BrsComponent, BrsIterable {
     readonly kind = ValueKind.Array;
 
     constructor(readonly elements: BrsType[]) { }
@@ -29,5 +29,9 @@ export class BrsArray implements BrsValue, BrsComponent {
 
     getValue() {
         return this.elements;
+    }
+
+    getElements() {
+        return this.elements.slice();
     }
 }
