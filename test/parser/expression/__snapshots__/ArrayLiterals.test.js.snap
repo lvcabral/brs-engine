@@ -1,0 +1,275 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser array literals contents can contain expressions 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [
+        Binary {
+          "left": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 1,
+            },
+          },
+          "right": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 2,
+            },
+          },
+          "token": Object {
+            "kind": 8,
+            "line": 1,
+            "text": "+",
+          },
+        },
+        Unary {
+          "operator": Object {
+            "kind": 61,
+            "line": 1,
+            "text": "not",
+          },
+          "right": Literal {
+            "value": BrsBoolean {
+              "kind": 1,
+              "value": false,
+            },
+          },
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser array literals contents can contain other arrays 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [
+        ArrayLiteral {
+          "elements": Array [
+            Literal {
+              "value": Int32 {
+                "kind": 3,
+                "value": 1,
+              },
+            },
+            Literal {
+              "value": Int32 {
+                "kind": 3,
+                "value": 2,
+              },
+            },
+            Literal {
+              "value": Int32 {
+                "kind": 3,
+                "value": 3,
+              },
+            },
+          ],
+        },
+        ArrayLiteral {
+          "elements": Array [
+            Literal {
+              "value": Int32 {
+                "kind": 3,
+                "value": 4,
+              },
+            },
+            Literal {
+              "value": Int32 {
+                "kind": 3,
+                "value": 5,
+              },
+            },
+            Literal {
+              "value": Int32 {
+                "kind": 3,
+                "value": 6,
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser array literals contents can contain primitives 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 1,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 2,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 3,
+          },
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser array literals empty arrays on multiple lines 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [],
+    },
+  },
+]
+`;
+
+exports[`parser array literals empty arrays on one line 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [],
+    },
+  },
+]
+`;
+
+exports[`parser array literals filled arrays on multiple lines with commas 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 1,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 2,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 3,
+          },
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser array literals filled arrays on multiple lines without commas 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 1,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 2,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 3,
+          },
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser array literals filled arrays on one line 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": ArrayLiteral {
+      "elements": Array [
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 1,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 2,
+          },
+        },
+        Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 3,
+          },
+        },
+      ],
+    },
+  },
+]
+`;
