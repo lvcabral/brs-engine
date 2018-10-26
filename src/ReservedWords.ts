@@ -33,7 +33,6 @@ export const ReservedWords: {[key: string]: L} = {
     getlastrunruntimeerror: L.GetLastRunRunTimeError,
     goto: L.Goto,
     if: L.If,
-    in: L.In,
     invalid: L.Invalid,
     let: L.Let,
     line_num: L.LineNum,

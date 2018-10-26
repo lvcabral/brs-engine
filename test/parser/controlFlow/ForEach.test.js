@@ -14,7 +14,7 @@ describe("parser foreach loops", () => {
         let parsed = Parser.parse([
             { kind: Lexeme.ForEach, text: "for each", line: 2 },
             { kind: Lexeme.Identifier, text: "word", line: 2 },
-            { kind: Lexeme.In, text: "in", line: 2 },
+            { kind: Lexeme.Identifier, text: "in", line: 2 },
             { kind: Lexeme.Identifier, text: "lipsum", line: 2 },
             { kind: Lexeme.Newline, text: "\n", line: 2 },
 

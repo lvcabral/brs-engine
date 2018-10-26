@@ -31,7 +31,7 @@ Array [
         },
         Unary {
           "operator": Object {
-            "kind": 61,
+            "kind": 60,
             "line": 1,
             "text": "not",
           },

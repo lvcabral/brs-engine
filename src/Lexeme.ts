@@ -69,7 +69,6 @@ export enum Lexeme {
     GetLastRunRunTimeError,
     Goto,
     If,
-    In,
     Invalid,
     Let,
     LineNum,

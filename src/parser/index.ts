@@ -266,7 +266,12 @@ function forStatement(): Stmt.For {
 function forEachStatement(): Stmt.ForEach {
     let name = advance();
 
-    consume("Expected 'in' after 'for each <name>'", Lexeme.In);
+    let maybeIn = peek();
+    if (check(Lexeme.Identifier) && maybeIn.text && maybeIn.text.toLowerCase() === "in") {
+        advance();
+    } else {
+        throw ParseError.make(maybeIn, "Expected 'in' after 'for each <name>'");
+    }
 
     let target = expression();
     if (!target) {
