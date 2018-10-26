@@ -630,9 +630,24 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             );
         }
 
-        target.getElements().forEach(element => {
+        target.getElements().every(element => {
             this.environment.define(Scope.Function, statement.item.text!, element);
-            this.execute(statement.body);
+
+            // execute the block
+            try {
+                this.execute(statement.body);
+            } catch (reason) {
+                if (reason.kind === Stmt.StopReason.ExitFor) {
+                    // break out of the loop
+                    return false;
+                } else {
+                    // re-throw returns, runtime errors, etc.
+                    throw reason;
+                }
+            }
+
+            // keep looping
+            return true;
         });
 
         return BrsInvalid.Instance;
