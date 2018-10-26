@@ -7,8 +7,17 @@ export class BrsArray implements BrsValue, BrsComponent, BrsIterable {
 
     constructor(readonly elements: BrsType[]) { }
 
-    toString() {
-        return "roArray";
+    toString(parent?: BrsType): string {
+        if (parent) {
+            return "<Component: roArray>";
+        }
+
+        return [
+            "<Component: roArray>",
+            "[",
+            ...this.elements.map((el: BrsValue) => `    ${el.toString(this)}`),
+            "]"
+        ].join("\n");
     }
 
     lessThan(other: BrsType) {

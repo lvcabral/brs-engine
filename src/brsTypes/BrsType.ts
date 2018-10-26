@@ -90,9 +90,10 @@ export interface BrsValue {
 
     /**
      * Converts the current value to a human-readable string.
+     * @param parent The (optional) BrightScript value that this value is being printed in the context of.
      * @returns A human-readable representation of this value.
      */
-    toString(): string;
+    toString(parent?: BrsType): string;
 }
 
 /** Internal representation of a string in BrightScript. */
