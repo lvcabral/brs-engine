@@ -302,16 +302,76 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return BrsInvalid.Instance;
                 }
             case Lexeme.Greater:
+                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                    BrsError.typeMismatch({
+                        message: "roArray objects cannot be compared to anything.",
+                        left: left,
+                        right: right,
+                        line: expression.token.line
+                    });
+                    return BrsInvalid.Instance;
+                }
+
                 return left.greaterThan(right);
             case Lexeme.GreaterEqual:
+                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                    BrsError.typeMismatch({
+                        message: "roArray objects cannot be compared to anything.",
+                        left: left,
+                        right: right,
+                        line: expression.token.line
+                    });
+                    return BrsInvalid.Instance;
+                }
+
                 return left.greaterThan(right).or(left.equalTo(right));
             case Lexeme.Less:
+                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                    BrsError.typeMismatch({
+                        message: "roArray objects cannot be compared to anything.",
+                        left: left,
+                        right: right,
+                        line: expression.token.line
+                    });
+                    return BrsInvalid.Instance;
+                }
+
                 return left.lessThan(right);
             case Lexeme.LessEqual:
+                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                    BrsError.typeMismatch({
+                        message: "roArray objects cannot be compared to anything.",
+                        left: left,
+                        right: right,
+                        line: expression.token.line
+                    });
+                    return BrsInvalid.Instance;
+                }
+
                 return left.lessThan(right).or(left.equalTo(right));
             case Lexeme.Equal:
+                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                    BrsError.typeMismatch({
+                        message: "roArray objects cannot be compared to anything.",
+                        left: left,
+                        right: right,
+                        line: expression.token.line
+                    });
+                    return BrsInvalid.Instance;
+                }
+
                 return left.equalTo(right);
             case Lexeme.LessGreater:
+                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                    BrsError.typeMismatch({
+                        message: "roArray objects cannot be compared to anything.",
+                        left: left,
+                        right: right,
+                        line: expression.token.line
+                    });
+                    return BrsInvalid.Instance;
+                }
+
                 return left.equalTo(right).not();
             case Lexeme.And:
                 if (isBrsBoolean(left) && !left.toBoolean()) {
