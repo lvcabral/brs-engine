@@ -26,8 +26,7 @@ export const ReservedWords: {[key: string]: L} = {
     "exit while": L.ExitWhile,
     false: L.False,
     for: L.For,
-    foreach: L.ForEach,
-    "for each": L.ForEach,
+    "for each": L.ForEach, // note: 'foreach' (no space) is *not* a reserved word
     function: L.Function,
     getglobalaa: L.GetGlobalAA,
     getlastruncompileerror: L.GetLastRunCompileError,
