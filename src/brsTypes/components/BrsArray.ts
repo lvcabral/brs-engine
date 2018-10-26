@@ -29,10 +29,6 @@ export class BrsArray implements BrsValue, BrsComponent, BrsIterable {
     }
 
     equalTo(other: BrsType) {
-        if (other.kind === ValueKind.Array) {
-            return BrsBoolean.from(this.elements === other.elements);
-        }
-
         return BrsBoolean.False;
     }
 
