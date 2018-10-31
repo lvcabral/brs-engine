@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser array indexing multi-dimensional indexing 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": IndexedGet {
+      "closingSquare": Object {
+        "kind": 3,
+        "line": 1,
+        "text": "]",
+      },
+      "index": Literal {
+        "value": Int32 {
+          "kind": 3,
+          "value": 6,
+        },
+      },
+      "obj": IndexedGet {
+        "closingSquare": Object {
+          "kind": 3,
+          "line": 1,
+          "text": "]",
+        },
+        "index": Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 0,
+          },
+        },
+        "obj": IndexedGet {
+          "closingSquare": Object {
+            "kind": 3,
+            "line": 1,
+            "text": "]",
+          },
+          "index": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 2,
+            },
+          },
+          "obj": Variable {
+            "name": Object {
+              "kind": 21,
+              "line": 1,
+              "text": "foo",
+            },
+          },
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`parser array indexing one-dimensional indexing 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": IndexedGet {
+      "closingSquare": Object {
+        "kind": 3,
+        "line": 1,
+        "text": "]",
+      },
+      "index": Literal {
+        "value": Int32 {
+          "kind": 3,
+          "value": 2,
+        },
+      },
+      "obj": Variable {
+        "name": Object {
+          "kind": 21,
+          "line": 1,
+          "text": "foo",
+        },
+      },
+    },
+  },
+]
+`;
