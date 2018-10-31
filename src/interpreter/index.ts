@@ -564,6 +564,36 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
+    visitIndexedGet(expression: Expr.IndexedGet): BrsType {
+        let source = this.evaluate(expression.obj);
+        if (!isIterable(source)) {
+            BrsError.typeMismatch({
+                message: "Attempting to retrieve property from non-iterable value",
+                line: expression.closingSquare.line,
+                left: source
+            });
+            return BrsInvalid.Instance;
+        }
+
+        let index = this.evaluate(expression.index);
+        if (!isBrsNumber(index) && !isBrsString(index)) {
+            BrsError.typeMismatch({
+                message: "Attempting to retrieve property from iterable with illegal index type",
+                line: expression.closingSquare.line,
+                left: source,
+                right: index
+            });
+
+            return BrsInvalid.Instance;
+        }
+
+        try {
+            return source.get(index);
+        } catch (err) {
+            throw BrsError.make(err.message, expression.closingSquare.line);
+        }
+    }
+
     visitGrouping(expr: Expr.Grouping) {
         return this.evaluate(expr.expression);
     }

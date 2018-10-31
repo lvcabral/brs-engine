@@ -8,6 +8,7 @@ export interface Visitor<T> {
     visitCall(expression: Call): T;
     visitAnonymousFunction(func: Function): T;
     visitGet(expression: Get): T;
+    visitIndexedGet(expression: IndexedGet): T;
     visitGrouping(expression: Grouping): T;
     visitLiteral(expression: Literal): T;
     visitArrayLiteral(expression: ArrayLiteral): T;
@@ -80,6 +81,18 @@ export class Get implements Expression {
 
     accept <R> (visitor: Visitor<R>): R {
         return visitor.visitGet(this);
+    }
+}
+
+export class IndexedGet implements Expression {
+    constructor(
+        readonly obj: Expression,
+        readonly index: Expression,
+        readonly closingSquare: Token,
+    ) {}
+
+    accept <R> (visitor: Visitor<R>): R {
+        return visitor.visitIndexedGet(this);
     }
 }
 

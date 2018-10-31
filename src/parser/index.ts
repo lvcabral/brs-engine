@@ -561,6 +561,15 @@ function call(): Expression {
     while (true) {
         if (match(Lexeme.LeftParen)) {
             expr = finishCall(expr);
+        } else if (match(Lexeme.LeftSquare)) {
+            while (match(Lexeme.Newline));
+
+            let index = expression();
+
+            while (match(Lexeme.Newline));
+            let closingSquare = consume("Expected ']' after array or object index", Lexeme.RightSquare);
+
+            expr = new Expr.IndexedGet(expr, index, closingSquare);
         } else {
             break;
         }
