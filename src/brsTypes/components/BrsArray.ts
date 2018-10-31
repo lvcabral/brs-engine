@@ -13,7 +13,7 @@ export class BrsArray implements BrsValue, BrsComponent, BrsIterable {
         }
 
         return [
-            "<Component: roArray>",
+            "<Component: roArray> =",
             "[",
             ...this.elements.map((el: BrsValue) => `    ${el.toString(this)}`),
             "]"
