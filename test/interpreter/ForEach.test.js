@@ -7,7 +7,6 @@ const { BrsArray, BrsString } = require("../../lib/brsTypes");
 const { identifier } = require("../parser/ParserTests");
 
 let interpreter;
-let decrementSpy;
 
 describe("interpreter for-each loops", () => {
     const arrayMembers = [
