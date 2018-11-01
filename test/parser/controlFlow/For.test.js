@@ -22,7 +22,7 @@ describe("parser for loops", () => {
             { kind: Lexeme.Newline, text: "\n", line: 1 },
             // body would go here, but it's not necessary for this test
             { kind: Lexeme.EndFor, text: "end for", line: 2 },
-            { kind: Lexeme.Newline, text: "\n", line: 1 },
+            { kind: Lexeme.Newline, text: "\n", line: 2 },
             EOF
         ]);
 
@@ -46,7 +46,7 @@ describe("parser for loops", () => {
             { kind: Lexeme.Newline, text: "\n", line: 1 },
             // body would go here, but it's not necessary for this test
             { kind: Lexeme.EndFor, text: "end for", line: 2 },
-            { kind: Lexeme.Newline, text: "\n", line: 1 },
+            { kind: Lexeme.Newline, text: "\n", line: 2 },
             EOF
         ]);
 

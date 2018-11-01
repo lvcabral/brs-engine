@@ -9,7 +9,7 @@ const { identifier } = require("../parser/ParserTests");
 let interpreter;
 let decrementSpy;
 
-describe("interpreter while loops", () => {
+describe("interpreter for loops", () => {
     const initializeCounter = new Stmt.Assignment(
         { kind: Lexeme.Identifier, text: "i", line: 1 },
         new Expr.Literal(new Int32(0))

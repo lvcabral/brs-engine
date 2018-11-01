@@ -247,7 +247,7 @@ describe("lexer", () => {
                 Lexeme.EndIf,
                 Lexeme.Function,
                 Lexeme.Eof
-            ])
+            ]);
         });
 
         it("allows alpha-numeric (plus '_') identifiers", () => {

@@ -1,4 +1,5 @@
 import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized } from "./BrsType";
+import { BrsArray } from "./components/BrsArray";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
@@ -10,6 +11,7 @@ export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
+export * from "./components/BrsArray";
 export * from "./Callable";
 
 /**
@@ -56,8 +58,20 @@ export function isBrsCallable(value: BrsType): value is Callable {
     return value.kind === ValueKind.Callable;
 }
 
+/**
+ * Determines whether or not the provided value is an instance of a interable BrightScript type.
+ * @param value the BrightScript value in question.
+ * @returns `true` if `value` can be iterated across, otherwise `false`.
+ */
+export function isIterable(value: BrsType): value is Iterable {
+    return value.kind === ValueKind.Array;
+}
+
 /** The set of BrightScript numeric types. */
 export type BrsNumber = Int32 | Int64 | Float | Double;
+
+/** The set of BrightScript iterable types. */
+export type Iterable = BrsArray;
 
 /** The set of all supported types in BrightScript. */
 export type BrsType =
@@ -68,5 +82,6 @@ export type BrsType =
     Int64 |
     Float |
     Double |
+    BrsArray |
     Callable |
     Uninitialized;

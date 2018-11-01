@@ -79,6 +79,8 @@ function scanToken(): void {
         case ")": addToken(Lexeme.RightParen); break;
         case "{": addToken(Lexeme.LeftBrace); break;
         case "}": addToken(Lexeme.RightBrace); break;
+        case "[": addToken(Lexeme.LeftSquare); break;
+        case "]": addToken(Lexeme.RightSquare); break;
         case ",": addToken(Lexeme.Comma); break;
         case ".": addToken(Lexeme.Dot); break;
         case "+": addToken(Lexeme.Plus); break;
@@ -365,7 +367,7 @@ function identifier() {
     let text = source.slice(start, current);
 
     // some identifiers can be split into two words, so check the "next" word and see what we get
-    if ((text === "end" || text === "else" || text === "exit") && peek() === " ") {
+    if ((text === "end" || text === "else" || text === "exit" || text === "for") && peek() === " ") {
         let endOfFirstWord = current;
 
         advance(); // skip past the space

@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser foreach loops requires a name and target 1`] = `
+Array [
+  ForEach {
+    "body": Block {
+      "statements": Array [],
+    },
+    "item": Object {
+      "kind": 21,
+      "line": 2,
+      "text": "word",
+    },
+    "target": Variable {
+      "name": Object {
+        "kind": 21,
+        "line": 2,
+        "text": "lipsum",
+      },
+    },
+  },
+]
+`;

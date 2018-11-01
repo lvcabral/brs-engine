@@ -30,12 +30,18 @@ export class AstPrinter implements Expr.Visitor<string> {
     visitGet(e: Expr.Get): string {
         return JSON.stringify(e, undefined, 2);
     }
+    visitIndexedGet(e: Expr.IndexedGet): string {
+        return JSON.stringify(e, undefined, 2);
+    }
     visitGrouping(e: Expr.Grouping): string {
         return this.parenthesize("group", e.expression);
     }
     visitLiteral(e: Expr.Literal): string {
         if (e.value == null) { return "invalid"; }
         else { return e.value.toString(); }
+    }
+    visitArrayLiteral(e: Expr.ArrayLiteral): string {
+        return JSON.stringify(e, undefined, 2);
     }
     visitLogical(e: Expr.Logical): string {
         return JSON.stringify(e, undefined, 2);

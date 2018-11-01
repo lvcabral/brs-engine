@@ -12,7 +12,7 @@ import {
     BrsString,
     Int32,
     ValueKind,
-    Argument
+    Argument,
 } from "../brsTypes";
 
 /** Set of all keywords that end blocks. */
@@ -22,7 +22,7 @@ type BlockTerminator =
     Lexeme.EndFor |
     Lexeme.EndIf |
     Lexeme.EndWhile |
-    Lexeme.EndSub|
+    Lexeme.EndSub |
     Lexeme.EndFunction;
 
 let current: number;
@@ -208,6 +208,8 @@ function statement(...additionalterminators: BlockTerminator[]): Statement {
 
     if (match(Lexeme.For)) { return forStatement(); }
 
+    if (match(Lexeme.ForEach)) { return forEachStatement(); }
+
     if (match(Lexeme.ExitFor)) { return exitFor(); }
 
     if (match(Lexeme.Return)) { return returnStatement(); }
@@ -247,18 +249,45 @@ function forStatement(): Stmt.For {
         // BrightScript for/to/step loops default to a step of 1 if no `step` is provided
         increment = new Expr.Literal(new Int32(1));
     }
-    while(match(Lexeme.Newline)) {}
+    while(match(Lexeme.Newline));
 
     let body = block(Lexeme.EndFor);
     if (!body) {
         throw ParseError.make(peek(), "Expected 'end for' to terminate for-loop block");
     }
     advance();
-    while(match(Lexeme.Newline)) {}
+    while(match(Lexeme.Newline));
 
     // WARNING: BrightScript doesn't delete the loop initial value after a for/to loop! It just
     // stays around in scope with whatever value it was when the loop exited.
     return new Stmt.For(initializer, finalValue, increment, body);
+}
+
+function forEachStatement(): Stmt.ForEach {
+    let name = advance();
+
+    let maybeIn = peek();
+    if (check(Lexeme.Identifier) && maybeIn.text && maybeIn.text.toLowerCase() === "in") {
+        advance();
+    } else {
+        throw ParseError.make(maybeIn, "Expected 'in' after 'for each <name>'");
+    }
+
+    let target = expression();
+    if (!target) {
+        throw ParseError.make(peek(), "Expected target object to iterate over");
+    }
+    advance();
+    while(match(Lexeme.Newline));
+
+    let body = block(Lexeme.EndFor);
+    if (!body) {
+        throw ParseError.make(peek(), "Expected 'end for' to terminate for-each loop block");
+    }
+    advance();
+    while(match(Lexeme.Newline));
+
+    return new Stmt.ForEach(name, target, body);
 }
 
 function exitFor(): Stmt.ExitFor {
@@ -532,6 +561,15 @@ function call(): Expression {
     while (true) {
         if (match(Lexeme.LeftParen)) {
             expr = finishCall(expr);
+        } else if (match(Lexeme.LeftSquare)) {
+            while (match(Lexeme.Newline));
+
+            let index = expression();
+
+            while (match(Lexeme.Newline));
+            let closingSquare = consume("Expected ']' after array or object index", Lexeme.RightSquare);
+
+            expr = new Expr.IndexedGet(expr, index, closingSquare);
         } else {
             break;
         }
@@ -575,14 +613,37 @@ function primary(): Expression {
             Lexeme.Double,
             Lexeme.String
         ):
-            let lit = new Expr.Literal(previous().literal!);
-            return lit;
+            return new Expr.Literal(previous().literal!);
         case match(Lexeme.Identifier):
             return new Expr.Variable(previous());
         case match(Lexeme.LeftParen):
             let expr = expression();
             consume("Unmatched '(' - expected ')' after expression", Lexeme.RightParen);
             return new Expr.Grouping(expr);
+        case match(Lexeme.LeftSquare):
+            let elements: Expression[] = [];
+
+            while (match(Lexeme.Newline));
+
+            if (!match(Lexeme.RightSquare)) {
+                elements.push(expression());
+
+                while (match(Lexeme.Comma, Lexeme.Newline)) {
+                    while (match(Lexeme.Newline));
+
+                    // TODO: check on a Roku to see if a trailing comma before the `]` is allowed
+                    if (check(Lexeme.RightSquare)) {
+                        break;
+                    }
+
+                    elements.push(expression());
+                }
+
+                consume("Unmatched '[' - expected ']' after array literal", Lexeme.RightSquare);
+            }
+
+            //consume("Expected newline or ':' after array literal", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
+            return new Expr.ArrayLiteral(elements);
         case match(Lexeme.Pos, Lexeme.Tab):
             let token = Object.assign(previous(), { kind: Lexeme.Identifier });
             return new Expr.Variable(token);
@@ -659,6 +720,7 @@ function synchronize() {
             case Lexeme.Sub:
             case Lexeme.If:
             case Lexeme.For:
+            case Lexeme.ForEach:
             case Lexeme.While:
             case Lexeme.Print:
             case Lexeme.Return:

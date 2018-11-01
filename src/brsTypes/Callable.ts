@@ -1,5 +1,5 @@
 import { Interpreter } from "../interpreter";
-import * as Brs from "./";
+import * as Brs from ".";
 import { Token } from "../Token";
 import * as Expr from "../parser/Expression";
 

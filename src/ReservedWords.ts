@@ -5,7 +5,6 @@ export const ReservedWords: {[key: string]: L} = {
     box: L.Box,
     createobject: L.CreateObject,
     dim: L.Dim,
-    each: L.Each,
     else: L.Else,
     elseif: L.ElseIf,
     "else if": L.ElseIf,
@@ -27,6 +26,7 @@ export const ReservedWords: {[key: string]: L} = {
     "exit while": L.ExitWhile,
     false: L.False,
     for: L.For,
+    "for each": L.ForEach, // note: 'foreach' (no space) is *not* a reserved word
     function: L.Function,
     getglobalaa: L.GetGlobalAA,
     getlastruncompileerror: L.GetLastRunCompileError,
