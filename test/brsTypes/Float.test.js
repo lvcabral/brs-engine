@@ -13,15 +13,15 @@ describe("Float", () => {
     it("doesn't rounds initial values", () => {
         let threePointFour = new Float(3.4);
         let threePointFive = new Float(3.5);
-        expect(threePointFour.getValue()).toBeCloseTo(3.4, 5);
-        expect(threePointFive.getValue()).toBeCloseTo(3.5, 5);
+        expect(threePointFour.getValue()).toBeCloseTo(3.4, 7);
+        expect(threePointFive.getValue()).toBeCloseTo(3.5, 7);
     });
 
     it("creates floats from strings", () => {
         let threePointFour = Float.fromString("3.4");
         let threePointFive = Float.fromString("3.5");
-        expect(threePointFour.getValue()).toBeCloseTo(3.4, 5);
-        expect(threePointFive.getValue()).toBeCloseTo(3.5, 5);
+        expect(threePointFour.getValue()).toBeCloseTo(3.4, 7);
+        expect(threePointFive.getValue()).toBeCloseTo(3.5, 7);
     });
 
     describe("addition", () => {
@@ -217,34 +217,34 @@ describe("Float", () => {
     });
 
     describe("exponentiation", () => {
-        let nine = new Float(1.5);
+        let onePointFive = new Float(1.5);
 
         it("raises to Int32 powers", () => {
             let two = new Int32(2);
-            let result = nine.pow(two);
+            let result = onePointFive.pow(two);
             expect(result.kind).toBe(ValueKind.Float);
             expect(result.getValue()).toBe(2.25);
         });
 
         it("raises to Int64 powers", () => {
             let two = new Int64(2);
-            let result = nine.pow(two);
+            let result = onePointFive.pow(two);
             expect(result.kind).toBe(ValueKind.Float);
             expect(result.getValue()).toBe(2.25);
         });
 
         it("raises to Float powers", () => {
             let oneHalf = new Float(0.5);
-            let result = nine.pow(oneHalf);
+            let result = onePointFive.pow(oneHalf);
             expect(result.kind).toBe(ValueKind.Float);
-            expect(result.getValue()).toBeCloseTo(1.22474, 5);
+            expect(result.getValue()).toBeCloseTo(1.224745, 7);
         });
 
         it("raises to Double powers", () => {
             let oneHalf = new Double(0.5);
-            let result = nine.pow(oneHalf);
+            let result = onePointFive.pow(oneHalf);
             expect(result.kind).toBe(ValueKind.Double);
-            expect(result.getValue()).toBeCloseTo(1.22474, 5);
+            expect(result.getValue()).toBeCloseTo(1.22474487, 7);
         });
     });
 
