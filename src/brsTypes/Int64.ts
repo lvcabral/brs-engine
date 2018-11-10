@@ -205,7 +205,7 @@ export class Int64 implements Numeric {
         }
     }
 
-    toString(): string {
+    toString(parent?: BrsType): string {
         return this.value.toString();
     }
 }

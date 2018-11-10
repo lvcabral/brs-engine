@@ -12,7 +12,7 @@ import {
     BrsString,
     Int32,
     ValueKind,
-    Argument,
+    Argument
 } from "../brsTypes";
 
 /** Set of all keywords that end blocks. */
@@ -644,6 +644,52 @@ function primary(): Expression {
 
             //consume("Expected newline or ':' after array literal", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
             return new Expr.ArrayLiteral(elements);
+        case match(Lexeme.LeftBrace):
+            let members: Expr.AAMember[] = [];
+
+            function key() {
+                let k;
+                if (check(Lexeme.Identifier)) {
+                    k = new BrsString(advance().text!);
+                } else if (check(Lexeme.String)) {
+                    k = advance().literal! as BrsString;
+                } else {
+                    throw ParseError.make(
+                        peek(),
+                        `Expected identiier or string as associative array key, but received '${peek().text || ""}'`
+                    );
+                }
+
+                consume("Expected ':' between associative array key and value", Lexeme.Colon);
+                return k;
+            }
+
+            while (match(Lexeme.Newline));
+
+            if (!match(Lexeme.RightBrace)) {
+                members.push({
+                    name: key(),
+                    value: expression()
+                });
+
+                while (match(Lexeme.Comma, Lexeme.Newline)) {
+                    while (match(Lexeme.Newline));
+
+                    // TODO: check on a Roku to see if a trailing comma before the closing ']' is allowed
+                    if (check(Lexeme.RightBrace)) {
+                        break;
+                    }
+
+                    members.push({
+                        name: key(),
+                        value: expression()
+                    });
+                }
+
+                consume("Unmatched '}' - expected '}' after associative array literal", Lexeme.RightBrace);
+            }
+
+            return new Expr.AALiteral(members);
         case match(Lexeme.Pos, Lexeme.Tab):
             let token = Object.assign(previous(), { kind: Lexeme.Identifier });
             return new Expr.Variable(token);

@@ -27,6 +27,7 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, StopReason } from "../parser/Statement";
+import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
 
 export interface OutputStreams {
     stdout: NodeJS.WriteStream,
@@ -739,6 +740,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitArrayLiteral(expression: Expr.ArrayLiteral): BrsArray {
         return new BrsArray(
             expression.elements.map(expr => this.evaluate(expr))
+        );
+    }
+
+    visitAALiteral(expression: Expr.AALiteral): BrsType {
+        return new AssociativeArray(
+            expression.elements.map(member =>
+                ({
+                    name: member.name,
+                    value: this.evaluate(member.value)
+                })
+            )
         );
     }
 

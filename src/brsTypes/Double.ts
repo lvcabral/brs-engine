@@ -187,7 +187,7 @@ export class Double implements Numeric {
         }
     }
 
-    toString(): string {
+    toString(parent?: BrsType): string {
         return this.value.toString();
     }
 }

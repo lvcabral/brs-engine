@@ -1,6 +1,7 @@
 import { Token } from "../Token";
-import { BrsType, Argument, ValueKind } from "../brsTypes";
+import { BrsType, Argument, ValueKind, BrsString } from "../brsTypes";
 import { Block } from "./Statement";
+import { Lexeme } from "../Lexeme";
 
 export interface Visitor<T> {
     visitAssign(expression: Assign): T;
@@ -12,6 +13,7 @@ export interface Visitor<T> {
     visitGrouping(expression: Grouping): T;
     visitLiteral(expression: Literal): T;
     visitArrayLiteral(expression: ArrayLiteral): T;
+    visitAALiteral(expression: AALiteral): T;
     visitLogical(expression: Logical): T;
     visitM(expression: M): T;
     visitSet(expression: Set): T;
@@ -120,6 +122,22 @@ export class ArrayLiteral implements Expression {
 
     accept <R> (visitor: Visitor<R>): R {
         return visitor.visitArrayLiteral(this);
+    }
+}
+
+/** A member of an associative array literal. */
+export interface AAMember {
+    /** The name of the member. */
+    name: BrsString,
+    /** The expression evaluated to determine the member's initial value. */
+    value: Expression
+}
+
+export class AALiteral implements Expression {
+    constructor(readonly elements: AAMember[]) {}
+
+    accept <R> (visitor: Visitor<R>): R {
+        return visitor.visitAALiteral(this);
     }
 }
 

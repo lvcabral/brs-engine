@@ -43,6 +43,9 @@ export class AstPrinter implements Expr.Visitor<string> {
     visitArrayLiteral(e: Expr.ArrayLiteral): string {
         return JSON.stringify(e, undefined, 2);
     }
+    visitAALiteral(e: Expr.AALiteral): string {
+        return JSON.stringify(e, undefined, 2);
+    }
     visitLogical(e: Expr.Logical): string {
         return JSON.stringify(e, undefined, 2);
     }

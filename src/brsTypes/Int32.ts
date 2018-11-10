@@ -206,7 +206,7 @@ export class Int32 implements Numeric {
         }
     }
 
-    toString(): string {
+    toString(parent?: BrsType): string {
         return this.value.toString();
     }
 }

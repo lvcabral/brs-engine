@@ -1,5 +1,6 @@
 import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized } from "./BrsType";
 import { BrsArray } from "./components/BrsArray";
+import { AssociativeArray } from "./components/AssociativeArray";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
@@ -12,6 +13,7 @@ export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
 export * from "./components/BrsArray";
+export * from "./components/AssociativeArray";
 export * from "./Callable";
 
 /**
@@ -64,14 +66,20 @@ export function isBrsCallable(value: BrsType): value is Callable {
  * @returns `true` if `value` can be iterated across, otherwise `false`.
  */
 export function isIterable(value: BrsType): value is Iterable {
-    return value.kind === ValueKind.Array;
+    switch (value.kind) {
+        case ValueKind.Array:
+        case ValueKind.AssociativeArray:
+            return true;
+        default:
+            return false;
+    }
 }
 
 /** The set of BrightScript numeric types. */
 export type BrsNumber = Int32 | Int64 | Float | Double;
 
 /** The set of BrightScript iterable types. */
-export type Iterable = BrsArray;
+export type Iterable = BrsArray | AssociativeArray;
 
 /** The set of all supported types in BrightScript. */
 export type BrsType =
@@ -83,5 +91,6 @@ export type BrsType =
     Float |
     Double |
     BrsArray |
+    AssociativeArray |
     Callable |
     Uninitialized;
