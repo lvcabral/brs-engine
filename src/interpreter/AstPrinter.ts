@@ -27,7 +27,7 @@ export class AstPrinter implements Expr.Visitor<string> {
     visitCall(e: Expr.Call): string {
         return JSON.stringify(e, undefined, 2);
     }
-    visitGet(e: Expr.Get): string {
+    visitDottedGet(e: Expr.DottedGet): string {
         return JSON.stringify(e, undefined, 2);
     }
     visitIndexedGet(e: Expr.IndexedGet): string {

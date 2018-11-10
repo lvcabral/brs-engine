@@ -569,8 +569,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitGet(expression: Expr.Get) {
-        return BrsInvalid.Instance;
+    visitDottedGet(expression: Expr.DottedGet) {
+        let source = this.evaluate(expression.obj);
+        if (!isIterable(source)) {
+            throw BrsError.typeMismatch({
+                message: "Attemptin to retrieve property from non-iterable value",
+                line: expression.name.line,
+                left: source
+            });
+            return BrsInvalid.Instance;
+        }
+
+        try {
+            return source.get(new BrsString(expression.name.text));
+        } catch (err) {
+            throw BrsError.make(err.message, expression.name.line);
+        }
     }
 
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {

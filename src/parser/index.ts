@@ -3,7 +3,7 @@ type Expression = Expr.Expression;
 import * as Stmt from "./Statement";
 type Statement = Stmt.Statement;
 import { Lexeme } from "../Lexeme";
-import { Token } from "../Token";
+import { Token, Identifier } from "../Token";
 import * as ParseError from "./ParseError";
 
 import {
@@ -570,6 +570,12 @@ function call(): Expression {
             let closingSquare = consume("Expected ']' after array or object index", Lexeme.RightSquare);
 
             expr = new Expr.IndexedGet(expr, index, closingSquare);
+        } else if (match(Lexeme.Dot)) {
+            while (match(Lexeme.Newline));
+
+            let name = consume("Expected property name after '.'", Lexeme.Identifier) as Identifier;
+
+            expr = new Expr.DottedGet(expr, name);
         } else {
             break;
         }

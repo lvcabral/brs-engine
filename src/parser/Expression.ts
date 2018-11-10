@@ -1,4 +1,4 @@
-import { Token } from "../Token";
+import { Token, Identifier } from "../Token";
 import { BrsType, Argument, ValueKind, BrsString } from "../brsTypes";
 import { Block } from "./Statement";
 import { Lexeme } from "../Lexeme";
@@ -8,7 +8,7 @@ export interface Visitor<T> {
     visitBinary(expression: Binary): T;
     visitCall(expression: Call): T;
     visitAnonymousFunction(func: Function): T;
-    visitGet(expression: Get): T;
+    visitDottedGet(expression: DottedGet): T;
     visitIndexedGet(expression: IndexedGet): T;
     visitGrouping(expression: Grouping): T;
     visitLiteral(expression: Literal): T;
@@ -75,14 +75,14 @@ export class Function implements Expression {
     }
 }
 
-export class Get implements Expression {
+export class DottedGet implements Expression {
     constructor(
         readonly obj: Expression,
-        readonly name: Token
+        readonly name: Identifier
     ) {}
 
     accept <R> (visitor: Visitor<R>): R {
-        return visitor.visitGet(this);
+        return visitor.visitDottedGet(this);
     }
 }
 

@@ -15,3 +15,9 @@ export interface Token {
     /** The line on which this token was found. */
     line: number;
 }
+
+/** Reprsents an identifier as scanned by the lexer. */
+export interface Identifier extends Token {
+    kind: Lexeme.Identifier;
+    text: string;
+}
