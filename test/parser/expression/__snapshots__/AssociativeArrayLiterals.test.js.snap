@@ -1,0 +1,239 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser associative array literals allows a mix of quoted and unquoted keys 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": AALiteral {
+      "elements": Array [
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "foo",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 1,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "bar",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 2,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "requires-hypens",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 3,
+            },
+          },
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser associative array literals empty associative arrays on multiple lines 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": AALiteral {
+      "elements": Array [],
+    },
+  },
+]
+`;
+
+exports[`parser associative array literals empty associative arrays on one line 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": AALiteral {
+      "elements": Array [],
+    },
+  },
+]
+`;
+
+exports[`parser associative array literals filled arrays on multiple lines with commas 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": AALiteral {
+      "elements": Array [
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "foo",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 1,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "bar",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 2,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "baz",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 3,
+            },
+          },
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser associative array literals filled arrays on multiple lines without commas 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": AALiteral {
+      "elements": Array [
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "foo",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 1,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "bar",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 2,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "baz",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 3,
+            },
+          },
+        },
+      ],
+    },
+  },
+]
+`;
+
+exports[`parser associative array literals filled arrays on one line 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": AALiteral {
+      "elements": Array [
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "foo",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 1,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "bar",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 2,
+            },
+          },
+        },
+        Object {
+          "name": BrsString {
+            "kind": 2,
+            "value": "baz",
+          },
+          "value": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 3,
+            },
+          },
+        },
+      ],
+    },
+  },
+]
+`;
