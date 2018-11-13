@@ -1,6 +1,6 @@
-const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid } = require("../../lib/stdlib/index");
+const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Val } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
-const { BrsString, BrsBoolean, Int32 } = require("../../lib/brsTypes");
+const { BrsString, BrsBoolean, Int32, Float } = require("../../lib/brsTypes");
 
 const interpreter = new Interpreter();
 
@@ -155,5 +155,53 @@ describe("global string functions", () => {
                 Mid.call(interpreter, new BrsString("abc"), new Int32(2))
             ).toEqual(new BrsString("bc"));
         });
+    });
+
+    describe("Str", () => {
+        it("returns a string from a positive float", () => {
+            expect(
+                Str.call(interpreter, new Float(3.4))
+            ).toEqual(new BrsString(" 3.4"));
+        })
+    });
+
+    describe("StrI", () => {
+        it("returns a string from a positive integer", () => {
+            expect(
+                StrI.call(interpreter, new Int32(3))
+            ).toEqual(new BrsString(" 3"));
+        });
+
+        it("returns a string from a negative integer", () => {
+            expect(
+                Str.call(interpreter, new Int32(-3))
+            ).toEqual(new BrsString("-3"));
+        });
+
+        it("returns a string from a zero integer", () => {
+            expect(
+                Str.call(interpreter, new Int32(0))
+            ).toEqual(new BrsString("0"));
+        });
+    });
+
+    describe("Val", () => {
+        it("returns a float from a positive decimal-formatted string", () => {
+            expect(
+                Val.call(interpreter, new BrsString("12.34"))
+            ).toEqual(new Float(12.34));
+        });
+
+        it("returns a float from a negative decimal-formatted string", () => {
+            expect(
+                Val.call(interpreter, new BrsString("-32.34"))
+            ).toEqual(new Float(-32.34));
+        });
+
+        it("returns a float from a zero decimal-formatted string", () => {
+            expect(
+                Val.call(interpreter, new BrsString("0.0"))
+            ).toEqual(new Float(0.0));
+        })
     });
 });

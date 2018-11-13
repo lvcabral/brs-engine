@@ -1,4 +1,4 @@
-import { BrsType, Callable, ValueKind, BrsString, Int32 } from "../brsTypes";
+import { BrsType, Callable, ValueKind, BrsString, Int32, Float } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
 /** Converts the string to all uppercase. */
@@ -122,3 +122,50 @@ export const Mid = new Callable(
         return (n) ? new BrsString(s.value.substring(start, start + n.getValue())) : new BrsString(s.value.substring(start));
     }
 );
+
+/**
+ * Return a string from a float. If it is positive, prefix it with a space.  
+ */
+export const Str = new Callable(
+    {
+        name: "Str",
+        args: [{name: "value", type: ValueKind.Float}],
+        returns: ValueKind.String
+    },
+    (interpreter: Interpreter, value: Float): BrsString => {
+        const floatValue = value.getValue();
+        const prefix = (floatValue > 0.0) ? " " : "";
+        return new BrsString(prefix + String(floatValue));
+    }
+);
+
+/**
+ * Return a string from an integer. If it is positive, prefix it with a space.  
+ */
+export const StrI = new Callable(
+    {
+        name: "StrI",
+        args: [{name: "value", type: ValueKind.Int32}],
+        returns: ValueKind.String
+    },
+    (interpreter: Interpreter, value: Int32): BrsString => {
+        const intValue = value.getValue();
+        const prefix = (intValue > 0) ? " " : "";
+        return new BrsString(prefix + String(intValue));
+    }
+);
+
+/**
+ * Return a float from a string
+ */
+export const Val = new Callable(
+    {
+        name: "Val",
+        args: [{name: "s", type: ValueKind.String}],
+        returns: ValueKind.Float
+    },
+    (interpreter: Interpreter, s: BrsString): Float => {
+        return new Float(+s.value);
+    }
+);
+
