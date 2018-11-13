@@ -162,7 +162,19 @@ describe("global string functions", () => {
             expect(
                 Str.call(interpreter, new Float(3.4))
             ).toEqual(new BrsString(" 3.4"));
-        })
+        });
+
+        it("returns a string from a negative float", () => {
+            expect(
+                Str.call(interpreter, new Float(-3.5))
+            ).toEqual(new BrsString("-3.5"));
+        });
+
+        it("returns a string from a zero float", () => {
+            expect(
+                Str.call(interpreter, new Float(0.0))
+            ).toEqual(new BrsString("0"));
+        });
     });
 
     describe("StrI", () => {
