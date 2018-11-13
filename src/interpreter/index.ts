@@ -5,6 +5,7 @@ import {
     isBrsNumber,
     isBrsString,
     BrsBoolean,
+    BrsString,
     isBrsBoolean,
     Int32,
     isBrsCallable,
@@ -12,7 +13,8 @@ import {
     BrsArray,
     isIterable,
     SignatureAndMismatches,
-    MismatchReason
+    MismatchReason,
+    isBrsPrimitive
 } from "../brsTypes";
 
 import * as Expr from "../parser/Expression";
@@ -298,9 +300,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return BrsInvalid.Instance;
                 }
             case Lexeme.Greater:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -310,9 +312,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right);
             case Lexeme.GreaterEqual:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -322,9 +324,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right).or(left.equalTo(right));
             case Lexeme.Less:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -334,9 +336,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right);
             case Lexeme.LessEqual:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -346,9 +348,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right).or(left.equalTo(right));
             case Lexeme.Equal:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -358,9 +360,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.equalTo(right);
             case Lexeme.LessGreater:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line

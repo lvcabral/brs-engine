@@ -75,22 +75,30 @@ export function isIterable(value: BrsType): value is Iterable {
     }
 }
 
+/**
+ * Determines whether ot not the provided value is a primitive BrightScript
+ * value, i.e. one of:
+ *   * `invalid`
+ *   * `true` or `false`
+ *   * any numeric value
+ *   * any string
+ */
+export function isBrsPrimitive(value: BrsType): value is BrsPrimitive {
+    return value.kind < ValueKind.Array;
+}
+
 /** The set of BrightScript numeric types. */
 export type BrsNumber = Int32 | Int64 | Float | Double;
+
+/** The set of all primitive (i.e. intrinsic and unboxed) BrightScript types. */
+export type BrsPrimitive = BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 
 /** The set of BrightScript iterable types. */
 export type Iterable = BrsArray | AssociativeArray;
 
 /** The set of all supported types in BrightScript. */
 export type BrsType =
-    BrsInvalid |
-    BrsBoolean |
-    BrsString |
-    Int32 |
-    Int64 |
-    Float |
-    Double |
-    BrsArray |
-    AssociativeArray |
+    BrsPrimitive |
+    Iterable |
     Callable |
     Uninitialized;
