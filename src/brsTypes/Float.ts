@@ -5,6 +5,12 @@ import { Int32 } from "./Int32";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
 
+/**
+ * Number of significant digits represented in an IEEE 32-bit floating point number.
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays#Typed_array_views
+ */
+const IEEE_FLOAT_SIGFIGS = 7;
+
 export class Float implements Numeric {
     readonly kind = ValueKind.Float;
     private readonly value: number;
@@ -16,10 +22,12 @@ export class Float implements Numeric {
     /**
      * Creates a new BrightScript floating-point value representing the provided `value`.
      * @param value the value to store in the BrightScript float, rounded to 32-bit floating point
-     *              precision.
+     *              precision and maintaining only seven significant digits of accuracy.
      */
     constructor(value: number) {
-        this.value = Math.fround(value);
+        this.value = parseFloat(
+            Math.fround(value).toPrecision(IEEE_FLOAT_SIGFIGS)
+        );
     }
 
     /**
