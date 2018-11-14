@@ -165,7 +165,7 @@ export const Val = new Callable(
         returns: ValueKind.Float
     },
     (interpreter: Interpreter, s: BrsString): Float => {
-        return new Float(+s.value);
+        return new Float(Number(s.value));
     }
 );
 
