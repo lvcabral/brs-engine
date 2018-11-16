@@ -20,5 +20,6 @@ export const RebootSystem = new Callable(
     rebootSystemImpl
 );
 
+export * from "./Math";
 export * from "./String";
 export * from "./Print";

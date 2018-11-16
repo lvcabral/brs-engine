@@ -39,4 +39,16 @@ describe("end to end standard libary", () => {
             ]);
         });
     });
+
+    test("stdlib/math.brs", () => {
+        return execute(resourceFile("stdlib", "math.brs"), outputStreams).then(() => {
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "22.19795",
+                "2.85647",
+                "3.342155"
+            ]);
+        });
+    })
 });
