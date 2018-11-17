@@ -1,10 +1,62 @@
-const { Exp, Log, Sqr, Rnd } = require("../../lib/stdlib/index");
+const { Atn, Cos, Sin, Tan, Exp, Log, Sqr, Rnd } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const { Int32, Float, ValueKind } = require("../../lib/brsTypes");
 
 const interpreter = new Interpreter();
 
 describe("global math functions", () => {
+    describe("Atn", () => {
+        it("calculates an arc-tangent", () => {
+            expect(
+                Atn.call(interpreter, new Float(-3.0)).value
+            ).toBeCloseTo(-1.2490, 1);
+
+            expect(
+                Atn.call(interpreter, new Float(0.0)).value
+            ).toBeCloseTo(0, 1);
+
+            expect(
+                Atn.call(interpreter, new Float(3.0)).value
+            ).toBeCloseTo(1.2490, 1);
+        });
+    });
+
+    describe("Cos", () => {
+        it("calculates a cosine from radians", () => {
+            expect(
+                Cos.call(interpreter, new Float(0)).value
+            ).toBeCloseTo(1, 1);
+
+            expect(
+                Cos.call(interpreter, new Float(Math.PI / 2)).value
+            ).toBeCloseTo(0, 1);
+        });
+    });
+
+    describe("Sin", () => {
+        it("calculates a sine from radians", () => {
+            expect(
+                Sin.call(interpreter, new Float(0)).value
+            ).toBeCloseTo(0, 1);
+
+            expect(
+                Sin.call(interpreter, new Float(Math.PI / 2)).value
+            ).toBeCloseTo(1, 1);
+        });
+    });
+
+    describe("Tan", () => {
+        it("calculates a tangent from radians", () => {
+            expect(
+                Tan.call(interpreter, new Float(0.0)).value
+            ).toBeCloseTo(0, 1);
+
+            expect(
+                Tan.call(interpreter, new Float(Math.PI / 4)).value
+            ).toBeCloseTo(1, 1);
+        });
+    });
+
     describe("Exp", () => {
         it("calculates a natural exponent", () => {
             expect(

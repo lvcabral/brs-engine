@@ -1,6 +1,46 @@
 import { Callable, ValueKind, Int32, Float } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
+/** Returns the arc-tangent (in radians) of a float. */
+export const Atn = new Callable(
+    {
+      name: "Atn",
+      args: [{name: "x", type: ValueKind.Float}],
+      returns: ValueKind.Float
+    },
+    (interpreter: Interpreter, x: Float) => new Float(Math.atan(x.getValue()))
+);
+
+/** Returns the cosine of a float (argument must be provided in radians). */
+export const Cos = new Callable(
+    {
+      name: "Cos",
+      args: [{name: "x", type: ValueKind.Float}],
+      returns: ValueKind.Float
+    },
+    (interpreter: Interpreter, x: Float) => new Float(Math.cos(x.getValue()))
+);
+
+/** Returns the sine of a float (argument must be provided in radians). */
+export const Sin = new Callable(
+    {
+      name: "Sin",
+      args: [{name: "x", type: ValueKind.Float}],
+      returns: ValueKind.Float
+    },
+    (interpreter: Interpreter, x: Float) => new Float(Math.sin(x.getValue()))
+);
+
+/** Returns the tangent float (argument must be provided in radians). */
+export const Tan = new Callable(
+    {
+      name: "Tan",
+      args: [{name: "x", type: ValueKind.Float}],
+      returns: ValueKind.Float
+    },
+    (interpreter: Interpreter, x: Float) => new Float(Math.tan(x.getValue()))
+);
+
 /** Returns the natural exponent of a float. */
 export const Exp = new Callable(
     {
