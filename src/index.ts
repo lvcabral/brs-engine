@@ -99,7 +99,7 @@ function run(contents: string, options: OutputStreams = processOutput, interpret
     try {
         return (interpreter || new Interpreter(options)).exec(statements);
     } catch (e) {
-        options.stderr.write(e.message);
+        //options.stderr.write(e.message);
         return;
     }
 }

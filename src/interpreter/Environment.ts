@@ -81,7 +81,7 @@ export class Environment {
     }
 
     /**
-     * Creates a clone of an environment, but without its function-scoped
+     * Creates a clone of the current environment, but without its function-scoped
      * values. Useful for creating sub-environments.
      *
      * The Reference BrightScript Implementation (RBI) doesn't currently create closures when
@@ -91,13 +91,12 @@ export class Environment {
      * 2. Named functions compiled together into a single "module"
      * 3. Parameters passed into the function
      *
-     * @param original the source environment
-     * @returns a copy of `original` but with no function-scoped values.
+     * @returns a copy of this environment but with no function-scoped values.
      */
-    static from(original: Environment) {
+    public createSubEnvironment(): Environment {
         let newEnvironment = new Environment();
-        newEnvironment.global = original.global;
-        newEnvironment.module = original.module;
+        newEnvironment.global = this.global;
+        newEnvironment.module = this.module;
 
         return newEnvironment;
     }

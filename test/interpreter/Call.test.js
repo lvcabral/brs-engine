@@ -68,7 +68,7 @@ describe("interpreter calls", () => {
             )
         );
 
-        expect(() => interpreter.exec([call])).toThrow(/Type mismatch/);
+        expect(() => interpreter.exec([call])).toThrow(/Argument '.+' must be of type/);
         expect(BrsError.found()).toBe(true);
     });
 });

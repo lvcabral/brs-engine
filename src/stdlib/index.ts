@@ -2,22 +2,23 @@ import { Callable, ValueKind, BrsType, BrsInvalid } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
 let warningShown = false;
-function rebootSystemImpl(interpreter: Interpreter): BrsInvalid {
-    if (!warningShown) {
-        console.warn("`RebootSystem` is not implemented in `brs`.");
-        warningShown = true;
-    }
-
-    return BrsInvalid.Instance;
-}
 
 export const RebootSystem = new Callable(
+    "RebootSystem",
     {
-        name: "RebootSystem",
-        args: [],
-        returns: ValueKind.Void
-    },
-    rebootSystemImpl
+        signature: {
+            args: [],
+            returns: ValueKind.Void
+        },
+        impl: () => {
+            if (!warningShown) {
+                console.warn("`RebootSystem` is not implemented in `brs`.");
+                warningShown = true;
+            }
+
+            return BrsInvalid.Instance;
+        }
+    }
 );
 
 export * from "./Math";

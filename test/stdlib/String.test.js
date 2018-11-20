@@ -186,14 +186,30 @@ describe("global string functions", () => {
 
         it("returns a string from a negative integer", () => {
             expect(
-                Str.call(interpreter, new Int32(-3))
+                StrI.call(interpreter, new Int32(-3))
             ).toEqual(new BrsString("-3"));
         });
 
         it("returns a string from a zero integer", () => {
             expect(
-                Str.call(interpreter, new Int32(0))
+                StrI.call(interpreter, new Int32(0))
             ).toEqual(new BrsString("0"));
+        });
+
+        it("returns an empty string for invalid radices", () => {
+            expect(
+                StrI.call(interpreter, new Int32(0), new Int32(1))
+            ).toEqual(new BrsString(""));
+
+            expect(
+                StrI.call(interpreter, new Int32(0), new Int32(37))
+            ).toEqual(new BrsString(""));
+        })
+
+        it("returns a string formatted by a radix", () => {
+            expect(
+                StrI.call(interpreter, new Int32(255), new Int32(16))
+            ).toEqual(new BrsString("ff"));
         });
     });
 

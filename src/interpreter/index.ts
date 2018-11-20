@@ -1,8 +1,5 @@
-import Long from "long";
-
 import {
     BrsType,
-    BrsString,
     ValueKind,
     BrsInvalid,
     isBrsNumber,
@@ -10,14 +7,12 @@ import {
     BrsBoolean,
     isBrsBoolean,
     Int32,
-    Int64,
-    Float,
-    Double,
     isBrsCallable,
-    BrsValue,
     Uninitialized,
     BrsArray,
-    isIterable
+    isIterable,
+    SignatureAndMismatches,
+    MismatchReason
 } from "../brsTypes";
 
 import * as Expr from "../parser/Expression";
@@ -102,7 +97,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      *                    provided to `func`.
      * @param func the JavaScript function to execute with the sub interpreter.
      */
-    inSubEnv(environment: Environment, func: (interpreter: Interpreter) => void) {
+    inSubEnv(environment: Environment, func: (interpreter: Interpreter) => BrsType): BrsType {
         let originalEnvironment = this._environment;
         try {
             this._environment = environment;
@@ -114,25 +109,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     exec(statements: ReadonlyArray<Stmt.Statement>) {
         return statements.map((statement) => this.execute(statement));
-    }
-
-    /**
-     * Executes a block in the context of the provided environment.
-     * The original environment will be restored after execution finishes --
-     * even if an error occurs.
-     *
-     * @param statements an array of statements to execute
-     * @param environment the environment in which those statements will be executed
-     * @returns an array of `Result`s, one for each executed statement
-     */
-    executeBlock(block: Stmt.Block, environment: Environment) {
-        let originalEnvironment = this.environment;
-        try {
-            this._environment = environment;
-            return block.accept(this);
-        } finally {
-            this._environment = originalEnvironment;
-        }
     }
 
     visitAssign(statement: Expr.Assign): BrsType {
@@ -508,66 +484,79 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             );
         }
 
-        if (callee.signature.name) {
-            functionName = callee.signature.name;
-        }
+        functionName = callee.getName();
 
-        // ensure argument counts match
-        const arity = callee.arity;
-        if (expression.args.length < arity.required) {
+        let satisfiedSignature = callee.getFirstSatisfiedSignature(args);
+
+        if (satisfiedSignature) {
+            try {
+                return callee.call(this, ...args);
+            } catch (reason) {
+                if (reason.kind == null) {
+                    throw new Error("Something terrible happened and we didn't throw a `BlockEnd` instance.");
+                }
+
+                let returnedValue = (reason as Stmt.ReturnValue).value;
+                let returnLocation = (reason as Stmt.ReturnValue).location;
+                if (satisfiedSignature.signature.returns !== ValueKind.Dynamic && satisfiedSignature.signature.returns !== returnedValue.kind) {
+                    throw BrsError.make(
+                        `Attempting to return value of type ${ValueKind.toString(returnedValue.kind)}, `
+                        + `but function ${callee.getName()} declares return value of type `
+                        + ValueKind.toString(satisfiedSignature.signature.returns),
+                        returnLocation.line
+                    );
+                }
+
+                return returnedValue;
+            }
+        } else {
+            function formatMismatch(mismatchedSignature: SignatureAndMismatches) {
+                let sig = mismatchedSignature.signature;
+                let mismatches = mismatchedSignature.mismatches;
+
+                let messageParts = [];
+
+                let args = sig.args.map(a => {
+                    let requiredArg = `${a.name} as ${ValueKind.toString(a.type)}`;
+                    if (a.defaultValue) {
+                        return `[${requiredArg}]`;
+                    } else {
+                        return requiredArg;
+                    }
+                }).join(", ");
+                messageParts.push(`function ${functionName}(${args}) as ${ValueKind.toString(sig.returns)}:`);
+                messageParts.push(
+                    ...mismatches.map(mm => {
+                        switch (mm.reason) {
+                            case MismatchReason.TooFewArguments:
+                                return `* ${functionName} requires at least ${mm.expected} arguments, but received ${mm.received}.`;
+                            case MismatchReason.TooManyArguments:
+                                return `* ${functionName} accepts at most ${mm.expected} arguments, but received ${mm.received}.`;
+                            case MismatchReason.ArgumentTypeMismatch:
+                                return `* Argument '${mm.argName}' must be of type ${mm.expected}, but received ${mm.received}.`;
+                        }
+                    }).map(line => `    ${line}`)
+                );
+
+                return messageParts.map(line => `    ${line}`).join("\n");
+            }
+
+            let mismatchedSignatures = callee.getAllSignatureMismatches(args);
+
+            let header;
+            let messages;
+            if (mismatchedSignatures.length === 1) {
+                header = `Provided arguments don't match ${functionName}'s signature.`;
+                messages = [ formatMismatch(mismatchedSignatures[0]) ];
+            } else {
+                header = `Provided arguments don't match any of ${functionName}'s signatures.`;
+                messages = mismatchedSignatures.map(formatMismatch);
+            }
+
             throw BrsError.make(
-                `'${functionName}' requires at least ${arity.required} arguments, ` +
-                    `but received ${expression.args.length}.`,
+                [header, ...messages].join("\n"),
                 expression.closingParen.line
             );
-        } else if (expression.args.length > arity.required + arity.optional) {
-            throw BrsError.make(
-                `'${functionName}' accepts at most ${arity.required + arity.optional} arguments, ` +
-                    `but received ${expression.args.length}.`,
-                expression.closingParen.line
-            );
-        }
-
-        // ensure argument types match
-        let typeMismatchFound = false;
-        args.forEach((_value, index) => {
-            const signatureArg = callee.signature.args[index];
-            if (signatureArg.type !== ValueKind.Dynamic && signatureArg.type !== args[index].kind) {
-                typeMismatchFound = true;
-                BrsError.make(
-                    `Type mismatch in '${functionName}': argument '${signatureArg.name}' must be ` +
-                        `of type ${ValueKind.toString(signatureArg.type)}, but received ` +
-                        `${ValueKind.toString(args[index].kind)}.`,
-                    expression.closingParen.line
-                );
-            }
-        });
-
-        if (typeMismatchFound) {
-            throw new Error(
-                `[Line ${expression.closingParen.line}] Type mismatch(es) detected.`
-            );
-        }
-
-        try {
-            return callee.call(this, ...args);
-        } catch (reason) {
-            if (reason.kind == null) {
-                throw new Error("Something terrible happened and we didn't throw a `BlockEnd` instance.");
-            }
-
-            let returnedValue = (reason as Stmt.ReturnValue).value;
-            let returnLocation = (reason as Stmt.ReturnValue).location;
-            if (callee.signature.returns !== ValueKind.Dynamic && callee.signature.returns !== returnedValue.kind) {
-                throw BrsError.make(
-                    `Attempting to return value of type ${ValueKind.toString(returnedValue.kind)}, `
-                    + `but function ${callee.signature.name} declares return value of type `
-                    + ValueKind.toString(callee.signature.returns),
-                    returnLocation.line
-                );
-            }
-
-            return returnedValue;
         }
     }
 

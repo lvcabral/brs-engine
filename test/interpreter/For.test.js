@@ -113,7 +113,7 @@ describe("interpreter for loops", () => {
         expect(i).toEqual(new Int32(6));
     });
 
-    it.only("can be exited", () => {
+    it("can be exited", () => {
         const body = new Stmt.Block([
             new Stmt.ExitFor()
         ]);

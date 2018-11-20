@@ -1,24 +1,29 @@
 import { BrsType, Callable, ValueKind, BrsString, Int32, Float } from "../brsTypes";
+import * as Expr from "../parser/Expression";
 import { Interpreter } from "../interpreter";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable(
+    "UCase",
     {
-      name: "UCase",
-      args: [{name: "s", type: ValueKind.String}],
-      returns: ValueKind.String
-    },
-    (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toUpperCase())
+        signature: {
+            args: [{name: "s", type: ValueKind.String}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toUpperCase())
+    }
 );
 
 /** Converts the string to all lowercase. */
 export const LCase = new Callable(
+    "LCase",
     {
-      name: "LCase",
-      args: [{name: "s", type: ValueKind.String}],
-      returns: ValueKind.String
-    },
-    (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toLowerCase())
+        signature: {
+            args: [{name: "s", type: ValueKind.String}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toLowerCase())
+    }
 );
 
 /**
@@ -26,12 +31,14 @@ export const LCase = new Callable(
  * An empty string argument will return `0`.
  */
 export const Asc = new Callable(
+    "Asc",
     {
-        name: "Asc",
-        args: [{name: "letter", type: ValueKind.String}],
-        returns: ValueKind.String
-    },
-    (interpreter: Interpreter, str: BrsString) => new Int32(str.value.charCodeAt(0) || 0)
+        signature: {
+            args: [{name: "letter", type: ValueKind.String}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, str: BrsString) => new Int32(str.value.charCodeAt(0) || 0)
+    }
 );
 
 /**
@@ -41,46 +48,52 @@ export const Asc = new Callable(
  * Returns empty string (`""`) if the specified value is `0` or an invalid Unicode value.
  */
 export const Chr = new Callable(
+    "Chr",
     {
-        name: "Chr",
-        args: [{name: "ch", type: ValueKind.Int32}],
-        returns: ValueKind.String
+        signature: {
+            args: [{name: "ch", type: ValueKind.Int32}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, ch: Int32) => {
+            const num = ch.getValue();
+            if (num <= 0) return new BrsString("");
+            else return new BrsString(String.fromCharCode(num));
+        }
     },
-    (interpreter: Interpreter, ch: Int32) => {
-        const num = ch.getValue();
-        if (num <= 0) return new BrsString("");
-        else return new BrsString(String.fromCharCode(num));
-    }
 );
 
 /**
  * Returns the first n characters in a string
  */
 export const Left = new Callable(
+    "Left",
     {
-        name: "Left",
-        args: [{name: "s", type: ValueKind.String}, {name: "n", type: ValueKind.Int32}],
-        returns: ValueKind.String
-    },
-    (interpreter: Interpreter, s: BrsString, n: Int32) => new BrsString(s.value.substr(0, n.getValue()))
+        signature: {
+            args: [{name: "s", type: ValueKind.String}, {name: "n", type: ValueKind.Int32}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, s: BrsString, n: Int32) => new BrsString(s.value.substr(0, n.getValue()))
+    }
 );
 
 /**
  * Returns the last n characters in a string
  */
 export const Right = new Callable(
+    "Right",
     {
-        name: "Right",
-        args: [{name: "s", type: ValueKind.String}, {name: "n", type: ValueKind.Int32}],
-        returns: ValueKind.String
-    },
-    (interpreter: Interpreter, s: BrsString, n: Int32) => {
-        let end = s.value.length - 1;
-        let start = end - (n.getValue() - 1);
+        signature: {
+            args: [{name: "s", type: ValueKind.String}, {name: "n", type: ValueKind.Int32}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, s: BrsString, n: Int32) => {
+            let end = s.value.length - 1;
+            let start = end - (n.getValue() - 1);
 
-        if (n.getValue() <= 0) return new BrsString("");
-        else if (start < 0) return new BrsString(s.value);
-        return new BrsString(s.value.substr(start, end));
+            if (n.getValue() <= 0) return new BrsString("");
+            else if (start < 0) return new BrsString(s.value);
+            return new BrsString(s.value.substr(start, end));
+        }
     }
 );
 
@@ -88,70 +101,128 @@ export const Right = new Callable(
  * Returns the index (1 based) of a string inside another string. Zero if there is no match.
  */
 export const Instr = new Callable(
+    "Instr",
     {
-        name: "Instr",
-        args: [{name: "start", type: ValueKind.Int32}, {name: "str", type: ValueKind.String}, {name: "search", type: ValueKind.String}],
-        returns: ValueKind.String
-    },
-    (interpreter: Interpreter, start: Int32, str: BrsString, search: BrsString) => new Int32(str.value.indexOf(search.value, start.getValue() - 1) + 1)
+        signature: {
+            args: [{name: "start", type: ValueKind.Int32}, {name: "str", type: ValueKind.String}, {name: "search", type: ValueKind.String}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, start: Int32, str: BrsString, search: BrsString) => new Int32(str.value.indexOf(search.value, start.getValue() - 1) + 1)
+    }
 );
 
 /**
  * Return the number of characters in a string
  */
 export const Len = new Callable(
+    "Len",
     {
-        name: "Len",
-        args: [{name: "s", type: ValueKind.String}],
-        returns: ValueKind.Int32
-    },
-    (interpreter: Interpreter, s: BrsString) => new Int32(s.value.length)
+        signature: {
+            args: [{name: "s", type: ValueKind.String}],
+            returns: ValueKind.Int32
+        },
+        impl: (interpreter: Interpreter, s: BrsString) => new Int32(s.value.length)
+    }
 );
 
 /**
  * Return a string located in the middle of another string from start index to end index
  */
 export const Mid = new Callable(
+    "Mid",
     {
-        name: "Mid",
-        args: [{name: "s", type: ValueKind.String}, {name: "p", type: ValueKind.Int32}, {name: "n", type: ValueKind.Int32}],
-        returns: ValueKind.String
+        signature: {
+            args: [
+                {
+                    name: "s",
+                    type: ValueKind.String
+                },
+                {
+                    name: "p",
+                    type: ValueKind.Int32
+                }
+            ],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, s: BrsString, p: Int32): BrsString => {
+            let start = p.getValue() - 1;
+            return new BrsString(s.value.substring(start));
+        }
     },
-    (interpreter: Interpreter, s: BrsString, p: Int32, n: Int32): BrsString => {
-        let start = p.getValue() - 1;
-        return (n) ? new BrsString(s.value.substring(start, start + n.getValue())) : new BrsString(s.value.substring(start));
+    {
+        signature: {
+            args: [
+                {
+                    name: "s",
+                    type: ValueKind.String
+                },
+                {
+                    name: "p",
+                    type: ValueKind.Int32
+                },
+                {
+                    name: "n",
+                    type: ValueKind.Int32
+                }
+            ],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, s: BrsString, p: Int32, n: Int32): BrsString => {
+            let start = p.getValue() - 1;
+            return new BrsString(s.value.substring(start, start + n.getValue()));
+        }
     }
 );
 
 /**
- * Return a string from a float. If it is positive, prefix it with a space.  
+ * Return a string from a float. If it is positive, prefix it with a space.
  */
 export const Str = new Callable(
+    "Str",
     {
-        name: "Str",
-        args: [{name: "value", type: ValueKind.Float}],
-        returns: ValueKind.String
+        signature: {
+            args: [{name: "value", type: ValueKind.Float}],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, value: Float): BrsString => {
+            const floatValue = value.getValue();
+            const prefix = (floatValue > 0.0) ? " " : "";
+            return new BrsString(prefix + String(floatValue));
+        }
     },
-    (interpreter: Interpreter, value: Float): BrsString => {
-        const floatValue = value.getValue();
-        const prefix = (floatValue > 0.0) ? " " : "";
-        return new BrsString(prefix + String(floatValue));
-    }
 );
 
 /**
- * Return a string from an integer. If it is positive, prefix it with a space.  
+ * Return a string from an integer. If it is positive, prefix it with a space.
  */
 export const StrI = new Callable(
+    "StrI",
     {
-        name: "StrI",
-        args: [{name: "value", type: ValueKind.Int32}],
-        returns: ValueKind.String
-    },
-    (interpreter: Interpreter, value: Int32): BrsString => {
-        const intValue = value.getValue();
-        const prefix = (intValue > 0) ? " " : "";
-        return new BrsString(prefix + String(intValue));
+        signature: {
+            args: [
+                {
+                    name: "value",
+                    type: ValueKind.Int32
+                },
+                {
+                    name: "radis",
+                    type: ValueKind.Int32,
+                    defaultValue: new Expr.Literal(new Int32(10))
+                }
+            ],
+            returns: ValueKind.String
+        },
+        impl: (interpreter: Interpreter, value: Int32, brsRadix: Int32): BrsString => {
+            let radix = brsRadix.getValue();
+            if (radix < 2 || radix > 36) {
+                return new BrsString("");
+            }
+
+            const intValue = value.getValue();
+            const prefix = (intValue > 0 && radix === 10) ? " " : "";
+
+            return new BrsString(prefix + intValue.toString(radix));
+        }
     }
 );
 
@@ -159,13 +230,15 @@ export const StrI = new Callable(
  * Return a float from a string
  */
 export const Val = new Callable(
+    "Val",
     {
-        name: "Val",
-        args: [{name: "s", type: ValueKind.String}],
-        returns: ValueKind.Float
+        signature: {
+            args: [{name: "s", type: ValueKind.String}],
+            returns: ValueKind.Float
+        },
+        impl: (interpreter: Interpreter, s: BrsString): Float => {
+            return new Float(Number(s.value));
+        }
     },
-    (interpreter: Interpreter, s: BrsString): Float => {
-        return new Float(Number(s.value));
-    }
 );
 

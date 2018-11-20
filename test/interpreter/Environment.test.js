@@ -78,7 +78,7 @@ describe("Environment", () => {
         env.define(Scope.Module, "moduleScoped", new BrsString("module-scoped"));
         env.define(Scope.Global, "globalScoped", new BrsString("global-scoped"));
 
-        let subEnv = Environment.from(env);
+        let subEnv = env.createSubEnvironment();
 
         expect(subEnv.has(identifier("funcScoped"))).toBe(false);
         expect(subEnv.has(identifier("moduleScoped"))).toBe(true);

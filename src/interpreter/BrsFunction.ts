@@ -16,30 +16,16 @@ import { Scope, Environment } from "./Environment";
  */
 export function toCallable(func: Expr.Function, name: string = "[Function]") {
     return new Callable(
+        name,
         {
-            name: name,
-            args: func.parameters,
-            returns: func.returns
-        },
-        (interpreter: Interpreter, ...args: BrsType[]) => {
-            // first, we need to evaluate all of the parameter default values
-            // and define them in a new environment
-            let subEnvironment = Environment.from(interpreter.environment);
-
-            interpreter.inSubEnv(subEnvironment, (subInterpreter) => {
-                func.parameters.forEach((param, index) => {
-                    if (param.defaultValue) {
-                        subEnvironment.define(Scope.Function, param.name, subInterpreter.evaluate(param.defaultValue));
-                        return;
-                    }
-
-                    subEnvironment.define(Scope.Function, param.name, args[index]);
-                });
-            });
-
-            // then return whatever BrightScript returned
-            // TODO: prevent `sub`s from returning values?
-            return interpreter.executeBlock(func.body, subEnvironment);
+            signature: {
+                args: func.parameters,
+                returns: func.returns
+            },
+            impl: (interpreter: Interpreter, ...args: BrsType[]) => {
+                // just return whatever BrightScript returned
+                return func.body.accept(interpreter);
+            }
         }
     );
 }

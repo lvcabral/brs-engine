@@ -1,4 +1,5 @@
 const BrsTypes = require("../../lib/brsTypes");
+const { MismatchReason } = require("../../lib/brsTypes/Callable");
 const { UCase, LCase } = require("../../lib/stdlib");
 
 describe("Callable", () => {
@@ -56,67 +57,107 @@ describe("Callable", () => {
         expect(UCase.equalTo(UCase)).toBe(BrsTypes.BrsBoolean.True);
     });
 
-    describe("arity", () => {
-        it("allows no-args functions", () => {
+    describe("type checking", () => {
+        it("detects calls with too few arguments", () => {
+            const hasArgs = new BrsTypes.Callable(
+                "acceptsArgs",
+                {
+                    signature: {
+                        args: [{
+                            name: "foo",
+                            type: BrsTypes.ValueKind.String
+                        }],
+                        returns: BrsTypes.String
+                    },
+                    impl: () => {}
+                }
+            );
+
+            expect(
+                hasArgs.getAllSignatureMismatches([]).map(mm => mm.mismatches)[0]
+            ).toContainEqual(
+                {
+                    reason: BrsTypes.MismatchReason.TooFewArguments,
+                    expected: "1",
+                    received: "0"
+                }
+            );
+        });
+
+        it("detects calls with too many arguments", () => {
             const noArgs = new BrsTypes.Callable(
+                "acceptsArgs",
                 {
-                    name: "acceptsNoArgs",
-                    args: []
-                },
-                () => {}
-            );
-            expect(noArgs.arity).toEqual({
-                required: 0,
-                optional: 0
-            });
-        });
-
-        it("allows functions with only required args", () => {
-            const required = new BrsTypes.Callable(
-                {
-                    name: "requiredOnly",
-                    args: [
-                        { name: "foo", type: BrsTypes.ValueKind.String },
-                        { name: "bar", type: BrsTypes.ValueKind.Int32 },
-                    ]
+                    signature: {
+                        args: [],
+                        returns: BrsTypes.String
+                    },
+                    impl: () => {}
                 }
             );
-            expect(required.arity).toEqual({
-                required: 2,
-                optional: 0
-            });
-        });
 
-        it("allows functions with only optional args", () => {
-            const required = new BrsTypes.Callable(
+            expect(
+                noArgs.getAllSignatureMismatches([
+                    new BrsTypes.BrsString("foo")
+                ]).map(mm => mm.mismatches)[0]
+            ).toContainEqual(
                 {
-                    name: "optionalOnly",
-                    args: [
-                        { name: "foo", type: BrsTypes.ValueKind.String, defaultValue: new BrsTypes.BrsString("okay") },
-                        { name: "bar", type: BrsTypes.ValueKind.Int32, defaultValue: new BrsTypes.Int32(-1) },
-                    ]
+                    reason: BrsTypes.MismatchReason.TooManyArguments,
+                    expected: "0",
+                    received: "1"
                 }
             );
-            expect(required.arity).toEqual({
-                required: 0,
-                optional: 2
-            });
         });
 
-        it("allows functions with both required and optional args", () => {
-            const required = new BrsTypes.Callable(
+        it("allows optional arguments to be excluded", () => {
+            const hasArgs = new BrsTypes.Callable(
+                "acceptsOptionalArgs",
                 {
-                    name: "requiredAndOptional",
-                    args: [
-                        { name: "foo", type: BrsTypes.ValueKind.String },
-                        { name: "bar", type: BrsTypes.ValueKind.Int32, defaultValue: new BrsTypes.Int32(-1) },
-                    ]
+                    signature: {
+                        args: [{
+                            name: "foo",
+                            type: BrsTypes.ValueKind.String,
+                            defaultValue: new BrsTypes.BrsString("defaultFoo")
+                        }],
+                        returns: BrsTypes.String
+                    },
+                    impl: () => {}
                 }
             );
-            expect(required.arity).toEqual({
-                required: 1,
-                optional: 1
-            });
+
+            expect(
+                hasArgs.getAllSignatureMismatches([]).map(mm => mm.mismatches)[0]
+            ).toEqual([]);
+        });
+
+        it("detects argument mismatches", () => {
+            const hasArgs = new BrsTypes.Callable(
+                "acceptsString",
+                {
+                    signature: {
+                        args: [{
+                            name: "foo",
+                            type: BrsTypes.ValueKind.String
+                        }],
+                        returns: BrsTypes.String
+                    },
+                    impl: () => {}
+                }
+            );
+
+            expect(
+                hasArgs.getAllSignatureMismatches([
+                    BrsTypes.BrsBoolean.False
+                ]).map(mm => mm.mismatches)[0]
+            ).toContainEqual(
+                {
+                    reason: BrsTypes.MismatchReason.ArgumentTypeMismatch,
+                    expected: "String",
+                    received: "Boolean",
+                    argName: "foo"
+                }
+            );
         });
     });
+
 });
