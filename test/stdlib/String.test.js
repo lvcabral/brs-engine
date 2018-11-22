@@ -231,5 +231,23 @@ describe("global string functions", () => {
                 Val.call(interpreter, new BrsString("0.0"))
             ).toEqual(new Float(0.0));
         })
+
+        it("returns an integer from a string an radix", () => {
+            expect(
+                Val.call(interpreter, new BrsString("7"), new Int32(10))
+            ).toEqual(new Int32(7));
+
+            expect(
+                Val.call(interpreter, new BrsString("0x80"), new Int32(0))
+            ).toEqual(new Int32(128));
+
+            expect(
+                Val.call(interpreter, new BrsString("FF"), new Int32(16))
+            ).toEqual(new Int32(255));
+
+            expect(
+                Val.call(interpreter, new BrsString("1001"), new Int32(2))
+            ).toEqual(new Int32(9));
+        })
     });
 });

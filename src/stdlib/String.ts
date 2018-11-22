@@ -1,6 +1,7 @@
 import { BrsType, Callable, ValueKind, BrsString, Int32, Float } from "../brsTypes";
 import * as Expr from "../parser/Expression";
 import { Interpreter } from "../interpreter";
+import { BrsNumber } from "../brsTypes/BrsNumber";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable(
@@ -205,7 +206,7 @@ export const StrI = new Callable(
                     type: ValueKind.Int32
                 },
                 {
-                    name: "radis",
+                    name: "radix",
                     type: ValueKind.Int32,
                     defaultValue: new Expr.Literal(new Int32(10))
                 }
@@ -233,11 +234,29 @@ export const Val = new Callable(
     "Val",
     {
         signature: {
-            args: [{name: "s", type: ValueKind.String}],
-            returns: ValueKind.Float
+            args: [
+                {
+                    name: "s", 
+                    type: ValueKind.String
+                },
+                {
+                    name: "radix",
+                    type: ValueKind.Int32,
+                    defaultValue: new Expr.Literal(new Int32(10))
+                }
+            ],
+            returns: ValueKind.Dynamic
         },
-        impl: (interpreter: Interpreter, s: BrsString): Float => {
-            return new Float(Number(s.value));
+        impl: (interpreter: Interpreter, s: BrsString, brsRadix: Int32): BrsNumber => {
+            function isBrsStrFloat(str: BrsString): boolean {
+                return str.value.includes(".");
+            }
+
+            if (isBrsStrFloat(s)) {
+                return new Float(Number(s.value));
+            } else {
+                return new Int32(parseInt(s.value, brsRadix.getValue()));
+            }
         }
     },
 );
