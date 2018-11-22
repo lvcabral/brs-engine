@@ -1,10 +1,72 @@
-const { Atn, Cos, Sin, Tan, Exp, Log, Sqr, Rnd } = require("../../lib/stdlib/index");
+const { Abs, Cdbl, Cint, Csng, Fix, Int, Sgn, Atn, Cos, Sin, Tan, Exp, Log, Sqr, Rnd } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const { Int32, Float, ValueKind } = require("../../lib/brsTypes");
 
 const interpreter = new Interpreter();
 
 describe("global math functions", () => {
+    describe("Abs", () => {
+        it("calculates the absolute value", () => {
+            expect(
+                Abs.call(interpreter, new Float(3.5)).value
+            ).toBeCloseTo(3.5);
+
+            expect(
+                Abs.call(interpreter, new Float(-3.5)).value
+            ).toBeCloseTo(3.5);
+
+            expect(
+                Abs.call(interpreter, new Float(0)).value
+            ).toBeCloseTo(0);
+        })
+    })
+
+    describe("Cdbl", () => {
+        let result = Cdbl.call(interpreter, new Int32(7));
+        expect(result.value).toBeCloseTo(7.0);
+        expect(result.kind).toBe(ValueKind.Float);
+    })
+
+    describe("Cint", () => {
+        let input =    [ 2.1, 2.5, -2.2, -2.5, -2.6 ];
+        let expected = [   2,   3,   -2,   -2,   -3 ];
+        for (let i = 0; i < input.length; i++) {
+            let result = Cint.call(interpreter, new Float(input[i]));
+            expect(result.value).toEqual(expected[i]);
+            expect(result.kind).toBe(ValueKind.Int32);
+        }
+    })
+
+    describe("Csng", () => {
+        let result = Csng.call(interpreter, new Int32(49));
+        expect(result.value).toBeCloseTo(49.0);
+        expect(result.kind).toBe(ValueKind.Float);
+    })
+
+    describe("Fix", () => {
+        let positiveResult = Fix.call(interpreter, new Float(2.2));
+        expect(positiveResult.value).toEqual(2);
+        expect(positiveResult.kind).toBe(ValueKind.Int32);
+        
+        let negativeResult = Fix.call(interpreter, new Float(-2.2));
+        expect(negativeResult.value).toEqual(-2);
+        expect(negativeResult.kind).toBe(ValueKind.Int32);
+    })
+
+    describe("Int", () => {
+        let result1 = Int.call(interpreter, new Float(2.5));
+        expect(result1.value).toEqual(2);
+        expect(result1.kind).toBe(ValueKind.Int32);
+
+        let result2 = Int.call(interpreter, new Float(-2.5));
+        expect(result2.value).toEqual(-3);
+        expect(result2.kind).toBe(ValueKind.Int32);
+
+        let result3 = Int.call(interpreter, new Float(1000101.23));
+        expect(result3.value).toEqual(1000101);
+        expect(result3.kind).toBe(ValueKind.Int32);
+    })
+
     describe("Atn", () => {
         it("calculates an arc-tangent", () => {
             expect(
