@@ -152,7 +152,7 @@ export class Callable implements Brs.BrsValue {
         return Brs.BrsBoolean.from(this === other);
     }
 
-    toString(): string {
+    toString(parent?: Brs.BrsType): string {
         if (this.name) {
             return `[Function ${this.name}]`;
         } else {
