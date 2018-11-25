@@ -28,7 +28,7 @@ export class AssociativeArray implements BrsValue, BrsComponent, BrsIterable {
             "<Component: roAssociativeArray> =",
             "{",
             ...Array.from(this.elements.keys())
-                    .map(key => `    ${key.toString()}: ${this.elements.get(key)!.toString(this)}`),
+                    .map(key => `    ${key}: ${this.elements.get(key)!.toString(this)}`),
             "}"
         ].join("\n");
     }
