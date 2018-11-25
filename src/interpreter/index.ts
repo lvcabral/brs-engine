@@ -75,6 +75,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             { name: "Mid",          func: StdLib.Mid },
             { name: "Str",          func: StdLib.Str },
             { name: "StrI",         func: StdLib.StrI },
+            { name: "Substitute",   func: StdLib.Substitute },
             { name: "Val",          func: StdLib.Val },
             { name: "Exp",          func: StdLib.Exp },
             { name: "Log",          func: StdLib.Log },

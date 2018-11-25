@@ -1,4 +1,4 @@
-const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Val } = require("../../lib/stdlib/index");
+const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Substitute, Val } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const { BrsString, BrsBoolean, Int32, Float } = require("../../lib/brsTypes");
 
@@ -210,6 +210,66 @@ describe("global string functions", () => {
             expect(
                 StrI.call(interpreter, new Int32(255), new Int32(16))
             ).toEqual(new BrsString("ff"));
+        });
+    });
+
+    describe("Substitute", () => {
+        it("returns no substitution", () => {
+            expect(
+                Substitute.call(
+                    interpreter, 
+                    new BrsString("Barry"),
+                    new BrsString("Mary"))
+            ).toEqual(new BrsString("Barry"));
+        });
+
+        it("returns a single substitution", () => {
+            expect(
+                Substitute.call(
+                    interpreter, 
+                    new BrsString("{0} is her name"),
+                    new BrsString("Mary"))
+            ).toEqual(new BrsString("Mary is her name"));
+
+            expect(
+                Substitute.call(
+                    interpreter, 
+                    new BrsString("{0}"),
+                    new BrsString(""))
+            ).toEqual(new BrsString(""));
+        });
+
+        it("returns a bunch of substitutions", () => {
+            expect(
+                Substitute.call(
+                    interpreter, 
+                    new BrsString("quick test: {0} {1} {2} {3}"),
+                    new BrsString("harry"),
+                    new BrsString("ron"),
+                    new BrsString("hermione"),
+                    new BrsString("dumbledore"))
+            ).toEqual(new BrsString("quick test: harry ron hermione dumbledore"));
+        });
+
+        it("replaces multiple instances", () => {
+            expect(
+                Substitute.call(
+                    interpreter, 
+                    new BrsString("{0} picked up {1}'s ball and gave it back to {1}"),
+                    new BrsString("Greg"),
+                    new BrsString("Mary"))
+            ).toEqual(new BrsString("Greg picked up Mary's ball and gave it back to Mary"));
+        });
+
+        it("ignores partial tokens", () => {
+            expect(
+                Substitute.call(
+                    interpreter, 
+                    new BrsString("{0 {1} 2}"),
+                    new BrsString("Frank"),
+                    new BrsString("Jane"),
+                    new BrsString("Olga"))
+            ).toEqual(new BrsString("{0 Jane 2}"));
         });
     });
 
