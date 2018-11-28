@@ -1,4 +1,4 @@
-import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized } from "./BrsType";
+import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized, Comparable } from "./BrsType";
 import { BrsArray } from "./components/BrsArray";
 import { AssociativeArray } from "./components/AssociativeArray";
 import { Int32 } from "./Int32";
@@ -75,22 +75,18 @@ export function isIterable(value: BrsType): value is Iterable {
     }
 }
 
-/**
- * Determines whether ot not the provided value is a primitive BrightScript
- * value, i.e. one of:
- *   * `invalid`
- *   * `true` or `false`
- *   * any numeric value
- *   * any string
- */
-export function isBrsPrimitive(value: BrsType): value is BrsPrimitive {
+/** Determines whether or not the provided value is comparable to other BrightScript values. */
+export function isComparable(value: BrsType): value is BrsPrimitive {
     return value.kind < ValueKind.Array;
 }
 
 /** The set of BrightScript numeric types. */
 export type BrsNumber = Int32 | Int64 | Float | Double;
 
-/** The set of all primitive (i.e. intrinsic and unboxed) BrightScript types. */
+/**
+ * The set of all comparable BrightScript types. Only primitive (i.e. intrinsic * and unboxed)
+ * BrightScript types are comparable to each other.
+ */
 export type BrsPrimitive = BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 
 /** The set of BrightScript iterable types. */

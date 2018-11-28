@@ -67,9 +67,22 @@ export namespace ValueKind {
 
 /** The base for all BrightScript types. */
 export interface BrsValue {
-    /** Type differentiator for all BrightScript values. */
+    /**
+     * Type differentiator for all BrightScript values. Used to allow comparisons of `.kind` to
+     * produce valuable compile-time type inferences.
+     */
     readonly kind: ValueKind;
 
+    /**
+     * Converts the current value to a human-readable string.
+     * @param parent The (optional) BrightScript value that this value is being printed in the context of.
+     * @returns A human-readable representation of this value.
+     */
+    toString(parent?: BrsType): string;
+}
+
+/** The set of operations required for a BrightScript datatype to be compared to another. */
+export interface Comparable {
     /**
      * Determines whether or not this value is less than some `other` value.
      * @param other The value to compare this value to.
@@ -90,17 +103,10 @@ export interface BrsValue {
      * @returns `true` if this value is strictly equal to the `other` value, otherwise `false`.
      */
     equalTo(other: BrsType): BrsBoolean;
-
-    /**
-     * Converts the current value to a human-readable string.
-     * @param parent The (optional) BrightScript value that this value is being printed in the context of.
-     * @returns A human-readable representation of this value.
-     */
-    toString(parent?: BrsType): string;
 }
 
 /** Internal representation of a string in BrightScript. */
-export class BrsString implements BrsValue {
+export class BrsString implements BrsValue, Comparable {
     readonly kind = ValueKind.String;
     constructor(readonly value: string) {}
 
@@ -135,7 +141,7 @@ export class BrsString implements BrsValue {
 }
 
 /** Internal representation of a boolean in BrightScript. */
-export class BrsBoolean implements BrsValue {
+export class BrsBoolean implements BrsValue, Comparable {
     readonly kind = ValueKind.Boolean;
     private constructor(private readonly value: boolean) {}
 
@@ -203,7 +209,7 @@ export class BrsBoolean implements BrsValue {
 }
 
 /** Internal representation of the BrightScript `invalid` value. */
-export class BrsInvalid implements BrsValue {
+export class BrsInvalid implements BrsValue, Comparable {
     readonly kind = ValueKind.Invalid;
     static Instance = new BrsInvalid();
 
@@ -232,7 +238,7 @@ export class BrsInvalid implements BrsValue {
 }
 
 /** Internal representation of uninitialized BrightScript variables. */
-export class Uninitialized implements BrsValue {
+export class Uninitialized implements BrsValue, Comparable {
     readonly kind = ValueKind.Uninitialized;
     static Instance = new Uninitialized();
 

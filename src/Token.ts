@@ -1,4 +1,3 @@
-import Long from "long";
 import { Lexeme } from "./Lexeme";
 import { BrsType } from "./brsTypes";
 

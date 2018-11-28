@@ -14,7 +14,7 @@ import {
     isIterable,
     SignatureAndMismatches,
     MismatchReason,
-    isBrsPrimitive
+    isComparable
 } from "../brsTypes";
 
 import * as Expr from "../parser/Expression";
@@ -300,7 +300,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return BrsInvalid.Instance;
                 }
             case Lexeme.Greater:
-                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -312,7 +312,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right);
             case Lexeme.GreaterEqual:
-                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -324,7 +324,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right).or(left.equalTo(right));
             case Lexeme.Less:
-                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -336,7 +336,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right);
             case Lexeme.LessEqual:
-                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -348,7 +348,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right).or(left.equalTo(right));
             case Lexeme.Equal:
-                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -360,7 +360,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.equalTo(right);
             case Lexeme.LessGreater:
-                if (!isBrsPrimitive(left) || !isBrsPrimitive(right)) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
