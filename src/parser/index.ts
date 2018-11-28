@@ -690,7 +690,7 @@ function primary(): Expression {
                     });
                 }
 
-                consume("Unmatched '}' - expected '}' after associative array literal", Lexeme.RightBrace);
+                consume("Unmatched '{' - expected '}' after associative array literal", Lexeme.RightBrace);
             }
 
             return new Expr.AALiteral(members);
