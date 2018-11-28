@@ -637,7 +637,6 @@ function primary(): Expression {
                 while (match(Lexeme.Comma, Lexeme.Newline)) {
                     while (match(Lexeme.Newline));
 
-                    // TODO: check on a Roku to see if a trailing comma before the `]` is allowed
                     if (check(Lexeme.RightSquare)) {
                         break;
                     }
@@ -681,7 +680,6 @@ function primary(): Expression {
                 while (match(Lexeme.Comma, Lexeme.Newline)) {
                     while (match(Lexeme.Newline));
 
-                    // TODO: check on a Roku to see if a trailing comma before the closing ']' is allowed
                     if (check(Lexeme.RightBrace)) {
                         break;
                     }
