@@ -1,5 +1,5 @@
 import { BrsType, BrsBoolean } from "./";
-import { BrsValue, ValueKind } from "./BrsType";
+import { ValueKind, Comparable } from "./BrsType";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Double } from "./Double";
@@ -11,7 +11,7 @@ import { Int64 } from "./Int64";
  */
 const IEEE_FLOAT_SIGFIGS = 7;
 
-export class Float implements Numeric {
+export class Float implements Numeric, Comparable {
     readonly kind = ValueKind.Float;
     private readonly value: number;
 
@@ -205,7 +205,7 @@ export class Float implements Numeric {
         }
     }
 
-    toString(): string {
+    toString(parent?: BrsType): string {
         return this.value.toString();
     }
 }

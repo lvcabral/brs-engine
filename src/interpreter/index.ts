@@ -5,6 +5,7 @@ import {
     isBrsNumber,
     isBrsString,
     BrsBoolean,
+    BrsString,
     isBrsBoolean,
     Int32,
     isBrsCallable,
@@ -12,7 +13,8 @@ import {
     BrsArray,
     isIterable,
     SignatureAndMismatches,
-    MismatchReason
+    MismatchReason,
+    isComparable
 } from "../brsTypes";
 
 import * as Expr from "../parser/Expression";
@@ -27,6 +29,7 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, StopReason } from "../parser/Statement";
+import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
 
 export interface OutputStreams {
     stdout: NodeJS.WriteStream,
@@ -297,9 +300,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return BrsInvalid.Instance;
                 }
             case Lexeme.Greater:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -309,9 +312,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right);
             case Lexeme.GreaterEqual:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -321,9 +324,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right).or(left.equalTo(right));
             case Lexeme.Less:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -333,9 +336,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right);
             case Lexeme.LessEqual:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -345,9 +348,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right).or(left.equalTo(right));
             case Lexeme.Equal:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -357,9 +360,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.equalTo(right);
             case Lexeme.LessGreater:
-                if (left.kind === ValueKind.Array || right.kind === ValueKind.Array) {
+                if (!isComparable(left) || !isComparable(right)) {
                     BrsError.typeMismatch({
-                        message: "roArray objects cannot be compared to anything.",
+                        message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
@@ -568,8 +571,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitGet(expression: Expr.Get) {
-        return BrsInvalid.Instance;
+    visitDottedGet(expression: Expr.DottedGet) {
+        let source = this.evaluate(expression.obj);
+        if (!isIterable(source)) {
+            throw BrsError.typeMismatch({
+                message: "Attemptin to retrieve property from non-iterable value",
+                line: expression.name.line,
+                left: source
+            });
+            return BrsInvalid.Instance;
+        }
+
+        try {
+            return source.get(new BrsString(expression.name.text));
+        } catch (err) {
+            throw BrsError.make(err.message, expression.name.line);
+        }
     }
 
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
@@ -739,6 +756,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitArrayLiteral(expression: Expr.ArrayLiteral): BrsArray {
         return new BrsArray(
             expression.elements.map(expr => this.evaluate(expr))
+        );
+    }
+
+    visitAALiteral(expression: Expr.AALiteral): BrsType {
+        return new AssociativeArray(
+            expression.elements.map(member =>
+                ({
+                    name: member.name,
+                    value: this.evaluate(member.value)
+                })
+            )
         );
     }
 

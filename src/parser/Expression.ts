@@ -1,17 +1,19 @@
-import { Token } from "../Token";
-import { BrsType, Argument, ValueKind } from "../brsTypes";
+import { Token, Identifier } from "../Token";
+import { BrsType, Argument, ValueKind, BrsString } from "../brsTypes";
 import { Block } from "./Statement";
+import { Lexeme } from "../Lexeme";
 
 export interface Visitor<T> {
     visitAssign(expression: Assign): T;
     visitBinary(expression: Binary): T;
     visitCall(expression: Call): T;
     visitAnonymousFunction(func: Function): T;
-    visitGet(expression: Get): T;
+    visitDottedGet(expression: DottedGet): T;
     visitIndexedGet(expression: IndexedGet): T;
     visitGrouping(expression: Grouping): T;
     visitLiteral(expression: Literal): T;
     visitArrayLiteral(expression: ArrayLiteral): T;
+    visitAALiteral(expression: AALiteral): T;
     visitLogical(expression: Logical): T;
     visitM(expression: M): T;
     visitSet(expression: Set): T;
@@ -73,14 +75,14 @@ export class Function implements Expression {
     }
 }
 
-export class Get implements Expression {
+export class DottedGet implements Expression {
     constructor(
         readonly obj: Expression,
-        readonly name: Token
+        readonly name: Identifier
     ) {}
 
     accept <R> (visitor: Visitor<R>): R {
-        return visitor.visitGet(this);
+        return visitor.visitDottedGet(this);
     }
 }
 
@@ -120,6 +122,22 @@ export class ArrayLiteral implements Expression {
 
     accept <R> (visitor: Visitor<R>): R {
         return visitor.visitArrayLiteral(this);
+    }
+}
+
+/** A member of an associative array literal. */
+export interface AAMember {
+    /** The name of the member. */
+    name: BrsString,
+    /** The expression evaluated to determine the member's initial value. */
+    value: Expression
+}
+
+export class AALiteral implements Expression {
+    constructor(readonly elements: AAMember[]) {}
+
+    accept <R> (visitor: Visitor<R>): R {
+        return visitor.visitAALiteral(this);
     }
 }
 

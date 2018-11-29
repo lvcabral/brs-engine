@@ -21,7 +21,7 @@ Array [
             },
           },
           "name": "a",
-          "type": 9,
+          "type": 10,
         },
         Object {
           "defaultValue": Literal {
@@ -31,7 +31,7 @@ Array [
             },
           },
           "name": "b",
-          "type": 9,
+          "type": 10,
         },
         Object {
           "defaultValue": Binary {
@@ -55,10 +55,10 @@ Array [
             },
           },
           "name": "c",
-          "type": 9,
+          "type": 10,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -80,15 +80,15 @@ Array [
         Object {
           "defaultValue": undefined,
           "name": "a",
-          "type": 9,
+          "type": 10,
         },
         Object {
           "defaultValue": undefined,
           "name": "b",
-          "type": 9,
+          "type": 10,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -118,7 +118,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -172,7 +172,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -191,7 +191,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -221,7 +221,7 @@ Array [
         ],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -240,7 +240,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
   },
 ]
@@ -259,7 +259,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -289,7 +289,7 @@ Array [
         ],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -316,7 +316,7 @@ Array [
             },
           },
           "name": "a",
-          "type": 9,
+          "type": 10,
         },
         Object {
           "defaultValue": Literal {
@@ -326,7 +326,7 @@ Array [
             },
           },
           "name": "b",
-          "type": 9,
+          "type": 10,
         },
         Object {
           "defaultValue": Binary {
@@ -350,10 +350,10 @@ Array [
             },
           },
           "name": "c",
-          "type": 9,
+          "type": 10,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -375,15 +375,15 @@ Array [
         Object {
           "defaultValue": undefined,
           "name": "a",
-          "type": 9,
+          "type": 10,
         },
         Object {
           "defaultValue": undefined,
           "name": "b",
-          "type": 9,
+          "type": 10,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -413,7 +413,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -467,7 +467,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -497,7 +497,7 @@ Array [
         ],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -524,7 +524,7 @@ Array [
             ],
           },
           "parameters": Array [],
-          "returns": 9,
+          "returns": 10,
         },
       ],
       "callee": Variable {

@@ -1,12 +1,11 @@
 import Long from "long";
 import { BrsType, BrsBoolean } from "./";
 import { BrsNumber, Numeric } from "./BrsNumber";
-import { BrsValue, ValueKind } from "./BrsType";
+import { ValueKind, Comparable } from "./BrsType";
 import { Float } from "./Float";
 import { Double } from "./Double";
-import { Int32 } from "./Int32";
 
-export class Int64 implements Numeric {
+export class Int64 implements Numeric, Comparable {
     readonly kind = ValueKind.Int64;
     private readonly value: Long;
 
@@ -205,7 +204,7 @@ export class Int64 implements Numeric {
         }
     }
 
-    toString(): string {
+    toString(parent?: BrsType): string {
         return this.value.toString();
     }
 }

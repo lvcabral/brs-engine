@@ -1,11 +1,11 @@
-import { ValueKind, BrsBoolean, BrsString } from "./BrsType";
+import { ValueKind, Comparable, BrsBoolean } from "./BrsType";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { BrsType } from "./";
 import { Float } from "./Float";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
 
-export class Int32 implements Numeric {
+export class Int32 implements Numeric, Comparable {
     readonly kind = ValueKind.Int32;
     private readonly value: number;
 
@@ -206,7 +206,7 @@ export class Int32 implements Numeric {
         }
     }
 
-    toString(): string {
+    toString(parent?: BrsType): string {
         return this.value.toString();
     }
 }
