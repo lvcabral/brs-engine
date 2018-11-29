@@ -1,7 +1,7 @@
 const Parser = require("../../../lib/parser");
-const { Lexeme } = require("../../../lib/Lexeme");
 const BrsError = require("../../../lib/Error");
-const { Int32 } = require("../../../lib/brsTypes");
+const { Lexeme, BrsTypes } = require("brs");
+const { Int32 } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 

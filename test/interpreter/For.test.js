@@ -1,13 +1,11 @@
 const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
-const { Lexeme } = require("../../lib/Lexeme");
 const { Interpreter } = require("../../lib/interpreter");
-const { Int32 } = require("../../lib/brsTypes/Int32");
-const { identifier } = require("../parser/ParserTests");
+const { Lexeme, BrsTypes } = require("brs");
+const { Int32 } = BrsTypes;
 
 let interpreter;
-let decrementSpy;
 
 describe("interpreter for loops", () => {
     const initializeCounter = new Stmt.Assignment(

@@ -1,8 +1,5 @@
-const Long = require("long");
-
-const Lexer = require("../lib/lexer");
-const { Lexeme } = require("../lib/Lexeme");
-const { BrsString, Int32, Int64, Float, Double } = require("../lib/brsTypes");
+const { Lexer, Lexeme, BrsTypes } = require("brs");
+const { BrsString, Int32, Int64, Float, Double } = BrsTypes;
 
 describe("lexer", () => {
     it("includes an end-of-file marker", () => {

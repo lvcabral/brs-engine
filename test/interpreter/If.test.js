@@ -2,10 +2,9 @@ const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { identifier, token } = require("../parser/ParserTests");
-const { binary } = require("./InterpreterTests");
-const { Lexeme } = require("../../lib/Lexeme");
 const { Interpreter } = require("../../lib/interpreter");
-const { Int32, BrsString, BrsBoolean, BrsInvalid } = require("../../lib/brsTypes");
+const { Lexeme, BrsTypes } = require("brs");
+const { Int32, BrsString, BrsBoolean } = BrsTypes;
 
 let interpreter;
 

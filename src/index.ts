@@ -7,6 +7,10 @@ import { Interpreter, OutputStreams } from "./interpreter";
 import { stringify } from "./Stringify";
 import * as BrsError from "./Error";
 
+export { Lexeme, Token, Lexer } from "./lexer";
+import * as BrsTypes from "./brsTypes";
+export { BrsTypes };
+
 /** The `stdout`/`stderr` pair from the process that invoked `brs`. */
 const processOutput: OutputStreams = {
     stdout: process.stdout,
