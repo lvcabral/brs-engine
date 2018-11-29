@@ -1,6 +1,6 @@
 {
   "name": "brs",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "An interpreter for the BrightScript language that runs on non-Roku platforms.",
   "author": "Sean Barag <sean@barag.org>",
   "license": "MIT",
