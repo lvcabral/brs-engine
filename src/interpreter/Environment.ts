@@ -1,7 +1,5 @@
-import { Token } from "../Token";
-import { Lexeme } from "../Lexeme";
+import { Token } from "../lexer";
 import { BrsType } from "../brsTypes";
-import * as BrsError from "../Error";
 
 /** The logical region from which a particular variable or function that defines where it may be accessed from. */
 export enum Scope {

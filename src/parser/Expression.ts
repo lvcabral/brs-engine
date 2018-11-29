@@ -1,7 +1,6 @@
-import { Token, Identifier } from "../Token";
+import { Token, Identifier } from "../lexer";
 import { BrsType, Argument, ValueKind, BrsString } from "../brsTypes";
 import { Block } from "./Statement";
-import { Lexeme } from "../Lexeme";
 
 export interface Visitor<T> {
     visitAssign(expression: Assign): T;

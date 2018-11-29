@@ -19,7 +19,7 @@ import {
 
 import * as Expr from "../parser/Expression";
 import * as Stmt from "../parser/Statement";
-import { Lexeme } from "../Lexeme";
+import { Lexeme } from "../lexer";
 import { stringify } from "../Stringify";
 import * as BrsError from "../Error";
 

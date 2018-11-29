@@ -1,6 +1,6 @@
 import { BrsType } from "../brsTypes";
 import * as BrsError from "../Error";
-import { Token } from "../Token";
+import { Token } from "../lexer";
 
 export interface BlockEnd {
     kind: StopReason

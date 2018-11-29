@@ -1,6 +1,5 @@
-import { Token } from "../Token";
+import { Token, Lexeme } from "../lexer";
 import * as BrsError from "../Error";
-import { Lexeme } from "../Lexeme";
 
 export function make(token: Token, message: string) {
     let m = message;
