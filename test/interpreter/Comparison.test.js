@@ -1,9 +1,8 @@
-const Long = require("long");
 const BrsError = require("../../lib/Error");
 const { binary } = require("./InterpreterTests");
-const { Lexeme } = require("../../lib/Lexeme");
 const { Interpreter } = require("../../lib/interpreter");
-const { Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsArray, BrsInvalid } = require("../../lib/brsTypes");
+const { Lexeme, BrsTypes } = require("brs");
+const { Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsArray, BrsInvalid } = BrsTypes;
 
 let interpreter;
 

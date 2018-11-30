@@ -1,7 +1,7 @@
 const Parser = require("../../../lib/parser");
-const { Lexeme } = require("../../../lib/Lexeme");
 const BrsError = require("../../../lib/Error");
-const { BrsBoolean, BrsString } = require("../../../lib/brsTypes");
+const { Lexeme, BrsTypes } = require("brs");
+const { BrsBoolean, BrsString } = BrsTypes;
 const { EOF } = require("../ParserTests");
 
 describe("parser while statements", () => {

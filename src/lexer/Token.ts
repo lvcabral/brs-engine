@@ -1,5 +1,5 @@
 import { Lexeme } from "./Lexeme";
-import { BrsType } from "./brsTypes";
+import { BrsType } from "../brsTypes";
 
 /**
  * Represents a chunk of BrightScript scanned by the lexer.

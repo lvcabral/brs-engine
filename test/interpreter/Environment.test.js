@@ -1,6 +1,6 @@
 const { Environment, Scope } = require("../../lib/interpreter/Environment");
-const { BrsString } = require("../../lib/brsTypes");
-const { Lexeme } = require("../../lib/Lexeme");
+const { Lexeme, BrsTypes } = require("brs");
+const { BrsString } = BrsTypes;
 
 describe("Environment", () => {
     let env;

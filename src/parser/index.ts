@@ -2,8 +2,7 @@ import * as Expr from "./Expression";
 type Expression = Expr.Expression;
 import * as Stmt from "./Statement";
 type Statement = Stmt.Statement;
-import { Lexeme } from "../Lexeme";
-import { Token, Identifier } from "../Token";
+import { Lexeme, Token, Identifier } from "../lexer";
 import * as ParseError from "./ParseError";
 
 import {

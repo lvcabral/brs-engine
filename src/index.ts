@@ -1,13 +1,15 @@
 import * as fs from "fs";
 import * as readline from "readline";
 
-import { Token } from "./Token";
-import * as Lexer from "./lexer";
+import { Token, Lexer } from "./lexer";
 import * as Parser from "./parser";
-import { AstPrinter } from "./interpreter/AstPrinter";
 import { Interpreter, OutputStreams } from "./interpreter";
 import { stringify } from "./Stringify";
 import * as BrsError from "./Error";
+
+export { Lexeme, Token, Lexer } from "./lexer";
+import * as BrsTypes from "./brsTypes";
+export { BrsTypes };
 
 /** The `stdout`/`stderr` pair from the process that invoked `brs`. */
 const processOutput: OutputStreams = {

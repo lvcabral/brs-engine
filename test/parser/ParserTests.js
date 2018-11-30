@@ -1,4 +1,4 @@
-const { Lexeme } = require("../../lib/Lexeme");
+const { Lexeme } = require("brs");
 
 /* A set of utilities to be used while writing tests for the BRS parser. */
 
