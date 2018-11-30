@@ -575,7 +575,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let source = this.evaluate(expression.obj);
         if (!isIterable(source)) {
             throw BrsError.typeMismatch({
-                message: "Attemptin to retrieve property from non-iterable value",
+                message: "Attempting to retrieve property from non-iterable value",
                 line: expression.name.line,
                 left: source
             });
@@ -776,7 +776,61 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitM(expression: Expr.M) {
         return BrsInvalid.Instance;
     }
-    visitSet(expression: Expr.Set) {
+
+    visitDottedSet(expression: Expr.DottedSet) {
+        let source = this.evaluate(expression.obj);
+        let value = this.evaluate(expression.value);
+
+        if (!isIterable(source)) {
+            throw BrsError.typeMismatch({
+                message: "Attempting to set property on non-iterable value",
+                line: expression.name.line,
+                left: source
+            });
+            return BrsInvalid.Instance;
+        }
+
+        try {
+            source.set(new BrsString(expression.name.text), value);
+        } catch (err) {
+            throw BrsError.make(err.message, expression.name.line);
+        }
+
+        return BrsInvalid.Instance;
+    }
+
+    visitIndexedSet(expression: Expr.IndexedSet) {
+        let source = this.evaluate(expression.obj);
+
+        if (!isIterable(source)) {
+            BrsError.typeMismatch({
+                message: "Attempting to set property on non-iterable value",
+                line: expression.closingSquare.line,
+                left: source
+            });
+            return BrsInvalid.Instance;
+        }
+
+        let index = this.evaluate(expression.index);
+        if (!isBrsNumber(index) && !isBrsString(index)) {
+            BrsError.typeMismatch({
+                message: "Attempting to set property on iterable with illegal index type",
+                line: expression.closingSquare.line,
+                left: source,
+                right: index
+            });
+
+            return BrsInvalid.Instance;
+        }
+
+        let value = this.evaluate(expression.value);
+
+        try {
+            source.set(index, value);
+        } catch (err) {
+            throw BrsError.make(err.message, expression.closingSquare.line);
+        }
+
         return BrsInvalid.Instance;
     }
 

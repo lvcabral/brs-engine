@@ -62,4 +62,13 @@ export class AssociativeArray implements BrsValue, BrsComponent, BrsIterable {
 
         return this.elements.get(index.value) || BrsInvalid.Instance;
     }
+
+    set(index: BrsType, value: BrsType) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("Associative array indexes must be strings");
+        }
+
+        this.elements.set(index.value, value);
+        return BrsInvalid.Instance;
+    }
 }

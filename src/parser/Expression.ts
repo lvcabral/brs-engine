@@ -15,7 +15,8 @@ export interface Visitor<T> {
     visitAALiteral(expression: AALiteral): T;
     visitLogical(expression: Logical): T;
     visitM(expression: M): T;
-    visitSet(expression: Set): T;
+    visitDottedSet(expression: DottedSet): T;
+    visitIndexedSet(expression: IndexedSet): T;
     visitUnary(expression: Unary): T;
     visitVariable(expression: Variable): T;
 }
@@ -160,15 +161,28 @@ export class M implements Expression {
     }
 }
 
-export class Set implements Expression {
+export class DottedSet implements Expression {
     constructor(
        readonly obj: Expression,
-       readonly name: Token,
+       readonly name: Identifier,
        readonly value: Expression
     ) {}
 
     accept<R>(visitor: Visitor<R>): R {
-        return visitor.visitSet(this);
+        return visitor.visitDottedSet(this);
+    }
+}
+
+export class IndexedSet implements Expression {
+    constructor(
+       readonly obj: Expression,
+       readonly index: Expression,
+       readonly value: Expression,
+       readonly closingSquare: Token
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): R {
+        return visitor.visitIndexedSet(this);
     }
 }
 

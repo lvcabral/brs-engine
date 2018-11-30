@@ -52,7 +52,10 @@ export class AstPrinter implements Expr.Visitor<string> {
     visitM(e: Expr.M): string {
         return JSON.stringify(e, undefined, 2);
     }
-    visitSet(e: Expr.Set): string {
+    visitDottedSet(e: Expr.DottedSet): string {
+        return JSON.stringify(e, undefined, 2);
+    }
+    visitIndexedSet(e: Expr.IndexedSet): string {
         return JSON.stringify(e, undefined, 2);
     }
     visitUnary(e: Expr.Unary): string {
