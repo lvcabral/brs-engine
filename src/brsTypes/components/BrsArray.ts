@@ -45,7 +45,7 @@ export class BrsArray implements BrsValue, BrsComponent, BrsIterable {
             throw new Error("Array indexes must be 32-bit integers");
         }
 
-        return this.getElements()[index.getValue()];
+        return this.getElements()[index.getValue()] || BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType) {
