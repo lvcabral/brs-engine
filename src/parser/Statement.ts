@@ -1,5 +1,5 @@
 import * as Expr from "./Expression";
-import { Token } from "../lexer";
+import { Token, Identifier } from "../lexer";
 import { BrsType } from "../brsTypes";
 
 /** A set of reasons why a `Block` stopped executing. */
@@ -32,7 +32,7 @@ export interface Statement {
 }
 
 export class Assignment implements Statement {
-    constructor(readonly name: Token, readonly value: Expr.Expression) {}
+    constructor(readonly name: Identifier, readonly value: Expr.Expression) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitAssignment(this);
@@ -70,7 +70,7 @@ export class ExitWhile implements Statement {
 
 export class Function implements Statement {
     constructor(
-        readonly name: Token,
+        readonly name: Identifier,
         readonly func: Expr.Function
     ) {}
 

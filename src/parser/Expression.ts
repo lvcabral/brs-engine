@@ -199,7 +199,7 @@ export class Unary implements Expression {
 
 export class Variable implements Expression {
     constructor(
-        readonly name: Token
+        readonly name: Identifier
     ) {}
 
     accept<R>(visitor: Visitor<R>): R {

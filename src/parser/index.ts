@@ -72,7 +72,7 @@ function functionDeclaration(isAnonymous: false): Stmt.Function;
 function functionDeclaration(isAnonymous: boolean) {
     let isSub = check(Lexeme.Sub);
     let functionType = isSub ? "sub" : "function";
-    let name: Token;
+    let name: Identifier;
     let returnType: ValueKind | undefined = ValueKind.Dynamic;
 
     advance();
@@ -80,7 +80,7 @@ function functionDeclaration(isAnonymous: boolean) {
     if (isAnonymous) {
         consume(`Expected '(' after ${functionType}`, Lexeme.LeftParen);
     } else {
-        name = consume(`Expected ${functionType} name after '${functionType}'`, Lexeme.Identifier);
+        name = consume(`Expected ${functionType} name after '${functionType}'`, Lexeme.Identifier) as Identifier;
         consume(`Expected '(' after ${functionType} name`, Lexeme.LeftParen);
     }
 
@@ -193,7 +193,7 @@ function assignment(...additionalterminators: Lexeme[]): Stmt.Assignment {
     if (!check(...additionalterminators)) {
         consume("Expected newline or ':' after assignment", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof, ...additionalterminators);
     }
-    return new Stmt.Assignment(name, value);
+    return new Stmt.Assignment(name as Identifier, value);
 }
 
 function statement(...additionalterminators: BlockTerminator[]): Statement {
@@ -639,7 +639,7 @@ function primary(): Expression {
         ):
             return new Expr.Literal(previous().literal!);
         case match(Lexeme.Identifier):
-            return new Expr.Variable(previous());
+            return new Expr.Variable(previous() as Identifier);
         case match(Lexeme.LeftParen):
             let expr = expression();
             consume("Unmatched '(' - expected ')' after expression", Lexeme.RightParen);
@@ -713,7 +713,7 @@ function primary(): Expression {
 
             return new Expr.AALiteral(members);
         case match(Lexeme.Pos, Lexeme.Tab):
-            let token = Object.assign(previous(), { kind: Lexeme.Identifier });
+            let token = Object.assign(previous(), { kind: Lexeme.Identifier }) as Identifier;
             return new Expr.Variable(token);
         default:
             throw ParseError.make(peek(), `Found unexpected token '${peek().text}'`);

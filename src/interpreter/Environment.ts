@@ -1,4 +1,4 @@
-import { Token } from "../lexer";
+import { Identifier } from "../lexer";
 import { BrsType } from "../brsTypes";
 
 /** The logical region from which a particular variable or function that defines where it may be accessed from. */
@@ -60,8 +60,8 @@ export class Environment {
         this.function.delete(name.toLowerCase());
     }
 
-    public get(name: Token): BrsType {
-        let lowercaseName = name.text!.toLowerCase();
+    public get(name: Identifier): BrsType {
+        let lowercaseName = name.text.toLowerCase();
         let source = [this.function, this.module, this.global].find(scope =>
             scope.has(lowercaseName)
         );
@@ -73,8 +73,8 @@ export class Environment {
         throw new NotFound(`Undefined variable '${name.text}'`);
     }
 
-    public has(name: Token): boolean {
-        let lowercaseName = name.text!.toLowerCase();
+    public has(name: Identifier): boolean {
+        let lowercaseName = name.text.toLowerCase();
         return [this.function, this.module, this.global].find(scope => scope.has(lowercaseName)) != null;
     }
 
