@@ -1,0 +1,189 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser indexing multi-level bracketed 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": IndexedGet {
+      "closingSquare": Object {
+        "kind": 3,
+        "line": 1,
+        "text": "]",
+      },
+      "index": Literal {
+        "value": Int32 {
+          "kind": 3,
+          "value": 6,
+        },
+      },
+      "obj": IndexedGet {
+        "closingSquare": Object {
+          "kind": 3,
+          "line": 1,
+          "text": "]",
+        },
+        "index": Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 0,
+          },
+        },
+        "obj": IndexedGet {
+          "closingSquare": Object {
+            "kind": 3,
+            "line": 1,
+            "text": "]",
+          },
+          "index": Literal {
+            "value": Int32 {
+              "kind": 3,
+              "value": 2,
+            },
+          },
+          "obj": Variable {
+            "name": Object {
+              "kind": 21,
+              "line": 1,
+              "text": "foo",
+            },
+          },
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`parser indexing multi-level dotted 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": DottedGet {
+      "name": Object {
+        "kind": 21,
+        "line": 1,
+        "text": "bar",
+      },
+      "obj": Variable {
+        "name": Object {
+          "kind": 21,
+          "line": 1,
+          "text": "foo",
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`parser indexing multi-level mixed 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": DottedGet {
+      "name": Object {
+        "kind": 21,
+        "line": 1,
+        "text": "baz",
+      },
+      "obj": IndexedGet {
+        "closingSquare": Object {
+          "kind": 3,
+          "line": 1,
+          "text": "]",
+        },
+        "index": Literal {
+          "value": Int32 {
+            "kind": 3,
+            "value": 0,
+          },
+        },
+        "obj": DottedGet {
+          "name": Object {
+            "kind": 21,
+            "line": 1,
+            "text": "bar",
+          },
+          "obj": Variable {
+            "name": Object {
+              "kind": 21,
+              "line": 1,
+              "text": "foo",
+            },
+          },
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`parser indexing one level bracketed 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": IndexedGet {
+      "closingSquare": Object {
+        "kind": 3,
+        "line": 1,
+        "text": "]",
+      },
+      "index": Literal {
+        "value": Int32 {
+          "kind": 3,
+          "value": 2,
+        },
+      },
+      "obj": Variable {
+        "name": Object {
+          "kind": 21,
+          "line": 1,
+          "text": "foo",
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`parser indexing one level dotted 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": DottedGet {
+      "name": Object {
+        "kind": 21,
+        "line": 1,
+        "text": "bar",
+      },
+      "obj": Variable {
+        "name": Object {
+          "kind": 21,
+          "line": 1,
+          "text": "foo",
+        },
+      },
+    },
+  },
+]
+`;
