@@ -1,0 +1,61 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser indexed assignment assigns to bracketed index 1`] = `
+Array [
+  Expression {
+    "expression": IndexedSet {
+      "closingSquare": Object {
+        "kind": 3,
+        "line": 1,
+        "text": "]",
+      },
+      "index": Literal {
+        "value": Int32 {
+          "kind": 3,
+          "value": 0,
+        },
+      },
+      "obj": Variable {
+        "name": Object {
+          "kind": 21,
+          "line": 1,
+          "text": "someArray",
+        },
+      },
+      "value": Literal {
+        "value": BrsString {
+          "kind": 2,
+          "value": "baz",
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`parser indexed assignment assigns to dotted index 1`] = `
+Array [
+  Expression {
+    "expression": DottedSet {
+      "name": Object {
+        "kind": 21,
+        "line": 1,
+        "text": "bar",
+      },
+      "obj": Variable {
+        "name": Object {
+          "kind": 21,
+          "line": 1,
+          "text": "foo",
+        },
+      },
+      "value": Literal {
+        "value": BrsString {
+          "kind": 2,
+          "value": "baz",
+        },
+      },
+    },
+  },
+]
+`;
