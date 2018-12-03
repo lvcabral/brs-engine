@@ -23,7 +23,8 @@
   ],
   "dependencies": {
     "commander": "^2.12.2",
-    "long": "^3.2.0"
+    "long": "^3.2.0",
+    "memfs": "2.13.1"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",

@@ -30,6 +30,7 @@ import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, StopReason } from "../parser/Statement";
 import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
+import { Volume } from "memfs/lib/volume";
 
 export interface OutputStreams {
     stdout: NodeJS.WriteStream,
@@ -38,8 +39,10 @@ export interface OutputStreams {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
+    
     readonly stdout: OutputProxy;
     readonly stderr: OutputProxy;
+    readonly temporaryVolume = new Volume();
 
     get environment() {
         return this._environment;
@@ -94,7 +97,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             { name: "Csng",         func: StdLib.Csng },
             { name: "Fix",          func: StdLib.Fix },
             { name: "Int",          func: StdLib.Int },
-            { name: "Sgn",          func: StdLib.Sgn }
+            { name: "Sgn",          func: StdLib.Sgn },
+            { name: "ReadAsciiFile", func: StdLib.ReadAsciiFile },
+            { name: "WriteAsciiFile", func: StdLib.WriteAsciiFile }
         ].forEach(({name, func}) =>
             this._environment.define(Scope.Global, name, func)
         );
