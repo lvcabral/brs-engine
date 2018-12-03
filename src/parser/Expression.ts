@@ -15,7 +15,6 @@ export interface Visitor<T> {
     visitAALiteral(expression: AALiteral): T;
     visitLogical(expression: Logical): T;
     visitM(expression: M): T;
-    visitSet(expression: Set): T;
     visitUnary(expression: Unary): T;
     visitVariable(expression: Variable): T;
 }
@@ -160,18 +159,6 @@ export class M implements Expression {
     }
 }
 
-export class Set implements Expression {
-    constructor(
-       readonly obj: Expression,
-       readonly name: Token,
-       readonly value: Expression
-    ) {}
-
-    accept<R>(visitor: Visitor<R>): R {
-        return visitor.visitSet(this);
-    }
-}
-
 export class Unary implements Expression {
     constructor(
         readonly operator: Token,
@@ -185,7 +172,7 @@ export class Unary implements Expression {
 
 export class Variable implements Expression {
     constructor(
-        readonly name: Token
+        readonly name: Identifier
     ) {}
 
     accept<R>(visitor: Visitor<R>): R {

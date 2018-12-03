@@ -4,7 +4,6 @@ const BrsError = require("../../../lib/Error");
 
 const { token, identifier, EOF } = require("../ParserTests");
 
-
 describe("parser", () => {
     afterEach(() => BrsError.reset());
 

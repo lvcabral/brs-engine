@@ -575,7 +575,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let source = this.evaluate(expression.obj);
         if (!isIterable(source)) {
             throw BrsError.typeMismatch({
-                message: "Attemptin to retrieve property from non-iterable value",
+                message: "Attempting to retrieve property from non-iterable value",
                 line: expression.name.line,
                 left: source
             });
@@ -776,7 +776,61 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitM(expression: Expr.M) {
         return BrsInvalid.Instance;
     }
-    visitSet(expression: Expr.Set) {
+
+    visitDottedSet(statement: Stmt.DottedSet) {
+        let source = this.evaluate(statement.obj);
+        let value = this.evaluate(statement.value);
+
+        if (!isIterable(source)) {
+            throw BrsError.typeMismatch({
+                message: "Attempting to set property on non-iterable value",
+                line: statement.name.line,
+                left: source
+            });
+            return BrsInvalid.Instance;
+        }
+
+        try {
+            source.set(new BrsString(statement.name.text), value);
+        } catch (err) {
+            throw BrsError.make(err.message, statement.name.line);
+        }
+
+        return BrsInvalid.Instance;
+    }
+
+    visitIndexedSet(statement: Stmt.IndexedSet) {
+        let source = this.evaluate(statement.obj);
+
+        if (!isIterable(source)) {
+            BrsError.typeMismatch({
+                message: "Attempting to set property on non-iterable value",
+                line: statement.closingSquare.line,
+                left: source
+            });
+            return BrsInvalid.Instance;
+        }
+
+        let index = this.evaluate(statement.index);
+        if (!isBrsNumber(index) && !isBrsString(index)) {
+            BrsError.typeMismatch({
+                message: "Attempting to set property on iterable with illegal index type",
+                line: statement.closingSquare.line,
+                left: source,
+                right: index
+            });
+
+            return BrsInvalid.Instance;
+        }
+
+        let value = this.evaluate(statement.value);
+
+        try {
+            source.set(index, value);
+        } catch (err) {
+            throw BrsError.make(err.message, statement.closingSquare.line);
+        }
+
         return BrsInvalid.Instance;
     }
 

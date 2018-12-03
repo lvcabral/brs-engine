@@ -1,4 +1,5 @@
 import { BrsType } from "..";
+import { BrsInvalid } from "../BrsType";
 
 export interface BrsComponent {
 
@@ -18,4 +19,6 @@ export interface BrsIterable {
      * @returns the element at `index` if one exists, otherwise throws an Error.
      */
     get(index: BrsType): BrsType;
+
+    set(index: BrsType, value: BrsType): BrsInvalid;
 }

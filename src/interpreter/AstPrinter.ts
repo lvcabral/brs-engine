@@ -1,4 +1,5 @@
 import * as Expr from "../parser/Expression";
+import * as Stmt from "../parser/Statement";
 import { BrsType } from "../brsTypes";
 
 /** Creates a pretty-printed representation of an expression to ease debugging. */
@@ -52,7 +53,10 @@ export class AstPrinter implements Expr.Visitor<string> {
     visitM(e: Expr.M): string {
         return JSON.stringify(e, undefined, 2);
     }
-    visitSet(e: Expr.Set): string {
+    visitDottedSet(e: Stmt.DottedSet): string {
+        return JSON.stringify(e, undefined, 2);
+    }
+    visitIndexedSet(e: Stmt.IndexedSet): string {
         return JSON.stringify(e, undefined, 2);
     }
     visitUnary(e: Expr.Unary): string {

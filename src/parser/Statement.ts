@@ -1,5 +1,5 @@
 import * as Expr from "./Expression";
-import { Token } from "../lexer";
+import { Token, Identifier } from "../lexer";
 import { BrsType } from "../brsTypes";
 
 /** A set of reasons why a `Block` stopped executing. */
@@ -18,6 +18,8 @@ export interface Visitor<T> {
     visitWhile(statement: While): BrsType;
     visitNamedFunction(statement: Function): BrsType;
     visitReturn(statement: Return): never;
+    visitDottedSet(statement: DottedSet): BrsType;
+    visitIndexedSet(statement: IndexedSet): BrsType;
 }
 
 /** A BrightScript statement */
@@ -32,7 +34,7 @@ export interface Statement {
 }
 
 export class Assignment implements Statement {
-    constructor(readonly name: Token, readonly value: Expr.Expression) {}
+    constructor(readonly name: Identifier, readonly value: Expr.Expression) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitAssignment(this);
@@ -70,7 +72,7 @@ export class ExitWhile implements Statement {
 
 export class Function implements Statement {
     constructor(
-        readonly name: Token,
+        readonly name: Identifier,
         readonly func: Expr.Function
     ) {}
 
@@ -170,5 +172,30 @@ export class While implements Statement {
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitWhile(this);
+    }
+}
+
+export class DottedSet implements Statement {
+    constructor(
+       readonly obj: Expr.Expression,
+       readonly name: Identifier,
+       readonly value: Expr.Expression
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitDottedSet(this);
+    }
+}
+
+export class IndexedSet implements Statement {
+    constructor(
+       readonly obj: Expr.Expression,
+       readonly index: Expr.Expression,
+       readonly value: Expr.Expression,
+       readonly closingSquare: Token
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitIndexedSet(this);
     }
 }
