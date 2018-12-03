@@ -18,6 +18,8 @@ export interface Visitor<T> {
     visitWhile(statement: While): BrsType;
     visitNamedFunction(statement: Function): BrsType;
     visitReturn(statement: Return): never;
+    visitDottedSet(statement: DottedSet): BrsType;
+    visitIndexedSet(statement: IndexedSet): BrsType;
 }
 
 /** A BrightScript statement */
@@ -170,5 +172,30 @@ export class While implements Statement {
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitWhile(this);
+    }
+}
+
+export class DottedSet implements Statement {
+    constructor(
+       readonly obj: Expr.Expression,
+       readonly name: Identifier,
+       readonly value: Expr.Expression
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitDottedSet(this);
+    }
+}
+
+export class IndexedSet implements Statement {
+    constructor(
+       readonly obj: Expr.Expression,
+       readonly index: Expr.Expression,
+       readonly value: Expr.Expression,
+       readonly closingSquare: Token
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitIndexedSet(this);
     }
 }

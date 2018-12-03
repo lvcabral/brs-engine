@@ -24,13 +24,11 @@ describe("property setting", () => {
                         new Expr.Literal(new BrsString("index2")),
                     ])
                 ),
-                new Stmt.Expression(
-                    new Expr.IndexedSet(
-                        new Expr.Variable({ kind: Lexeme.Identifier, text: "array", line: 2 }),
-                        new Expr.Literal(new Int32(0)),
-                        new Expr.Literal(new BrsString("new index0")),
-                        { kind: Lexeme.RightSquare, text: "]", line: 2 }
-                    )
+                new Stmt.IndexedSet(
+                    new Expr.Variable({ kind: Lexeme.Identifier, text: "array", line: 2 }),
+                    new Expr.Literal(new Int32(0)),
+                    new Expr.Literal(new BrsString("new index0")),
+                    { kind: Lexeme.RightSquare, text: "]", line: 2 }
                 ),
                 new Stmt.Assignment(
                     { kind: Lexeme.Identifier, text: "result", line: 3 },
@@ -74,16 +72,14 @@ describe("property setting", () => {
                         ])
                     ])
                 ),
-                new Stmt.Expression(
-                    new Expr.IndexedSet(
-                        new Expr.IndexedGet(
-                            new Expr.Variable({ kind: Lexeme.Identifier, text: "array", line: 2 }),
-                            new Expr.Literal(new Int32(2)),
-                        ),
-                        new Expr.Literal(new Int32(1)),
-                        new Expr.Literal(new BrsString("new (2,1)")),
-                        { kind: Lexeme.RightSquare, text: "]", line: 2 }
-                    )
+                new Stmt.IndexedSet(
+                    new Expr.IndexedGet(
+                        new Expr.Variable({ kind: Lexeme.Identifier, text: "array", line: 2 }),
+                        new Expr.Literal(new Int32(2)),
+                    ),
+                    new Expr.Literal(new Int32(1)),
+                    new Expr.Literal(new BrsString("new (2,1)")),
+                    { kind: Lexeme.RightSquare, text: "]", line: 2 }
                 ),
                 new Stmt.Assignment(
                     { kind: Lexeme.Identifier, text: "result", line: 3 },
@@ -122,20 +118,16 @@ describe("property setting", () => {
                         }
                     ])
                 ),
-                new Stmt.Expression(
-                    new Expr.DottedSet(
-                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 2 }),
-                        { kind: Lexeme.Identifier, text: "foo", line: 2 },
-                        new Expr.Literal(new BrsString("new foo"))
-                    )
+                new Stmt.DottedSet(
+                    new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 2 }),
+                    { kind: Lexeme.Identifier, text: "foo", line: 2 },
+                    new Expr.Literal(new BrsString("new foo"))
                 ),
-                new Stmt.Expression(
-                    new Expr.IndexedSet(
-                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 3 }),
-                        new Expr.Literal(new BrsString("bar")),
-                        new Expr.Literal(new BrsString("added bar")),
-                        { kind: Lexeme.RightSquare, text: "]", line: 3 }
-                    )
+                new Stmt.IndexedSet(
+                    new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 3 }),
+                    new Expr.Literal(new BrsString("bar")),
+                    new Expr.Literal(new BrsString("added bar")),
+                    { kind: Lexeme.RightSquare, text: "]", line: 3 }
                 ),
                 new Stmt.Assignment(
                     { kind: Lexeme.Identifier, text: "fooResult", line: 4 },
@@ -185,27 +177,23 @@ describe("property setting", () => {
                         }
                     ])
                 ),
-                new Stmt.Expression(
-                    new Expr.DottedSet(
-                        new Expr.IndexedGet(
-                            new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 2 }),
-                            new Expr.Literal(new BrsString("foo")),
-                            { kind: Lexeme.RightSquare, text: "]", line: 2 }
-                        ),
-                        { kind: Lexeme.Identifier, text: "bar", line: 2 },
-                        new Expr.Literal(new BrsString("new aa.foo.bar"))
-                    )
+                new Stmt.DottedSet(
+                    new Expr.IndexedGet(
+                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 2 }),
+                        new Expr.Literal(new BrsString("foo")),
+                        { kind: Lexeme.RightSquare, text: "]", line: 2 }
+                    ),
+                    { kind: Lexeme.Identifier, text: "bar", line: 2 },
+                    new Expr.Literal(new BrsString("new aa.foo.bar"))
                 ),
-                new Stmt.Expression(
-                    new Expr.IndexedSet(
-                        new Expr.DottedGet(
-                            new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 3 }),
-                            { kind: Lexeme.Identifier, text: "foo", line: 3 }
-                        ),
-                        new Expr.Literal(new BrsString("baz")),
-                        new Expr.Literal(new BrsString("added aa.foo.baz")),
-                        { kind: Lexeme.RightSquare, text: "]", line: 3 }
-                    )
+                new Stmt.IndexedSet(
+                    new Expr.DottedGet(
+                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 3 }),
+                        { kind: Lexeme.Identifier, text: "foo", line: 3 }
+                    ),
+                    new Expr.Literal(new BrsString("baz")),
+                    new Expr.Literal(new BrsString("added aa.foo.baz")),
+                    { kind: Lexeme.RightSquare, text: "]", line: 3 }
                 ),
                 new Stmt.Assignment(
                     { kind: Lexeme.Identifier, text: "barResult", line: 4 },

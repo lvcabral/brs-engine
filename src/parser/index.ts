@@ -383,7 +383,7 @@ function ifStatement(): Stmt.If {
     return new Stmt.If(condition, thenBranch, elseIfBranches, elseBranch);
 }
 
-function expressionStatement(...additionalterminators: BlockTerminator[]): Stmt.Expression | Stmt.Assignment {
+function expressionStatement(...additionalterminators: BlockTerminator[]): Stmt.Expression | Stmt.DottedSet | Stmt.IndexedSet {
     let expressionStart = peek();
     let expr = expression();
 
@@ -395,21 +395,17 @@ function expressionStatement(...additionalterminators: BlockTerminator[]): Stmt.
         return new Stmt.Expression(expr);
     } else if (expr instanceof Expr.Binary) {
         if (expr.left instanceof Expr.IndexedGet && expr.token.kind === Lexeme.Equal) {
-            return new Stmt.Expression(
-                new Expr.IndexedSet(
-                    expr.left.obj,
-                    expr.left.index,
-                    expr.right,
-                    expr.left.closingSquare
-                )
+            return new Stmt.IndexedSet(
+                expr.left.obj,
+                expr.left.index,
+                expr.right,
+                expr.left.closingSquare
             );
         } else if (expr.left instanceof Expr.DottedGet && expr.token.kind === Lexeme.Equal) {
-            return new Stmt.Expression(
-                new Expr.DottedSet(
-                    expr.left.obj,
-                    expr.left.name,
-                    expr.right
-                )
+            return new Stmt.DottedSet(
+                expr.left.obj,
+                expr.left.name,
+                expr.right
             );
         }
     }

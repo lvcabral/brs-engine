@@ -777,7 +777,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitDottedSet(expression: Expr.DottedSet) {
+    visitDottedSet(expression: Stmt.DottedSet) {
         let source = this.evaluate(expression.obj);
         let value = this.evaluate(expression.value);
 
@@ -799,7 +799,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitIndexedSet(expression: Expr.IndexedSet) {
+    visitIndexedSet(expression: Stmt.IndexedSet) {
         let source = this.evaluate(expression.obj);
 
         if (!isIterable(source)) {
