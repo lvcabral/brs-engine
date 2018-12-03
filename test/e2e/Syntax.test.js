@@ -20,13 +20,13 @@ describe("end to end syntax", () => {
     });
 
     test("comments.brs", () => {
-        return execute(resourceFile("comments.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("comments.brs") ], outputStreams).then(() => {
             expect(outputStreams.stdout.write).not.toBeCalled();
         });
     });
 
     test("printLiterals.brs", () => {
-        return execute(resourceFile("printLiterals.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("printLiterals.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -43,7 +43,7 @@ describe("end to end syntax", () => {
     });
 
     test("arithmetic.brs", () => {
-        return execute(resourceFile("arithmetic.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("arithmetic.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -57,7 +57,7 @@ describe("end to end syntax", () => {
     });
 
     test("assignment.brs", () => {
-        return execute(resourceFile("assignment.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("assignment.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -67,7 +67,7 @@ describe("end to end syntax", () => {
     });
 
     test("conditionals.brs", () => {
-        return execute(resourceFile("conditionals.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("conditionals.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -77,7 +77,7 @@ describe("end to end syntax", () => {
     });
 
     test("while-loops.brs", () => {
-        return execute(resourceFile("while-loops.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("while-loops.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -88,7 +88,7 @@ describe("end to end syntax", () => {
     });
 
     test("for-loops.brs", () => {
-        return execute(resourceFile("for-loops.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("for-loops.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -103,7 +103,7 @@ describe("end to end syntax", () => {
     });
 
     test("print.brs", () => {
-        return execute(resourceFile("print.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("print.brs") ], outputStreams).then(() => {
             expect(allArgs(outputStreams.stdout.write).join("")).toEqual(
                 "lorem 1psum\n" +
                 "9  is equal to 9\n" +

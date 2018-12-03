@@ -13,21 +13,18 @@ const packageJson = JSON.parse(
     )
 );
 
-let brsFile;
-
 program
     .description("Off-Roku BrightScript interpreter")
-    .arguments("brs <filename>")
-    .action((filename) => brsFile = filename)
-    .version(packageJson.version);
-
-let args = program.parse(process.argv);
-
-if (brsFile) {
-    brs.execute(brsFile).catch(err => {
-        console.error(err.message);
-        process.exit(1);
-    });
-} else {
-    brs.repl();
-}
+    .arguments("brs [brsFiles...]")
+    .action((brsFiles) => {
+        if (brsFiles.length > 0) {
+            brs.execute(brsFiles).catch(err => {
+                console.error(err.message);
+                process.exit(1);
+            });
+        } else {
+            brs.repl();
+        }
+    })
+    .version(packageJson.version)
+    .parse(process.argv);

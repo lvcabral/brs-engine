@@ -20,7 +20,7 @@ describe("end to end iterables", () => {
     });
 
     test("arrays.brs", () => {
-        return execute(resourceFile("arrays.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("arrays.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -32,7 +32,7 @@ describe("end to end iterables", () => {
     });
 
     test("associative-arrays.brs", () => {
-        return execute(resourceFile("associative-arrays.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("associative-arrays.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([

@@ -19,7 +19,7 @@ describe("end to end functions", () => {
     });
 
     test("function/arguments.brs", () => {
-        return execute(resourceFile("function", "arguments.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("function", "arguments.brs") ], outputStreams).then(() => {
             expect(BrsError.found()).toBe(false);
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
@@ -33,7 +33,7 @@ describe("end to end functions", () => {
     });
 
     test("function/return.brs", () => {
-        return execute(resourceFile("function", "return.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("function", "return.brs") ], outputStreams).then(() => {
             expect(BrsError.found()).toBe(false);
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
@@ -48,7 +48,7 @@ describe("end to end functions", () => {
     });
 
     test("function/expressions.brs", () => {
-        return execute(resourceFile("function", "expressions.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("function", "expressions.brs") ], outputStreams).then(() => {
             expect(BrsError.found()).toBe(false);
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
@@ -64,7 +64,7 @@ describe("end to end functions", () => {
 
     test.skip("function/scoping.brs", () => {
         // TODO: fix this test once `type` has been implemented
-        return execute(resourceFile("function", "scoping.brs"), outputStreams).then(() => {
+        return execute([ resourceFile("function", "scoping.brs") ], outputStreams).then(() => {
             expect(BrsError.found()).toBe(false);
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
