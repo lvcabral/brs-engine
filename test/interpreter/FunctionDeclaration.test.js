@@ -228,4 +228,19 @@ describe("interpreter function declarations", () => {
             { kind: Lexeme.Identifier, text: "input", line: 6 }
         )).toBe(false);
     });
+
+    it("disallows functions named after reserved words", () => {
+        let statements = [
+            new Stmt.Function(
+                { kind: Lexeme.Identifier, text: "type", isReserved: true, line: 1 },
+                new Expr.Function(
+                    [],
+                    ValueKind.Void,
+                    new Stmt.Block([])
+                )
+            ),
+        ];
+
+        expect(() => interpreter.exec(statements)).toThrow(/reserved name/);
+    });
 });

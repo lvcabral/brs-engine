@@ -132,6 +132,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitNamedFunction(statement: Stmt.Function): BrsType {
+        if (statement.name.isReserved) {
+            throw BrsError.make(`Cannot create a named function with reserved name '${statement.name.text}'`, statement.name.line);
+        }
+
         if (this.environment.has(statement.name)) {
             // TODO: Figure out how to determine where the original version was declared
             // Maybe `Environment.define` records the location along with the value?
@@ -201,6 +205,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitAssignment(statement: Stmt.Assignment): BrsType {
+        if (statement.name.isReserved) {
+            throw BrsError.make(`Cannot assign a value to reserved name '${statement.name}'`, statement.name.line);
+        }
+
         let value = this.evaluate(statement.value);
         this.environment.define(Scope.Function, statement.name.text!, value);
         return BrsInvalid.Instance;
