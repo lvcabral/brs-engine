@@ -108,6 +108,141 @@ describe("property setting", () => {
                 )
             ).toEqual(new BrsString("new (2,1)"));
         });
+    });
 
+    describe("associative arrays", () => {
+        test("one-dimensional", () => {
+            let ast = [
+                new Stmt.Assignment(
+                    { kind: Lexeme.Identifier, text: "aa", line: 1 },
+                    new Expr.AALiteral([
+                        {
+                            name: new BrsString("foo"),
+                            value: new Expr.Literal(new BrsString("foo's value")),
+                        }
+                    ])
+                ),
+                new Stmt.Expression(
+                    new Expr.DottedSet(
+                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 2 }),
+                        { kind: Lexeme.Identifier, text: "foo", line: 2 },
+                        new Expr.Literal(new BrsString("new foo"))
+                    )
+                ),
+                new Stmt.Expression(
+                    new Expr.IndexedSet(
+                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 3 }),
+                        new Expr.Literal(new BrsString("bar")),
+                        new Expr.Literal(new BrsString("added bar")),
+                        { kind: Lexeme.RightSquare, text: "]", line: 3 }
+                    )
+                ),
+                new Stmt.Assignment(
+                    { kind: Lexeme.Identifier, text: "fooResult", line: 4 },
+                    new Expr.DottedGet(
+                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 4 }),
+                        { kind: Lexeme.Identifier, text: "foo", line: 4 }
+                    )
+                ),
+                new Stmt.Assignment(
+                    { kind: Lexeme.Identifier, text: "barResult", line: 5 },
+                    new Expr.DottedGet(
+                        new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 5 }),
+                        { kind: Lexeme.Identifier, text: "bar", line: 5 }
+                    )
+                )
+            ];
+
+            interpreter.exec(ast);
+
+            expect(BrsError.found()).toBeFalsy();
+
+            expect(
+                interpreter.environment.get(
+                    { kind: Lexeme.Identifier, text: "fooResult", line: -1 }
+                )
+            ).toEqual(new BrsString("new foo"));
+            expect(
+                interpreter.environment.get(
+                    { kind: Lexeme.Identifier, text: "barResult", line: -1 }
+                )
+            ).toEqual(new BrsString("added bar"));
+        });
+
+        test("multi-dimensional", () => {
+            let ast = [
+                new Stmt.Assignment(
+                    { kind: Lexeme.Identifier, text: "aa", line: 1 },
+                    new Expr.AALiteral([
+                        {
+                            name: new BrsString("foo"),
+                            value: new Expr.AALiteral([
+                                {
+                                    name: new BrsString("bar"),
+                                    value: new Expr.Literal(new BrsString("original aa.foo.bar")),
+                                }
+                            ])
+                        }
+                    ])
+                ),
+                new Stmt.Expression(
+                    new Expr.DottedSet(
+                        new Expr.IndexedGet(
+                            new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 2 }),
+                            new Expr.Literal(new BrsString("foo")),
+                            { kind: Lexeme.RightSquare, text: "]", line: 2 }
+                        ),
+                        { kind: Lexeme.Identifier, text: "bar", line: 2 },
+                        new Expr.Literal(new BrsString("new aa.foo.bar"))
+                    )
+                ),
+                new Stmt.Expression(
+                    new Expr.IndexedSet(
+                        new Expr.DottedGet(
+                            new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 3 }),
+                            { kind: Lexeme.Identifier, text: "foo", line: 3 }
+                        ),
+                        new Expr.Literal(new BrsString("baz")),
+                        new Expr.Literal(new BrsString("added aa.foo.baz")),
+                        { kind: Lexeme.RightSquare, text: "]", line: 3 }
+                    )
+                ),
+                new Stmt.Assignment(
+                    { kind: Lexeme.Identifier, text: "barResult", line: 4 },
+                    new Expr.DottedGet(
+                        new Expr.DottedGet(
+                            new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 4 }),
+                            { kind: Lexeme.Identifier, text: "foo", line: 4 }
+                        ),
+                        { kind: Lexeme.Identifier, text: "bar", line: 4 }
+                    )
+                ),
+                new Stmt.Assignment(
+                    { kind: Lexeme.Identifier, text: "bazResult", line: 5 },
+                    new Expr.DottedGet(
+                        new Expr.DottedGet(
+                            new Expr.Variable({ kind: Lexeme.Identifier, text: "aa", line: 5 }),
+                            { kind: Lexeme.Identifier, text: "foo", line: 5 }
+                        ),
+                        { kind: Lexeme.Identifier, text: "baz", line: 5 }
+                    )
+                )
+            ];
+
+            interpreter.exec(ast);
+
+            expect(BrsError.found()).toBeFalsy();
+
+            expect(
+                interpreter.environment.get(
+                    { kind: Lexeme.Identifier, text: "barResult", line: -1 }
+                )
+            ).toEqual(new BrsString("new aa.foo.bar"));
+            expect(
+                interpreter.environment.get(
+                    { kind: Lexeme.Identifier, text: "bazResult", line: -1 }
+                )
+            ).toEqual(new BrsString("added aa.foo.baz"));
+        });
     });
 });
