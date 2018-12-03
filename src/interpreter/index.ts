@@ -39,7 +39,7 @@ export interface OutputStreams {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
-    
+
     readonly stdout: OutputProxy;
     readonly stderr: OutputProxy;
     readonly temporaryVolume = new Volume();
@@ -640,7 +640,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             counterName,
             new Expr.Binary(
                 new Expr.Variable(counterName),
-                { kind: Lexeme.Plus, text: "+", line: counterName.line },
+                { kind: Lexeme.Plus, text: "+", isReserved: false, line: counterName.line },
                 new Expr.Literal(increment)
             )
         );
