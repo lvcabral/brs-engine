@@ -214,7 +214,7 @@ describe("lexer", () => {
         });
 
         it("matches multi-word reserved words", () => {
-            let words = Lexer.scan("else if end if end while end sub end function exit while");
+            let words = Lexer.scan("else if end if end while End Sub end Function Exit wHILe");
             expect(words.map(w => w.kind)).toEqual([
                 Lexeme.ElseIf,
                 Lexeme.EndIf,

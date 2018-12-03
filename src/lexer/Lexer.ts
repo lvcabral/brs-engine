@@ -359,7 +359,7 @@ function number() {
 function identifier() {
     while (isAlphaNumeric(peek())) { advance(); }
 
-    let text = source.slice(start, current);
+    let text = source.slice(start, current).toLowerCase();
 
     // some identifiers can be split into two words, so check the "next" word and see what we get
     if ((text === "end" || text === "else" || text === "exit" || text === "for") && peek() === " ") {
