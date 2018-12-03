@@ -777,45 +777,45 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitDottedSet(expression: Stmt.DottedSet) {
-        let source = this.evaluate(expression.obj);
-        let value = this.evaluate(expression.value);
+    visitDottedSet(statement: Stmt.DottedSet) {
+        let source = this.evaluate(statement.obj);
+        let value = this.evaluate(statement.value);
 
         if (!isIterable(source)) {
             throw BrsError.typeMismatch({
                 message: "Attempting to set property on non-iterable value",
-                line: expression.name.line,
+                line: statement.name.line,
                 left: source
             });
             return BrsInvalid.Instance;
         }
 
         try {
-            source.set(new BrsString(expression.name.text), value);
+            source.set(new BrsString(statement.name.text), value);
         } catch (err) {
-            throw BrsError.make(err.message, expression.name.line);
+            throw BrsError.make(err.message, statement.name.line);
         }
 
         return BrsInvalid.Instance;
     }
 
-    visitIndexedSet(expression: Stmt.IndexedSet) {
-        let source = this.evaluate(expression.obj);
+    visitIndexedSet(statement: Stmt.IndexedSet) {
+        let source = this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
             BrsError.typeMismatch({
                 message: "Attempting to set property on non-iterable value",
-                line: expression.closingSquare.line,
+                line: statement.closingSquare.line,
                 left: source
             });
             return BrsInvalid.Instance;
         }
 
-        let index = this.evaluate(expression.index);
+        let index = this.evaluate(statement.index);
         if (!isBrsNumber(index) && !isBrsString(index)) {
             BrsError.typeMismatch({
                 message: "Attempting to set property on iterable with illegal index type",
-                line: expression.closingSquare.line,
+                line: statement.closingSquare.line,
                 left: source,
                 right: index
             });
@@ -823,12 +823,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return BrsInvalid.Instance;
         }
 
-        let value = this.evaluate(expression.value);
+        let value = this.evaluate(statement.value);
 
         try {
             source.set(index, value);
         } catch (err) {
-            throw BrsError.make(err.message, expression.closingSquare.line);
+            throw BrsError.make(err.message, statement.closingSquare.line);
         }
 
         return BrsInvalid.Instance;
