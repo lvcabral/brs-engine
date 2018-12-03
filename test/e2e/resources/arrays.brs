@@ -12,3 +12,8 @@ for each square in twoDimensional[2]
 end for
 
 print twoDimensional[3][2]
+
+' add n^4
+twoDimensional[4] = [ 1, 16, 81 ]
+
+print twoDimensional[4][1]
