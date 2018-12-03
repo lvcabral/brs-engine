@@ -302,7 +302,11 @@ function ifStatement(): Stmt.If {
     let thenBranch: Stmt.Block;
     let elseIfBranches: Stmt.ElseIf[] = [];
     let elseBranch: Stmt.Block | undefined;
-    consume("Expected 'then' after 'if ...condition...", Lexeme.Then);
+
+    if (check(Lexeme.Then)) {
+        // `then` is optional after `if ...condition...`, so only advance to the next token if `then` is present
+        advance();
+    }
 
     if (match(Lexeme.Newline)) {
         // we're parsing a multi-line ("block") form of the BrightScript if/then/else and must find
@@ -319,7 +323,10 @@ function ifStatement(): Stmt.If {
         // attempt to read a bunch of "else if" clauses
         while (match(Lexeme.ElseIf)) {
             let elseIfCondition = expression();
-            consume("Expected 'then' after 'else if ...condition...'", Lexeme.Then);
+            if (check(Lexeme.Then)) {
+                // `then` is optional after `else if ...condition...`, so only advance to the next token if `then` is present
+                advance();
+            }
             match(Lexeme.Newline);
             let elseIfThen = block(Lexeme.EndIf, Lexeme.Else, Lexeme.ElseIf);
             if (!elseIfThen) {
@@ -355,7 +362,10 @@ function ifStatement(): Stmt.If {
         while(match(Lexeme.ElseIf)) {
             let elseIf = previous();
             let elseIfCondition = expression();
-            consume("Expected 'then' after 'else if ...condition...'", Lexeme.Then);
+            if (check(Lexeme.Then)) {
+                // `then` is optional after `else if ...condition...`, so only advance to the next token if `then` is present
+                advance();
+            }
 
             let elseIfThen = declaration(Lexeme.ElseIf, Lexeme.Else);
             if (!elseIfThen) {
