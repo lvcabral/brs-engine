@@ -1,6 +1,6 @@
 const { Environment, Scope } = require("../../lib/interpreter/Environment");
 const { Lexeme, BrsTypes } = require("brs");
-const { BrsString } = BrsTypes;
+const { BrsString, AssociativeArray, Int32 } = BrsTypes;
 
 describe("Environment", () => {
     let env;
@@ -41,6 +41,17 @@ describe("Environment", () => {
         ).toBe(val);
     });
 
+    it("gets and sets an m pointer", () => {
+        let newM = new AssociativeArray([
+            { name: new BrsString("id"), value: new Int32(1738) }
+        ]);
+        env.setM(newM);
+
+        expect(
+            env.get({ kind: Lexeme.Identifier, text: "m", line: 1 })
+        ).toBe(newM);
+    });
+
     it("checks all sources for existence", () => {
         let foo = new BrsString("function scope");
         let bar = new BrsString("module scope");
@@ -49,6 +60,8 @@ describe("Environment", () => {
         env.define(Scope.Function, "foo", foo);
         env.define(Scope.Module, "bar", bar);
         env.define(Scope.Global, "baz", baz);
+
+        expect(env.has(identifier("m"))).toBe(true);
 
         expect(env.has(identifier("foo"))).toBe(true);
         expect(env.has(identifier("bar"))).toBe(true);
@@ -77,11 +90,17 @@ describe("Environment", () => {
         env.define(Scope.Function, "funcScoped", new BrsString("funcScoped"));
         env.define(Scope.Module, "moduleScoped", new BrsString("module-scoped"));
         env.define(Scope.Global, "globalScoped", new BrsString("global-scoped"));
+        env.setM(
+            new AssociativeArray([
+                { name: new BrsString("id"), value: new Int32(679) }
+            ])
+        );
 
         let subEnv = env.createSubEnvironment();
 
         expect(subEnv.has(identifier("funcScoped"))).toBe(false);
         expect(subEnv.has(identifier("moduleScoped"))).toBe(true);
         expect(subEnv.has(identifier("globalScoped"))).toBe(true);
+        expect(subEnv.has(identifier("m"))).toBe(true);
     });
 });
