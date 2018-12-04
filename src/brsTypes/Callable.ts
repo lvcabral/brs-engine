@@ -109,19 +109,17 @@ export class Callable implements Brs.BrsValue {
 
         let { signature, impl } = satisfiedSignature;
 
-        // first, we need to evaluate all of the parameter default values
-        // and define them in a new environment
-        let subEnvironment = interpreter.environment.createSubEnvironment();
-
         let mutableArgs = args.slice();
 
-        return interpreter.inSubEnv(subEnvironment, (subInterpreter) => {
+        return interpreter.inSubEnv(subInterpreter => {
+            // first, we need to evaluate all of the parameter default values
+            // and define them in a new environment
             signature.args.forEach((param, index) => {
                 if (param.defaultValue && mutableArgs[index] == null) {
                     mutableArgs[index] = subInterpreter.evaluate(param.defaultValue);
                 }
 
-                subEnvironment.define(Scope.Function, param.name, mutableArgs[index]);
+                subInterpreter.environment.define(Scope.Function, param.name, mutableArgs[index]);
             });
 
             // then return whatever the selected implementation would return

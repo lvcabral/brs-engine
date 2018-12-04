@@ -110,14 +110,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Temporarily sets an interpreter's environment to the provided one, then
      * passes the sub-interpreter to the provided JavaScript function. Always
      * reverts the current interpreter's environment to its original value.
-     * @param environment the sub-environment to use for the interpreter
-     *                    provided to `func`.
      * @param func the JavaScript function to execute with the sub interpreter.
      */
-    inSubEnv(environment: Environment, func: (interpreter: Interpreter) => BrsType): BrsType {
+    inSubEnv(func: (interpreter: Interpreter) => BrsType): BrsType {
         let originalEnvironment = this._environment;
+        let newEnv = this._environment.createSubEnvironment();
         try {
-            this._environment = environment;
+            this._environment = newEnv;
             return func(this);
         } finally {
             this._environment = originalEnvironment;
@@ -527,7 +526,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
 
                 return this.inSubEnv(
-                    this.environment.createSubEnvironment(),
                     (subInterpreter) => {
                         subInterpreter.environment.setM(mPointer);
                         return callee.call(this, ...args);
