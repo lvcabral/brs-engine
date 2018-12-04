@@ -515,7 +515,24 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (satisfiedSignature) {
             try {
-                return callee.call(this, ...args);
+                let mPointer = new AssociativeArray([]);
+
+                if (expression.callee instanceof Expr.DottedGet || expression.callee instanceof Expr.IndexedGet) {
+                    let maybeM = this.evaluate(expression.callee.obj);
+                    if (maybeM.kind === ValueKind.AssociativeArray) {
+                        mPointer = maybeM;
+                    } else {
+                        BrsError.make("Retrieved a function from non-indexable value", expression.closingParen.line);
+                    }
+                }
+
+                return this.inSubEnv(
+                    this.environment.createSubEnvironment(),
+                    (subInterpreter) => {
+                        subInterpreter.environment.setM(mPointer);
+                        return callee.call(this, ...args);
+                    }
+                );
             } catch (reason) {
                 if (reason.kind == null) {
                     throw new Error("Something terrible happened and we didn't throw a `BlockEnd` instance.");

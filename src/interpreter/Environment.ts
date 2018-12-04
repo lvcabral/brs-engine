@@ -1,5 +1,5 @@
 import { Identifier } from "../lexer";
-import { BrsType } from "../brsTypes";
+import { BrsType, AssociativeArray } from "../brsTypes";
 
 /** The logical region from which a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -37,6 +37,8 @@ export class Environment {
      * @see Scope.Function
      */
     private function = new Map<string, BrsType>();
+    /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
+    private mPointer = new AssociativeArray([]);
 
     public define(scope: Scope, name: string, value: BrsType): void {
         let destination: Map<string, BrsType>;
@@ -56,12 +58,22 @@ export class Environment {
         destination.set(name.toLowerCase(), value);
     }
 
+    public setM(newMPointer: AssociativeArray): void {
+        this.mPointer = newMPointer;
+    }
+
     public remove(name: string): void {
         this.function.delete(name.toLowerCase());
     }
 
     public get(name: Identifier): BrsType {
         let lowercaseName = name.text.toLowerCase();
+
+        // "m" always maps to the special `m` pointer
+        if (lowercaseName === "m") {
+            return this.mPointer;
+        }
+
         let source = [this.function, this.module, this.global].find(scope =>
             scope.has(lowercaseName)
         );
@@ -88,6 +100,7 @@ export class Environment {
      * 1. Globally-defined functions (e.g. `RebootSystem`, `UCase`, et. al.)
      * 2. Named functions compiled together into a single "module"
      * 3. Parameters passed into the function
+     * 4. The `m` pointer, defined by the way in which a function was called
      *
      * @returns a copy of this environment but with no function-scoped values.
      */
@@ -95,6 +108,7 @@ export class Environment {
         let newEnvironment = new Environment();
         newEnvironment.global = this.global;
         newEnvironment.module = this.module;
+        newEnvironment.mPointer = this.mPointer;
 
         return newEnvironment;
     }
