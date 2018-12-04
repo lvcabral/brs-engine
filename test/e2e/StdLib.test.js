@@ -47,7 +47,8 @@ describe("end to end standard libary", () => {
                 " 3.4",
                 "-3",
                 "12.34",
-                "Mary and Bob"
+                "Mary and Bob",
+                "252"
             ]);
         });
     });

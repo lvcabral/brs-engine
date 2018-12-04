@@ -1,4 +1,4 @@
-const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Substitute, Val } = require("../../lib/stdlib/index");
+const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Substitute, Val, StrToI } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const { BrsString, BrsBoolean, Int32, Float } = require("../../lib/brsTypes");
 
@@ -308,6 +308,32 @@ describe("global string functions", () => {
             expect(
                 Val.call(interpreter, new BrsString("1001"), new Int32(2))
             ).toEqual(new Int32(9));
+        })
+    });
+
+    describe("StrToI", () => {
+        it("returns an integer from a positive string", () => {
+            expect(
+                StrToI.call(interpreter, new BrsString("125"))
+            ).toEqual(new Int32(125));
+        });
+
+        it("returns an integer from a negative string", () => {
+            expect(
+                StrToI.call(interpreter, new BrsString("-16"))
+            ).toEqual(new Int32(-16));
+        });
+
+        it("returns an integer from a decimal-formatted string", () => {
+            expect(
+                StrToI.call(interpreter, new BrsString("65.47"))
+            ).toEqual(new Int32(65));
+        });
+
+        it("returns 0 if the parsed string is NaN", () => {
+            expect(
+                StrToI.call(interpreter, new BrsString("hola"))
+            ).toEqual(new Int32(0));
         })
     });
 });

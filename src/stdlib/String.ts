@@ -273,7 +273,7 @@ export const Substitute = new Callable(
 );
 
 /**
- * Return a float from a string
+ * Return a float or integer from a string
  */
 export const Val = new Callable(
     "Val",
@@ -306,3 +306,29 @@ export const Val = new Callable(
     },
 );
 
+/**
+ * Return an integer from a string or 0 if it can't be parsed.
+ */
+export const StrToI = new Callable(
+    "StrToI",
+    {
+        signature: {
+            args: [
+                {
+                    name: "s", 
+                    type: ValueKind.String
+                }
+            ],
+            returns: ValueKind.Int32
+        },
+        impl: (interpreter: Interpreter, s: BrsString): BrsNumber => {
+            let integerValue = parseInt(s.value);
+
+            if (Number.isNaN(integerValue)) {
+                return new Int32(0);
+            }
+
+            return new Int32(integerValue);
+        }
+    }
+);

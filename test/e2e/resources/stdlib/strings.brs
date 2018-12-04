@@ -16,3 +16,4 @@ print Str(3.4) ' " 3.4"
 print StrI(-3) ' "-3"
 print Val("12.34") ' 12.34
 print Substitute("{0} and {1}", "Mary", "Bob")
+print StrToI("252")

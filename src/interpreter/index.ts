@@ -99,7 +99,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             { name: "Int",          func: StdLib.Int },
             { name: "Sgn",          func: StdLib.Sgn },
             { name: "ReadAsciiFile", func: StdLib.ReadAsciiFile },
-            { name: "WriteAsciiFile", func: StdLib.WriteAsciiFile }
+            { name: "WriteAsciiFile", func: StdLib.WriteAsciiFile },
+            { name: "StrToI",       func: StdLib.StrToI }
         ].forEach(({name, func}) =>
             this._environment.define(Scope.Global, name, func)
         );
