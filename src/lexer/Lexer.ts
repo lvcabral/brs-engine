@@ -1,6 +1,6 @@
 import { Lexeme } from "./Lexeme";
 import { Token } from "./Token";
-import { ReservedWords } from "./ReservedWords";
+import { ReservedWords, KeyWords } from "./ReservedWords";
 import * as BrsError from "../Error";
 import { isAlpha, isDigit, isAlphaNumeric } from "./Characters";
 
@@ -47,6 +47,7 @@ export function scan(toScan: string): ReadonlyArray<Token> {
 
     tokens.push({
         kind: Lexeme.Eof,
+        isReserved: false,
         line: line
     });
 
@@ -369,7 +370,7 @@ function identifier() {
         while (isAlphaNumeric(peek())) { advance(); } // read the next word
 
         let twoWords = source.slice(start, current);
-        let maybeTokenType = ReservedWords[twoWords.toLowerCase()];
+        let maybeTokenType = KeyWords[twoWords.toLowerCase()];
         if (maybeTokenType) {
             addToken(maybeTokenType);
             return;
@@ -382,8 +383,8 @@ function identifier() {
     // TODO: support type designators:
     // https://sdkdocs.roku.com/display/sdkdoc/Expressions%2C+Variables%2C+and+Types
 
-    let tokenType = ReservedWords[text.toLowerCase()] || Lexeme.Identifier;
-    if (tokenType === ReservedWords.rem) {
+    let tokenType = KeyWords[text.toLowerCase()] || Lexeme.Identifier;
+    if (tokenType === KeyWords.rem) {
         // The 'rem' keyword can be used to indicate comments as well, so
         // consume the rest of the line, but don't add the token; it's not
         // particularly useful.
@@ -407,9 +408,11 @@ function lastToken(): Token | undefined {
  * @param literal an optional literal value to include in the token.
  */
 function addToken(kind: Lexeme, literal?: BrsType): void {
+    let text = source.slice(start, current);
     tokens.push({
         kind: kind,
-        text: source.slice(start, current),
+        text: text,
+        isReserved: ReservedWords.has(text),
         literal: literal,
         line: line
     });

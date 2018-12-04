@@ -3,8 +3,8 @@ const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { identifier } = require("../parser/ParserTests");
 const { Interpreter } = require("../../lib/interpreter");
-const { BrsTypes } = require("brs");
-const { Int32, BrsInvalid } = BrsTypes;
+const { Lexeme, BrsTypes } = require("brs");
+const { Int32, BrsString, BrsInvalid } = BrsTypes;
 
 let interpreter;
 
@@ -51,5 +51,16 @@ describe("interpreter variables", () => {
         );
         let results = interpreter.exec([ assign, retrieve ]);
         expect(results).toEqual([BrsInvalid.Instance, seven]);
+    });
+
+    it("disallows variables named after reserved words", () => {
+        let ast = [
+            new Stmt.Assignment(
+                { kind: Lexeme.Identifier, text: "type", isReserved: true, line: 1 },
+                new Expr.Literal(new BrsString("this will fail"))
+            )
+        ];
+
+        expect(() => interpreter.exec(ast)).toThrow(/reserved name/);
     });
 });

@@ -39,7 +39,7 @@ export interface OutputStreams {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
-    
+
     readonly stdout: OutputProxy;
     readonly stderr: OutputProxy;
     readonly temporaryVolume = new Volume();
@@ -133,6 +133,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitNamedFunction(statement: Stmt.Function): BrsType {
+        if (statement.name.isReserved) {
+            throw BrsError.make(`Cannot create a named function with reserved name '${statement.name.text}'`, statement.name.line);
+        }
+
         if (this.environment.has(statement.name)) {
             // TODO: Figure out how to determine where the original version was declared
             // Maybe `Environment.define` records the location along with the value?
@@ -202,6 +206,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitAssignment(statement: Stmt.Assignment): BrsType {
+        if (statement.name.isReserved) {
+            throw BrsError.make(`Cannot assign a value to reserved name '${statement.name}'`, statement.name.line);
+        }
+
         let value = this.evaluate(statement.value);
         this.environment.define(Scope.Function, statement.name.text!, value);
         return BrsInvalid.Instance;
@@ -641,7 +649,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             counterName,
             new Expr.Binary(
                 new Expr.Variable(counterName),
-                { kind: Lexeme.Plus, text: "+", line: counterName.line },
+                { kind: Lexeme.Plus, text: "+", isReserved: false, line: counterName.line },
                 new Expr.Literal(increment)
             )
         );

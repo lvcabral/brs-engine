@@ -2,7 +2,7 @@ import * as Expr from "./Expression";
 type Expression = Expr.Expression;
 import * as Stmt from "./Statement";
 type Statement = Stmt.Statement;
-import { Lexeme, Token, Identifier } from "../lexer";
+import { Lexeme, Token, Identifier, ReservedWords } from "../lexer";
 import * as ParseError from "./ParseError";
 
 import {
@@ -116,7 +116,7 @@ function functionDeclaration(isAnonymous: boolean) {
     args.reduce((haveFoundOptional: boolean, arg: Argument) => {
         if (haveFoundOptional && !arg.defaultValue) {
             throw ParseError.make(
-                { kind: Lexeme.Identifier, text: arg.name, line: name.line },
+                { kind: Lexeme.Identifier, text: arg.name, isReserved: ReservedWords.has(arg.name), line: name.line },
                 `Argument '${arg.name}' has no default value, but comes after arguments with default values`
             );
         }

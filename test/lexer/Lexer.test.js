@@ -194,14 +194,13 @@ describe("lexer", () => {
     });
 
     describe("identifiers", () => {
-        it("matches single-word reserved words", () => {
+        it("matches single-word keywords", () => {
             // test just a sample of single-word reserved words for now.
             // if we find any that we've missed
-            let words = Lexer.scan("and or box if else endif return true false");
+            let words = Lexer.scan("and or if else endif return true false");
             expect(words.map(w => w.kind)).toEqual([
                 Lexeme.And,
                 Lexeme.Or,
-                Lexeme.Box,
                 Lexeme.If,
                 Lexeme.Else,
                 Lexeme.EndIf,
@@ -213,7 +212,7 @@ describe("lexer", () => {
             expect(words.filter(w => !!w.literal).length).toBe(0);
         });
 
-        it("matches multi-word reserved words", () => {
+        it("matches multi-word keywords", () => {
             let words = Lexer.scan("else if end if end while End Sub end Function Exit wHILe");
             expect(words.map(w => w.kind)).toEqual([
                 Lexeme.ElseIf,
@@ -236,7 +235,7 @@ describe("lexer", () => {
             ]);
         });
 
-        it("matches reserved words with silly capitalization", () => {
+        it("matches keywords with silly capitalization", () => {
             let words = Lexer.scan("iF ELSE eNDIf FUncTioN");
             expect(words.map(w => w.kind)).toEqual([
                 Lexeme.If,
