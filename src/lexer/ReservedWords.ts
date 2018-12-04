@@ -57,7 +57,6 @@ export const ReservedWords = new Set([
  */
 export const KeyWords: {[key: string]: L} = {
     and: L.And,
-    box: L.Box,
     dim: L.Dim,
     else: L.Else,
     elseif: L.ElseIf,
