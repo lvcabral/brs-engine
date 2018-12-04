@@ -71,6 +71,14 @@ export class Environment {
     }
 
     /**
+     * Retrieves the current value of the special `m` variable, which is analogous to JavaScript's `this`.
+     * @returns the current value used for the `m` pointer.
+     */
+    public getM(): AssociativeArray {
+        return this.mPointer;
+    }
+
+    /**
      * Removes a variable from this environment's function scope.
      * @param name the name of the variable to remove (in the form of an `Identifier`)
      */

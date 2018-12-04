@@ -514,7 +514,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (satisfiedSignature) {
             try {
-                let mPointer = new AssociativeArray([]);
+                let mPointer = this._environment.getM();
 
                 if (expression.callee instanceof Expr.DottedGet || expression.callee instanceof Expr.IndexedGet) {
                     let maybeM = this.evaluate(expression.callee.obj);
