@@ -14,7 +14,8 @@ export enum ValueKind {
     Callable,
     Dynamic,
     Void,
-    Uninitialized
+    Uninitialized,
+    Object
 }
 
 export namespace ValueKind {
@@ -37,6 +38,7 @@ export namespace ValueKind {
             case ValueKind.Dynamic: return "Dynamic";
             case ValueKind.Void: return "Void";
             case ValueKind.Uninitialized: return "<UNINITIALIZED>";
+            case ValueKind.Object: return "Object";
         }
     }
 
@@ -60,6 +62,7 @@ export namespace ValueKind {
             case "dynamic": return ValueKind.Dynamic;
             case "void": return ValueKind.Void;
             case "<uninitialized>": return ValueKind.Uninitialized;
+            case "object": return ValueKind.Object;
             default: return undefined;
         }
     }

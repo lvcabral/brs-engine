@@ -158,6 +158,34 @@ describe("Callable", () => {
                 }
             );
         });
-    });
 
+        it("allows any type for dynamic and object", () => {
+            const hasArgs = new BrsTypes.Callable(
+                "acceptsAnything",
+                {
+                    signature: {
+                        args: [
+                            {
+                                name: "foo",
+                                type: BrsTypes.ValueKind.Dynamic
+                            },
+                            {
+                                name: "bar",
+                                type: BrsTypes.ValueKind.Object
+                            },
+                        ],
+                        returns: BrsTypes.String
+                    },
+                    impl: () => {}
+                }
+            );
+
+            expect(
+                hasArgs.getAllSignatureMismatches([
+                    BrsTypes.BrsBoolean.False,
+                    BrsTypes.BrsInvalid.Instance
+                ]).map(mm => mm.mismatches)[0]
+            ).toEqual([]);
+        });
+    });
 });

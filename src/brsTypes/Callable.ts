@@ -203,7 +203,7 @@ export class Callable implements Brs.BrsValue {
             let expected = sig.args[index];
             let received = args[index];
 
-            if (expected.type === Brs.ValueKind.Dynamic) { return; }
+            if (expected.type === Brs.ValueKind.Dynamic || expected.type === Brs.ValueKind.Object) { return; }
 
             if (expected.type !== received.kind) {
                 reasons.push({

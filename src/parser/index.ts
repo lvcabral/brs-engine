@@ -171,7 +171,7 @@ function signatureArgument(): Argument {
         let typeValueKind = ValueKind.fromString(typeString);
 
         if (!typeValueKind) {
-            throw ParseError.make(typeToken, `Function parameter ${name} is of invalid type '${typeString}'`);
+            throw ParseError.make(typeToken, `Function parameter '${name.text}' is of invalid type '${typeString}'`);
         }
 
         type = typeValueKind;
