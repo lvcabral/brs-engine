@@ -20,19 +20,10 @@ export const Type = new Callable(
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, variable: BrsType, version: Int32) => {
-            if (variable.kind < ValueKind.Array) {
+            if (variable.kind !== ValueKind.Object) {
                 return new BrsString(ValueKind.toString(variable.kind));
             } else {
-                switch (variable.kind) {
-                    case ValueKind.Array:
-                        // TODO: replace with component name once boxed types are supported
-                        return new BrsString("roArray");
-                    case ValueKind.AssociativeArray:
-                        // TODO: replace with component name once boxed types are supported
-                        return new BrsString("roAssociativeArray");
-                    default:
-                        throw new Error("Unknown variable kind detected.  This is a bug in the runtime.");
-                }
+                return new BrsString(variable.getComponentName())
             }
         }
     }

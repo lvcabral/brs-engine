@@ -10,12 +10,12 @@ export interface AAMember {
     value: BrsType
 }
 
-export class AssociativeArray implements BrsValue, BrsComponent, BrsIterable {
-    readonly kind = ValueKind.AssociativeArray;
-
+export class AssociativeArray extends BrsComponent implements BrsValue, BrsIterable {
+    readonly kind = ValueKind.Object;
     private elements = new Map<string, BrsType>();
 
     constructor(elements: AAMember[]) {
+        super("roAssociativeArray");
         elements.forEach(member => this.elements.set(member.name.value, member.value));
     }
 

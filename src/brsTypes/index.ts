@@ -67,18 +67,16 @@ export function isBrsCallable(value: BrsType): value is Callable {
  * @returns `true` if `value` can be iterated across, otherwise `false`.
  */
 export function isIterable(value: BrsType): value is Iterable {
-    switch (value.kind) {
-        case ValueKind.Array:
-        case ValueKind.AssociativeArray:
-            return true;
-        default:
-            return false;
+    if (value.kind !== ValueKind.Object) {
+        return false;
     }
+
+    return value.getElements != null;
 }
 
 /** Determines whether or not the provided value is comparable to other BrightScript values. */
 export function isComparable(value: BrsType): value is BrsPrimitive {
-    return value.kind < ValueKind.Array;
+    return value.kind < ValueKind.Dynamic;
 }
 
 /** The set of BrightScript numeric types. */
