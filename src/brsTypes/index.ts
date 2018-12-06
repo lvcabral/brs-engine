@@ -14,6 +14,7 @@ export * from "./Float";
 export * from "./Double";
 export * from "./components/BrsArray";
 export * from "./components/AssociativeArray";
+export * from "./components/BrsObjects";
 export * from "./Callable";
 
 /**

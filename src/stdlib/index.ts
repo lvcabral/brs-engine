@@ -25,3 +25,4 @@ export * from "./File";
 export * from "./Math";
 export * from "./String";
 export * from "./Print";
+export * from "./CreateObject";
