@@ -1,6 +1,8 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType } from "..";
+import { Callable } from "../Callable";
+import { Interpreter } from "../../interpreter";
 
 /** A member of an `AssociativeArray` in BrightScript. */
 export interface AAMember {
@@ -17,6 +19,10 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
     constructor(elements: AAMember[]) {
         super("roAssociativeArray");
         elements.forEach(member => this.elements.set(member.name.value, member.value));
+
+        this.registerMethods([
+            this.clear
+        ]);
     }
 
     toString(parent?: BrsType): string {
@@ -60,7 +66,18 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             throw new Error("Associative array indexes must be strings");
         }
 
-        return this.elements.get(index.value) || BrsInvalid.Instance;
+        // TODO: this works for now, in that a property with the same name as a method essentially
+        // overwrites the method. The only reason this doesn't work is that getting a method from an
+        // associative array and _not_ calling it returns `invalid`, but calling it returns the
+        // function itself. I'm not entirely sure why yet, but it's gotta have something to do with
+        // how methods are implemented within RBI.
+        //
+        // Are they stored separately from elements, like they are here? Or does
+        // `Interpreter#visitCall` need to check for `invalid` in its callable, then try to find a
+        // method with the desired name separately? That last bit would work but it's pretty gross.
+        // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
+        // Same with AssociativeArrays I guess.
+        return this.elements.get(index.value) || this.getMethod(index.value) || BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType) {
@@ -71,4 +88,18 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
         this.elements.set(index.value, value);
         return BrsInvalid.Instance;
     }
+
+    private clear = new Callable(
+        "clear",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Void
+            },
+            impl: (interpreter: Interpreter) => {
+                this.elements.clear();
+                return BrsInvalid.Instance;
+            }
+        }
+    );
 }
