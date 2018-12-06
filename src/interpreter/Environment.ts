@@ -1,7 +1,7 @@
 import { Identifier } from "../lexer";
-import { BrsType } from "../brsTypes";
+import { BrsType, AssociativeArray } from "../brsTypes";
 
-/** The logical region from which a particular variable or function that defines where it may be accessed from. */
+/** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
     /** The set of native functions that are always accessible, e.g. `RebootSystem`. */
     Global,
@@ -18,9 +18,7 @@ export class NotFound extends Error {
     }
 }
 
-/**
- * Holds a set of values in multiple scopes and provides access operations to them.
- */
+/** Holds a set of values in multiple scopes and provides access operations to them. */
 export class Environment {
     /**
      * Functions that are always accessible.
@@ -37,7 +35,15 @@ export class Environment {
      * @see Scope.Function
      */
     private function = new Map<string, BrsType>();
+    /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
+    private mPointer = new AssociativeArray([]);
 
+    /**
+     * Stores a `value` for the `name`d variable in the provided `scope`.
+     * @param scope The logical region from a particular variable or function that defines where it may be accessed from
+     * @param name the name of the variable to define (in the form of an `Identifier`)
+     * @param value the value of the variable to define
+     */
     public define(scope: Scope, name: string, value: BrsType): void {
         let destination: Map<string, BrsType>;
 
@@ -56,12 +62,44 @@ export class Environment {
         destination.set(name.toLowerCase(), value);
     }
 
+    /**
+     * Sets the value of the special `m` variable, which is analogous to JavaScript's `this`.
+     * @param newMPointer the new value to be used for the `m` pointer
+     */
+    public setM(newMPointer: AssociativeArray): void {
+        this.mPointer = newMPointer;
+    }
+
+    /**
+     * Retrieves the current value of the special `m` variable, which is analogous to JavaScript's `this`.
+     * @returns the current value used for the `m` pointer.
+     */
+    public getM(): AssociativeArray {
+        return this.mPointer;
+    }
+
+    /**
+     * Removes a variable from this environment's function scope.
+     * @param name the name of the variable to remove (in the form of an `Identifier`)
+     */
     public remove(name: string): void {
         this.function.delete(name.toLowerCase());
     }
 
+    /**
+     * Retrieves a variable from this environment, checking each internal scope in order of precedence.
+     * @param name the name of the variable to retrieve (in the form of an `Identifier`)
+     * @returns the value stored for `name` if any exist
+     * @throws a `NotFound` error if no value is stored for `name`
+     */
     public get(name: Identifier): BrsType {
         let lowercaseName = name.text.toLowerCase();
+
+        // "m" always maps to the special `m` pointer
+        if (lowercaseName === "m") {
+            return this.mPointer;
+        }
+
         let source = [this.function, this.module, this.global].find(scope =>
             scope.has(lowercaseName)
         );
@@ -73,9 +111,17 @@ export class Environment {
         throw new NotFound(`Undefined variable '${name.text}'`);
     }
 
+    /**
+     * Determines whether or not a variable exists in this environment.
+     * @param name the name of the variable to search for (in the form of an `Identifier`)
+     * @returns `true` if this environment contains `name`, otherwise `false`
+     */
     public has(name: Identifier): boolean {
-        let lowercaseName = name.text.toLowerCase();
-        return [this.function, this.module, this.global].find(scope => scope.has(lowercaseName)) != null;
+        try {
+            return this.get(name) != null;
+        } catch (err) {
+            return false;
+        }
     }
 
     /**
@@ -88,6 +134,7 @@ export class Environment {
      * 1. Globally-defined functions (e.g. `RebootSystem`, `UCase`, et. al.)
      * 2. Named functions compiled together into a single "module"
      * 3. Parameters passed into the function
+     * 4. The `m` pointer, defined by the way in which a function was called
      *
      * @returns a copy of this environment but with no function-scoped values.
      */
@@ -95,6 +142,7 @@ export class Environment {
         let newEnvironment = new Environment();
         newEnvironment.global = this.global;
         newEnvironment.module = this.module;
+        newEnvironment.mPointer = this.mPointer;
 
         return newEnvironment;
     }

@@ -62,6 +62,18 @@ describe("end to end functions", () => {
         });
     });
 
+    test("function/m-pointer.brs", () => {
+        return execute([ resourceFile("function", "m-pointer.brs") ], outputStreams).then(() => {
+            expect(BrsError.found()).toBe(false);
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "carpenter.safetyGlassesOn = ", "true",
+                "m.houseAge = ", "old"
+            ]);
+        });
+    });
+
     test.skip("function/scoping.brs", () => {
         // TODO: fix this test once `type` has been implemented
         return execute([ resourceFile("function", "scoping.brs") ], outputStreams).then(() => {
