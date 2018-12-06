@@ -12,7 +12,11 @@ export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
         super("roArray");
         this.elements = elements;
         this.registerMethods([
-            this.clear
+            this.peek,
+            this.pop,
+            this.push,
+            this.clear,
+            this.shift
         ]);
     }
 
@@ -83,4 +87,61 @@ export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
     );
+
+    private push = new Callable(
+        "push",
+        {
+            signature: {
+                args: [
+                    { name: "tvalue", type: ValueKind.Dynamic }
+                ],
+                returns: ValueKind.Void
+            },
+            impl: (interpreter: Interpreter, tvalue: BrsType) => {
+                this.elements.push(tvalue);
+                return BrsInvalid.Instance;
+            }
+        }
+    );
+
+    private pop = new Callable(
+        "pop",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Dynamic
+            },
+            impl: (interpreter: Interpreter) => {
+                return this.elements.pop() || BrsInvalid.Instance;
+            }
+        }
+    );
+
+    private peek = new Callable(
+        "peek",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Dynamic
+            },
+            impl: (interpreter: Interpreter) => {
+                return this.elements[this.elements.length - 1] || BrsInvalid.Instance;
+            }
+        }
+    );
+
+    private shift = new Callable(
+        "shift",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Dynamic
+            },
+            impl: (interpreter: Interpreter) => {
+                return this.elements.shift() || BrsInvalid.Instance;
+            }
+        }
+    );
+
+    // TODO: implement append!
 }
