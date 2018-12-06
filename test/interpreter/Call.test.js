@@ -63,7 +63,7 @@ describe("interpreter calls", () => {
         interpreter.exec(ast);
 
         let foo = interpreter.environment.get({ kind: Lexeme.Identifier, text: "foo", line: -1 });
-        expect(foo.kind).toBe(ValueKind.AssociativeArray);
+        expect(foo.kind).toBe(ValueKind.Object);
         expect(
             foo.get(new BrsString("id"))
         ).toEqual(new BrsString("this is an ID"));
