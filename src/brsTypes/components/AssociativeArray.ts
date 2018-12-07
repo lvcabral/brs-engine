@@ -21,7 +21,8 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
         elements.forEach(member => this.elements.set(member.name.value, member.value));
 
         this.registerMethods([
-            this.clear
+            this.clear,
+            this.delete
         ]);
     }
 
@@ -98,6 +99,22 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             },
             impl: (interpreter: Interpreter) => {
                 this.elements.clear();
+                return BrsInvalid.Instance;
+            }
+        }
+    );
+
+    private delete = new Callable(
+        "delete",
+        {
+            signature: {
+                args: [
+                    { name: "str", type: ValueKind.String }
+                ],
+                returns: ValueKind.Boolean
+            },
+            impl: (interpreter: Interpreter, str: BrsString) => {
+                this.elements.delete(str.value);
                 return BrsInvalid.Instance;
             }
         }
