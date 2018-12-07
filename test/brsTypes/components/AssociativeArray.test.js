@@ -1,6 +1,7 @@
 const { BrsTypes } = require("brs");
 const { AssociativeArray, BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = BrsTypes;
 const BrsError = require("../../../lib/Error");
+const { Interpreter } = require("../../../lib/interpreter");
 
 describe("AssociativeArray", () => {
     beforeEach(() => BrsError.reset());
@@ -70,7 +71,7 @@ describe("AssociativeArray", () => {
             aa.set(new BrsString("bar"), new Int32(808));
             expect(aa.get(new BrsString("bar"))).toEqual(new Int32(808));
 
-            // ensure other keya don't get modified
+            // ensure other keys don't get modified
             expect(aa.get(new BrsString("foo"))).toBe(ninetyNine);
         });
 
@@ -82,6 +83,66 @@ describe("AssociativeArray", () => {
             aa.set(new BrsString("foo"), new BrsString("not ninetynine"));
 
             expect(aa.get(new BrsString("foo"))).toEqual(new BrsString("not ninetynine"));
+        });
+    });
+
+    describe("methods", () => {
+        let interpreter;
+
+        beforeEach(() => {
+            interpreter = new Interpreter();
+        });
+
+        describe("clear", () => {
+            it("empties the associative array", () => {
+                let aa = new AssociativeArray([
+                    { name: new BrsString("foo"), value: new Int32(-99) }
+                ]);
+
+                let clear = aa.getMethod("clear");
+                expect(clear).toBeTruthy();
+                expect(clear.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(aa.elements).toEqual(new Map());
+            });
+        });
+
+        describe("delete", () => {
+            it("deletes a given item in the associative array", () => {
+                let aa = new AssociativeArray([
+                    { name: new BrsString("foo"), value: new Int32(-99) },
+                    { name: new BrsString("bar"), value: new Int32(800) }
+                ]);
+
+                let deleteCall = aa.getMethod("delete");
+                expect(deleteCall).toBeTruthy();
+                expect(deleteCall.call(interpreter, new BrsString("foo"))).toBe(BrsInvalid.Instance);
+                expect(aa.get(new BrsString("foo"))).toEqual(BrsInvalid.Instance);
+            });
+        });
+
+        describe("addreplace", () => {
+            it("adds new elements to the associative array", () => {
+                let aa = new AssociativeArray([
+                    { name: new BrsString("letter1"), value: new BrsString("a") }
+                ]);
+
+                let addreplace = aa.getMethod("addreplace");
+                expect(addreplace).toBeTruthy();
+                expect(addreplace.call(interpreter, new BrsString("letter2"), new BrsString("b"))).toBe(BrsInvalid.Instance);
+                expect(aa.get(new BrsString("letter2"))).toEqual(new BrsString("b"));
+            });
+
+            it("replaces the value of known elements in the associative array", () => {
+                let aa = new AssociativeArray([
+                    { name: new BrsString("letter1"), value: new BrsString("a") }
+                ]);
+
+                let addreplace = aa.getMethod("addreplace");
+                expect(addreplace).toBeTruthy();
+                expect(addreplace.call(interpreter, new BrsString("letter1"), new BrsString("c"))).toBe(BrsInvalid.Instance);
+                expect(aa.get(new BrsString("letter1"))).not.toEqual(new BrsString("a"));
+                expect(aa.get(new BrsString("letter1"))).toEqual(new BrsString("c"));
+            });
         });
     });
 });
