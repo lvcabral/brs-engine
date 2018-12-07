@@ -22,7 +22,8 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
 
         this.registerMethods([
             this.clear,
-            this.delete
+            this.delete,
+            this.addreplace
         ]);
     }
 
@@ -90,6 +91,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
         return BrsInvalid.Instance;
     }
 
+    /** Removes all elements from the associative array */
     private clear = new Callable(
         "clear",
         {
@@ -103,7 +105,8 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-
+    
+    /** Removes a given item from the associative array */
     private delete = new Callable(
         "delete",
         {
@@ -115,6 +118,23 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             },
             impl: (interpreter: Interpreter, str: BrsString) => {
                 this.elements.delete(str.value);
+                return BrsInvalid.Instance;
+            }
+        }
+    );
+
+    private addreplace = new Callable(
+        "addreplace",
+        {
+            signature: {
+                args: [
+                    { name: "key", type: ValueKind.String },
+                    { name: "value", type: ValueKind.Dynamic }
+                ],
+                returns: ValueKind.Void
+            },
+            impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
+                this.set(key, value);
                 return BrsInvalid.Instance;
             }
         }
