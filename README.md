@@ -86,13 +86,15 @@ index.d.ts (and friends)
 ```
 
 #### Testing
-Tests are written with [Facebook's Jest](http://facebook.github.io/jest/), and can be run with the `test` target:
+Tests are written in plain-old JavaScript with [Facebook's Jest](http://facebook.github.io/jest/), and can be run with the `test` target:
 
 ```shell
 $ yarn test
 
 # tests start running
 ```
+
+Note that only test files ending in `.test.js` will be executed by `yarn test`.
 
 #### Cleaning
 Compiled output in `lib/` and `types/` can be removed with the `clean` target:
