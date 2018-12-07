@@ -1,5 +1,6 @@
-const { AssociativeArray, BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = require("../../lib/brsTypes");
-const BrsError = require("../../lib/Error");
+const { BrsTypes } = require("brs");
+const { AssociativeArray, BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = BrsTypes;
+const BrsError = require("../../../lib/Error");
 
 describe("AssociativeArray", () => {
     beforeEach(() => BrsError.reset());

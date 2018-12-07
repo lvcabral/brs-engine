@@ -1,5 +1,6 @@
-const { BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = require("../../lib/brsTypes");
-const BrsError = require("../../lib/Error");
+const { BrsTypes } = require("brs");
+const { BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = BrsTypes;
+const BrsError = require("../../../lib/Error");
 
 describe("Array", () => {
     beforeEach(() => BrsError.reset());
