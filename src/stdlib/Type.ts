@@ -23,7 +23,7 @@ export const Type = new Callable(
             if (variable.kind !== ValueKind.Object) {
                 return new BrsString(ValueKind.toString(variable.kind));
             } else {
-                return new BrsString(variable.getComponentName())
+                return new BrsString(variable.getComponentName());
             }
         }
     }
