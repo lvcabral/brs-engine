@@ -3,6 +3,7 @@ import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { Int32 } from "../Int32";
 
 /** A member of an `AssociativeArray` in BrightScript. */
 export interface AAMember {
@@ -23,7 +24,8 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
         this.registerMethods([
             this.clear,
             this.delete,
-            this.addreplace
+            this.addreplace,
+            this.count
         ]);
     }
 
@@ -136,6 +138,19 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
                 this.set(key, value);
                 return BrsInvalid.Instance;
+            }
+        }
+    );
+
+    private count = new Callable(
+        "count",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32
+            },
+            impl: (interpreter: Interpreter) => {
+                return new Int32(this.elements.size);
             }
         }
     );

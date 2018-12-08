@@ -1,5 +1,5 @@
 const { BrsTypes } = require("brs");
-const { AssociativeArray, BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = BrsTypes;
+const { AssociativeArray, BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } = BrsTypes;
 const BrsError = require("../../../lib/Error");
 const { Interpreter } = require("../../../lib/interpreter");
 
@@ -143,6 +143,23 @@ describe("AssociativeArray", () => {
                 expect(aa.get(new BrsString("letter1"))).not.toEqual(new BrsString("a"));
                 expect(aa.get(new BrsString("letter1"))).toEqual(new BrsString("c"));
             });
+
         });
+
+        describe("count", () => {
+            it("returns the number of items in the associative array", () => {
+                let aa = new AssociativeArray([
+                    { name: new BrsString("letter1"), value: new BrsString("a") },
+                    { name: new BrsString("letter2"), value: new BrsString("b") }
+                ]);
+
+                let count = aa.getMethod("count");
+                expect(count).toBeTruthy();
+
+                let result = count.call(interpreter);
+                expect(result.value).toEqual(2);
+                expect(result.kind).toBe(ValueKind.Int32);
+            });
+        })
     });
 });
