@@ -115,7 +115,8 @@ describe("AssociativeArray", () => {
 
                 let deleteCall = aa.getMethod("delete");
                 expect(deleteCall).toBeTruthy();
-                expect(deleteCall.call(interpreter, new BrsString("foo"))).toBe(BrsInvalid.Instance);
+                expect(deleteCall.call(interpreter, new BrsString("foo"))).toBe(BrsBoolean.True);
+                expect(deleteCall.call(interpreter, new BrsString("baz"))).toBe(BrsBoolean.False);
                 expect(aa.get(new BrsString("foo"))).toEqual(BrsInvalid.Instance);
             });
         });

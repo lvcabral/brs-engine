@@ -25,7 +25,8 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             this.clear,
             this.delete,
             this.addreplace,
-            this.count
+            this.count,
+            this.doesexist
         ]);
     }
 
@@ -119,12 +120,15 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
                 returns: ValueKind.Boolean
             },
             impl: (interpreter: Interpreter, str: BrsString) => {
-                this.elements.delete(str.value);
-                return BrsInvalid.Instance;
+                let deleted = this.elements.delete(str.value);
+                return BrsBoolean.from(deleted);
             }
         }
     );
-
+    
+    /** Give a key and value, adds an item to the associtiative array if it doesn't exist
+     * Or replaces the value of a key that already exists in the associative array
+     */
     private addreplace = new Callable(
         "addreplace",
         {
@@ -141,7 +145,8 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-
+    
+    /** Returns the number of items in the associative array */
     private count = new Callable(
         "count",
         {
@@ -151,6 +156,22 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             },
             impl: (interpreter: Interpreter) => {
                 return new Int32(this.elements.size);
+            }
+        }
+    );
+    
+    /** Returns a boolean indicating whether or not a given key exists in the associative array */
+    private doesexist = new Callable(
+        "doesexist",
+        {
+            signature: {
+                args: [
+                    { name: "str", type: ValueKind.String }
+                ],
+                returns: ValueKind.Boolean
+            },
+            impl: (interpreter: Interpreter, str: BrsString) => {                
+                return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
             }
         }
     );
