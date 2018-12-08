@@ -114,14 +114,22 @@ export class Environment {
     /**
      * Determines whether or not a variable exists in this environment.
      * @param name the name of the variable to search for (in the form of an `Identifier`)
+     * @param scopeFilter the set of scopes with which to limit searches for `name`
      * @returns `true` if this environment contains `name`, otherwise `false`
      */
-    public has(name: Identifier): boolean {
-        try {
-            return this.get(name) != null;
-        } catch (err) {
-            return false;
+    public has(name: Identifier, scopeFilter: Scope[] = [Scope.Global, Scope.Module, Scope.Function]): boolean {
+        if (name.text.toLowerCase() === "m") {
+            return true; // we always have an `m` scope of some sort!
         }
+
+        let lowercaseName = name.text.toLowerCase();
+        return scopeFilter.map(scopeName => {
+            switch (scopeName) {
+                case Scope.Global: return this.global;
+                case Scope.Module: return this.module;
+                case Scope.Function: return this.function;
+            }
+        }).find(scope => scope.has(lowercaseName)) != null;
     }
 
     /**

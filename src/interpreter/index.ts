@@ -102,12 +102,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             throw BrsError.make(`Cannot create a named function with reserved name '${statement.name.text}'`, statement.name.line);
         }
 
-        if (this.environment.has(statement.name)) {
+        if (this.environment.has(statement.name, [Scope.Module])) {
             // TODO: Figure out how to determine where the original version was declared
             // Maybe `Environment.define` records the location along with the value?
             BrsError.make(
                 `Attempting to declare function '${statement.name.text}', but ` +
-                `a property of that name already exists.`,
+                `a property of that name already exists in this scope.`,
                 statement.name.line
             );
             return BrsInvalid.Instance;

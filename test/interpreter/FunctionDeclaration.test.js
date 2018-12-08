@@ -243,4 +243,19 @@ describe("interpreter function declarations", () => {
 
         expect(() => interpreter.exec(statements)).toThrow(/reserved name/);
     });
+
+    it("allows functions to override global stdlib functions", () => {
+        let statements = [
+            new Stmt.Function(
+                { kind: Lexeme.Identifier, text: "UCase", isReserved: false, line: 1 },
+                new Expr.Function(
+                    [], // accepts no arguments
+                    ValueKind.Void, // returns nothing
+                    new Stmt.Block([]) // does nothing. It's a really silly function, but the implementation doesn't matter
+                )
+            )
+        ];
+
+        expect(() => interpreter.exec(statements)).not.toThrow();
+    });
 });
