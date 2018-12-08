@@ -16,7 +16,7 @@ Array [
             },
           },
           "name": "a",
-          "type": 10,
+          "type": 9,
         },
         Object {
           "defaultValue": Literal {
@@ -26,7 +26,7 @@ Array [
             },
           },
           "name": "b",
-          "type": 10,
+          "type": 9,
         },
         Object {
           "defaultValue": Binary {
@@ -50,10 +50,10 @@ Array [
             },
           },
           "name": "c",
-          "type": 10,
+          "type": 9,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -75,15 +75,15 @@ Array [
         Object {
           "defaultValue": undefined,
           "name": "a",
-          "type": 10,
+          "type": 9,
         },
         Object {
           "defaultValue": undefined,
           "name": "b",
-          "type": 10,
+          "type": 9,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -113,7 +113,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -167,7 +167,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -186,7 +186,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -216,7 +216,7 @@ Array [
         ],
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -235,7 +235,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 11,
+      "returns": 10,
     },
     "name": Object {
       "kind": 21,
@@ -254,7 +254,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -284,7 +284,7 @@ Array [
         ],
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -311,7 +311,7 @@ Array [
             },
           },
           "name": "a",
-          "type": 10,
+          "type": 9,
         },
         Object {
           "defaultValue": Literal {
@@ -321,7 +321,7 @@ Array [
             },
           },
           "name": "b",
-          "type": 10,
+          "type": 9,
         },
         Object {
           "defaultValue": Binary {
@@ -345,10 +345,10 @@ Array [
             },
           },
           "name": "c",
-          "type": 10,
+          "type": 9,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -370,15 +370,15 @@ Array [
         Object {
           "defaultValue": undefined,
           "name": "a",
-          "type": 10,
+          "type": 9,
         },
         Object {
           "defaultValue": undefined,
           "name": "b",
-          "type": 10,
+          "type": 9,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -408,7 +408,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,
@@ -462,7 +462,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 10,
+      "returns": 9,
     },
     "name": Object {
       "kind": 21,

@@ -9,13 +9,13 @@ export enum ValueKind {
     Int64,
     Float,
     Double,
-    Array,
-    AssociativeArray,
     Callable,
+    Uninitialized,
     Dynamic,
     Void,
-    Uninitialized,
-    Object
+    Object,
+    Array,
+    AssociativeArray
 }
 
 export namespace ValueKind {

@@ -26,3 +26,4 @@ export * from "./Math";
 export * from "./String";
 export * from "./Print";
 export * from "./CreateObject";
+export * from "./Type";

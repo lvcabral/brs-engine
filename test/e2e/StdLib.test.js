@@ -83,5 +83,15 @@ describe("end to end standard libary", () => {
                 "-1"
             ]);
         });
-    })
+    });
+
+    test("stdlib/runtime.brs", () => {
+        return execute([ resourceFile("stdlib", "runtime.brs") ], outputStreams).then(() => {
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "true"
+            ]);
+        });
+    });
 });
