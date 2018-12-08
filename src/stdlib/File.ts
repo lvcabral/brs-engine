@@ -1,8 +1,7 @@
-import { Callable, ValueKind, BrsString, BrsBoolean } from "../brsTypes";
+import { Callable, ValueKind, BrsString, BrsBoolean, BrsArray } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { Volume } from "memfs/lib/volume";
 import { URL } from "url";
-
+import MemoryFileSystem from "memory-fs";
 
 /*
  * Returns a memfs volume based on the brs path uri.  For example, passing in
@@ -10,7 +9,7 @@ import { URL } from "url";
  * 
  * Returns invalid in no appopriate volume is found for the path
  */
-export function getVolumeByPath(interpreter: Interpreter, path: string): Volume | null {
+export function getVolumeByPath(interpreter: Interpreter, path: string): MemoryFileSystem | null {
     try {
         const protocol = new URL(path).protocol;
         if (protocol === "tmp:") return interpreter.temporaryVolume;
@@ -27,6 +26,203 @@ export function getVolumeByPath(interpreter: Interpreter, path: string): Volume 
 export function getMemfsPath(fileUri: string) {
     return new URL(fileUri).pathname;
 }
+
+/** Copies a file from src to dst, return true if successful */
+export const CopyFile = new Callable(
+    "CopyFile",
+    {
+        signature: {
+            args: [
+                {name: "source", type: ValueKind.String},
+                {name: "destination", type: ValueKind.String}
+            ],
+            returns: ValueKind.Boolean
+        },
+        impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
+            const srcVolume = getVolumeByPath(interpreter, src.value);
+            if (srcVolume === null) {
+                return BrsBoolean.False;
+            }
+            const dstVolume = getVolumeByPath(interpreter, dst.value);
+            if (dstVolume === null) {
+                return BrsBoolean.False;
+            }
+
+            const srcMemfsPath = getMemfsPath(src.value);
+            const dstMemfsPath = getMemfsPath(dst.value);
+            try {
+                let contents = srcVolume.readFileSync(srcMemfsPath);
+                dstVolume.writeFileSync(dstMemfsPath, contents);
+                return BrsBoolean.True;
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+        }
+    }
+);
+
+/** Copies a file from src to dst, return true if successful */
+export const MoveFile = new Callable(
+    "MoveFile",
+    {
+        signature: {
+            args: [
+                {name: "source", type: ValueKind.String},
+                {name: "destination", type: ValueKind.String}
+            ],
+            returns: ValueKind.Boolean
+        },
+        impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
+            const srcVolume = getVolumeByPath(interpreter, src.value);
+            if (srcVolume === null) {
+                return BrsBoolean.False;
+            }
+            const dstVolume = getVolumeByPath(interpreter, dst.value);
+            if (dstVolume === null) {
+                return BrsBoolean.False;
+            }
+
+            const srcMemfsPath = getMemfsPath(src.value);
+            const dstMemfsPath = getMemfsPath(dst.value);
+            try {
+                let contents = srcVolume.readFileSync(srcMemfsPath);
+                dstVolume.writeFileSync(dstMemfsPath, contents);
+                srcVolume.unlinkSync(srcMemfsPath);
+                return BrsBoolean.True;
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+        }
+    }
+);
+
+/** Deletes a file, return true if successful */
+export const DeleteFile = new Callable(
+    "DeleteFile",
+    {
+        signature: {
+            args: [
+                {name: "file", type: ValueKind.String}
+            ],
+            returns: ValueKind.Boolean
+        },
+        impl: (interpreter: Interpreter, file: BrsString) => {
+            const volume = getVolumeByPath(interpreter, file.value);
+            if (volume === null) {
+                return BrsBoolean.False;
+            }
+
+            const memfsPath = getMemfsPath(file.value);
+            try {
+                volume.unlinkSync(memfsPath);
+                return BrsBoolean.True;
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+        }
+    }
+);
+
+/** Deletes a directory (if empty), return true if successful */
+export const DeleteDirectory = new Callable(
+    "DeleteDirectory",
+    {
+        signature: {
+            args: [
+                {name: "dir", type: ValueKind.String}
+            ],
+            returns: ValueKind.Boolean
+        },
+        impl: (interpreter: Interpreter, dir: BrsString) => {
+            const volume = getVolumeByPath(interpreter, dir.value);
+            if (volume === null) {
+                return BrsBoolean.False;
+            }
+
+            const memfsPath = getMemfsPath(dir.value);
+            try {
+                volume.rmdirSync(memfsPath);
+                return BrsBoolean.True;
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+        }
+    }
+);
+
+/** Creates a directory, return true if successful */
+export const CreateDirectory = new Callable(
+    "CreateDirectory",
+    {
+        signature: {
+            args: [
+                {name: "dir", type: ValueKind.String}
+            ],
+            returns: ValueKind.Boolean
+        },
+        impl: (interpreter: Interpreter, dir: BrsString) => {
+            const volume = getVolumeByPath(interpreter, dir.value);
+            if (volume === null) {
+                return BrsBoolean.False;
+            }
+
+            const memfsPath = getMemfsPath(dir.value);
+            try {
+                volume.mkdirSync(memfsPath);
+                return BrsBoolean.True;
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+        }
+    }
+);
+
+/** Stubbed function for formatting a drive; always returns false */
+export const FormatDrive = new Callable(
+    "FormatDrive",
+    {
+        signature: {
+            args: [
+                {name: "drive", type: ValueKind.String},
+                {name: "fs_type", type: ValueKind.String}
+            ],
+            returns: ValueKind.Boolean
+        },
+        impl: (interpreter: Interpreter, dir: BrsString) => {
+            if (process.env.NODE_ENV !== "test") {
+                console.error("`FormatDrive` is not implemented in `brs`.");
+            }
+            return BrsBoolean.False;
+        }
+    }
+);
+
+/** Returns an array of paths in a directory */
+export const ListDir = new Callable(
+    "ListDir",
+    {
+        signature: {
+            args: [
+                {name: "path", type: ValueKind.String}
+            ],
+            returns: ValueKind.Array // TODO: change this to roList when available
+        },
+        impl: (interpreter: Interpreter, path: BrsString) => {
+            const volume = getVolumeByPath(interpreter, path.value);
+            if (volume === null) {
+                return new BrsArray([]);
+            }
+
+            const memfsPath = getMemfsPath(path.value);
+            try {
+                let subPaths = volume.readdirSync(memfsPath).map((s) => new BrsString(s));
+                return new BrsArray(subPaths);
+            } catch (err) {
+                return new BrsArray([]);
+            }
+        }
+    }
+);
 
 /** Reads ascii file from file system. */
 export const ReadAsciiFile = new Callable(

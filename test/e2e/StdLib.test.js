@@ -24,7 +24,15 @@ describe("end to end standard libary", () => {
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
                 "false",
-                "true"
+                "true",
+                "true",
+                "true",
+                "true",
+                "true",
+                "false",
+                "true",
+                "false",
+                "<Component: roArray> =\n[\n    test_backup.txt\n]"
             ]);
         });
     });

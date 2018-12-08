@@ -24,11 +24,12 @@
   "dependencies": {
     "commander": "^2.12.2",
     "long": "^3.2.0",
-    "memfs": "2.13.1"
+    "memory-fs": "^0.4.1"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
     "@types/long": "^3.0.32",
+    "@types/memory-fs": "^0.3.2",
     "@types/node": "^8.5.2",
     "jest": "^22.0.4",
     "npm-run-all": "^4.1.2",
