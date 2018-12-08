@@ -162,5 +162,33 @@ describe("AssociativeArray", () => {
                 expect(result.kind).toBe(ValueKind.Int32);
             });
         })
+
+        describe("doesexist", () => {
+            it("returns true when an item exists in the array", () => {
+                let aa = new AssociativeArray([
+                    { name: new BrsString("letter1"), value: new BrsString("a") },
+                    { name: new BrsString("letter2"), value: new BrsString("b") }
+                ]);
+
+                let doesexist = aa.getMethod("doesexist");
+                expect(doesexist).toBeTruthy();
+
+                let result = doesexist.call(interpreter, new BrsString("letter2"));
+                expect(result.kind).toBe(ValueKind.Boolean);
+                expect(result).toBe(BrsBoolean.True);
+            });
+
+            it("returns false when an item doesn't exist in the array", () => {
+                let aa = new AssociativeArray([
+                    { name: new BrsString("letter1"), value: new BrsString("a") },
+                    { name: new BrsString("letter2"), value: new BrsString("b") }
+                ]);
+
+                let doesexist = aa.getMethod("doesexist");
+                let result = doesexist.call(interpreter, new BrsString("letter3"));
+                expect(result.kind).toBe(ValueKind.Boolean);
+                expect(result).toBe(BrsBoolean.False);
+            });
+        })
     });
 });
