@@ -25,7 +25,7 @@ export class BrsComponent {
     }
 
     getMethod(index: string): Callable | undefined {
-        return this.methods.get(index);
+        return this.methods.get(index.toLowerCase());
     }
 }
 
