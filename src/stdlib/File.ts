@@ -5,8 +5,8 @@ import MemoryFileSystem from "memory-fs";
 
 /*
  * Returns a memfs volume based on the brs path uri.  For example, passing in
- * "tmp:///test.txt" will return the memfs temporary volume on the interpreter. 
- * 
+ * "tmp:///test.txt" will return the memfs temporary volume on the interpreter.
+ *
  * Returns invalid in no appopriate volume is found for the path
  */
 export function getVolumeByPath(interpreter: Interpreter, path: string): MemoryFileSystem | null {
@@ -20,7 +20,7 @@ export function getVolumeByPath(interpreter: Interpreter, path: string): MemoryF
 }
 
 /*
- * Returns a memfs file path from a brs file uri 
+ * Returns a memfs file path from a brs file uri
  *   ex. "tmp:///test/test1.txt" -> "/test/test1.txt"
  */
 export function getMemfsPath(fileUri: string) {
@@ -205,7 +205,7 @@ export const ListDir = new Callable(
             args: [
                 {name: "path", type: ValueKind.String}
             ],
-            returns: ValueKind.Array // TODO: change this to roList when available
+            returns: ValueKind.Object
         },
         impl: (interpreter: Interpreter, path: BrsString) => {
             const volume = getVolumeByPath(interpreter, path.value);

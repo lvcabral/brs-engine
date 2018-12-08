@@ -1,9 +1,8 @@
 import { AssociativeArray } from "./AssociativeArray";
-import { BrsString } from "../BrsType";
+import { BrsArray } from "./BrsArray";
 
 /** Map containing a list of brightscript components that can be created. */
-export const BrsObjects = new Map<string, Function>(
-    [
-        [ "roassociativearray", () => new AssociativeArray([]) ]
-    ]
-);
+export const BrsObjects = new Map<string, Function>([
+    [ "roassociativearray", () => new AssociativeArray([]) ],
+    [ "roarray", () => new BrsArray([]) ]
+]);

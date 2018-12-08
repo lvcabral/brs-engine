@@ -484,10 +484,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (expression.callee instanceof Expr.DottedGet || expression.callee instanceof Expr.IndexedGet) {
                     let maybeM = this.evaluate(expression.callee.obj);
-                    if (maybeM.kind === ValueKind.AssociativeArray) {
-                        mPointer = maybeM;
+                    if (maybeM.kind === ValueKind.Object) {
+                        if (maybeM instanceof AssociativeArray) {
+                            mPointer = maybeM;
+                        }
                     } else {
-                        BrsError.make("Retrieved a function from non-indexable value", expression.closingParen.line);
+                        BrsError.make("Attempted to retrieve a function from a primitive value", expression.closingParen.line);
                     }
                 }
 

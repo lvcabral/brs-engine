@@ -9,7 +9,7 @@ describe("global runtime functions", () => {
     describe("CreateObject", () => {
         it("creates a new instance of associative array", () => {
             let obj = CreateObject.call(interpreter, new BrsString("roAssociativeArray"));
-            expect(obj).toEqual(new AssociativeArray([]));
+            expect(obj.elements).toEqual(new Map());
         });
 
         it("returns invalid for an undefined BrsObject", () => {

@@ -5,7 +5,7 @@ describe("BrsObjects", () => {
     describe("new object instances", () => {
         it("maps a new instance of associative array", () => {
             let obj = BrsObjects.get("roassociativearray")
-            expect(obj()).toEqual(new AssociativeArray([]));
+            expect(obj().elements).toEqual(new AssociativeArray([]).elements);
         });
     });
 });

@@ -1,8 +1,32 @@
 import { BrsType } from "..";
-import { BrsInvalid } from "../BrsType";
+import { BrsInvalid, ValueKind, BrsValue } from "../BrsType";
+import { Callable } from "../Callable";
 
-export interface BrsComponent {
+export class BrsComponent {
+    private methods: Map<string, Callable> = new Map();
+    private readonly componentName: string;
 
+    constructor(name: string) {
+        this.componentName = name;
+    }
+
+    /**
+     * Returns the name of the component, used to create instances via `createObject`.
+     * @returns the name of this component.
+     */
+    getComponentName(): string {
+        return this.componentName;
+    }
+
+    protected registerMethods(methods: Callable[]) {
+        this.methods = new Map(
+            methods.map(m => [ m.name!, m ] as [ string, Callable ])
+        );
+    }
+
+    getMethod(index: string): Callable | undefined {
+        return this.methods.get(index.toLowerCase());
+    }
 }
 
 /** Represents a BrightScript component that has elements that can be iterated across. */
