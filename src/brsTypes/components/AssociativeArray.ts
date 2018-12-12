@@ -137,7 +137,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
         }
     );
     
-    /** Give a key and value, adds an item to the associtiative array if it doesn't exist
+    /** Given a key and value, adds an item to the associative array if it doesn't exist
      * Or replaces the value of a key that already exists in the associative array
      */
     private addreplace = new Callable(

@@ -215,11 +215,11 @@ describe("AssociativeArray", () => {
                     { name: new BrsString("arr"), value: new BrsArray([new Int32(1), new BrsString("two")]) },
                     { name: new BrsString("obj"), value: new AssociativeArray([]) },
                     { name: new BrsString("num"), value: new Int32(555) }
-                ])
+                ]);
 
                 let result = append.call(interpreter, aa2);
-                let resultKeys = resultAA.getElements()
-                let aa1Keys = aa1.getElements()
+                let resultKeys = resultAA.getElements();
+                let aa1Keys = aa1.getElements();
 
                 resultKeys.forEach(element => {
                     expect(aa1Keys).toContainEqual(new BrsString(element.value));
@@ -231,9 +231,9 @@ describe("AssociativeArray", () => {
 
         describe("keys", () => {
             it("returns an array of keys from the associative array in lexicographical order", () => {
-                let letter1 = new BrsString("letter1")
-                let letter2 = new BrsString("letter2")
-                let cletter = new BrsString("cletter")
+                let letter1 = new BrsString("letter1");
+                let letter2 = new BrsString("letter2");
+                let cletter = new BrsString("cletter");
 
                 let aa = new AssociativeArray([
                     { name: letter1, value: new BrsString("a") },
@@ -254,16 +254,16 @@ describe("AssociativeArray", () => {
                 let keys = aa.getMethod("keys");
                 expect(keys).toBeTruthy();
 
-                let result = keys.call(interpreter)
-                expect(result.elements).toEqual(new BrsArray([]).elements)
+                let result = keys.call(interpreter);
+                expect(result.elements).toEqual(new BrsArray([]).elements);
             });
         });
 
         describe("items", () => {
             it("returns an array of values from the associative array in lexicographical order", () => {
-                let cletter = new BrsString("c")
-                let letter1 = new BrsString("a")
-                let letter2 = new BrsString("b")
+                let cletter = new BrsString("c");
+                let letter1 = new BrsString("a");
+                let letter2 = new BrsString("b");
 
                 let aa = new AssociativeArray([
                     { name: new BrsString("cletter"), value: cletter },
@@ -283,8 +283,8 @@ describe("AssociativeArray", () => {
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
 
-                let result = items.call(interpreter)
-                expect(result.elements).toEqual(new BrsArray([]).elements)
+                let result = items.call(interpreter);
+                expect(result.elements).toEqual(new BrsArray([]).elements);
             });
         });
     });
