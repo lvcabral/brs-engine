@@ -190,5 +190,102 @@ describe("AssociativeArray", () => {
                 expect(result).toBe(BrsBoolean.False);
             });
         })
+
+        describe("append", () => {
+            it("appends a new associative array to an existing one", () => {
+                let aa1 = new AssociativeArray([
+                    { name: new BrsString("letter1"), value: new BrsString("a") },
+                ]);
+
+                let append = aa1.getMethod("append");
+                expect(append).toBeTruthy();
+
+                let aa2 = new AssociativeArray([
+                    { name: new BrsString("letter2"), value: new BrsString("b") },
+                    { name: new BrsString("empty"), value: new BrsString("") },
+                    { name: new BrsString("arr"), value: new BrsArray([new Int32(1), new BrsString("two")]) },
+                    { name: new BrsString("obj"), value: new AssociativeArray([]) },
+                    { name: new BrsString("num"), value: new Int32(555) }
+                ]);
+
+                let resultAA = new AssociativeArray([
+                    { name: new BrsString("letter1"), value: new BrsString("a") },
+                    { name: new BrsString("letter2"), value: new BrsString("b") },
+                    { name: new BrsString("empty"), value: new BrsString("") },
+                    { name: new BrsString("arr"), value: new BrsArray([new Int32(1), new BrsString("two")]) },
+                    { name: new BrsString("obj"), value: new AssociativeArray([]) },
+                    { name: new BrsString("num"), value: new Int32(555) }
+                ])
+
+                let result = append.call(interpreter, aa2);
+                let resultKeys = resultAA.getElements()
+                let aa1Keys = aa1.getElements()
+
+                resultKeys.forEach(element => {
+                    expect(aa1Keys).toContainEqual(new BrsString(element.value));
+                });
+
+                expect(result).toBe(BrsInvalid.Instance);
+            });
+        });
+
+        describe("keys", () => {
+            it("returns an array of keys from the associative array in lexicographical order", () => {
+                let letter1 = new BrsString("letter1")
+                let letter2 = new BrsString("letter2")
+                let cletter = new BrsString("cletter")
+
+                let aa = new AssociativeArray([
+                    { name: letter1, value: new BrsString("a") },
+                    { name: letter2, value: new BrsString("b") },
+                    { name: cletter, value: new BrsString("c") }
+                ]);
+
+                let keys = aa.getMethod("keys");
+                expect(keys).toBeTruthy();
+
+                let result = keys.call(interpreter);
+                expect(result.elements).toEqual(new BrsArray([ cletter, letter1, letter2 ]).elements);
+            });
+
+            it("returns an empty array from an empty associative array", () => {
+                let aa = new AssociativeArray([]);
+
+                let keys = aa.getMethod("keys");
+                expect(keys).toBeTruthy();
+
+                let result = keys.call(interpreter)
+                expect(result.elements).toEqual(new BrsArray([]).elements)
+            });
+        });
+
+        describe("items", () => {
+            it("returns an array of values from the associative array in lexicographical order", () => {
+                let cletter = new BrsString("c")
+                let letter1 = new BrsString("a")
+                let letter2 = new BrsString("b")
+
+                let aa = new AssociativeArray([
+                    { name: new BrsString("cletter"), value: cletter },
+                    { name: new BrsString("letter1"), value: letter1 },
+                    { name: new BrsString("letter2"), value: letter2 }
+                ]);
+
+                let items = aa.getMethod("items");
+                expect(items).toBeTruthy();
+                let result = items.call(interpreter);
+                expect(result.elements).toEqual(new BrsArray([ letter1, letter2, cletter ]).elements);
+            });
+
+            it("returns an empty array from an empty associative array", () => {
+                let aa = new AssociativeArray([]);
+
+                let items = aa.getMethod("items");
+                expect(items).toBeTruthy();
+
+                let result = items.call(interpreter)
+                expect(result.elements).toEqual(new BrsArray([]).elements)
+            });
+        });
     });
 });

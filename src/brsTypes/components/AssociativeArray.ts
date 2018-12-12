@@ -4,6 +4,8 @@ import { BrsType } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { BrsArray } from "./BrsArray";
+import { BrsObjects } from "./BrsObjects";
 
 /** A member of an `AssociativeArray` in BrightScript. */
 export interface AAMember {
@@ -19,14 +21,18 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
 
     constructor(elements: AAMember[]) {
         super("roAssociativeArray");
-        elements.forEach(member => this.elements.set(member.name.value, member.value));
+        elements.forEach(member => this.elements.set(member.name.value.toLowerCase(), member.value));
 
         this.registerMethods([
             this.clear,
             this.delete,
             this.addreplace,
             this.count,
-            this.doesexist
+            this.doesexist,
+            this.append,
+            this.keys,
+            this.items,
+            this.lookup
         ]);
     }
 
@@ -66,6 +72,12 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             .map(key => new BrsString(key));
     }
 
+    getValues() {
+        return Array.from(this.elements.values())
+            .sort()
+            .map((value: BrsType) => value);
+    }
+
     get(index: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("Associative array indexes must be strings");
@@ -82,15 +94,14 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
         // method with the desired name separately? That last bit would work but it's pretty gross.
         // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
         // Same with AssociativeArrays I guess.
-        return this.elements.get(index.value) || this.getMethod(index.value) || BrsInvalid.Instance;
+        return this.elements.get(index.value.toLowerCase()) || this.getMethod(index.value) || BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("Associative array indexes must be strings");
         }
-
-        this.elements.set(index.value, value);
+        this.elements.set(index.value.toLowerCase(), value);
         return BrsInvalid.Instance;
     }
 
@@ -172,6 +183,78 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             },
             impl: (interpreter: Interpreter, str: BrsString) => {                
                 return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
+            }
+        }
+    );
+
+    /** Appends a new associative array to another. If two keys are the same, the value of the original AA is replaced with the new one. */
+    private append = new Callable(
+        "append",
+        {
+            signature: {
+                args: [
+                    { name: "obj", type: ValueKind.Object }
+                ],
+                returns: ValueKind.Void
+            },
+            impl: (interpreter: Interpreter, obj: BrsType) => {
+                if (!(obj instanceof AssociativeArray)) {
+                    // TODO: validate against RBI
+                    return BrsInvalid.Instance;
+                }
+
+                this.elements = new Map<string, BrsType>([
+                    ...this.elements,
+                    ...obj.elements
+                ]);
+
+                return BrsInvalid.Instance;
+            }
+        }
+    );
+    
+    /** Returns an array of keys from the associative array in lexicographical order */
+    private keys = new Callable(
+        "keys",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Object
+            },
+            impl: (interpreter: Interpreter) => {
+                return new BrsArray(this.getElements());
+            }
+        }
+    );
+
+    /** Returns an array of values from the associative array in lexicographical order */
+    private items = new Callable(
+        "items",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Object
+            },
+            impl: (interpreter: Interpreter) => {
+                return new BrsArray(this.getValues());
+            }
+        }
+    );
+    
+    /** Given a key, returns the value associated with that key. This method is case insensitive. */
+    private lookup = new Callable(
+        "lookup",
+        {
+            signature: {
+                args: [
+                    { name: "key", type: ValueKind.String }
+                ],
+                returns: ValueKind.Dynamic
+            },
+            impl: (interpreter: Interpreter, key: BrsString) => {
+                let lKey = key.value.toLowerCase();
+                let brsKey = new BrsString(lKey);
+                return this.get(brsKey) ? this.get(brsKey) : BrsInvalid.Instance;
             }
         }
     );
