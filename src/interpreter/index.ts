@@ -14,7 +14,6 @@ import {
     isIterable,
     SignatureAndMismatches,
     MismatchReason,
-    isComparable,
     Callable
 } from "../brsTypes";
 
@@ -200,6 +199,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             right = this.evaluate(expression.right);
         }
 
+        /**
+         * Determines whether or not the provided pair of values are allowed to be compared to each other.
+         * @param left the left-hand side of a comparison operator
+         * @param operator the operator to use when comparing `left` and `right`
+         * @param right the right-hand side of a comparison operator
+         * @returns `true` if `left` and `right` are allowed to be compared to each other with `operator`,
+         *          otherwise `false`.
+         */
+        function canCompare(left: BrsType, operator: Lexeme, right: BrsType ): boolean {
+            if (left.kind === ValueKind.Invalid || right.kind === ValueKind.Invalid) {
+                // anything can be checked for *equality* with `invalid`, but greater than / less than comparisons
+                // are type mismatches
+                return operator === Lexeme.Equal || operator=== Lexeme.LessGreater;
+            }
+
+            // and only primitive non-invalid values can be compared to each other (i.e. no `foo <> []`)
+            return left.kind < ValueKind.Dynamic && right.kind < ValueKind.Dynamic;
+        }
+
         switch (lexeme) {
             case Lexeme.Minus:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
@@ -280,7 +298,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     });
                 }
             case Lexeme.Greater:
-                if (!isComparable(left) || !isComparable(right)) {
+                if (!canCompare(left, lexeme, right)) {
                     throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -291,7 +309,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right);
             case Lexeme.GreaterEqual:
-                if (!isComparable(left) || !isComparable(right)) {
+                if (!canCompare(left, lexeme, right)) {
                     throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -302,7 +320,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.greaterThan(right).or(left.equalTo(right));
             case Lexeme.Less:
-                if (!isComparable(left) || !isComparable(right)) {
+                if (!canCompare(left, lexeme, right)) {
                     throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -313,7 +331,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right);
             case Lexeme.LessEqual:
-                if (!isComparable(left) || !isComparable(right)) {
+                if (!canCompare(left, lexeme, right)) {
                     throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -324,7 +342,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.lessThan(right).or(left.equalTo(right));
             case Lexeme.Equal:
-                if (!isComparable(left) || !isComparable(right)) {
+                if (!canCompare(left, lexeme, right)) {
                     throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
@@ -335,7 +353,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return left.equalTo(right);
             case Lexeme.LessGreater:
-                if (!isComparable(left) || !isComparable(right)) {
+                if (!canCompare(left, lexeme, right)) {
                     throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
