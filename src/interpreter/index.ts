@@ -17,9 +17,8 @@ import {
     Callable
 } from "../brsTypes";
 
-import * as Expr from "../parser/Expression";
-import * as Stmt from "../parser/Statement";
 import { Lexeme } from "../lexer";
+import { Expr, Stmt } from "../parser";
 import * as BrsError from "../Error";
 
 import * as StdLib from "../stdlib";

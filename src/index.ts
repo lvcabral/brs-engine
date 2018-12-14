@@ -11,8 +11,8 @@ import * as BrsError from "./Error";
 
 export { Lexeme, Token, Lexer } from "./lexer";
 import * as BrsTypes from "./brsTypes";
-import { Statement } from "./parser/Statement";
 export { BrsTypes };
+export { Parser };
 
 /** The `stdout`/`stderr` pair from the process that invoked `brs`. */
 const processOutput: OutputStreams = {
