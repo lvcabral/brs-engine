@@ -2,7 +2,7 @@ const BrsError = require("../../lib/Error");
 const { binary } = require("./InterpreterTests");
 const { Interpreter } = require("../../lib/interpreter");
 const { Lexeme, BrsTypes } = require("brs");
-const { Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsArray, BrsInvalid } = BrsTypes;
+const { Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsArray, BrsInvalid, AssociativeArray } = BrsTypes;
 
 let interpreter;
 
@@ -99,17 +99,64 @@ describe("interpreter comparisons", () => {
             test(name, () => {
                 let arr = new BrsArray([]);
 
-                expect(
-                    interpreter.exec(
-                        [ binary(arr, operator, arr) ]
-                    )
-                ).toEqual([ BrsInvalid.Instance ]);
+                expect(() => interpreter.exec(
+                    [ binary(arr, operator, arr) ]
+                )).toThrow(/Attempting to compare non-primitive values/);
                 expect(BrsError.found()).toBe(true);
             });
         });
     });
 
-    describe("invalid mixed-type comparisons", () => {
+    describe("`invalid` comparisons", () => {
+        let invalid = BrsInvalid.Instance;
+
+        [
+            { name: "boolean", value: BrsBoolean.True },
+            { name: "string", value: new BrsString("foo") },
+            { name: "32-bit integer", value: new Int32(5) },
+            { name: "64-bit integer", value: new Int64(-1111111111) },
+            { name: "float", value: new Float(3.4) },
+            { name: "double", value: new Double(7.8) },
+            { name: "array", value: new BrsArray([]) },
+            { name: "associative array", value: new AssociativeArray([]) }
+        ].forEach(({ name, value }) => {
+            test(name, () => {
+                expect(interpreter.exec([
+                    binary(value, Lexeme.Equal, invalid),
+                    binary(invalid, Lexeme.Equal, value),
+                    binary(value, Lexeme.LessGreater, invalid),
+                    binary(invalid, Lexeme.LessGreater, value),
+                ])).toEqual([
+                    BrsBoolean.False,
+                    BrsBoolean.False,
+                    BrsBoolean.True,
+                    BrsBoolean.True
+                ]);
+
+                [ Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual ].forEach(operator => {
+                    expect(() => interpreter.exec([
+                        binary(value, operator, invalid)
+                    ])).toThrow(/Attempting to compare non-primitive values/);
+
+                    expect(() => interpreter.exec([
+                        binary(invalid, operator, value)
+                    ])).toThrow(/Attempting to compare non-primitive values/);
+                });
+            });
+        });
+
+        test("invalid", () =>
+            expect(interpreter.exec([
+                binary(invalid, Lexeme.Equal, invalid),
+                binary(invalid, Lexeme.LessGreater, invalid),
+            ])).toEqual([
+                BrsBoolean.True,
+                BrsBoolean.False
+            ])
+        );
+    });
+
+    describe("disallowed mixed-type comparisons", () => {
         let int32 = new Int32(2);
         let str = new BrsString("two");
         let int64 = new Int64(2);

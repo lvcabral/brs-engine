@@ -112,9 +112,8 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        let [ result ] = interpreter.exec([ast]);
+        expect(() => interpreter.exec([ast])).toThrow(/Attempting to add non-homogeneous values/);
         expect(BrsError.found()).toBe(true);
-        expect(result).toBe(BrsTypes.BrsInvalid.Instance);
     });
 
     it("bitwise ANDs integers", () => {

@@ -48,9 +48,8 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        let [result] = interpreter.exec([ast]);
+        expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'and' boolean/);
         expect(BrsError.found()).toBe(true);
-        expect(result).toEqual(BrsTypes.BrsInvalid.Instance);
     });
 
     it("doesn't allow mixed-type ORs", () => {
@@ -62,8 +61,7 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        let [result] = interpreter.exec([ast]);
+        expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'or' boolean/);
         expect(BrsError.found()).toBe(true);
-        expect(result).toEqual(BrsTypes.BrsInvalid.Instance);
     });
 });
