@@ -7,7 +7,6 @@ const readFile = promisify(fs.readFile);
 import { Token, Lexer } from "./lexer";
 import * as Parser from "./parser";
 import { Interpreter, OutputStreams } from "./interpreter";
-import { stringify } from "./Stringify";
 import * as BrsError from "./Error";
 
 export { Lexeme, Token, Lexer } from "./lexer";
@@ -92,7 +91,7 @@ export function repl() {
     rl.on("line", (line) => {
         let results = run(line, processOutput, replInterpreter);
         if (results) {
-            results.map(result => console.log(stringify(result)));
+            results.map(result => console.log(result.toString()));
         }
 
         BrsError.reset();

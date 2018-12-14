@@ -21,7 +21,6 @@ import {
 import * as Expr from "../parser/Expression";
 import * as Stmt from "../parser/Statement";
 import { Lexeme } from "../lexer";
-import { stringify } from "../Stringify";
 import * as BrsError from "../Error";
 
 import * as StdLib from "../stdlib";
@@ -160,9 +159,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     break;
                 default:
                     this.stdout.write(
-                        stringify(
-                            this.evaluate(printable)
-                        )
+                        this.evaluate(printable).toString()
                     );
                     break;
             }
