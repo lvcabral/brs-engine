@@ -24,13 +24,17 @@
   "dependencies": {
     "commander": "^2.12.2",
     "long": "^3.2.0",
-    "memory-fs": "^0.4.1"
+    "memory-fs": "^0.4.1",
+    "p-settle": "^2.1.0",
+    "pify": "^4.0.1"
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
     "@types/long": "^3.0.32",
     "@types/memory-fs": "^0.3.2",
     "@types/node": "^8.5.2",
+    "@types/p-settle": "^2.0.1",
+    "@types/pify": "^3.0.2",
     "jest": "^22.0.4",
     "npm-run-all": "^4.1.2",
     "rimraf": "^2.6.2",

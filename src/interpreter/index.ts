@@ -90,7 +90,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     exec(statements: ReadonlyArray<Stmt.Statement>) {
-        return statements.map((statement) => this.execute(statement));
+        let results = statements.map((statement) => this.execute(statement));
+        try {
+            let maybeMain = this._environment.get({ kind: Lexeme.Identifier, text: "main", line: -1, isReserved: false });
+            if (maybeMain.kind === ValueKind.Callable) {
+                results = [ maybeMain.call(this) ];
+            }
+        } finally {
+            return results;
+        }
     }
 
     visitAssign(statement: Expr.Assign): BrsType {

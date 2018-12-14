@@ -25,5 +25,3 @@ end sub
 sub setHouseAge()
     m.houseAge = "old"
 end sub
-
-Main()

@@ -1,5 +1,8 @@
 import * as fs from "fs";
 import * as readline from "readline";
+import promisify from "pify";
+import pSettle from "p-settle";
+const readFile = promisify(fs.readFile);
 
 import { Token, Lexer } from "./lexer";
 import * as Parser from "./parser";
@@ -9,6 +12,7 @@ import * as BrsError from "./Error";
 
 export { Lexeme, Token, Lexer } from "./lexer";
 import * as BrsTypes from "./brsTypes";
+import { Statement } from "./parser/Statement";
 export { BrsTypes };
 
 /** The `stdout`/`stderr` pair from the process that invoked `brs`. */
@@ -29,32 +33,46 @@ const processOutput: OutputStreams = {
  *          executed, or be rejected if an error occurs.
  */
 export async function execute(filenames: string[], options: OutputStreams = processOutput) {
-    return new Promise((resolve, reject) => {
-        const interpreter = new Interpreter(options); // shared between files
+    const interpreter = new Interpreter(options); // shared between files
 
-        let brsError;
-        for (let filename of filenames) {
-            try {
-                let contents = fs.readFileSync(filename, "utf-8");
-                run(contents, options, interpreter);
-                if (BrsError.found()) {
-                    brsError = "Error occurred";
-                    break;
-                }
-            } catch (readError) {
-                brsError = `brs: can't open file '${filename}': [Errno ${readError.errno}]`;
-                break;
-            }
-        }
-
-        if (brsError == null) {
-            resolve();
-        } else  {
-            reject({
-                "message" : brsError
+    // wait for all files to be read, lexed, and parsed, but don't exit on the first error
+    let parsedFiles = await pSettle(filenames.map(async (filename) => {
+        let contents;
+        try {
+            contents = await readFile(filename, "utf-8");
+        } catch (err) {
+            return Promise.reject({
+                message: `brs: can't open file '${filename}': [Errno ${err.errno}]`
             });
         }
-    });
+
+        let tokens = Lexer.scan(contents);
+        let statements = Parser.parse(tokens);
+
+        if (BrsError.found()) {
+            return Promise.reject({
+                message: "Error occurred"
+            });
+        }
+
+        return Promise.resolve(statements || []);
+    }));
+
+    // don't execute anything if there were reading, lexing, or parsing errors
+    if (parsedFiles.some(file => file.isRejected)) {
+        return Promise.reject({
+            messages: parsedFiles.filter(file => file.isRejected).map(rejection => rejection.reason.message)
+        });
+    }
+
+    // combine statements from all files into one array
+    let statements = parsedFiles.map(file => file.value || []).reduce(
+        (allStatements, fileStatements) => [ ...allStatements, ...fileStatements ],
+        []
+    );
+
+    // execute them
+    return interpreter.exec(statements);
 }
 
 /**

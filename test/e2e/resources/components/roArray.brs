@@ -12,5 +12,3 @@ sub Main()
     arr.clear()
     print "can empty itself: " arr.count() = 0  ' => true
 end sub
-
-Main()
