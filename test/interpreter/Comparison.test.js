@@ -99,11 +99,9 @@ describe("interpreter comparisons", () => {
             test(name, () => {
                 let arr = new BrsArray([]);
 
-                expect(
-                    interpreter.exec(
-                        [ binary(arr, operator, arr) ]
-                    )
-                ).toEqual([ BrsInvalid.Instance ]);
+                expect(() => interpreter.exec(
+                    [ binary(arr, operator, arr) ]
+                )).toThrow(/Attempting to compare non-primitive values/);
                 expect(BrsError.found()).toBe(true);
             });
         });

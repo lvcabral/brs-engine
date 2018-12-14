@@ -205,72 +205,66 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.subtract(right);
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to subtract non-numeric values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Star:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.multiply(right);
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to multiply non-numeric values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Caret:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.pow(right);
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to exponentiate non-numeric values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Slash:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.divide(right);
                 }
-                BrsError.typeMismatch({
+                throw BrsError.typeMismatch({
                     message: "Attempting to dividie non-numeric values.",
                     left: left,
                     right: right,
                     line: expression.token.line
                 });
-                return BrsInvalid.Instance;
             case Lexeme.Mod:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.modulo(right);
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to modulo non-numeric values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Backslash:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.intDivide(right);
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to integer-divide non-numeric values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Plus:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
@@ -278,83 +272,76 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else if (isBrsString(left) && isBrsString(right)) {
                     return left.concat(right);
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to add non-homogeneous values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Greater:
                 if (!isComparable(left) || !isComparable(right)) {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
 
                 return left.greaterThan(right);
             case Lexeme.GreaterEqual:
                 if (!isComparable(left) || !isComparable(right)) {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
 
                 return left.greaterThan(right).or(left.equalTo(right));
             case Lexeme.Less:
                 if (!isComparable(left) || !isComparable(right)) {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
 
                 return left.lessThan(right);
             case Lexeme.LessEqual:
                 if (!isComparable(left) || !isComparable(right)) {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
 
                 return left.lessThan(right).or(left.equalTo(right));
             case Lexeme.Equal:
                 if (!isComparable(left) || !isComparable(right)) {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
 
                 return left.equalTo(right);
             case Lexeme.LessGreater:
                 if (!isComparable(left) || !isComparable(right)) {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to compare non-primitive values.",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
 
                 return left.equalTo(right).not();
@@ -368,13 +355,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         return (left as BrsBoolean).and(right);
                     }
 
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to 'and' boolean with non-boolean value",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 } else if (isBrsNumber(left)) {
                     right = this.evaluate(expression.right);
 
@@ -384,21 +370,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
 
                     // TODO: figure out how to handle 32-bit int AND 64-bit int
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to bitwise 'and' number with non-numberic value",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to 'and' unexpected values",
                         left: left,
                         right: this.evaluate(expression.right),
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Or:
                 if (isBrsBoolean(left) && left.toBoolean()) {
@@ -409,13 +393,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (isBrsBoolean(right)) {
                         return (left as BrsBoolean).or(right);
                     } else {
-                        BrsError.typeMismatch({
+                        throw BrsError.typeMismatch({
                             message: "Attempting to 'or' boolean with non-boolean value",
                             left: left,
                             right: right,
                             line: expression.token.line
                         });
-                        return BrsInvalid.Instance;
                     }
                 } else if (isBrsNumber(left)) {
                     right = this.evaluate(expression.right);
@@ -424,21 +407,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
 
                     // TODO: figure out how to handle 32-bit int OR 64-bit int
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to bitwise 'or' number with non-numeric expression",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 } else {
-                    BrsError.typeMismatch({
+                    throw BrsError.typeMismatch({
                         message: "Attempting to 'or' unexpected values",
                         left: left,
                         right: right,
                         line: expression.token.line
                     });
-                    return BrsInvalid.Instance;
                 }
             default:
                 BrsError.make(
