@@ -253,8 +253,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             },
             impl: (interpreter: Interpreter, key: BrsString) => {
                 let lKey = key.value.toLowerCase();
-                let brsKey = new BrsString(lKey);
-                return this.get(brsKey) ? this.get(brsKey) : BrsInvalid.Instance;
+                return this.get(new BrsString(lKey));
             }
         }
     );

@@ -158,8 +158,7 @@ describe("AssociativeArray", () => {
                 expect(count).toBeTruthy();
 
                 let result = count.call(interpreter);
-                expect(result.value).toEqual(2);
-                expect(result.kind).toBe(ValueKind.Int32);
+                expect(result).toEqual(new Int32(2));
             });
         })
 
@@ -218,13 +217,7 @@ describe("AssociativeArray", () => {
                 ]);
 
                 let result = append.call(interpreter, aa2);
-                let resultKeys = resultAA.getElements();
-                let aa1Keys = aa1.getElements();
-
-                resultKeys.forEach(element => {
-                    expect(aa1Keys).toContainEqual(new BrsString(element.value));
-                });
-
+                expect(aa1.toString()).toEqual(resultAA.toString());
                 expect(result).toBe(BrsInvalid.Instance);
             });
         });
