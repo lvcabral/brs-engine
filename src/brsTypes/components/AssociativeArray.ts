@@ -119,7 +119,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-    
+
     /** Removes a given item from the associative array */
     private delete = new Callable(
         "delete",
@@ -136,7 +136,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-    
+
     /** Given a key and value, adds an item to the associative array if it doesn't exist
      * Or replaces the value of a key that already exists in the associative array
      */
@@ -156,7 +156,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-    
+
     /** Returns the number of items in the associative array */
     private count = new Callable(
         "count",
@@ -170,7 +170,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-    
+
     /** Returns a boolean indicating whether or not a given key exists in the associative array */
     private doesexist = new Callable(
         "doesexist",
@@ -181,7 +181,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
                 ],
                 returns: ValueKind.Boolean
             },
-            impl: (interpreter: Interpreter, str: BrsString) => {                
+            impl: (interpreter: Interpreter, str: BrsString) => {
                 return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
             }
         }
@@ -212,7 +212,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-    
+
     /** Returns an array of keys from the associative array in lexicographical order */
     private keys = new Callable(
         "keys",
@@ -240,7 +240,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             }
         }
     );
-    
+
     /** Given a key, returns the value associated with that key. This method is case insensitive. */
     private lookup = new Callable(
         "lookup",
