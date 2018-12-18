@@ -31,4 +31,20 @@ describe("end to end brightscript functions", () => {
             ]);
         });
     });
+
+    test("components/roAssociativeArray.brs", () => {
+        return execute([ resourceFile("components", "roAssociativeArray.brs") ], outputStreams).then(() => {
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "AA size: ", "3",
+                "AA keys size: ", "3",
+                "AA items size: ", "3",
+                "can delete elements: ", "true",
+                "can look up elements: ", "true",
+                "can check for existence: ", "true",
+                "can empty itself: ", "true"
+            ]);
+        });
+    });
 });
