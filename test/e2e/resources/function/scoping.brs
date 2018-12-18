@@ -11,5 +11,3 @@ end sub
 sub ModuleDefined()
     ' just needs to exist
 end sub
-
-Main()

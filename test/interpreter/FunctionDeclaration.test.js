@@ -258,4 +258,23 @@ describe("interpreter function declarations", () => {
 
         expect(() => interpreter.exec(statements)).not.toThrow();
     });
+
+    it.only("automatically calls main()", () => {
+        let mainBody = new Stmt.Block([]);
+        jest.spyOn(mainBody, "accept");
+
+        let statements = [
+            new Stmt.Function(
+                { kind: Lexeme.Identifier, text: "Main", isReserved: false, line: 1 },
+                new Expr.Function(
+                    [], // accepts no arguments
+                    ValueKind.Void, // returns nothing
+                    mainBody
+                )
+            )
+        ];
+
+        expect(() => interpreter.exec(statements)).not.toThrow();
+        expect(mainBody.accept).toHaveBeenCalledTimes(1);
+    });
 });

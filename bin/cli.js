@@ -19,7 +19,7 @@ program
     .action((brsFiles) => {
         if (brsFiles.length > 0) {
             brs.execute(brsFiles).catch(err => {
-                console.error(err.message);
+                err.messages.forEach(message => console.error(message));
                 process.exit(1);
             });
         } else {

@@ -1,5 +1,4 @@
-const Parser = require("../../../lib/parser");
-const { Lexeme } = require("brs");
+const { Lexeme, Parser } = require("brs");
 const BrsError = require("../../../lib/Error");
 
 const { token, EOF } = require("../ParserTests");
