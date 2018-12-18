@@ -252,4 +252,48 @@ describe("lexer", () => {
             expect(identifier.text).toBe("_abc_123_");
         });
     });
+
+    describe("conditional compilation", () => {
+        it("reads constant declarations", () => {
+            let tokens = Lexer.scan("#const foo true");
+            expect(tokens.map(t => t.kind)).toEqual([
+                Lexeme.HashConst,
+                Lexeme.Identifier,
+                Lexeme.True,
+                Lexeme.Eof
+            ]);
+        });
+
+        it("reads constant aliases", () => {
+            let tokens = Lexer.scan("#const bar foo");
+            expect(tokens.map(t => t.kind)).toEqual([
+                Lexeme.HashConst,
+                Lexeme.Identifier,
+                Lexeme.Identifier,
+                Lexeme.Eof
+            ]);
+        });
+
+        it("reads conditional directives", () => {
+            let tokens = Lexer.scan("#if #else if #else #end if");
+            expect(tokens.map(t => t.kind)).toEqual([
+                Lexeme.HashIf,
+                Lexeme.HashElseIf,
+                Lexeme.HashElse,
+                Lexeme.HashEndIf,
+                Lexeme.Eof
+            ]);
+        });
+
+        it("reads forced compilation errors with messages", () => {
+            let tokens = Lexer.scan("#error a message goes here\n");
+            expect(tokens.map(t => t.kind)).toEqual([
+                Lexeme.HashError,
+                Lexeme.HashErrorMessage,
+                Lexeme.Eof
+            ]);
+
+            expect(tokens[1].text).toBe("a message goes here");
+        });
+    });
 }); // lexer

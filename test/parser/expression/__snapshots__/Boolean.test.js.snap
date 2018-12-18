@@ -22,7 +22,7 @@ Array [
         },
       },
       "token": Object {
-        "kind": 31,
+        "kind": 38,
         "line": 1,
         "text": "and",
       },
@@ -53,7 +53,7 @@ Array [
         },
       },
       "token": Object {
-        "kind": 62,
+        "kind": 69,
         "line": 1,
         "text": "or",
       },

@@ -8,7 +8,7 @@ Array [
         "statements": Array [
           Return {
             "keyword": Object {
-              "kind": 66,
+              "kind": 73,
               "line": 2,
               "text": "return",
             },
@@ -50,7 +50,7 @@ Array [
         "statements": Array [
           Return {
             "keyword": Object {
-              "kind": 66,
+              "kind": 73,
               "line": 2,
               "text": "return",
             },
@@ -83,7 +83,7 @@ Array [
         "statements": Array [
           Return {
             "keyword": Object {
-              "kind": 66,
+              "kind": 73,
               "line": 2,
               "text": "return",
             },

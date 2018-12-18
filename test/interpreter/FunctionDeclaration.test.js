@@ -259,7 +259,7 @@ describe("interpreter function declarations", () => {
         expect(() => interpreter.exec(statements)).not.toThrow();
     });
 
-    it.only("automatically calls main()", () => {
+    it("automatically calls main()", () => {
         let mainBody = new Stmt.Block([]);
         jest.spyOn(mainBody, "accept");
 

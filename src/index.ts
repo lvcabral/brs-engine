@@ -5,6 +5,7 @@ import pSettle from "p-settle";
 const readFile = promisify(fs.readFile);
 
 import { Token, Lexer } from "./lexer";
+import * as Preprocessor from "./preprocessor";
 import * as Parser from "./parser";
 import { Interpreter, OutputStreams } from "./interpreter";
 import * as BrsError from "./Error";
@@ -12,6 +13,7 @@ import * as BrsError from "./Error";
 export { Lexeme, Token, Lexer } from "./lexer";
 import * as BrsTypes from "./brsTypes";
 export { BrsTypes };
+export { Preprocessor };
 export { Parser };
 
 /** The `stdout`/`stderr` pair from the process that invoked `brs`. */
@@ -46,7 +48,9 @@ export async function execute(filenames: string[], options: OutputStreams = proc
         }
 
         let tokens = Lexer.scan(contents);
-        let statements = Parser.parse(tokens);
+        // TODO: Does this need to work across multiple files?
+        let processedTokens = Preprocessor.preprocess(tokens);
+        let statements = Parser.parse(processedTokens);
 
         if (BrsError.found()) {
             return Promise.reject({

@@ -48,7 +48,8 @@ export function scan(toScan: string): ReadonlyArray<Token> {
     tokens.push({
         kind: Lexeme.Eof,
         isReserved: false,
-        line: line
+        line: line,
+        text: "\0"
     });
 
     return tokens;
@@ -140,6 +141,9 @@ function scanToken(): void {
             break;
         case "\"":
             string();
+            break;
+        case "#":
+            preProcessedConditional();
             break;
         default:
             if (isDigit(c)) {
@@ -395,6 +399,69 @@ function identifier() {
 }
 
 /**
+ * Reads characters within an identifier with a leading '#', typically reserved for conditional
+ * compilation. Adds the produced token to the `tokens` array.
+ */
+function preProcessedConditional() {
+    advance(); // advance past the leading #
+    while (isAlphaNumeric(peek())) { advance(); }
+
+    let text = source.slice(start, current).toLowerCase();
+
+    // some identifiers can be split into two words, so check the "next" word and see what we get
+    if ((text === "#end" || text === "#else") && peek() === " ") {
+        let endOfFirstWord = current;
+
+        advance(); // skip past the space
+        while (isAlphaNumeric(peek())) { advance(); } // read the next word
+
+        let twoWords = source.slice(start, current);
+        switch (twoWords.replace(/ {2,}/g, " ")) {
+            case "#else if":
+                addToken(Lexeme.HashElseIf);
+                return;
+            case "#end if":
+                addToken(Lexeme.HashEndIf);
+                return;
+        }
+
+        // reset if the last word and the current word didn't form a multi-word Lexeme
+        current = endOfFirstWord;
+    }
+
+    switch (text) {
+        case "#if":
+            addToken(Lexeme.HashIf);
+            return;
+        case "#else":
+            addToken(Lexeme.HashElse);
+            return;
+        case "#const":
+            addToken(Lexeme.HashConst);
+            return;
+        case "#error":
+            addToken(Lexeme.HashError);
+
+            // #error must be followed by a message; scan it separately to preserve whitespace
+            start = current;
+            while (!isAtEnd() && peek() !== "\n") {
+                advance();
+            }
+
+            // grab all text since we found #error as one token
+            addToken(Lexeme.HashErrorMessage);
+
+            // consume the trailing newline here; it's not semantically significant
+            match("\n");
+
+            start = current;
+            return;
+        default:
+            BrsError.make(`Found unexpected conditional-compilation string '${text}'`, line);
+    }
+}
+
+/**
  * Retrieves the token that was most recently added.
  * @returns the most recently added token.
  */
@@ -408,7 +475,7 @@ function lastToken(): Token | undefined {
  * @param literal an optional literal value to include in the token.
  */
 function addToken(kind: Lexeme, literal?: BrsType): void {
-    let text = source.slice(start, current);
+    let text = source.slice(start, current).trimLeft();
     tokens.push({
         kind: kind,
         text: text,

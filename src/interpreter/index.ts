@@ -93,6 +93,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (maybeMain.kind === ValueKind.Callable) {
                 results = [ maybeMain.call(this) ];
             }
+        } catch (err) {
+            throw err;
         } finally {
             return results;
         }

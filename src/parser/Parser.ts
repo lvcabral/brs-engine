@@ -33,6 +33,10 @@ export function parse(toParse: ReadonlyArray<Token>) {
 
     let statements: Statement[] = [];
 
+    if (toParse.length === 0) {
+        return [];
+    }
+
     try {
         while (!isAtEnd()) {
             let dec = declaration();
@@ -43,7 +47,7 @@ export function parse(toParse: ReadonlyArray<Token>) {
 
         return statements;
     } catch (parseError) {
-        return;
+        return [];
     }
 }
 

@@ -42,6 +42,15 @@ export enum Lexeme {
     Colon,
     Semicolon,
 
+    // conditional compilation
+    HashIf,
+    HashElseIf,
+    HashElse,
+    HashEndIf,
+    HashConst,
+    HashError,
+    HashErrorMessage,
+
     // keywords
     // canonical source: https://sdkdocs.roku.com/display/sdkdoc/Reserved+Words
     And,

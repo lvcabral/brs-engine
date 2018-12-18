@@ -63,31 +63,31 @@ Array [
     },
     "value": Unary {
       "operator": Object {
-        "kind": 60,
+        "kind": 67,
         "line": 1,
         "text": "not",
       },
       "right": Unary {
         "operator": Object {
-          "kind": 60,
+          "kind": 67,
           "line": 1,
           "text": "not",
         },
         "right": Unary {
           "operator": Object {
-            "kind": 60,
+            "kind": 67,
             "line": 1,
             "text": "not",
           },
           "right": Unary {
             "operator": Object {
-              "kind": 60,
+              "kind": 67,
               "line": 1,
               "text": "not",
             },
             "right": Unary {
               "operator": Object {
-                "kind": 60,
+                "kind": 67,
                 "line": 1,
                 "text": "not",
               },
@@ -141,7 +141,7 @@ Array [
     },
     "value": Unary {
       "operator": Object {
-        "kind": 60,
+        "kind": 67,
         "line": 1,
         "text": "not",
       },
