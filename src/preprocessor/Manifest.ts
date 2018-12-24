@@ -22,7 +22,6 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
     let manifestPath = path.join(rootDir, "manifest");
 
     if (!await exists(manifestPath)) {
-        if (process.env.NODE_ENV !== "test") { console.warn(`No manifest file detected at ${manifestPath}`); }
         return Promise.resolve(new Map());
     }
 
