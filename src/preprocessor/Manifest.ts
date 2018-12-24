@@ -33,18 +33,23 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
         .split("\n")
         // remove leading/trailing whitespace
         .map(line => line.trim())
-        // ignore empty lines and commented lines
-        .filter(line => line && !line.startsWith("#"))
         // separate keys and values
-        .map(line => {
+        .map((line, index) => {
+            // skip empty lines and comments
+            if (line === "" || line.startsWith("#")) {
+                return ["", ""];
+            }
+
             let equals = line.indexOf("=");
             if (equals === -1) {
-                throw new Error("No '=' detected.  Manifest lines must be of the form 'key=value'.");
+                throw new Error(`[manifest:${index + 1}] No '=' detected.  Manifest attributes must be of the form 'key=value'.`);
             }
             return [line.slice(0, equals), line.slice(equals + 1)];
         })
         // keep only non-empty keys and values
         .filter(([key, value]) => key && value)
+        // remove leading/trailing whitespace from keys and values
+        .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean, integer, or leave as string
         .map(([key, value]): [string, ManifestValue] => {
             if (value === "true") { return [key, true]; }
@@ -83,10 +88,12 @@ export function getBsConst(manifest: Manifest): Map<string, boolean> {
         .map(keyValuePair => {
             let equals = keyValuePair.indexOf("=");
             if (equals === -1) {
-                throw new Error("No '=' detected.  bs_const constants must be of the form 'key=value'.");
+                throw new Error(`No '=' detected for key ${keyValuePair}.  bs_const constants must be of the form 'key=value'.`);
             }
             return [keyValuePair.slice(0, equals), keyValuePair.slice(equals + 1)];
         })
+        // remove leading/trailing whitespace from keys and values
+        .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean or throw
         .map(([key, value]): [string, boolean] => {
             if (value === "true") { return [key, true]; }

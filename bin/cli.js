@@ -27,7 +27,7 @@ program
                 if (err.messages && err.messages.length) {
                     err.messages.forEach(message => console.error(message));
                 } else {
-                    console.error(err);
+                    console.error(err.message);
                 }
                 process.exit(1);
             });
