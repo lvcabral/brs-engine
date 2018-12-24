@@ -24,7 +24,11 @@ program
     .action((brsFiles) => {
         if (brsFiles.length > 0) {
             brs.execute(brsFiles).catch(err => {
-                err.messages.forEach(message => console.error(message));
+                if (err.messages && err.messages.length) {
+                    err.messages.forEach(message => console.error(message));
+                } else {
+                    console.error(err);
+                }
                 process.exit(1);
             });
         } else {

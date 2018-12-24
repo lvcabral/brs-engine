@@ -7,7 +7,7 @@ const readFile = promisify(fs.readFile);
 import { Token, Lexer } from "./lexer";
 import * as Preprocessor from "./preprocessor";
 import * as Parser from "./parser";
-import { Interpreter, OutputStreams } from "./interpreter";
+import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interpreter";
 import * as BrsError from "./Error";
 
 export { Lexeme, Token, Lexer } from "./lexer";
@@ -16,25 +16,23 @@ export { BrsTypes };
 export { Preprocessor };
 export { Parser };
 
-/** The `stdout`/`stderr` pair from the process that invoked `brs`. */
-const processOutput: OutputStreams = {
-    stdout: process.stdout,
-    stderr: process.stderr
-};
 
 /**
  * Executes a BrightScript file by path and writes its output to the streams
  * provided in `options`.
  *
  * @param filename the absolute path to the `.brs` file to be executed
- * @param options the streams to use for `stdout` and `stderr`. Mostly used for
- *                testing.
+ * @param options configuration for the execution, including the streams to use for `stdout` and
+ *                `stderr` and the base directory for path resolution
  *
  * @returns a `Promise` that will be resolve if `filename` is successfully
  *          executed, or be rejected if an error occurs.
  */
-export async function execute(filenames: string[], options: OutputStreams = processOutput) {
-    const interpreter = new Interpreter(options); // shared between files
+export async function execute(filenames: string[], options: Partial<ExecutionOptions>) {
+    const executionOptions = Object.assign(defaultExecutionOptions, options);
+    const interpreter = new Interpreter(executionOptions); // shared between files
+
+    let manifest = await Preprocessor.getManifest(executionOptions.root);
 
     // wait for all files to be read, lexed, and parsed, but don't exit on the first error
     let parsedFiles = await pSettle(filenames.map(async (filename) => {
@@ -49,7 +47,7 @@ export async function execute(filenames: string[], options: OutputStreams = proc
 
         let tokens = Lexer.scan(contents);
         // TODO: Does this need to work across multiple files?
-        let processedTokens = Preprocessor.preprocess(tokens);
+        let processedTokens = Preprocessor.preprocess(tokens, manifest);
         let statements = Parser.parse(processedTokens);
 
         if (BrsError.found()) {
@@ -93,7 +91,7 @@ export function repl() {
     rl.setPrompt("brs> ");
 
     rl.on("line", (line) => {
-        let results = run(line, processOutput, replInterpreter);
+        let results = run(line, defaultExecutionOptions, replInterpreter);
         if (results) {
             results.map(result => console.log(result.toString()));
         }
@@ -116,7 +114,7 @@ export function repl() {
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(contents: string, options: OutputStreams = processOutput, interpreter?: Interpreter) {
+function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter?: Interpreter) {
     const tokens: ReadonlyArray<Token> = Lexer.scan(contents);
     const statements = Parser.parse(tokens);
 

@@ -30,10 +30,20 @@ import { BlockEnd, StopReason } from "../parser/Statement";
 import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
 import MemoryFileSystem from "memory-fs";
 
-export interface OutputStreams {
+/** The set of options used to configure an interpreter's execution. */
+export interface ExecutionOptions {
+    /** The base path for  */
+    root: string,
     stdout: NodeJS.WriteStream,
     stderr: NodeJS.WriteStream
 }
+
+/** The default set of execution options.  Includes the `stdout`/`stderr` pair from the process that invoked `brs`. */
+export const defaultExecutionOptions: ExecutionOptions = {
+    root: process.cwd(),
+    stdout: process.stdout,
+    stderr: process.stderr
+};
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
@@ -50,7 +60,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param outputStreams the WriteStreams to use for `stdout` and `stderr`.
      */
-    constructor(outputStreams: OutputStreams = process) {
+    constructor(outputStreams: ExecutionOptions = defaultExecutionOptions) {
         this.stdout = new OutputProxy(outputStreams.stdout);
         this.stderr = new OutputProxy(outputStreams.stderr);
 
