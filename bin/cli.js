@@ -17,13 +17,13 @@ program
     .description("Off-Roku BrightScript interpreter")
     .arguments("brs [brsFiles...]")
     .option(
-        "-r, --root",
-        "The root directory from which `pkg:` paths will be resolved. [default: current working directory]",
+        "-r, --root <directory>",
+        "The root directory from which `pkg:` paths will be resolved.",
         process.cwd()
     )
-    .action((brsFiles) => {
+    .action((brsFiles, program) => {
         if (brsFiles.length > 0) {
-            brs.execute(brsFiles).catch(err => {
+            brs.execute(brsFiles, { root: program.root }).catch(err => {
                 if (err.messages && err.messages.length) {
                     err.messages.forEach(message => console.error(message));
                 } else {
