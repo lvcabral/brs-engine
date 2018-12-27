@@ -18,4 +18,4 @@ export function preprocess(tokens: ReadonlyArray<Token>, manifest: Manifest) {
 import * as Chunk from "./Chunk";
 export { Chunk };
 export { parse } from "./Parser";
-export { getManifest, Manifest } from "./Manifest";
+export { getManifest, getBsConst, Manifest } from "./Manifest";

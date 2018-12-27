@@ -51,8 +51,8 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
         .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean, integer, or leave as string
         .map(([key, value]): [string, ManifestValue] => {
-            if (value === "true") { return [key, true]; }
-            if (value === "false") { return [key, false]; }
+            if (value.toLowerCase() === "true") { return [key, true]; }
+            if (value.toLowerCase() === "false") { return [key, false]; }
 
             let maybeNumber = Number.parseInt(value);
             // if it's not a number, it's just a string
@@ -66,7 +66,8 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
 /**
  * Parses a 'manifest' file's `bs_const` property into a map of key to boolean value.
  * @param manifest the internal representation of the 'manifest' file to extract `bs_const` from
- * @returns a map of key to boolean value, representing the `bs_const` attribute
+ * @returns a map of key to boolean value representing the `bs_const` attribute, or an empty map if
+ *          no `bs_const` attribute is found.
  */
 export function getBsConst(manifest: Manifest): Map<string, boolean> {
     if (!manifest.has("bs_const")) {
@@ -95,8 +96,8 @@ export function getBsConst(manifest: Manifest): Map<string, boolean> {
         .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean or throw
         .map(([key, value]): [string, boolean] => {
-            if (value === "true") { return [key, true]; }
-            if (value === "false") { return [key, false]; }
+            if (value.toLowerCase() === "true") { return [key, true]; }
+            if (value.toLowerCase() === "false") { return [key, false]; }
             throw new Error(`Invalid value for bs_const key '${key}'.  Values must be either 'true' or 'false'.`);
         });
 
