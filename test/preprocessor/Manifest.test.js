@@ -10,36 +10,36 @@ describe("manifest support", () => {
             fs.exists.mockRestore();
         });
 
-        it("returns an empty map if manifest not found", async () => {
+        it("returns an empty map if manifest not found", () => {
             fs.exists.mockImplementation((filename, cb) => cb(false));
-            expect(
+            return expect(
                 getManifest("/no/manifest/here")
             ).resolves.toEqual(new Map());
         });
 
-        it("rejects key-value pairs with no '='", async () => {
+        it("rejects key-value pairs with no '='", () => {
             fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(/* no error */ null, "no_equal")
             );
 
-            expect(
+            return expect(
                 getManifest("/has/key/but/no/equal")
             ).rejects.toThrowError("No '=' detected");
         });
 
-        it("ignores comments", async () => {
+        it("ignores comments", () => {
             fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(/* no error */ null, "# this line is ignored!")
             );
 
-            expect(
+            return expect(
                 getManifest("/has/a/manifest")
             ).resolves.toEqual(new Map());
         });
 
-        it("ignores empty keys and values", async () => {
+        it("ignores empty keys and values", () => {
             fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(
@@ -48,18 +48,18 @@ describe("manifest support", () => {
                 )
             );
 
-            expect(
+            return expect(
                 getManifest("/has/blank/keys/and/values")
             ).resolves.toEqual(new Map());
         });
 
-        it("trims whitespace from keys and values", async () => {
+        it("trims whitespace from keys and values", () => {
             fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb( /* no error */ null, "    key = value    ")
             );
 
-            expect(
+            return expect(
                 getManifest("/has/extra/whitespace")
             ).resolves.toEqual(
                 new Map([
@@ -68,7 +68,7 @@ describe("manifest support", () => {
              );
         });
 
-        it("parses key-value pairs", async () => {
+        it("parses key-value pairs", () => {
             fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(
