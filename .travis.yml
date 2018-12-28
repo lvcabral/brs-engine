@@ -8,4 +8,5 @@ cache: yarn
 before_script: yarn build
 script:
   - yarn lint
-  - yarn test
+  # reduce process creation on Travis builds
+  - yarn test --runInBand
