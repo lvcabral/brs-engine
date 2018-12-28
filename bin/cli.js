@@ -16,15 +16,24 @@ const packageJson = JSON.parse(
 program
     .description("Off-Roku BrightScript interpreter")
     .arguments("brs [brsFiles...]")
-    .action((brsFiles) => {
+    .option(
+        "-r, --root <directory>",
+        "The root directory from which `pkg:` paths will be resolved.",
+        process.cwd()
+    )
+    .action((brsFiles, program) => {
         if (brsFiles.length > 0) {
-            brs.execute(brsFiles).catch(err => {
-                err.messages.forEach(message => console.error(message));
+            brs.execute(brsFiles, { root: program.root }).catch(err => {
+                if (err.messages && err.messages.length) {
+                    err.messages.forEach(message => console.error(message));
+                } else {
+                    console.error(err.message);
+                }
                 process.exit(1);
             });
         } else {
             brs.repl();
         }
     })
-    .version(packageJson.version)
+    .version(packageJson.version, "-v, --version")
     .parse(process.argv);

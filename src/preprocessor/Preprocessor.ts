@@ -14,9 +14,11 @@ export class Preprocessor implements CC.Visitor {
     /**
      * Filters the tokens contained within a set of chunks based on a set of constants.
      * @param chunks the chunks from which to retrieve tokens
+     * @param bsConst the set of constants defined in a BrightScript `manifest` file's `bs_const` property
      * @returns an array of tokens, filtered by conditional compilation directives included within
      */
-    filter(chunks: ReadonlyArray<CC.Chunk>) {
+    filter(chunks: ReadonlyArray<CC.Chunk>, bsConst: Map<string, boolean>) {
+        this.constants = new Map(bsConst);
         return chunks.map(chunk => chunk.accept(this)).reduce(
            (allTokens: Token[], chunkTokens: Token[]) => [ ...allTokens, ...chunkTokens ],
            []

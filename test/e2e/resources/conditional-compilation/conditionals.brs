@@ -1,4 +1,3 @@
-#const lorem = false
 #const ipsum = true
 ' dolor simply aliases lorem
 #const dolor = lorem
