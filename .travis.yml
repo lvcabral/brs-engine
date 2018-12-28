@@ -3,6 +3,8 @@ node_js:
   - "6"
   - "8"
   - "10"
+# cache dependencies between jobs (on a per-runtime-version basis)
+cache: yarn
 before_script: yarn build
 script:
   - yarn lint
