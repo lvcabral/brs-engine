@@ -25,7 +25,7 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
         return Promise.resolve(new Map());
     }
 
-    let contents = await readFile(manifestPath, "utf-8");
+    let contents: string = await readFile(manifestPath, "utf-8");
 
     let keyValuePairs = contents
         // for each line
