@@ -3,7 +3,10 @@ node_js:
   - "6"
   - "8"
   - "10"
+# cache dependencies between jobs (on a per-runtime-version basis)
+cache: yarn
 before_script: yarn build
 script:
   - yarn lint
-  - yarn test
+  # reduce process creation on Travis builds
+  - yarn test --runInBand
