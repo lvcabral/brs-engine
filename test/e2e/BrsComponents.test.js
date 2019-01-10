@@ -1,12 +1,14 @@
 const { execute } = require("../../lib/");
 const BrsError = require("../../lib/Error");
-
 const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
+const lolex = require("lolex")
 
 describe("end to end brightscript functions", () => {
     let outputStreams;
+    let clock;
 
     beforeAll(() => {
+        clock = lolex.install({ now: 1547072370937 });
         outputStreams = createMockStreams();
     });
 
@@ -15,6 +17,7 @@ describe("end to end brightscript functions", () => {
     });
 
     afterAll(() => {
+        clock.uninstall()
         jest.restoreAllMocks();
     });
 
@@ -44,6 +47,17 @@ describe("end to end brightscript functions", () => {
                 "can look up elements: ", "true",
                 "can check for existence: ", "true",
                 "can empty itself: ", "true"
+            ]);
+        });
+    });
+
+    test("components/roTimespan.brs", () => {
+        return execute([ resourceFile("components", "roTimespan.brs") ], outputStreams).then(() => {
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "can return seconds from date until now: ",  "373447701",
+                "can return 2077252342 for date that can't be parsed: ", "2077252342"
             ]);
         });
     });

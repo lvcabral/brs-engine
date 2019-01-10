@@ -29,6 +29,7 @@ import { toCallable } from "./BrsFunction";
 import { BlockEnd, StopReason } from "../parser/Statement";
 import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
 import MemoryFileSystem from "memory-fs";
+import { BrsComponent } from "../brsTypes/components/BrsComponent";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -590,19 +591,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitDottedGet(expression: Expr.DottedGet) {
         let source = this.evaluate(expression.obj);
-        if (!isIterable(source)) {
+
+        if (isIterable(source)) {
+            try {
+                return source.get(new BrsString(expression.name.text));
+            } catch (err) {
+                throw BrsError.make(err.message, expression.name.line);
+            }
+        } else if (source instanceof BrsComponent) {
+            try {
+                return source.getMethod(expression.name.text) || BrsInvalid.Instance;
+            } catch (err) {
+                throw BrsError.make(err.message, expression.name.line);
+            }
+        } else {
             throw BrsError.typeMismatch({
                 message: "Attempting to retrieve property from non-iterable value",
                 line: expression.name.line,
                 left: source
             });
-            return BrsInvalid.Instance;
-        }
-
-        try {
-            return source.get(new BrsString(expression.name.text));
-        } catch (err) {
-            throw BrsError.make(err.message, expression.name.line);
         }
     }
 
