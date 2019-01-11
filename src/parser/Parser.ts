@@ -77,7 +77,13 @@ function functionDeclaration(isAnonymous: boolean) {
     let isSub = check(Lexeme.Sub);
     let functionType = isSub ? "sub" : "function";
     let name: Identifier;
-    let returnType: ValueKind | undefined = ValueKind.Dynamic;
+    let returnType: ValueKind;
+
+    if (isSub) {
+        returnType = ValueKind.Void;
+    } else {
+        returnType = ValueKind.Dynamic;
+    }
 
     advance();
 
@@ -110,11 +116,13 @@ function functionDeclaration(isAnonymous: boolean) {
 
         let typeToken = advance();
         let typeString = typeToken.text || "";
-        returnType = ValueKind.fromString(typeString);
+        let maybeReturnType = ValueKind.fromString(typeString);
 
-        if (!returnType) {
+        if (!maybeReturnType) {
             throw ParseError.make(typeToken, `Function return type '${typeString}' is invalid`);
         }
+
+        returnType = maybeReturnType;
     }
 
     args.reduce((haveFoundOptional: boolean, arg: Argument) => {

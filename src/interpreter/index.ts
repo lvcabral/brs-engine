@@ -142,7 +142,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitReturn(statement: Stmt.Return): never {
         if (!statement.value) {
-            throw new Stmt.ReturnValue(statement.keyword, BrsInvalid.Instance);
+            throw new Stmt.ReturnValue(statement.keyword);
         }
 
         let toReturn = this.evaluate(statement.value);
@@ -527,16 +527,38 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 let returnedValue = (reason as Stmt.ReturnValue).value;
                 let returnLocation = (reason as Stmt.ReturnValue).location;
-                if (satisfiedSignature.signature.returns !== ValueKind.Dynamic && satisfiedSignature.signature.returns !== returnedValue.kind) {
-                    throw BrsError.make(
-                        `Attempting to return value of type ${ValueKind.toString(returnedValue.kind)}, `
-                        + `but function ${callee.getName()} declares return value of type `
-                        + ValueKind.toString(satisfiedSignature.signature.returns),
-                        returnLocation.line
+
+                if (returnedValue && satisfiedSignature.signature.returns === ValueKind.Void) {
+                    throw new Stmt.Runtime(
+                        BrsError.make(
+                            `Attempting to return value of non-void type ${ValueKind.toString(returnedValue.kind)} `
+                            + `from function ${callee.getName()} with void return type.`,
+                            returnLocation.line
+                        )
                     );
                 }
 
-                return returnedValue;
+                if (!returnedValue && satisfiedSignature.signature.returns !== ValueKind.Void) {
+                    throw new Stmt.Runtime(
+                        BrsError.make(
+                            `Attempting to return void value from function ${callee.getName()} with non-void return type.`,
+                            returnLocation.line
+                        )
+                    );
+                }
+
+                if (returnedValue && satisfiedSignature.signature.returns !== ValueKind.Dynamic && satisfiedSignature.signature.returns !== returnedValue.kind) {
+                    throw new Stmt.Runtime(
+                        BrsError.make(
+                            `Attempting to return value of type ${ValueKind.toString(returnedValue.kind)}, `
+                            + `but function ${callee.getName()} declares return value of type `
+                            + ValueKind.toString(satisfiedSignature.signature.returns),
+                            returnLocation.line
+                        )
+                    );
+                }
+
+                return returnedValue || BrsInvalid.Instance;
             }
         } else {
             function formatMismatch(mismatchedSignature: SignatureAndMismatches) {

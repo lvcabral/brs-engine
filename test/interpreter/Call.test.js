@@ -3,7 +3,7 @@ const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
 const { Lexeme, BrsTypes } = require("brs");
-const { BrsString, ValueKind } = BrsTypes;
+const { BrsString, Int32, ValueKind } = BrsTypes;
 
 const { identifier } = require("../parser/ParserTests");
 
@@ -110,6 +110,95 @@ describe("interpreter calls", () => {
         );
 
         expect(() => interpreter.exec([call])).toThrow(/Argument '.+' must be of type/);
+        expect(BrsError.found()).toBe(true);
+    });
+
+    it("errors when return types don't match", () => {
+        const ast = [
+            new Stmt.Function(
+                { kind: Lexeme.Identifier, text: "foo", line: 1 },
+                new Expr.Function(
+                    [],
+                    ValueKind.String,
+                    new Stmt.Block([
+                        new Stmt.Return(
+                            { kind: Lexeme.Return, text: "return", line: 2, isReserved: true },
+                            new Expr.Literal(new Int32(5))
+                        )
+                    ])
+                )
+            ),
+            new Stmt.Expression(
+                new Expr.Call(
+                    new Expr.Variable(identifier("foo")),
+                    { kind: Lexeme.RightParen, text: ")", line: 2 },
+                    [] // no args required
+                )
+            )
+        ];
+
+        expect(() => interpreter.exec(ast)).toThrow(
+            /\[Line .\] Attempting to return value of type Integer, but function foo declares return value of type String/
+        );
+        expect(BrsError.found()).toBe(true);
+    });
+
+    it("errors when returning from a void return", () => {
+        const ast = [
+            new Stmt.Function(
+                { kind: Lexeme.Identifier, text: "foo", line: 1 },
+                new Expr.Function(
+                    [],
+                    ValueKind.Void,
+                    new Stmt.Block([
+                        new Stmt.Return(
+                            { kind: Lexeme.Return, text: "return", line: 2, isReserved: true },
+                            new Expr.Literal(new Int32(5))
+                        )
+                    ])
+                )
+            ),
+            new Stmt.Expression(
+                new Expr.Call(
+                    new Expr.Variable(identifier("foo")),
+                    { kind: Lexeme.RightParen, text: ")", line: 2 },
+                    [] // no args required
+                )
+            )
+        ];
+
+        expect(() => interpreter.exec(ast)).toThrow(
+            /\[Line .\] Attempting to return value of non-void type/
+        );
+        expect(BrsError.found()).toBe(true);
+    });
+
+    it("errors when returning void from a non-void return", () => {
+        const ast = [
+            new Stmt.Function(
+                { kind: Lexeme.Identifier, text: "foo", line: 1 },
+                new Expr.Function(
+                    [],
+                    ValueKind.String,
+                    new Stmt.Block([
+                        new Stmt.Return(
+                            { kind: Lexeme.Return, text: "return", line: 2, isReserved: true }
+                        )
+                    ])
+                )
+            ),
+            new Stmt.Expression(
+                new Expr.Call(
+                    new Expr.Variable(identifier("foo")),
+                    { kind: Lexeme.RightParen, text: ")", line: 2 },
+                    [] // no args required
+                )
+            )
+        ];
+
+        expect(() => interpreter.exec(ast)).toThrow(
+            /\[Line .\] Attempting to return void value/
+        );
         expect(BrsError.found()).toBe(true);
     });
 });

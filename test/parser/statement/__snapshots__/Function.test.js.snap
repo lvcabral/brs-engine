@@ -254,7 +254,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
     "name": Object {
       "kind": 21,
@@ -284,7 +284,7 @@ Array [
         ],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
     "name": Object {
       "kind": 21,
@@ -348,7 +348,7 @@ Array [
           "type": 9,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
     "name": Object {
       "kind": 21,
@@ -462,7 +462,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
     "name": Object {
       "kind": 21,

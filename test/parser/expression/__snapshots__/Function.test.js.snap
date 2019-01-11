@@ -264,7 +264,7 @@ Array [
         "statements": Array [],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -294,7 +294,7 @@ Array [
         ],
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -358,7 +358,7 @@ Array [
           "type": 9,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -472,7 +472,7 @@ Array [
           "type": 3,
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]

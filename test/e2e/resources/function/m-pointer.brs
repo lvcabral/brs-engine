@@ -9,13 +9,13 @@ sub Main()
     print "m.houseAge = " m.houseAge
 end sub
 
-sub createCarpenter()
+function createCarpenter()
     return {
         name: "Norm Abrams",
         safetyGlassesOn: false
         work: __work
     }
-end sub
+end function
 
 sub __work()
     ' always remember to wear these, safety glasses

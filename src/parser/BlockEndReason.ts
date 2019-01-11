@@ -24,9 +24,13 @@ export class ExitWhileReason implements BlockEnd {
 export class ReturnValue implements BlockEnd {
     readonly kind = StopReason.Return;
 
-    constructor(readonly location: Token, readonly value: BrsType) {}
+    constructor(readonly location: Token, readonly value?: BrsType) {}
 }
 
-export class Runtime implements BlockEnd {
+export class Runtime extends Error implements BlockEnd {
     readonly kind = StopReason.RuntimeError;
+
+    constructor(readonly err: Error) {
+        super(err.message);
+    }
 }
