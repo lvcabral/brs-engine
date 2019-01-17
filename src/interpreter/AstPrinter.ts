@@ -14,10 +14,6 @@ export class AstPrinter implements Expr.Visitor<string> {
         return expression.accept(this);
     }
 
-    visitAssign(e: Expr.Assign): string {
-        return JSON.stringify(e, undefined, 2);
-    }
-
     visitAnonymousFunction(e: Expr.Function): string {
         return JSON.stringify(e, undefined, 2);
     }
@@ -45,12 +41,6 @@ export class AstPrinter implements Expr.Visitor<string> {
         return JSON.stringify(e, undefined, 2);
     }
     visitAALiteral(e: Expr.AALiteral): string {
-        return JSON.stringify(e, undefined, 2);
-    }
-    visitLogical(e: Expr.Logical): string {
-        return JSON.stringify(e, undefined, 2);
-    }
-    visitM(e: Expr.M): string {
         return JSON.stringify(e, undefined, 2);
     }
     visitDottedSet(e: Stmt.DottedSet): string {

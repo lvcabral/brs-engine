@@ -3,7 +3,6 @@ import { BrsType, Argument, ValueKind, BrsString } from "../brsTypes";
 import { Block } from "./Statement";
 
 export interface Visitor<T> {
-    visitAssign(expression: Assign): T;
     visitBinary(expression: Binary): T;
     visitCall(expression: Call): T;
     visitAnonymousFunction(func: Function): T;
@@ -13,25 +12,12 @@ export interface Visitor<T> {
     visitLiteral(expression: Literal): T;
     visitArrayLiteral(expression: ArrayLiteral): T;
     visitAALiteral(expression: AALiteral): T;
-    visitLogical(expression: Logical): T;
-    visitM(expression: M): T;
     visitUnary(expression: Unary): T;
     visitVariable(expression: Variable): T;
 }
 
 export interface Expression {
     accept <R> (visitor: Visitor<R>): R;
-}
-
-export class Assign implements Expression {
-    constructor(
-        readonly name: Token,
-        readonly value: Expression
-    ) {}
-
-    accept <R> (visitor: Visitor<R>): R {
-        return visitor.visitAssign(this);
-    }
 }
 
 export class Binary implements Expression {
@@ -136,26 +122,6 @@ export class AALiteral implements Expression {
 
     accept <R> (visitor: Visitor<R>): R {
         return visitor.visitAALiteral(this);
-    }
-}
-
-export class Logical implements Expression {
-    constructor(
-        readonly left: Expression,
-        readonly operator: Token,
-        readonly right: Expression
-    ) {}
-
-    accept<R>(visitor: Visitor<R>): R {
-        return visitor.visitLogical(this);
-    }
-}
-
-export class M implements Expression {
-    constructor(readonly keyword: Token) {}
-
-    accept<R>(visitor: Visitor<R>): R {
-        return visitor.visitM(this);
     }
 }
 

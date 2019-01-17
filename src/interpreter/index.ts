@@ -116,10 +116,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitAssign(statement: Expr.Assign): BrsType {
-        return BrsInvalid.Instance;
-    }
-
     visitNamedFunction(statement: Stmt.Function): BrsType {
         if (statement.name.isReserved) {
             throw BrsError.make(`Cannot create a named function with reserved name '${statement.name.text}'`, statement.name.line);
@@ -816,13 +812,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         );
     }
 
-    visitLogical(expression: Expr.Logical) {
-        return BrsInvalid.Instance;
-    }
-    visitM(expression: Expr.M) {
-        return BrsInvalid.Instance;
-    }
-
     visitDottedSet(statement: Stmt.DottedSet) {
         let source = this.evaluate(statement.obj);
         let value = this.evaluate(statement.value);
@@ -833,7 +822,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 line: statement.name.line,
                 left: source
             });
-            return BrsInvalid.Instance;
         }
 
         try {
