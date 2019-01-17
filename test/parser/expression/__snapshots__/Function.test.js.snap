@@ -1,5 +1,35 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`parser function expressions parses colon-separated function declarations 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "kind": 21,
+      "line": 1,
+      "text": "_",
+    },
+    "value": Function {
+      "body": Block {
+        "statements": Array [
+          Print {
+            "expressions": Array [
+              Literal {
+                "value": BrsString {
+                  "kind": 2,
+                  "value": "Lorem ipsum",
+                },
+              },
+            ],
+          },
+        ],
+      },
+      "parameters": Array [],
+      "returns": 9,
+    },
+  },
+]
+`;
+
 exports[`parser function expressions parses functions with default argument expressions 1`] = `
 Array [
   Assignment {

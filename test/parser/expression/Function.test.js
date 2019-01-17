@@ -26,6 +26,27 @@ describe("parser", () => {
             expect(parsed).toMatchSnapshot();
         });
 
+        it("parses colon-separated function declarations", () => {
+            let parsed = Parser.parse([
+                { kind: Lexeme.Identifier, text: "_", line: 1 },
+                { kind: Lexeme.Equal, text: "=", line: 1 },
+                { kind: Lexeme.Function, text: "function", line: 1 },
+                { kind: Lexeme.LeftParen, text: "(", line: 1 },
+                { kind: Lexeme.RightParen, text: ")", line: 1 },
+                { kind: Lexeme.Colon, text: ":", line: 1 },
+                { kind: Lexeme.Print, text: "print", line: 2 },
+                { kind: Lexeme.String, text: "Lorem ipsum", line: 2, literal: new BrsString("Lorem ipsum") },
+                { kind: Lexeme.Colon, text: ":", line: 2 },
+                { kind: Lexeme.EndFunction, text: "end function", line: 3 },
+                EOF
+            ]);
+
+            expect(BrsError.found()).toBeFalsy();
+            expect(parsed).toBeDefined();
+            expect(parsed).not.toBeNull();
+            expect(parsed).toMatchSnapshot();
+        });
+
         it("parses non-empty function expressions", () => {
             let parsed = Parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },

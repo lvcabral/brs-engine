@@ -136,7 +136,7 @@ function functionDeclaration(isAnonymous: boolean) {
         return haveFoundOptional || !!arg.defaultValue;
     }, false);
 
-    consume(`Expected newline after ${functionType} signature`, Lexeme.Newline);
+    consume(`Expected newline or ':' after ${functionType} signature`, Lexeme.Newline, Lexeme.Colon);
     let body = block(isSub ? Lexeme.EndSub : Lexeme.EndFunction);
     if (!body) {
         throw ParseError.make(peek(), `Expected 'end ${functionType}' to terminate ${functionType} block`);
