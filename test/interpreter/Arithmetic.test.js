@@ -10,7 +10,6 @@ let interpreter;
 
 describe("interpreter arithmetic", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -98,9 +97,7 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        let [ result ] = interpreter.exec([ast]);
-        expect(BrsError.found()).toBe(true);
-        expect(result).toBe(BrsTypes.BrsInvalid.Instance);
+        expect(() => interpreter.exec([ast])).toThrow(/Attempting to negate non-numeric value/);
     });
 
     it("doesn't allow mixed-type arithmetic", () => {

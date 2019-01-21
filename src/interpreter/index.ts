@@ -946,23 +946,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(right)) {
                     return right.multiply(new Int32(-1));
                 } else {
-                    new BrsError(
-                        `Attempting to negate non-numeric value.
-                        value type: ${ValueKind.toString(right.kind)}`,
-                        expression.operator.line
+                    return this.addError(
+                        new BrsError(
+                            `Attempting to negate non-numeric value.
+                            value type: ${ValueKind.toString(right.kind)}`,
+                            expression.operator.line
+                        )
                     );
-                    return BrsInvalid.Instance;
                 }
             case Lexeme.Not:
                 if (isBrsBoolean(right)) {
                     return right.not();
                 } else {
-                    new BrsError(
-                        `Attempting to NOT non-boolean value.
-                        value type: ${ValueKind.toString(right.kind)}`,
-                        expression.operator.line
+                    return this.addError(
+                        new BrsError(
+                            `Attempting to NOT non-boolean value.
+                            value type: ${ValueKind.toString(right.kind)}`,
+                            expression.operator.line
+                        )
                     );
-                    return BrsInvalid.Instance;
                 }
         }
 
