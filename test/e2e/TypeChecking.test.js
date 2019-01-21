@@ -1,11 +1,9 @@
 const { execute } = require("../../lib/");
-const BrsError = require("../../lib/Error");
 
 const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
 describe("function argument type checking", () => {
     let outputStreams;
-    let originalNodeEnv;
 
     beforeAll(() => {
         // make console.error empty so we don't clutter test output
@@ -15,7 +13,6 @@ describe("function argument type checking", () => {
 
     afterEach(() => {
         stderr.mockClear();
-        BrsError.reset();
     });
 
     afterAll(() => {

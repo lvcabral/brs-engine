@@ -1,6 +1,4 @@
-const fs = require("fs");
 const { execute } = require("../../lib/");
-const BrsError = require("../../lib/Error");
 
 const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 

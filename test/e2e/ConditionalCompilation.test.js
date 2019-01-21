@@ -1,5 +1,4 @@
 const { execute } = require("../../lib/");
-const BrsError = require("../../lib/Error");
 const path = require("path");
 
 const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
@@ -11,10 +10,6 @@ describe("end to end conditional compilation", () => {
         outputStreams = createMockStreams();
     });
 
-    afterEach(() => {
-        BrsError.reset();
-    });
-
     test("conditional-compilation/conditionals.brs", () => {
         return execute(
             [ resourceFile("conditional-compilation", "conditionals.brs") ],
@@ -23,7 +18,6 @@ describe("end to end conditional compilation", () => {
                 { root: path.join(process.cwd(), "test", "e2e", "resources", "conditional-compilation") }
             )
         ).then(() => {
-            expect(BrsError.found()).toBe(false);
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
@@ -43,7 +37,6 @@ describe("end to end conditional compilation", () => {
                     done.fail("execute() should have rejected");
                 })
                 .catch(() => {
-                    expect(BrsError.found()).toBe(true);
                     expect(
                         allArgs(stderr).filter(arg => arg !== "\n")
                     ).toEqual([
