@@ -27,7 +27,7 @@ export class Parser {
         const emitError = (err: ParseError): never => {
             this.events.emit("err", err);
             throw err;
-        }
+        };
 
         try {
             return nChunks();

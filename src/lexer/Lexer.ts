@@ -57,7 +57,7 @@ export class Lexer {
         const addError = (err: BrsError) => {
             errors.push(err);
             this.events.emit("err", err);
-        }
+        };
 
         while (!isAtEnd()) {
             start = current;
