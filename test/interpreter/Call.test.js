@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
@@ -11,7 +10,6 @@ let interpreter;
 
 describe("interpreter calls", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -79,7 +77,6 @@ describe("interpreter calls", () => {
         );
 
         expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when too many arguments are provided", () => {
@@ -95,7 +92,6 @@ describe("interpreter calls", () => {
         );
 
         expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when argument types are incorrect", () => {
@@ -110,7 +106,6 @@ describe("interpreter calls", () => {
         );
 
         expect(() => interpreter.exec([call])).toThrow(/Argument '.+' must be of type/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when return types don't match", () => {
@@ -140,7 +135,6 @@ describe("interpreter calls", () => {
         expect(() => interpreter.exec(ast)).toThrow(
             /\[Line .\] Attempting to return value of type Integer, but function foo declares return value of type String/
         );
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when returning from a void return", () => {
@@ -170,7 +164,6 @@ describe("interpreter calls", () => {
         expect(() => interpreter.exec(ast)).toThrow(
             /\[Line .\] Attempting to return value of non-void type/
         );
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when returning void from a non-void return", () => {
@@ -199,6 +192,5 @@ describe("interpreter calls", () => {
         expect(() => interpreter.exec(ast)).toThrow(
             /\[Line .\] Attempting to return void value/
         );
-        expect(BrsError.found()).toBe(true);
     });
 });

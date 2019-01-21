@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
@@ -9,8 +8,6 @@ let interpreter;
 
 describe("interpreter function declarations", () => {
     beforeEach(() => {
-        BrsError.reset();
-
         interpreter = new Interpreter();
     });
 
@@ -27,7 +24,6 @@ describe("interpreter function declarations", () => {
         ];
 
         interpreter.exec(statements);
-        expect(BrsError.found()).toBe(false);
 
         let storedValue = interpreter.environment.get(
             { kind: Lexeme.Identifier, text: "foo", line: 3 }
@@ -61,7 +57,6 @@ describe("interpreter function declarations", () => {
         ];
 
         interpreter.exec(statements);
-        expect(BrsError.found()).toBe(false);
 
         expect(emptyBlock.accept).toHaveBeenCalledTimes(1);
     });
@@ -96,7 +91,6 @@ describe("interpreter function declarations", () => {
         ];
 
         interpreter.exec(statements);
-        expect(BrsError.found()).toBe(false);
 
         let storedResult = interpreter.environment.get(
             { kind: Lexeme.Identifier, text: "result", line: 5 }
@@ -138,7 +132,6 @@ describe("interpreter function declarations", () => {
         ];
 
         interpreter.exec(statements);
-        expect(BrsError.found()).toBe(false);
 
         let storedResult = interpreter.environment.get(
             { kind: Lexeme.Identifier, text: "result", line: 5 }
@@ -180,7 +173,6 @@ describe("interpreter function declarations", () => {
         ];
 
         expect(() => interpreter.exec(statements)).toThrow("Attempting to return value of type");
-        expect(BrsError.found()).toBe(true);
     });
 
     it("evaluates default arguments", () => {
@@ -217,7 +209,6 @@ describe("interpreter function declarations", () => {
         ];
 
         interpreter.exec(statements);
-        expect(BrsError.found()).toBe(false);
 
         let storedResult = interpreter.environment.get(
             { kind: Lexeme.Identifier, text: "result", line: 5 }

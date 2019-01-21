@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { identifier } = require("../parser/ParserTests");
@@ -10,7 +9,6 @@ let interpreter;
 
 describe("interpreter variables", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 

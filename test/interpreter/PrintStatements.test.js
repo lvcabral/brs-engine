@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { identifier } = require("../parser/ParserTests");
@@ -12,7 +11,6 @@ describe("interperter print statements", () => {
     let stdout, stderr, interpreter;
 
     beforeEach(() => {
-        BrsError.reset();
         const outputStreams = createMockStreams();
         interpreter = new Interpreter(outputStreams);
 

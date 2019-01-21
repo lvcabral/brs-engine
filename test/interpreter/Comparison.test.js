@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const { binary } = require("./InterpreterTests");
 const { Interpreter } = require("../../lib/interpreter");
 const { Lexeme, BrsTypes } = require("brs");
@@ -63,7 +62,6 @@ function verifyComparisons(small, large) {
 
 describe("interpreter comparisons", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -102,7 +100,6 @@ describe("interpreter comparisons", () => {
                 expect(() => interpreter.exec(
                     [ binary(arr, operator, arr) ]
                 )).toThrow(/Attempting to compare non-primitive values/);
-                expect(BrsError.found()).toBe(true);
             });
         });
     });

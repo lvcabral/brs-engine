@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { token } = require("../parser/ParserTests");
@@ -9,7 +8,6 @@ let interpreter;
 
 describe("interpreter boolean algebra", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -49,7 +47,6 @@ describe("interpreter boolean algebra", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'and' boolean/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("doesn't allow mixed-type ORs", () => {
@@ -62,6 +59,5 @@ describe("interpreter boolean algebra", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'or' boolean/);
-        expect(BrsError.found()).toBe(true);
     });
 });

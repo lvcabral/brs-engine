@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { token } = require("../parser/ParserTests");
@@ -110,7 +109,6 @@ describe("interpreter arithmetic", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(/Attempting to add non-homogeneous values/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("bitwise ANDs integers", () => {

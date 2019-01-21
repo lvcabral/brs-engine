@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
@@ -9,7 +8,6 @@ let interpreter;
 
 describe("property setting", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -42,7 +40,6 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(BrsError.found()).toBe(false);
             expect(
                 interpreter.environment.get(
                     { kind: Lexeme.Identifier, text: "result", line: -1 }
@@ -97,7 +94,6 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(BrsError.found()).toBe(false);
             expect(
                 interpreter.environment.get(
                     { kind: Lexeme.Identifier, text: "result", line: -1 }
@@ -146,8 +142,6 @@ describe("property setting", () => {
             ];
 
             interpreter.exec(ast);
-
-            expect(BrsError.found()).toBeFalsy();
 
             expect(
                 interpreter.environment.get(
@@ -218,8 +212,6 @@ describe("property setting", () => {
             ];
 
             interpreter.exec(ast);
-
-            expect(BrsError.found()).toBeFalsy();
 
             expect(
                 interpreter.environment.get(

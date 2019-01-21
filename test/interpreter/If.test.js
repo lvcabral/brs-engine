@@ -1,4 +1,3 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { identifier, token } = require("../parser/ParserTests");
@@ -12,8 +11,6 @@ describe("interpreter if statements", () => {
     let assignTo;
 
     beforeEach(() => {
-        BrsError.reset();
-
         assignTo = {
             foo: new Stmt.Assignment(
                 identifier("foo"),
