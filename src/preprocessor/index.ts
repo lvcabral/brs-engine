@@ -1,21 +1,36 @@
+import { EventEmitter } from "events";
+
 import { Token } from "../lexer";
 
-import { parse } from "./Parser";
-import { Preprocessor } from "./Preprocessor";
+import { Parser } from "./Parser";
+import { Preprocessor as InternalPreprocessor } from "./Preprocessor";
 import { Manifest, getBsConst } from "./Manifest";
 
-/**
- * Pre-processes a set of tokens, evaluating any conditional compilation directives encountered.
- * @param tokens the set of tokens to process
- * @param manifest the data stored in
- * @returns an array of processed tokens representing a subset of the provided ones
- */
-export function preprocess(tokens: ReadonlyArray<Token>, manifest: Manifest) {
-    let chunks = parse(tokens);
-    return new Preprocessor().filter(chunks, getBsConst(manifest));
+export class Preprocessor {
+    private parser = new Parser();
+    private _preprocessor = new InternalPreprocessor();
+
+    readonly events = new EventEmitter();
+
+    constructor() {
+        // plumb errors from the internal parser and preprocessor out to the public interface for convenience
+        this.parser.events.on("err", (err) => this.events.emit("err", err));
+        this._preprocessor.events.on("err", (err) => this.events.emit("err", err));
+    }
+
+    /**
+     * Pre-processes a set of tokens, evaluating any conditional compilation directives encountered.
+     * @param tokens the set of tokens to process
+     * @param manifest the data stored in the found manifest file
+     * @returns an array of processed tokens representing a subset of the provided ones
+     */
+    preprocess(tokens: ReadonlyArray<Token>, manifest: Manifest) {
+        let chunks = this.parser.parse(tokens);
+        return this._preprocessor.filter(chunks, getBsConst(manifest));
+    }
 }
 
 import * as Chunk from "./Chunk";
 export { Chunk };
-export { parse } from "./Parser";
+export { Parser } from "./Parser";
 export { getManifest, getBsConst, Manifest } from "./Manifest";

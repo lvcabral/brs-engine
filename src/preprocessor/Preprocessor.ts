@@ -1,3 +1,5 @@
+import { EventEmitter } from "events";
+
 import * as CC from "./Chunk";
 import { ParseError } from "../parser";
 import { Token, Lexeme } from "../lexer";
@@ -10,6 +12,18 @@ import { BrsError } from "../Error";
 export class Preprocessor implements CC.Visitor {
 
     private constants = new Map<string, boolean>();
+
+    /** Allows consumers to observe errors as they're detected. */
+    readonly events = new EventEmitter();
+
+    /**
+     * Emits an error via this processor's `events` property, then throws it.
+     * @param err the ParseError to emit then throw
+     */
+    private emitError(err: BrsError): never {
+        this.events.emit("err", err);
+        throw err;
+    }
 
     /**
      * Filters the tokens contained within a set of chunks based on a set of constants.
@@ -42,7 +56,9 @@ export class Preprocessor implements CC.Visitor {
      */
     visitDeclaration(chunk: CC.Declaration) {
         if (this.constants.has(chunk.name.text)) {
-            throw new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line);
+            return this.emitError(
+                new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line)
+            );
         }
 
         let value;
@@ -59,9 +75,13 @@ export class Preprocessor implements CC.Visitor {
                     break;
                 }
 
-                throw new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line);
+                return this.emitError(
+                    new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line)
+                );
             default:
-                throw new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line);
+                return this.emitError(
+                    new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line)
+                );
         }
 
         this.constants.set(chunk.name.text, value);
@@ -75,7 +95,7 @@ export class Preprocessor implements CC.Visitor {
      * @throws a JavaScript error with the provided message
      */
     visitError(chunk: CC.Error): never {
-        throw new ParseError(chunk.hashError, chunk.message);
+        return this.emitError(new ParseError(chunk.hashError, chunk.message));
     }
 
     /**
@@ -121,9 +141,13 @@ export class Preprocessor implements CC.Visitor {
                     return this.constants.get(token.text) as boolean;
                 }
 
-                throw new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.line);
+                return this.emitError(
+                    new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.line)
+                );
             default:
-                throw new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.line);
+                return this.emitError(
+                    new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.line)
+                );
         }
     }
 }

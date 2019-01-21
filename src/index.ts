@@ -5,7 +5,7 @@ import pSettle from "p-settle";
 const readFile = promisify(fs.readFile);
 
 import { Token, Lexer } from "./lexer";
-import * as Preprocessor from "./preprocessor";
+import * as PP from "./preprocessor";
 import * as Parser from "./parser";
 import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interpreter";
 import * as BrsError from "./Error";
@@ -13,7 +13,7 @@ import * as BrsError from "./Error";
 export { Lexeme, Token, Lexer } from "./lexer";
 import * as BrsTypes from "./brsTypes";
 export { BrsTypes };
-export { Preprocessor };
+export { PP as Preprocessor };
 export { Parser };
 
 
@@ -32,7 +32,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
     const executionOptions = Object.assign(defaultExecutionOptions, options);
     const interpreter = new Interpreter(executionOptions); // shared between files
 
-    let manifest = await Preprocessor.getManifest(executionOptions.root);
+    let manifest = await PP.getManifest(executionOptions.root);
 
     // wait for all files to be read, lexed, and parsed, but don't exit on the first error
     let parsedFiles = await pSettle(filenames.map(async (filename) => {
@@ -45,9 +45,11 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
             });
         }
 
-        let tokens = Lexer.scan(contents);
-        // TODO: Does this need to work across multiple files?
-        let processedTokens = Preprocessor.preprocess(tokens, manifest);
+        let lexer = new Lexer();
+        let preprocessor = new PP.Preprocessor();
+
+        let tokens = lexer.scan(contents);
+        let processedTokens = preprocessor.preprocess(tokens, manifest);
         let statements = Parser.parse(processedTokens);
 
         if (BrsError.found()) {
