@@ -16,7 +16,7 @@ describe("parser", () => {
 
     describe("exponential expressions", () => {
         it("parses exponential operators", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "2", literal: new Int32(2), line: 1 },
@@ -25,14 +25,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses repeated exponential operators as left-associative", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "2", literal: new Int32(2), line: 1 },
@@ -43,10 +43,10 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 });

@@ -16,7 +16,7 @@ describe("parser", () => {
 
     describe("function declarations", () => {
         it("parses minimal empty function declarations", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -26,14 +26,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses non-empty function declarations", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -46,14 +46,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses functions with implicit-dynamic arguments", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "add2", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -66,14 +66,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses functions with typed arguments", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "repeat", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -90,14 +90,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses functions with default argument expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -124,14 +124,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses functions with typed arguments and default expressions", () => {
-             let parsed = parser.parse([
+             let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -157,14 +157,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses return types", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -176,16 +176,16 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 
     describe("sub declarations", () => {
         it("parses minimal sub declarations", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "bar", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -195,14 +195,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses non-empty sub declarations", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -215,14 +215,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses subs with implicit-dynamic arguments", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "add2", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -235,14 +235,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses subs with typed arguments", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Function, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "repeat", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -259,14 +259,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses subs with default argument expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -293,14 +293,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses subs with typed arguments and default expressions", () => {
-             let parsed = parser.parse([
+             let { statements, errors } = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -326,14 +326,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("doesn't allow return types", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },

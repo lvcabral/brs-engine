@@ -16,7 +16,7 @@ describe("parser associative array literals", () => {
 
     describe("empty associative arrays", () => {
         test("on one line", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftBrace, text: "{", line: 1 },
@@ -24,14 +24,14 @@ describe("parser associative array literals", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         test("on multiple lines", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftBrace, text: "{", line: 1 },
@@ -45,16 +45,16 @@ describe("parser associative array literals", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 
     describe("filled arrays", () => {
         test("on one line", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftBrace, text: "{", line: 1 },
@@ -73,14 +73,14 @@ describe("parser associative array literals", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         test("on multiple lines with commas", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftBrace, text: "{", line: 1 },
@@ -103,14 +103,14 @@ describe("parser associative array literals", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         test("on multiple lines without commas", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftBrace, text: "{", line: 1 },
@@ -131,15 +131,15 @@ describe("parser associative array literals", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 
     it("allows a mix of quoted and unquoted keys", () => {
-        let parsed = parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "_", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
             { kind: Lexeme.LeftBrace, text: "{", line: 1 },
@@ -162,9 +162,9 @@ describe("parser associative array literals", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBeFalsy();
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 });

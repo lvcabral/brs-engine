@@ -16,7 +16,7 @@ describe("parser", () => {
 
     describe("relational expressions", () => {
         it("parses less-than expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -25,14 +25,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses less-than-or-equal-to expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -41,14 +41,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses greater-than expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -57,14 +57,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses greater-than-or-equal-to expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -73,14 +73,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses equality expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -89,14 +89,14 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses inequality expressions", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -105,10 +105,10 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 });

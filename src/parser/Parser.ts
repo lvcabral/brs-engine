@@ -26,6 +26,14 @@ type BlockTerminator =
     Lexeme.EndSub |
     Lexeme.EndFunction;
 
+/** The results of a Parser's parsing pass. */
+interface ParseResults {
+    /** The statements produced by the parser. */
+    statements: ReadonlyArray<Stmt.Statement>,
+    /** The errors encountered by the Parser. */
+    errors: ReadonlyArray<ParseError>
+}
+
 export class Parser {
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -35,7 +43,7 @@ export class Parser {
      * @param toParse the array of tokens to parse
      * @returns an array of `Statement` objects that together form the abstract syntax tree of the program
      */
-    parse(toParse: ReadonlyArray<Token>) {
+    parse(toParse: ReadonlyArray<Token>): ParseResults {
         let current = 0;
         let tokens = toParse;
 
@@ -51,7 +59,10 @@ export class Parser {
 
 
         if (toParse.length === 0) {
-            return [];
+            return {
+                statements: [],
+                errors: []
+            };
         }
 
         try {
@@ -62,9 +73,12 @@ export class Parser {
                 }
             }
 
-            return statements;
+            return { statements, errors };
         } catch (parseError) {
-            return [];
+            return {
+                statements: [],
+                errors: errors
+            };
         }
 
         function declaration(...additionalTerminators: BlockTerminator[]): Statement | undefined {

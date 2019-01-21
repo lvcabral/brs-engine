@@ -15,7 +15,7 @@ describe("parser for loops", () => {
     afterEach(() => BrsError.reset());
 
     it("accepts a 'step' clause", () => {
-        let parsed = parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.For, text: "for", line: 1 },
             { kind: Lexeme.Identifier, text: "i", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
@@ -31,17 +31,17 @@ describe("parser for loops", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed[0]).toBeDefined();
-        expect(parsed[0].increment).toBeDefined();
-        expect(parsed[0].increment.value).toEqual(new Int32(2));
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements[0]).toBeDefined();
+        expect(statements[0].increment).toBeDefined();
+        expect(statements[0].increment.value).toEqual(new Int32(2));
 
-        expect(parsed).toMatchSnapshot();
+        expect(statements).toMatchSnapshot();
     });
 
     it("defaults a missing 'step' clause to '1'", () => {
-        let parsed = parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.For, text: "for", line: 1 },
             { kind: Lexeme.Identifier, text: "i", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
@@ -55,12 +55,12 @@ describe("parser for loops", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed[0]).toBeDefined();
-        expect(parsed[0].increment).toBeDefined();
-        expect(parsed[0].increment.value).toEqual(new Int32(1));
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements[0]).toBeDefined();
+        expect(statements[0].increment).toBeDefined();
+        expect(statements[0].increment.value).toEqual(new Int32(1));
 
-        expect(parsed).toMatchSnapshot();
+        expect(statements).toMatchSnapshot();
     });
 });

@@ -16,7 +16,7 @@ describe("parser indexing", () => {
 
     describe("one level", () => {
         test("dotted", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -25,14 +25,14 @@ describe("parser indexing", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         test("bracketed", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -42,16 +42,16 @@ describe("parser indexing", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 
     describe("multi-level", () => {
         test("dotted", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -60,14 +60,14 @@ describe("parser indexing", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         test("bracketed", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -83,14 +83,14 @@ describe("parser indexing", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         test("mixed", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -104,10 +104,10 @@ describe("parser indexing", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 });

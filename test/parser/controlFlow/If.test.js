@@ -16,7 +16,7 @@ describe("parser if statements", () => {
 
     describe("single-line if", () => {
         it("parses if only", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -30,14 +30,14 @@ describe("parser if statements", () => {
             ]);
 
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses if-else", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -54,14 +54,14 @@ describe("parser if statements", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses if-elseif-else", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -86,14 +86,14 @@ describe("parser if statements", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("allows 'then' to be skipped", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -116,16 +116,16 @@ describe("parser if statements", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 
     describe("block if", () => {
         it("parses if only", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },
@@ -144,14 +144,14 @@ describe("parser if statements", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses if-else", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },
@@ -176,14 +176,14 @@ describe("parser if statements", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses if-elseif-else", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },
@@ -219,14 +219,14 @@ describe("parser if statements", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("allows 'then' to be skipped", () => {
-            let parsed = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },
@@ -260,10 +260,10 @@ describe("parser if statements", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBe(false);
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 });

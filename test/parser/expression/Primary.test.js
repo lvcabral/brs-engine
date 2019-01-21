@@ -16,14 +16,14 @@ describe("parser", () => {
     afterEach(() => BrsError.reset());
 
     describe("primary expressions", () => {
-        it("parses literals", () => {
-            let numeric = parser.parse([
+        it("parses numeric literals", () => {
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: 5, literal: new Int32(5), line: 1 },
                 EOF
             ]);
-            expect(numeric).toEqual([
+            expect(statements).toEqual([
                 new Stmt.Assignment(
                     { kind: Lexeme.Identifier, text: "_", line: 1 },
                     new Expr.Literal(
@@ -31,15 +31,17 @@ describe("parser", () => {
                     )
                 )
             ]);
-            expect(BrsError.found()).toBeFalsy();
+            expect(errors).toEqual([]);
+        });
 
-            let parsedString = parser.parse([
+        it("parses string literals", () => {
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.String, text: "hello", literal: new BrsString("hello"), line: 1 },
                 EOF
             ]);
-            expect(parsedString).toEqual([
+            expect(statements).toEqual([
                 new Stmt.Assignment(
                     { kind: Lexeme.Identifier, text: "_", line: 1 },
                     new Expr.Literal(
@@ -47,11 +49,11 @@ describe("parser", () => {
                     )
                 )
             ]);
-            expect(BrsError.found()).toBeFalsy();
+            expect(errors).toEqual([]);
         });
 
         it("parses expressions in parentheses", () => {
-            let withParens = parser.parse([
+            let { statements, errors } = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "1", literal: new Int32(1), line: 1 },
@@ -64,10 +66,10 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeFalsy();
-            expect(withParens).toBeDefined();
-            expect(withParens).not.toBeNull();
-            expect(withParens).toMatchSnapshot();
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 });

@@ -4,7 +4,7 @@ import promisify from "pify";
 import pSettle from "p-settle";
 const readFile = promisify(fs.readFile);
 
-import { Token, Lexer } from "./lexer";
+import { Lexer } from "./lexer";
 import * as PP from "./preprocessor";
 import { Parser } from "./parser";
 import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interpreter";
@@ -52,7 +52,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
 
         let { tokens } = lexer.scan(contents);
         let { processedTokens } = preprocessor.preprocess(tokens, manifest);
-        let statements = parser.parse(processedTokens);
+        let { statements } = parser.parse(processedTokens);
 
         if (BrsError.found()) {
             return Promise.reject({
@@ -122,7 +122,7 @@ export function repl() {
  */
 function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter?: Interpreter) {
     const { tokens } = Lexer.scan(contents);
-    const statements = new Parser().parse(tokens);
+    const { statements } = new Parser().parse(tokens);
 
     if (BrsError.found()) {
         return;

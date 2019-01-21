@@ -15,7 +15,7 @@ describe("parser indexed assignment", () => {
     afterEach(() => BrsError.reset());
 
     it("assigns to dotted index", () => {
-        let parsed = parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.Dot, text: ".", line: 1 },
             { kind: Lexeme.Identifier, text: "bar", line: 1 },
@@ -24,14 +24,14 @@ describe("parser indexed assignment", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 
     it("assigns to bracketed index", () => {
-        let parsed = parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "someArray", line: 1 },
             { kind: Lexeme.LeftSquare, text: "[", line: 1 },
             { kind: Lexeme.Integer, text: "0", line: 1, literal: new Int32(0) },
@@ -41,9 +41,9 @@ describe("parser indexed assignment", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 });

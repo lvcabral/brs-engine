@@ -14,7 +14,7 @@ describe("parser while statements", () => {
     afterEach(() => BrsError.reset());
 
     test("while without exit", () => {
-        const parsed = parser.parse([
+        const { statements, errors } = parser.parse([
             { kind: Lexeme.While, text: "while" },
             { kind: Lexeme.True, literal: BrsBoolean.True, text: "true" },
             { kind: Lexeme.Newline, text: "\n" },
@@ -25,14 +25,14 @@ describe("parser while statements", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 
     test("while with exit", () => {
-        const parsed = parser.parse([
+        const { statements, errors } = parser.parse([
             { kind: Lexeme.While, text: "while" },
             { kind: Lexeme.True, literal: BrsBoolean.True, text: "true" },
             { kind: Lexeme.Newline, text: "\n" },
@@ -45,9 +45,9 @@ describe("parser while statements", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 });
