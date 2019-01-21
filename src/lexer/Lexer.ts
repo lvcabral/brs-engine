@@ -1,3 +1,5 @@
+import { EventEmitter } from "events";
+
 import { Lexeme } from "./Lexeme";
 import { Token } from "./Token";
 import { ReservedWords, KeyWords } from "./ReservedWords";
@@ -14,8 +16,8 @@ import {
 } from "../brsTypes";
 
 export class Lexer {
-
-    constructor() {}
+    /** Allows consumers to observe errors as they're detected. */
+    readonly events = new EventEmitter();
 
     /**
      * Converts a string containing BrightScript code to an array of `Token` objects that will later be
@@ -48,6 +50,14 @@ export class Lexer {
 
         /** The tokens produced from `source`. */
         let tokens: Token[] = [];
+
+        /** The errors produced from `source.` */
+        let errors: BrsError[] = [];
+
+        const addError = (err: BrsError) => {
+            errors.push(err);
+            this.events.emit("err", err);
+        }
 
         while (!isAtEnd()) {
             start = current;
@@ -161,7 +171,7 @@ export class Lexer {
                     } else if (isAlpha(c)) {
                         identifier();
                     } else {
-                        new BrsError(`Unexpected character '${c}'`, line);
+                        addError(new BrsError(`Unexpected character '${c}'`, line));
                     }
                     break;
             }
@@ -239,7 +249,7 @@ export class Lexer {
 
                 if (peekNext() === "\n") {
                     // BrightScript doesn't support multi-line strings
-                    new BrsError("Unterminated string at end of line", line);
+                    addError(new BrsError("Unterminated string at end of line", line));
                     return;
                 }
                 // if (peekNext() === "\"") { advance();}
@@ -249,7 +259,7 @@ export class Lexer {
 
             if (isAtEnd()) {
                 // terminating a string with EOF is also not allowed
-                new BrsError("Unterminated string at end of file", line)
+                addError(new BrsError("Unterminated string at end of file", line));
                 return;
             }
 
@@ -467,7 +477,7 @@ export class Lexer {
                     start = current;
                     return;
                 default:
-                    new BrsError(`Found unexpected conditional-compilation string '${text}'`, line);
+                    addError(new BrsError(`Found unexpected conditional-compilation string '${text}'`, line));
             }
         }
 
