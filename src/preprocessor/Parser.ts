@@ -4,6 +4,14 @@ import { Token, Lexeme } from "../lexer";
 import { ParseError } from "../parser";
 import * as CC from "./Chunk";
 
+/** The results of a chunk-parser's parsing pass. */
+export interface ChunkParserResult {
+    /** The chunks produced by the chunk-parser. */
+    chunks: ReadonlyArray<CC.Chunk>,
+    /** The errors encountered by the chunk-parser. */
+    errors: ReadonlyArray<ParseError>
+}
+
 /** * Parses `Tokens` into chunks of tokens, excluding conditional compilation directives. */
 export class Parser {
     readonly events = new EventEmitter();
@@ -16,23 +24,31 @@ export class Parser {
      * @returns an array of chunks (conditional compilation directives and the associated BrightScript) to be later
      *          executed.
      */
-    parse(toParse: ReadonlyArray<Token>) {
+    parse(toParse: ReadonlyArray<Token>): ChunkParserResult {
         let current = 0;
         let tokens = toParse;
+        let errors: ParseError[] = [];
 
         /**
          * Emits an error via this parser's `events` property, then throws it.
          * @param err the ParseError to emit then throw
          */
         const emitError = (err: ParseError): never => {
+            errors.push(err);
             this.events.emit("err", err);
             throw err;
         };
 
         try {
-            return nChunks();
+            return {
+                chunks: nChunks(),
+                errors: errors
+            };
         } catch (conditionalCompilationError) {
-            return [];
+            return {
+                chunks: [],
+                errors: errors
+            };
         }
 
         /**

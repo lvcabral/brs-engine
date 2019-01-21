@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import { Token } from "../lexer";
 
 import { Parser } from "./Parser";
-import { Preprocessor as InternalPreprocessor } from "./Preprocessor";
+import { Preprocessor as InternalPreprocessor, FilterResults } from "./Preprocessor";
 import { Manifest, getBsConst } from "./Manifest";
 
 export class Preprocessor {
@@ -24,9 +24,16 @@ export class Preprocessor {
      * @param manifest the data stored in the found manifest file
      * @returns an array of processed tokens representing a subset of the provided ones
      */
-    preprocess(tokens: ReadonlyArray<Token>, manifest: Manifest) {
-        let chunks = this.parser.parse(tokens);
-        return this._preprocessor.filter(chunks, getBsConst(manifest));
+    preprocess(tokens: ReadonlyArray<Token>, manifest: Manifest): FilterResults {
+        let parserResults = this.parser.parse(tokens);
+        if (parserResults.errors.length > 0) {
+            return {
+                processedTokens: [],
+                errors: parserResults.errors
+            };
+        }
+
+        return this._preprocessor.filter(parserResults.chunks, getBsConst(manifest));
     }
 }
 

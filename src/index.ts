@@ -51,7 +51,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         [lexer, preprocessor, parser].forEach(emitter => emitter.events.on("err", logError));
 
         let { tokens } = lexer.scan(contents);
-        let processedTokens = preprocessor.preprocess(tokens, manifest);
+        let { processedTokens } = preprocessor.preprocess(tokens, manifest);
         let statements = parser.parse(processedTokens);
 
         if (BrsError.found()) {
