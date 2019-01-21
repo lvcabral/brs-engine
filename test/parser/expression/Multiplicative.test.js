@@ -12,8 +12,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("multiplicative expressions", () => {
         it("parses left-associative multiplication chains", () => {
             let { statements, errors } = parser.parse([

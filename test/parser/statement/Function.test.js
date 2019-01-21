@@ -12,8 +12,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("function declarations", () => {
         it("parses minimal empty function declarations", () => {
             let { statements, errors } = parser.parse([

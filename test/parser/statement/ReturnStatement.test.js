@@ -12,8 +12,6 @@ describe("parser return statements", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     it("parses void returns", () => {
         let { statements, errors } = parser.parse([
             { kind: Lexeme.Function, text: "function", line: 1 },

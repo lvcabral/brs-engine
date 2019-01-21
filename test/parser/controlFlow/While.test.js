@@ -11,8 +11,6 @@ describe("parser while statements", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     test("while without exit", () => {
         const { statements, errors } = parser.parse([
             { kind: Lexeme.While, text: "while" },

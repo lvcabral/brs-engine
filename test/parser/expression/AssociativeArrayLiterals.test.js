@@ -12,8 +12,6 @@ describe("parser associative array literals", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("empty associative arrays", () => {
         test("on one line", () => {
             let { statements, errors } = parser.parse([

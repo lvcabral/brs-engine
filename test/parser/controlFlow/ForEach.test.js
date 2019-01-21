@@ -12,8 +12,6 @@ describe("parser foreach loops", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     it("requires a name and target", () => {
         let { statements, errors } = parser.parse([
             { kind: Lexeme.ForEach, text: "for each", line: 2 },

@@ -12,8 +12,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("unary expressions", () => {
         it("parses unary 'not'", () => {
             let { statements, errors } = parser.parse([

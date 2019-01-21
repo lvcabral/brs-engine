@@ -12,8 +12,6 @@ describe("parser array literals", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("empty arrays", () => {
         test("on one line", () => {
             let { statements, errors } = parser.parse([

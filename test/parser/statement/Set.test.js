@@ -12,8 +12,6 @@ describe("parser indexed assignment", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     it("assigns to dotted index", () => {
         let { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "foo", line: 1 },

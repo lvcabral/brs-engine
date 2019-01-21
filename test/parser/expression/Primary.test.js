@@ -13,8 +13,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("primary expressions", () => {
         it("parses numeric literals", () => {
             let { statements, errors } = parser.parse([

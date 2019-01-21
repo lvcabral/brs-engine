@@ -12,8 +12,6 @@ describe("parser for loops", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     it("accepts a 'step' clause", () => {
         let { statements, errors } = parser.parse([
             { kind: Lexeme.For, text: "for", line: 1 },

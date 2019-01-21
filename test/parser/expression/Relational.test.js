@@ -12,8 +12,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("relational expressions", () => {
         it("parses less-than expressions", () => {
             let { statements, errors } = parser.parse([

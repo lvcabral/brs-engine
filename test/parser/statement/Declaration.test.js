@@ -11,8 +11,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("variable declarations", () => {
         it("allows newlines after assignments", () => {
             let { statements, errors } = parser.parse([

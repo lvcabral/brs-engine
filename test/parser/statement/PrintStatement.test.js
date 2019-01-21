@@ -11,8 +11,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("print statements", () => {
         it("parses singular print statements", () => {
             let { statements, errors } = parser.parse([

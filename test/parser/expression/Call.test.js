@@ -12,8 +12,6 @@ describe("parser call expressions", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     it("parses named function calls", () => {
         const { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "RebootSystem", line: 1 },

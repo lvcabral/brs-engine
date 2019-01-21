@@ -12,8 +12,6 @@ describe("parser if statements", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("single-line if", () => {
         it("parses if only", () => {
             let { statements, errors } = parser.parse([

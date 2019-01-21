@@ -12,8 +12,6 @@ describe("parser indexing", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("one level", () => {
         test("dotted", () => {
             let { statements, errors } = parser.parse([

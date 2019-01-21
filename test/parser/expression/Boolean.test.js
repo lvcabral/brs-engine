@@ -12,8 +12,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("boolean expressions", () => {
         it("parses boolean ANDs", () => {
             let { statements, errors } = parser.parse([

@@ -12,8 +12,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("additive expressions", () => {
         it("parses left-associative addition chains", () => {
             let { statements, errors } = parser.parse([

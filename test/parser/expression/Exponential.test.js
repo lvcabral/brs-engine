@@ -12,8 +12,6 @@ describe("parser", () => {
         parser = new brs.parser.Parser();
     });
 
-    afterEach(() => BrsError.reset());
-
     describe("exponential expressions", () => {
         it("parses exponential operators", () => {
             let { statements, errors } = parser.parse([
