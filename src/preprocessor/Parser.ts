@@ -175,7 +175,7 @@ function consume(message: string, ...lexemes: Lexeme[]): Token {
         );
 
     if (foundLexeme) { return advance(); }
-    throw ParseError.make(peek(), message);
+    throw new ParseError(peek(), message);
 }
 
 function advance(): Token {

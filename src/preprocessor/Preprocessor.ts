@@ -1,7 +1,7 @@
 import * as CC from "./Chunk";
 import { ParseError } from "../parser";
 import { Token, Lexeme } from "../lexer";
-import * as BrsError from "../Error";
+import { BrsError } from "../Error";
 
 /**
  * A simple pre-processor that executes BrightScript's conditional compilation directives by
@@ -42,7 +42,7 @@ export class Preprocessor implements CC.Visitor {
      */
     visitDeclaration(chunk: CC.Declaration) {
         if (this.constants.has(chunk.name.text)) {
-            throw BrsError.make(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line);
+            throw new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line);
         }
 
         let value;
@@ -59,9 +59,9 @@ export class Preprocessor implements CC.Visitor {
                     break;
                 }
 
-                throw BrsError.make(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line);
+                throw new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line);
             default:
-                throw BrsError.make("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line);
+                throw new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line);
         }
 
         this.constants.set(chunk.name.text, value);
@@ -75,7 +75,7 @@ export class Preprocessor implements CC.Visitor {
      * @throws a JavaScript error with the provided message
      */
     visitError(chunk: CC.Error): never {
-        throw ParseError.make(chunk.hashError, chunk.message);
+        throw new ParseError(chunk.hashError, chunk.message);
     }
 
     /**
@@ -121,9 +121,9 @@ export class Preprocessor implements CC.Visitor {
                     return this.constants.get(token.text) as boolean;
                 }
 
-                throw BrsError.make(`Attempting to reference undefined #const with name '${token.text}'`, token.line);
+                throw new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.line);
             default:
-                throw BrsError.make("#if conditionals can only be `true`, `false`, or other #const names", token.line);
+                throw new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.line);
         }
     }
 }

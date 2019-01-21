@@ -2,14 +2,16 @@ import { BrsType, ValueKind } from "./brsTypes";
 
 let foundError = false;
 
-export function make(message: string, line: number, file?: string) {
-    foundError = true;
-    let location = file ? `${file}: ${line}` : `Line ${line}`;
-    let error = new Error(`[${location}] ${message}`);
-    if (process.env.NODE_ENV !== "test") {
-        console.error(error.message);
+export class BrsError extends Error {
+    constructor(message: string, line: number, file?: string) {
+        foundError = true;
+        let location = file ? `${file}: ${line}` : `Line ${line}`;
+        let output = `[${location}] ${message}`;
+        if (process.env.NODE_ENV !== "test") {
+            console.error(output);
+        }
+        super(output);
     }
-    return error;
 }
 
 /** Wraps up the metadata associated with a type mismatch error. */
@@ -33,23 +35,25 @@ export interface TypeMismatchMetadata {
  * Creates a "type mismatch"-like error message, but with the appropriate types specified.
  * @return a type mismatch error that will be tracked by this module.
  */
-export function typeMismatch(mismatchMetadata: TypeMismatchMetadata) {
-    let messageLines = [
-        mismatchMetadata.message,
-        `    left: ${ValueKind.toString(mismatchMetadata.left.kind)}`
-    ];
+export class TypeMismatch extends BrsError {
+    constructor(mismatchMetadata: TypeMismatchMetadata) {
+        let messageLines = [
+            mismatchMetadata.message,
+            `    left: ${ValueKind.toString(mismatchMetadata.left.kind)}`
+        ];
 
-    if (mismatchMetadata.right) {
-        messageLines.push(
-        `    right: ${ValueKind.toString(mismatchMetadata.right.kind)}`
+        if (mismatchMetadata.right) {
+            messageLines.push(
+            `    right: ${ValueKind.toString(mismatchMetadata.right.kind)}`
+            );
+        }
+
+        super(
+            messageLines.join("\n"),
+            mismatchMetadata.line,
+            mismatchMetadata.file
         );
     }
-
-    return make(
-        messageLines.join("\n"),
-        mismatchMetadata.line,
-        mismatchMetadata.file
-    );
 }
 
 export function found() {

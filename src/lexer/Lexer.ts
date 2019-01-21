@@ -1,7 +1,7 @@
 import { Lexeme } from "./Lexeme";
 import { Token } from "./Token";
 import { ReservedWords, KeyWords } from "./ReservedWords";
-import * as BrsError from "../Error";
+import { BrsError } from "../Error";
 import { isAlpha, isDigit, isAlphaNumeric } from "./Characters";
 
 import {
@@ -62,6 +62,7 @@ export class Lexer {
         });
 
         return tokens;
+
 
 
         /**
@@ -160,7 +161,7 @@ export class Lexer {
                     } else if (isAlpha(c)) {
                         identifier();
                     } else {
-                        BrsError.make(`Unexpected character '${c}'`, line);
+                        new BrsError(`Unexpected character '${c}'`, line);
                     }
                     break;
             }
@@ -238,7 +239,7 @@ export class Lexer {
 
                 if (peekNext() === "\n") {
                     // BrightScript doesn't support multi-line strings
-                    BrsError.make("Unterminated string at end of line", line);
+                    new BrsError("Unterminated string at end of line", line);
                     return;
                 }
                 // if (peekNext() === "\"") { advance();}
@@ -248,7 +249,7 @@ export class Lexer {
 
             if (isAtEnd()) {
                 // terminating a string with EOF is also not allowed
-                BrsError.make("Unterminated string at end of file", line);
+                new BrsError("Unterminated string at end of file", line)
                 return;
             }
 
@@ -466,7 +467,7 @@ export class Lexer {
                     start = current;
                     return;
                 default:
-                    BrsError.make(`Found unexpected conditional-compilation string '${text}'`, line);
+                    new BrsError(`Found unexpected conditional-compilation string '${text}'`, line);
             }
         }
 
