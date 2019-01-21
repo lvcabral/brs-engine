@@ -1,14 +1,21 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Int32 } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser call expressions", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     it("parses named function calls", () => {
-        const parsed = Parser.parse([
+        const parsed = parser.parse([
             { kind: Lexeme.Identifier, text: "RebootSystem", line: 1 },
             { kind: Lexeme.LeftParen,  text: "(", line: 1 },
             { kind: Lexeme.RightParen, text: ")", line: 1 },
@@ -22,7 +29,7 @@ describe("parser call expressions", () => {
     });
 
     it("allows closing parentheses on separate line", () => {
-        const parsed = Parser.parse([
+        const parsed = parser.parse([
             { kind: Lexeme.Identifier, text: "RebootSystem", line: 1 },
             { kind: Lexeme.LeftParen,  text: "(", line: 1 },
             { kind: Lexeme.Newline, text: "\\n", line: 1 },
@@ -38,7 +45,7 @@ describe("parser call expressions", () => {
     });
 
     it("accepts arguments", () => {
-        const parsed = Parser.parse([
+        const parsed = parser.parse([
             { kind: Lexeme.Identifier, text: "add", line: 1 },
             { kind: Lexeme.LeftParen,  text: "(", line: 1 },
             { kind: Lexeme.Integer, text: "1", literal: new Int32(1) },

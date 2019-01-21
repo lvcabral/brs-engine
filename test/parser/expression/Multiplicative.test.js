@@ -1,15 +1,22 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Float } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("multiplicative expressions", () => {
         it("parses left-associative multiplication chains", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Float, text: "3.0", literal: new Float(3.0), line: 1 },
@@ -27,7 +34,7 @@ describe("parser", () => {
         });
 
         it("parses left-associative division chains", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Float, text: "7.0", literal: new Float(7.0), line: 1 },
@@ -45,7 +52,7 @@ describe("parser", () => {
         });
 
         it("parses left-associative modulo chains", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Float, text: "7.0", literal: new Float(7.0), line: 1 },
@@ -63,7 +70,7 @@ describe("parser", () => {
         });
 
         it("parses left-associative integer-division chains", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Float, text: "32.5", literal: new Float(32.5), line: 1 },

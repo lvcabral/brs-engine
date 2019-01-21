@@ -1,14 +1,21 @@
-const { Lexeme, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme } = brs;
 const BrsError = require("../../../lib/Error");
 
 const { token, identifier, EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("variable declarations", () => {
         it("allows newlines after assignments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 identifier("hasNewlines"),
                 token(Lexeme.Equal),
                 token(Lexeme.True),
@@ -21,7 +28,7 @@ describe("parser", () => {
         });
 
         it("parses literal value assignments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 identifier("foo"),
                 token(Lexeme.Equal),
                 token(Lexeme.Integer, 5),
@@ -34,7 +41,7 @@ describe("parser", () => {
         });
 
         it("parses evaluated value assignments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 identifier("bar"),
                 token(Lexeme.Equal),
                 token(Lexeme.Integer, 5),
@@ -49,7 +56,7 @@ describe("parser", () => {
         });
 
         it("parses variable aliasing", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 identifier("baz"),
                 token(Lexeme.Equal),
                 identifier("foo"),

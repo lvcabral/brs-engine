@@ -1,16 +1,23 @@
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Int32, BrsString } = BrsTypes;
-const { Expr, Stmt } = Parser;
+const { Expr, Stmt } = brs.parser;
 const BrsError = require("../../../lib/Error");
 
-const { token, EOF } = require("../ParserTests");
+const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("primary expressions", () => {
         it("parses literals", () => {
-            let numeric = Parser.parse([
+            let numeric = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: 5, literal: new Int32(5), line: 1 },
@@ -26,7 +33,7 @@ describe("parser", () => {
             ]);
             expect(BrsError.found()).toBeFalsy();
 
-            let parsedString = Parser.parse([
+            let parsedString = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.String, text: "hello", literal: new BrsString("hello"), line: 1 },
@@ -44,7 +51,7 @@ describe("parser", () => {
         });
 
         it("parses expressions in parentheses", () => {
-            let withParens = Parser.parse([
+            let withParens = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "1", literal: new Int32(1), line: 1 },

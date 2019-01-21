@@ -1,15 +1,22 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { BrsBoolean, Int32 } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser array literals", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("empty arrays", () => {
         test("on one line", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },
@@ -24,7 +31,7 @@ describe("parser array literals", () => {
         });
 
         test("on multiple lines", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },
@@ -47,7 +54,7 @@ describe("parser array literals", () => {
 
     describe("filled arrays", () => {
         test("on one line", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },
@@ -67,7 +74,7 @@ describe("parser array literals", () => {
         });
 
         test("on multiple lines with commas", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },
@@ -91,7 +98,7 @@ describe("parser array literals", () => {
         });
 
         test("on multiple lines without commas", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },
@@ -115,7 +122,7 @@ describe("parser array literals", () => {
 
     describe("contents", () => {
         it("can contain primitives", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },
@@ -135,7 +142,7 @@ describe("parser array literals", () => {
         });
 
         it("can contain other arrays", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },
@@ -165,7 +172,7 @@ describe("parser array literals", () => {
         });
 
         it("can contain expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.LeftSquare, text: "[", line: 1 },

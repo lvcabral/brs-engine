@@ -1,14 +1,21 @@
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { BrsString } = BrsTypes;
 const BrsError = require("../../../lib/Error");
 
 const { EOF } = require("../ParserTests");
 
 describe("parser return statements", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     it("parses void returns", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.Function, text: "function", line: 1 },
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -27,7 +34,7 @@ describe("parser return statements", () => {
     });
 
     it("parses literal returns", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.Function, text: "function", line: 1 },
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -47,7 +54,7 @@ describe("parser return statements", () => {
     });
 
     it("parses expression returns", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.Function, text: "function", line: 1 },
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.LeftParen, text: "(", line: 1 },

@@ -1,13 +1,20 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { BrsBoolean, BrsString } = BrsTypes;
 const { EOF } = require("../ParserTests");
 
 describe("parser while statements", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     test("while without exit", () => {
-        const parsed = Parser.parse([
+        const parsed = parser.parse([
             { kind: Lexeme.While, text: "while" },
             { kind: Lexeme.True, literal: BrsBoolean.True, text: "true" },
             { kind: Lexeme.Newline, text: "\n" },
@@ -25,7 +32,7 @@ describe("parser while statements", () => {
     });
 
     test("while with exit", () => {
-        const parsed = Parser.parse([
+        const parsed = parser.parse([
             { kind: Lexeme.While, text: "while" },
             { kind: Lexeme.True, literal: BrsBoolean.True, text: "true" },
             { kind: Lexeme.Newline, text: "\n" },

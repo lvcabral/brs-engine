@@ -6,7 +6,7 @@ const readFile = promisify(fs.readFile);
 
 import { Token, Lexer } from "./lexer";
 import * as PP from "./preprocessor";
-import * as Parser from "./parser";
+import { Parser } from "./parser";
 import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interpreter";
 import * as BrsError from "./Error";
 
@@ -14,7 +14,8 @@ export { Lexeme, Token, Lexer } from "./lexer";
 import * as BrsTypes from "./brsTypes";
 export { BrsTypes };
 export { PP as preprocessor };
-export { Parser };
+import * as _parser from "./parser";
+export { _parser as parser };
 
 
 /**
@@ -47,10 +48,11 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
 
         let lexer = new Lexer();
         let preprocessor = new PP.Preprocessor();
+        let parser = new Parser();
 
         let tokens = lexer.scan(contents);
         let processedTokens = preprocessor.preprocess(tokens, manifest);
-        let statements = Parser.parse(processedTokens);
+        let statements = parser.parse(processedTokens);
 
         if (BrsError.found()) {
             return Promise.reject({
@@ -118,7 +120,7 @@ export function repl() {
  */
 function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter?: Interpreter) {
     const tokens: ReadonlyArray<Token> = Lexer.scan(contents);
-    const statements = Parser.parse(tokens);
+    const statements = new Parser().parse(tokens);
 
     if (BrsError.found()) {
         return;

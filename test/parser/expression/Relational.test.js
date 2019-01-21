@@ -1,15 +1,22 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Int32 } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("relational expressions", () => {
         it("parses less-than expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -25,7 +32,7 @@ describe("parser", () => {
         });
 
         it("parses less-than-or-equal-to expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -41,7 +48,7 @@ describe("parser", () => {
         });
 
         it("parses greater-than expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -57,7 +64,7 @@ describe("parser", () => {
         });
 
         it("parses greater-than-or-equal-to expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -73,7 +80,7 @@ describe("parser", () => {
         });
 
         it("parses equality expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
@@ -89,7 +96,7 @@ describe("parser", () => {
         });
 
         it("parses inequality expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },

@@ -1,15 +1,22 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, Parser, BrsTypes } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { BrsBoolean, Int32 } = BrsTypes;
 
 const { token, identifier, EOF } = require("../ParserTests");
 
 describe("parser if statements", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("single-line if", () => {
         it("parses if only", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -30,7 +37,7 @@ describe("parser if statements", () => {
         });
 
         it("parses if-else", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -54,7 +61,7 @@ describe("parser if statements", () => {
         });
 
         it("parses if-elseif-else", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -86,7 +93,7 @@ describe("parser if statements", () => {
         });
 
         it("allows 'then' to be skipped", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 token(Lexeme.If),
                 token(Lexeme.Integer, new Int32(1)),
                 token(Lexeme.Less),
@@ -118,7 +125,7 @@ describe("parser if statements", () => {
 
     describe("block if", () => {
         it("parses if only", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },
@@ -144,7 +151,7 @@ describe("parser if statements", () => {
         });
 
         it("parses if-else", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },
@@ -176,7 +183,7 @@ describe("parser if statements", () => {
         });
 
         it("parses if-elseif-else", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },
@@ -219,7 +226,7 @@ describe("parser if statements", () => {
         });
 
         it("allows 'then' to be skipped", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.If, text: "if" },
                 { kind: Lexeme.Integer, literal: new Int32(1) },
                 { kind: Lexeme.Less, text: "<" },

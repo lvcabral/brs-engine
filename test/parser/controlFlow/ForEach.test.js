@@ -1,14 +1,21 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, Parser } = require("brs");
-const { Expr, Stmt } = Parser;
+const brs = require("brs");
+const { Lexeme } = brs;
+const { Expr, Stmt } = brs.parser;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser foreach loops", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     it("requires a name and target", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.ForEach, text: "for each", line: 2 },
             { kind: Lexeme.Identifier, text: "word", line: 2 },
             { kind: Lexeme.Identifier, text: "in", line: 2 },

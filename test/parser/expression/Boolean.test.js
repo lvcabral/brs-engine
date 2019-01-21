@@ -1,15 +1,22 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { BrsBoolean } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("boolean expressions", () => {
         it("parses boolean ANDs", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.True, text: "true", literal: BrsBoolean.True, line: 1 },
@@ -25,7 +32,7 @@ describe("parser", () => {
         });
 
         it("parses boolean ORs", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.True, text: "true", literal: BrsBoolean.True, line: 1 },

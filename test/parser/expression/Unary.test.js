@@ -1,15 +1,22 @@
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Int32, BrsBoolean } = BrsTypes;
 const BrsError = require("../../../lib/Error");
 
 const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("unary expressions", () => {
         it("parses unary 'not'", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Not, text: "not", line: 1 },
@@ -24,7 +31,7 @@ describe("parser", () => {
         });
 
         it("parses consecutive unary 'not'", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Not, text: "not", line: 1 },
@@ -43,7 +50,7 @@ describe("parser", () => {
         });
 
         it("parses unary '-'", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Minus, text: "-", line: 1},
@@ -58,7 +65,7 @@ describe("parser", () => {
         });
 
         it("parses consecutive unary '-'", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Minus, text: "-", line: 1},

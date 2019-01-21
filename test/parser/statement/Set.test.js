@@ -1,12 +1,21 @@
 const BrsError = require("../../../lib/Error");
 
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Int32, BrsString } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 describe("parser indexed assignment", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
+    afterEach(() => BrsError.reset());
+
     it("assigns to dotted index", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.Dot, text: ".", line: 1 },
             { kind: Lexeme.Identifier, text: "bar", line: 1 },
@@ -22,7 +31,7 @@ describe("parser indexed assignment", () => {
     });
 
     it("assigns to bracketed index", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.Identifier, text: "someArray", line: 1 },
             { kind: Lexeme.LeftSquare, text: "[", line: 1 },
             { kind: Lexeme.Integer, text: "0", line: 1, literal: new Int32(0) },

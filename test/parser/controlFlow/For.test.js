@@ -1,14 +1,21 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Int32 } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser for loops", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     it("accepts a 'step' clause", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.For, text: "for", line: 1 },
             { kind: Lexeme.Identifier, text: "i", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
@@ -34,7 +41,7 @@ describe("parser for loops", () => {
     });
 
     it("defaults a missing 'step' clause to '1'", () => {
-        let parsed = Parser.parse([
+        let parsed = parser.parse([
             { kind: Lexeme.For, text: "for", line: 1 },
             { kind: Lexeme.Identifier, text: "i", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },

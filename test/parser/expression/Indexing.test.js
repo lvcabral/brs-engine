@@ -1,15 +1,22 @@
 const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { Int32 } = BrsTypes;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser indexing", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("one level", () => {
         test("dotted", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -25,7 +32,7 @@ describe("parser indexing", () => {
         });
 
         test("bracketed", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -44,7 +51,7 @@ describe("parser indexing", () => {
 
     describe("multi-level", () => {
         test("dotted", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -60,7 +67,7 @@ describe("parser indexing", () => {
         });
 
         test("bracketed", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
@@ -83,7 +90,7 @@ describe("parser indexing", () => {
         });
 
         test("mixed", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },

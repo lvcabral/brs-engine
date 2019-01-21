@@ -1,15 +1,22 @@
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { BrsString, Int32 } = BrsTypes;
 const BrsError = require("../../../lib/Error");
 
 const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("function expressions", () => {
         it("parses minimal empty function expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -27,7 +34,7 @@ describe("parser", () => {
         });
 
         it("parses colon-separated function declarations", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -48,7 +55,7 @@ describe("parser", () => {
         });
 
         it("parses non-empty function expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -69,7 +76,7 @@ describe("parser", () => {
         });
 
         it("parses functions with implicit-dynamic arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -90,7 +97,7 @@ describe("parser", () => {
         });
 
         it("parses functions with typed arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -119,7 +126,7 @@ describe("parser", () => {
         });
 
         it("parses functions with default argument expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -154,7 +161,7 @@ describe("parser", () => {
         });
 
         it("parses functions with typed arguments and default expressions", () => {
-             let parsed = Parser.parse([
+             let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -188,7 +195,7 @@ describe("parser", () => {
         });
 
         it("parses return types", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "function", line: 1 },
@@ -210,7 +217,7 @@ describe("parser", () => {
 
     describe("sub expressions", () => {
         it("parses minimal sub expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
@@ -228,7 +235,7 @@ describe("parser", () => {
         });
 
         it("parses non-empty sub expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
@@ -249,7 +256,7 @@ describe("parser", () => {
         });
 
         it("parses subs with implicit-dynamic arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "sub", line: 1 },
@@ -270,7 +277,7 @@ describe("parser", () => {
         });
 
         it("parses subs with typed arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Function, text: "sub", line: 1 },
@@ -295,7 +302,7 @@ describe("parser", () => {
         });
 
         it("parses subs with default argument expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
@@ -330,7 +337,7 @@ describe("parser", () => {
         });
 
         it("parses subs with typed arguments and default expressions", () => {
-             let parsed = Parser.parse([
+             let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
@@ -364,7 +371,7 @@ describe("parser", () => {
         });
 
         it("doesn't allow return types", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "_", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
@@ -383,7 +390,7 @@ describe("parser", () => {
 
     describe("usage", () => {
         it("allows sub expressions in call arguments", () => {
-            const parsed = Parser.parse([
+            const parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "acceptsCallback", line: 1 },
                 { kind: Lexeme.LeftParen,  text: "(", line: 1 },
                 { kind: Lexeme.Newline, text: "\\n", line: 1 },
@@ -409,7 +416,7 @@ describe("parser", () => {
         });
 
         it("allows function expressions in assignment RHS", () => {
-            const parsed = Parser.parse([
+            const parsed = parser.parse([
                 { kind: Lexeme.Identifier, text: "anonymousFunction", line: 1 },
                 { kind: Lexeme.Equal, text: "=", line: 1 },
 

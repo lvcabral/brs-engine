@@ -1,15 +1,22 @@
-const { Lexeme, BrsTypes, Parser } = require("brs");
+const brs = require("brs");
+const { Lexeme, BrsTypes } = brs;
 const { BrsString, Int32 } = BrsTypes;
 const BrsError = require("../../../lib/Error");
 
 const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
+
     afterEach(() => BrsError.reset());
 
     describe("function declarations", () => {
         it("parses minimal empty function declarations", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -26,7 +33,7 @@ describe("parser", () => {
         });
 
         it("parses non-empty function declarations", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -46,7 +53,7 @@ describe("parser", () => {
         });
 
         it("parses functions with implicit-dynamic arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "add2", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -66,7 +73,7 @@ describe("parser", () => {
         });
 
         it("parses functions with typed arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "repeat", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -90,7 +97,7 @@ describe("parser", () => {
         });
 
         it("parses functions with default argument expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -124,7 +131,7 @@ describe("parser", () => {
         });
 
         it("parses functions with typed arguments and default expressions", () => {
-             let parsed = Parser.parse([
+             let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -157,7 +164,7 @@ describe("parser", () => {
         });
 
         it("parses return types", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "function", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -178,7 +185,7 @@ describe("parser", () => {
 
     describe("sub declarations", () => {
         it("parses minimal sub declarations", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "bar", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -195,7 +202,7 @@ describe("parser", () => {
         });
 
         it("parses non-empty sub declarations", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -215,7 +222,7 @@ describe("parser", () => {
         });
 
         it("parses subs with implicit-dynamic arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "add2", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -235,7 +242,7 @@ describe("parser", () => {
         });
 
         it("parses subs with typed arguments", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Function, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "repeat", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -259,7 +266,7 @@ describe("parser", () => {
         });
 
         it("parses subs with default argument expressions", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -293,7 +300,7 @@ describe("parser", () => {
         });
 
         it("parses subs with typed arguments and default expressions", () => {
-             let parsed = Parser.parse([
+             let parsed = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "add", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -326,7 +333,7 @@ describe("parser", () => {
         });
 
         it("doesn't allow return types", () => {
-            let parsed = Parser.parse([
+            let parsed = parser.parse([
                 { kind: Lexeme.Sub, text: "sub", line: 1 },
                 { kind: Lexeme.Identifier, text: "foo", line: 1 },
                 { kind: Lexeme.LeftParen, text: "(", line: 1 },
