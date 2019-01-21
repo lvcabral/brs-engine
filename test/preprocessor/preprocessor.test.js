@@ -1,6 +1,6 @@
 const brs = require("brs");
 const { Lexeme, BrsTypes } = brs;
-const { Chunk } = brs.Preprocessor;
+const { Chunk } = brs.preprocessor;
 const { BrsString, BrsBoolean } = BrsTypes;
 
 const { Preprocessor } = require("../../lib/preprocessor/Preprocessor");

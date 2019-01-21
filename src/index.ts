@@ -13,7 +13,7 @@ import * as BrsError from "./Error";
 export { Lexeme, Token, Lexer } from "./lexer";
 import * as BrsTypes from "./brsTypes";
 export { BrsTypes };
-export { PP as Preprocessor };
+export { PP as preprocessor };
 export { Parser };
 
 

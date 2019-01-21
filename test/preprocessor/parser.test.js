@@ -1,11 +1,11 @@
-const { Lexeme, Preprocessor, BrsTypes } = require("brs");
+const { Lexeme, preprocessor, BrsTypes } = require("brs");
 const { BrsBoolean } = BrsTypes;
 
 describe("preprocessor parser", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new Preprocessor.Parser();
+        parser = new preprocessor.Parser();
     });
 
     it("parses chunks of brightscript", () => {
