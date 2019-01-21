@@ -1,10 +1,7 @@
 import { BrsType, ValueKind } from "./brsTypes";
 
-let foundError = false;
-
 export class BrsError extends Error {
     constructor(message: string, line: number, file?: string) {
-        foundError = true;
         let location = file ? `${file}: ${line}` : `Line ${line}`;
         let output = `[${location}] ${message}`;
         super(output);
@@ -51,12 +48,4 @@ export class TypeMismatch extends BrsError {
             mismatchMetadata.file
         );
     }
-}
-
-export function found() {
-    return foundError;
-}
-
-export function reset() {
-    foundError = false;
 }

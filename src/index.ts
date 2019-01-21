@@ -50,17 +50,29 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         let parser = new Parser();
         [lexer, preprocessor, parser].forEach(emitter => emitter.events.on("err", logError));
 
-        let { tokens } = lexer.scan(contents);
-        let { processedTokens } = preprocessor.preprocess(tokens, manifest);
-        let { statements } = parser.parse(processedTokens);
-
-        if (BrsError.found()) {
+        let scanResults = lexer.scan(contents);
+        if (scanResults.errors.length > 0) {
             return Promise.reject({
-                message: "Error occurred"
+                message: "Error occurred during lexing"
             });
         }
 
-        return Promise.resolve(statements || []);
+        let preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
+        if (preprocessResults.errors.length > 0) {
+            return Promise.reject({
+                message: "Error occurred during pre-processing"
+            });
+        }
+
+
+        let parseResults = parser.parse(preprocessResults.processedTokens);
+        if (parseResults.errors.length > 0) {
+            return Promise.reject({
+                message: "Error occurred during pre-processing"
+            });
+        }
+
+        return Promise.resolve(parseResults.statements);
     }));
 
     // don't execute anything if there were reading, lexing, or parsing errors
