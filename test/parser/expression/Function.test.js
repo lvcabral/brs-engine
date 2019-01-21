@@ -1,8 +1,6 @@
 const brs = require("brs");
 const { Lexeme, BrsTypes } = brs;
 const { BrsString, Int32 } = BrsTypes;
-const BrsError = require("../../../lib/Error");
-
 const { EOF } = require("../ParserTests");
 
 describe("parser", () => {
@@ -382,7 +380,7 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(BrsError.found()).toBeTruthy();
+            expect(errors.length).not.toBe(0);
         });
     });
 
