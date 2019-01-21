@@ -16,11 +16,15 @@ export class Preprocessor implements CC.Visitor {
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
+    /** The set of errors encountered when pre-processing conditional compilation directives. */
+    errors: ParseError[] = [];
+
     /**
      * Emits an error via this processor's `events` property, then throws it.
      * @param err the ParseError to emit then throw
      */
-    private emitError(err: BrsError): never {
+    private addError(err: BrsError): never {
+        this.errors.push(err);
         this.events.emit("err", err);
         throw err;
     }
@@ -56,7 +60,7 @@ export class Preprocessor implements CC.Visitor {
      */
     visitDeclaration(chunk: CC.Declaration) {
         if (this.constants.has(chunk.name.text)) {
-            return this.emitError(
+            return this.addError(
                 new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line)
             );
         }
@@ -75,11 +79,11 @@ export class Preprocessor implements CC.Visitor {
                     break;
                 }
 
-                return this.emitError(
+                return this.addError(
                     new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line)
                 );
             default:
-                return this.emitError(
+                return this.addError(
                     new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line)
                 );
         }
@@ -95,7 +99,7 @@ export class Preprocessor implements CC.Visitor {
      * @throws a JavaScript error with the provided message
      */
     visitError(chunk: CC.Error): never {
-        return this.emitError(new ParseError(chunk.hashError, chunk.message));
+        return this.addError(new ParseError(chunk.hashError, chunk.message));
     }
 
     /**
@@ -141,11 +145,11 @@ export class Preprocessor implements CC.Visitor {
                     return this.constants.get(token.text) as boolean;
                 }
 
-                return this.emitError(
+                return this.addError(
                     new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.line)
                 );
             default:
-                return this.emitError(
+                return this.addError(
                     new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.line)
                 );
         }

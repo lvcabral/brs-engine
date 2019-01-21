@@ -34,16 +34,12 @@ describe("end to end conditional compilation", () => {
 
     describe("(with sterr captured)", () => {
         test("conditional-compilation/compile-error.brs", (done) => {
-            let originalNodeEnv = process.env.NODE_ENV;
-            // switch NODE_ENV to not-test, to ensure errors get logged
-            process.env.NODE_ENV = "jest";
-            // but make console.error empty so we don't clutter test output
+            // make console.error empty so we don't clutter test output
             let stderr = jest.spyOn(console, "error").mockImplementation(() => {});
 
             return execute([ resourceFile("conditional-compilation", "compile-error.brs") ], outputStreams)
                 .then(() => {
                     stderr.mockRestore()
-                    process.env.NODE_ENV = originalNodeEnv;
                     done.fail("execute() should have rejected");
                 })
                 .catch(() => {
@@ -55,7 +51,6 @@ describe("end to end conditional compilation", () => {
                     ]);
 
                     stderr.mockRestore()
-                    process.env.NODE_ENV = originalNodeEnv;
                     done();
                 });
         });

@@ -7,9 +7,6 @@ export class BrsError extends Error {
         foundError = true;
         let location = file ? `${file}: ${line}` : `Line ${line}`;
         let output = `[${location}] ${message}`;
-        if (process.env.NODE_ENV !== "test") {
-            console.error(output);
-        }
         super(output);
     }
 }

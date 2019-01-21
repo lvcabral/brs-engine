@@ -31,7 +31,6 @@ export { _parser as parser };
  */
 export async function execute(filenames: string[], options: Partial<ExecutionOptions>) {
     const executionOptions = Object.assign(defaultExecutionOptions, options);
-    const interpreter = new Interpreter(executionOptions); // shared between files
 
     let manifest = await PP.getManifest(executionOptions.root);
 
@@ -49,6 +48,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         let lexer = new Lexer();
         let preprocessor = new PP.Preprocessor();
         let parser = new Parser();
+        [lexer, preprocessor, parser].forEach(emitter => emitter.events.on("err", logError));
 
         let tokens = lexer.scan(contents);
         let processedTokens = preprocessor.preprocess(tokens, manifest);
@@ -77,6 +77,8 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
     );
 
     // execute them
+    const interpreter = new Interpreter(executionOptions);
+    interpreter.events.on("err", logError);
     return interpreter.exec(statements);
 }
 
@@ -134,4 +136,12 @@ function run(contents: string, options: ExecutionOptions = defaultExecutionOptio
         //options.stderr.write(e.message);
         return;
     }
+}
+
+/**
+ * Logs a detected BRS error to stderr.
+ * @param err the error to log to `stderr`
+ */
+function logError(err: BrsError.BrsError) {
+    console.error(err.message);
 }
