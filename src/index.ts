@@ -10,9 +10,10 @@ import { Parser } from "./parser";
 import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interpreter";
 import * as BrsError from "./Error";
 
-export { Lexeme, Token, Lexer } from "./lexer";
+import * as _lexer from "./lexer";
+export { _lexer as lexer };
 import * as BrsTypes from "./brsTypes";
-export { BrsTypes };
+export { BrsTypes as types };
 export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };

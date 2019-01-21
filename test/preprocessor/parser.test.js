@@ -1,5 +1,7 @@
-const { Lexeme, preprocessor, BrsTypes } = require("brs");
-const { BrsBoolean } = BrsTypes;
+const brs = require("brs");
+const preprocessor = brs.preprocessor;
+const { Lexeme } = brs.lexer;
+const { BrsBoolean } = brs.types;
 
 describe("preprocessor parser", () => {
     let parser;

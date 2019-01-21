@@ -1,5 +1,5 @@
-const { BrsTypes } = require("brs");
-const { BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = BrsTypes;
+const brs = require("brs");
+const { BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
 const BrsError = require("../../../lib/Error");
 const { Interpreter } = require("../../../lib/interpreter");
 

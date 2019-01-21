@@ -1,7 +1,8 @@
 const { binary } = require("./InterpreterTests");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsArray, BrsInvalid, AssociativeArray } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsArray, BrsInvalid, AssociativeArray } = brs.types;
 
 let interpreter;
 

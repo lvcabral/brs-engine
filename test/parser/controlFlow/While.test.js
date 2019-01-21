@@ -1,7 +1,6 @@
-const BrsError = require("../../../lib/Error");
 const brs = require("brs");
-const { Lexeme, BrsTypes } = brs;
-const { BrsBoolean, BrsString } = BrsTypes;
+const { Lexeme } = brs.lexer;
+const { BrsBoolean, BrsString } = brs.types;
 const { EOF } = require("../ParserTests");
 
 describe("parser while statements", () => {

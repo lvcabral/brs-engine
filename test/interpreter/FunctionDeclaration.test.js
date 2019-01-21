@@ -1,8 +1,9 @@
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { Int32, BrsString, BrsInvalid, Callable, ValueKind } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32, BrsString, BrsInvalid, Callable, ValueKind } = brs.types;
 
 let interpreter;
 

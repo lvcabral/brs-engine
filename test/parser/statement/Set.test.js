@@ -1,8 +1,6 @@
-const BrsError = require("../../../lib/Error");
-
 const brs = require("brs");
-const { Lexeme, BrsTypes } = brs;
-const { Int32, BrsString } = BrsTypes;
+const { Lexeme } = brs.lexer;
+const { Int32, BrsString } = brs.types;
 
 const { EOF } = require("../ParserTests");
 describe("parser indexed assignment", () => {

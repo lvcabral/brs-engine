@@ -1,5 +1,6 @@
-const { Lexer, Lexeme, BrsTypes } = require("brs");
-const { BrsString, Int32, Int64, Float, Double } = BrsTypes;
+const { lexer, types } = require("brs");
+const { Lexer, Lexeme } = lexer;
+const { BrsString, Int32, Int64, Float, Double } = types;
 
 describe("lexer", () => {
     it("includes an end-of-file marker", () => {

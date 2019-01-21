@@ -1,7 +1,7 @@
 const { ListDir, CopyFile, MoveFile, DeleteFile, DeleteDirectory, CreateDirectory, FormatDrive, ReadAsciiFile, WriteAsciiFile, getMemfsPath, getVolumeByPath } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
-const { BrsTypes } = require("brs");
-const { BrsString } = BrsTypes;
+const brs = require("brs");
+const { BrsString } = brs.types;
 
 let interpreter;
 
@@ -157,7 +157,7 @@ describe("global file I/O functions", () => {
     describe("ReadAsciiFile", () => {
         it("reads an ascii file", () => {
             interpreter.temporaryVolume.writeFileSync("/test.txt", "test contents");
-            
+
             expect(
                 ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt")).value
             ).toEqual("test contents");

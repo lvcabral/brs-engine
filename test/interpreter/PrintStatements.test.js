@@ -2,8 +2,9 @@ const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { identifier } = require("../parser/ParserTests");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { Int32, BrsString, BrsInvalid } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32, BrsString, BrsInvalid } = brs.types;
 
 const { createMockStreams, allArgs } = require("../e2e/E2ETests");
 

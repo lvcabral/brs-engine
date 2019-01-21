@@ -1,7 +1,6 @@
-const BrsError = require("../../../lib/Error");
 const brs = require("brs");
-const { Lexeme, BrsTypes } = brs;
-const { BrsBoolean, Int32 } = BrsTypes;
+const { Lexeme } = brs.lexer;
+const { BrsBoolean, Int32 } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
 

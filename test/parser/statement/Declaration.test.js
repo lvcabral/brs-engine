@@ -1,6 +1,5 @@
 const brs = require("brs");
-const { Lexeme } = brs;
-const BrsError = require("../../../lib/Error");
+const { Lexeme } = brs.lexer;
 
 const { token, identifier, EOF } = require("../ParserTests");
 

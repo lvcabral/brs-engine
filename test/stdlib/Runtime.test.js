@@ -1,5 +1,5 @@
-const { BrsTypes } = require("brs");
-const { AssociativeArray, BrsArray, BrsInvalid, BrsBoolean, BrsString, Int32, Int64, Float, Double, Uninitialized } = BrsTypes;
+const brs = require("brs");
+const { AssociativeArray, BrsArray, BrsInvalid, BrsBoolean, BrsString, Int32, Int64, Float, Double, Uninitialized } = brs.types;
 const { CreateObject, Type } = require("../../lib/stdlib");
 const { Interpreter } = require("../../lib/interpreter");
 
