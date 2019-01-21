@@ -15,29 +15,38 @@ import {
     Double
 } from "../brsTypes";
 
+/** The results of a Lexer's scanning pass. */
+interface ScanResults {
+    /** The tokens produced by the Lexer. */
+    tokens: ReadonlyArray<Token>,
+    /** The errors encountered by the Lexer. */
+    errors: ReadonlyArray<BrsError>
+}
+
 export class Lexer {
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
     /**
-     * Converts a string containing BrightScript code to an array of `Token` objects that will later be
-     * used to build an abstract syntax tree.
+     * A convenience function, equivalent to `new Lexer().scan(toScan)`, that Converts a string
+     * containing BrightScript code to an array of `Token` objects that will later be used to build
+     * an abstract syntax tree.
      *
      * @param toScan the BrightScript code to convert into tokens
-     * @returns a (read-only) array of tokens to be passed to a parser.
+     * @returns an object containing an array of `errors` and an array of `tokens` to be passed to a parser.
      */
-    static scan(toScan: string): ReadonlyArray<Token> {
+    static scan(toScan: string): ScanResults {
         return new Lexer().scan(toScan);
     }
 
     /**
-     * Converts a string containing BrightScript code to an array of `Token` objects that will later be
-     * used to build an abstract syntax tree.
+     * Converts a string containing BrightScript code to an array of `Token` objects that will
+     * later be used to build an abstract syntax tree.
      *
      * @param toScan the BrightScript code to convert into tokens
-     * @returns a (read-only) array of tokens to be passed to a parser.
+     * @returns an object containing an array of `errors` and an array of `tokens` to be passed to a parser.
      */
-    public scan(toScan: string): ReadonlyArray<Token> {
+    public scan(toScan: string): ScanResults {
         /** The zero-indexed position at which the token under consideration begins. */
         let start = 0;
         /** The zero-indexed position being examined for the token under consideration. */
@@ -71,7 +80,7 @@ export class Lexer {
             text: "\0"
         });
 
-        return tokens;
+        return { tokens, errors };
 
 
 

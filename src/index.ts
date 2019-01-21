@@ -50,7 +50,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         let parser = new Parser();
         [lexer, preprocessor, parser].forEach(emitter => emitter.events.on("err", logError));
 
-        let tokens = lexer.scan(contents);
+        let { tokens } = lexer.scan(contents);
         let processedTokens = preprocessor.preprocess(tokens, manifest);
         let statements = parser.parse(processedTokens);
 
@@ -121,7 +121,7 @@ export function repl() {
  *          `interpreter` threw an Error.
  */
 function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter?: Interpreter) {
-    const tokens: ReadonlyArray<Token> = Lexer.scan(contents);
+    const { tokens } = Lexer.scan(contents);
     const statements = new Parser().parse(tokens);
 
     if (BrsError.found()) {
