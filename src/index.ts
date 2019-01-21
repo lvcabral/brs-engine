@@ -102,7 +102,6 @@ export function repl() {
             results.map(result => console.log(result.toString()));
         }
 
-        BrsError.reset();
         rl.prompt();
     });
 
@@ -120,18 +119,21 @@ export function repl() {
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter?: Interpreter) {
-    const { tokens } = Lexer.scan(contents);
-    const { statements } = new Parser().parse(tokens);
-
-    if (BrsError.found()) {
+function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter: Interpreter) {
+    const scanResults = Lexer.scan(contents);
+    if (scanResults.errors.length > 0) {
         return;
     }
 
-    if (!statements) { return; }
+    const parseResults = new Parser().parse(scanResults.tokens);
+    if (parseResults.errors.length > 0) {
+        return;
+    }
+
+    if (parseResults.statements.length === 0) { return; }
 
     try {
-        return (interpreter || new Interpreter(options)).exec(statements);
+        return interpreter.exec(parseResults.statements);
     } catch (e) {
         //options.stderr.write(e.message);
         return;
