@@ -1,15 +1,14 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { Int32, BrsString } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32, BrsString } = brs.types;
 
 let interpreter;
 
 describe("property getting", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -36,7 +35,6 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
 
-            expect(BrsError.found()).toBeFalsy();
             expect(
                 interpreter.environment.get(
                     { kind: Lexeme.Identifier, text: "result", line: -1 }
@@ -82,7 +80,6 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
 
-            expect(BrsError.found()).toBeFalsy();
             expect(
                 interpreter.environment.get(
                     { kind: Lexeme.Identifier, text: "result", line: -1 }
@@ -118,7 +115,6 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
 
-            expect(BrsError.found()).toBeFalsy();
             expect(
                 interpreter.environment.get(
                     { kind: Lexeme.Identifier, text: "result", line: -1 }
@@ -155,8 +151,6 @@ describe("property getting", () => {
             ];
 
             interpreter.exec(ast);
-
-            expect(BrsError.found()).toBeFalsy();
             expect(
                 interpreter.environment.get(
                     { kind: Lexeme.Identifier, text: "result", line: -1 }

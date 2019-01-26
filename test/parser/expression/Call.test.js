@@ -1,28 +1,32 @@
-const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
-const { Int32 } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32 } = brs.types;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser call expressions", () => {
-    afterEach(() => BrsError.reset());
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
 
     it("parses named function calls", () => {
-        const parsed = Parser.parse([
+        const { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "RebootSystem", line: 1 },
             { kind: Lexeme.LeftParen,  text: "(", line: 1 },
             { kind: Lexeme.RightParen, text: ")", line: 1 },
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 
     it("allows closing parentheses on separate line", () => {
-        const parsed = Parser.parse([
+        const { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "RebootSystem", line: 1 },
             { kind: Lexeme.LeftParen,  text: "(", line: 1 },
             { kind: Lexeme.Newline, text: "\\n", line: 1 },
@@ -31,14 +35,14 @@ describe("parser call expressions", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 
     it("accepts arguments", () => {
-        const parsed = Parser.parse([
+        const { statements, errors } = parser.parse([
             { kind: Lexeme.Identifier, text: "add", line: 1 },
             { kind: Lexeme.LeftParen,  text: "(", line: 1 },
             { kind: Lexeme.Integer, text: "1", literal: new Int32(1) },
@@ -48,10 +52,10 @@ describe("parser call expressions", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed[0].expression.args).toBeTruthy();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements[0].expression.args).toBeTruthy();
+        expect(statements).toMatchSnapshot();
     });
 });

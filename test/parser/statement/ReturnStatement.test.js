@@ -1,14 +1,18 @@
-const { Lexeme, BrsTypes, Parser } = require("brs");
-const { BrsString } = BrsTypes;
-const BrsError = require("../../../lib/Error");
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { BrsString } = brs.types;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser return statements", () => {
-    afterEach(() => BrsError.reset());
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
 
     it("parses void returns", () => {
-        let parsed = Parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.Function, text: "function", line: 1 },
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -20,14 +24,14 @@ describe("parser return statements", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBeFalsy();
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 
     it("parses literal returns", () => {
-        let parsed = Parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.Function, text: "function", line: 1 },
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -40,14 +44,14 @@ describe("parser return statements", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBeFalsy();
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 
     it("parses expression returns", () => {
-        let parsed = Parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.Function, text: "function", line: 1 },
             { kind: Lexeme.Identifier, text: "foo", line: 1 },
             { kind: Lexeme.LeftParen, text: "(", line: 1 },
@@ -62,9 +66,9 @@ describe("parser return statements", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBeFalsy();
-        expect(parsed).toBeDefined();
-        expect(parsed).not.toBeNull();
-        expect(parsed).toMatchSnapshot();
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
     });
 });

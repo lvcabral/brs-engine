@@ -1,9 +1,9 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { BrsString } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { BrsString } = brs.types;
 
 let interpreter;
 
@@ -15,7 +15,6 @@ describe("interpreter for-each loops", () => {
     ];
 
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -51,7 +50,6 @@ describe("interpreter for-each loops", () => {
 
         interpreter.exec(statements);
 
-        expect(BrsError.found()).toBe(false);
         expect(emptyBlockSpy).toHaveBeenCalledTimes(3);
         expect(receivedElements).toEqual(arrayMembers);
     });
@@ -74,7 +72,6 @@ describe("interpreter for-each loops", () => {
 
         interpreter.exec(statements);
 
-        expect(BrsError.found()).toBe(false);
         expect(emptyBlockSpy).not.toHaveBeenCalled();
     });
 
@@ -97,7 +94,6 @@ describe("interpreter for-each loops", () => {
 
         interpreter.exec(statements);
 
-        expect(BrsError.found()).toBe(false);
         expect(
             interpreter.environment.get(
                 { kind: Lexeme.Identifier, text: "element", line: -1 }
@@ -127,7 +123,6 @@ describe("interpreter for-each loops", () => {
 
         interpreter.exec(statements);
 
-        expect(BrsError.found()).toBe(false);
         expect(blockSpy).toHaveBeenCalledTimes(1);
     });
 });

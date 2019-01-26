@@ -1,9 +1,9 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { Int32 } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32 } = brs.types;
 
 let interpreter;
 
@@ -14,7 +14,6 @@ describe("interpreter for loops", () => {
     );
 
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 

@@ -1,9 +1,17 @@
-const { Lexeme, Preprocessor, BrsTypes } = require("brs");
-const { BrsBoolean } = BrsTypes;
+const brs = require("brs");
+const preprocessor = brs.preprocessor;
+const { Lexeme } = brs.lexer;
+const { BrsBoolean } = brs.types;
 
 describe("preprocessor parser", () => {
+    let parser;
+
+    beforeEach(() => {
+        parser = new preprocessor.Parser();
+    });
+
     it("parses chunks of brightscript", () => {
-        let chunks = Preprocessor.parse([
+        let chunks = parser.parse([
             { kind: Lexeme.Identifier, text: "someFunction", line: 1, isReserved: false },
             { kind: Lexeme.LeftParen, text: "(", line: 1, isReserved: false },
             { kind: Lexeme.RightParen, text: ")", line: 1, isReserved: false },
@@ -17,7 +25,7 @@ describe("preprocessor parser", () => {
     });
 
     it("parses #const", () => {
-        let chunks = Preprocessor.parse([
+        let chunks = parser.parse([
             { kind: Lexeme.HashConst, text: "#const", line: 1, isReserved: false },
             { kind: Lexeme.Identifier, text: "foo", line: 1, isReserved: false },
             { kind: Lexeme.Equal, text: "=", line: 1, isReserved: false },
@@ -32,7 +40,7 @@ describe("preprocessor parser", () => {
     });
 
     it("parses #error", () => {
-        let chunks = Preprocessor.parse([
+        let chunks = parser.parse([
             { kind: Lexeme.HashError, text: "#error", line: 1, isReserved: false },
             { kind: Lexeme.HashErrorMessage, text: "I'm an error message!", line: 1, isReserved: false },
             { kind: Lexeme.Eof, text: "\0", line: 1, isReserved: true }
@@ -45,7 +53,7 @@ describe("preprocessor parser", () => {
 
     describe("conditionals", () => {
         test("#if only", () => {
-            let chunks = Preprocessor.parse([
+            let chunks = parser.parse([
                 { kind: Lexeme.HashIf, text: "#if", line: 1, isReserved: false },
                 { kind: Lexeme.Identifier, text: "foo", line: 1, isReserved: false },
                 { kind: Lexeme.Newline, text: "\n", line: 1, isReserved: false },
@@ -63,7 +71,7 @@ describe("preprocessor parser", () => {
         });
 
         test("#if and #else", () => {
-            let chunks = Preprocessor.parse([
+            let chunks = parser.parse([
                 { kind: Lexeme.HashIf, text: "#if", line: 1, isReserved: false },
                 { kind: Lexeme.Identifier, text: "foo", line: 1, isReserved: false },
                 { kind: Lexeme.Newline, text: "\n", line: 1, isReserved: false },
@@ -91,7 +99,7 @@ describe("preprocessor parser", () => {
         });
 
         test("#if #else if and #else", () => {
-            let chunks = Preprocessor.parse([
+            let chunks = parser.parse([
                 { kind: Lexeme.HashIf, text: "#if", line: 1, isReserved: false },
                 { kind: Lexeme.Identifier, text: "foo", line: 1, isReserved: false },
                 { kind: Lexeme.Newline, text: "\n", line: 1, isReserved: false },

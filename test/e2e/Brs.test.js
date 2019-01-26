@@ -1,5 +1,4 @@
 const { execute } = require("../../lib/");
-const BrsError = require("../../lib/Error");
 
 const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
@@ -24,7 +23,6 @@ describe("end to end brightscript functions", () => {
             resourceFile("multi-file", "test2.brs")
         ];
         return execute(resourceFiles, outputStreams).then(() => {
-            expect(BrsError.found()).toBe(false);
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([

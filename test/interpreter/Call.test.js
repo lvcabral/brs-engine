@@ -1,9 +1,9 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { BrsString, Int32, ValueKind } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { BrsString, Int32, ValueKind } = brs.types;
 
 const { identifier } = require("../parser/ParserTests");
 
@@ -11,7 +11,6 @@ let interpreter;
 
 describe("interpreter calls", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
@@ -20,7 +19,7 @@ describe("interpreter calls", () => {
             new Expr.Call(
                 new Expr.Variable(identifier("UCase")),
                 { kind: Lexeme.RightParen, text: ")", line: 1 },
-                [ new Expr.Literal(new BrsTypes.BrsString("h@lL0")) ]
+                [ new Expr.Literal(new BrsString("h@lL0")) ]
             )
         );
         const [ result ] = interpreter.exec([call]);
@@ -79,7 +78,6 @@ describe("interpreter calls", () => {
         );
 
         expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when too many arguments are provided", () => {
@@ -88,14 +86,13 @@ describe("interpreter calls", () => {
                 new Expr.Variable(identifier("UCase")),
                 { kind: Lexeme.RightParen, text: ")", line: 1 },
                 [
-                    new Expr.Literal(new BrsTypes.BrsString("h@lL0")),
-                    new Expr.Literal(new BrsTypes.BrsString("too many args")),
+                    new Expr.Literal(new BrsString("h@lL0")),
+                    new Expr.Literal(new BrsString("too many args")),
                 ]
             )
         );
 
         expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when argument types are incorrect", () => {
@@ -104,13 +101,12 @@ describe("interpreter calls", () => {
                 new Expr.Variable(identifier("UCase")),
                 { kind: Lexeme.RightParen, text: ")", line: 1 },
                 [
-                    new Expr.Literal(new BrsTypes.Int32(5)),
+                    new Expr.Literal(new Int32(5)),
                 ]
             )
         );
 
         expect(() => interpreter.exec([call])).toThrow(/Argument '.+' must be of type/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when return types don't match", () => {
@@ -140,7 +136,6 @@ describe("interpreter calls", () => {
         expect(() => interpreter.exec(ast)).toThrow(
             /\[Line .\] Attempting to return value of type Integer, but function foo declares return value of type String/
         );
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when returning from a void return", () => {
@@ -170,7 +165,6 @@ describe("interpreter calls", () => {
         expect(() => interpreter.exec(ast)).toThrow(
             /\[Line .\] Attempting to return value of non-void type/
         );
-        expect(BrsError.found()).toBe(true);
     });
 
     it("errors when returning void from a non-void return", () => {
@@ -199,6 +193,5 @@ describe("interpreter calls", () => {
         expect(() => interpreter.exec(ast)).toThrow(
             /\[Line .\] Attempting to return void value/
         );
-        expect(BrsError.found()).toBe(true);
     });
 });

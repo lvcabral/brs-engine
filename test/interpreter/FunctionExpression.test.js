@@ -1,16 +1,14 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { ValueKind } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { ValueKind } = brs.types;
 
 let interpreter;
 
 describe("interpreter function expressions", () => {
     beforeEach(() => {
-        BrsError.reset();
-
         interpreter = new Interpreter();
     });
 
@@ -33,7 +31,6 @@ describe("interpreter function expressions", () => {
         ];
 
         interpreter.exec(statements);
-        expect(BrsError.found()).toBe(false);
 
         expect(emptyBlock.accept).toHaveBeenCalledTimes(1);
     });

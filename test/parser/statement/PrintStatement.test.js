@@ -1,26 +1,30 @@
-const { Lexeme, Parser } = require("brs");
-const BrsError = require("../../../lib/Error");
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
 
 const { token, EOF } = require("../ParserTests");
 
 describe("parser", () => {
-    afterEach(() => BrsError.reset());
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
 
     describe("print statements", () => {
         it("parses singular print statements", () => {
-            let parsed = Parser.parse([
+            let { statements, errors } = parser.parse([
                 token(Lexeme.Print),
                 token(Lexeme.String, "Hello, world"),
                 EOF
             ]);
 
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses print lists with no separator", () => {
-            let parsed = Parser.parse([
+            let { statements, errors } = parser.parse([
                 token(Lexeme.Print),
                 token(Lexeme.String, "Foo"),
                 token(Lexeme.String, "bar"),
@@ -28,13 +32,13 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
 
         it("parses print lists with separators", () => {
-            let parsed = Parser.parse([
+            let { statements, errors } = parser.parse([
                 token(Lexeme.Print),
                 token(Lexeme.String, "Foo"),
                 token(Lexeme.Semicolon),
@@ -44,9 +48,9 @@ describe("parser", () => {
                 EOF
             ]);
 
-            expect(parsed).toBeDefined();
-            expect(parsed).not.toBeNull();
-            expect(parsed).toMatchSnapshot();
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
         });
     });
 });

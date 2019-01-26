@@ -1,7 +1,17 @@
+import { EventEmitter } from "events";
+
 import * as CC from "./Chunk";
 import { ParseError } from "../parser";
 import { Token, Lexeme } from "../lexer";
-import * as BrsError from "../Error";
+import { BrsError } from "../Error";
+
+/** The results of a Preprocessor's filtering pass. */
+export interface FilterResults {
+    /** The tokens remaining after preprocessing. */
+    processedTokens: ReadonlyArray<Token>,
+    /** The encountered during preprocessing. */
+    errors: ReadonlyArray<BrsError>
+}
 
 /**
  * A simple pre-processor that executes BrightScript's conditional compilation directives by
@@ -11,18 +21,38 @@ export class Preprocessor implements CC.Visitor {
 
     private constants = new Map<string, boolean>();
 
+    /** Allows consumers to observe errors as they're detected. */
+    readonly events = new EventEmitter();
+
+    /** The set of errors encountered when pre-processing conditional compilation directives. */
+    errors: ParseError[] = [];
+
+    /**
+     * Emits an error via this processor's `events` property, then throws it.
+     * @param err the ParseError to emit then throw
+     */
+    private addError(err: BrsError): never {
+        this.errors.push(err);
+        this.events.emit("err", err);
+        throw err;
+    }
+
     /**
      * Filters the tokens contained within a set of chunks based on a set of constants.
      * @param chunks the chunks from which to retrieve tokens
      * @param bsConst the set of constants defined in a BrightScript `manifest` file's `bs_const` property
-     * @returns an array of tokens, filtered by conditional compilation directives included within
+     * @returns an object containing an array of `errors` and an array of `processedTokens` filtered by conditional
+     *          compilation directives included within
      */
-    filter(chunks: ReadonlyArray<CC.Chunk>, bsConst: Map<string, boolean>) {
+    filter(chunks: ReadonlyArray<CC.Chunk>, bsConst: Map<string, boolean>): FilterResults {
         this.constants = new Map(bsConst);
-        return chunks.map(chunk => chunk.accept(this)).reduce(
-           (allTokens: Token[], chunkTokens: Token[]) => [ ...allTokens, ...chunkTokens ],
-           []
-        );
+        return {
+            processedTokens: chunks.map(chunk => chunk.accept(this)).reduce(
+                (allTokens: Token[], chunkTokens: Token[]) => [ ...allTokens, ...chunkTokens ],
+                []
+            ),
+            errors: this.errors
+        };
     }
 
     /**
@@ -42,7 +72,9 @@ export class Preprocessor implements CC.Visitor {
      */
     visitDeclaration(chunk: CC.Declaration) {
         if (this.constants.has(chunk.name.text)) {
-            throw BrsError.make(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line);
+            return this.addError(
+                new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line)
+            );
         }
 
         let value;
@@ -59,9 +91,13 @@ export class Preprocessor implements CC.Visitor {
                     break;
                 }
 
-                throw BrsError.make(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line);
+                return this.addError(
+                    new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line)
+                );
             default:
-                throw BrsError.make("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line);
+                return this.addError(
+                    new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line)
+                );
         }
 
         this.constants.set(chunk.name.text, value);
@@ -75,7 +111,7 @@ export class Preprocessor implements CC.Visitor {
      * @throws a JavaScript error with the provided message
      */
     visitError(chunk: CC.Error): never {
-        throw ParseError.make(chunk.hashError, chunk.message);
+        return this.addError(new ParseError(chunk.hashError, chunk.message));
     }
 
     /**
@@ -121,9 +157,13 @@ export class Preprocessor implements CC.Visitor {
                     return this.constants.get(token.text) as boolean;
                 }
 
-                throw BrsError.make(`Attempting to reference undefined #const with name '${token.text}'`, token.line);
+                return this.addError(
+                    new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.line)
+                );
             default:
-                throw BrsError.make("#if conditionals can only be `true`, `false`, or other #const names", token.line);
+                return this.addError(
+                    new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.line)
+                );
         }
     }
 }

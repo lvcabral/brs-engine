@@ -1,5 +1,5 @@
 import { BrsType } from "../brsTypes";
-import * as BrsError from "../Error";
+import { BrsError } from "../Error";
 import { Token } from "../lexer";
 
 export interface BlockEnd {
@@ -27,10 +27,6 @@ export class ReturnValue implements BlockEnd {
     constructor(readonly location: Token, readonly value?: BrsType) {}
 }
 
-export class Runtime extends Error implements BlockEnd {
+export class Runtime extends BrsError implements BlockEnd {
     readonly kind = StopReason.RuntimeError;
-
-    constructor(readonly err: Error) {
-        super(err.message);
-    }
 }

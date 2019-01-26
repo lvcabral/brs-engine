@@ -1,14 +1,18 @@
-const BrsError = require("../../../lib/Error");
-const { Lexeme, Parser } = require("brs");
-const { Expr, Stmt } = Parser;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Expr, Stmt } = brs.parser;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser foreach loops", () => {
-    afterEach(() => BrsError.reset());
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
 
     it("requires a name and target", () => {
-        let parsed = Parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.ForEach, text: "for each", line: 2 },
             { kind: Lexeme.Identifier, text: "word", line: 2 },
             { kind: Lexeme.Identifier, text: "in", line: 2 },
@@ -21,10 +25,10 @@ describe("parser foreach loops", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
 
-        let forEach = parsed[0];
+        let forEach = statements[0];
         expect(forEach).toBeInstanceOf(Stmt.ForEach);
 
         expect(forEach.item).toEqual(
@@ -35,6 +39,6 @@ describe("parser foreach loops", () => {
             { kind: Lexeme.Identifier, text: "lipsum", line: 2 }
         );
 
-        expect(parsed).toMatchSnapshot();
+        expect(statements).toMatchSnapshot();
     });
 });

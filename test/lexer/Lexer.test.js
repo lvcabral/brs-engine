@@ -1,19 +1,20 @@
-const { Lexer, Lexeme, BrsTypes } = require("brs");
-const { BrsString, Int32, Int64, Float, Double } = BrsTypes;
+const { lexer, types } = require("brs");
+const { Lexer, Lexeme } = lexer;
+const { BrsString, Int32, Int64, Float, Double } = types;
 
 describe("lexer", () => {
     it("includes an end-of-file marker", () => {
-        let tokens = Lexer.scan("");
+        let { tokens } = Lexer.scan("");
         expect(tokens.map(t => t.kind)).toEqual([ Lexeme.Eof ]);
     });
 
     it("ignores tabs and spaces", () => {
-        let tokens = Lexer.scan("\t\t  \t     \t");
+        let { tokens } = Lexer.scan("\t\t  \t     \t");
         expect(tokens.map(t => t.kind)).toEqual([ Lexeme.Eof ]);
     });
 
     it("retains one newline from consecutive newlines", () => {
-        let tokens = Lexer.scan("\n\n'foo\n\n\nprint 2\n\n");
+        let { tokens } = Lexer.scan("\n\n'foo\n\n\nprint 2\n\n");
         expect(tokens.map(t => t.kind)).toEqual([
             Lexeme.Print,
             Lexeme.Integer,
@@ -23,7 +24,7 @@ describe("lexer", () => {
     });
 
     it("aliases '?' to 'print'", () => {
-        let tokens = Lexer.scan("?2");
+        let { tokens } = Lexer.scan("?2");
         expect(tokens.map(t => t.kind)).toEqual([
             Lexeme.Print,
             Lexeme.Integer,
@@ -33,21 +34,21 @@ describe("lexer", () => {
 
     describe("comments", () => {
         it("ignores everything after `'`", () => {
-            let tokens = Lexer.scan("= ' (");
+            let { tokens } = Lexer.scan("= ' (");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.Equal, Lexeme.Eof
             ]);
         });
 
         it("ignores everything after `REM`", () => {
-            let tokens = Lexer.scan("= REM (");
+            let { tokens } = Lexer.scan("= REM (");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.Equal, Lexeme.Eof
             ]);
         });
 
         it("ignores everything after `rem`", () => {
-            let tokens = Lexer.scan("= rem (");
+            let { tokens } = Lexer.scan("= rem (");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.Equal, Lexeme.Eof
             ]);
@@ -56,7 +57,7 @@ describe("lexer", () => {
 
     describe("non-literals", () => {
         it("reads parens & braces", () => {
-            let tokens = Lexer.scan("(){}");
+            let { tokens } = Lexer.scan("(){}");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.LeftParen,
                 Lexeme.RightParen,
@@ -68,7 +69,7 @@ describe("lexer", () => {
         });
 
         it("reads operators", () => {
-            let tokens = Lexer.scan("^ - + * MOD / \\");
+            let { tokens } = Lexer.scan("^ - + * MOD / \\");
 
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.Caret,
@@ -84,7 +85,7 @@ describe("lexer", () => {
         });
 
         it("reads bitshift operators", () => {
-            let tokens = Lexer.scan("<< >> <<");
+            let { tokens } = Lexer.scan("<< >> <<");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.LeftShift,
                 Lexeme.RightShift,
@@ -95,7 +96,7 @@ describe("lexer", () => {
         });
 
         it("reads comparators", () => {
-            let tokens = Lexer.scan("< <= > >= = <>");
+            let { tokens } = Lexer.scan("< <= > >= = <>");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.Less,
                 Lexeme.LessEqual,
@@ -111,7 +112,7 @@ describe("lexer", () => {
 
     describe("string literals", () => {
         it("produces string literal tokens", () => {
-            let tokens = Lexer.scan(`"hello world"`);
+            let { tokens } = Lexer.scan(`"hello world"`);
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.String,
                 Lexeme.Eof
@@ -122,7 +123,7 @@ describe("lexer", () => {
         });
 
         it(`safely escapes " literals`, () => {
-            let tokens = Lexer.scan(`"the cat says ""meow"""`);
+            let { tokens } = Lexer.scan(`"the cat says ""meow"""`);
             expect(tokens[0].kind).toBe(Lexeme.String);
             expect(tokens[0].literal).toEqual(
                 new BrsString(`the cat says "meow"`)
@@ -135,19 +136,19 @@ describe("lexer", () => {
 
     describe("double literals", () => {
         it("respects '#' suffix", () => {
-            let d = Lexer.scan("123#")[0];
+            let d = Lexer.scan("123#").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
             expect(d.literal).toEqual(new Double(123));
         });
 
         it("forces literals >= 10 digits into doubles", () => {
-            let d = Lexer.scan("0000000005")[0];
+            let d = Lexer.scan("0000000005").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
             expect(d.literal).toEqual(new Double(5));
         });
 
         it("forces literals with 'D' in exponent into doubles", () => {
-            let d = Lexer.scan("2.5d3")[0];
+            let d = Lexer.scan("2.5d3").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
             expect(d.literal).toEqual(new Double(2500));
         });
@@ -155,7 +156,7 @@ describe("lexer", () => {
 
     describe("float literals", () => {
         it("respects '!' suffix", () => {
-            let f = Lexer.scan("0.00000008!")[0];
+            let f = Lexer.scan("0.00000008!").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
             // Floating precision will make this *not* equal
             expect(f.literal).not.toBe(8e-8);
@@ -163,13 +164,13 @@ describe("lexer", () => {
         });
 
         it("forces literals with a decimal into floats", () => {
-            let f = Lexer.scan("1.0")[0];
+            let f = Lexer.scan("1.0").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
             expect(f.literal).toEqual(new Float(1000000000000e-12));
         });
 
         it("forces literals with 'E' in exponent into floats", () => {
-            let f = Lexer.scan("2.5e3")[0];
+            let f = Lexer.scan("2.5e3").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
             expect(f.literal).toEqual(new Float(2500));
         });
@@ -178,7 +179,7 @@ describe("lexer", () => {
     describe("long integer literals", () => {
         it("supports hexadecimal literals");
         it("respects '&' suffix", () => {
-            let li = Lexer.scan("123&")[0];
+            let li = Lexer.scan("123&").tokens[0];
             expect(li.kind).toBe(Lexeme.LongInteger);
             expect(li.literal).toEqual(new Int64(123));
         });
@@ -187,7 +188,7 @@ describe("lexer", () => {
     describe("integer literals", () => {
         it("supports hexadecimal literals");
         it("falls back to a regular integer", () => {
-            let i = Lexer.scan("123")[0];
+            let i = Lexer.scan("123").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);
             expect(i.literal).toEqual(new Int32(123));
         });
@@ -197,8 +198,8 @@ describe("lexer", () => {
         it("matches single-word keywords", () => {
             // test just a sample of single-word reserved words for now.
             // if we find any that we've missed
-            let words = Lexer.scan("and or if else endif return true false");
-            expect(words.map(w => w.kind)).toEqual([
+            let { tokens } = Lexer.scan("and or if else endif return true false");
+            expect(tokens.map(w => w.kind)).toEqual([
                 Lexeme.And,
                 Lexeme.Or,
                 Lexeme.If,
@@ -209,12 +210,12 @@ describe("lexer", () => {
                 Lexeme.False,
                 Lexeme.Eof
             ]);
-            expect(words.filter(w => !!w.literal).length).toBe(0);
+            expect(tokens.filter(w => !!w.literal).length).toBe(0);
         });
 
         it("matches multi-word keywords", () => {
-            let words = Lexer.scan("else if end if end while End Sub end Function Exit wHILe");
-            expect(words.map(w => w.kind)).toEqual([
+            let { tokens } = Lexer.scan("else if end if end while End Sub end Function Exit wHILe");
+            expect(tokens.map(w => w.kind)).toEqual([
                 Lexeme.ElseIf,
                 Lexeme.EndIf,
                 Lexeme.EndWhile,
@@ -223,12 +224,12 @@ describe("lexer", () => {
                 Lexeme.ExitWhile,
                 Lexeme.Eof
             ]);
-            expect(words.filter(w => !!w.literal).length).toBe(0);
+            expect(tokens.filter(w => !!w.literal).length).toBe(0);
         });
 
         it("accepts 'exit for' but not 'exitfor'", () => {
-            let words = Lexer.scan("exit for exitfor");
-            expect(words.map(w => w.kind)).toEqual([
+            let { tokens } = Lexer.scan("exit for exitfor");
+            expect(tokens.map(w => w.kind)).toEqual([
                 Lexeme.ExitFor,
                 Lexeme.Identifier,
                 Lexeme.Eof
@@ -236,8 +237,8 @@ describe("lexer", () => {
         });
 
         it("matches keywords with silly capitalization", () => {
-            let words = Lexer.scan("iF ELSE eNDIf FUncTioN");
-            expect(words.map(w => w.kind)).toEqual([
+            let { tokens } = Lexer.scan("iF ELSE eNDIf FUncTioN");
+            expect(tokens.map(w => w.kind)).toEqual([
                 Lexeme.If,
                 Lexeme.Else,
                 Lexeme.EndIf,
@@ -247,7 +248,7 @@ describe("lexer", () => {
         });
 
         it("allows alpha-numeric (plus '_') identifiers", () => {
-            let identifier = Lexer.scan("_abc_123_")[0];
+            let identifier = Lexer.scan("_abc_123_").tokens[0];
             expect(identifier.kind).toBe(Lexeme.Identifier);
             expect(identifier.text).toBe("_abc_123_");
         });
@@ -255,7 +256,7 @@ describe("lexer", () => {
 
     describe("conditional compilation", () => {
         it("reads constant declarations", () => {
-            let tokens = Lexer.scan("#const foo true");
+            let { tokens } = Lexer.scan("#const foo true");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.HashConst,
                 Lexeme.Identifier,
@@ -265,7 +266,7 @@ describe("lexer", () => {
         });
 
         it("reads constant aliases", () => {
-            let tokens = Lexer.scan("#const bar foo");
+            let { tokens } = Lexer.scan("#const bar foo");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.HashConst,
                 Lexeme.Identifier,
@@ -275,7 +276,7 @@ describe("lexer", () => {
         });
 
         it("reads conditional directives", () => {
-            let tokens = Lexer.scan("#if #else if #else #end if");
+            let { tokens } = Lexer.scan("#if #else if #else #end if");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.HashIf,
                 Lexeme.HashElseIf,
@@ -286,7 +287,7 @@ describe("lexer", () => {
         });
 
         it("reads forced compilation errors with messages", () => {
-            let tokens = Lexer.scan("#error a message goes here\n");
+            let { tokens } = Lexer.scan("#error a message goes here\n");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.HashError,
                 Lexeme.HashErrorMessage,

@@ -1,29 +1,22 @@
 const { execute } = require("../../lib/");
-const BrsError = require("../../lib/Error");
 
 const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
 describe("function argument type checking", () => {
     let outputStreams;
-    let originalNodeEnv;
 
     beforeAll(() => {
-        originalNodeEnv = process.env.NODE_ENV;
-        // switch NODE_ENV to not-test, to ensure errors get logged
-        process.env.NODE_ENV = "jest";
-        // but make console.error empty so we don't clutter test output
+        // make console.error empty so we don't clutter test output
         stderr = jest.spyOn(console, "error").mockImplementation(() => {});
         outputStreams = createMockStreams();
     });
 
     afterEach(() => {
         stderr.mockClear();
-        BrsError.reset();
     });
 
     afterAll(() => {
         stderr.mockRestore()
-        process.env.NODE_ENV = originalNodeEnv;
     });
 
     it("errors when too few args are passed", () => {

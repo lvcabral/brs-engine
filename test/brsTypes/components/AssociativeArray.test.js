@@ -1,11 +1,8 @@
-const { BrsTypes } = require("brs");
-const { AssociativeArray, BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } = BrsTypes;
-const BrsError = require("../../../lib/Error");
+const brs = require("brs");
+const { AssociativeArray, BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } = brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("AssociativeArray", () => {
-    beforeEach(() => BrsError.reset());
-
     describe("comparisons", () => {
         it("is less than nothing", () => {
             let a = new AssociativeArray([]);

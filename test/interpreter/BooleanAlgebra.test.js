@@ -1,67 +1,64 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { token } = require("../parser/ParserTests");
-const { Lexeme, BrsTypes } = require("brs");
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
 const { Interpreter } = require("../../lib/interpreter");
 
 let interpreter;
 
 describe("interpreter boolean algebra", () => {
     beforeEach(() => {
-        BrsError.reset();
         interpreter = new Interpreter();
     });
 
     it("ANDs booleans", () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
-                new Expr.Literal(BrsTypes.BrsBoolean.True),
+                new Expr.Literal(brs.types.BrsBoolean.True),
                 token(Lexeme.And),
-                new Expr.Literal(BrsTypes.BrsBoolean.False)
+                new Expr.Literal(brs.types.BrsBoolean.False)
             )
         );
 
         let [result] = interpreter.exec([ast]);
-        expect(result).toEqual(BrsTypes.BrsBoolean.False);
+        expect(result).toEqual(brs.types.BrsBoolean.False);
     });
 
     it("ORs booleans", () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
-                new Expr.Literal(BrsTypes.BrsBoolean.True),
+                new Expr.Literal(brs.types.BrsBoolean.True),
                 token(Lexeme.Or),
-                new Expr.Literal(BrsTypes.BrsBoolean.False)
+                new Expr.Literal(brs.types.BrsBoolean.False)
             )
         );
 
         let [result] = interpreter.exec([ast]);
-        expect(result).toEqual(BrsTypes.BrsBoolean.True);
+        expect(result).toEqual(brs.types.BrsBoolean.True);
     });
 
     it("doesn't allow mixed-type ANDs", () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
-                new Expr.Literal(BrsTypes.BrsBoolean.True),
+                new Expr.Literal(brs.types.BrsBoolean.True),
                 token(Lexeme.And),
-                new Expr.Literal(new BrsTypes.Int32(5))
+                new Expr.Literal(new brs.types.Int32(5))
             )
         );
 
         expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'and' boolean/);
-        expect(BrsError.found()).toBe(true);
     });
 
     it("doesn't allow mixed-type ORs", () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
-                new Expr.Literal(BrsTypes.BrsBoolean.False),
+                new Expr.Literal(brs.types.BrsBoolean.False),
                 token(Lexeme.Or),
-                new Expr.Literal(new BrsTypes.Int32(5))
+                new Expr.Literal(new brs.types.Int32(5))
             )
         );
 
         expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'or' boolean/);
-        expect(BrsError.found()).toBe(true);
     });
 });

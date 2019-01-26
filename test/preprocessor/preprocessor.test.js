@@ -1,7 +1,7 @@
 const brs = require("brs");
-const { Lexeme, BrsTypes } = brs;
-const { Chunk } = brs.Preprocessor;
-const { BrsString, BrsBoolean } = BrsTypes;
+const { Lexeme } = brs.lexer;
+const { Chunk } = brs.preprocessor;
+const { BrsString, BrsBoolean } = brs.types;
 
 const { Preprocessor } = require("../../lib/preprocessor/Preprocessor");
 
@@ -15,21 +15,21 @@ describe("preprocessor", () => {
             { kind: Lexeme.Eof, text: "\0", line: 2, isReserved: false }
         ];
 
-        let filtered = new Preprocessor().filter([
+        let { processedTokens } = new Preprocessor().filter([
             new Chunk.BrightScript(unprocessed)
         ]);
-        expect(filtered).toEqual(unprocessed);
+        expect(processedTokens).toEqual(unprocessed);
     });
 
     describe("#const", () => {
         it("removes #const declarations from output", () => {
-            let filtered = new Preprocessor().filter([
+            let { processedTokens } = new Preprocessor().filter([
                 new Chunk.Declaration(
                     { kind: Lexeme.Identifier, text: "lorem", line: 1, isReserved: false },
                     { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true }
                 )
             ]);
-            expect(filtered).toEqual([]);
+            expect(processedTokens).toEqual([]);
         });
 
         describe("values", () => {

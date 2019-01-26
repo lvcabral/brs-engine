@@ -1,10 +1,10 @@
-const BrsError = require("../../lib/Error");
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
 const { identifier, token } = require("../parser/ParserTests");
 const { Interpreter } = require("../../lib/interpreter");
-const { Lexeme, BrsTypes } = require("brs");
-const { Int32, BrsString, BrsBoolean } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32, BrsString, BrsBoolean } = brs.types;
 
 let interpreter;
 
@@ -12,8 +12,6 @@ describe("interpreter if statements", () => {
     let assignTo;
 
     beforeEach(() => {
-        BrsError.reset();
-
         assignTo = {
             foo: new Stmt.Assignment(
                 identifier("foo"),

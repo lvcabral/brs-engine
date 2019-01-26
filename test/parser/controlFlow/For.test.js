@@ -1,14 +1,18 @@
-const BrsError = require("../../../lib/Error");
-const { Lexeme, BrsTypes, Parser } = require("brs");
-const { Int32 } = BrsTypes;
+const brs = require("brs");
+const { Lexeme } = brs.lexer;
+const { Int32 } = brs.types;
 
 const { EOF } = require("../ParserTests");
 
 describe("parser for loops", () => {
-    afterEach(() => BrsError.reset());
+    let parser;
+
+    beforeEach(() => {
+        parser = new brs.parser.Parser();
+    });
 
     it("accepts a 'step' clause", () => {
-        let parsed = Parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.For, text: "for", line: 1 },
             { kind: Lexeme.Identifier, text: "i", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
@@ -24,17 +28,17 @@ describe("parser for loops", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed[0]).toBeDefined();
-        expect(parsed[0].increment).toBeDefined();
-        expect(parsed[0].increment.value).toEqual(new Int32(2));
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements[0]).toBeDefined();
+        expect(statements[0].increment).toBeDefined();
+        expect(statements[0].increment.value).toEqual(new Int32(2));
 
-        expect(parsed).toMatchSnapshot();
+        expect(statements).toMatchSnapshot();
     });
 
     it("defaults a missing 'step' clause to '1'", () => {
-        let parsed = Parser.parse([
+        let { statements, errors } = parser.parse([
             { kind: Lexeme.For, text: "for", line: 1 },
             { kind: Lexeme.Identifier, text: "i", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
@@ -48,12 +52,12 @@ describe("parser for loops", () => {
             EOF
         ]);
 
-        expect(BrsError.found()).toBe(false);
-        expect(parsed).toBeDefined();
-        expect(parsed[0]).toBeDefined();
-        expect(parsed[0].increment).toBeDefined();
-        expect(parsed[0].increment.value).toEqual(new Int32(1));
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(statements[0]).toBeDefined();
+        expect(statements[0].increment).toBeDefined();
+        expect(statements[0].increment.value).toEqual(new Int32(1));
 
-        expect(parsed).toMatchSnapshot();
+        expect(statements).toMatchSnapshot();
     });
 });

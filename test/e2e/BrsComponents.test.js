@@ -1,5 +1,4 @@
 const { execute } = require("../../lib/");
-const BrsError = require("../../lib/Error");
 const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 const lolex = require("lolex")
 
