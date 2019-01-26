@@ -66,6 +66,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
+     * Convenience function to subscribe to the `err` events emitted by `interpreter.events`.
+     * @param errorHandler the function to call for every runtime error emitted after subscribing
+     * @returns an object with a `dispose` function, used to unsubscribe from errors
+     */
+    public onError(errorHandler: (err: BrsError | Runtime) => void) {
+        this.events.on("err", errorHandler);
+        return {
+            dispose: () => {
+                this.events.removeListener("err", errorHandler);
+            }
+        };
+    }
+
+    /**
+     * Convenience function to subscribe to a single `err` event emitted by `interpreter.events`.
+     * @param errorHandler the function to call for the first runtime error emitted after subscribing
+     */
+    public onErrorOnce(errorHandler: (err: BrsError | Runtime) => void) {
+        this.events.once("err", errorHandler);
+    }
+
+    /**
      * Creates a new Interpreter, including any global properties and functions.
      * @param outputStreams the WriteStreams to use for `stdout` and `stderr`.
      */

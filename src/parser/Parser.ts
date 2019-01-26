@@ -50,6 +50,28 @@ export class Parser {
     }
 
     /**
+     * Convenience function to subscribe to the `err` events emitted by `parser.events`.
+     * @param errorHandler the function to call for every Parser error emitted after subscribing
+     * @returns an object with a `dispose` function, used to unsubscribe from errors
+     */
+    public onError(errorHandler: (err: ParseError) => void) {
+        this.events.on("err", errorHandler);
+        return {
+            dispose: () => {
+                this.events.removeListener("err", errorHandler);
+            }
+        };
+    }
+
+    /**
+     * Convenience function to subscribe to a single `err` event emitted by `parser.events`.
+     * @param errorHandler the function to call for the first Parser error emitted after subscribing
+     */
+    public onErrorOnce(errorHandler: (err: ParseError) => void) {
+        this.events.once("err", errorHandler);
+    }
+
+    /**
      * Parses an array of `Token`s into an abstract syntax tree that can be executed with the `Interpreter`.
      * @param toParse the array of tokens to parse
      * @returns an array of `Statement` objects that together form the abstract syntax tree of the

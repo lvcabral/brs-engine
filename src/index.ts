@@ -49,7 +49,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         let lexer = new Lexer();
         let preprocessor = new PP.Preprocessor();
         let parser = new Parser();
-        [lexer, preprocessor, parser].forEach(emitter => emitter.events.on("err", logError));
+        [lexer, preprocessor, parser].forEach(emitter => emitter.onError(logError));
 
         let scanResults = lexer.scan(contents);
         if (scanResults.errors.length > 0) {
@@ -91,7 +91,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
 
     // execute them
     const interpreter = new Interpreter(executionOptions);
-    interpreter.events.on("err", logError);
+    interpreter.onError(logError);
     return interpreter.exec(statements);
 }
 

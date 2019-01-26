@@ -12,6 +12,29 @@ export class Preprocessor {
 
     readonly events = new EventEmitter();
 
+    /**
+     * Convenience function to subscribe to the `err` events emitted by `preprocessor.events`.
+     * @param errorHandler the function to call for every preprocessing error emitted after subscribing
+     * @returns an object with a `dispose` function, used to unsubscribe from errors
+     */
+    public onError(errorHandler: (err: BrsError | ParseError) => void) {
+        this.events.on("err", errorHandler);
+        return {
+            dispose: () => {
+                this.events.removeListener("err", errorHandler);
+            }
+        };
+    }
+
+    /**
+     * Convenience function to subscribe to a single `err` event emitted by `preprocessor.events`.
+     * @param errorHandler the function to call for the first preprocessing error emitted after subscribing
+     */
+    public onErrorOnce(errorHandler: (err: BrsError | ParseError) => void) {
+        this.events.once("err", errorHandler);
+    }
+
+
     constructor() {
         // plumb errors from the internal parser and preprocessor out to the public interface for convenience
         this.parser.events.on("err", (err) => this.events.emit("err", err));
@@ -38,6 +61,8 @@ export class Preprocessor {
 }
 
 import * as Chunk from "./Chunk";
+import { BrsError } from "../Error";
+import { ParseError } from "../parser";
 export { Chunk };
 export { Parser } from "./Parser";
 export { getManifest, getBsConst, Manifest } from "./Manifest";
