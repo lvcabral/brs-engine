@@ -130,8 +130,19 @@ describe("lexer", () => {
             );
         });
 
-        it("produces an error for unterminated strings");
-        it("disallows multiline strings");
+        it("produces an error for unterminated strings", () => {
+            let { errors } = Lexer.scan(`"unterminated!`);
+            expect(errors.map(err => err.message)).toEqual([
+                expect.stringMatching("Unterminated string")
+            ]);
+        });
+
+        it("disallows multiline strings", () => {
+            let { errors } = Lexer.scan(`"multi-line\n\n`);
+            expect(errors.map(err => err.message)).toEqual([
+                expect.stringMatching("Unterminated string")
+            ]);
+        });
     }); // string literals
 
     describe("double literals", () => {
@@ -177,7 +188,7 @@ describe("lexer", () => {
     });
 
     describe("long integer literals", () => {
-        it("supports hexadecimal literals");
+        it.todo("supports hexadecimal literals");
         it("respects '&' suffix", () => {
             let li = Lexer.scan("123&").tokens[0];
             expect(li.kind).toBe(Lexeme.LongInteger);
@@ -186,7 +197,7 @@ describe("lexer", () => {
     });
 
     describe("integer literals", () => {
-        it("supports hexadecimal literals");
+        it.todo("supports hexadecimal literals");
         it("falls back to a regular integer", () => {
             let i = Lexer.scan("123").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);
