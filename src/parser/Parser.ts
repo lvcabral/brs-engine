@@ -29,9 +29,9 @@ type BlockTerminator =
 /** The results of a Parser's parsing pass. */
 interface ParseResults {
     /** The statements produced by the parser. */
-    statements: ReadonlyArray<Stmt.Statement>,
+    statements: Stmt.Statement[],
     /** The errors encountered by the Parser. */
-    errors: ReadonlyArray<ParseError>
+    errors: ParseError[]
 }
 
 export class Parser {
@@ -39,9 +39,21 @@ export class Parser {
     readonly events = new EventEmitter();
 
     /**
+     * A convenience function, equivalent to `new Parser().parse(toParse)`, that parses an array of
+     * `Token`s into an abstract syntax tree that can be executed with the `Interpreter`.
+     * @param toParse the array of tokens to parse
+     * @returns an array of `Statement` objects that together form the abstract syntax tree of the
+     *          program
+     */
+    static parse(toParse: ReadonlyArray<Token>) {
+        return new Parser().parse(toParse);
+    }
+
+    /**
      * Parses an array of `Token`s into an abstract syntax tree that can be executed with the `Interpreter`.
      * @param toParse the array of tokens to parse
-     * @returns an array of `Statement` objects that together form the abstract syntax tree of the program
+     * @returns an array of `Statement` objects that together form the abstract syntax tree of the
+     *          program
      */
     parse(toParse: ReadonlyArray<Token>): ParseResults {
         let current = 0;

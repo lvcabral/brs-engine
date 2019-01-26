@@ -28,7 +28,7 @@ export class Lexer {
     readonly events = new EventEmitter();
 
     /**
-     * A convenience function, equivalent to `new Lexer().scan(toScan)`, that Converts a string
+     * A convenience function, equivalent to `new Lexer().scan(toScan)`, that converts a string
      * containing BrightScript code to an array of `Token` objects that will later be used to build
      * an abstract syntax tree.
      *
