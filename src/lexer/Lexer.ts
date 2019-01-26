@@ -18,9 +18,9 @@ import {
 /** The results of a Lexer's scanning pass. */
 interface ScanResults {
     /** The tokens produced by the Lexer. */
-    tokens: ReadonlyArray<Token>,
+    tokens: Token[],
     /** The errors encountered by the Lexer. */
-    errors: ReadonlyArray<BrsError>
+    errors: BrsError[]
 }
 
 export class Lexer {
