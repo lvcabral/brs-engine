@@ -1,0 +1,54 @@
+version: 2.1
+
+jobs:
+  private-build-lint-test: &build-lint-test
+    docker:
+      - image: circleci/node # will be overridden
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: yarn
+      - run:
+          name: Compile
+          command: yarn build
+      - run:
+          name: Lint
+          command: yarn lint
+      - run:
+          name: Test
+          command: yarn test --ci --runInBand --testResultsProcessor=jest-junit
+          environment:
+            - JEST_JUNIT_ANCESTOR_SEPARATOR: ">"
+            - JEST_JUNIT_OUTPUT_DIR: "reports/jest"
+      - store_test_results:
+          path: reports/jest
+
+  "Node 6":
+    <<: *build-lint-test
+    docker:
+      - image: node:6
+
+  "Node 8":
+    <<: *build-lint-test
+    docker:
+      - image: node:8
+
+  "Node 10":
+    <<: *build-lint-test
+    docker:
+      - image: node:10
+
+  "Node 11":
+    <<: *build-lint-test
+    docker:
+        - image: node:11
+
+workflows:
+  version: 2
+  "Node - supported versions":
+    jobs:
+      - "Node 6"
+      - "Node 8"
+      - "Node 10"
+      - "Node 11"
