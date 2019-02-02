@@ -21,11 +21,12 @@ Array [
         "text": "someArray",
       },
     },
-    "value": Literal {
-      "value": BrsString {
-        "kind": 2,
-        "value": "baz",
+    "value": Function {
+      "body": Block {
+        "statements": Array [],
       },
+      "parameters": Array [],
+      "returns": 9,
     },
   },
 ]
@@ -46,11 +47,12 @@ Array [
         "text": "foo",
       },
     },
-    "value": Literal {
-      "value": BrsString {
-        "kind": 2,
-        "value": "baz",
+    "value": Function {
+      "body": Block {
+        "statements": Array [],
       },
+      "parameters": Array [],
+      "returns": 9,
     },
   },
 ]

@@ -838,6 +838,8 @@ export class Parser {
                 case match(Lexeme.Pos, Lexeme.Tab):
                     let token = Object.assign(previous(), { kind: Lexeme.Identifier }) as Identifier;
                     return new Expr.Variable(token);
+                case check(Lexeme.Function, Lexeme.Sub):
+                    return anonymousFunction();
                 default:
                     return addError(
                         new ParseError(peek(), `Found unexpected token '${peek().text}'`)
