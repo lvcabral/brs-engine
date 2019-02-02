@@ -69,7 +69,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         let parseResults = parser.parse(preprocessResults.processedTokens);
         if (parseResults.errors.length > 0) {
             return Promise.reject({
-                message: "Error occurred during pre-processing"
+                message: "Error occurred parsing"
             });
         }
 

@@ -16,7 +16,11 @@ describe("parser indexed assignment", () => {
             { kind: Lexeme.Dot, text: ".", line: 1 },
             { kind: Lexeme.Identifier, text: "bar", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
-            { kind: Lexeme.String, text: "baz", line: 1, literal: new BrsString("baz") },
+            { kind: Lexeme.Function, text: "function", line: 1 },
+            { kind: Lexeme.LeftParen, text: "(", line: 1 },
+            { kind: Lexeme.RightParen, text: ")", line: 1 },
+            { kind: Lexeme.Newline, text: "\\n", line: 1 },
+            { kind: Lexeme.EndFunction, text: "end function", line: 2 },
             EOF
         ]);
 
@@ -33,7 +37,11 @@ describe("parser indexed assignment", () => {
             { kind: Lexeme.Integer, text: "0", line: 1, literal: new Int32(0) },
             { kind: Lexeme.RightSquare, text: "]", line: 1 },
             { kind: Lexeme.Equal, text: "=", line: 1 },
-            { kind: Lexeme.String, text: "baz", line: 1, literal: new BrsString("baz") },
+            { kind: Lexeme.Function, text: "function", line: 1 },
+            { kind: Lexeme.LeftParen, text: "(", line: 1 },
+            { kind: Lexeme.RightParen, text: ")", line: 1 },
+            { kind: Lexeme.Newline, text: "\\n", line: 1 },
+            { kind: Lexeme.EndFunction, text: "end function", line: 2 },
             EOF
         ]);
 
