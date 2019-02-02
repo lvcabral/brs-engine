@@ -41,4 +41,25 @@ describe("parser foreach loops", () => {
 
         expect(statements).toMatchSnapshot();
     });
+
+    it("allows 'next' to terminate loop", () => {
+        let { statements, errors } = parser.parse([
+            { kind: Lexeme.ForEach, text: "for each", line: 2 },
+            { kind: Lexeme.Identifier, text: "word", line: 2 },
+            { kind: Lexeme.Identifier, text: "in", line: 2 },
+            { kind: Lexeme.Identifier, text: "lipsum", line: 2 },
+            { kind: Lexeme.Newline, text: "\n", line: 2 },
+
+            // body would go here, but it's not necessary for this test
+            { kind: Lexeme.Next, text: "next", line: 3 },
+            { kind: Lexeme.Newline, text: "\n", line: 3 },
+            EOF
+        ]);
+
+        expect(errors).toEqual([])
+        expect(statements).toBeDefined();
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).toMatchSnapshot();
+    });
 });

@@ -35,6 +35,41 @@ Array [
 ]
 `;
 
+exports[`parser for loops allows 'next' to terminate loop 1`] = `
+Array [
+  For {
+    "body": Block {
+      "statements": Array [],
+    },
+    "counterDeclaration": Assignment {
+      "name": Object {
+        "kind": 21,
+        "line": 1,
+        "text": "i",
+      },
+      "value": Literal {
+        "value": Int32 {
+          "kind": 3,
+          "value": 0,
+        },
+      },
+    },
+    "finalValue": Literal {
+      "value": Int32 {
+        "kind": 3,
+        "value": 5,
+      },
+    },
+    "increment": Literal {
+      "value": Int32 {
+        "kind": 3,
+        "value": 1,
+      },
+    },
+  },
+]
+`;
+
 exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
 Array [
   For {

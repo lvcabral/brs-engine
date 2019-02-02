@@ -21,6 +21,7 @@ type BlockTerminator =
     Lexeme.ElseIf |
     Lexeme.Else |
     Lexeme.EndFor |
+    Lexeme.Next |
     Lexeme.EndIf |
     Lexeme.EndWhile |
     Lexeme.EndSub |
@@ -342,10 +343,10 @@ export class Parser {
             }
             while(match(Lexeme.Newline));
 
-            let body = block(Lexeme.EndFor);
+            let body = block(Lexeme.EndFor, Lexeme.Next);
             if (!body) {
                 return addError(
-                    new ParseError(peek(), "Expected 'end for' to terminate for-loop block")
+                    new ParseError(peek(), "Expected 'end for' or 'next' to terminate for-loop block")
                 );
             }
             advance();
@@ -377,10 +378,10 @@ export class Parser {
             advance();
             while(match(Lexeme.Newline));
 
-            let body = block(Lexeme.EndFor);
+            let body = block(Lexeme.EndFor, Lexeme.Next);
             if (!body) {
                 return addError(
-                    new ParseError(peek(), "Expected 'end for' to terminate for-each loop block")
+                    new ParseError(peek(), "Expected 'end for' or 'next' to terminate for-loop block")
                 );
             }
             advance();

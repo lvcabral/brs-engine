@@ -60,4 +60,24 @@ describe("parser for loops", () => {
 
         expect(statements).toMatchSnapshot();
     });
+
+    it("allows 'next' to terminate loop", () => {
+        let { statements, errors } = parser.parse([
+            { kind: Lexeme.For, text: "for", line: 1 },
+            { kind: Lexeme.Identifier, text: "i", line: 1 },
+            { kind: Lexeme.Equal, text: "=", line: 1 },
+            { kind: Lexeme.Integer, text: "0", literal: new Int32(0), line: 1 },
+            { kind: Lexeme.To, text: "to", line: 1 },
+            { kind: Lexeme.Integer, text: "5", literal: new Int32(5), line: 1 },
+            { kind: Lexeme.Newline, text: "\n", line: 1 },
+            // body would go here, but it's not necessary for this test
+            { kind: Lexeme.Next, text: "next", line: 2 },
+            { kind: Lexeme.Newline, text: "\n", line: 2 },
+            EOF
+        ]);
+
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).toMatchSnapshot();
+    });
 });
