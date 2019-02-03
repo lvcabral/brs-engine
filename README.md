@@ -1,6 +1,9 @@
 # BRS: Off-Roku BrightScript
 An interpreter for the BrightScript language that runs on non-Roku platforms.
 
+[![CircleCI](https://circleci.com/gh/sjbarag/brs.svg?style=svg)](https://circleci.com/gh/sjbarag/brs)
+[![NPM Version](https://badge.fury.io/js/brs.svg?style=flat)](https://npmjs.org/package/brs)
+
 ## Installation
 The BRS project is published as a `node` package, so use `npm`:
 
