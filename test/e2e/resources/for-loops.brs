@@ -7,7 +7,7 @@ for i = 0 to final * 2
     ' modify the loop counter; it's effectively `step 2`
     i = i + 1
     final = final - 3
-end for
+next
 
 ' i should still exist, and should be (final * 2) + 1
 print i
