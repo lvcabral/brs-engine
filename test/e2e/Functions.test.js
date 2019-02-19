@@ -69,8 +69,7 @@ describe("end to end functions", () => {
         });
     });
 
-    test.skip("function/scoping.brs", () => {
-        // TODO: fix this test once `type` has been implemented
+    test("function/scoping.brs", () => {
         return execute([ resourceFile("function", "scoping.brs") ], outputStreams).then(() => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")

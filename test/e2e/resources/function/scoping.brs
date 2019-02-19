@@ -2,9 +2,9 @@ sub Main()
     functionScoped = "I'm function scoped"
 
     _ = (sub()
-        print "Global: " RebootSystem <> "<UNINITIALIZED>"
-        print "Module: " ModuleDefined <> "<UNINITIALIZED>"
-        print "Function: " functionScoped <> "<UNINITIALIZED>"
+        print "Global: " type(RebootSystem) <> "<UNINITIALIZED>"
+        print "Module: " type(ModuleDefined) <> "<UNINITIALIZED>"
+        print "Function: " type(functionScoped) <> "<UNINITIALIZED>"
     end sub)()
 end sub
 
