@@ -1,4 +1,4 @@
-import { Callable, ValueKind, BrsInvalid, BrsString, BrsType } from "../brsTypes";
+import { Callable, ValueKind, BrsInvalid, BrsString, BrsType, StdlibArgument } from "../brsTypes";
 import { BrsObjects } from "../brsTypes/components/BrsObjects";
 import * as Expr from "../parser/Expression";
 import { Interpreter } from "../interpreter";
@@ -9,12 +9,11 @@ export const CreateObject = new Callable(
     {
         signature: {
             args: [
-                { name: "objName", type: ValueKind.String },
-                { name: "arg1", type: ValueKind.Dynamic, defaultValue: new Expr.Literal(BrsInvalid.Instance) },
-                { name: "arg2", type: ValueKind.Dynamic, defaultValue: new Expr.Literal(BrsInvalid.Instance) },
-                { name: "arg3", type: ValueKind.Dynamic, defaultValue: new Expr.Literal(BrsInvalid.Instance) },
-                { name: "arg4", type: ValueKind.Dynamic, defaultValue: new Expr.Literal(BrsInvalid.Instance) },
-                { name: "arg4", type: ValueKind.Dynamic, defaultValue: new Expr.Literal(BrsInvalid.Instance) }
+                new StdlibArgument("objName", ValueKind.String),
+                new StdlibArgument("arg1", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg2", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg3", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg4", ValueKind.Dynamic, BrsInvalid.Instance),
             ],
             returns: ValueKind.Dynamic
         },

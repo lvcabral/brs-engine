@@ -5,14 +5,16 @@ const { BrsString, BrsBoolean } = brs.types;
 
 const { Preprocessor } = require("../../lib/preprocessor/Preprocessor");
 
+const { identifier, token, EOF } = require("../parser/ParserTests");
+
 describe("preprocessor", () => {
     it("forwards brightscript chunk contents unmodified", () => {
         let unprocessed = [
-            { kind: Lexeme.Identifier, text: "foo", line: 1, isReserved: false },
-            { kind: Lexeme.LeftParen, text: "(", line: 1, isReserved: false },
-            { kind: Lexeme.RightParen, text: ")", line: 1, isReserved: false },
-            { kind: Lexeme.Newline, text: "\n", line: 1, isReserved: false },
-            { kind: Lexeme.Eof, text: "\0", line: 2, isReserved: false }
+            identifier("foo"),
+            token(Lexeme.LeftParen, "("),
+            token(Lexeme.RightParen, ")"),
+            token(Lexeme.Newline, "\n"),
+            EOF
         ];
 
         let { processedTokens } = new Preprocessor().filter([
@@ -25,8 +27,8 @@ describe("preprocessor", () => {
         it("removes #const declarations from output", () => {
             let { processedTokens } = new Preprocessor().filter([
                 new Chunk.Declaration(
-                    { kind: Lexeme.Identifier, text: "lorem", line: 1, isReserved: false },
-                    { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true }
+                    identifier("lorem"),
+                    token(Lexeme.False, "false", BrsBoolean.False)
                 )
             ]);
             expect(processedTokens).toEqual([]);
@@ -37,8 +39,8 @@ describe("preprocessor", () => {
                 expect(() =>
                     new Preprocessor().filter([
                         new Chunk.Declaration(
-                            { kind: Lexeme.Identifier, text: "lorem", line: 1, isReserved: false },
-                            { kind: Lexeme.True, text: "true", literal: BrsBoolean.True, line: 1, isReserved: true }
+                            identifier("lorem"),
+                            token(Lexeme.True, "true", BrsBoolean.True)
                         )
                     ])
                 ).not.toThrow();
@@ -48,8 +50,8 @@ describe("preprocessor", () => {
                 expect(() =>
                     new Preprocessor().filter([
                         new Chunk.Declaration(
-                            { kind: Lexeme.Identifier, text: "ipsum", line: 1, isReserved: false },
-                            { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true }
+                            identifier("ipsum"),
+                            token(Lexeme.False, "false", BrsBoolean.False)
                         )
                     ])
                 ).not.toThrow();
@@ -60,12 +62,12 @@ describe("preprocessor", () => {
                     new Preprocessor().filter([
                         // 'ipsum' must be defined before it's referenced
                         new Chunk.Declaration(
-                            { kind: Lexeme.Identifier, text: "ipsum", line: 1, isReserved: false },
-                            { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true }
+                            identifier("ipsum"),
+                            token(Lexeme.False, "false", BrsBoolean.False)
                         ),
                         new Chunk.Declaration(
-                            { kind: Lexeme.Identifier, text: "dolor", line: 1, isReserved: false },
-                            { kind: Lexeme.Identifier, text: "ipsum", line: 1, isReserved: false }
+                            identifier("dolor"),
+                            token(Lexeme.True, "true", BrsBoolean.True)
                         )
                     ])
                 ).not.toThrow();
@@ -75,8 +77,8 @@ describe("preprocessor", () => {
                 expect(() =>
                     new Preprocessor().filter([
                         new Chunk.Declaration(
-                            { kind: Lexeme.Identifier, text: "sit", line: 1, isReserved: false },
-                            { kind: Lexeme.String, text: "good boy!", literal: new BrsString("good boy!"), line: 1, isReserved: false }
+                            identifier("sit"),
+                            token(Lexeme.String, "good boy!", new BrsString("good boy!"))
                         )
                     ])
                 ).toThrow("#const declarations can only have");
@@ -86,12 +88,12 @@ describe("preprocessor", () => {
                 expect(() =>
                     new Preprocessor().filter([
                         new Chunk.Declaration(
-                            { kind: Lexeme.Identifier, text: "lorem", line: 1, isReserved: false },
-                            { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true }
+                            identifier("lorem"),
+                            token(Lexeme.False, "false", BrsBoolean.False)
                         ),
                         new Chunk.Declaration(
-                            { kind: Lexeme.Identifier, text: "lorem", line: 1, isReserved: false },
-                            { kind: Lexeme.True, text: "true", literal: BrsBoolean.True, line: 1, isReserved: true }
+                            identifier("lorem"),
+                            token(Lexeme.True, "true", BrsBoolean.True)
                         ),
                     ])
                 ).toThrow("Attempting to re-declare");
@@ -104,7 +106,7 @@ describe("preprocessor", () => {
             expect(() =>
                 new Preprocessor().filter([
                     new Chunk.Error(
-                        { kind: Lexeme.HashError, text: "#error", line: 1, isReserved: false },
+                        token(Lexeme.HashError, "#error"),
                         "I'm an error message!"
                     )
                 ])
@@ -115,10 +117,10 @@ describe("preprocessor", () => {
             expect(() =>
                 new Preprocessor().filter([
                     new Chunk.If(
-                        { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true },
+                        token(Lexeme.False, "false", BrsBoolean.False),
                         [
                             new Chunk.Error(
-                                { kind: Lexeme.HashError, text: "#error", line: 1, isReserved: false },
+                                token(Lexeme.HasError, "#error"),
                                 "I'm an error message!"
                             )
                         ],
@@ -149,11 +151,11 @@ describe("preprocessor", () => {
         it("enters #if branch", () => {
             new Preprocessor().filter([
                 new Chunk.If(
-                    { kind: Lexeme.True, text: "true", literal: BrsBoolean.True, line: 1, isReserved: true },
+                    token(Lexeme.True, "true", BrsBoolean.True),
                     [ ifChunk ],
                     [
                         {
-                            condition: { kind: Lexeme.True, text: "true", literal: BrsBoolean.True, line: 2, isReserved: true },
+                            condition: token(Lexeme.True, "true", BrsBoolean.True),
                             thenChunks: [ elseIfChunk ]
                         }
                     ],
@@ -169,11 +171,11 @@ describe("preprocessor", () => {
         it("enters #else if branch", () => {
             new Preprocessor().filter([
                 new Chunk.If(
-                    { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true },
+                    token(Lexeme.False, "false", BrsBoolean.False),
                     [ ifChunk ],
                     [
                         {
-                            condition: { kind: Lexeme.True, text: "true", literal: BrsBoolean.True, line: 2, isReserved: true },
+                            condition: token(Lexeme.True, "true", BrsBoolean.True),
                             thenChunks: [ elseIfChunk ]
                         }
                     ],
@@ -189,11 +191,11 @@ describe("preprocessor", () => {
         it("enters #else branch", () => {
             new Preprocessor().filter([
                 new Chunk.If(
-                    { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true },
+                    token(Lexeme.False, "false", BrsBoolean.False),
                     [ ifChunk ],
                     [
                         {
-                            condition: { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true },
+                            condition: token(Lexeme.False, "false", BrsBoolean.False),
                             thenChunks: [ elseIfChunk ]
                         }
                     ],
@@ -209,7 +211,7 @@ describe("preprocessor", () => {
         it("enters no branches if none pass", () => {
             new Preprocessor().filter([
                 new Chunk.If(
-                    { kind: Lexeme.False, text: "false", literal: BrsBoolean.False, line: 1, isReserved: true },
+                    token(Lexeme.False, "false", BrsBoolean.False),
                     [ ifChunk ],
                     [ ] // no else-if chunks
                     // NOTE: no 'else" chunk!
@@ -224,11 +226,11 @@ describe("preprocessor", () => {
         it("uses #const values to determine truth", () => {
             new Preprocessor().filter([
                 new Chunk.Declaration(
-                    { kind: Lexeme.Identifier, text: "lorem", line: 1, isReserved: false },
-                    { kind: Lexeme.True, text: "True", literal: BrsBoolean.True, line: 1, isReserved: true }
+                    identifier("lorem"),
+                    token(Lexeme.True, "true", BrsBoolean.True)
                 ),
                 new Chunk.If(
-                    { kind: Lexeme.Identifier, text: "lorem", line: 2, isReserved: false },
+                    identifier("lorem"),
                     [ ifChunk ],
                     [ ] // no else-if chunks
                     // NOTE: no 'else" chunk!

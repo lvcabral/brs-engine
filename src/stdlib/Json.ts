@@ -12,7 +12,8 @@ import {
     Float,
     Int32,
     Int64,
-    ValueKind
+    ValueKind,
+    StdlibArgument
 } from "../brsTypes";
 
 /**
@@ -113,8 +114,8 @@ function logBrsErr(functionName: string, err: Error): void {
 
 export const FormatJson = new Callable("FormatJson", {
     signature: { returns: ValueKind.String, args: [
-        { name: "x", type: ValueKind.Object },
-        { name: "flags", type: ValueKind.Int32, defaultValue: new Literal(new Int32(0)) }
+        new StdlibArgument("x", ValueKind.Object),
+        new StdlibArgument("flags", ValueKind.Int32, new Int32(0))
     ]},
     impl: (interpreter: Interpreter, x: BrsType, _flags: Int32) => {
         try {
@@ -130,7 +131,7 @@ export const FormatJson = new Callable("FormatJson", {
 
 export const ParseJson = new Callable("ParseJson", {
     signature: { returns: ValueKind.Dynamic, args: [
-        { name: "jsonString", type: ValueKind.String }
+        new StdlibArgument("jsonString", ValueKind.String)
     ]},
     impl: (_: Interpreter, jsonString: BrsString) => {
         try {

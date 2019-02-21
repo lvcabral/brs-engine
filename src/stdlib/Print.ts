@@ -1,4 +1,4 @@
-import { Callable, ValueKind, BrsString, Int32 } from "../brsTypes";
+import { Callable, ValueKind, BrsString, Int32, StdlibArgument } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
 /**
@@ -11,7 +11,7 @@ export const Tab = new Callable(
     "Tab",
     {
         signature: {
-            args: [{ name: "position", type: ValueKind.Int32 }],
+            args: [ new StdlibArgument("position", ValueKind.Int32) ],
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter, position: Int32) => {
@@ -40,7 +40,7 @@ export const Pos = new Callable(
             // `pos` expects an argument and doesn't use it. The reference
             // implementation's documentation even says it must be provided but
             // isn't used: https://sdkdocs.roku.com/display/sdkdoc/Program+Statements#ProgramStatements-PRINTitemlist
-            args: [{ name: "dummy", type: ValueKind.Dynamic }],
+            args: [ new StdlibArgument("dummy", ValueKind.Dynamic) ],
             returns: ValueKind.Int32
         },
         impl: (interpreter: Interpreter) => {

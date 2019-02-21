@@ -5,6 +5,8 @@ const brs = require("brs");
 const { Lexeme } = brs.lexer;
 const { BrsString } = brs.types;
 
+const { token, identifier } = require("../parser/ParserTests");
+
 let interpreter;
 
 describe("interpreter for-each loops", () => {
@@ -29,21 +31,27 @@ describe("interpreter for-each loops", () => {
         const emptyBlockSpy = jest.spyOn(emptyBlock, "accept").mockImplementation(_interpreter =>
             receivedElements.push(
                 _interpreter.environment.get(
-                    { kind: Lexeme.Identifier, text: "element", line: -1 }
+                    identifier("element")
                 )
             )
         );
 
         const statements = [
             new Stmt.Assignment(
-                { kind: Lexeme.Identifier, text: "array", line: 1 },
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("array"),
                 new Expr.ArrayLiteral(
                     arrayMembers.map(member => new Expr.Literal(member))
                 )
             ),
             new Stmt.ForEach(
-                { kind: Lexeme.Identifier, text: "element", line: 2 },
-                new Expr.Variable({ kind: Lexeme.Identifier, text: "array", line: 2 }),
+                {
+                    forEach: token(Lexeme.ForEach, "for each"),
+                    in: identifier("in"),
+                    endFor: token(Lexeme.EndFor, "end for")
+                },
+                identifier("element"),
+                new Expr.Variable(identifier("array")),
                 emptyBlock
             )
         ];
@@ -60,12 +68,18 @@ describe("interpreter for-each loops", () => {
 
         const statements = [
             new Stmt.Assignment(
-                { kind: Lexeme.Identifier, text: "empty", line: 1 },
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("empty"),
                 new Expr.ArrayLiteral([])
             ),
             new Stmt.ForEach(
-                { kind: Lexeme.Identifier, text: "element", line: 2 },
-                new Expr.Variable({ kind: Lexeme.Identifier, text: "empty", line: 2 }),
+                {
+                    forEach: token(Lexeme.ForEach, "for each"),
+                    in: identifier("in"),
+                    endFor: token(Lexeme.EndFor, "end for")
+                },
+                identifier("element"),
+                new Expr.Variable(identifier("empty")),
                 emptyBlock
             )
         ];
@@ -80,14 +94,20 @@ describe("interpreter for-each loops", () => {
 
         const statements = [
             new Stmt.Assignment(
-                { kind: Lexeme.Identifier, text: "array", line: 1 },
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("array"),
                 new Expr.ArrayLiteral(
                     arrayMembers.map(member => new Expr.Literal(member))
                 )
             ),
             new Stmt.ForEach(
-                { kind: Lexeme.Identifier, text: "element", line: 2 },
-                new Expr.Variable({ kind: Lexeme.Identifier, text: "array", line: 2 }),
+                {
+                    forEach: token(Lexeme.ForEach, "for each"),
+                    in: identifier("in"),
+                    endFor: token(Lexeme.EndFor, "end for")
+                },
+                identifier("element"),
+                new Expr.Variable(identifier("array")),
                 emptyBlock
             )
         ];
@@ -96,7 +116,7 @@ describe("interpreter for-each loops", () => {
 
         expect(
             interpreter.environment.get(
-                { kind: Lexeme.Identifier, text: "element", line: -1 }
+                identifier("element")
             )
         ).toEqual(arrayMembers[arrayMembers.length - 1]);
     });
@@ -109,14 +129,20 @@ describe("interpreter for-each loops", () => {
 
         const statements = [
             new Stmt.Assignment(
-                { kind: Lexeme.Identifier, text: "array", line: 1 },
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("array"),
                 new Expr.ArrayLiteral(
                     arrayMembers.map(member => new Expr.Literal(member))
                 )
             ),
             new Stmt.ForEach(
-                { kind: Lexeme.Identifier, text: "element", line: 2 },
-                new Expr.Variable({ kind: Lexeme.Identifier, text: "array", line: 2 }),
+                {
+                    forEach: token(Lexeme.ForEach, "for each"),
+                    in: identifier("in"),
+                    endFor: token(Lexeme.EndFor, "end for")
+                },
+                identifier("element"),
+                new Expr.Variable(identifier("array")),
                 block
             )
         ];

@@ -1,4 +1,4 @@
-import { Callable, ValueKind, BrsString, BrsBoolean, BrsArray } from "../brsTypes";
+import { Callable, ValueKind, BrsString, BrsBoolean, BrsArray, StdlibArgument } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { URL } from "url";
 import MemoryFileSystem from "memory-fs";
@@ -33,8 +33,8 @@ export const CopyFile = new Callable(
     {
         signature: {
             args: [
-                {name: "source", type: ValueKind.String},
-                {name: "destination", type: ValueKind.String}
+                new StdlibArgument("source", ValueKind.String),
+                new StdlibArgument("destination", ValueKind.String)
             ],
             returns: ValueKind.Boolean
         },
@@ -67,8 +67,8 @@ export const MoveFile = new Callable(
     {
         signature: {
             args: [
-                {name: "source", type: ValueKind.String},
-                {name: "destination", type: ValueKind.String}
+                new StdlibArgument("source", ValueKind.String),
+                new StdlibArgument("destination", ValueKind.String),
             ],
             returns: ValueKind.Boolean
         },
@@ -102,7 +102,7 @@ export const DeleteFile = new Callable(
     {
         signature: {
             args: [
-                {name: "file", type: ValueKind.String}
+                new StdlibArgument("file", ValueKind.String)
             ],
             returns: ValueKind.Boolean
         },
@@ -129,7 +129,7 @@ export const DeleteDirectory = new Callable(
     {
         signature: {
             args: [
-                {name: "dir", type: ValueKind.String}
+                new StdlibArgument("dir", ValueKind.String)
             ],
             returns: ValueKind.Boolean
         },
@@ -156,7 +156,7 @@ export const CreateDirectory = new Callable(
     {
         signature: {
             args: [
-                {name: "dir", type: ValueKind.String}
+                new StdlibArgument("dir", ValueKind.String)
             ],
             returns: ValueKind.Boolean
         },
@@ -183,8 +183,8 @@ export const FormatDrive = new Callable(
     {
         signature: {
             args: [
-                {name: "drive", type: ValueKind.String},
-                {name: "fs_type", type: ValueKind.String}
+                new StdlibArgument("drive", ValueKind.String),
+                new StdlibArgument("fs_type", ValueKind.String)
             ],
             returns: ValueKind.Boolean
         },
@@ -203,7 +203,7 @@ export const ListDir = new Callable(
     {
         signature: {
             args: [
-                {name: "path", type: ValueKind.String}
+                new StdlibArgument("path", ValueKind.String)
             ],
             returns: ValueKind.Object
         },
@@ -230,7 +230,7 @@ export const ReadAsciiFile = new Callable(
     {
         signature: {
             args: [
-                {name: "filepath", type: ValueKind.String}
+                new StdlibArgument("filepath", ValueKind.String)
             ],
             returns: ValueKind.String
         },
@@ -252,8 +252,8 @@ export const WriteAsciiFile = new Callable(
     {
         signature: {
             args: [
-                {name: "filepath", type: ValueKind.String},
-                {name: "text", type: ValueKind.String}
+                new StdlibArgument("filepath", ValueKind.String),
+                new StdlibArgument("text", ValueKind.String)
             ],
             returns: ValueKind.Boolean
         },

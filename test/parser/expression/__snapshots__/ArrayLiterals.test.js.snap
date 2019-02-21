@@ -4,38 +4,135 @@ exports[`parser array literals contents can contain expressions 1`] = `
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [
         Binary {
           "left": Literal {
+            "_location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
             "value": Int32 {
               "kind": 3,
               "value": 1,
             },
           },
           "right": Literal {
+            "_location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
             "value": Int32 {
               "kind": 3,
               "value": 2,
             },
           },
           "token": Object {
+            "isReserved": false,
             "kind": 8,
-            "line": 1,
+            "literal": undefined,
+            "location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
             "text": "+",
           },
         },
         Unary {
           "operator": Object {
+            "isReserved": true,
             "kind": 67,
-            "line": 1,
+            "literal": undefined,
+            "location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
             "text": "not",
           },
           "right": Literal {
+            "_location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
             "value": BrsBoolean {
               "kind": 1,
               "value": false,
@@ -43,6 +140,22 @@ Array [
           },
         },
       ],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]
@@ -52,57 +165,242 @@ exports[`parser array literals contents can contain other arrays 1`] = `
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [
         ArrayLiteral {
+          "close": Object {
+            "isReserved": false,
+            "kind": 3,
+            "literal": undefined,
+            "location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "]",
+          },
           "elements": Array [
             Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
               "value": Int32 {
                 "kind": 3,
                 "value": 1,
               },
             },
             Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
               "value": Int32 {
                 "kind": 3,
                 "value": 2,
               },
             },
             Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
               "value": Int32 {
                 "kind": 3,
                 "value": 3,
               },
             },
           ],
+          "open": Object {
+            "isReserved": false,
+            "kind": 2,
+            "literal": undefined,
+            "location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "[",
+          },
         },
         ArrayLiteral {
+          "close": Object {
+            "isReserved": false,
+            "kind": 3,
+            "literal": undefined,
+            "location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "]",
+          },
           "elements": Array [
             Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
               "value": Int32 {
                 "kind": 3,
                 "value": 4,
               },
             },
             Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
               "value": Int32 {
                 "kind": 3,
                 "value": 5,
               },
             },
             Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
               "value": Int32 {
                 "kind": 3,
                 "value": 6,
               },
             },
           ],
+          "open": Object {
+            "isReserved": false,
+            "kind": 2,
+            "literal": undefined,
+            "location": Object {
+              "end": Object {
+                "column": -9,
+                "line": -9,
+              },
+              "start": Object {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "[",
+          },
         },
       ],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]
@@ -112,31 +410,122 @@ exports[`parser array literals contents can contain primitives 1`] = `
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 1,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 2,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 3,
           },
         },
       ],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]
@@ -146,12 +535,73 @@ exports[`parser array literals empty arrays on multiple lines 1`] = `
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]
@@ -161,12 +611,73 @@ exports[`parser array literals empty arrays on one line 1`] = `
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]
@@ -176,31 +687,122 @@ exports[`parser array literals filled arrays on multiple lines with commas 1`] =
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 1,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 2,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 3,
           },
         },
       ],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]
@@ -210,31 +812,122 @@ exports[`parser array literals filled arrays on multiple lines without commas 1`
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 1,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 2,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 3,
           },
         },
       ],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]
@@ -244,31 +937,122 @@ exports[`parser array literals filled arrays on one line 1`] = `
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
     },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
     "value": ArrayLiteral {
+      "close": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
       "elements": Array [
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 1,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 2,
           },
         },
         Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Int32 {
             "kind": 3,
             "value": 3,
           },
         },
       ],
+      "open": Object {
+        "isReserved": false,
+        "kind": 2,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "[",
+      },
     },
   },
 ]

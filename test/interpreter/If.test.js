@@ -12,32 +12,40 @@ describe("interpreter if statements", () => {
     let assignTo;
 
     beforeEach(() => {
+        equals = { equals: token(Lexeme.Equals, "=") };
         assignTo = {
             foo: new Stmt.Assignment(
+                equals,
                 identifier("foo"),
                 new Expr.Literal(BrsBoolean.True)
             ),
             bar: new Stmt.Assignment(
+                equals,
                 identifier("bar"),
                 new Expr.Literal(BrsBoolean.False)
             ),
             lorem: new Stmt.Assignment(
+                equals,
                 identifier("lorem"),
                 new Expr.Literal(new BrsString("lorem"))
             ),
             ipsum: new Stmt.Assignment(
+                equals,
                 identifier("ipsum"),
                 new Expr.Literal(new BrsString("ipsum"))
             ),
             dolor: new Stmt.Assignment(
+                equals,
                 identifier("dolor"),
                 new Expr.Literal(new BrsString("dolor"))
             ),
             sit: new Stmt.Assignment(
+                equals,
                 identifier("sit"),
                 new Expr.Literal(new BrsString("sit"))
             ),
             amet: new Stmt.Assignment(
+                equals,
                 identifier("amet"),
                 new Expr.Literal(new BrsString("amet"))
             )
@@ -50,6 +58,11 @@ describe("interpreter if statements", () => {
         assignTo.bar.accept = jest.fn();
         let statements = [
             new Stmt.If(
+                {
+                    if: token(Lexeme.If, "if"),
+                    then: token(Lexeme.Then, "then"),
+                    endIf: token(Lexeme.EndIf, "end if")
+                },
                 new Expr.Binary(
                     new Expr.Literal(new Int32(1)),
                     token(Lexeme.Less),
@@ -62,7 +75,7 @@ describe("interpreter if statements", () => {
             )
         ];
 
-        let results = interpreter.exec(statements);
+        interpreter.exec(statements);
         expect(assignTo.bar.accept).toBeCalled();
     });
 
@@ -70,6 +83,11 @@ describe("interpreter if statements", () => {
         assignTo.foo.accept = jest.fn();
         let statements = [
             new Stmt.If(
+                {
+                    if: token(Lexeme.If, "if"),
+                    then: token(Lexeme.Then, "then"),
+                    endIf: token(Lexeme.EndIf, "end if")
+                },
                 new Expr.Binary(
                     new Expr.Literal(new Int32(2)),
                     token(Lexeme.Less),
@@ -82,7 +100,7 @@ describe("interpreter if statements", () => {
             )
         ];
 
-        let results = interpreter.exec(statements);
+        interpreter.exec(statements);
         expect(assignTo.foo.accept).not.toBeCalled();
     });
 
@@ -99,6 +117,13 @@ describe("interpreter if statements", () => {
 
         let statements = [
             new Stmt.If(
+                {
+                    if: token(Lexeme.If, "if"),
+                    then: token(Lexeme.Then, "then"),
+                    elseIfs: [ token(Lexeme.ElseIf, "else if"), token(Lexeme.ElseIf, "else if") ],
+                    else: token(Lexeme.Else, "else"),
+                    endIf: token(Lexeme.EndIf, "end if")
+                },
                 new Expr.Binary(
                     new Expr.Literal(new Int32(2)),
                     token(Lexeme.Less),
@@ -124,7 +149,7 @@ describe("interpreter if statements", () => {
             )
         ];
 
-        let results = interpreter.exec(statements);
+        interpreter.exec(statements);
         expect(shouldNotExecute).not.toBeCalled();
         expect(shouldExecute).toHaveBeenCalledTimes(2);
     })
@@ -140,6 +165,13 @@ describe("interpreter if statements", () => {
 
         let statements = [
             new Stmt.If(
+                {
+                    if: token(Lexeme.If, "if"),
+                    then: token(Lexeme.Then, "then"),
+                    elseIfs: [ token(Lexeme.ElseIf, "else if"), token(Lexeme.ElseIf, "else if") ],
+                    else: token(Lexeme.Else, "else"),
+                    endIf: token(Lexeme.EndIf, "end if")
+                },
                 new Expr.Binary(
                     new Expr.Literal(new Int32(2)),
                     token(Lexeme.Less),
@@ -165,7 +197,7 @@ describe("interpreter if statements", () => {
             )
         ];
 
-        let results = interpreter.exec(statements);
+        interpreter.exec(statements);
         expect(shouldNotExecute).not.toBeCalled();
         expect(shouldExecute).toBeCalled();
     });

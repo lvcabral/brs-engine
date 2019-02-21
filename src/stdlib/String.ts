@@ -1,14 +1,15 @@
-import { BrsType, Callable, ValueKind, BrsString, Int32, Float } from "../brsTypes";
+import { BrsType, Callable, ValueKind, BrsString, Int32, Float, StdlibArgument } from "../brsTypes";
 import * as Expr from "../parser/Expression";
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
+import { Lexeme } from "../lexer";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable(
     "UCase",
     {
         signature: {
-            args: [{name: "s", type: ValueKind.String}],
+            args: [new StdlibArgument("s", ValueKind.String)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toUpperCase())
@@ -20,7 +21,7 @@ export const LCase = new Callable(
     "LCase",
     {
         signature: {
-            args: [{name: "s", type: ValueKind.String}],
+            args: [new StdlibArgument("s", ValueKind.String)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toLowerCase())
@@ -35,7 +36,7 @@ export const Asc = new Callable(
     "Asc",
     {
         signature: {
-            args: [{name: "letter", type: ValueKind.String}],
+            args: [new StdlibArgument("letter", ValueKind.String)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, str: BrsString) => new Int32(str.value.charCodeAt(0) || 0)
@@ -52,7 +53,7 @@ export const Chr = new Callable(
     "Chr",
     {
         signature: {
-            args: [{name: "ch", type: ValueKind.Int32}],
+            args: [new StdlibArgument("ch", ValueKind.Int32)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, ch: Int32) => {
@@ -70,7 +71,7 @@ export const Left = new Callable(
     "Left",
     {
         signature: {
-            args: [{name: "s", type: ValueKind.String}, {name: "n", type: ValueKind.Int32}],
+            args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("n", ValueKind.Int32)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, s: BrsString, n: Int32) => new BrsString(s.value.substr(0, n.getValue()))
@@ -84,7 +85,7 @@ export const Right = new Callable(
     "Right",
     {
         signature: {
-            args: [{name: "s", type: ValueKind.String}, {name: "n", type: ValueKind.Int32}],
+            args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("n", ValueKind.Int32)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, s: BrsString, n: Int32) => {
@@ -105,7 +106,7 @@ export const Instr = new Callable(
     "Instr",
     {
         signature: {
-            args: [{name: "start", type: ValueKind.Int32}, {name: "str", type: ValueKind.String}, {name: "search", type: ValueKind.String}],
+            args: [new StdlibArgument("start", ValueKind.Int32), new StdlibArgument("str", ValueKind.String), new StdlibArgument("search", ValueKind.String)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, start: Int32, str: BrsString, search: BrsString) => new Int32(str.value.indexOf(search.value, start.getValue() - 1) + 1)
@@ -119,7 +120,7 @@ export const Len = new Callable(
     "Len",
     {
         signature: {
-            args: [{name: "s", type: ValueKind.String}],
+            args: [new StdlibArgument("s", ValueKind.String)],
             returns: ValueKind.Int32
         },
         impl: (interpreter: Interpreter, s: BrsString) => new Int32(s.value.length)
@@ -134,14 +135,8 @@ export const Mid = new Callable(
     {
         signature: {
             args: [
-                {
-                    name: "s",
-                    type: ValueKind.String
-                },
-                {
-                    name: "p",
-                    type: ValueKind.Int32
-                }
+                new StdlibArgument("s", ValueKind.String),
+                new StdlibArgument("p", ValueKind.Int32)
             ],
             returns: ValueKind.String
         },
@@ -153,18 +148,9 @@ export const Mid = new Callable(
     {
         signature: {
             args: [
-                {
-                    name: "s",
-                    type: ValueKind.String
-                },
-                {
-                    name: "p",
-                    type: ValueKind.Int32
-                },
-                {
-                    name: "n",
-                    type: ValueKind.Int32
-                }
+                new StdlibArgument("s", ValueKind.String),
+                new StdlibArgument("p", ValueKind.Int32),
+                new StdlibArgument("n", ValueKind.Int32)
             ],
             returns: ValueKind.String
         },
@@ -182,7 +168,7 @@ export const Str = new Callable(
     "Str",
     {
         signature: {
-            args: [{name: "value", type: ValueKind.Float}],
+            args: [new StdlibArgument("value", ValueKind.Float)],
             returns: ValueKind.String
         },
         impl: (interpreter: Interpreter, value: Float): BrsString => {
@@ -201,15 +187,8 @@ export const StrI = new Callable(
     {
         signature: {
             args: [
-                {
-                    name: "value",
-                    type: ValueKind.Int32
-                },
-                {
-                    name: "radix",
-                    type: ValueKind.Int32,
-                    defaultValue: new Expr.Literal(new Int32(10))
-                }
+                new StdlibArgument("value", ValueKind.Int32),
+                new StdlibArgument("radix", ValueKind.Int32, new Int32(10))
             ],
             returns: ValueKind.String
         },
@@ -228,7 +207,7 @@ export const StrI = new Callable(
 );
 
 /**
- * Return a string from another string replacing instances of {index} with the 
+ * Return a string from another string replacing instances of {index} with the
  * respective parameter.
  */
 export const Substitute = new Callable(
@@ -236,29 +215,11 @@ export const Substitute = new Callable(
     {
         signature: {
             args: [
-                {
-                    name: "str",
-                    type: ValueKind.String
-                },
-                {
-                    name: "arg0",
-                    type: ValueKind.String
-                },
-                {
-                    name: "arg1",
-                    type: ValueKind.String,
-                    defaultValue: new Expr.Literal(new BrsString(""))
-                },
-                {
-                    name: "arg2",
-                    type: ValueKind.String,
-                    defaultValue: new Expr.Literal(new BrsString(""))
-                },
-                {
-                    name: "arg3",
-                    type: ValueKind.String,
-                    defaultValue: new Expr.Literal(new BrsString(""))
-                },
+                new StdlibArgument("str", ValueKind.String),
+                new StdlibArgument("arg0", ValueKind.String),
+                new StdlibArgument("arg1", ValueKind.String, new BrsString("")),
+                new StdlibArgument("arg2", ValueKind.String, new BrsString("")),
+                new StdlibArgument("arg3", ValueKind.String, new BrsString(""))
             ],
             returns: ValueKind.String
         },
@@ -280,15 +241,8 @@ export const Val = new Callable(
     {
         signature: {
             args: [
-                {
-                    name: "s", 
-                    type: ValueKind.String
-                },
-                {
-                    name: "radix",
-                    type: ValueKind.Int32,
-                    defaultValue: new Expr.Literal(new Int32(10))
-                }
+                new StdlibArgument("s", ValueKind.String),
+                new StdlibArgument("radix", ValueKind.Int32, new Int32(10))
             ],
             returns: ValueKind.Dynamic
         },
@@ -314,10 +268,7 @@ export const StrToI = new Callable(
     {
         signature: {
             args: [
-                {
-                    name: "s", 
-                    type: ValueKind.String
-                }
+                new StdlibArgument("s", ValueKind.String)
             ],
             returns: ValueKind.Int32
         },

@@ -5,15 +5,72 @@ Array [
   Print {
     "expressions": Array [
       Literal {
-        "value": "Foo",
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": BrsString {
+          "kind": 2,
+          "value": "Foo",
+        },
       },
       Literal {
-        "value": "bar",
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": BrsString {
+          "kind": 2,
+          "value": "bar",
+        },
       },
       Literal {
-        "value": "baz",
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": BrsString {
+          "kind": 2,
+          "value": "baz",
+        },
       },
     ],
+    "tokens": Object {
+      "print": Object {
+        "isReserved": false,
+        "kind": 71,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
+      },
+    },
   },
 ]
 `;
@@ -23,17 +80,104 @@ Array [
   Print {
     "expressions": Array [
       Literal {
-        "value": "Foo",
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": BrsString {
+          "kind": 2,
+          "value": "Foo",
+        },
       },
-      1,
-      Literal {
-        "value": "bar",
+      Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
       },
-      0,
       Literal {
-        "value": "baz",
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": BrsString {
+          "kind": 2,
+          "value": "bar",
+        },
+      },
+      Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
+      },
+      Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": BrsString {
+          "kind": 2,
+          "value": "baz",
+        },
       },
     ],
+    "tokens": Object {
+      "print": Object {
+        "isReserved": false,
+        "kind": 71,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
+      },
+    },
   },
 ]
 `;
@@ -43,9 +187,37 @@ Array [
   Print {
     "expressions": Array [
       Literal {
-        "value": "Hello, world",
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": undefined,
       },
     ],
+    "tokens": Object {
+      "print": Object {
+        "isReserved": false,
+        "kind": 71,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
+      },
+    },
   },
 ]
 `;

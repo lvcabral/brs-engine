@@ -47,7 +47,7 @@ describe("function argument type checking", () => {
         return execute([ resourceFile("type-checking", "mismatched-return-type.brs") ], outputStreams).catch(() => {
             const output = allArgs(stderr);
             expect(output[0]).toMatch(
-                /\[Line .\] Attempting to return value of type Integer, but function returnsString declares return value of type String/
+                /Attempting to return value of type Integer, but function returnsString declares return value of type String/
             );
         });
 

@@ -4,39 +4,120 @@ exports[`parser multiplicative expressions parses left-associative division chai
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
     },
     "value": Binary {
       "left": Binary {
         "left": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 7,
           },
         },
         "right": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 5,
           },
         },
         "token": Object {
+          "isReserved": false,
           "kind": 10,
-          "line": 1,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "text": "/",
         },
       },
       "right": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "value": Float {
           "kind": 5,
           "value": 3,
         },
       },
       "token": Object {
+        "isReserved": false,
         "kind": 10,
-        "line": 1,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "text": "/",
       },
     },
@@ -48,39 +129,120 @@ exports[`parser multiplicative expressions parses left-associative integer-divis
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
     },
     "value": Binary {
       "left": Binary {
         "left": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 32.5,
           },
         },
         "right": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 5,
           },
         },
         "token": Object {
+          "isReserved": false,
           "kind": 12,
-          "line": 1,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "text": "\\\\",
         },
       },
       "right": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "value": Float {
           "kind": 5,
           "value": 3,
         },
       },
       "token": Object {
+        "isReserved": false,
         "kind": 12,
-        "line": 1,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "text": "\\\\",
       },
     },
@@ -92,39 +254,120 @@ exports[`parser multiplicative expressions parses left-associative modulo chains
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
     },
     "value": Binary {
       "left": Binary {
         "left": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 7,
           },
         },
         "right": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 5,
           },
         },
         "token": Object {
+          "isReserved": false,
           "kind": 11,
-          "line": 1,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "text": "MOD",
         },
       },
       "right": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "value": Float {
           "kind": 5,
           "value": 3,
         },
       },
       "token": Object {
+        "isReserved": false,
         "kind": 11,
-        "line": 1,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "text": "MOD",
       },
     },
@@ -136,39 +379,120 @@ exports[`parser multiplicative expressions parses left-associative multiplicatio
 Array [
   Assignment {
     "name": Object {
+      "isReserved": false,
       "kind": 21,
-      "line": 1,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "text": "_",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 19,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
     },
     "value": Binary {
       "left": Binary {
         "left": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 3,
           },
         },
         "right": Literal {
+          "_location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "value": Float {
             "kind": 5,
             "value": 5,
           },
         },
         "token": Object {
+          "isReserved": false,
           "kind": 9,
-          "line": 1,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
           "text": "*",
         },
       },
       "right": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "value": Float {
           "kind": 5,
           "value": 7,
         },
       },
       "token": Object {
+        "isReserved": false,
         "kind": 9,
-        "line": 1,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "text": "*",
       },
     },

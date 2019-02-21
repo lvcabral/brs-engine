@@ -3,6 +3,8 @@ const brs = require("brs");
 const { Lexeme } = brs.lexer;
 const { BrsString, AssociativeArray, Int32 } = brs.types;
 
+const { token, identifier } = require("../parser/ParserTests");
+
 describe("Environment", () => {
     let env;
     let lineNumber;
@@ -20,7 +22,7 @@ describe("Environment", () => {
         env.define(Scope.Function, "foo", val);
 
         expect(
-            env.get({ kind: Lexeme.Identifier, text: "foo", line: 1 })
+            env.get(identifier("foo"))
         ).toBe(val);
     });
 
@@ -29,7 +31,7 @@ describe("Environment", () => {
         env.define(Scope.Module, "foo", val);
 
         expect(
-            env.get({ kind: Lexeme.Identifier, text: "foo", line: 1 })
+            env.get(identifier("foo"))
         ).toBe(val);
     });
 
@@ -38,7 +40,7 @@ describe("Environment", () => {
         env.define(Scope.Global, "foo", val);
 
         expect(
-            env.get({ kind: Lexeme.Identifier, text: "foo", line: 1 })
+            env.get(identifier("foo"))
         ).toBe(val);
     });
 
@@ -49,7 +51,7 @@ describe("Environment", () => {
         env.setM(newM);
 
         expect(
-            env.get({ kind: Lexeme.Identifier, text: "m", line: 1 })
+            env.get(identifier("m"))
         ).toBe(newM);
     });
 

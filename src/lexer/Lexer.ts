@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 
 import { Lexeme } from "./Lexeme";
-import { Token } from "./Token";
+import { Token, Location } from "./Token";
 import { ReservedWords, KeyWords } from "./ReservedWords";
 import { BrsError } from "../Error";
 import { isAlpha, isDigit, isAlphaNumeric } from "./Characters";
@@ -33,10 +33,11 @@ export class Lexer {
      * an abstract syntax tree.
      *
      * @param toScan the BrightScript code to convert into tokens
+     * @param filename the name of the file to be scanned
      * @returns an object containing an array of `errors` and an array of `tokens` to be passed to a parser.
      */
-    static scan(toScan: string): ScanResults {
-        return new Lexer().scan(toScan);
+    static scan(toScan: string, filename: string = ""): ScanResults {
+        return new Lexer().scan(toScan, filename);
     }
 
     /**
@@ -66,15 +67,18 @@ export class Lexer {
      * later be used to build an abstract syntax tree.
      *
      * @param toScan the BrightScript code to convert into tokens
+     * @param filename the name of the file to be scanned
      * @returns an object containing an array of `errors` and an array of `tokens` to be passed to a parser.
      */
-    public scan(toScan: string): ScanResults {
+    public scan(toScan: string, filename: string): ScanResults {
         /** The zero-indexed position at which the token under consideration begins. */
         let start = 0;
         /** The zero-indexed position being examined for the token under consideration. */
         let current = 0;
         /** The one-indexed line number being parsed. */
         let line = 1;
+        /** The zero-indexed column number being parsed. */
+        let column = 0;
 
         /** The BrightScript code being converted to an array of `Token`s. */
         let source = toScan;
@@ -98,8 +102,18 @@ export class Lexer {
         tokens.push({
             kind: Lexeme.Eof,
             isReserved: false,
-            line: line,
-            text: "\0"
+            text: "\0",
+            location: {
+                start: {
+                    line: line,
+                    column: column
+                },
+                end: {
+                    line: line,
+                    column: column + 1
+                },
+                file: filename
+            }
         });
 
         return { tokens, errors };
@@ -189,6 +203,8 @@ export class Lexer {
                     }
                     // but always advance the line counter
                     line++;
+                    // and always reset the column counter
+                    column = 0;
                     break;
                 case "\"":
                     string();
@@ -202,7 +218,7 @@ export class Lexer {
                     } else if (isAlpha(c)) {
                         identifier();
                     } else {
-                        addError(new BrsError(`Unexpected character '${c}'`, line));
+                        addError(new BrsError(`Unexpected character '${c}'`, locationOf(c)));
                     }
                     break;
             }
@@ -214,6 +230,7 @@ export class Lexer {
          */
         function advance(): string {
             current++;
+            column++;
             return source.charAt(current - 1);
         }
 
@@ -280,17 +297,16 @@ export class Lexer {
 
                 if (peekNext() === "\n") {
                     // BrightScript doesn't support multi-line strings
-                    addError(new BrsError("Unterminated string at end of line", line));
+                    addError(new BrsError("Unterminated string at end of line", locationOf(source.slice(start, current))));
                     return;
                 }
-                // if (peekNext() === "\"") { advance();}
 
                 advance();
             }
 
             if (isAtEnd()) {
                 // terminating a string with EOF is also not allowed
-                addError(new BrsError("Unterminated string at end of file", line));
+                addError(new BrsError("Unterminated string at end of file", locationOf(source.slice(start, current))));
                 return;
             }
 
@@ -508,7 +524,12 @@ export class Lexer {
                     start = current;
                     return;
                 default:
-                    addError(new BrsError(`Found unexpected conditional-compilation string '${text}'`, line));
+                    addError(
+                        new BrsError(
+                            `Found unexpected conditional-compilation string '${text}'`,
+                            locationOf(source.slice(start, current))
+                        )
+                    );
             }
         }
 
@@ -526,14 +547,34 @@ export class Lexer {
          * @param literal an optional literal value to include in the token.
          */
         function addToken(kind: Lexeme, literal?: BrsType): void {
-            let text = source.slice(start, current).trimLeft();
+            let withWhitespace = source.slice(start, current);
+            let text = withWhitespace.trimLeft() || withWhitespace;
             tokens.push({
                 kind: kind,
                 text: text,
                 isReserved: ReservedWords.has(text),
                 literal: literal,
-                line: line
+                location: locationOf(text)
             });
+        }
+
+        /**
+         * Creates a `TokenLocation` at the lexer's current position for the provided `text`.
+         * @param text the text to create a location for
+         * @returns the location of `text` as a `TokenLocation`
+         */
+        function locationOf(text: string): Location {
+            return {
+                start: {
+                    line: line,
+                    column: column - text.length
+                },
+                end: {
+                    line: line,
+                    column: Math.max(column - text.length + 1, column)
+                },
+                file: filename
+            };
         }
     }
 }

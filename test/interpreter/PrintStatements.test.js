@@ -1,6 +1,6 @@
 const Expr = require("../../lib/parser/Expression");
 const Stmt = require("../../lib/parser/Statement");
-const { identifier } = require("../parser/ParserTests");
+const { token, identifier } = require("../parser/ParserTests");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("brs");
 const { Lexeme } = brs.lexer;
@@ -11,6 +11,10 @@ const { createMockStreams, allArgs } = require("../e2e/E2ETests");
 describe("interperter print statements", () => {
     let stdout, stderr, interpreter;
 
+    let tokens = {
+        print: token(Lexeme.Print, "print")
+    };
+
     beforeEach(() => {
         const outputStreams = createMockStreams();
         interpreter = new Interpreter(outputStreams);
@@ -20,9 +24,10 @@ describe("interperter print statements", () => {
     });
 
     it("prints single values on their own line", () => {
-        const ast = new Stmt.Print([
-            new Expr.Literal(new BrsString("foo"))
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [ new Expr.Literal(new BrsString("foo")) ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
@@ -32,11 +37,14 @@ describe("interperter print statements", () => {
     });
 
     it("prints multiple values with no separators", () => {
-        const ast = new Stmt.Print([
-            new Expr.Literal(new BrsString("foo")),
-            new Expr.Literal(new BrsString("bar")),
-            new Expr.Literal(new BrsString("baz")),
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [
+                new Expr.Literal(new BrsString("foo")),
+                new Expr.Literal(new BrsString("bar")),
+                new Expr.Literal(new BrsString("baz")),
+            ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
@@ -46,14 +54,16 @@ describe("interperter print statements", () => {
     });
 
     it("prints multiple values with space separators", () => {
-        const ast = new Stmt.Print([
-            new Expr.Literal(new BrsString("foo")),
-            Stmt.PrintSeparator.Space,
-            new Expr.Literal(new BrsString("bar")),
-            Stmt.PrintSeparator.Space,
-            new Expr.Literal(new BrsString("baz")),
-
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [
+                new Expr.Literal(new BrsString("foo")),
+                token(Lexeme.Semicolon, ";"),
+                new Expr.Literal(new BrsString("bar")),
+                token(Lexeme.Semicolon, ";"),
+                new Expr.Literal(new BrsString("baz")),
+            ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
@@ -63,13 +73,16 @@ describe("interperter print statements", () => {
     });
 
     it("aligns values to 16-charcater tab stops", () => {
-        const ast = new Stmt.Print([
-            new Expr.Literal(new BrsString("foo")),
-            Stmt.PrintSeparator.Tab,
-            new Expr.Literal(new BrsString("barbara")),
-            Stmt.PrintSeparator.Tab,
-            new Expr.Literal(new BrsString("baz")),
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [
+                new Expr.Literal(new BrsString("foo")),
+                token(Lexeme.Comma, ","),
+                new Expr.Literal(new BrsString("barbara")),
+                token(Lexeme.Comma, ","),
+                new Expr.Literal(new BrsString("baz")),
+            ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
@@ -81,14 +94,17 @@ describe("interperter print statements", () => {
     });
 
     it("skips cursor-return with a trailing semicolon", () => {
-        const ast = new Stmt.Print([
-            new Expr.Literal(new BrsString("foo")),
-            Stmt.PrintSeparator.Space,
-            new Expr.Literal(new BrsString("bar")),
-            Stmt.PrintSeparator.Space,
-            new Expr.Literal(new BrsString("baz")),
-            Stmt.PrintSeparator.Space,
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [
+                new Expr.Literal(new BrsString("foo")),
+                token(Lexeme.Semicolon, ";"),
+                new Expr.Literal(new BrsString("bar")),
+                token(Lexeme.Semicolon, ";"),
+                new Expr.Literal(new BrsString("baz")),
+                token(Lexeme.Semicolon, ";"),
+            ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
@@ -98,15 +114,18 @@ describe("interperter print statements", () => {
     });
 
     it("inserts the current position via `pos`", () => {
-        const ast = new Stmt.Print([
-            new Expr.Literal(new BrsString("foo")),
-            Stmt.PrintSeparator.Space,
-            new Expr.Call(
-                new Expr.Variable(identifier("Pos")),
-                { kind: Lexeme.RightParen, text: ")", line: 1 },
-                [ new Expr.Literal(new Int32(0)) ]
-            )
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [
+                new Expr.Literal(new BrsString("foo")),
+                token(Lexeme.Semicolon, ";"),
+                new Expr.Call(
+                    new Expr.Variable(identifier("Pos")),
+                    token(Lexeme.RightParen, ")"),
+                    [ new Expr.Literal(new Int32(0)) ]
+                )
+            ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
@@ -116,15 +135,18 @@ describe("interperter print statements", () => {
     });
 
     it("indents to an arbitrary position via `tab`", () => {
-        const ast = new Stmt.Print([
-            new Expr.Literal(new BrsString("foo")),
-            new Expr.Call(
-                new Expr.Variable(identifier("Tab")),
-                { kind: Lexeme.RightParen, text: ")", line: 1 },
-                [ new Expr.Literal(new Int32(6)) ]
-            ),
-            new Expr.Literal(new BrsString("bar"))
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [
+                new Expr.Literal(new BrsString("foo")),
+                new Expr.Call(
+                    new Expr.Variable(identifier("Tab")),
+                    token(Lexeme.RightParen, ")"),
+                    [ new Expr.Literal(new Int32(6)) ]
+                ),
+                new Expr.Literal(new BrsString("bar"))
+            ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
@@ -134,9 +156,10 @@ describe("interperter print statements", () => {
     });
 
     it("prints uninitialized values with placeholder text", () => {
-        const ast = new Stmt.Print([
-            new Expr.Variable({ kind: Lexeme.Identifier, text: "doesNotExist", line: 1 })
-        ]);
+        const ast = new Stmt.Print(
+            tokens,
+            [ new Expr.Variable(identifier("doesNotExist")) ]
+        );
 
         const [ result ] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);

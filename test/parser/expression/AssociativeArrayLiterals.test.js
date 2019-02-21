@@ -2,7 +2,7 @@ const brs = require("brs");
 const { Lexeme } = brs.lexer;
 const { BrsString, Int32 } = brs.types;
 
-const { EOF } = require("../ParserTests");
+const { token, identifier, EOF } = require("../ParserTests");
 
 describe("parser associative array literals", () => {
     let parser;
@@ -14,10 +14,10 @@ describe("parser associative array literals", () => {
     describe("empty associative arrays", () => {
         test("on one line", () => {
             let { statements, errors } = parser.parse([
-                { kind: Lexeme.Identifier, text: "_", line: 1 },
-                { kind: Lexeme.Equal, text: "=", line: 1 },
-                { kind: Lexeme.LeftBrace, text: "{", line: 1 },
-                { kind: Lexeme.RightBrace, text: "}", line: 1 },
+                identifier("_"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.LeftBrace, "{"),
+                token(Lexeme.RightBrace, "}"),
                 EOF
             ]);
 
@@ -29,16 +29,16 @@ describe("parser associative array literals", () => {
 
         test("on multiple lines", () => {
             let { statements, errors } = parser.parse([
-                { kind: Lexeme.Identifier, text: "_", line: 1 },
-                { kind: Lexeme.Equal, text: "=", line: 1 },
-                { kind: Lexeme.LeftBrace, text: "{", line: 1 },
-                { kind: Lexeme.Newline, text: "\n", line: 1 },
-                { kind: Lexeme.Newline, text: "\n", line: 2 },
-                { kind: Lexeme.Newline, text: "\n", line: 3 },
-                { kind: Lexeme.Newline, text: "\n", line: 4 },
-                { kind: Lexeme.Newline, text: "\n", line: 5 },
-                { kind: Lexeme.Newline, text: "\n", line: 6 },
-                { kind: Lexeme.RightBrace, text: "}", line: 7 },
+                identifier("_"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.LeftBrace, "{"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.RightBrace, "}"),
                 EOF
             ]);
 
@@ -52,21 +52,21 @@ describe("parser associative array literals", () => {
     describe("filled arrays", () => {
         test("on one line", () => {
             let { statements, errors } = parser.parse([
-                { kind: Lexeme.Identifier, text: "_", line: 1 },
-                { kind: Lexeme.Equal, text: "=", line: 1 },
-                { kind: Lexeme.LeftBrace, text: "{", line: 1 },
-                { kind: Lexeme.Identifier, text: "foo", line: 1 },
-                { kind: Lexeme.Colon, text: ":", line: 1 },
-                { kind: Lexeme.Integer, text: "1", line: 1, literal: new Int32(1) },
-                { kind: Lexeme.Comma, text: ",", line: 1 },
-                { kind: Lexeme.Identifier, text: "bar", line: 1 },
-                { kind: Lexeme.Colon, text: ":", line: 1 },
-                { kind: Lexeme.Integer, text: "2", line: 1, literal: new Int32(2) },
-                { kind: Lexeme.Comma, text: ",", line: 1 },
-                { kind: Lexeme.Identifier, text: "baz", line: 1 },
-                { kind: Lexeme.Colon, text: ":", line: 1 },
-                { kind: Lexeme.Integer, text: "3", line: 1, literal: new Int32(3) },
-                { kind: Lexeme.RightBrace, text: "}", line: 1 },
+                identifier("_"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.LeftBrace, "{"),
+                identifier("foo"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "1", new Int32(1)),
+                token(Lexeme.Comma, ","),
+                identifier("bar"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "2", new Int32(2)),
+                token(Lexeme.Comma, ","),
+                identifier("baz"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "3", new Int32(3)),
+                token(Lexeme.RightBrace, "}"),
                 EOF
             ]);
 
@@ -78,25 +78,25 @@ describe("parser associative array literals", () => {
 
         test("on multiple lines with commas", () => {
             let { statements, errors } = parser.parse([
-                { kind: Lexeme.Identifier, text: "_", line: 1 },
-                { kind: Lexeme.Equal, text: "=", line: 1 },
-                { kind: Lexeme.LeftBrace, text: "{", line: 1 },
-                { kind: Lexeme.Newline, text: "\n", line: 1 },
-                { kind: Lexeme.Identifier, text: "foo", line: 2 },
-                { kind: Lexeme.Colon, text: ":", line: 2 },
-                { kind: Lexeme.Integer, text: "1", line: 2, literal: new Int32(1) },
-                { kind: Lexeme.Comma, text: ",", line: 2 },
-                { kind: Lexeme.Newline, text: "\n", line: 2 },
-                { kind: Lexeme.Identifier, text: "bar", line: 3 },
-                { kind: Lexeme.Colon, text: ":", line: 3 },
-                { kind: Lexeme.Integer, text: "2", line: 3, literal: new Int32(2) },
-                { kind: Lexeme.Comma, text: ",", line: 3 },
-                { kind: Lexeme.Newline, text: "\n", line: 3 },
-                { kind: Lexeme.Identifier, text: "baz", line: 4 },
-                { kind: Lexeme.Colon, text: ":", line: 4 },
-                { kind: Lexeme.Integer, text: "3", line: 4, literal: new Int32(3) },
-                { kind: Lexeme.Newline, text: "\n", line: 5 },
-                { kind: Lexeme.RightBrace, text: "}", line: 6 },
+                identifier("_"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.LeftBrace, "{"),
+                token(Lexeme.Newline, "\n"),
+                identifier("foo"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "1", new Int32(1)),
+                token(Lexeme.Comma, ","),
+                token(Lexeme.Newline, "\n"),
+                identifier("bar"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "2", new Int32(2)),
+                token(Lexeme.Comma, ","),
+                token(Lexeme.Newline, "\n"),
+                identifier("baz"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "3", new Int32(3)),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.RightBrace, "}"),
                 EOF
             ]);
 
@@ -108,23 +108,23 @@ describe("parser associative array literals", () => {
 
         test("on multiple lines without commas", () => {
             let { statements, errors } = parser.parse([
-                { kind: Lexeme.Identifier, text: "_", line: 1 },
-                { kind: Lexeme.Equal, text: "=", line: 1 },
-                { kind: Lexeme.LeftBrace, text: "{", line: 1 },
-                { kind: Lexeme.Newline, text: "\n", line: 1 },
-                { kind: Lexeme.Identifier, text: "foo", line: 2 },
-                { kind: Lexeme.Colon, text: ":", line: 2 },
-                { kind: Lexeme.Integer, text: "1", line: 2, literal: new Int32(1) },
-                { kind: Lexeme.Newline, text: "\n", line: 2 },
-                { kind: Lexeme.Identifier, text: "bar", line: 3 },
-                { kind: Lexeme.Colon, text: ":", line: 3 },
-                { kind: Lexeme.Integer, text: "2", line: 3, literal: new Int32(2) },
-                { kind: Lexeme.Newline, text: "\n", line: 3 },
-                { kind: Lexeme.Identifier, text: "baz", line: 4 },
-                { kind: Lexeme.Colon, text: ":", line: 4 },
-                { kind: Lexeme.Integer, text: "3", line: 4, literal: new Int32(3) },
-                { kind: Lexeme.Newline, text: "\n", line: 5 },
-                { kind: Lexeme.RightBrace, text: "}", line: 6 },
+                identifier("_"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.LeftBrace, "{"),
+                token(Lexeme.Newline, "\n"),
+                identifier("foo"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "1", new Int32(1)),
+                token(Lexeme.Newline, "\n"),
+                identifier("bar"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "2", new Int32(2)),
+                token(Lexeme.Newline, "\n"),
+                identifier("baz"),
+                token(Lexeme.Colon, ":"),
+                token(Lexeme.Integer, "3", new Int32(3)),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.RightBrace, "}"),
                 EOF
             ]);
 
@@ -137,25 +137,25 @@ describe("parser associative array literals", () => {
 
     it("allows a mix of quoted and unquoted keys", () => {
         let { statements, errors } = parser.parse([
-            { kind: Lexeme.Identifier, text: "_", line: 1 },
-            { kind: Lexeme.Equal, text: "=", line: 1 },
-            { kind: Lexeme.LeftBrace, text: "{", line: 1 },
-            { kind: Lexeme.Newline, text: "\n", line: 1 },
-            { kind: Lexeme.String, text: "foo", line: 2, literal: new BrsString("foo") },
-            { kind: Lexeme.Colon, text: ":", line: 2 },
-            { kind: Lexeme.Integer, text: "1", line: 2, literal: new Int32(1) },
-            { kind: Lexeme.Comma, text: ",", line: 2 },
-            { kind: Lexeme.Newline, text: "\n", line: 2 },
-            { kind: Lexeme.Identifier, text: "bar", line: 3 },
-            { kind: Lexeme.Colon, text: ":", line: 3 },
-            { kind: Lexeme.Integer, text: "2", line: 3, literal: new Int32(2) },
-            { kind: Lexeme.Comma, text: ",", line: 3 },
-            { kind: Lexeme.Newline, text: "\n", line: 3 },
-            { kind: Lexeme.String, text: "requires-hyphens", line: 4, literal: new BrsString("requires-hypens") },
-            { kind: Lexeme.Colon, text: ":", line: 4 },
-            { kind: Lexeme.Integer, text: "3", line: 4, literal: new Int32(3) },
-            { kind: Lexeme.Newline, text: "\n", line: 5 },
-            { kind: Lexeme.RightBrace, text: "}", line: 6 },
+            identifier("_"),
+            token(Lexeme.Equal, "="),
+            token(Lexeme.LeftBrace, "{"),
+            token(Lexeme.Newline, "\n"),
+            token(Lexeme.String, "foo", new BrsString("foo")),
+            token(Lexeme.Colon, ":"),
+            token(Lexeme.Integer, "1", new Int32(1)),
+            token(Lexeme.Comma, ","),
+            token(Lexeme.Newline, "\n"),
+            identifier("bar"),
+            token(Lexeme.Colon, ":"),
+            token(Lexeme.Integer, "2", new Int32(2)),
+            token(Lexeme.Comma, ","),
+            token(Lexeme.Newline, "\n"),
+            token(Lexeme.String, "requires-hyphens", new BrsString("requires-hypens")),
+            token(Lexeme.Colon, ":"),
+            token(Lexeme.Integer, "3", new Int32(3)),
+            token(Lexeme.Newline, "\n"),
+            token(Lexeme.RightBrace, "}"),
             EOF
         ]);
 
@@ -163,5 +163,153 @@ describe("parser associative array literals", () => {
         expect(statements).toBeDefined();
         expect(statements).not.toBeNull();
         expect(statements).toMatchSnapshot();
+    });
+
+    test("location tracking", () => {
+        /**
+         *    0   0   0   1
+         *    0   4   8   2
+         *  +--------------
+         * 1| a = {   }
+         * 2|
+         * 3| b = {
+         * 4|
+         * 5|
+         * 6| }
+         */
+        let { statements, errors } = parser.parse([
+            {
+                kind: Lexeme.Identifier,
+                text: "a",
+                isReserved: false,
+                location: {
+                    start: { line: 1, column: 0 },
+                    end: { line: 1, column: 1 }
+                }
+            },
+            {
+                kind: Lexeme.Equal,
+                text: "=",
+                isReserved: false,
+                location: {
+                    start: { line: 1, column: 2 },
+                    end: { line: 1, column: 3 }
+                }
+            },
+            {
+                kind: Lexeme.LeftBrace,
+                text: "{",
+                isReserved: false,
+                location: {
+                    start: { line: 1, column: 4 },
+                    end: { line: 1, column: 5 }
+
+                }
+            },
+            {
+                kind: Lexeme.RightBrace,
+                text: "}",
+                isReserved: false,
+                location: {
+                    start: { line: 1, column: 8 },
+                    end: { line: 1, column: 9 }
+                }
+            },
+            {
+                kind: Lexeme.Newline,
+                text: "\n",
+                isReserved: false,
+                location: {
+                    start: { line: 1, column: 9 },
+                    end: { line: 1, column: 10 },
+                }
+            },
+            {
+                kind: Lexeme.Newline,
+                text: "\n",
+                isReserved: false,
+                location: {
+                    start: { line: 2, column: 0 },
+                    end: { line: 2, column: 1 },
+                }
+            },
+            {
+                kind: Lexeme.Identifier,
+                text: "b",
+                isReserved: false,
+                location: {
+                    start: { line: 3, column: 0 },
+                    end: { line: 3, column: 1 }
+                }
+            },
+            {
+                kind: Lexeme.Equal,
+                text: "=",
+                isReserved: false,
+                location: {
+                    start: { line: 3, column: 2 },
+                    end: { line: 3, column: 3 }
+                }
+            },
+            {
+                kind: Lexeme.LeftBrace,
+                text: "{",
+                isReserved: false,
+                location: {
+                    start: { line: 3, column: 4 },
+                    end: { line: 3, column: 5 }
+
+                }
+            },
+            {
+                kind: Lexeme.Newline,
+                text: "\n",
+                isReserved: false,
+                location: {
+                    start: { line: 4, column: 0 },
+                    end: { line: 4, column: 1 },
+                }
+            },
+            {
+                kind: Lexeme.Newline,
+                text: "\n",
+                isReserved: false,
+                location: {
+                    start: { line: 5, column: 0 },
+                    end: { line: 5, column: 1 },
+                }
+            },
+            {
+                kind: Lexeme.RightBrace,
+                text: "}",
+                isReserved: false,
+                location: {
+                    start: { line: 6, column: 0 },
+                    end: { line: 6, column: 1 }
+                }
+            },
+            {
+                kind: Lexeme.Eof,
+                text: "\0",
+                isReserved: false,
+                location: {
+                    start: { line: 6, column: 1 },
+                    end: { line: 6, column: 2 }
+                }
+            }
+        ]);
+
+        expect(errors).toEqual([]);
+        expect(statements.length).toEqual(2);
+        expect(statements.map(s => s.value.location)).toEqual([
+            {
+                start: { line: 1, column: 4 },
+                end: { line: 1, column: 9 }
+            },
+            {
+                start: { line: 3, column: 4 },
+                end: { line: 6, column: 1 }
+            }
+        ]);
     });
 });

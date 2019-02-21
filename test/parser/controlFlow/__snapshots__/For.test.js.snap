@@ -4,15 +4,64 @@ exports[`parser for loops accepts a 'step' clause 1`] = `
 Array [
   For {
     "body": Block {
+      "startingLocation": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "statements": Array [],
     },
     "counterDeclaration": Assignment {
       "name": Object {
+        "isReserved": false,
         "kind": 21,
-        "line": 1,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "text": "i",
       },
+      "tokens": Object {
+        "equals": Object {
+          "isReserved": false,
+          "kind": 19,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "=",
+        },
+      },
       "value": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "value": Int32 {
           "kind": 3,
           "value": 0,
@@ -20,15 +69,101 @@ Array [
       },
     },
     "finalValue": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "value": Int32 {
         "kind": 3,
         "value": 5,
       },
     },
     "increment": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "value": Int32 {
         "kind": 3,
         "value": 2,
+      },
+    },
+    "tokens": Object {
+      "endFor": Object {
+        "isReserved": false,
+        "kind": 46,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "end for",
+      },
+      "for": Object {
+        "isReserved": true,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "for",
+      },
+      "step": Object {
+        "isReserved": true,
+        "kind": 75,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "step",
+      },
+      "to": Object {
+        "isReserved": true,
+        "kind": 80,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "to",
       },
     },
   },
@@ -39,15 +174,64 @@ exports[`parser for loops allows 'next' to terminate loop 1`] = `
 Array [
   For {
     "body": Block {
+      "startingLocation": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "statements": Array [],
     },
     "counterDeclaration": Assignment {
       "name": Object {
+        "isReserved": false,
         "kind": 21,
-        "line": 1,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "text": "i",
       },
+      "tokens": Object {
+        "equals": Object {
+          "isReserved": false,
+          "kind": 19,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "=",
+        },
+      },
       "value": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "value": Int32 {
           "kind": 3,
           "value": 0,
@@ -55,15 +239,86 @@ Array [
       },
     },
     "finalValue": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "value": Int32 {
         "kind": 3,
         "value": 5,
       },
     },
     "increment": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "value": Int32 {
         "kind": 3,
         "value": 1,
+      },
+    },
+    "tokens": Object {
+      "endFor": Object {
+        "isReserved": true,
+        "kind": 66,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "next",
+      },
+      "for": Object {
+        "isReserved": true,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "for",
+      },
+      "step": undefined,
+      "to": Object {
+        "isReserved": true,
+        "kind": 80,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "to",
       },
     },
   },
@@ -74,15 +329,64 @@ exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
 Array [
   For {
     "body": Block {
+      "startingLocation": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "statements": Array [],
     },
     "counterDeclaration": Assignment {
       "name": Object {
+        "isReserved": false,
         "kind": 21,
-        "line": 1,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "text": "i",
       },
+      "tokens": Object {
+        "equals": Object {
+          "isReserved": false,
+          "kind": 19,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "=",
+        },
+      },
       "value": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
         "value": Int32 {
           "kind": 3,
           "value": 0,
@@ -90,15 +394,86 @@ Array [
       },
     },
     "finalValue": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "value": Int32 {
         "kind": 3,
         "value": 5,
       },
     },
     "increment": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
       "value": Int32 {
         "kind": 3,
         "value": 1,
+      },
+    },
+    "tokens": Object {
+      "endFor": Object {
+        "isReserved": false,
+        "kind": 46,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "end for",
+      },
+      "for": Object {
+        "isReserved": true,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "for",
+      },
+      "step": undefined,
+      "to": Object {
+        "isReserved": true,
+        "kind": 80,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "to",
       },
     },
   },

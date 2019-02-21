@@ -73,7 +73,7 @@ export class Preprocessor implements CC.Visitor {
     visitDeclaration(chunk: CC.Declaration) {
         if (this.constants.has(chunk.name.text)) {
             return this.addError(
-                new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.line)
+                new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.location)
             );
         }
 
@@ -92,11 +92,11 @@ export class Preprocessor implements CC.Visitor {
                 }
 
                 return this.addError(
-                    new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.line)
+                    new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.location)
                 );
             default:
                 return this.addError(
-                    new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.line)
+                    new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.location)
                 );
         }
 
@@ -158,11 +158,11 @@ export class Preprocessor implements CC.Visitor {
                 }
 
                 return this.addError(
-                    new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.line)
+                    new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.location)
                 );
             default:
                 return this.addError(
-                    new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.line)
+                    new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.location)
                 );
         }
     }

@@ -1,7 +1,7 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
-import { Callable } from "../Callable";
+import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import * as luxon from "luxon";
@@ -58,7 +58,7 @@ export class Timespan extends BrsComponent implements BrsValue {
             }
         }
     );
-    
+
     /** Returns total seconds from the mark time to now */
     private totalseconds = new Callable(
         "totalseconds",
@@ -81,7 +81,7 @@ export class Timespan extends BrsComponent implements BrsValue {
         {
             signature: {
                 args: [
-                    { name: "date", type: ValueKind.String }
+                    new StdlibArgument("date", ValueKind.String)
                 ],
                 returns: ValueKind.Int32
             },

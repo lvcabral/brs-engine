@@ -308,4 +308,37 @@ describe("lexer", () => {
             expect(tokens[1].text).toBe("a message goes here");
         });
     });
+
+    describe("location tracking", () => {
+        it("tracks starting and ending lines", () => {
+            let { tokens } = Lexer.scan(`sub foo()\n\n    print "bar"\nend sub`);
+            expect(tokens.map(t => t.location.start.line)).toEqual([
+                1, 1, 1, 1, 1,
+                3, 3, 3,
+                4, 4
+            ]);
+
+            expect(tokens.map(t => t.location.end.line)).toEqual([
+                1, 1, 1, 1, 1,
+                3, 3, 3,
+                4, 4
+            ]);
+        });
+
+        it("tracks starting and ending columns", () => {
+            let { tokens } = Lexer.scan(`sub foo()\n    print "bar"\nend sub`);
+            expect(tokens.map(t => [ t.location.start.column, t.location.end.column ])).toEqual([
+                [0, 3],   // sub
+                [4, 7],   // foo
+                [7, 8],   // (
+                [8, 9],   // )
+                [9, 10], // \n
+                [4, 9],   // print
+                [10, 15], // "bar"
+                [15, 16], // \n
+                [0, 7],   // end sub
+                [7, 8]    // EOF
+            ]);
+        });
+    });
 }); // lexer

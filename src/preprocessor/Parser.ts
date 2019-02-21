@@ -98,9 +98,8 @@ export class Parser {
          * @returns an "if" chunk if one is detected, otherwise whatever `hashError` returns
          */
         function hashIf(): CC.Chunk | undefined {
-            let startingLine = peek().line;
-
             if (match(Lexeme.HashIf)) {
+                let startingLine = previous().location.start.line;
                 let elseChunk: CC.Chunk[] | undefined;
 
                 let ifCondition = advance();

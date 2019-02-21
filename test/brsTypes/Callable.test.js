@@ -1,5 +1,4 @@
 const BrsTypes = require("../../lib/brsTypes");
-const { MismatchReason } = require("../../lib/brsTypes/Callable");
 const { UCase, LCase } = require("../../lib/stdlib");
 
 describe("Callable", () => {
@@ -63,10 +62,7 @@ describe("Callable", () => {
                 "acceptsArgs",
                 {
                     signature: {
-                        args: [{
-                            name: "foo",
-                            type: BrsTypes.ValueKind.String
-                        }],
+                        args: [ new BrsTypes.StdlibArgument("foo", BrsTypes.ValueKind.String) ],
                         returns: BrsTypes.String
                     },
                     impl: () => {}
@@ -114,11 +110,13 @@ describe("Callable", () => {
                 "acceptsOptionalArgs",
                 {
                     signature: {
-                        args: [{
-                            name: "foo",
-                            type: BrsTypes.ValueKind.String,
-                            defaultValue: new BrsTypes.BrsString("defaultFoo")
-                        }],
+                        args: [
+                            new BrsTypes.StdlibArgument(
+                                "foo",
+                                BrsTypes.ValueKind.String,
+                                new BrsTypes.BrsString("defaultFoo")
+                            )
+                        ],
                         returns: BrsTypes.String
                     },
                     impl: () => {}
@@ -135,10 +133,7 @@ describe("Callable", () => {
                 "acceptsString",
                 {
                     signature: {
-                        args: [{
-                            name: "foo",
-                            type: BrsTypes.ValueKind.String
-                        }],
+                        args: [ new BrsTypes.StdlibArgument("foo", BrsTypes.ValueKind.String) ],
                         returns: BrsTypes.String
                     },
                     impl: () => {}
@@ -165,14 +160,8 @@ describe("Callable", () => {
                 {
                     signature: {
                         args: [
-                            {
-                                name: "foo",
-                                type: BrsTypes.ValueKind.Dynamic
-                            },
-                            {
-                                name: "bar",
-                                type: BrsTypes.ValueKind.Object
-                            },
+                            new BrsTypes.StdlibArgument("foo", BrsTypes.ValueKind.Dynamic),
+                            new BrsTypes.StdlibArgument("bar", BrsTypes.ValueKind.Object)
                         ],
                         returns: BrsTypes.String
                     },

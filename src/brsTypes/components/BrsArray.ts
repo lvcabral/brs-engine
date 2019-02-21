@@ -1,7 +1,7 @@
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsType } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { Callable } from "../Callable";
+import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
@@ -110,7 +110,7 @@ export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
         {
             signature: {
                 args: [
-                    { name: "tvalue", type: ValueKind.Dynamic }
+                    new StdlibArgument("talue", ValueKind.Dynamic)
                 ],
                 returns: ValueKind.Void
             },
@@ -139,7 +139,7 @@ export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
         {
             signature: {
                 args: [
-                    { name: "tvalue", type: ValueKind.Dynamic }
+                    new StdlibArgument("tvalue", ValueKind.Dynamic)
                 ],
                 returns: ValueKind.Void
             },
@@ -155,7 +155,7 @@ export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
         {
             signature: {
                 args: [
-                    { name: "index", type: ValueKind.Int32 }
+                    new StdlibArgument("index", ValueKind.Int32)
                 ],
                 returns: ValueKind.Boolean
             },
@@ -201,10 +201,9 @@ export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
         "append",
         {
             signature: {
-                args: [{
-                    name: "array",
-                    type: ValueKind.Object
-                }],
+                args: [
+                    new StdlibArgument("array", ValueKind.Object)
+                ],
                 returns: ValueKind.Void
             },
             impl: (interpreter: Interpreter, array: BrsComponent) => {

@@ -40,7 +40,7 @@ describe("end to end conditional compilation", () => {
                     expect(
                         allArgs(stderr).filter(arg => arg !== "\n")
                     ).toEqual([
-                        `[Line 2] I'm a compile-time error!`
+                        expect.stringContaining("I'm a compile-time error!")
                     ]);
 
                     stderr.mockRestore()

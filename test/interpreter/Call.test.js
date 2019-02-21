@@ -5,7 +5,7 @@ const brs = require("brs");
 const { Lexeme } = brs.lexer;
 const { BrsString, Int32, ValueKind } = brs.types;
 
-const { identifier } = require("../parser/ParserTests");
+const { token, identifier } = require("../parser/ParserTests");
 
 let interpreter;
 
@@ -18,7 +18,7 @@ describe("interpreter calls", () => {
         const call = new Stmt.Expression(
             new Expr.Call(
                 new Expr.Variable(identifier("UCase")),
-                { kind: Lexeme.RightParen, text: ")", line: 1 },
+                token(Lexeme.RightParen, ")"),
                 [ new Expr.Literal(new BrsString("h@lL0")) ]
             )
         );
@@ -29,7 +29,8 @@ describe("interpreter calls", () => {
     it("sets a new `m` pointer when called from an associative array", () => {
         const ast = [
             new Stmt.Assignment(
-                { kind: Lexeme.Identifier, text: "foo", line: 2 },
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("foo"),
                 new Expr.AALiteral([
                     {
                         name: new BrsString("setMId"),
@@ -38,8 +39,8 @@ describe("interpreter calls", () => {
                             ValueKind.Void,
                             new Stmt.Block([
                                 new Stmt.DottedSet(
-                                    new Expr.Variable({ kind: Lexeme.Identifier, text: "m", line: 3 }),
-                                    { kind: Lexeme.Identifier, text: "id", line: 3 },
+                                    new Expr.Variable(identifier("m")),
+                                    identifier("id"),
                                     new Expr.Literal(new BrsString("this is an ID"))
                                 )
                             ])
@@ -50,10 +51,10 @@ describe("interpreter calls", () => {
             new Stmt.Expression(
                 new Expr.Call(
                     new Expr.DottedGet(
-                        new Expr.Variable({ kind: Lexeme.Identifier, text: "foo", line: 5 }),
-                        { kind: Lexeme.Identifier, text: "setMId" }
+                        new Expr.Variable(identifier("foo")),
+                        identifier("setMId")
                     ),
-                    { kind: Lexeme.RightParen, text: ")", line: 2 },
+                    token(Lexeme.RightParen, ")"),
                     [ ] // no args required
                 )
             )
@@ -61,7 +62,7 @@ describe("interpreter calls", () => {
 
         interpreter.exec(ast);
 
-        let foo = interpreter.environment.get({ kind: Lexeme.Identifier, text: "foo", line: -1 });
+        let foo = interpreter.environment.get(identifier("foo"));
         expect(foo.kind).toBe(ValueKind.Object);
         expect(
             foo.get(new BrsString("id"))
@@ -72,7 +73,7 @@ describe("interpreter calls", () => {
         const call = new Stmt.Expression(
             new Expr.Call(
                 new Expr.Variable(identifier("UCase")),
-                { kind: Lexeme.RightParen, text: ")", line: 1 },
+                token(Lexeme.RightParen, ")"),
                 [] // no arugments
             )
         );
@@ -84,7 +85,7 @@ describe("interpreter calls", () => {
         const call = new Stmt.Expression(
             new Expr.Call(
                 new Expr.Variable(identifier("UCase")),
-                { kind: Lexeme.RightParen, text: ")", line: 1 },
+                token(Lexeme.RightParen, ")"),
                 [
                     new Expr.Literal(new BrsString("h@lL0")),
                     new Expr.Literal(new BrsString("too many args")),
@@ -99,7 +100,7 @@ describe("interpreter calls", () => {
         const call = new Stmt.Expression(
             new Expr.Call(
                 new Expr.Variable(identifier("UCase")),
-                { kind: Lexeme.RightParen, text: ")", line: 1 },
+                token(Lexeme.RightParen, ")"),
                 [
                     new Expr.Literal(new Int32(5)),
                 ]
@@ -112,86 +113,95 @@ describe("interpreter calls", () => {
     it("errors when return types don't match", () => {
         const ast = [
             new Stmt.Function(
-                { kind: Lexeme.Identifier, text: "foo", line: 1 },
+                identifier("foo"),
                 new Expr.Function(
                     [],
                     ValueKind.String,
-                    new Stmt.Block([
-                        new Stmt.Return(
-                            { kind: Lexeme.Return, text: "return", line: 2, isReserved: true },
-                            new Expr.Literal(new Int32(5))
-                        )
-                    ])
+                    new Stmt.Block(
+                        [
+                            new Stmt.Return(
+                                { return: token(Lexeme.Return, "return") },
+                                new Expr.Literal(new Int32(5))
+                            )
+                        ],
+                        token(Lexeme.Newline, "\n")
+                    )
                 )
             ),
             new Stmt.Expression(
                 new Expr.Call(
                     new Expr.Variable(identifier("foo")),
-                    { kind: Lexeme.RightParen, text: ")", line: 2 },
+                    token(Lexeme.RightParen, ")"),
                     [] // no args required
                 )
             )
         ];
 
         expect(() => interpreter.exec(ast)).toThrow(
-            /\[Line .\] Attempting to return value of type Integer, but function foo declares return value of type String/
+            /Attempting to return value of type Integer, but function foo declares return value of type String/
         );
     });
 
     it("errors when returning from a void return", () => {
         const ast = [
             new Stmt.Function(
-                { kind: Lexeme.Identifier, text: "foo", line: 1 },
+                identifier("foo"),
                 new Expr.Function(
                     [],
                     ValueKind.Void,
-                    new Stmt.Block([
-                        new Stmt.Return(
-                            { kind: Lexeme.Return, text: "return", line: 2, isReserved: true },
-                            new Expr.Literal(new Int32(5))
-                        )
-                    ])
+                    new Stmt.Block(
+                        [
+                            new Stmt.Return(
+                                { return: token(Lexeme.Return, "return") },
+                                new Expr.Literal(new Int32(5))
+                            )
+                        ],
+                        token(Lexeme.Newline, "\n")
+                    )
                 )
             ),
             new Stmt.Expression(
                 new Expr.Call(
                     new Expr.Variable(identifier("foo")),
-                    { kind: Lexeme.RightParen, text: ")", line: 2 },
+                    token(Lexeme.RightParen, ")"),
                     [] // no args required
                 )
             )
         ];
 
         expect(() => interpreter.exec(ast)).toThrow(
-            /\[Line .\] Attempting to return value of non-void type/
+            /Attempting to return value of non-void type/
         );
     });
 
     it("errors when returning void from a non-void return", () => {
         const ast = [
             new Stmt.Function(
-                { kind: Lexeme.Identifier, text: "foo", line: 1 },
+                identifier("foo"),
                 new Expr.Function(
                     [],
                     ValueKind.String,
-                    new Stmt.Block([
-                        new Stmt.Return(
-                            { kind: Lexeme.Return, text: "return", line: 2, isReserved: true }
-                        )
-                    ])
+                    new Stmt.Block(
+                        [
+                            new Stmt.Return(
+                                { return: token(Lexeme.Return, "return") }
+                            )
+                        ],
+                        token(Lexeme.Newline, "\n")
+                    )
                 )
             ),
             new Stmt.Expression(
                 new Expr.Call(
                     new Expr.Variable(identifier("foo")),
-                    { kind: Lexeme.RightParen, text: ")", line: 2 },
+                    token(Lexeme.RightParen, ")"),
                     [] // no args required
                 )
             )
         ];
 
         expect(() => interpreter.exec(ast)).toThrow(
-            /\[Line .\] Attempting to return void value/
+            /Attempting to return void value/
         );
     });
 });

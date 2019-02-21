@@ -51,7 +51,7 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         let parser = new Parser();
         [lexer, preprocessor, parser].forEach(emitter => emitter.onError(logError));
 
-        let scanResults = lexer.scan(contents);
+        let scanResults = lexer.scan(contents, filename);
         if (scanResults.errors.length > 0) {
             return Promise.reject({
                 message: "Error occurred during lexing"
@@ -103,6 +103,8 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
  */
 export function repl() {
     const replInterpreter = new Interpreter();
+    replInterpreter.onError(logError);
+
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -133,12 +135,18 @@ export function repl() {
  *          `interpreter` threw an Error.
  */
 function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter: Interpreter) {
-    const scanResults = Lexer.scan(contents);
+    const lexer = new Lexer();
+    const parser = new Parser();
+
+    lexer.onError(logError);
+    parser.onError(logError);
+
+    const scanResults = lexer.scan(contents, "REPL");
     if (scanResults.errors.length > 0) {
         return;
     }
 
-    const parseResults = new Parser().parse(scanResults.tokens);
+    const parseResults = parser.parse(scanResults.tokens);
     if (parseResults.errors.length > 0) {
         return;
     }
@@ -158,5 +166,5 @@ function run(contents: string, options: ExecutionOptions = defaultExecutionOptio
  * @param err the error to log to `stderr`
  */
 function logError(err: BrsError.BrsError) {
-    console.error(err.message);
+    console.error(err.format());
 }

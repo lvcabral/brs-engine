@@ -6,14 +6,20 @@ const { Lexeme } = brs.lexer;
 /**
  * Creates a token with the given `kind` and (optional) `literal` value.
  * @param {Lexeme} kind the lexeme the produced token should represent.
- * @param {*} [literal] the literal value that the produced token should contain.
- * @returns {object} a token of `kind` with value `literal`.
+ * @param {string} text the text represented by this token.
+ * @param {*} [literal] the literal value that the produced token should contain, if any
+ * @returns {object} a token of `kind` representing `text` with value `literal`.
  */
-exports.token = function(kind, literal) {
+exports.token = function(kind, text, literal) {
     return {
         kind: kind,
+        text: text,
+        isReserved: brs.lexer.ReservedWords.has(text),
         literal: literal,
-        line: 1
+        location: {
+            start: { line: -9, column: -9 },
+            end: { line: -9, column: -9 },
+        }
     };
 }
 
@@ -23,12 +29,8 @@ exports.token = function(kind, literal) {
  * @returns {object} a token with the provided `text`.
  */
 exports.identifier = function(text) {
-    return {
-        kind: Lexeme.Identifier,
-        text: text,
-        line: 1
-    };
+    return exports.token(Lexeme.Identifier, text);
 }
 
 /** An end-of-file token. */
-exports.EOF = exports.token(Lexeme.Eof);
+exports.EOF = exports.token(Lexeme.Eof, "\0");

@@ -67,6 +67,10 @@ describe("interpreter arithmetic", () => {
             new Expr.Binary(
                 new Expr.Binary(
                     new Expr.Grouping(
+                        {
+                            left: token(Lexeme.LeftParen),
+                            right: token(Lexeme.RightParen)
+                        },
                         new Expr.Binary(
                             new Expr.Literal(new brs.types.Int32(6)),
                             token(Lexeme.Plus),

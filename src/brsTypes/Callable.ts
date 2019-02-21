@@ -2,15 +2,63 @@ import { Interpreter } from "../interpreter";
 import * as Brs from ".";
 import * as Expr from "../parser/Expression";
 import { Scope } from "../interpreter/Environment";
+import { Location } from "../lexer";
 
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
+    /** Where the argument exists in the parsed source file(s). */
+    readonly location: Location,
+
     /** The argument's name. */
-    readonly name: string,
+    readonly name: {
+        text: string,
+        location: Location
+    },
+
     /** The type of the argument expected by the BrightScript runtime. */
-    readonly type: Brs.ValueKind,
+    readonly type: {
+        kind: Brs.ValueKind
+        location: Location
+    },
+
     /** The default value to use for the argument if none is provided. */
-    readonly defaultValue?: Expr.Expression
+    readonly defaultValue?: Expr.Expression,
+}
+
+/**
+ * A variant of the `Argument` interface intended for use only when creating standard library
+ * functions.
+ */
+export class StdlibArgument implements Argument {
+    readonly location: Argument["location"];
+    readonly name: Argument["name"];
+    readonly type: Argument["type"];
+    readonly defaultValue: Argument["defaultValue"];
+
+    /**
+     * Creates an `Argument` without requiring locations to be specified.
+     * @param name the name of the argument, used for presentation to users
+     * @param type the type of value accepted at runtime
+     * @param defaultValue the optional default value to use for this argument if one isn't
+     *                     provided at runtime
+     */
+    constructor(name: string, type: Brs.ValueKind, defaultValue?: Brs.BrsType) {
+
+        this.location = StdlibArgument.InternalLocation;
+        this.name = { text: name, location: StdlibArgument.InternalLocation };
+        this.type = { kind: type, location: StdlibArgument.InternalLocation };
+        if (defaultValue) {
+            this.defaultValue = new Expr.Literal(defaultValue, StdlibArgument.InternalLocation);
+        }
+    }
+
+    /** A fake location exists only within the BRS runtime. */
+    static InternalLocation = {
+        file: "(stdlib)",
+        start: { line: -1, column: -1 },
+        end: { line: -1, column: -1 }
+    };
+
 }
 
 /** A BrightScript `function` or `sub`'s signature. */
@@ -119,7 +167,7 @@ export class Callable implements Brs.BrsValue {
                     mutableArgs[index] = subInterpreter.evaluate(param.defaultValue);
                 }
 
-                subInterpreter.environment.define(Scope.Function, param.name, mutableArgs[index]);
+                subInterpreter.environment.define(Scope.Function, param.name.text, mutableArgs[index]);
             });
 
             // then return whatever the selected implementation would return
@@ -201,14 +249,14 @@ export class Callable implements Brs.BrsValue {
             let expected = sig.args[index];
             let received = args[index];
 
-            if (expected.type === Brs.ValueKind.Dynamic || expected.type === Brs.ValueKind.Object) { return; }
+            if (expected.type.kind === Brs.ValueKind.Dynamic || expected.type.kind === Brs.ValueKind.Object) { return; }
 
-            if (expected.type !== received.kind) {
+            if (expected.type.kind !== received.kind) {
                 reasons.push({
                     reason: MismatchReason.ArgumentTypeMismatch,
-                    expected: Brs.ValueKind.toString(expected.type),
+                    expected: Brs.ValueKind.toString(expected.type.kind),
                     received: Brs.ValueKind.toString(received.kind),
-                    argName: expected.name
+                    argName: expected.name.text
                 });
             }
         });
