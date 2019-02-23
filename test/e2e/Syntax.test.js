@@ -64,6 +64,16 @@ describe("end to end syntax", () => {
         });
     });
 
+    test("assignment-operators.brs", () => {
+        return execute([ resourceFile("assignment-operators.brs") ], outputStreams).then(() =>{
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "5", "2", "6", "2", "16", "2"
+            ]);
+        });
+    });
+
     test("conditionals.brs", () => {
         return execute([ resourceFile("conditionals.brs") ], outputStreams).then(() => {
             expect(

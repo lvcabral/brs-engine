@@ -18,7 +18,7 @@ Array [
     },
     "item": Object {
       "isReserved": false,
-      "kind": 21,
+      "kind": 29,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -35,7 +35,7 @@ Array [
     "target": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 21,
+        "kind": 29,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -53,7 +53,7 @@ Array [
     "tokens": Object {
       "endFor": Object {
         "isReserved": true,
-        "kind": 66,
+        "kind": 74,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -69,7 +69,7 @@ Array [
       },
       "forEach": Object {
         "isReserved": false,
-        "kind": 56,
+        "kind": 64,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -85,7 +85,7 @@ Array [
       },
       "in": Object {
         "isReserved": false,
-        "kind": 21,
+        "kind": 29,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -122,7 +122,7 @@ Array [
     },
     "item": Object {
       "isReserved": false,
-      "kind": 21,
+      "kind": 29,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -139,7 +139,7 @@ Array [
     "target": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 21,
+        "kind": 29,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -157,7 +157,7 @@ Array [
     "tokens": Object {
       "endFor": Object {
         "isReserved": false,
-        "kind": 46,
+        "kind": 54,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -173,7 +173,7 @@ Array [
       },
       "forEach": Object {
         "isReserved": false,
-        "kind": 56,
+        "kind": 64,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -189,7 +189,7 @@ Array [
       },
       "in": Object {
         "isReserved": false,
-        "kind": 21,
+        "kind": 29,
         "literal": undefined,
         "location": Object {
           "end": Object {

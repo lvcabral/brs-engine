@@ -28,6 +28,19 @@ type BlockTerminator =
     Lexeme.EndSub |
     Lexeme.EndFunction;
 
+/** The set of operators valid for use in assignment statements. */
+const assignmentOperators = [
+    Lexeme.Equal,
+    Lexeme.CaretEqual,
+    Lexeme.MinusEqual,
+    Lexeme.PlusEqual,
+    Lexeme.StarEqual,
+    Lexeme.SlashEqual,
+    Lexeme.BackslashEqual,
+    Lexeme.LeftShiftEqual,
+    Lexeme.RightShiftEqual
+];
+
 /** The results of a Parser's parsing pass. */
 interface ParseResults {
     /** The statements produced by the parser. */
@@ -129,7 +142,7 @@ export class Parser {
                 // BrightScript is like python, in that variables can be declared without a `var`,
                 // `let`, (...) keyword. As such, we must check the token *after* an identifier to figure
                 // out what to do with it.
-                if (check(Lexeme.Identifier) && checkNext(Lexeme.Equal)) {
+                if ( check(Lexeme.Identifier) && checkNext(...assignmentOperators)) {
                     return assignment(...additionalTerminators);
                 }
 
@@ -290,20 +303,30 @@ export class Parser {
         }
 
         function assignment(...additionalterminators: Lexeme[]): Stmt.Assignment {
-            let name = advance();
-            let equals = consume("Expected '=' after idenfifier", Lexeme.Equal);
-            // TODO: support +=, -=, >>=, etc.
+            let name = advance() as Identifier;
+            let operator = consume(
+                `Expected operator ('=', '+=', '-=', '*=', '/=', '\\=', '^=', '<<=', or '>>=') after idenfifier '${name.text}'`,
+                ...assignmentOperators
+            );
 
             let value = expression();
             if (!check(...additionalterminators)) {
                 consume("Expected newline or ':' after assignment", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof, ...additionalterminators);
             }
 
-            return new Stmt.Assignment(
-                { equals: equals },
-                name as Identifier,
-                value
-            );
+            if (operator.kind === Lexeme.Equal) {
+                return new Stmt.Assignment(
+                    { equals: operator },
+                    name,
+                    value
+                );
+            } else {
+                return new Stmt.Assignment(
+                    { equals: operator },
+                    name,
+                    new Expr.Binary(new Expr.Variable(name), operator, value)
+                );
+            }
         }
 
         function statement(...additionalterminators: BlockTerminator[]): Statement {
@@ -974,8 +997,10 @@ export class Parser {
             return lexemes.some(lexeme => peek().kind === lexeme);
         }
 
-        function checkNext(lexeme: Lexeme) {
-            return peekNext().kind === lexeme;
+        function checkNext(...lexemes: Lexeme[]) {
+            if (isAtEnd()) { return false; }
+
+            return lexemes.some(lexeme => peekNext().kind === lexeme);
         }
 
         function isAtEnd() {

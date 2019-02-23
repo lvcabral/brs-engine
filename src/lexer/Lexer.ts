@@ -145,13 +145,73 @@ export class Lexer {
                 case "]": addToken(Lexeme.RightSquare); break;
                 case ",": addToken(Lexeme.Comma); break;
                 case ".": addToken(Lexeme.Dot); break;
-                case "+": addToken(Lexeme.Plus); break;
-                case "-": addToken(Lexeme.Minus); break;
-                case "*": addToken(Lexeme.Star); break;
-                case "/": addToken(Lexeme.Slash); break;
+                case "+":
+                    switch (peek()) {
+                        case "=":
+                            advance();
+                            addToken(Lexeme.PlusEqual);
+                            break;
+                        default:
+                            addToken(Lexeme.Plus);
+                            break;
+                    }
+                    break;
+                case "-":
+                    switch (peek()) {
+                        case "=":
+                            advance();
+                            addToken(Lexeme.MinusEqual);
+                            break;
+                        default:
+                            addToken(Lexeme.Minus);
+                            break;
+                    }
+                    break;
+                case "*":
+                    switch (peek()) {
+                        case "=":
+                            advance();
+                            addToken(Lexeme.StarEqual);
+                            break;
+                        default:
+                            addToken(Lexeme.Star);
+                            break;
+                    }
+                    break;
+                case "/":
+                    switch (peek()) {
+                        case "=":
+                            advance();
+                            addToken(Lexeme.SlashEqual);
+                            break;
+                        default:
+                            addToken(Lexeme.Slash);
+                            break;
+                    }
+                    break;
+                case "^":
+                    switch (peek()) {
+                        case "=":
+                            advance();
+                            addToken(Lexeme.CaretEqual);
+                            break;
+                        default:
+                            addToken(Lexeme.Caret);
+                            break;
+                    }
+                    break;
+                case "\\":
+                    switch (peek()) {
+                        case "=":
+                            advance();
+                            addToken(Lexeme.BackslashEqual);
+                            break;
+                        default:
+                            addToken(Lexeme.Backslash);
+                            break;
+                    }
+                    break;
                 case "=": addToken(Lexeme.Equal); break;
-                case "^": addToken(Lexeme.Caret); break;
-                case "\\": addToken(Lexeme.Backslash); break;
                 case ":": addToken(Lexeme.Colon); break;
                 case ";": addToken(Lexeme.Semicolon); break;
                 case "?": addToken(Lexeme.Print); break;

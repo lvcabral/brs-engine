@@ -290,6 +290,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         switch (lexeme) {
             case Lexeme.Minus:
+            case Lexeme.MinusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.subtract(right);
                 } else {
@@ -308,6 +309,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Star:
+            case Lexeme.StarEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.multiply(right);
                 } else {
@@ -326,6 +328,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Caret:
+            case Lexeme.CaretEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.pow(right);
                 } else {
@@ -344,6 +347,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Slash:
+            case Lexeme.SlashEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.divide(right);
                 }
@@ -379,6 +383,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Backslash:
+            case Lexeme.BackslashEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.intDivide(right);
                 } else {
@@ -397,6 +402,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Plus:
+            case Lexeme.PlusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.add(right);
                 } else if (isBrsString(left) && isBrsString(right)) {

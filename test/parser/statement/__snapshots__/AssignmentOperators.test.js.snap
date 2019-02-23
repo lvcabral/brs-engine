@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`parser relational expressions parses equality expressions 1`] = `
+exports[`parser assignment operators *= 1`] = `
 Array [
   Assignment {
     "name": Object {
@@ -22,7 +22,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 27,
+        "kind": 18,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -34,24 +34,26 @@ Array [
             "line": -9,
           },
         },
-        "text": "=",
+        "text": undefined,
       },
     },
     "value": Binary {
-      "left": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
           },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 3,
-          "value": 5,
+          "text": "_",
         },
       },
       "right": Literal {
@@ -67,12 +69,12 @@ Array [
         },
         "value": Int32 {
           "kind": 3,
-          "value": 2,
+          "value": 3,
         },
       },
       "token": Object {
         "isReserved": false,
-        "kind": 27,
+        "kind": 18,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -84,14 +86,14 @@ Array [
             "line": -9,
           },
         },
-        "text": "=",
+        "text": undefined,
       },
     },
   },
 ]
 `;
 
-exports[`parser relational expressions parses greater-than expressions 1`] = `
+exports[`parser assignment operators += 1`] = `
 Array [
   Assignment {
     "name": Object {
@@ -113,7 +115,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 27,
+        "kind": 17,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -125,24 +127,26 @@ Array [
             "line": -9,
           },
         },
-        "text": "=",
+        "text": undefined,
       },
     },
     "value": Binary {
-      "left": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
           },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 3,
-          "value": 5,
+          "text": "_",
         },
       },
       "right": Literal {
@@ -156,14 +160,14 @@ Array [
             "line": -9,
           },
         },
-        "value": Int32 {
-          "kind": 3,
-          "value": 2,
+        "value": BrsString {
+          "kind": 2,
+          "value": "lorem",
         },
       },
       "token": Object {
         "isReserved": false,
-        "kind": 25,
+        "kind": 17,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -175,14 +179,14 @@ Array [
             "line": -9,
           },
         },
-        "text": ">",
+        "text": undefined,
       },
     },
   },
 ]
 `;
 
-exports[`parser relational expressions parses greater-than-or-equal-to expressions 1`] = `
+exports[`parser assignment operators /= 1`] = `
 Array [
   Assignment {
     "name": Object {
@@ -204,7 +208,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 27,
+        "kind": 19,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -216,24 +220,26 @@ Array [
             "line": -9,
           },
         },
-        "text": "=",
+        "text": undefined,
       },
     },
     "value": Binary {
-      "left": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
           },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 3,
-          "value": 5,
+          "text": "_",
         },
       },
       "right": Literal {
@@ -249,12 +255,12 @@ Array [
         },
         "value": Int32 {
           "kind": 3,
-          "value": 2,
+          "value": 4,
         },
       },
       "token": Object {
         "isReserved": false,
-        "kind": 26,
+        "kind": 19,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -266,14 +272,14 @@ Array [
             "line": -9,
           },
         },
-        "text": ">=",
+        "text": undefined,
       },
     },
   },
 ]
 `;
 
-exports[`parser relational expressions parses inequality expressions 1`] = `
+exports[`parser assignment operators <<= 1`] = `
 Array [
   Assignment {
     "name": Object {
@@ -295,7 +301,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 27,
+        "kind": 21,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -307,24 +313,26 @@ Array [
             "line": -9,
           },
         },
-        "text": "=",
+        "text": undefined,
       },
     },
     "value": Binary {
-      "left": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
           },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 3,
-          "value": 5,
+          "text": "_",
         },
       },
       "right": Literal {
@@ -340,12 +348,12 @@ Array [
         },
         "value": Int32 {
           "kind": 3,
-          "value": 2,
+          "value": 6,
         },
       },
       "token": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": 21,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -357,14 +365,14 @@ Array [
             "line": -9,
           },
         },
-        "text": "<>",
+        "text": undefined,
       },
     },
   },
 ]
 `;
 
-exports[`parser relational expressions parses less-than expressions 1`] = `
+exports[`parser assignment operators >>= 1`] = `
 Array [
   Assignment {
     "name": Object {
@@ -386,7 +394,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 27,
+        "kind": 22,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -398,24 +406,26 @@ Array [
             "line": -9,
           },
         },
-        "text": "=",
+        "text": undefined,
       },
     },
     "value": Binary {
-      "left": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
           },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 3,
-          "value": 5,
+          "text": "_",
         },
       },
       "right": Literal {
@@ -431,12 +441,12 @@ Array [
         },
         "value": Int32 {
           "kind": 3,
-          "value": 2,
+          "value": 7,
         },
       },
       "token": Object {
         "isReserved": false,
-        "kind": 23,
+        "kind": 22,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -448,14 +458,14 @@ Array [
             "line": -9,
           },
         },
-        "text": "<",
+        "text": undefined,
       },
     },
   },
 ]
 `;
 
-exports[`parser relational expressions parses less-than-or-equal-to expressions 1`] = `
+exports[`parser assignment operators \\= 1`] = `
 Array [
   Assignment {
     "name": Object {
@@ -477,7 +487,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 27,
+        "kind": 20,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -489,11 +499,29 @@ Array [
             "line": -9,
           },
         },
-        "text": "=",
+        "text": undefined,
       },
     },
     "value": Binary {
-      "left": Literal {
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "_",
+        },
+      },
+      "right": Literal {
         "_location": Object {
           "end": Object {
             "column": -9,
@@ -507,6 +535,83 @@ Array [
         "value": Int32 {
           "kind": 3,
           "value": 5,
+        },
+      },
+      "token": Object {
+        "isReserved": false,
+        "kind": 20,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
+      },
+    },
+  },
+]
+`;
+
+exports[`parser assignment operators ^= 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "isReserved": false,
+      "kind": 29,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "text": "_",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 15,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
+      },
+    },
+    "value": Binary {
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "_",
         },
       },
       "right": Literal {
@@ -527,7 +632,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": 15,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -539,7 +644,100 @@ Array [
             "line": -9,
           },
         },
-        "text": "<=",
+        "text": undefined,
+      },
+    },
+  },
+]
+`;
+
+exports[`parser assignment operators -= 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "isReserved": false,
+      "kind": 29,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "text": "_",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": 16,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
+      },
+    },
+    "value": Binary {
+      "left": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 29,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "_",
+        },
+      },
+      "right": Literal {
+        "_location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": Int32 {
+          "kind": 3,
+          "value": 1,
+        },
+      },
+      "token": Object {
+        "isReserved": false,
+        "kind": 16,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": undefined,
       },
     },
   },

@@ -20,6 +20,16 @@ export enum Lexeme {
     LeftShift, // <<
     RightShift, // >>
 
+    // assignment operators
+    CaretEqual,      // ^=
+    MinusEqual,      // -=
+    PlusEqual,       // +=
+    StarEqual,       // *=
+    SlashEqual,      // /=
+    BackslashEqual,  // \=
+    LeftShiftEqual,  // <<=
+    RightShiftEqual, // >>=
+
     // comparators
     Less,
     LessEqual,
