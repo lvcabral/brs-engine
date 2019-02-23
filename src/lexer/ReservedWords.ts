@@ -92,7 +92,6 @@ export const KeyWords: {[key: string]: L} = {
     print: L.Print,
     rem: L.Rem,
     return: L.Return,
-    run: L.Run,
     step: L.Step,
     sub: L.Sub,
     then: L.Then,

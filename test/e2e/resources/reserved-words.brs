@@ -2,7 +2,8 @@ sub main()
     hasReservedWords = {
         createObject: true,
         in: true,
-        stop: true
+        stop: true,
+        run: true
     }
 
     for each word in hasReservedWords
