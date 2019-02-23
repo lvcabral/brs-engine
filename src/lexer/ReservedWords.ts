@@ -94,7 +94,6 @@ export const KeyWords: {[key: string]: L} = {
     return: L.Return,
     run: L.Run,
     step: L.Step,
-    stop: L.Stop,
     sub: L.Sub,
     then: L.Then,
     to: L.To,

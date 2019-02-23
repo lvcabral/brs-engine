@@ -91,7 +91,6 @@ export enum Lexeme {
     Return,
     Run,
     Step,
-    Stop,
     Sub,
     Tab,
     Then,

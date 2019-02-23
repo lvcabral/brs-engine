@@ -151,7 +151,7 @@ Array [
       },
       "to": Object {
         "isReserved": true,
-        "kind": 80,
+        "kind": 79,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -306,7 +306,7 @@ Array [
       "step": undefined,
       "to": Object {
         "isReserved": true,
-        "kind": 80,
+        "kind": 79,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -461,7 +461,7 @@ Array [
       "step": undefined,
       "to": Object {
         "isReserved": true,
-        "kind": 80,
+        "kind": 79,
         "literal": undefined,
         "location": Object {
           "end": Object {

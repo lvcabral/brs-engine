@@ -117,4 +117,14 @@ describe("end to end syntax", () => {
             );
         });
     });
+
+    test("reserved-words.brs", () => {
+        return execute([ resourceFile("reserved-words.brs") ], outputStreams).then(() => {
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "createobject", "in", "stop"
+            ]);
+        });
+    });
 });
