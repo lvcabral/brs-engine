@@ -891,7 +891,7 @@ export class Parser {
                             return addError(
                                 new ParseError(
                                     peek(),
-                                    `Expected identiier or string as associative array key, but received '${peek().text || ""}'`
+                                    `Expected identifier or string as associative array key, but received '${peek().text || ""}'`
                                 )
                             );
                         }
