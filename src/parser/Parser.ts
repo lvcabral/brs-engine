@@ -482,7 +482,18 @@ export class Parser {
             let elseIfTokens: Token[] = [];
             let endIf: Token | undefined;
 
-            if (check(Lexeme.Then)) {
+            /**
+             * A simple wrapper around `check`, to make tests for a `then` identifier.
+             * As with many other words, "then" is a keyword but not reserved, so associative
+             * arrays can have properties called "then".  It's a valid identifier sometimes, so the
+             * parser has to take on the burden of understanding that I guess.
+             * @returns `true` if the next token is an identifier with text "then", otherwise `false`.
+             */
+            function checkThen() {
+                return check(Lexeme.Identifier) && peek().text === "then";
+            }
+
+            if (checkThen()) {
                 // `then` is optional after `if ...condition...`, so only advance to the next token if `then` is present
                 then = advance();
             }
@@ -510,7 +521,7 @@ export class Parser {
                 while (check(Lexeme.ElseIf)) {
                     elseIfTokens.push(advance());
                     let elseIfCondition = expression();
-                    if (check(Lexeme.Then)) {
+                    if (checkThen()) {
                         // `then` is optional after `else if ...condition...`, so only advance to the next token if `then` is present
                         advance();
                     }
@@ -558,7 +569,7 @@ export class Parser {
                 while(match(Lexeme.ElseIf)) {
                     let elseIf = previous();
                     let elseIfCondition = expression();
-                    if (check(Lexeme.Then)) {
+                    if (checkThen()) {
                         // `then` is optional after `else if ...condition...`, so only advance to the next token if `then` is present
                         advance();
                     }

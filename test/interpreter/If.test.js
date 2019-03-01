@@ -60,7 +60,7 @@ describe("interpreter if statements", () => {
             new Stmt.If(
                 {
                     if: token(Lexeme.If, "if"),
-                    then: token(Lexeme.Then, "then"),
+                    then: identifier("then"),
                     endIf: token(Lexeme.EndIf, "end if")
                 },
                 new Expr.Binary(
@@ -85,7 +85,7 @@ describe("interpreter if statements", () => {
             new Stmt.If(
                 {
                     if: token(Lexeme.If, "if"),
-                    then: token(Lexeme.Then, "then"),
+                    then: identifier("then"),
                     endIf: token(Lexeme.EndIf, "end if")
                 },
                 new Expr.Binary(
@@ -119,7 +119,7 @@ describe("interpreter if statements", () => {
             new Stmt.If(
                 {
                     if: token(Lexeme.If, "if"),
-                    then: token(Lexeme.Then, "then"),
+                    then: identifier("then"),
                     elseIfs: [ token(Lexeme.ElseIf, "else if"), token(Lexeme.ElseIf, "else if") ],
                     else: token(Lexeme.Else, "else"),
                     endIf: token(Lexeme.EndIf, "end if")
@@ -167,7 +167,7 @@ describe("interpreter if statements", () => {
             new Stmt.If(
                 {
                     if: token(Lexeme.If, "if"),
-                    then: token(Lexeme.Then, "then"),
+                    then: identifier("then"),
                     elseIfs: [ token(Lexeme.ElseIf, "else if"), token(Lexeme.ElseIf, "else if") ],
                     else: token(Lexeme.Else, "else"),
                     endIf: token(Lexeme.EndIf, "end if")

@@ -110,7 +110,7 @@ Array [
       },
       "while": Object {
         "isReserved": true,
-        "kind": 88,
+        "kind": 87,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -219,7 +219,7 @@ Array [
       },
       "while": Object {
         "isReserved": true,
-        "kind": 88,
+        "kind": 87,
         "literal": undefined,
         "location": Object {
           "end": Object {

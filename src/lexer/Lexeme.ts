@@ -101,7 +101,6 @@ export enum Lexeme {
     Step,
     Sub,
     Tab,
-    Then,
     To,
     True,
     Type,

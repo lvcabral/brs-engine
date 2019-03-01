@@ -134,7 +134,8 @@ describe("end to end syntax", () => {
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
                 // note: associative array keys are sorted before iteration
-                "createobject", "in", "run", "stop"
+                "createobject", "in", "run", "stop", "then",
+                "promise-like resolved to 'foo'"
             ]);
         });
     });
