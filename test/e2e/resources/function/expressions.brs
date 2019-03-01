@@ -8,7 +8,7 @@ a()
     print "immediately-invoked function expression (IIFE)"
 end sub)()
 
-function acceptsCallback(initial as integer, cb)
+function acceptsCallback(initial as integer, cb as function)
     print "pre-callback"
     cb(initial * 2)
     print "post-callback"

@@ -52,7 +52,7 @@ export namespace ValueKind {
             case "longinteger": return ValueKind.Int64;
             case "float": return ValueKind.Float;
             case "double": return ValueKind.Double;
-            case "callable": return ValueKind.Callable;
+            case "function": return ValueKind.Callable;
             case "dynamic": return ValueKind.Dynamic;
             case "void": return ValueKind.Void;
             case "<uninitialized>": return ValueKind.Uninitialized;
