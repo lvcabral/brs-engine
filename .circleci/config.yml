@@ -27,22 +27,38 @@ jobs:
   "Node 6":
     <<: *build-lint-test
     docker:
-      - image: node:6
+      - image: circleci/node:6
 
   "Node 8":
     <<: *build-lint-test
     docker:
-      - image: node:8
+      - image: circleci/node:8
 
   "Node 10":
     <<: *build-lint-test
     docker:
-      - image: node:10
+      - image: circleci/node:10
 
   "Node 11":
     <<: *build-lint-test
     docker:
-        - image: node:11
+      - image: circleci/node:11
+
+  "Publish nightly build":
+    working_directory: ~/circleci
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.com/:_authToken=$NPM_TOKEN" > ~/.npmrc
+      - run:
+          name: Install dependencies
+          command: yarn
+      - run:
+          name: Publish
+          command: yarn publish --no-git-tag-version --new-version `node scripts/getNightlyVersion.js` --tag nightly
 
 workflows:
   version: 2
@@ -52,3 +68,24 @@ workflows:
       - "Node 8"
       - "Node 10"
       - "Node 11"
+
+  "Nightly build":
+    triggers:
+      - schedule:
+          cron: 05 7 * * *
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - "Node 6"
+      - "Node 8"
+      - "Node 10"
+      - "Node 11"
+      - "Publish nightly build":
+          requires:
+            - "Node 6"
+            - "Node 8"
+            - "Node 10"
+            - "Node 11"
+

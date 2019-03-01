@@ -17,9 +17,9 @@
     "prepublishOnly": "npm-run-all --serial clean build lint test"
   },
   "files": [
-    "./bin/",
-    "./lib/",
-    "./types/"
+    "bin/",
+    "lib/",
+    "types/"
   ],
   "dependencies": {
     "commander": "^2.12.2",
