@@ -19,7 +19,7 @@ Array [
     "counterDeclaration": Assignment {
       "name": Object {
         "isReserved": false,
-        "kind": 29,
+        "kind": 28,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -36,7 +36,7 @@ Array [
       "tokens": Object {
         "equals": Object {
           "isReserved": false,
-          "kind": 27,
+          "kind": 26,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -103,7 +103,7 @@ Array [
     "tokens": Object {
       "endFor": Object {
         "isReserved": false,
-        "kind": 54,
+        "kind": 53,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -119,7 +119,7 @@ Array [
       },
       "for": Object {
         "isReserved": true,
-        "kind": 63,
+        "kind": 62,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -135,7 +135,7 @@ Array [
       },
       "step": Object {
         "isReserved": true,
-        "kind": 82,
+        "kind": 81,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -151,7 +151,7 @@ Array [
       },
       "to": Object {
         "isReserved": true,
-        "kind": 86,
+        "kind": 85,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -189,7 +189,7 @@ Array [
     "counterDeclaration": Assignment {
       "name": Object {
         "isReserved": false,
-        "kind": 29,
+        "kind": 28,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -206,7 +206,7 @@ Array [
       "tokens": Object {
         "equals": Object {
           "isReserved": false,
-          "kind": 27,
+          "kind": 26,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -273,7 +273,7 @@ Array [
     "tokens": Object {
       "endFor": Object {
         "isReserved": true,
-        "kind": 74,
+        "kind": 73,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -289,7 +289,7 @@ Array [
       },
       "for": Object {
         "isReserved": true,
-        "kind": 63,
+        "kind": 62,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -306,7 +306,7 @@ Array [
       "step": undefined,
       "to": Object {
         "isReserved": true,
-        "kind": 86,
+        "kind": 85,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -344,7 +344,7 @@ Array [
     "counterDeclaration": Assignment {
       "name": Object {
         "isReserved": false,
-        "kind": 29,
+        "kind": 28,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -361,7 +361,7 @@ Array [
       "tokens": Object {
         "equals": Object {
           "isReserved": false,
-          "kind": 27,
+          "kind": 26,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -428,7 +428,7 @@ Array [
     "tokens": Object {
       "endFor": Object {
         "isReserved": false,
-        "kind": 54,
+        "kind": 53,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -444,7 +444,7 @@ Array [
       },
       "for": Object {
         "isReserved": true,
-        "kind": 63,
+        "kind": 62,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -461,7 +461,7 @@ Array [
       "step": undefined,
       "to": Object {
         "isReserved": true,
-        "kind": 86,
+        "kind": 85,
         "literal": undefined,
         "location": Object {
           "end": Object {

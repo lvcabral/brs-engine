@@ -37,7 +37,7 @@ Array [
           "tokens": Object {
             "print": Object {
               "isReserved": true,
-              "kind": 79,
+              "kind": 78,
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -57,7 +57,7 @@ Array [
           "tokens": Object {
             "exitWhile": Object {
               "isReserved": false,
-              "kind": 61,
+              "kind": 60,
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -94,7 +94,7 @@ Array [
     "tokens": Object {
       "endWhile": Object {
         "isReserved": false,
-        "kind": 57,
+        "kind": 56,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -110,7 +110,7 @@ Array [
       },
       "while": Object {
         "isReserved": true,
-        "kind": 89,
+        "kind": 88,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -166,7 +166,7 @@ Array [
           "tokens": Object {
             "print": Object {
               "isReserved": true,
-              "kind": 79,
+              "kind": 78,
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -203,7 +203,7 @@ Array [
     "tokens": Object {
       "endWhile": Object {
         "isReserved": false,
-        "kind": 57,
+        "kind": 56,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -219,7 +219,7 @@ Array [
       },
       "while": Object {
         "isReserved": true,
-        "kind": 89,
+        "kind": 88,
         "literal": undefined,
         "location": Object {
           "end": Object {

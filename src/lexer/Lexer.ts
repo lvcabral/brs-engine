@@ -190,15 +190,7 @@ export class Lexer {
                     }
                     break;
                 case "^":
-                    switch (peek()) {
-                        case "=":
-                            advance();
-                            addToken(Lexeme.CaretEqual);
-                            break;
-                        default:
-                            addToken(Lexeme.Caret);
-                            break;
-                    }
+                    addToken(Lexeme.Caret);
                     break;
                 case "\\":
                     switch (peek()) {

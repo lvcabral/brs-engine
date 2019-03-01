@@ -31,7 +31,6 @@ type BlockTerminator =
 /** The set of operators valid for use in assignment statements. */
 const assignmentOperators = [
     Lexeme.Equal,
-    Lexeme.CaretEqual,
     Lexeme.MinusEqual,
     Lexeme.PlusEqual,
     Lexeme.StarEqual,

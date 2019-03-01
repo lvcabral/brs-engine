@@ -5,7 +5,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 29,
+      "kind": 28,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -22,7 +22,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 18,
+        "kind": 17,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -41,7 +41,7 @@ Array [
       "left": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -74,7 +74,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 18,
+        "kind": 17,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -98,7 +98,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 29,
+      "kind": 28,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -115,7 +115,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 17,
+        "kind": 16,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -134,7 +134,7 @@ Array [
       "left": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -167,7 +167,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 17,
+        "kind": 16,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -191,7 +191,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 29,
+      "kind": 28,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -208,7 +208,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 19,
+        "kind": 18,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -227,7 +227,7 @@ Array [
       "left": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -260,7 +260,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 19,
+        "kind": 18,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -284,7 +284,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 29,
+      "kind": 28,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -301,7 +301,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 21,
+        "kind": 20,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -320,7 +320,7 @@ Array [
       "left": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -353,7 +353,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 21,
+        "kind": 20,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -377,7 +377,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 29,
+      "kind": 28,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -394,7 +394,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 22,
+        "kind": 21,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -413,7 +413,7 @@ Array [
       "left": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -446,7 +446,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 22,
+        "kind": 21,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -470,7 +470,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 29,
+      "kind": 28,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -487,7 +487,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 20,
+        "kind": 19,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -506,7 +506,7 @@ Array [
       "left": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -539,100 +539,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 20,
-        "literal": undefined,
-        "location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
-          },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": undefined,
-      },
-    },
-  },
-]
-`;
-
-exports[`parser assignment operators ^= 1`] = `
-Array [
-  Assignment {
-    "name": Object {
-      "isReserved": false,
-      "kind": 29,
-      "literal": undefined,
-      "location": Object {
-        "end": Object {
-          "column": -9,
-          "line": -9,
-        },
-        "start": Object {
-          "column": -9,
-          "line": -9,
-        },
-      },
-      "text": "_",
-    },
-    "tokens": Object {
-      "equals": Object {
-        "isReserved": false,
-        "kind": 15,
-        "literal": undefined,
-        "location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
-          },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": undefined,
-      },
-    },
-    "value": Binary {
-      "left": Variable {
-        "name": Object {
-          "isReserved": false,
-          "kind": 29,
-          "literal": undefined,
-          "location": Object {
-            "end": Object {
-              "column": -9,
-              "line": -9,
-            },
-            "start": Object {
-              "column": -9,
-              "line": -9,
-            },
-          },
-          "text": "_",
-        },
-      },
-      "right": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
-          },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 3,
-          "value": 2,
-        },
-      },
-      "token": Object {
-        "isReserved": false,
-        "kind": 15,
+        "kind": 19,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -656,7 +563,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 29,
+      "kind": 28,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -673,7 +580,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 16,
+        "kind": 15,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -692,7 +599,7 @@ Array [
       "left": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -725,7 +632,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 16,
+        "kind": 15,
         "literal": undefined,
         "location": Object {
           "end": Object {

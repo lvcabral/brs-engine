@@ -38,19 +38,6 @@ describe("parser assignment operators", () => {
         expect(statements).toMatchSnapshot();
     });
 
-    test("^=", () => {
-        let { statements, errors } = parser.parse([
-            identifier("_"),
-            token(Lexeme.CaretEqual),
-            token(Lexeme.Integer, "2", new Int32(2)),
-            EOF
-        ]);
-
-        expect(errors).toEqual([]);
-        expect(statements).not.toBeFalsy();
-        expect(statements).toMatchSnapshot();
-    });
-
     test("*=", () => {
         let { statements, errors } = parser.parse([
             identifier("_"),

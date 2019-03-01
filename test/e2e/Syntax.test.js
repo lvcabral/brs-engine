@@ -69,7 +69,7 @@ describe("end to end syntax", () => {
             expect(
                 allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
             ).toEqual([
-                "5", "2", "6", "2", "16", "2"
+                "5", "2", "6", "3", "1"
             ]);
         });
     });

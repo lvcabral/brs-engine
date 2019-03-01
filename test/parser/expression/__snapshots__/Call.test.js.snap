@@ -41,7 +41,7 @@ Array [
       "callee": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -85,7 +85,7 @@ Array [
       "callee": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -129,7 +129,7 @@ Array [
       "callee": Variable {
         "name": Object {
           "isReserved": false,
-          "kind": 29,
+          "kind": 28,
           "literal": undefined,
           "location": Object {
             "end": Object {

@@ -328,7 +328,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Caret:
-            case Lexeme.CaretEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.pow(right);
                 } else {

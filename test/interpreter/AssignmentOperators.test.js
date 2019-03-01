@@ -115,20 +115,6 @@ describe("interpreter assignment operators", () => {
         );
     });
 
-    it("exponentiates numbers", () => {
-        interpreter.exec([
-            initializeFoo(new Int32(3)),
-            fooAssignmentOperator(
-                token(Lexeme.CaretEqual, "^="),
-                new Int32(2)
-            )
-        ]);
-
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Float(9)
-        );
-    });
-
     // TODO: unskip once bitshift operators are supported
     it.skip("left-shifts numbers", () => {
         interpreter.exec([
