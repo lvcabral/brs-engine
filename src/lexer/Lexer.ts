@@ -604,7 +604,7 @@ export class Lexer {
             tokens.push({
                 kind: kind,
                 text: text,
-                isReserved: ReservedWords.has(text),
+                isReserved: ReservedWords.has(text.toLowerCase()),
                 literal: literal,
                 location: locationOf(text)
             });

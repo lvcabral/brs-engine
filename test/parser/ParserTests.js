@@ -14,7 +14,9 @@ exports.token = function(kind, text, literal) {
     return {
         kind: kind,
         text: text,
-        isReserved: brs.lexer.ReservedWords.has(text),
+        isReserved: brs.lexer.ReservedWords.has(
+            (text || "").toLowerCase()
+        ),
         literal: literal,
         location: {
             start: { line: -9, column: -9 },

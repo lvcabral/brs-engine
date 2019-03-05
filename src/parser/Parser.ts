@@ -424,7 +424,7 @@ export class Parser {
             let name = advance();
 
             let maybeIn = peek();
-            if (check(Lexeme.Identifier) && maybeIn.text && maybeIn.text.toLowerCase() === "in") {
+            if (check(Lexeme.Identifier) && maybeIn.text.toLowerCase() === "in") {
                 advance();
             } else {
                 return addError(
@@ -490,7 +490,7 @@ export class Parser {
              * @returns `true` if the next token is an identifier with text "then", otherwise `false`.
              */
             function checkThen() {
-                return check(Lexeme.Identifier) && peek().text === "then";
+                return check(Lexeme.Identifier) && peek().text.toLowerCase() === "then";
             }
 
             if (checkThen()) {
