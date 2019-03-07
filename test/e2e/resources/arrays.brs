@@ -17,3 +17,7 @@ print twoDimensional[3][2]
 twoDimensional[4] = [ 1, 16, 81 ]
 
 print twoDimensional[4][1]
+
+' modify oneDimensional[0]
+oneDimensional[0] += " bar"
+print oneDimensional[0]

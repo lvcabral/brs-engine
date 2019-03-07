@@ -24,7 +24,8 @@ describe("end to end iterables", () => {
             ).toEqual([
                 "1", "4", "9", // squared values, via for-each
                 "27",          // two-dimensional index
-                "16"           // 2 ^ 4
+                "16",          // 2 ^ 4
+                "foo bar"      // oneDimensional[0] += " bar"
             ]);
         });
     });
@@ -43,7 +44,10 @@ describe("end to end iterables", () => {
                 "2",
 
                 // after adding a third layer, twoDimensional.secondLayer.thirdLayer.level
-                "3"
+                "3",
+
+                // modify twoDimensional.secondLayer.level to sanity-check *= and friends
+                "6"
             ]);
         });
     });

@@ -19,3 +19,6 @@ twoDimensional.secondLayer.thirdLayer = { level: 3 }
 
 print twoDimensional.secondLayer.thirdLayer.level
 
+' modify the top for an as
+twoDimensional.secondLayer.level *= 3
+print twoDimensional.secondLayer.level
