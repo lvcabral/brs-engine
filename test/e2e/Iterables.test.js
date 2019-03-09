@@ -47,7 +47,10 @@ describe("end to end iterables", () => {
                 "3",
 
                 // modify twoDimensional.secondLayer.level to sanity-check *= and friends
-                "6"
+                "6",
+
+                // add `false` via expression to `empty`
+                "false"
             ]);
         });
     });

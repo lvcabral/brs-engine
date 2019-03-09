@@ -11,7 +11,7 @@ describe("parser indexed assignment", () => {
     });
 
     describe("dotted", () => {
-        test("assignment", () => {
+        it("assigns anonymous functions", () => {
             let { statements, errors } = parser.parse([
                 identifier("foo"),
                 token(Lexeme.Dot, "."),
@@ -22,6 +22,25 @@ describe("parser indexed assignment", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
+                EOF
+            ]);
+
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
+        });
+
+        it("assigns boolean expressions", () => {
+            let { statements, errors } = parser.parse([
+                identifier("foo"),
+                token(Lexeme.Dot, "."),
+                identifier("bar"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.True, "true"),
+                token(Lexeme.And, "and"),
+                token(Lexeme.False, "false"),
+                token(Lexeme.Newline, "\\n"),
                 EOF
             ]);
 
@@ -50,7 +69,7 @@ describe("parser indexed assignment", () => {
     });
 
     describe("bracketed", () => {
-        it("assignment", () => {
+        it("assigns anonymous functions", () => {
             let { statements, errors } = parser.parse([
                 identifier("someArray"),
                 token(Lexeme.LeftSquare, "["),
@@ -62,6 +81,26 @@ describe("parser indexed assignment", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
+                EOF
+            ]);
+
+            expect(errors).toEqual([])
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
+        });
+
+        it("assigns boolean expressions", () => {
+            let { statements, errors } = parser.parse([
+                identifier("someArray"),
+                token(Lexeme.LeftSquare, "["),
+                token(Lexeme.Integer, "0", new Int32(0)),
+                token(Lexeme.RightSquare, "]"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.True, "true"),
+                token(Lexeme.And, "and"),
+                token(Lexeme.False, "false"),
+                token(Lexeme.Newline, "\\n"),
                 EOF
             ]);
 

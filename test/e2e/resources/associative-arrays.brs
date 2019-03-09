@@ -19,6 +19,10 @@ twoDimensional.secondLayer.thirdLayer = { level: 3 }
 
 print twoDimensional.secondLayer.thirdLayer.level
 
-' modify the top for an as
+' modify the top for a silly example
 twoDimensional.secondLayer.level *= 3
 print twoDimensional.secondLayer.level
+
+' add property to `empty` to be really silly
+empty.isEmpty = oneDimensional.isOneDimensional and false
+print empty.isEmpty

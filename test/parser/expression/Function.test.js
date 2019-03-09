@@ -392,7 +392,7 @@ describe("parser", () => {
         it("allows sub expressions in call arguments", () => {
             const { statements, errors } = parser.parse([
                 identifier("acceptsCallback"),
-                { kind: Lexeme.LeftParen,  text: "(", line: 1 },
+                token(Lexeme.LeftParen, "("),
                 token(Lexeme.Newline, "\\n"),
 
                 token(Lexeme.Function, "function"),

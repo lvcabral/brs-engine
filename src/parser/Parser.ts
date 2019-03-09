@@ -632,50 +632,34 @@ export class Parser {
                 );
             }
 
-            let expr = expression();
-
-            let left: Expr.Expression;
-            let operator: Token;
-            let right: Expr.Expression;
-
-            if (expr instanceof Expr.Binary) {
-                // Simple assignments (e.g. `foo.bar = "baz"`) are parsed as binary expressions
-                // because of the ambiguity of the `=` operator without context
-                left = expr.left;
-                operator = expr.token;
-                right = expr.right;
-            } else if (check(...assignmentOperators)) {
-                // Otherwise it appears to be a set statement
-                left = expr;
-                operator = advance();
-                let parsedRhs = expression();
-
-                // De-sugar assignment operators into binary expressions that operate on the
-                // left- and right-hand sides of the operator
-                right = new Expr.Binary(left, operator, parsedRhs);
-            } else {
-                return _expressionStatement();
-            }
+            let expr = call();
+            if (check(...assignmentOperators) && !(expr instanceof Expr.Call)) {
+                let left = expr;
+                let operator = advance();
+                let right = expression();
 
 
-            // Create a dotted or indexed "set" based on the left-hand side's type
-            if (left instanceof Expr.IndexedGet) {
-                consume("Expected newline or ':' after indexed 'set' statement", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
+                // Create a dotted or indexed "set" based on the left-hand side's type
+                if (left instanceof Expr.IndexedGet) {
+                    consume("Expected newline or ':' after indexed 'set' statement", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
 
-                return new Stmt.IndexedSet(
-                    left.obj,
-                    left.index,
-                    right,
-                    left.closingSquare,
-                );
-            } else if (left instanceof Expr.DottedGet) {
-                consume("Expected newline or ':' after dotted 'set' statement", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
+                    return new Stmt.IndexedSet(
+                        left.obj,
+                        left.index,
+                        operator.kind === Lexeme.Equal ? right : new Expr.Binary(left, operator, right),
+                        left.closingSquare,
+                    );
+                } else if (left instanceof Expr.DottedGet) {
+                    consume("Expected newline or ':' after dotted 'set' statement", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
 
-                return new Stmt.DottedSet(
-                    left.obj,
-                    left.name,
-                    right,
-                );
+                    return new Stmt.DottedSet(
+                        left.obj,
+                        left.name,
+                        operator.kind === Lexeme.Equal ? right : new Expr.Binary(left, operator, right),
+                    );
+                } else {
+                    return _expressionStatement();
+                }
             } else {
                 return _expressionStatement();
             }
