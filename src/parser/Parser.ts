@@ -218,7 +218,7 @@ export class Parser {
                     return addError(
                         new ParseError(
                             { kind: Lexeme.Identifier, text: arg.name.text, isReserved: ReservedWords.has(arg.name.text), location: arg.location },
-                            `Argument '${arg.name}' has no default value, but comes after arguments with default values`
+                            `Argument '${arg.name.text}' has no default value, but comes after arguments with default values`
                         )
                     );
                 }
