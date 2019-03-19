@@ -486,13 +486,21 @@ export class Lexer {
             let text = source.slice(start, current).toLowerCase();
 
             // some identifiers can be split into two words, so check the "next" word and see what we get
-            if ((text === "end" || text === "else" || text === "exit" || text === "for") && peek() === " ") {
+            if ((text === "end" || text === "else" || text === "exit" || text === "for") && (peek() === " " || peek() === "\t")) {
                 let endOfFirstWord = current;
 
-                advance(); // skip past the space
+                // skip past any whitespace
+                let whitespace = "";
+                while (peek() === " " || peek() === "\t") {
+                    //keep the whitespace so we can replace it later
+                    whitespace += peek();
+                    advance();
+                }
                 while (isAlphaNumeric(peek())) { advance(); } // read the next word
 
                 let twoWords = source.slice(start, current);
+                //replace all of the whitespace with a single space character so we can properly match keyword token types
+                twoWords = twoWords.replace(whitespace, " ");
                 let maybeTokenType = KeyWords[twoWords.toLowerCase()];
                 if (maybeTokenType) {
                     addToken(maybeTokenType);
