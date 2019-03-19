@@ -511,8 +511,13 @@ export class Lexer {
                 }
             }
 
-            // TODO: support type designators:
-            // https://sdkdocs.roku.com/display/sdkdoc/Expressions%2C+Variables%2C+and+Types
+            //look for a type designator character ($ % ! #). vars may have them, but functions
+            //may not. Let the parser figure that part out.
+            let nextChar = peek();
+            if (["$", "%", "!", "#"].indexOf(nextChar) > -1) {
+                text += nextChar;
+                advance();
+            }
 
             let tokenType = KeyWords[text.toLowerCase()] || Lexeme.Identifier;
             if (tokenType === KeyWords.rem) {
