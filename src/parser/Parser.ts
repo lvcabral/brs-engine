@@ -237,13 +237,20 @@ export class Parser {
             }, false);
 
             consume(`Expected newline or ':' after ${functionType.text} signature`, Lexeme.Newline, Lexeme.Colon);
-            let body = block(isSub ? Lexeme.EndSub : Lexeme.EndFunction);
+            //support ending the function with `end sub` OR `end function`
+            let body = block(Lexeme.EndSub, Lexeme.EndFunction);
             if (!body) {
                 throw addError(peek(), `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`);
             }
             // consume 'end sub' or 'end function'
             let endingKeyword = advance();
+            let expectedEndKind = isSub ? Lexeme.EndSub : Lexeme.EndFunction;
 
+            //if `function` is ended with `end sub`, or `sub` is ended with `end function`, then 
+            //add an error but don't hard-fail so the AST can continue more gracefully
+            if (endingKeyword.kind !== expectedEndKind) {
+                addError(endingKeyword, `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`);
+            }
 
             let func = new Expr.Function(args, returnType, body, startingKeyword, endingKeyword);
 

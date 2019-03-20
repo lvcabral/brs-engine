@@ -1539,6 +1539,199 @@ Array [
 ]
 `;
 
+exports[`parser function declarations recovers when using \`end sub\` instead of \`end function\` 1`] = `
+Object {
+  "errors": Array [
+    [Error: Expected 'end function' to terminate function block],
+  ],
+  "statements": Array [
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 25,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 20,
+              "line": 3,
+            },
+          },
+          "statements": Array [
+            Print {
+              "expressions": Array [
+                Literal {
+                  "_location": Object {
+                    "end": Object {
+                      "column": 39,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 26,
+                      "line": 3,
+                    },
+                  },
+                  "value": BrsString {
+                    "kind": 2,
+                    "value": "Hello world",
+                  },
+                },
+              ],
+              "tokens": Object {
+                "print": Object {
+                  "isReserved": true,
+                  "kind": 78,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 25,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 20,
+                      "line": 3,
+                    },
+                  },
+                  "text": "print",
+                },
+              },
+            },
+          ],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 55,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 23,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 4,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 64,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 24,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 2,
+            },
+          },
+          "text": "function",
+        },
+        "parameters": Array [],
+        "returns": 9,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 28,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 29,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 25,
+            "line": 2,
+          },
+        },
+        "text": "Main",
+      },
+    },
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 23,
+              "line": 8,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 8,
+            },
+          },
+          "statements": Array [],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 55,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 23,
+              "line": 8,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 8,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 82,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 6,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 6,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 28,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 31,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 20,
+            "line": 6,
+          },
+        },
+        "text": "DoSomething",
+      },
+    },
+  ],
+}
+`;
+
 exports[`parser sub declarations does not allow type designators at end of name 1`] = `
 Object {
   "errors": Array [
@@ -2848,4 +3041,197 @@ Array [
     },
   },
 ]
+`;
+
+exports[`parser sub declarations recovers when using \`end function\` instead of \`end sub\` 1`] = `
+Object {
+  "errors": Array [
+    [Error: Expected 'end sub' to terminate sub block],
+  ],
+  "statements": Array [
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 25,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 20,
+              "line": 3,
+            },
+          },
+          "statements": Array [
+            Print {
+              "expressions": Array [
+                Literal {
+                  "_location": Object {
+                    "end": Object {
+                      "column": 39,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 26,
+                      "line": 3,
+                    },
+                  },
+                  "value": BrsString {
+                    "kind": 2,
+                    "value": "Hello world",
+                  },
+                },
+              ],
+              "tokens": Object {
+                "print": Object {
+                  "isReserved": true,
+                  "kind": 78,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 25,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 20,
+                      "line": 3,
+                    },
+                  },
+                  "text": "print",
+                },
+              },
+            },
+          ],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 52,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 28,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 4,
+            },
+          },
+          "text": "end function",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 82,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 2,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 28,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 24,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 20,
+            "line": 2,
+          },
+        },
+        "text": "Main",
+      },
+    },
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 23,
+              "line": 8,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 8,
+            },
+          },
+          "statements": Array [],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 55,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 23,
+              "line": 8,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 8,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 82,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 6,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 6,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 28,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 31,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 20,
+            "line": 6,
+          },
+        },
+        "text": "DoSomething",
+      },
+    },
+  ],
+}
 `;

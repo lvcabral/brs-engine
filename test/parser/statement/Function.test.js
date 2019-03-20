@@ -12,6 +12,23 @@ describe("parser", () => {
     });
 
     describe("function declarations", () => {
+        it('recovers when using `end sub` instead of `end function`', () => {
+            const { tokens } = brs.lexer.Lexer.scan(`
+                function Main()
+                    print "Hello world"
+                end sub
+                
+                sub DoSomething()
+                
+                end sub 
+            `);
+            let { statements, errors } = parser.parse(tokens);
+            expect(errors.length).toBe(1);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect({ errors, statements }).toMatchSnapshot();
+        });
+
         it("parses minimal empty function declarations", () => {
             let { statements, errors } = parser.parse([
                 token(Lexeme.Function, "function"),
@@ -204,6 +221,23 @@ describe("parser", () => {
     });
 
     describe("sub declarations", () => {
+        it('recovers when using `end function` instead of `end sub`', () => {
+            const { tokens } = brs.lexer.Lexer.scan(`
+                sub Main()
+                    print "Hello world"
+                end function
+                
+                sub DoSomething()
+                
+                end sub 
+            `);
+            let { statements, errors } = parser.parse(tokens);
+            expect(errors.length).toBe(1);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            expect({ errors, statements }).toMatchSnapshot();
+        });
+
         it("parses minimal sub declarations", () => {
             let { statements, errors } = parser.parse([
                 token(Lexeme.Sub, "sub"),
