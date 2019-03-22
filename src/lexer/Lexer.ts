@@ -215,7 +215,15 @@ export class Lexer {
                             break;
                         case "<":
                             advance();
-                            addToken(Lexeme.LeftShift);
+                            switch (peek()) {
+                                case "=":
+                                    advance();
+                                    addToken(Lexeme.LeftShiftEqual);
+                                    break;
+                                default:
+                                    addToken(Lexeme.LeftShift);
+                                    break;
+                            }
                             break;
                         case ">":
                             advance();
@@ -232,7 +240,15 @@ export class Lexer {
                             break;
                         case ">":
                             advance();
-                            addToken(Lexeme.RightShift);
+                            switch(peek()){
+                                case "=":
+                                    advance();
+                                    addToken(Lexeme.RightShiftEqual);
+                                    break;
+                                default:
+                                    addToken(Lexeme.RightShift);
+                                    break;
+                            }
                             break;
                         default: addToken(Lexeme.Greater); break;
                     }
