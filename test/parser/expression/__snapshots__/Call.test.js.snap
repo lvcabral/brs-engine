@@ -121,6 +121,356 @@ Array [
 ]
 `;
 
+exports[`parser call expressions does not invalidate the next statement on a multi-statement line 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 22,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 28,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 3,
+                },
+              },
+              "text": "name",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 26,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 29,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 28,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 35,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 3,
+                },
+              },
+              "value": BrsString {
+                "kind": 2,
+                "value": "bob",
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 4,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 82,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 28,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 26,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "DoThingOne",
+    },
+  },
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 19,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 6,
+          },
+        },
+        "statements": Array [],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 6,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 82,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 5,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 5,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 28,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 26,
+          "line": 5,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 5,
+        },
+      },
+      "text": "DoThingTwo",
+    },
+  },
+]
+`;
+
+exports[`parser call expressions does not invalidate the rest of the file on incomplete statement 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 22,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "statements": Array [],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 4,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 82,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 28,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 26,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "DoThingOne",
+    },
+  },
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 19,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 6,
+          },
+        },
+        "statements": Array [],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 6,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 82,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 5,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 5,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 28,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 26,
+          "line": 5,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 5,
+        },
+      },
+      "text": "DoThingTwo",
+    },
+  },
+]
+`;
+
 exports[`parser call expressions parses named function calls 1`] = `
 Array [
   Expression {
