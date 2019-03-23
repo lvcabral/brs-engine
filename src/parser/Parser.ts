@@ -940,8 +940,8 @@ export class Parser {
                             value: expression()
                         });
 
-                        while (match(Lexeme.Comma, Lexeme.Newline)) {
-                            while (match(Lexeme.Newline));
+                        while (match(Lexeme.Comma, Lexeme.Newline, Lexeme.Colon)) {
+                            while (match(Lexeme.Newline, Lexeme.Colon));
 
                             if (check(Lexeme.RightBrace)) {
                                 break;

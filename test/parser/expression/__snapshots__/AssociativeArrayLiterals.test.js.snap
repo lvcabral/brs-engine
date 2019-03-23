@@ -143,6 +143,195 @@ Array [
 ]
 `;
 
+exports[`parser associative array literals allows separating properties with colons 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 28,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": Object {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
+              "text": "person",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 26,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": -9,
+                    "line": -9,
+                  },
+                  "start": Object {
+                    "column": -9,
+                    "line": -9,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": AALiteral {
+              "close": Object {
+                "isReserved": false,
+                "kind": 5,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": -9,
+                    "line": -9,
+                  },
+                  "start": Object {
+                    "column": -9,
+                    "line": -9,
+                  },
+                },
+                "text": "}",
+              },
+              "elements": Array [
+                Object {
+                  "name": BrsString {
+                    "kind": 2,
+                    "value": "name",
+                  },
+                  "value": Literal {
+                    "_location": Object {
+                      "end": Object {
+                        "column": -9,
+                        "line": -9,
+                      },
+                      "start": Object {
+                        "column": -9,
+                        "line": -9,
+                      },
+                    },
+                    "value": BrsString {
+                      "kind": 2,
+                      "value": "Bob",
+                    },
+                  },
+                },
+                Object {
+                  "name": BrsString {
+                    "kind": 2,
+                    "value": "age",
+                  },
+                  "value": Literal {
+                    "_location": Object {
+                      "end": Object {
+                        "column": -9,
+                        "line": -9,
+                      },
+                      "start": Object {
+                        "column": -9,
+                        "line": -9,
+                      },
+                    },
+                    "value": Int32 {
+                      "kind": 3,
+                      "value": 3,
+                    },
+                  },
+                },
+              ],
+              "open": Object {
+                "isReserved": false,
+                "kind": 4,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": -9,
+                    "line": -9,
+                  },
+                  "start": Object {
+                    "column": -9,
+                    "line": -9,
+                  },
+                },
+                "text": "{",
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 55,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 82,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 28,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "text": "main",
+    },
+  },
+]
+`;
+
 exports[`parser associative array literals empty associative arrays on multiple lines 1`] = `
 Array [
   Assignment {
