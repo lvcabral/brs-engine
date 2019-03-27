@@ -60,4 +60,24 @@ describe("end to end brightscript functions", () => {
             ]);
         });
     });
+
+    test("components/roRegex.brs", () => {
+        return execute([ resourceFile("components", "roRegex.brs") ], outputStreams).then(() => {
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "HeLlO_123_WoRlD is match of hello_[0-9]*_world: ", "true",
+                "goodbye_123_WoRlD isn't match of hello_[0-9]*_world: ",  "true",
+                "Replacing ',' in 2019,03,26 by '-' on first occurrence: ", "2019-03,26",
+                "Replacing ',' in 2019,03,26 by '-' on all occurrences: ", "2019-03-26",
+                "Split by ',': [ ", "2019", " ", "03", " ", "26", " ]",
+                "First match: [ ", "123", " ]",
+                "All matches: [ ",
+                "[ ", "123", " ]",
+                "[ ", "456", " ]",
+                "[ ", "789", " ]",
+                " ]"
+            ]);
+        });
+    });
 });

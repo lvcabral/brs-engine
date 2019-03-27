@@ -17,6 +17,7 @@ export * from "./components/BrsArray";
 export * from "./components/AssociativeArray";
 export * from "./components/Timespan";
 export * from "./components/BrsObjects";
+export * from "./components/Regex";
 export * from "./Callable";
 
 /**
