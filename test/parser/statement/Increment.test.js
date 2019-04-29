@@ -84,6 +84,26 @@ describe("parser postfix unary expressions", () => {
         });
     });
 
+    it("allows '++' at the end of a function", () => {
+        let { statements, errors } = parser.parse([
+            token(Lexeme.Sub, "sub"),
+            identifier("foo"),
+            token(Lexeme.LeftParen, "("),
+            token(Lexeme.RightParen, ")"),
+            token(Lexeme.Newline, "\n"),
+            identifier("someValue"),
+            token(Lexeme.PlusPlus, "++"),
+            token(Lexeme.Newline, "\n"),
+            token(Lexeme.EndSub, "end sub"),
+            EOF
+        ]);
+
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
+    });
+
     test("location tracking", () => {
         /**
          *    0   0   0   1

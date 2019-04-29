@@ -613,14 +613,18 @@ export class Parser {
             function _expressionStatement(): Stmt.Expression | Stmt.Increment {
                 let expressionStart = peek();
 
-                if (match(Lexeme.PlusPlus, Lexeme.MinusMinus)) {
+                if (check(Lexeme.PlusPlus, Lexeme.MinusMinus)) {
+                    let operator = advance();
+
                     if (check(Lexeme.PlusPlus, Lexeme.MinusMinus)) {
                         throw addError(peek(), "Consecutive increment/decrement operators are not allowed");
                     } else if (expr instanceof Expr.Call) {
                         throw addError(expressionStart, "Increment/decrement operators are not allowed on the result of a function call");
                     }
 
-                    return new Stmt.Increment(expr, previous());
+                    while (match(Lexeme.Newline, Lexeme.Colon));
+
+                    return new Stmt.Increment(expr, operator);
                 }
 
                 if (!check(...additionalTerminators)) {
