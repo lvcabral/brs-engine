@@ -69,7 +69,7 @@ describe("lexer", () => {
         });
 
         it("reads operators", () => {
-            let { tokens } = Lexer.scan("^ - + * MOD / \\");
+            let { tokens } = Lexer.scan("^ - + * MOD / \\ -- ++");
 
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.Caret,
@@ -79,6 +79,8 @@ describe("lexer", () => {
                 Lexeme.Mod,
                 Lexeme.Slash,
                 Lexeme.Backslash,
+                Lexeme.MinusMinus,
+                Lexeme.PlusPlus,
                 Lexeme.Eof
             ])
             expect(tokens.filter(t => !!t.literal).length).toBe(0);

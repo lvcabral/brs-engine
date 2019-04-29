@@ -1,11 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`parser unary expressions parses consecutive unary '-' 1`] = `
+exports[`parser prefix unary expressions parses consecutive unary '-' 1`] = `
 Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 28,
+      "kind": 30,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -22,7 +22,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 26,
+        "kind": 28,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -147,12 +147,12 @@ Array [
 ]
 `;
 
-exports[`parser unary expressions parses consecutive unary 'not' 1`] = `
+exports[`parser prefix unary expressions parses consecutive unary 'not' 1`] = `
 Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 28,
+      "kind": 30,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -169,7 +169,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 26,
+        "kind": 28,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -187,7 +187,7 @@ Array [
     "value": Unary {
       "operator": Object {
         "isReserved": true,
-        "kind": 74,
+        "kind": 76,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -204,7 +204,7 @@ Array [
       "right": Unary {
         "operator": Object {
           "isReserved": true,
-          "kind": 74,
+          "kind": 76,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -221,7 +221,7 @@ Array [
         "right": Unary {
           "operator": Object {
             "isReserved": true,
-            "kind": 74,
+            "kind": 76,
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -238,7 +238,7 @@ Array [
           "right": Unary {
             "operator": Object {
               "isReserved": true,
-              "kind": 74,
+              "kind": 76,
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -255,7 +255,7 @@ Array [
             "right": Unary {
               "operator": Object {
                 "isReserved": true,
-                "kind": 74,
+                "kind": 76,
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -294,12 +294,12 @@ Array [
 ]
 `;
 
-exports[`parser unary expressions parses unary '-' 1`] = `
+exports[`parser prefix unary expressions parses unary '-' 1`] = `
 Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 28,
+      "kind": 30,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -316,7 +316,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 26,
+        "kind": 28,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -369,12 +369,12 @@ Array [
 ]
 `;
 
-exports[`parser unary expressions parses unary 'not' 1`] = `
+exports[`parser prefix unary expressions parses unary 'not' 1`] = `
 Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 28,
+      "kind": 30,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -391,7 +391,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 26,
+        "kind": 28,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -409,7 +409,7 @@ Array [
     "value": Unary {
       "operator": Object {
         "isReserved": true,
-        "kind": 74,
+        "kind": 76,
         "literal": undefined,
         "location": Object {
           "end": Object {

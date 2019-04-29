@@ -139,4 +139,16 @@ describe("end to end syntax", () => {
             ]);
         });
     });
+
+    test("increment.brs", () => {
+        return execute([ resourceFile("increment.brs") ], outputStreams).then(() => {
+            expect(
+                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+            ).toEqual([
+                "6",  // var = 5: var++
+                "2",  // aa = { foo: 3 }: aa.foo--
+                "14", // arr = [13]: arr[0]++
+            ]);
+        });
+    });
 });

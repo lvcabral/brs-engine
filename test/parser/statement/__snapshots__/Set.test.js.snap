@@ -38,7 +38,7 @@ Array [
     "obj": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": 30,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -90,7 +90,7 @@ Array [
         "obj": Variable {
           "name": Object {
             "isReserved": false,
-            "kind": 28,
+            "kind": 30,
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -124,7 +124,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 17,
+        "kind": 19,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -181,7 +181,7 @@ Array [
     "obj": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": 30,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -212,7 +212,7 @@ Array [
       },
       "end": Object {
         "isReserved": false,
-        "kind": 52,
+        "kind": 54,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -228,7 +228,7 @@ Array [
       },
       "keyword": Object {
         "isReserved": true,
-        "kind": 64,
+        "kind": 66,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -287,7 +287,7 @@ Array [
     "obj": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": 30,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -337,7 +337,7 @@ Array [
       },
       "token": Object {
         "isReserved": true,
-        "kind": 45,
+        "kind": 47,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -361,7 +361,7 @@ Array [
   DottedSet {
     "name": Object {
       "isReserved": false,
-      "kind": 28,
+      "kind": 30,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -378,7 +378,7 @@ Array [
     "obj": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": 30,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -397,7 +397,7 @@ Array [
       "left": DottedGet {
         "name": Object {
           "isReserved": false,
-          "kind": 28,
+          "kind": 30,
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -414,7 +414,7 @@ Array [
         "obj": Variable {
           "name": Object {
             "isReserved": false,
-            "kind": 28,
+            "kind": 30,
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -448,7 +448,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 17,
+        "kind": 19,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -472,7 +472,7 @@ Array [
   DottedSet {
     "name": Object {
       "isReserved": false,
-      "kind": 28,
+      "kind": 30,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -489,7 +489,7 @@ Array [
     "obj": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": 30,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -520,7 +520,7 @@ Array [
       },
       "end": Object {
         "isReserved": false,
-        "kind": 52,
+        "kind": 54,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -536,7 +536,7 @@ Array [
       },
       "keyword": Object {
         "isReserved": true,
-        "kind": 64,
+        "kind": 66,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -562,7 +562,7 @@ Array [
   DottedSet {
     "name": Object {
       "isReserved": false,
-      "kind": 28,
+      "kind": 30,
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -579,7 +579,7 @@ Array [
     "obj": Variable {
       "name": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": 30,
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -629,7 +629,7 @@ Array [
       },
       "token": Object {
         "isReserved": true,
-        "kind": 45,
+        "kind": 47,
         "literal": undefined,
         "location": Object {
           "end": Object {

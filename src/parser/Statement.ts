@@ -1,6 +1,6 @@
 import * as Expr from "./Expression";
 import { Token, Identifier, Location, Lexeme } from "../lexer";
-import { BrsType } from "../brsTypes";
+import { BrsType, BrsInvalid } from "../brsTypes";
 
 /** A set of reasons why a `Block` stopped executing. */
 export * from "./BlockEndReason";
@@ -20,6 +20,7 @@ export interface Visitor<T> {
     visitReturn(statement: Return): never;
     visitDottedSet(statement: DottedSet): BrsType;
     visitIndexedSet(statement: IndexedSet): BrsType;
+    visitIncrement(expression: Increment): BrsInvalid;
 }
 
 /** A BrightScript statement */
@@ -189,6 +190,26 @@ export class If implements Statement {
         };
     }
 }
+
+export class Increment implements Statement {
+    constructor(
+        readonly value: Expr.Expression,
+        readonly token: Token
+    ) {}
+
+    accept <R> (visitor: Visitor<R>): BrsType {
+        return visitor.visitIncrement(this);
+    }
+
+    get location() {
+        return {
+            file: this.value.location.file,
+            start: this.value.location.start,
+            end: this.token.location.end
+        };
+    }
+}
+
 
 /** The set of all accepted `print` statement separators. */
 export namespace PrintSeparator {

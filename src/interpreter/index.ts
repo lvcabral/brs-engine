@@ -17,6 +17,7 @@ import {
     SignatureAndMismatches,
     MismatchReason,
     Callable,
+    BrsNumber,
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
@@ -1119,6 +1120,54 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             );
         }
 
+        return BrsInvalid.Instance;
+    }
+
+    visitIncrement(expression: Stmt.Increment) {
+        let target = this.evaluate(expression.value);
+
+        if (!isBrsNumber(target)) {
+            let operation = expression.token.kind === Lexeme.PlusPlus ? "increment" : "decrement";
+            return this.addError(
+                new BrsError(
+                    `Attempting to ${operation} value of non-numeric type ${ValueKind.toString(target.kind)}`,
+                    expression.location
+                )
+            );
+        }
+
+        let result: BrsNumber;
+        if (expression.token.kind === Lexeme.PlusPlus){
+            result = target.add(new Int32(1));
+        } else {
+            result = target.subtract(new Int32(1));
+        }
+
+        if (expression.value instanceof Expr.Variable) {
+            // store the result of the operation
+            this.environment.define(Scope.Function, expression.value.name.text, result);
+        } else if (expression.value instanceof Expr.DottedGet) {
+            // immediately execute a dotted "set" statement
+            this.execute(
+                new Stmt.DottedSet(
+                    expression.value.obj,
+                    expression.value.name,
+                    new Expr.Literal(result, expression.location)
+                )
+            );
+        } else if (expression.value instanceof Expr.IndexedGet) {
+            // immediately execute an indexed "set" statement
+            this.execute(
+                new Stmt.IndexedSet(
+                    expression.value.obj,
+                    expression.value.index,
+                    new Expr.Literal(result, expression.location),
+                    expression.value.closingSquare
+                )
+            );
+        }
+
+        // always return `invalid`, because ++/-- are purely side-effects in BrightScript
         return BrsInvalid.Instance;
     }
 

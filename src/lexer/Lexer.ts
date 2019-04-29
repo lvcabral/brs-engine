@@ -151,6 +151,10 @@ export class Lexer {
                             advance();
                             addToken(Lexeme.PlusEqual);
                             break;
+                        case "+":
+                            advance();
+                            addToken(Lexeme.PlusPlus);
+                            break;
                         default:
                             addToken(Lexeme.Plus);
                             break;
@@ -161,6 +165,10 @@ export class Lexer {
                         case "=":
                             advance();
                             addToken(Lexeme.MinusEqual);
+                            break;
+                        case "-":
+                            advance();
+                            addToken(Lexeme.MinusMinus);
                             break;
                         default:
                             addToken(Lexeme.Minus);

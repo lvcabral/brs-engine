@@ -16,8 +16,12 @@ export enum Lexeme {
     Mod,
     Backslash,
 
+    // postfix operators
+    PlusPlus,   // ++
+    MinusMinus, // --
+
     // bitshift
-    LeftShift, // <<
+    LeftShift,  // <<
     RightShift, // >>
 
     // assignment operators

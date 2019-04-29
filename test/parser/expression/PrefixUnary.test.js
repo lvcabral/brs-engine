@@ -4,7 +4,7 @@ const { Int32, BrsBoolean } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
 
-describe("parser unary expressions", () => {
+describe("parser prefix unary expressions", () => {
     let parser;
 
     beforeEach(() => {

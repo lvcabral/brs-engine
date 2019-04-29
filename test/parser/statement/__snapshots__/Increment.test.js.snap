@@ -1,0 +1,178 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser postfix unary expressions parses postfix '++' for indexed get expressions 1`] = `
+Array [
+  Increment {
+    "token": Object {
+      "isReserved": false,
+      "kind": 13,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "text": "++",
+    },
+    "value": IndexedGet {
+      "closingSquare": Object {
+        "isReserved": false,
+        "kind": 3,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
+      "index": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "property",
+        },
+      },
+      "obj": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "obj",
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`parser postfix unary expressions parses postfix '++' for variables 1`] = `
+Array [
+  Increment {
+    "token": Object {
+      "isReserved": false,
+      "kind": 13,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "text": "++",
+    },
+    "value": Variable {
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "foo",
+      },
+    },
+  },
+]
+`;
+
+exports[`parser postfix unary expressions parses postfix '--' for dotted get expressions 1`] = `
+Array [
+  Increment {
+    "token": Object {
+      "isReserved": false,
+      "kind": 14,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": -9,
+          "line": -9,
+        },
+        "start": Object {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "text": "--",
+    },
+    "value": DottedGet {
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "property",
+      },
+      "obj": Variable {
+        "name": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "obj",
+        },
+      },
+    },
+  },
+]
+`;
