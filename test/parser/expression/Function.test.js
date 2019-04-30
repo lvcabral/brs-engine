@@ -369,23 +369,6 @@ describe("parser", () => {
             expect(statements).not.toBeNull();
             expect(statements).toMatchSnapshot();
         });
-
-        it("doesn't allow return types", () => {
-            let { statements, errors } = parser.parse([
-                identifier("_"),
-                token(Lexeme.Equal, "="),
-                token(Lexeme.Sub, "sub"),
-                token(Lexeme.LeftParen, "("),
-                token(Lexeme.RightParen, ")"),
-                identifier("as"),
-                identifier("integer"),
-                token(Lexeme.Newline, "\\n"),
-                token(Lexeme.EndSub, "end sub"),
-                EOF
-            ]);
-
-            expect(errors.length).not.toBe(0);
-        });
     });
 
     describe("usage", () => {

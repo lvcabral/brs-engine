@@ -17,10 +17,10 @@ describe("parser", () => {
                 function Main()
                     print "Hello world"
                 end sub
-                
+
                 sub DoSomething()
-                
-                end sub 
+
+                end sub
             `);
             let { statements, errors } = parser.parse(tokens);
             expect(errors.length).toBe(1);
@@ -226,10 +226,10 @@ describe("parser", () => {
                 sub Main()
                     print "Hello world"
                 end function
-                
+
                 sub DoSomething()
-                
-                end sub 
+
+                end sub
             `);
             let { statements, errors } = parser.parse(tokens);
             expect(errors.length).toBe(1);
@@ -384,22 +384,6 @@ describe("parser", () => {
             expect(statements).toBeDefined();
             expect(statements).not.toBeNull();
             expect(statements).toMatchSnapshot();
-        });
-
-        it("doesn't allow return types", () => {
-            let { statements, errors } = parser.parse([
-                token(Lexeme.Sub, "sub"),
-                identifier("foo"),
-                token(Lexeme.LeftParen, "("),
-                token(Lexeme.RightParen, ")"),
-                identifier("as"),
-                identifier("integer"),
-                token(Lexeme.Newline, "\\n"),
-                token(Lexeme.EndSub, "end sub"),
-                EOF
-            ]);
-
-            expect(errors.length).not.toBe(0);
         });
 
         it('does not allow type designators at end of name', () => {
