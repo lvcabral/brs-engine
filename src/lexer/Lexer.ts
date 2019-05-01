@@ -4,7 +4,7 @@ import { Lexeme } from "./Lexeme";
 import { Token, Location } from "./Token";
 import { ReservedWords, KeyWords } from "./ReservedWords";
 import { BrsError } from "../Error";
-import { isAlpha, isDigit, isAlphaNumeric } from "./Characters";
+import { isAlpha, isDecimalDigit, isAlphaNumeric, isHexDigit } from "./Characters";
 
 import {
     BrsType,
@@ -289,8 +289,11 @@ export class Lexer {
                     preProcessedConditional();
                     break;
                 default:
-                    if (isDigit(c)) {
-                        number();
+                    if (isDecimalDigit(c)) {
+                        decimalNumber();
+                    } else if (c === "&" && peek().toLowerCase() === "h") {
+                        advance(); // move past 'h'
+                        hexadecimalNumber();
                     } else if (isAlpha(c)) {
                         identifier();
                     } else {
@@ -395,25 +398,26 @@ export class Lexer {
         }
 
         /**
-         * Reads characters within a number literal, advancing through fractional and exponential portions
-         * as well as trailing type identifiers, and adds the produced token to the `tokens` array. Also
-         * responsible for BrightScript's integer literal vs. float literal rules.
+         * Reads characters within a base-10 number literal, advancing through fractional and
+         * exponential portions as well as trailing type identifiers, and adds the produced token
+         * to the `tokens` array. Also responsible for BrightScript's integer literal vs. float
+         * literal rules.
          *
          * @see https://sdkdocs.roku.com/display/sdkdoc/Expressions%2C+Variables%2C+and+Types#Expressions,Variables,andTypes-NumericLiterals
          */
-        function number() {
+        function decimalNumber() {
             let containsDecimal = false;
-            while (isDigit(peek())) { advance(); }
+            while (isDecimalDigit(peek())) { advance(); }
 
             // look for a fractional portion
-            if (peek() === "." && isDigit(peekNext())) {
+            if (peek() === "." && isDecimalDigit(peekNext())) {
                 containsDecimal = true;
 
                 // consume the "." parse the fractional part
                 advance();
 
                 // read the remaining digits
-                while (isDigit(peek())) { advance(); }
+                while (isDecimalDigit(peek())) { advance(); }
             }
 
             let asString = source.slice(start, current);
@@ -441,7 +445,7 @@ export class Lexer {
                 }
 
                 // consume the exponent
-                while (isDigit(peek())) { advance(); }
+                while (isDecimalDigit(peek())) { advance(); }
 
                 // replace the exponential marker with a JavaScript-friendly "e"
                 asString = source.slice(start, current).replace(/[dD]/, "e");
@@ -470,7 +474,7 @@ export class Lexer {
                 }
 
                 // consume the exponent
-                while (isDigit(peek())) { advance(); }
+                while (isDecimalDigit(peek())) { advance(); }
 
                 asString = source.slice(start, current);
                 addToken(
@@ -497,6 +501,41 @@ export class Lexer {
                 // otherwise, it's a regular integer
                 addToken(Lexeme.Integer, Int32.fromString(asString));
                 return;
+            }
+        }
+
+        /**
+         * Reads characters within a base-16 number literal, advancing through trailing type
+         * identifiers, and adds the produced token to the `tokens` array. Also responsible for
+         * BrightScript's integer literal vs. long-integer literal rules _for hex literals only_.
+         *
+         * @see https://sdkdocs.roku.com/display/sdkdoc/Expressions%2C+Variables%2C+and+Types#Expressions,Variables,andTypes-NumericLiterals
+         */
+        function hexadecimalNumber() {
+            while (isHexDigit(peek())) { advance(); }
+
+            // fractional hex literals aren't valid
+            if (peek() === "." && isHexDigit(peekNext())) {
+                advance(); // consume the "."
+                addError(
+                    new BrsError(
+                        "Fractional hex literals are not supported",
+                        locationOf(source.slice(start, current))
+                    )
+                );
+                return;
+            }
+
+            if (peek() === "&") {
+                // literals ending with "&" are forced to LongIntegers
+                advance();
+                let asString = source.slice(start, current);
+                console.log(`========== creating long hex literal '${asString}'`);
+                addToken(Lexeme.LongInteger, Int64.fromString(asString));
+            } else {
+                let asString = source.slice(start, current);
+                console.log(`========== creating hex literal '${asString}'`);
+                addToken(Lexeme.LongInteger, Int32.fromString(asString));
             }
         }
 

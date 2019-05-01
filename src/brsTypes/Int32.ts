@@ -30,7 +30,12 @@ export class Int32 implements Numeric, Comparable {
      * @returns a BrightScript 32-bit integer value representing `asString`.
      */
     static fromString(asString: string): Int32 {
-        return new Int32(Number.parseFloat(asString));
+        let radix = 10;
+        if (asString.toLowerCase().startsWith("&h")) {
+            radix = 16; // it's a hex literal!
+            asString = asString.slice(2); // remove "&h" from the string representation
+        }
+        return new Int32(Number.parseInt(asString, radix));
     }
 
     add(rhs: BrsNumber): BrsNumber {

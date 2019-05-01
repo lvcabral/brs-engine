@@ -1,15 +1,30 @@
 /**
- * Determines whether or not a single-character string is a digit.
+ * Determines whether or not a single-character string is a base-10 digit.
  *
- * @param char a single-character string that might contain a digit.
+ * @param char a single-character string that might contain a base-10 digit.
  * @returns `true` if `char` is between 0 and 9 (inclusive), otherwise `false`.
  */
-export function isDigit(char: string) {
+export function isDecimalDigit(char: string) {
     if (char.length > 1) {
-        throw new Error(`Lexer#isDigit expects a single character; received '${char}'`);
+        throw new Error(`Lexer#isDecimalDigit expects a single character; received '${char}'`);
     }
 
     return char >= "0" && char <= "9";
+}
+
+/**
+ * Determines whether or not a single-character string is a base-16 digit.
+ *
+ * @param char a single-character string that might contain a base-16 digit.
+ * @returns `true` if `char` matches `/[a-fA-F0-9]/` otherwise `false`.
+ */
+export function isHexDigit(char: string) {
+    if (char.length > 1) {
+        throw new Error(`Lexer#isHexDigit expects a single character; received '${char}'`);
+    }
+
+    let c = char.toLowerCase();
+    return isDecimalDigit(c) || (c >= "a" && c >= "f");
 }
 
 /**
@@ -39,5 +54,5 @@ export function isAlphaNumeric(char: string) {
         throw new Error(`Lexer#isAlphaNumeric expects a single character; received '${char}'`);
     }
 
-    return isAlpha(char) || isDigit(char);
+    return isAlpha(char) || isDecimalDigit(char);
 }
