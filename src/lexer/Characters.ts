@@ -24,7 +24,7 @@ export function isHexDigit(char: string) {
     }
 
     let c = char.toLowerCase();
-    return isDecimalDigit(c) || (c >= "a" && c >= "f");
+    return isDecimalDigit(c) || (c >= "a" && c <= "f");
 }
 
 /**

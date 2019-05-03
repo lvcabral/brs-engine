@@ -200,8 +200,13 @@ describe("lexer", () => {
     });
 
     describe("long integer literals", () => {
-        it.todo("supports hexadecimal literals");
-        it("respects '&' suffix", () => {
+        it("supports hexadecimal literals", () => {
+            let i = Lexer.scan("&hf00d&").tokens[0];
+            expect(i.kind).toBe(Lexeme.LongInteger);
+            expect(i.literal).toEqual(new Int64(61453));
+        });
+
+        it("forces literals with '&' suffix into Int64s", () => {
             let li = Lexer.scan("123&").tokens[0];
             expect(li.kind).toBe(Lexeme.LongInteger);
             expect(li.literal).toEqual(new Int64(123));
@@ -209,7 +214,12 @@ describe("lexer", () => {
     });
 
     describe("integer literals", () => {
-        it.todo("supports hexadecimal literals");
+        it("supports hexadecimal literals", () => {
+            let i = Lexer.scan("&hFf").tokens[0];
+            expect(i.kind).toBe(Lexeme.Integer);
+            expect(i.literal).toEqual(new Int32(255));
+        });
+
         it("falls back to a regular integer", () => {
             let i = Lexer.scan("123").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);

@@ -530,12 +530,10 @@ export class Lexer {
                 // literals ending with "&" are forced to LongIntegers
                 advance();
                 let asString = source.slice(start, current);
-                console.log(`========== creating long hex literal '${asString}'`);
                 addToken(Lexeme.LongInteger, Int64.fromString(asString));
             } else {
                 let asString = source.slice(start, current);
-                console.log(`========== creating hex literal '${asString}'`);
-                addToken(Lexeme.LongInteger, Int32.fromString(asString));
+                addToken(Lexeme.Integer, Int32.fromString(asString));
             }
         }
 
