@@ -18,11 +18,16 @@ describe("Int64", () => {
         expect(four.getValue().toNumber()).toBe(4);
     });
 
-    it("creates integers from strings", () => {
+    it("creates base-10 integers from strings", () => {
         let three = Int64.fromString("3.4");
         let four = Int64.fromString("3.5");
         expect(three.getValue().toNumber()).toBe(3);
         expect(four.getValue().toNumber()).toBe(4);
+    });
+
+    it("creates base-16 integers from strings", () => {
+        let cafeFood = Int64.fromString("&hCAFEF00D");
+        expect(cafeFood.getValue().toNumber()).toBe(3405705229);
     });
 
     describe("addition", () => {
