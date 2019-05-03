@@ -422,18 +422,19 @@ export class Lexer {
 
             let asString = source.slice(start, current);
             let numberOfDigits = containsDecimal ? asString.length - 1 : asString.length;
+            let designator = peek().toLowerCase();
 
-            if (numberOfDigits >= 10) {
-                // numeric literals over 10 digits are automatically Doubles
+            if (numberOfDigits >= 10 && designator !== "&") {
+                // numeric literals over 10 digits with no type designator are implicitly Doubles
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
-            } else if (peek() === "#") {
+            } else if (designator === "#") {
                 // numeric literals ending with "#" are forced to Doubles
                 advance();
                 asString = source.slice(start, current);
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
-            } else if (peek().toLowerCase() === "d") {
+            } else if (designator === "d") {
                 // literals that use "D" as the exponent are also automatic Doubles
 
                 // consume the "D"
@@ -453,7 +454,7 @@ export class Lexer {
                 return;
             }
 
-            if (peek() === "!") {
+            if (designator === "!") {
                 // numeric literals ending with "!" are forced to Floats
                 advance();
                 asString = source.slice(start, current);
@@ -462,7 +463,7 @@ export class Lexer {
                     Float.fromString(asString)
                 );
                 return;
-            } else if (peek().toLowerCase() === "e") {
+            } else if (designator === "e") {
                 // literals that use "E" as the exponent are also automatic Floats
 
                 // consume the "E"
@@ -491,10 +492,10 @@ export class Lexer {
                 return;
             }
 
-            if (peek() === "&") {
+            if (designator === "&") {
                 // numeric literals ending with "&" are forced to LongIntegers
-                advance();
                 asString = source.slice(start, current);
+                advance();
                 addToken(Lexeme.LongInteger, Int64.fromString(asString));
                 return;
             } else {

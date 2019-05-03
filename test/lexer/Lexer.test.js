@@ -206,6 +206,12 @@ describe("lexer", () => {
             expect(i.literal).toEqual(new Int64(61453));
         });
 
+        it("allows very long Int64 literals", () => {
+            let li = Lexer.scan("9876543210&").tokens[0];
+            expect(li.kind).toBe(Lexeme.LongInteger);
+            expect(li.literal).toEqual(Int64.fromString("9876543210"));
+        });
+
         it("forces literals with '&' suffix into Int64s", () => {
             let li = Lexer.scan("123&").tokens[0];
             expect(li.kind).toBe(Lexeme.LongInteger);
