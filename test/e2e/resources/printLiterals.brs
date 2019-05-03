@@ -7,3 +7,5 @@ print 7&  ' a 64-bit integer
 print 3e1 ' a float
 ? 4d1     ' a double
 ?"hello"  ' a string
+
+print &hff ' 255, in hex
