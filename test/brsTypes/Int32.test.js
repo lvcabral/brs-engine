@@ -17,11 +17,16 @@ describe("Int32", () => {
         expect(four.getValue()).toBe(4);
     });
 
-    it("creates integers from strings", () => {
+    it("creates base-10 integers from strings", () => {
         let three = Int32.fromString("3.4");
         let four = Int32.fromString("3.5");
         expect(three.getValue()).toBe(3);
         expect(four.getValue()).toBe(4);
+    });
+
+    it("creates base-16 integers from strings", () => {
+        let twoFiftyFive = Int32.fromString("&hFF");
+        expect(twoFiftyFive.getValue()).toBe(255);
     });
 
     describe("addition", () => {
