@@ -30,6 +30,10 @@ export class Int32 implements Numeric, Comparable {
      * @returns a BrightScript 32-bit integer value representing `asString`.
      */
     static fromString(asString: string): Int32 {
+        if (asString.toLowerCase().startsWith("&h")) {
+            asString = asString.slice(2); // remove "&h" from the string representation
+            return new Int32(Number.parseInt(asString, 16));
+        }
         return new Int32(Number.parseFloat(asString));
     }
 

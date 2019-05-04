@@ -35,7 +35,8 @@ describe("end to end syntax", () => {
                 "7",
                 "30",
                 "40",
-                "hello"
+                "hello",
+                "255"
             ]);
         });
     });

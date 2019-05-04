@@ -35,7 +35,14 @@ export class Int64 implements Numeric, Comparable {
      * @returns a BrightScript 64-bit integer value representing `asString`.
      */
     static fromString(asString: string): Int64 {
-        let i64 = new Int64(Long.fromString(asString));
+        let radix = 10;
+
+        if (asString.toLowerCase().startsWith("&h")) {
+            radix = 16; // it's a hex literal!
+            asString = asString.slice(2); // remove "&h" from the string representation
+        }
+
+        let i64 = new Int64(Long.fromString(asString, undefined, radix));
         const decimalLocation = asString.indexOf(".");
         if (decimalLocation > -1 && (decimalLocation + 1) < asString.length) {
             // Long.fromString truncates to integers instead of rounding, so manually add one to
@@ -46,7 +53,6 @@ export class Int64 implements Numeric, Comparable {
         }
         return i64;
     }
-
 
     add(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
