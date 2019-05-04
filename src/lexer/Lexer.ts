@@ -248,7 +248,7 @@ export class Lexer {
                             break;
                         case ">":
                             advance();
-                            switch(peek()){
+                            switch (peek()) {
                                 case "=":
                                     advance();
                                     addToken(Lexeme.RightShiftEqual);
@@ -362,7 +362,7 @@ export class Lexer {
         function string() {
             while (!isAtEnd()) {
                 if (peek() === "\"") {
-                    if( peekNext() === "\"") {
+                    if (peekNext() === "\"") {
                         // skip over two consecutive `"` characters to handle escaped `"` literals
                         advance();
                     } else {
@@ -511,7 +511,10 @@ export class Lexer {
 
             // some identifiers can be split into two words, so check the "next" word and see what we get
             if ((text === "end" || text === "else" || text === "exit" || text === "for") && (peek() === " " || peek() === "\t")) {
-                let endOfFirstWord = current;
+                let endOfFirstWord = {
+                    position: current,
+                    column: column
+                };
 
                 // skip past any whitespace
                 let whitespace = "";
@@ -531,7 +534,8 @@ export class Lexer {
                     return;
                 } else {
                     // reset if the last word and the current word didn't form a multi-word Lexeme
-                    current = endOfFirstWord;
+                    current = endOfFirstWord.position;
+                    column = endOfFirstWord.column;
                 }
             }
 
@@ -667,4 +671,3 @@ export class Lexer {
         }
     }
 }
-

@@ -278,6 +278,27 @@ export class Return implements Statement {
     }
 }
 
+export class End implements Statement {
+    constructor(
+        readonly tokens: {
+            end: Token
+        }
+    ) { }
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        //TODO implement this in the runtime. It should immediately terminate program execution, without error
+        throw new Error("Not implemented");
+    }
+
+    get location() {
+        return {
+            file: this.tokens.end.location.file,
+            start: this.tokens.end.location.start,
+            end: this.tokens.end.location.end
+        };
+    }
+}
+
 export class For implements Statement {
     constructor(
         readonly tokens: {

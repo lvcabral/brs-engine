@@ -1,0 +1,3902 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser \`end\` keyword can be used as a property name on objects 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 26,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 20,
+            "line": 3,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 20,
+                  "line": 3,
+                },
+              },
+              "text": "person",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 28,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 27,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": AALiteral {
+              "close": Object {
+                "isReserved": false,
+                "kind": 5,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 21,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 20,
+                    "line": 5,
+                  },
+                },
+                "text": "}",
+              },
+              "elements": Array [
+                Object {
+                  "name": BrsString {
+                    "kind": 2,
+                    "value": "end",
+                  },
+                  "value": Literal {
+                    "_location": Object {
+                      "end": Object {
+                        "column": 33,
+                        "line": 4,
+                      },
+                      "file": "",
+                      "start": Object {
+                        "column": 29,
+                        "line": 4,
+                      },
+                    },
+                    "value": BrsBoolean {
+                      "kind": 1,
+                      "value": true,
+                    },
+                  },
+                },
+              ],
+              "open": Object {
+                "isReserved": false,
+                "kind": 4,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 30,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 29,
+                    "line": 3,
+                  },
+                },
+                "text": "{",
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 57,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 23,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 6,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 84,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 30,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 24,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`parser \`end\` keyword does not produce errors 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 23,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 20,
+            "line": 3,
+          },
+        },
+        "statements": Array [
+          End {
+            "tokens": Object {
+              "end": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 23,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 20,
+                    "line": 3,
+                  },
+                },
+                "text": "end",
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 57,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 23,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 4,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 84,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 30,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 24,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`parser \`end\` keyword is not allowed as a standalone variable 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 23,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 20,
+            "line": 3,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 23,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 20,
+                  "line": 3,
+                },
+              },
+              "text": "end",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 25,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 24,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 26,
+                  "line": 3,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 57,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 23,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 4,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 84,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 30,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 24,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`parser allows whitelisted reserved words as object properties 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 22,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 22,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 3,
+                },
+              },
+              "text": "person",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 24,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 23,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": AALiteral {
+              "close": Object {
+                "isReserved": false,
+                "kind": 5,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 27,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 26,
+                    "line": 3,
+                  },
+                },
+                "text": "}",
+              },
+              "elements": Array [],
+              "open": Object {
+                "isReserved": false,
+                "kind": 4,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 26,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 25,
+                    "line": 3,
+                  },
+                },
+                "text": "{",
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 4,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 4,
+                },
+              },
+              "text": "and",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 4,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 4,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 4,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 5,
+                },
+              },
+              "text": "box",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 5,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 5,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 35,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 6,
+                },
+              },
+              "text": "createobject",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 6,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 6,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 42,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 38,
+                  "line": 6,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 7,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 7,
+                },
+              },
+              "text": "dim",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 7,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 7,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 7,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 7,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 8,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 8,
+                },
+              },
+              "text": "double",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 8,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 8,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 36,
+                  "line": 8,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 32,
+                  "line": 8,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 9,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 9,
+                },
+              },
+              "text": "each",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 9,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 9,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 9,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 9,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 10,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 10,
+                },
+              },
+              "text": "else",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 10,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 10,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 10,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 10,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 11,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 11,
+                },
+              },
+              "text": "elseif",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 11,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 11,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 36,
+                  "line": 11,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 32,
+                  "line": 11,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 12,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 12,
+                },
+              },
+              "text": "end",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 12,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 12,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 12,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 12,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 13,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 13,
+                },
+              },
+              "text": "endfor",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 13,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 13,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 36,
+                  "line": 13,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 32,
+                  "line": 13,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 14,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 14,
+                },
+              },
+              "text": "endfunction",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 14,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 14,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 41,
+                  "line": 14,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 37,
+                  "line": 14,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 28,
+                  "line": 15,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 15,
+                },
+              },
+              "text": "endif",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 15,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 15,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 35,
+                  "line": 15,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 31,
+                  "line": 15,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 16,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 16,
+                },
+              },
+              "text": "endsub",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 16,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 16,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 36,
+                  "line": 16,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 32,
+                  "line": 16,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 31,
+                  "line": 17,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 17,
+                },
+              },
+              "text": "endwhile",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 17,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 17,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 38,
+                  "line": 17,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 34,
+                  "line": 17,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 18,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 18,
+                },
+              },
+              "text": "eval",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 18,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 18,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 18,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 18,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 19,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 19,
+                },
+              },
+              "text": "exit",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 19,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 19,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 19,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 19,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 20,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 20,
+                },
+              },
+              "text": "exitfor",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 20,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 20,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 37,
+                  "line": 20,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 33,
+                  "line": 20,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 32,
+                  "line": 21,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 21,
+                },
+              },
+              "text": "exitwhile",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 21,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 21,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 39,
+                  "line": 21,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 35,
+                  "line": 21,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 28,
+                  "line": 22,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 22,
+                },
+              },
+              "text": "false",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 22,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 22,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 35,
+                  "line": 22,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 31,
+                  "line": 22,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 28,
+                  "line": 23,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 23,
+                },
+              },
+              "text": "float",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 23,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 23,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 35,
+                  "line": 23,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 31,
+                  "line": 23,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 24,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 24,
+                },
+              },
+              "text": "for",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 24,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 24,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 24,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 24,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 25,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 25,
+                },
+              },
+              "text": "foreach",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 25,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 25,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 37,
+                  "line": 25,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 33,
+                  "line": 25,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 31,
+                  "line": 26,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 26,
+                },
+              },
+              "text": "function",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 26,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 26,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 38,
+                  "line": 26,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 34,
+                  "line": 26,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 27,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 27,
+                },
+              },
+              "text": "getglobalaa",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 27,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 27,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 41,
+                  "line": 27,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 37,
+                  "line": 27,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 45,
+                  "line": 28,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 28,
+                },
+              },
+              "text": "getlastruncompileerror",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 28,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 28,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 52,
+                  "line": 28,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 48,
+                  "line": 28,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 45,
+                  "line": 29,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 29,
+                },
+              },
+              "text": "getlastrunruntimeerror",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 29,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 29,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 52,
+                  "line": 29,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 48,
+                  "line": 29,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 30,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 30,
+                },
+              },
+              "text": "goto",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 30,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 30,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 30,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 30,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 25,
+                  "line": 31,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 31,
+                },
+              },
+              "text": "if",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 31,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 31,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 32,
+                  "line": 31,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 28,
+                  "line": 31,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 32,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 32,
+                },
+              },
+              "text": "integer",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 32,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 32,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 37,
+                  "line": 32,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 33,
+                  "line": 32,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 33,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 33,
+                },
+              },
+              "text": "invalid",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 33,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 33,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 37,
+                  "line": 33,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 33,
+                  "line": 33,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 34,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 34,
+                },
+              },
+              "text": "let",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 34,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 34,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 34,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 34,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 31,
+                  "line": 35,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 35,
+                },
+              },
+              "text": "line_num",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 35,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 35,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 38,
+                  "line": 35,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 34,
+                  "line": 35,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 36,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 36,
+                },
+              },
+              "text": "longinteger",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 36,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 36,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 41,
+                  "line": 36,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 37,
+                  "line": 36,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 37,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 37,
+                },
+              },
+              "text": "next",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 37,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 37,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 37,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 37,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 38,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 38,
+                },
+              },
+              "text": "not",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 38,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 38,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 38,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 38,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 39,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 39,
+                },
+              },
+              "text": "objfun",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 39,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 39,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 36,
+                  "line": 39,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 32,
+                  "line": 39,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 25,
+                  "line": 40,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 40,
+                },
+              },
+              "text": "or",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 40,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 40,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 32,
+                  "line": 40,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 28,
+                  "line": 40,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 41,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 41,
+                },
+              },
+              "text": "pos",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 41,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 41,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 41,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 41,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 28,
+                  "line": 42,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 42,
+                },
+              },
+              "text": "print",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 42,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 42,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 35,
+                  "line": 42,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 31,
+                  "line": 42,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 44,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 44,
+                },
+              },
+              "text": "return",
+            },
+            "obj": DottedGet {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 44,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 44,
+                  },
+                },
+                "text": "person",
+              },
+              "obj": Variable {
+                "name": Object {
+                  "isReserved": false,
+                  "kind": 30,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 22,
+                      "line": 43,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 16,
+                      "line": 43,
+                    },
+                  },
+                  "text": "person",
+                },
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 36,
+                  "line": 44,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 32,
+                  "line": 44,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 45,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 45,
+                },
+              },
+              "text": "run",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 45,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 45,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 45,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 45,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 46,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 46,
+                },
+              },
+              "text": "step",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 46,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 46,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 46,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 46,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 47,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 47,
+                },
+              },
+              "text": "stop",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 47,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 47,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 47,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 47,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 48,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 48,
+                },
+              },
+              "text": "string",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 48,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 48,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 36,
+                  "line": 48,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 32,
+                  "line": 48,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 49,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 49,
+                },
+              },
+              "text": "sub",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 49,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 49,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 49,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 49,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 50,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 50,
+                },
+              },
+              "text": "tab",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 50,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 50,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 50,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 50,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 51,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 51,
+                },
+              },
+              "text": "then",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 51,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 51,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 51,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 51,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 25,
+                  "line": 52,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 52,
+                },
+              },
+              "text": "to",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 52,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 52,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 32,
+                  "line": 52,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 28,
+                  "line": 52,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 53,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 53,
+                },
+              },
+              "text": "true",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 53,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 53,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 53,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 53,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 54,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 54,
+                },
+              },
+              "text": "type",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 54,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 54,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 54,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 54,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 28,
+                  "line": 55,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 55,
+                },
+              },
+              "text": "while",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 55,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 55,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 35,
+                  "line": 55,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 31,
+                  "line": 55,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 57,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 56,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 56,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 84,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 30,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 20,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`parser certain reserved words are allowed as local var identifiers 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 22,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 55,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 22,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 3,
+                },
+              },
+              "text": "endfor",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 24,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 23,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 25,
+                  "line": 3,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 22,
+                  "line": 4,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 4,
+                },
+              },
+              "text": "double",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 24,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 23,
+                    "line": 4,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 4,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 25,
+                  "line": 4,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 23,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 5,
+                },
+              },
+              "text": "exitfor",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 25,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 24,
+                    "line": 5,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 26,
+                  "line": 5,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 21,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 6,
+                },
+              },
+              "text": "float",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 23,
+                    "line": 6,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 22,
+                    "line": 6,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 28,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 24,
+                  "line": 6,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 23,
+                  "line": 7,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 7,
+                },
+              },
+              "text": "foreach",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 25,
+                    "line": 7,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 24,
+                    "line": 7,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 7,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 26,
+                  "line": 7,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 23,
+                  "line": 8,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 8,
+                },
+              },
+              "text": "integer",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 25,
+                    "line": 8,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 24,
+                    "line": 8,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 8,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 26,
+                  "line": 8,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 27,
+                  "line": 9,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 9,
+                },
+              },
+              "text": "longinteger",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 29,
+                    "line": 9,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 28,
+                    "line": 9,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 34,
+                  "line": 9,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 30,
+                  "line": 9,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": 30,
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 22,
+                  "line": 10,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 10,
+                },
+              },
+              "text": "string",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": 28,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 24,
+                    "line": 10,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 23,
+                    "line": 10,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 29,
+                  "line": 10,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 25,
+                  "line": 10,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": 57,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 11,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 11,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": 84,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": 30,
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 20,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`parser most reserved words are not allowed as local var identifiers 1`] = `Array []`;

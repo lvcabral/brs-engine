@@ -102,7 +102,7 @@ Array [
         Object {
           "name": BrsString {
             "kind": 2,
-            "value": "requires-hypens",
+            "value": "requires-hyphens",
           },
           "value": Literal {
             "_location": Object {

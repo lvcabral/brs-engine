@@ -181,7 +181,7 @@ describe("parser associative array literals", () => {
             token(Lexeme.Integer, "2", new Int32(2)),
             token(Lexeme.Comma, ","),
             token(Lexeme.Newline, "\n"),
-            token(Lexeme.String, "requires-hyphens", new BrsString("requires-hypens")),
+            token(Lexeme.String, "requires-hyphens", new BrsString("requires-hyphens")),
             token(Lexeme.Colon, ":"),
             token(Lexeme.Integer, "3", new Int32(3)),
             token(Lexeme.Newline, "\n"),

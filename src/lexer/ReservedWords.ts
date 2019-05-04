@@ -61,7 +61,6 @@ export const KeyWords: {[key: string]: L} = {
     else: L.Else,
     elseif: L.ElseIf,
     "else if": L.ElseIf,
-    end: L.End,
     endfor: L.EndFor,
     "end for": L.EndFor,
     endfunction: L.EndFunction,
