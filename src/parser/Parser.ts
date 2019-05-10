@@ -4,7 +4,7 @@ import * as Expr from "./Expression";
 type Expression = Expr.Expression;
 import * as Stmt from "./Statement";
 type Statement = Stmt.Statement;
-import { Lexeme, Token, Identifier, ReservedWords } from "../lexer";
+import { Lexeme, Token, Identifier, Location, ReservedWords } from "../lexer";
 import { ParseError } from "./ParseError";
 
 import {
@@ -200,6 +200,13 @@ export class Parser {
         let current = 0;
         let tokens = toParse;
 
+        //the depth of the calls to function declarations. Helps some checks know if they are at the root or not.
+        let functionDeclarationLevel = 0;
+
+        function isAtRootLevel() {
+            return functionDeclarationLevel === 0;
+        }
+
         let statements: Statement[] = [];
 
         let errors: ParseError[] = [];
@@ -217,6 +224,14 @@ export class Parser {
             return err;
         };
 
+        /**
+         * Add an error at the given location. 
+         * @param location 
+         * @param message 
+         */
+        const addErrorAtLocation = (location: Location, message: string) => {
+            addError({ location: location } as any, message);
+        };
 
         if (toParse.length === 0) {
             return {
@@ -260,6 +275,10 @@ export class Parser {
                     return functionDeclaration(false);
                 }
 
+                if (checkLibrary()) {
+                    return libraryStatement();
+                }
+
                 // BrightScript is like python, in that variables can be declared without a `var`,
                 // `let`, (...) keyword. As such, we must check the token *after* an identifier to figure
                 // out what to do with it.
@@ -277,102 +296,112 @@ export class Parser {
         function functionDeclaration(isAnonymous: true): Expr.Function;
         function functionDeclaration(isAnonymous: false): Stmt.Function;
         function functionDeclaration(isAnonymous: boolean) {
-            let startingKeyword = peek();
-            let isSub = check(Lexeme.Sub);
-            let functionType = advance();
-            let name: Identifier;
-            let returnType: ValueKind;
-            let leftParen: Token;
-            let rightParen: Token;
+            try {
+                //certain statements need to know if they are contained within a function body
+                //so track the depth here
+                functionDeclarationLevel++;
+                let startingKeyword = peek();
+                let isSub = check(Lexeme.Sub);
+                let functionType = advance();
+                let name: Identifier;
+                let returnType: ValueKind;
+                let leftParen: Token;
+                let rightParen: Token;
 
-            if (isSub) {
-                returnType = ValueKind.Void;
-            } else {
-                returnType = ValueKind.Dynamic;
-            }
-
-            if (isAnonymous) {
-                leftParen = consume(`Expected '(' after ${functionType.text}`, Lexeme.LeftParen);
-            } else {
-                name = consume(`Expected ${functionType.text} name after '${functionType.text}'`, Lexeme.Identifier) as Identifier;
-                leftParen = consume(`Expected '(' after ${functionType.text} name`, Lexeme.LeftParen);
-
-                //prevent functions from ending with type designators
-                let lastChar = name.text[name.text.length - 1];
-                if (["$", "%", "!", "#"].indexOf(lastChar) > -1) {
-                    //don't throw this error; let the parser continue
-                    addError(name, `Function name '${name.text}' cannot end with type designator '${lastChar}'`);
+                if (isSub) {
+                    returnType = ValueKind.Void;
+                } else {
+                    returnType = ValueKind.Dynamic;
                 }
-            }
 
-            let args: Argument[] = [];
-            if (!check(Lexeme.RightParen)) {
-                do {
-                    if (args.length >= Expr.Call.MaximumArguments) {
-                        throw addError(peek(), `Cannot have more than ${Expr.Call.MaximumArguments} arguments`);
+                if (isAnonymous) {
+                    leftParen = consume(`Expected '(' after ${functionType.text}`, Lexeme.LeftParen);
+                } else {
+                    name = consume(`Expected ${functionType.text} name after '${functionType.text}'`, Lexeme.Identifier) as Identifier;
+                    leftParen = consume(`Expected '(' after ${functionType.text} name`, Lexeme.LeftParen);
+
+                    //prevent functions from ending with type designators
+                    let lastChar = name.text[name.text.length - 1];
+                    if (["$", "%", "!", "#"].indexOf(lastChar) > -1) {
+                        //don't throw this error; let the parser continue
+                        addError(name, `Function name '${name.text}' cannot end with type designator '${lastChar}'`);
+                    }
+                }
+
+                let args: Argument[] = [];
+                if (!check(Lexeme.RightParen)) {
+                    do {
+                        if (args.length >= Expr.Call.MaximumArguments) {
+                            throw addError(peek(), `Cannot have more than ${Expr.Call.MaximumArguments} arguments`);
+                        }
+
+                        args.push(signatureArgument());
+                    } while (match(Lexeme.Comma));
+                }
+                rightParen = advance();
+
+                let maybeAs = peek();
+                if (check(Lexeme.Identifier) && maybeAs.text.toLowerCase() === "as") {
+                    advance();
+                    if (isSub) {
+                        throw addError(previous(), "'Sub' functions are always void returns, and can't have 'as' clauses");
                     }
 
-                    args.push(signatureArgument());
-                } while (match(Lexeme.Comma));
-            }
-            rightParen = advance();
+                    let typeToken = advance();
+                    let typeString = typeToken.text || "";
+                    let maybeReturnType = ValueKind.fromString(typeString);
 
-            let maybeAs = peek();
-            if (check(Lexeme.Identifier) && maybeAs.text.toLowerCase() === "as") {
-                advance();
+                    if (!maybeReturnType) {
+                        throw addError(typeToken, `Function return type '${typeString}' is invalid`);
+                    }
 
-                let typeToken = advance();
-                let typeString = typeToken.text || "";
-                let maybeReturnType = ValueKind.fromString(typeString);
-
-                if (!maybeReturnType) {
-                    throw addError(typeToken, `Function return type '${typeString}' is invalid`);
+                    returnType = maybeReturnType;
                 }
 
-                returnType = maybeReturnType;
-            }
+                args.reduce((haveFoundOptional: boolean, arg: Argument) => {
+                    if (haveFoundOptional && !arg.defaultValue) {
+                        throw addError(
+                            {
+                                kind: Lexeme.Identifier,
+                                text: arg.name.text,
+                                isReserved: ReservedWords.has(arg.name.text),
+                                location: arg.location
+                            },
+                            `Argument '${arg.name.text}' has no default value, but comes after arguments with default values`
+                        );
+                    }
 
-            args.reduce((haveFoundOptional: boolean, arg: Argument) => {
-                if (haveFoundOptional && !arg.defaultValue) {
-                    throw addError(
-                        {
-                            kind: Lexeme.Identifier,
-                            text: arg.name.text,
-                            isReserved: ReservedWords.has(arg.name.text),
-                            location: arg.location
-                        },
-                        `Argument '${arg.name.text}' has no default value, but comes after arguments with default values`
-                    );
+                    return haveFoundOptional || !!arg.defaultValue;
+                }, false);
+
+                consume(`Expected newline or ':' after ${functionType.text} signature`, Lexeme.Newline, Lexeme.Colon);
+                //support ending the function with `end sub` OR `end function`
+                let body = block(Lexeme.EndSub, Lexeme.EndFunction);
+                if (!body) {
+                    throw addError(peek(), `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`);
+                }
+                // consume 'end sub' or 'end function'
+                let endingKeyword = advance();
+                let expectedEndKind = isSub ? Lexeme.EndSub : Lexeme.EndFunction;
+
+                //if `function` is ended with `end sub`, or `sub` is ended with `end function`, then
+                //add an error but don't hard-fail so the AST can continue more gracefully
+                if (endingKeyword.kind !== expectedEndKind) {
+                    addError(endingKeyword, `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`);
                 }
 
-                return haveFoundOptional || !!arg.defaultValue;
-            }, false);
+                let func = new Expr.Function(args, returnType, body, startingKeyword, endingKeyword);
 
-            consume(`Expected newline or ':' after ${functionType.text} signature`, Lexeme.Newline, Lexeme.Colon);
-            //support ending the function with `end sub` OR `end function`
-            let body = block(Lexeme.EndSub, Lexeme.EndFunction);
-            if (!body) {
-                throw addError(peek(), `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`);
-            }
-            // consume 'end sub' or 'end function'
-            let endingKeyword = advance();
-            let expectedEndKind = isSub ? Lexeme.EndSub : Lexeme.EndFunction;
-
-            //if `function` is ended with `end sub`, or `sub` is ended with `end function`, then
-            //add an error but don't hard-fail so the AST can continue more gracefully
-            if (endingKeyword.kind !== expectedEndKind) {
-                addError(endingKeyword, `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`);
-            }
-
-            let func = new Expr.Function(args, returnType, body, startingKeyword, endingKeyword);
-
-            if (isAnonymous) {
-                return func;
-            } else {
-                // only consume trailing newlines in the statement context; expressions
-                // expect to handle their own trailing whitespace
-                while (match(Lexeme.Newline));
-                return new Stmt.Function(name!, func);
+                if (isAnonymous) {
+                    return func;
+                } else {
+                    // only consume trailing newlines in the statement context; expressions
+                    // expect to handle their own trailing whitespace
+                    while (match(Lexeme.Newline));
+                    return new Stmt.Function(name!, func);
+                }
+            } finally {
+                functionDeclarationLevel--;
             }
         }
 
@@ -456,7 +485,26 @@ export class Parser {
             }
         }
 
-        function statement(...additionalterminators: BlockTerminator[]): Statement {
+        function checkLibrary() {
+            let isLibraryIdentifier = check(Lexeme.Identifier) && peek().text.toLowerCase() === "library";
+            //if we are at the top level, any line that starts with "library" should be considered a library statement
+            if (isAtRootLevel() && isLibraryIdentifier) {
+                return true;
+            }
+            //not at root level, library statements are all invalid here, but try to detect if the tokens look
+            //like a library statement (and let the libraryStatement function handle emitting the errors)
+            else if (isLibraryIdentifier && checkNext(Lexeme.String)) {
+                return true;
+            }
+            //definitely not a library statement
+            else {
+                return false;
+            }
+        }
+
+        function statement(...additionalterminators: BlockTerminator[]): Statement | undefined {
+            if (checkLibrary()) { return libraryStatement(); }
+
             if (check(Lexeme.If)) { return ifStatement(); }
 
             if (check(Lexeme.Print)) { return printStatement(...additionalterminators); }
@@ -587,6 +635,51 @@ export class Parser {
             consume("Expected newline after 'exit for'", Lexeme.Newline);
             while (match(Lexeme.Newline)) { }
             return new Stmt.ExitFor({ exitFor: keyword });
+        }
+
+        function libraryStatement(): Stmt.Library | undefined {
+            let libraryStatement = new Stmt.Library({
+                library: advance(),
+                //grab the next token only if it's a string
+                filePath: check(Lexeme.String) ? advance() : undefined
+            });
+
+            //no token following library keyword token
+            if (!libraryStatement.tokens.filePath && check(Lexeme.Newline, Lexeme.Colon)) {
+                addErrorAtLocation(libraryStatement.tokens.library.location, `Missing string literal after ${libraryStatement.tokens.library.text} keyword`);
+            }
+            //does not have a string literal as next token
+            else if (!libraryStatement.tokens.filePath && peek().kind === Lexeme.Newline) {
+                addErrorAtLocation(peek().location, `Expected string literal after ${libraryStatement.tokens.library.text} keyword`);
+
+            }
+
+            //consume all tokens until the end of the line
+            let invalidTokens = consumeUntil(Lexeme.Newline, Lexeme.Eof, Lexeme.Colon);
+
+            if (invalidTokens.length > 0) {
+                //add an error for every invalid token
+                for (let invalidToken of invalidTokens) {
+                    addErrorAtLocation(invalidToken.location, `Found unexpected token '${invalidToken.text}' after library statement`);
+                }
+            }
+
+            //libraries must be at the very top of the file before any other declarations.
+            let isAtTopOfFile = true;
+            for (let statement of statements) {
+                //if we found a non-library statement, this statement is not at the top of the file
+                if (!(statement instanceof Stmt.Library)) {
+                    isAtTopOfFile = false;
+                }
+            }
+
+            //libraries must be a root-level statement (i.e. NOT nested inside of functions)
+            if (!isAtRootLevel() || !isAtTopOfFile) {
+                addErrorAtLocation(libraryStatement.location, "Library statements may only appear at the top of a file");
+            }
+            //consume to the next newline, eof, or colon
+            while (match(Lexeme.Newline, Lexeme.Eof, Lexeme.Colon));
+            return libraryStatement;
         }
 
         function ifStatement(): Stmt.If {
@@ -1232,4 +1325,3 @@ export class Parser {
         }
     }
 }
-

@@ -1,0 +1,1105 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser library statements adds error for library statements NOT at top of file 1`] = `
+Object {
+  "errors": Array [
+    [Error: Library statements may only appear at the top of a file],
+  ],
+  "statements": Array [
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 19,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 3,
+            },
+          },
+          "statements": Array [],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 3,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "main",
+      },
+    },
+    Library {
+      "tokens": Object {
+        "filePath": Object {
+          "isReserved": false,
+          "kind": 31,
+          "literal": BrsString {
+            "kind": 2,
+            "value": "v30/bslCore.brs",
+          },
+          "location": Object {
+            "end": Object {
+              "column": 37,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 20,
+              "line": 4,
+            },
+          },
+          "text": "\\"v30/bslCore.brs\\"",
+        },
+        "library": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "text": "Library",
+        },
+      },
+    },
+  ],
+}
+`;
+
+exports[`parser library statements adds error for library statements inside of function body 1`] = `
+Object {
+  "errors": Array [
+    [Error: Library statements may only appear at the top of a file],
+  ],
+  "statements": Array [
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 23,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 3,
+            },
+          },
+          "statements": Array [
+            Library {
+              "tokens": Object {
+                "filePath": Object {
+                  "isReserved": false,
+                  "kind": 31,
+                  "literal": BrsString {
+                    "kind": 2,
+                    "value": "v30/bslCore.brs",
+                  },
+                  "location": Object {
+                    "end": Object {
+                      "column": 41,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 24,
+                      "line": 3,
+                    },
+                  },
+                  "text": "\\"v30/bslCore.brs\\"",
+                },
+                "library": Object {
+                  "isReserved": false,
+                  "kind": 30,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 23,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 16,
+                      "line": 3,
+                    },
+                  },
+                  "text": "Library",
+                },
+              },
+            },
+          ],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "main",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parser library statements does not prevent usage of \`library\` as object property name 1`] = `
+Object {
+  "errors": Array [],
+  "statements": Array [
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 25,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 3,
+            },
+          },
+          "statements": Array [
+            Assignment {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 25,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 3,
+                  },
+                },
+                "text": "buildings",
+              },
+              "tokens": Object {
+                "equals": Object {
+                  "isReserved": false,
+                  "kind": 28,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 27,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 26,
+                      "line": 3,
+                    },
+                  },
+                  "text": "=",
+                },
+              },
+              "value": AALiteral {
+                "close": Object {
+                  "isReserved": false,
+                  "kind": 5,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 17,
+                      "line": 5,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 16,
+                      "line": 5,
+                    },
+                  },
+                  "text": "}",
+                },
+                "elements": Array [
+                  Object {
+                    "name": BrsString {
+                      "kind": 2,
+                      "value": "library",
+                    },
+                    "value": Literal {
+                      "_location": Object {
+                        "end": Object {
+                          "column": 50,
+                          "line": 4,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 29,
+                          "line": 4,
+                        },
+                      },
+                      "value": BrsString {
+                        "kind": 2,
+                        "value": "Gotham City Library",
+                      },
+                    },
+                  },
+                ],
+                "open": Object {
+                  "isReserved": false,
+                  "kind": 4,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 29,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 28,
+                      "line": 3,
+                    },
+                  },
+                  "text": "{",
+                },
+              },
+            },
+          ],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 6,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 6,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "main",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parser library statements does not prevent usage of \`library\` as varible name 1`] = `
+Object {
+  "errors": Array [],
+  "statements": Array [
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 23,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 3,
+            },
+          },
+          "statements": Array [
+            Assignment {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 23,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 3,
+                  },
+                },
+                "text": "library",
+              },
+              "tokens": Object {
+                "equals": Object {
+                  "isReserved": false,
+                  "kind": 28,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 25,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 24,
+                      "line": 3,
+                    },
+                  },
+                  "text": "=",
+                },
+              },
+              "value": Literal {
+                "_location": Object {
+                  "end": Object {
+                    "column": 47,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 26,
+                    "line": 3,
+                  },
+                },
+                "value": BrsString {
+                  "kind": 2,
+                  "value": "Gotham City Library",
+                },
+              },
+            },
+          ],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "main",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parser library statements parses rest of file with ONLY the library keyword present at root level 1`] = `
+Object {
+  "errors": Array [
+    [Error: Missing string literal after library keyword],
+  ],
+  "statements": Array [
+    Library {
+      "tokens": Object {
+        "filePath": undefined,
+        "library": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "library",
+        },
+      },
+    },
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 23,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 16,
+              "line": 4,
+            },
+          },
+          "statements": Array [
+            Assignment {
+              "name": Object {
+                "isReserved": false,
+                "kind": 30,
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 23,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 4,
+                  },
+                },
+                "text": "library",
+              },
+              "tokens": Object {
+                "equals": Object {
+                  "isReserved": false,
+                  "kind": 28,
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 25,
+                      "line": 4,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 24,
+                      "line": 4,
+                    },
+                  },
+                  "text": "=",
+                },
+              },
+              "value": Literal {
+                "_location": Object {
+                  "end": Object {
+                    "column": 40,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 26,
+                    "line": 4,
+                  },
+                },
+                "value": BrsString {
+                  "kind": 2,
+                  "value": "Your Library",
+                },
+              },
+            },
+          ],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 5,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 5,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 3,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "text": "main",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parser library statements still parses entire file after invalid library statement 1`] = `
+Object {
+  "errors": Array [
+    [Error: Found unexpected token 'cat' after library statement],
+    [Error: Found unexpected token 'dog' after library statement],
+    [Error: Found unexpected token 'mouse' after library statement],
+  ],
+  "statements": Array [
+    Library {
+      "tokens": Object {
+        "filePath": undefined,
+        "library": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "library",
+        },
+      },
+    },
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "statements": Array [],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 3,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "text": "main",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parser library statements supports library statements at top of file 1`] = `
+Object {
+  "errors": Array [],
+  "statements": Array [
+    Library {
+      "tokens": Object {
+        "filePath": Object {
+          "isReserved": false,
+          "kind": 31,
+          "literal": BrsString {
+            "kind": 2,
+            "value": "v30/bslCore.brs",
+          },
+          "location": Object {
+            "end": Object {
+              "column": 37,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 20,
+              "line": 2,
+            },
+          },
+          "text": "\\"v30/bslCore.brs\\"",
+        },
+        "library": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "Library",
+        },
+      },
+    },
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "statements": Array [],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 3,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "text": "main",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parser library statements supports multiple library statements separated by colon 1`] = `
+Object {
+  "errors": Array [],
+  "statements": Array [
+    Library {
+      "tokens": Object {
+        "filePath": Object {
+          "isReserved": false,
+          "kind": 31,
+          "literal": BrsString {
+            "kind": 2,
+            "value": "v30/bslCore.brs",
+          },
+          "location": Object {
+            "end": Object {
+              "column": 37,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 20,
+              "line": 2,
+            },
+          },
+          "text": "\\"v30/bslCore.brs\\"",
+        },
+        "library": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 2,
+            },
+          },
+          "text": "Library",
+        },
+      },
+    },
+    Library {
+      "tokens": Object {
+        "filePath": Object {
+          "isReserved": false,
+          "kind": 31,
+          "literal": BrsString {
+            "kind": 2,
+            "value": "v30/bslCore.brs",
+          },
+          "location": Object {
+            "end": Object {
+              "column": 65,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 48,
+              "line": 2,
+            },
+          },
+          "text": "\\"v30/bslCore.brs\\"",
+        },
+        "library": Object {
+          "isReserved": false,
+          "kind": 30,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 47,
+              "line": 2,
+            },
+            "file": "",
+            "start": Object {
+              "column": 40,
+              "line": 2,
+            },
+          },
+          "text": "Library",
+        },
+      },
+    },
+    Function {
+      "func": Function {
+        "body": Block {
+          "startingLocation": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "statements": Array [],
+        },
+        "end": Object {
+          "isReserved": false,
+          "kind": 57,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 19,
+              "line": 4,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 4,
+            },
+          },
+          "text": "end sub",
+        },
+        "keyword": Object {
+          "isReserved": true,
+          "kind": 84,
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": 15,
+              "line": 3,
+            },
+            "file": "",
+            "start": Object {
+              "column": 12,
+              "line": 3,
+            },
+          },
+          "text": "sub",
+        },
+        "parameters": Array [],
+        "returns": 10,
+      },
+      "name": Object {
+        "isReserved": false,
+        "kind": 30,
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 20,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "text": "main",
+      },
+    },
+  ],
+}
+`;
