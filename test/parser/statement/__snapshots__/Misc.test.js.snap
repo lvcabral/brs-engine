@@ -20,7 +20,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -38,7 +38,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -57,7 +57,7 @@ Array [
             "value": AALiteral {
               "close": Object {
                 "isReserved": false,
-                "kind": 5,
+                "kind": "RightBrace",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -99,7 +99,7 @@ Array [
               ],
               "open": Object {
                 "isReserved": false,
-                "kind": 4,
+                "kind": "LeftBrace",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -120,7 +120,7 @@ Array [
       },
       "end": Object {
         "isReserved": false,
-        "kind": 57,
+        "kind": "EndSub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -137,7 +137,7 @@ Array [
       },
       "keyword": Object {
         "isReserved": true,
-        "kind": 84,
+        "kind": "Sub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -157,7 +157,7 @@ Array [
     },
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -197,7 +197,7 @@ Array [
             "tokens": Object {
               "end": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -218,7 +218,7 @@ Array [
       },
       "end": Object {
         "isReserved": false,
-        "kind": 57,
+        "kind": "EndSub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -235,7 +235,7 @@ Array [
       },
       "keyword": Object {
         "isReserved": true,
-        "kind": 84,
+        "kind": "Sub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -255,7 +255,7 @@ Array [
     },
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -294,7 +294,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -312,7 +312,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -350,7 +350,7 @@ Array [
       },
       "end": Object {
         "isReserved": false,
-        "kind": 57,
+        "kind": "EndSub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -367,7 +367,7 @@ Array [
       },
       "keyword": Object {
         "isReserved": true,
-        "kind": 84,
+        "kind": "Sub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -387,7 +387,7 @@ Array [
     },
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -426,7 +426,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -444,7 +444,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -463,7 +463,7 @@ Array [
             "value": AALiteral {
               "close": Object {
                 "isReserved": false,
-                "kind": 5,
+                "kind": "RightBrace",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -481,7 +481,7 @@ Array [
               "elements": Array [],
               "open": Object {
                 "isReserved": false,
-                "kind": 4,
+                "kind": "LeftBrace",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -501,7 +501,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -519,7 +519,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -556,7 +556,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -574,7 +574,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -611,7 +611,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -629,7 +629,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -666,7 +666,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -684,7 +684,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -721,7 +721,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -739,7 +739,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -776,7 +776,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -794,7 +794,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -831,7 +831,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -849,7 +849,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -886,7 +886,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -904,7 +904,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -941,7 +941,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -959,7 +959,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -996,7 +996,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1014,7 +1014,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1051,7 +1051,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1069,7 +1069,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1106,7 +1106,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1124,7 +1124,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1161,7 +1161,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1179,7 +1179,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1216,7 +1216,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1234,7 +1234,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1271,7 +1271,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1289,7 +1289,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1326,7 +1326,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1344,7 +1344,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1381,7 +1381,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1399,7 +1399,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1436,7 +1436,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1454,7 +1454,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1491,7 +1491,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1509,7 +1509,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1546,7 +1546,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1564,7 +1564,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1601,7 +1601,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1619,7 +1619,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1656,7 +1656,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1674,7 +1674,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1711,7 +1711,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1729,7 +1729,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1766,7 +1766,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1784,7 +1784,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1821,7 +1821,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1839,7 +1839,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1876,7 +1876,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1894,7 +1894,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1931,7 +1931,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1949,7 +1949,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1986,7 +1986,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2004,7 +2004,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2041,7 +2041,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2059,7 +2059,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2096,7 +2096,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2114,7 +2114,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2151,7 +2151,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2169,7 +2169,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2206,7 +2206,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2224,7 +2224,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2261,7 +2261,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2279,7 +2279,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2316,7 +2316,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2334,7 +2334,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2371,7 +2371,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2389,7 +2389,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2426,7 +2426,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2444,7 +2444,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2481,7 +2481,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2499,7 +2499,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2536,7 +2536,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2554,7 +2554,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2591,7 +2591,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2609,7 +2609,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2646,7 +2646,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2664,7 +2664,7 @@ Array [
             "obj": DottedGet {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2682,7 +2682,7 @@ Array [
               "obj": Variable {
                 "name": Object {
                   "isReserved": false,
-                  "kind": 30,
+                  "kind": "Identifier",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -2720,7 +2720,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2738,7 +2738,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2775,7 +2775,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2793,7 +2793,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2830,7 +2830,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2848,7 +2848,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2885,7 +2885,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2903,7 +2903,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2940,7 +2940,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2958,7 +2958,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2995,7 +2995,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3013,7 +3013,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3050,7 +3050,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3068,7 +3068,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3105,7 +3105,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3123,7 +3123,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3160,7 +3160,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3178,7 +3178,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3215,7 +3215,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3233,7 +3233,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3270,7 +3270,7 @@ Array [
           DottedSet {
             "name": Object {
               "isReserved": true,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3288,7 +3288,7 @@ Array [
             "obj": Variable {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3326,7 +3326,7 @@ Array [
       },
       "end": Object {
         "isReserved": false,
-        "kind": 57,
+        "kind": "EndSub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -3343,7 +3343,7 @@ Array [
       },
       "keyword": Object {
         "isReserved": true,
-        "kind": 84,
+        "kind": "Sub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -3363,7 +3363,7 @@ Array [
     },
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -3402,7 +3402,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 55,
+              "kind": "EndFor",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3420,7 +3420,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3457,7 +3457,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3475,7 +3475,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3512,7 +3512,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3530,7 +3530,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3567,7 +3567,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3585,7 +3585,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3622,7 +3622,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3640,7 +3640,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3677,7 +3677,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3695,7 +3695,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3732,7 +3732,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3750,7 +3750,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3787,7 +3787,7 @@ Array [
           Assignment {
             "name": Object {
               "isReserved": false,
-              "kind": 30,
+              "kind": "Identifier",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -3805,7 +3805,7 @@ Array [
             "tokens": Object {
               "equals": Object {
                 "isReserved": false,
-                "kind": 28,
+                "kind": "Equal",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -3843,7 +3843,7 @@ Array [
       },
       "end": Object {
         "isReserved": false,
-        "kind": 57,
+        "kind": "EndSub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -3860,7 +3860,7 @@ Array [
       },
       "keyword": Object {
         "isReserved": true,
-        "kind": 84,
+        "kind": "Sub",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -3880,7 +3880,7 @@ Array [
     },
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {

@@ -24,7 +24,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -41,7 +41,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -61,7 +61,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -81,7 +81,7 @@ Object {
       "tokens": Object {
         "filePath": Object {
           "isReserved": false,
-          "kind": 31,
+          "kind": "String",
           "literal": BrsString {
             "kind": 2,
             "value": "v30/bslCore.brs",
@@ -101,7 +101,7 @@ Object {
         },
         "library": Object {
           "isReserved": false,
-          "kind": 30,
+          "kind": "Identifier",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -147,7 +147,7 @@ Object {
               "tokens": Object {
                 "filePath": Object {
                   "isReserved": false,
-                  "kind": 31,
+                  "kind": "String",
                   "literal": BrsString {
                     "kind": 2,
                     "value": "v30/bslCore.brs",
@@ -167,7 +167,7 @@ Object {
                 },
                 "library": Object {
                   "isReserved": false,
-                  "kind": 30,
+                  "kind": "Identifier",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -188,7 +188,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -205,7 +205,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -225,7 +225,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -267,7 +267,7 @@ Object {
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -285,7 +285,7 @@ Object {
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -304,7 +304,7 @@ Object {
               "value": AALiteral {
                 "close": Object {
                   "isReserved": false,
-                  "kind": 5,
+                  "kind": "RightBrace",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -346,7 +346,7 @@ Object {
                 ],
                 "open": Object {
                   "isReserved": false,
-                  "kind": 4,
+                  "kind": "LeftBrace",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -367,7 +367,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -384,7 +384,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -404,7 +404,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -446,7 +446,7 @@ Object {
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -464,7 +464,7 @@ Object {
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -502,7 +502,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -519,7 +519,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -539,7 +539,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -570,7 +570,7 @@ Object {
         "filePath": undefined,
         "library": Object {
           "isReserved": false,
-          "kind": 30,
+          "kind": "Identifier",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -605,7 +605,7 @@ Object {
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -623,7 +623,7 @@ Object {
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -661,7 +661,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -678,7 +678,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -698,7 +698,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -731,7 +731,7 @@ Object {
         "filePath": undefined,
         "library": Object {
           "isReserved": false,
-          "kind": 30,
+          "kind": "Identifier",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -766,7 +766,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -783,7 +783,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -803,7 +803,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -831,7 +831,7 @@ Object {
       "tokens": Object {
         "filePath": Object {
           "isReserved": false,
-          "kind": 31,
+          "kind": "String",
           "literal": BrsString {
             "kind": 2,
             "value": "v30/bslCore.brs",
@@ -851,7 +851,7 @@ Object {
         },
         "library": Object {
           "isReserved": false,
-          "kind": 30,
+          "kind": "Identifier",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -886,7 +886,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -903,7 +903,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -923,7 +923,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -951,7 +951,7 @@ Object {
       "tokens": Object {
         "filePath": Object {
           "isReserved": false,
-          "kind": 31,
+          "kind": "String",
           "literal": BrsString {
             "kind": 2,
             "value": "v30/bslCore.brs",
@@ -971,7 +971,7 @@ Object {
         },
         "library": Object {
           "isReserved": false,
-          "kind": 30,
+          "kind": "Identifier",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -992,7 +992,7 @@ Object {
       "tokens": Object {
         "filePath": Object {
           "isReserved": false,
-          "kind": 31,
+          "kind": "String",
           "literal": BrsString {
             "kind": 2,
             "value": "v30/bslCore.brs",
@@ -1012,7 +1012,7 @@ Object {
         },
         "library": Object {
           "isReserved": false,
-          "kind": 30,
+          "kind": "Identifier",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -1047,7 +1047,7 @@ Object {
         },
         "end": Object {
           "isReserved": false,
-          "kind": 57,
+          "kind": "EndSub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -1064,7 +1064,7 @@ Object {
         },
         "keyword": Object {
           "isReserved": true,
-          "kind": 84,
+          "kind": "Sub",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -1084,7 +1084,7 @@ Object {
       },
       "name": Object {
         "isReserved": false,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {

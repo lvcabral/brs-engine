@@ -5,7 +5,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -22,7 +22,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -40,7 +40,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -90,7 +90,7 @@ Array [
           },
           "token": Object {
             "isReserved": false,
-            "kind": 8,
+            "kind": "Plus",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -108,7 +108,7 @@ Array [
         Unary {
           "operator": Object {
             "isReserved": true,
-            "kind": 76,
+            "kind": "Not",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -142,7 +142,7 @@ Array [
       ],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -166,7 +166,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -183,7 +183,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -201,7 +201,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -219,7 +219,7 @@ Array [
         ArrayLiteral {
           "close": Object {
             "isReserved": false,
-            "kind": 3,
+            "kind": "RightSquare",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -285,7 +285,7 @@ Array [
           ],
           "open": Object {
             "isReserved": false,
-            "kind": 2,
+            "kind": "LeftSquare",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -303,7 +303,7 @@ Array [
         ArrayLiteral {
           "close": Object {
             "isReserved": false,
-            "kind": 3,
+            "kind": "RightSquare",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -369,7 +369,7 @@ Array [
           ],
           "open": Object {
             "isReserved": false,
-            "kind": 2,
+            "kind": "LeftSquare",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -387,7 +387,7 @@ Array [
       ],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -411,7 +411,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -428,7 +428,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -446,7 +446,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -512,7 +512,7 @@ Array [
       ],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -536,7 +536,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -553,7 +553,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -571,7 +571,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -588,7 +588,7 @@ Array [
       "elements": Array [],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -612,7 +612,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -629,7 +629,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -647,7 +647,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -664,7 +664,7 @@ Array [
       "elements": Array [],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -688,7 +688,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -705,7 +705,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -723,7 +723,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -789,7 +789,7 @@ Array [
       ],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -813,7 +813,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -830,7 +830,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -848,7 +848,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -914,7 +914,7 @@ Array [
       ],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -938,7 +938,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -955,7 +955,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -973,7 +973,7 @@ Array [
     "value": ArrayLiteral {
       "close": Object {
         "isReserved": false,
-        "kind": 3,
+        "kind": "RightSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1039,7 +1039,7 @@ Array [
       ],
       "open": Object {
         "isReserved": false,
-        "kind": 2,
+        "kind": "LeftSquare",
         "literal": undefined,
         "location": Object {
           "end": Object {

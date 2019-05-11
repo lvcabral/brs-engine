@@ -1,116 +1,116 @@
 export enum Lexeme {
     // parens (and friends)
-    LeftParen,
-    RightParen,
-    LeftSquare,
-    RightSquare,
-    LeftBrace,
-    RightBrace,
+    LeftParen = "LeftParen",
+    RightParen = "RightParen",
+    LeftSquare = "LeftSquare",
+    RightSquare = "RightSquare",
+    LeftBrace = "LeftBrace",
+    RightBrace = "RightBrace",
 
     // operators
-    Caret,
-    Minus,
-    Plus,
-    Star,
-    Slash,
-    Mod,
-    Backslash,
+    Caret = "Caret",
+    Minus = "Minus",
+    Plus = "Plus",
+    Star = "Star",
+    Slash = "Slash",
+    Mod = "Mod",
+    Backslash = "Backslash",
 
     // postfix operators
-    PlusPlus,   // ++
-    MinusMinus, // --
+    PlusPlus = "PlusPlus",   // ++
+    MinusMinus = "MinusMinus", // --
 
     // bitshift
-    LeftShift,  // <<
-    RightShift, // >>
+    LeftShift = "LeftShift",  // <<
+    RightShift = "RightShift", // >>
 
     // assignment operators
-    MinusEqual,      // -=
-    PlusEqual,       // +=
-    StarEqual,       // *=
-    SlashEqual,      // /=
-    BackslashEqual,  // \=
-    LeftShiftEqual,  // <<=
-    RightShiftEqual, // >>=
+    MinusEqual = "MinusEqual",      // -=
+    PlusEqual = "PlusEqual",       // +=
+    StarEqual = "StarEqual",       // *=
+    SlashEqual = "SlashEqual",      // /=
+    BackslashEqual = "BackslashEqual",  // \=
+    LeftShiftEqual = "LeftShiftEqual",  // <<=
+    RightShiftEqual = "RightShiftEqual", // >>=
 
     // comparators
-    Less,
-    LessEqual,
-    Greater,
-    GreaterEqual,
-    Equal,
-    LessGreater, // BrightScript uses `<>` for "not equal"
+    Less = "Less",
+    LessEqual = "LessEqual",
+    Greater = "Greater",
+    GreaterEqual = "GreaterEqual",
+    Equal = "Equal",
+    LessGreater = "LessGreater", // BrightScript uses `<>` for "not equal"
 
     // literals
-    Identifier,
-    String,
-    Integer,
-    Float,
-    Double,
-    LongInteger,
+    Identifier = "Identifier",
+    String = "String",
+    Integer = "Integer",
+    Float = "Float",
+    Double = "Double",
+    LongInteger = "LongInteger",
 
     // other single-character symbols
-    Dot,
-    Comma,
-    Colon,
-    Semicolon,
+    Dot = "Dot",
+    Comma = "Comma",
+    Colon = "Colon",
+    Semicolon = "Semicolon",
 
     // conditional compilation
-    HashIf,
-    HashElseIf,
-    HashElse,
-    HashEndIf,
-    HashConst,
-    HashError,
-    HashErrorMessage,
+    HashIf = "HashIf",
+    HashElseIf = "HashElseIf",
+    HashElse = "HashElse",
+    HashEndIf = "HashEndIf",
+    HashConst = "HashConst",
+    HashError = "HashError",
+    HashErrorMessage = "HashErrorMessage",
 
     // keywords
     // canonical source: https://sdkdocs.roku.com/display/sdkdoc/Reserved+Words
-    And,
-    Box,
-    CreateObject,
-    Dim,
-    Else,
-    ElseIf,
-    End,
-    EndFunction,
-    EndFor,
-    EndIf,
-    EndSub,
-    EndWhile,
-    Eval,
-    Exit,
-    ExitFor, // not technically a reserved word, but definitely a lexeme
-    ExitWhile,
-    False,
-    For,
-    ForEach,
-    Function,
-    GetGlobalAA,
-    GetLastRunCompileError,
-    GetLastRunRunTimeError,
-    Goto,
-    If,
-    Invalid,
-    Let,
-    LineNum,
-    Next,
-    Not,
-    ObjFun,
-    Or,
-    Pos,
-    Print,
-    Rem,
-    Return,
-    Step,
-    Sub,
-    Tab,
-    To,
-    True,
-    Type,
-    While,
+    And = "And",
+    Box = "Box",
+    CreateObject = "CreateObject",
+    Dim = "Dim",
+    Else = "Else",
+    ElseIf = "ElseIf",
+    End = "End",
+    EndFunction = "EndFunction",
+    EndFor = "EndFor",
+    EndIf = "EndIf",
+    EndSub = "EndSub",
+    EndWhile = "EndWhile",
+    Eval = "Eval",
+    Exit = "Exit",
+    ExitFor = "ExitFor", // not technically a reserved word, but definitely a lexeme
+    ExitWhile = "ExitWhile",
+    False = "False",
+    For = "For",
+    ForEach = "ForEach",
+    Function = "Function",
+    GetGlobalAA = "GetGlobalAA",
+    GetLastRunCompileError = "GetLastRunCompileError",
+    GetLastRunRunTimeError = "GetLastRunRunTimeError",
+    Goto = "Goto",
+    If = "If",
+    Invalid = "Invalid",
+    Let = "Let",
+    LineNum = "LineNum",
+    Next = "Next",
+    Not = "Not",
+    ObjFun = "ObjFun",
+    Or = "Or",
+    Pos = "Pos",
+    Print = "Print",
+    Rem = "Rem",
+    Return = "Return",
+    Step = "Step",
+    Sub = "Sub",
+    Tab = "Tab",
+    To = "To",
+    True = "True",
+    Type = "Type",
+    While = "While",
 
     // structural
-    Newline,
-    Eof
+    Newline = "Newline",
+    Eof = "Eof"
 }

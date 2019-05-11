@@ -38,7 +38,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -68,7 +68,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -85,7 +85,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -156,7 +156,7 @@ Array [
           },
           "token": Object {
             "isReserved": false,
-            "kind": 26,
+            "kind": "Greater",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -186,7 +186,7 @@ Array [
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -203,7 +203,7 @@ Array [
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -238,7 +238,7 @@ Array [
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -255,7 +255,7 @@ Array [
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -306,7 +306,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -323,7 +323,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -361,7 +361,7 @@ Array [
       "elseIfs": Array [
         Object {
           "isReserved": false,
-          "kind": 52,
+          "kind": "ElseIf",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -379,7 +379,7 @@ Array [
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -437,7 +437,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -469,7 +469,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -486,7 +486,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -521,7 +521,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -538,7 +538,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -576,7 +576,7 @@ Array [
       "elseIfs": Array [],
       "endIf": Object {
         "isReserved": false,
-        "kind": 56,
+        "kind": "EndIf",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -592,7 +592,7 @@ Array [
       },
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -608,7 +608,7 @@ Array [
       },
       "then": Object {
         "isReserved": true,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -665,7 +665,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -695,7 +695,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -712,7 +712,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -747,7 +747,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -764,7 +764,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -814,7 +814,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -831,7 +831,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -870,7 +870,7 @@ Array [
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -886,7 +886,7 @@ Array [
       },
       "then": Object {
         "isReserved": true,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -943,7 +943,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -973,7 +973,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -990,7 +990,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1061,7 +1061,7 @@ Array [
           },
           "token": Object {
             "isReserved": false,
-            "kind": 26,
+            "kind": "Greater",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1091,7 +1091,7 @@ Array [
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1108,7 +1108,7 @@ Array [
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -1143,7 +1143,7 @@ Array [
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1160,7 +1160,7 @@ Array [
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -1211,7 +1211,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1228,7 +1228,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1266,7 +1266,7 @@ Array [
       "elseIfs": Array [
         Object {
           "isReserved": false,
-          "kind": 52,
+          "kind": "ElseIf",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -1284,7 +1284,7 @@ Array [
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1300,7 +1300,7 @@ Array [
       },
       "then": Object {
         "isReserved": true,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1357,7 +1357,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1387,7 +1387,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1404,7 +1404,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1475,7 +1475,7 @@ Array [
           },
           "token": Object {
             "isReserved": false,
-            "kind": 28,
+            "kind": "Equal",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1505,7 +1505,7 @@ Array [
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -1522,7 +1522,7 @@ Array [
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -1573,7 +1573,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1590,7 +1590,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1629,7 +1629,7 @@ Array [
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1687,7 +1687,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1719,7 +1719,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1736,7 +1736,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1775,7 +1775,7 @@ Array [
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1791,7 +1791,7 @@ Array [
       },
       "then": Object {
         "isReserved": true,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1848,7 +1848,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -1878,7 +1878,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1895,7 +1895,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -1945,7 +1945,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -1962,7 +1962,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2001,7 +2001,7 @@ Array [
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -2017,7 +2017,7 @@ Array [
       },
       "then": Object {
         "isReserved": true,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -2074,7 +2074,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 24,
+        "kind": "Less",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -2104,7 +2104,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -2121,7 +2121,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2192,7 +2192,7 @@ Array [
           },
           "token": Object {
             "isReserved": false,
-            "kind": 28,
+            "kind": "Equal",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -2222,7 +2222,7 @@ Array [
             Assignment {
               "name": Object {
                 "isReserved": false,
-                "kind": 30,
+                "kind": "Identifier",
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
@@ -2239,7 +2239,7 @@ Array [
               "tokens": Object {
                 "equals": Object {
                   "isReserved": false,
-                  "kind": 28,
+                  "kind": "Equal",
                   "literal": undefined,
                   "location": Object {
                     "end": Object {
@@ -2290,7 +2290,7 @@ Array [
         Assignment {
           "name": Object {
             "isReserved": false,
-            "kind": 30,
+            "kind": "Identifier",
             "literal": undefined,
             "location": Object {
               "end": Object {
@@ -2307,7 +2307,7 @@ Array [
           "tokens": Object {
             "equals": Object {
               "isReserved": false,
-              "kind": 28,
+              "kind": "Equal",
               "literal": undefined,
               "location": Object {
                 "end": Object {
@@ -2346,7 +2346,7 @@ Array [
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
-        "kind": 71,
+        "kind": "If",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -2362,7 +2362,7 @@ Array [
       },
       "then": Object {
         "isReserved": true,
-        "kind": 30,
+        "kind": "Identifier",
         "literal": undefined,
         "location": Object {
           "end": Object {

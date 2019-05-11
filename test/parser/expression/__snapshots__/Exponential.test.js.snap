@@ -5,7 +5,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -22,7 +22,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -72,7 +72,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 6,
+        "kind": "Caret",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -96,7 +96,7 @@ Array [
   Assignment {
     "name": Object {
       "isReserved": false,
-      "kind": 30,
+      "kind": "Identifier",
       "literal": undefined,
       "location": Object {
         "end": Object {
@@ -113,7 +113,7 @@ Array [
     "tokens": Object {
       "equals": Object {
         "isReserved": false,
-        "kind": 28,
+        "kind": "Equal",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -164,7 +164,7 @@ Array [
         },
         "token": Object {
           "isReserved": false,
-          "kind": 6,
+          "kind": "Caret",
           "literal": undefined,
           "location": Object {
             "end": Object {
@@ -197,7 +197,7 @@ Array [
       },
       "token": Object {
         "isReserved": false,
-        "kind": 6,
+        "kind": "Caret",
         "literal": undefined,
         "location": Object {
           "end": Object {

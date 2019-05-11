@@ -56,7 +56,7 @@ Array [
     "tokens": Object {
       "print": Object {
         "isReserved": false,
-        "kind": 80,
+        "kind": "Print",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -97,7 +97,7 @@ Array [
       },
       Object {
         "isReserved": false,
-        "kind": 39,
+        "kind": "Semicolon",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -129,7 +129,7 @@ Array [
       },
       Object {
         "isReserved": false,
-        "kind": 39,
+        "kind": "Semicolon",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -163,7 +163,7 @@ Array [
     "tokens": Object {
       "print": Object {
         "isReserved": false,
-        "kind": 80,
+        "kind": "Print",
         "literal": undefined,
         "location": Object {
           "end": Object {
@@ -203,7 +203,7 @@ Array [
     "tokens": Object {
       "print": Object {
         "isReserved": false,
-        "kind": 80,
+        "kind": "Print",
         "literal": undefined,
         "location": Object {
           "end": Object {
