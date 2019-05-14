@@ -343,9 +343,6 @@ export class Parser {
                 let maybeAs = peek();
                 if (check(Lexeme.Identifier) && maybeAs.text.toLowerCase() === "as") {
                     advance();
-                    if (isSub) {
-                        throw addError(previous(), "'Sub' functions are always void returns, and can't have 'as' clauses");
-                    }
 
                     let typeToken = advance();
                     let typeString = typeToken.text || "";
