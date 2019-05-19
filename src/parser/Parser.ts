@@ -225,9 +225,9 @@ export class Parser {
         };
 
         /**
-         * Add an error at the given location. 
-         * @param location 
-         * @param message 
+         * Add an error at the given location.
+         * @param location
+         * @param message
          */
         const addErrorAtLocation = (location: Location, message: string) => {
             addError({ location: location } as any, message);
@@ -322,7 +322,7 @@ export class Parser {
 
                     //prevent functions from ending with type designators
                     let lastChar = name.text[name.text.length - 1];
-                    if (["$", "%", "!", "#"].indexOf(lastChar) > -1) {
+                    if (["$", "%", "!", "#"].includes(lastChar)) {
                         //don't throw this error; let the parser continue
                         addError(name, `Function name '${name.text}' cannot end with type designator '${lastChar}'`);
                     }
@@ -453,7 +453,7 @@ export class Parser {
         function assignment(...additionalterminators: Lexeme[]): Stmt.Assignment {
             let name = advance() as Identifier;
             //add error if name is a reserved word that cannot be used as an identifier
-            if (disallowedIdentifiers.indexOf(name.text.toLowerCase()) > -1) {
+            if (disallowedIdentifiers.includes(name.text.toLowerCase())) {
                 //don't throw...this is fully recoverable
                 addError(name, `Cannot use reserved word "${name.text}" as an identifier`);
             }
@@ -1243,7 +1243,7 @@ export class Parser {
         function consumeUntil(...stopLexemes: Lexeme[]) {
             let result = [] as Token[];
             //take tokens until we encounter one of the stopLexemes
-            while (stopLexemes.indexOf(peek().kind) === -1) {
+            while (!stopLexemes.includes(peek().kind)) {
                 result.push(advance());
             }
             return result;

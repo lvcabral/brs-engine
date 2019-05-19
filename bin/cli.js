@@ -21,16 +21,18 @@ program
         "The root directory from which `pkg:` paths will be resolved.",
         process.cwd()
     )
-    .action((brsFiles, program) => {
+    .action(async (brsFiles, program) => {
         if (brsFiles.length > 0) {
-            brs.execute(brsFiles, { root: program.root }).catch(err => {
+            try {
+                await brs.execute(brsFiles, { root: program.root })
+            } catch (err) {
                 if (err.messages && err.messages.length) {
                     err.messages.forEach(message => console.error(message));
                 } else {
                     console.error(err.message);
                 }
-                process.exit(1);
-            });
+                process.exitCode = 1;
+            }
         } else {
             brs.repl();
         }

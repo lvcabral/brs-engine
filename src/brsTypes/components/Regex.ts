@@ -43,7 +43,7 @@ export class Regex extends BrsComponent implements BrsValue {
         for (const flag of inputFlags) {
             if (flag === "x") {
                 console.warn("'x' flag is not implemented yet, ignoring flag.");
-            } else if(this.supportedFlags.indexOf(flag) === -1) {
+            } else if(!this.supportedFlags.includes(flag)) {
                 throw new Error(`${flag} is not supported.`);
             } else {
                 parsedFlags += flag;

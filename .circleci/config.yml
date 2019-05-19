@@ -24,11 +24,6 @@ jobs:
       - store_test_results:
           path: reports/jest
 
-  "Node 6":
-    <<: *build-lint-test
-    docker:
-      - image: circleci/node:6
-
   "Node 8":
     <<: *build-lint-test
     docker:
@@ -39,10 +34,10 @@ jobs:
     docker:
       - image: circleci/node:10
 
-  "Node 11":
+  "Node 12":
     <<: *build-lint-test
     docker:
-      - image: circleci/node:11
+      - image: circleci/node:12
 
   "Publish nightly build":
     working_directory: ~/circleci
@@ -64,10 +59,9 @@ workflows:
   version: 2
   "Node - supported versions":
     jobs:
-      - "Node 6"
       - "Node 8"
       - "Node 10"
-      - "Node 11"
+      - "Node 12"
 
   "Nightly build":
     triggers:
@@ -78,14 +72,12 @@ workflows:
               only:
                 - master
     jobs:
-      - "Node 6"
       - "Node 8"
       - "Node 10"
-      - "Node 11"
+      - "Node 12"
       - "Publish nightly build":
           requires:
-            - "Node 6"
             - "Node 8"
             - "Node 10"
-            - "Node 11"
+            - "Node 12"
 

@@ -17,41 +17,41 @@ describe("end to end iterables", () => {
         jest.restoreAllMocks();
     });
 
-    test("arrays.brs", () => {
-        return execute([ resourceFile("arrays.brs") ], outputStreams).then(() => {
-            expect(
-                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-            ).toEqual([
-                "1", "4", "9", // squared values, via for-each
-                "27",          // two-dimensional index
-                "16",          // 2 ^ 4
-                "foo bar"      // oneDimensional[0] += " bar"
-            ]);
-        });
+    test("arrays.brs", async () => {
+        await execute([ resourceFile("arrays.brs") ], outputStreams);
+
+        expect(
+            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+        ).toEqual([
+            "1", "4", "9", // squared values, via for-each
+            "27",          // two-dimensional index
+            "16",          // 2 ^ 4
+            "foo bar"      // oneDimensional[0] += " bar"
+        ]);
     });
 
-    test("associative-arrays.brs", () => {
-        return execute([ resourceFile("associative-arrays.brs") ], outputStreams).then(() => {
-            expect(
-                allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-            ).toEqual([
-                // iterate through keys
-                "has-second-layer",
-                "level",
-                "secondlayer",
+    test("associative-arrays.brs", async () => {
+        await execute([ resourceFile("associative-arrays.brs") ], outputStreams);
 
-                // twoDimensional.secondLayer.level
-                "2",
+        expect(
+            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
+        ).toEqual([
+            // iterate through keys
+            "has-second-layer",
+            "level",
+            "secondlayer",
 
-                // after adding a third layer, twoDimensional.secondLayer.thirdLayer.level
-                "3",
+            // twoDimensional.secondLayer.level
+            "2",
 
-                // modify twoDimensional.secondLayer.level to sanity-check *= and friends
-                "6",
+            // after adding a third layer, twoDimensional.secondLayer.thirdLayer.level
+            "3",
 
-                // add `false` via expression to `empty`
-                "false"
-            ]);
-        });
+            // modify twoDimensional.secondLayer.level to sanity-check *= and friends
+            "6",
+
+            // add `false` via expression to `empty`
+            "false"
+        ]);
     });
 });

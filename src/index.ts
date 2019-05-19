@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as readline from "readline";
-import promisify from "pify";
+import { promisify } from "util";
 import pSettle from "p-settle";
 const readFile = promisify(fs.readFile);
 

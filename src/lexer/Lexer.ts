@@ -580,7 +580,7 @@ export class Lexer {
             //look for a type designator character ($ % ! #). vars may have them, but functions
             //may not. Let the parser figure that part out.
             let nextChar = peek();
-            if (["$", "%", "!", "#"].indexOf(nextChar) > -1) {
+            if (["$", "%", "!", "#"].includes(nextChar)) {
                 text += nextChar;
                 advance();
             }

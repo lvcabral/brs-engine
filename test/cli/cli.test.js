@@ -1,11 +1,11 @@
 const child_process = require("child_process");
 const path = require("path");
-const pify = require("pify");
+const { promisify } = require("util");
 
-const exec = pify(child_process.exec);
+const exec = promisify(child_process.exec);
 
 describe("cli", () => {
-    it("accepts a root directory", () => {
+    it("accepts a root directory", async () => {
         let rootDir = path.join(__dirname, "resources");
 
         let command = [
@@ -15,23 +15,21 @@ describe("cli", () => {
             path.join(rootDir, "requires-manifest.brs")
         ].join(" ");
 
-        return exec(command).then((stdout, stderr) => {
-            expect(stdout.trim()).toEqual("hi from foo()");
-        });
+        let { stdout } = await exec(command);
+        expect(stdout.trim()).toEqual("hi from foo()");
     });
 
-    it("defaults --root to process.cwd()", () => {
+    it("defaults --root to process.cwd()", async () => {
         let command = [
             "node",
             path.join(process.cwd(), "bin", "cli.js"),
             "requires-manifest.brs"
         ].join(" ");
 
-        return exec(command, {
+        let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources")
-        }).then((stdout, stderr) => {
-            expect(stdout.trim()).toEqual("hi from foo()");
         });
+        expect(stdout.trim()).toEqual("hi from foo()");
     });
 });
 

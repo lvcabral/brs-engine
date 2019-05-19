@@ -5,20 +5,22 @@ jest.mock("fs");
 const fs = require("fs");
 
 describe("manifest support", () => {
-    describe("manifest parser", () => {
-        afterEach(() => {
-            fs.exists.mockRestore();
-        });
+    afterEach(() => {
+        fs.readFile.mockRestore();
+    });
 
+    describe("manifest parser", () => {
         it("returns an empty map if manifest not found", () => {
-            fs.exists.mockImplementation((filename, cb) => cb(false));
+            fs.readFile.mockImplementation(
+                (filename, encoding, cb) => cb(new Error("File not found"), null)
+            );
+
             return expect(
                 getManifest("/no/manifest/here")
             ).resolves.toEqual(new Map());
         });
 
         it("rejects key-value pairs with no '='", () => {
-            fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(/* no error */ null, "no_equal")
             );
@@ -29,7 +31,6 @@ describe("manifest support", () => {
         });
 
         it("ignores comments", () => {
-            fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(/* no error */ null, "# this line is ignored!")
             );
@@ -40,7 +41,6 @@ describe("manifest support", () => {
         });
 
         it("ignores empty keys and values", () => {
-            fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(
                     /* no error */ null,
@@ -54,7 +54,6 @@ describe("manifest support", () => {
         });
 
         it("trims whitespace from keys and values", () => {
-            fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb( /* no error */ null, "    key = value    ")
             );
@@ -69,7 +68,6 @@ describe("manifest support", () => {
         });
 
         it("parses key-value pairs", () => {
-            fs.exists.mockImplementation((filename, cb) => cb(true));
             fs.readFile.mockImplementation(
                 (filename, encoding, cb) => cb(
                     /* no error */ null,

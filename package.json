@@ -27,8 +27,7 @@
     "long": "^3.2.0",
     "luxon": "^1.8.3",
     "memory-fs": "^0.4.1",
-    "p-settle": "^2.1.0",
-    "pify": "^4.0.1"
+    "p-settle": "^2.1.0"
   },
   "devDependencies": {
     "@types/jest": "^23.3.13",
@@ -38,7 +37,6 @@
     "@types/memory-fs": "^0.3.2",
     "@types/node": "^8.5.2",
     "@types/p-settle": "^2.0.1",
-    "@types/pify": "^3.0.2",
     "jest": "^24.0.0",
     "jest-junit": "^6.1.0",
     "npm-run-all": "^4.1.2",
