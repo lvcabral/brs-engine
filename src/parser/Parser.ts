@@ -518,7 +518,9 @@ export class Parser {
 
             if (checkEnd()) { return endStatement(); }
 
-            if (match(Lexeme.Return)) { return returnStatement(); }
+            if (match(Lexeme.Return)) {
+                return returnStatement();
+            }
 
             // TODO: support multi-statements
             return setStatement(...additionalterminators);
@@ -688,9 +690,9 @@ export class Parser {
             let elseIfBranches: Stmt.ElseIf[] = [];
             let elseBranch: Stmt.Block | undefined;
 
-            let then: Token | undefined;
+            let thenToken: Token | undefined;
             let elseIfTokens: Token[] = [];
-            let endIf: Token | undefined;
+            let endIfToken: Token | undefined;
 
             /**
              * A simple wrapper around `check`, to make tests for a `then` identifier.
@@ -705,21 +707,38 @@ export class Parser {
 
             if (checkThen()) {
                 // `then` is optional after `if ...condition...`, so only advance to the next token if `then` is present
-                then = advance();
+                thenToken = advance();
             }
 
-            if (match(Lexeme.Newline)) {
+            if (match(Lexeme.Newline) || match(Lexeme.Colon)) {
+                //consume until no more colons
+                while (check(Lexeme.Colon)) { advance(); }
+
+                //consume exactly 1 newline, if found
+                if (check(Lexeme.Newline)) { advance(); }
+
+                //keep track of the current error count, because if the then branch fails, 
+                //we will trash them in favor of a single error on if
+                var errorsLengthBeforeBlock = errors.length;
+
                 // we're parsing a multi-line ("block") form of the BrightScript if/then/else and must find
                 // a trailing "end if"
 
                 let maybeThenBranch = block(Lexeme.EndIf, Lexeme.Else, Lexeme.ElseIf);
                 if (!maybeThenBranch) {
-                    throw addError(peek(), "Expected 'end if', 'else if', or 'else' to terminate 'then' block");
+                    //throw out any new errors created as a result of a `then` block parse failure.
+                    //the block() function will discard the current line, so any discarded errors will
+                    //resurface if they are legitimate, and not a result of a malformed if statement
+                    errors.splice(errorsLengthBeforeBlock, errors.length - errorsLengthBeforeBlock);
+
+                    //this whole if statement is bogus...add error to the if token and hard-fail
+                    throw addError(ifToken, "Expected 'end if', 'else if', or 'else' to terminate 'then' block");
                 }
+
 
                 let blockEnd = previous();
                 if (blockEnd.kind === Lexeme.EndIf) {
-                    endIf = blockEnd;
+                    endIfToken = blockEnd;
                 }
 
                 thenBranch = maybeThenBranch;
@@ -733,6 +752,10 @@ export class Parser {
                         // `then` is optional after `else if ...condition...`, so only advance to the next token if `then` is present
                         advance();
                     }
+
+                    //consume any trailing colons
+                    while (check(Lexeme.Colon)) { advance(); }
+
                     match(Lexeme.Newline);
                     let elseIfThen = block(Lexeme.EndIf, Lexeme.Else, Lexeme.ElseIf);
                     if (!elseIfThen) {
@@ -741,7 +764,7 @@ export class Parser {
 
                     let blockEnd = previous();
                     if (blockEnd.kind === Lexeme.EndIf) {
-                        endIf = blockEnd;
+                        endIfToken = blockEnd;
                     }
 
                     elseIfBranches.push({
@@ -751,16 +774,37 @@ export class Parser {
                 }
 
                 if (match(Lexeme.Else)) {
+                    //consume any trailing colons
+                    while (check(Lexeme.Colon)) { advance(); }
+
                     match(Lexeme.Newline);
                     elseBranch = block(Lexeme.EndIf);
-                    advance(); // skip past "end if"
+                    let endIfToken = advance(); // skip past "end if"
+
+                    //ensure that single-line `if` statements have a colon right before 'end if'
+                    if (ifToken.location.start.line === endIfToken.location.start.line) {
+                        let index = tokens.indexOf(endIfToken);
+                        let previousToken = tokens[index - 1];
+                        if (previousToken.kind !== Lexeme.Colon) {
+                            addError(endIfToken, "Expected ':' to preceed 'end if'");
+                        }
+                    }
                     match(Lexeme.Newline);
                 } else {
                     match(Lexeme.Newline);
-                    endIf = consume(
+                    endIfToken = consume(
                         `Expected 'end if' to close 'if' statement started on line ${startingLine}`,
                         Lexeme.EndIf
                     );
+
+                    //ensure that single-line `if` statements have a colon right before 'end if'
+                    if (ifToken.location.start.line === endIfToken.location.start.line) {
+                        let index = tokens.indexOf(endIfToken);
+                        let previousToken = tokens[index - 1];
+                        if (previousToken.kind !== Lexeme.Colon) {
+                            addError(endIfToken, "Expected ':' to preceed 'end if'");
+                        }
+                    }
                     match(Lexeme.Newline);
                 }
             } else {
@@ -801,9 +845,9 @@ export class Parser {
             return new Stmt.If(
                 {
                     if: ifToken,
-                    then: then,
+                    then: thenToken,
                     elseIfs: elseIfTokens,
-                    endIf: endIf
+                    endIf: endIfToken
                 },
                 condition,
                 thenBranch,
@@ -920,7 +964,7 @@ export class Parser {
             }
 
             let toReturn = expression();
-            while (match(Lexeme.Newline));
+            while (match(Lexeme.Newline, Lexeme.Colon));
 
             return new Stmt.Return(tokens, toReturn);
         }
