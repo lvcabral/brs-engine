@@ -175,6 +175,18 @@ describe("lexer", () => {
             expect(d.kind).toBe(Lexeme.Double);
             expect(d.literal).toEqual(new Double(2500));
         });
+
+        it("allows digits before `.` to be elided", () => {
+            let f = Lexer.scan(".123#").tokens[0];
+            expect(f.kind).toBe(Lexeme.Double);
+            expect(f.literal).toEqual(new Double(0.123));
+        });
+
+        it("allows digits after `.` to be elided", () => {
+            let f = Lexer.scan("12.#").tokens[0];
+            expect(f.kind).toBe(Lexeme.Double);
+            expect(f.literal).toEqual(new Double(12));
+        });
     });
 
     describe("float literals", () => {
@@ -196,6 +208,18 @@ describe("lexer", () => {
             let f = Lexer.scan("2.5e3").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
             expect(f.literal).toEqual(new Float(2500));
+        });
+
+        it("allows digits before `.` to be elided", () => {
+            let f = Lexer.scan(".123").tokens[0];
+            expect(f.kind).toBe(Lexeme.Float);
+            expect(f.literal).toEqual(new Float(0.123));
+        });
+
+        it("allows digits after `.` to be elided", () => {
+            let f = Lexer.scan("12.").tokens[0];
+            expect(f.kind).toBe(Lexeme.Float);
+            expect(f.literal).toEqual(new Float(12));
         });
     });
 

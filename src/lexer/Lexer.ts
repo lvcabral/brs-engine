@@ -144,7 +144,15 @@ export class Lexer {
                 case "[": addToken(Lexeme.LeftSquare); break;
                 case "]": addToken(Lexeme.RightSquare); break;
                 case ",": addToken(Lexeme.Comma); break;
-                case ".": addToken(Lexeme.Dot); break;
+                case ".":
+                    // this might be a float/double literal, because decimals without a leading 0
+                    // are allowed
+                    if (isDecimalDigit(peek())) {
+                        decimalNumber(true);
+                    } else {
+                        addToken(Lexeme.Dot);
+                    }
+                    break;
                 case "+":
                     switch (peek()) {
                         case "=":
@@ -290,7 +298,7 @@ export class Lexer {
                     break;
                 default:
                     if (isDecimalDigit(c)) {
-                        decimalNumber();
+                        decimalNumber(false);
                     } else if (c === "&" && peek().toLowerCase() === "h") {
                         advance(); // move past 'h'
                         hexadecimalNumber();
@@ -402,15 +410,16 @@ export class Lexer {
          * exponential portions as well as trailing type identifiers, and adds the produced token
          * to the `tokens` array. Also responsible for BrightScript's integer literal vs. float
          * literal rules.
+         * @param hasSeenDecimal `true` if decimal point has already been found, otherwise `false`
          *
          * @see https://sdkdocs.roku.com/display/sdkdoc/Expressions%2C+Variables%2C+and+Types#Expressions,Variables,andTypes-NumericLiterals
          */
-        function decimalNumber() {
-            let containsDecimal = false;
+        function decimalNumber(hasSeenDecimal: boolean) {
+            let containsDecimal = hasSeenDecimal;
             while (isDecimalDigit(peek())) { advance(); }
 
             // look for a fractional portion
-            if (peek() === "." && isDecimalDigit(peekNext())) {
+            if (!hasSeenDecimal && peek() === ".") {
                 containsDecimal = true;
 
                 // consume the "." parse the fractional part
