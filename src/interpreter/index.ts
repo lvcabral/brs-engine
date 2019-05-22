@@ -254,7 +254,35 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         let value = this.evaluate(statement.value);
-        this.environment.define(Scope.Function, statement.name.text!, value);
+
+        let name = statement.name.text;
+
+        const typeDesignators: Record<string, ValueKind> = {
+            "$": ValueKind.String,
+            "%": ValueKind.Int32,
+            "!": ValueKind.Float,
+            "#": ValueKind.Double,
+            "&": ValueKind.Int64
+        };
+        let requiredType = typeDesignators[name.charAt(name.length - 1)];
+
+        if (requiredType && requiredType !== value.kind) {
+            return this.addError(
+                new TypeMismatch({
+                    message: `Attempting to assign incorrect value to statically-typed variable '${name}'`,
+                    left: {
+                        type: requiredType,
+                        location: statement.name.location
+                    },
+                    right: {
+                        type: value,
+                        location: statement.value.location
+                    }
+                })
+            );
+        }
+
+        this.environment.define(Scope.Function, statement.name.text, value);
         return BrsInvalid.Instance;
     }
 

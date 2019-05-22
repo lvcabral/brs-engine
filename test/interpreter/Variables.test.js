@@ -4,7 +4,7 @@ const { token, identifier } = require("../parser/ParserTests");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("brs");
 const { Lexeme } = brs.lexer;
-const { Int32, BrsString, BrsInvalid } = brs.types;
+const { Int32, Int64, Float, Double, BrsString, BrsInvalid, ValueKind } = brs.types;
 
 let interpreter;
 
@@ -67,5 +67,96 @@ describe("interpreter variables", () => {
         ];
 
         expect(() => interpreter.exec(ast)).toThrow(/reserved name/);
+    });
+
+    it("allows values of matching declared types", () => {
+        let assign = [
+            new Stmt.Assignment(
+                tokens,
+                identifier("str$"),
+                new Expr.Literal(new BrsString("$ suffix for strings"))
+            ),
+            new Stmt.Assignment(
+                tokens,
+                identifier("int32%"),
+                new Expr.Literal(new Int32(1))
+            ),
+            new Stmt.Assignment(
+                tokens,
+                identifier("float!"),
+                new Expr.Literal(new Float(2))
+            ),
+            new Stmt.Assignment(
+                tokens,
+                identifier("double#"),
+                new Expr.Literal(new Double(3))
+            ),
+            new Stmt.Assignment(
+                tokens,
+                identifier("int64&"),
+                new Expr.Literal(new Int64(4))
+            )
+        ];
+
+        expect(() => interpreter.exec(assign)).not.toThrow();
+
+        let retrieve = ["str$", "int32%", "float!", "double#", "int64&"].map(name =>
+                new Stmt.Expression(
+                    new Expr.Variable(
+                        identifier(name)
+                    )
+                )
+        );
+
+        let stored = interpreter.exec(retrieve);
+        expect(stored).toEqual([
+            new BrsString("$ suffix for strings"),
+            new Int32(1),
+            new Float(2),
+            new Double(3),
+            new Int64(4)
+        ]);
+    });
+
+    describe("type mismatch errors", () => {
+        let str = new BrsString("foo");
+        let int32 = new Int32(1);
+        let float = new Float(2);
+        let double = new Double(3);
+        let int64 = new Int64(4);
+
+        [
+            {
+                lhs: "string$",
+                values: [ int32, int64, float, double ]
+            },
+            {
+                lhs: "int32%",
+                values: [ str, float, double, int64 ]
+            },
+            {
+                lhs: "float!",
+                values: [ str, int32, double, int64 ]
+            },
+            {
+                lhs: "double#",
+                values: [ str, int32, float, int64 ]
+            },
+            {
+                lhs: "int64&",
+                values: [ str, int32, float, double ]
+            }
+        ].forEach(({lhs, values}) => {
+            test(lhs, () => {
+                values.forEach(value => {
+                    let assign = new Stmt.Assignment(
+                        tokens,
+                        identifier(lhs),
+                        new Expr.Literal(value)
+                    );
+                    expect(() => interpreter.exec([assign])).toThrowError(/statically-typed variable/);
+                });
+            });
+        });
     });
 });

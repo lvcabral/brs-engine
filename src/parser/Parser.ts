@@ -322,7 +322,7 @@ export class Parser {
 
                     //prevent functions from ending with type designators
                     let lastChar = name.text[name.text.length - 1];
-                    if (["$", "%", "!", "#"].includes(lastChar)) {
+                    if (["$", "%", "!", "#", "&"].includes(lastChar)) {
                         //don't throw this error; let the parser continue
                         addError(name, `Function name '${name.text}' cannot end with type designator '${lastChar}'`);
                     }

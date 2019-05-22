@@ -50,6 +50,14 @@ describe("function argument type checking", () => {
                 /Attempting to return value of type Integer, but function returnsString declares return value of type String/
             );
         });
+    });
 
+    it("errors when assigning a mismatched type ", () => {
+        return execute([ resourceFile("type-checking", "assignment-type-mismatch.brs") ], outputStreams).catch(() => {
+            const output = allArgs(stderr);
+            expect(output[0]).toMatch(
+                /Attempting to assign incorrect value to statically-typed variable/
+            );
+        });
     });
 });

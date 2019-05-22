@@ -47,7 +47,7 @@ export interface TypeMismatchMetadata {
 
 export type TypeAndLocation = {
     /** The type of a value involved in a type mismatch. */
-    type: BrsType,
+    type: BrsType | ValueKind,
     /** The location at which the offending value was resolved. */
     location: Location
 };
@@ -60,18 +60,31 @@ export class TypeMismatch extends BrsError {
     constructor(mismatchMetadata: TypeMismatchMetadata) {
         let messageLines = [
             mismatchMetadata.message,
-            `    left: ${ValueKind.toString(mismatchMetadata.left.type.kind)}`
+            `    left: ${ValueKind.toString(getKind(mismatchMetadata.left.type))}`
         ];
         let location = mismatchMetadata.left.location;
 
         if (mismatchMetadata.right) {
             messageLines.push(
-            `    right: ${ValueKind.toString(mismatchMetadata.right.type.kind)}`
+            `    right: ${ValueKind.toString(getKind(mismatchMetadata.right.type))}`
             );
 
             location.end = mismatchMetadata.right.location.end;
         }
 
         super(messageLines.join("\n"), location);
+    }
+}
+
+/**
+ * Returns the `.kind` property of a `BrsType`, otherwise returns the provided `ValueKind`.
+ * @param maybeType the `BrsType` to extract a `.kind` field from, or the `ValueKind` to return directly
+ * @returns the `ValueKind` for `maybeType`
+ */
+function getKind(maybeType: BrsType | ValueKind): ValueKind {
+    if (typeof maybeType === "number") {
+        return maybeType;
+    } else {
+        return maybeType.kind;
     }
 }

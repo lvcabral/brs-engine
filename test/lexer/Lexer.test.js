@@ -291,6 +291,19 @@ describe("lexer", () => {
             expect(identifier.kind).toBe(Lexeme.Identifier);
             expect(identifier.text).toBe("_abc_123_");
         });
+
+        it("allows identifiers with trailing type designators", () => {
+            let { tokens } = Lexer.scan("lorem$ ipsum% dolor! sit# amet&");
+            let identifiers = tokens.filter(t => t.kind !== Lexeme.Eof);
+            expect(identifiers.every(t => t.kind === Lexeme.Identifier));
+            expect(identifiers.map(t => t.text)).toEqual([
+                "lorem$",
+                "ipsum%",
+                "dolor!",
+                "sit#",
+                "amet&"
+            ]);
+        });
     });
 
     describe("conditional compilation", () => {
