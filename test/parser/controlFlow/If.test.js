@@ -139,7 +139,7 @@ describe("parser if statements", () => {
         it("parses if-else", () => {
             //this test requires token locations, so use the lexer
             let { tokens } = brs.lexer.Lexer.scan(`
-                if 1 < 2 then 
+                if 1 < 2 then
                     foo = true
                 else
                     foo = false
@@ -262,7 +262,6 @@ describe("parser if statements", () => {
     });
 
     it('catches one-line if statement with colon and missing end if', () => {
-        debugger;
         //missing 'end if'
         let { tokens } = brs.lexer.Lexer.scan(`
             function missingendif()
@@ -270,7 +269,6 @@ describe("parser if statements", () => {
             end function
         `);
         let { statements, errors } = brs.parser.Parser.parse(tokens);
-        console.log(errors);
         expect(errors.length).toEqual(1);
         expect(statements).toMatchSnapshot();
     });
@@ -313,7 +311,7 @@ describe("parser if statements", () => {
     });
 
 
-    // TODO: Improve `if` statement structure to allow a linter to require a `uthenu` keyword for
+    // TODO: Improve `if` statement structure to allow a linter to require a `then` keyword for
     // all `if` statements, then test location tracking
     test.todo("location tracking");
 });
