@@ -261,7 +261,7 @@ describe("lexer", () => {
         it("matches single-word keywords", () => {
             // test just a sample of single-word reserved words for now.
             // if we find any that we've missed
-            let { tokens } = Lexer.scan("and or if else endif return true false");
+            let { tokens } = Lexer.scan("and or if else endif return true false line_num");
             expect(tokens.map(w => w.kind)).toEqual([
                 Lexeme.And,
                 Lexeme.Or,
@@ -271,6 +271,7 @@ describe("lexer", () => {
                 Lexeme.Return,
                 Lexeme.True,
                 Lexeme.False,
+                Lexeme.Identifier,
                 Lexeme.Eof
             ]);
             expect(tokens.filter(w => !!w.literal).length).toBe(0);

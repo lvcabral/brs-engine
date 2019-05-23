@@ -40,9 +40,7 @@ const assignmentOperators = [
     Lexeme.RightShiftEqual
 ];
 
-/**
- * List of Lexeme that are permitted as property names
- */
+/** List of Lexemes that are permitted as property names. */
 const allowedProperties = [
     Lexeme.And,
     Lexeme.Box,
@@ -71,7 +69,6 @@ const allowedProperties = [
     Lexeme.If,
     Lexeme.Invalid,
     Lexeme.Let,
-    Lexeme.LineNum,
     Lexeme.Next,
     Lexeme.Not,
     Lexeme.ObjFun,
@@ -89,9 +86,7 @@ const allowedProperties = [
     Lexeme.While,
 ];
 
-/**
- * List of Lexeme that are allowed as local var identifiers
- */
+/** List of Lexeme that are allowed as local var identifiers. */
 const allowedIdentifiers = [
     Lexeme.EndFor,
     Lexeme.ExitFor,
@@ -102,48 +97,49 @@ const allowedIdentifiers = [
  * List of string versions of Lexeme that are NOT allowed as local var identifiers.
  * Used to throw more helpful "you can't use a reserved word as an identifier" errors.
  */
-export const disallowedIdentifiers = [
-    Lexeme.And,
-    Lexeme.Box,
-    Lexeme.CreateObject,
-    Lexeme.Dim,
-    Lexeme.Else,
-    Lexeme.ElseIf,
-    Lexeme.End,
-    Lexeme.EndFunction,
-    Lexeme.EndIf,
-    Lexeme.EndSub,
-    Lexeme.EndWhile,
-    Lexeme.Eval,
-    Lexeme.Exit,
-    Lexeme.ExitWhile,
-    Lexeme.False,
-    Lexeme.For,
-    Lexeme.Function,
-    Lexeme.GetGlobalAA,
-    Lexeme.GetLastRunCompileError,
-    Lexeme.GetLastRunRunTimeError,
-    Lexeme.Goto,
-    Lexeme.If,
-    Lexeme.Invalid,
-    Lexeme.Let,
-    Lexeme.LineNum,
-    Lexeme.Next,
-    Lexeme.Not,
-    Lexeme.ObjFun,
-    Lexeme.Or,
-    Lexeme.Pos,
-    Lexeme.Print,
-    Lexeme.Rem,
-    Lexeme.Return,
-    Lexeme.Step,
-    Lexeme.Sub,
-    Lexeme.Tab,
-    Lexeme.To,
-    Lexeme.True,
-    Lexeme.Type,
-    Lexeme.While,
-].map(x => Lexeme[x].toLowerCase());
+const disallowedIdentifiers = new Set(
+    [
+        Lexeme.And,
+        Lexeme.Box,
+        Lexeme.CreateObject,
+        Lexeme.Dim,
+        Lexeme.Else,
+        Lexeme.ElseIf,
+        Lexeme.End,
+        Lexeme.EndFunction,
+        Lexeme.EndIf,
+        Lexeme.EndSub,
+        Lexeme.EndWhile,
+        Lexeme.Eval,
+        Lexeme.Exit,
+        Lexeme.ExitWhile,
+        Lexeme.False,
+        Lexeme.For,
+        Lexeme.Function,
+        Lexeme.GetGlobalAA,
+        Lexeme.GetLastRunCompileError,
+        Lexeme.GetLastRunRunTimeError,
+        Lexeme.Goto,
+        Lexeme.If,
+        Lexeme.Invalid,
+        Lexeme.Let,
+        Lexeme.Next,
+        Lexeme.Not,
+        Lexeme.ObjFun,
+        Lexeme.Or,
+        Lexeme.Pos,
+        Lexeme.Print,
+        Lexeme.Rem,
+        Lexeme.Return,
+        Lexeme.Step,
+        Lexeme.Sub,
+        Lexeme.Tab,
+        Lexeme.To,
+        Lexeme.True,
+        Lexeme.Type,
+        Lexeme.While,
+    ].map(x => Lexeme[x].toLowerCase())
+);
 
 /** The results of a Parser's parsing pass. */
 interface ParseResults {
@@ -453,7 +449,7 @@ export class Parser {
         function assignment(...additionalterminators: Lexeme[]): Stmt.Assignment {
             let name = advance() as Identifier;
             //add error if name is a reserved word that cannot be used as an identifier
-            if (disallowedIdentifiers.includes(name.text.toLowerCase())) {
+            if (disallowedIdentifiers.has(name.text.toLowerCase())) {
                 //don't throw...this is fully recoverable
                 addError(name, `Cannot use reserved word "${name.text}" as an identifier`);
             }
@@ -717,7 +713,7 @@ export class Parser {
                 //consume exactly 1 newline, if found
                 if (check(Lexeme.Newline)) { advance(); }
 
-                //keep track of the current error count, because if the then branch fails, 
+                //keep track of the current error count, because if the then branch fails,
                 //we will trash them in favor of a single error on if
                 var errorsLengthBeforeBlock = errors.length;
 

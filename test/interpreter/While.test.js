@@ -57,8 +57,7 @@ describe("interpreter while loops", () => {
             )
         ];
 
-        let results = interpreter.exec(statements);
-        expect(results.map(r => r.reason)).toEqual([Stmt.StopReason.End, Stmt.StopReason.End]);
+        interpreter.exec(statements);
         expect(decrementSpy).toHaveBeenCalledTimes(5);
     });
 
@@ -104,13 +103,12 @@ describe("interpreter while loops", () => {
                 ),
                 new Stmt.Block([
                     decrementFoo,
-                    new Stmt.ExitWhile()
+                    new Stmt.ExitWhile({ exitWhile: token(Lexeme.ExitWhile, "exit while") })
                 ])
             )
         ];
 
-        let results = interpreter.exec(statements);
-        expect(results.map(r => r.reason)).toEqual([Stmt.StopReason.End, Stmt.StopReason.End]);
+        interpreter.exec(statements);
         expect(decrementSpy).toHaveBeenCalledTimes(1);
     });
 

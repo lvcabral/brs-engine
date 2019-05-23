@@ -83,7 +83,6 @@ export const KeyWords: {[key: string]: L} = {
     if: L.If,
     invalid: L.Invalid,
     let: L.Let,
-    line_num: L.LineNum,
     mod: L.Mod,
     next: L.Next,
     not: L.Not,

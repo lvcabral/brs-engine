@@ -114,7 +114,7 @@ describe("interpreter function declarations", () => {
                     ValueKind.Int32,
                     new Stmt.Block([
                         new Stmt.Return(
-                            token(Lexeme.Return, "return"),
+                            { return: token(Lexeme.Return, "return") },
                             new Expr.Variable(
                                 identifier("input")
                             )

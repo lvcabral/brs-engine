@@ -30,7 +30,7 @@ import * as StdLib from "../stdlib";
 import { Scope, Environment, NotFound } from "./Environment";
 import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
-import { BlockEnd, StopReason, Runtime, Expression } from "../parser/Statement";
+import { Runtime } from "../parser/Statement";
 import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
 import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
@@ -125,7 +125,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = newEnv;
             return func(this);
         } catch (err) {
-            if (err.kind == null) {
+            if (!(err instanceof BrsError)) {
                 console.error("Runtime error encountered in BRS implementation: ", err);
             }
             throw err;
@@ -188,11 +188,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitReturn(statement: Stmt.Return): never {
         if (!statement.value) {
-            throw new Stmt.ReturnValue(statement.tokens.return);
+            throw new Stmt.ReturnValue(statement.tokens.return.location);
         }
 
         let toReturn = this.evaluate(statement.value);
-        throw new Stmt.ReturnValue(statement.tokens.return, toReturn);
+        throw new Stmt.ReturnValue(statement.tokens.return.location, toReturn);
     }
 
     visitExpression(statement: Stmt.Expression): BrsType {
@@ -248,9 +248,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitAssignment(statement: Stmt.Assignment): BrsType {
         if (statement.name.isReserved) {
-            return this.addError(
-                new BrsError(`Cannot assign a value to reserved name '${statement.name}'`, statement.name.location)
+            this.addError(
+                new BrsError(`Cannot assign a value to reserved name '${statement.name.text}'`, statement.name.location)
             );
+            return BrsInvalid.Instance;
         }
 
         let value = this.evaluate(statement.value);
@@ -692,11 +693,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitExitFor(statement: Stmt.ExitFor): never {
-        throw new Stmt.ExitForReason();
+        throw new Stmt.ExitForReason(statement.location);
     }
 
     visitExitWhile(expression: Stmt.ExitWhile): never {
-        throw new Stmt.ExitWhileReason();
+        throw new Stmt.ExitWhileReason(expression.location);
     }
 
     visitCall(expression: Expr.Call) {
@@ -749,7 +750,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                 );
             } catch (reason) {
-                if (reason.kind == null) {
+                if (!(reason instanceof Stmt.BlockEnd)) {
                     throw new Error("Something terrible happened and we didn't throw a `BlockEnd` instance.");
                 }
 
@@ -761,7 +762,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         new Stmt.Runtime(
                             `Attempting to return value of non-void type ${ValueKind.toString(returnedValue.kind)} `
                             + `from function ${callee.getName()} with void return type.`,
-                            returnLocation.location
+                            returnLocation
                         )
                     );
                 }
@@ -770,7 +771,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this.addError(
                         new Stmt.Runtime(
                             `Attempting to return void value from function ${callee.getName()} with non-void return type.`,
-                            returnLocation.location
+                            returnLocation
                         )
                     );
                 }
@@ -781,7 +782,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             `Attempting to return value of type ${ValueKind.toString(returnedValue.kind)}, `
                             + `but function ${callee.getName()} declares return value of type `
                             + ValueKind.toString(satisfiedSignature.signature.returns),
-                            returnLocation.location
+                            returnLocation
                         )
                     );
                 }
@@ -959,8 +960,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             try {
                 this.execute(statement.body);
             } catch (reason) {
-                if (reason.kind === Stmt.StopReason.ExitFor) {
-                    loopExitReason = reason as BlockEnd;
+                if (reason instanceof Stmt.ExitForReason) {
+                    loopExitReason = reason;
                     break;
                 } else {
                     // re-throw returns, runtime errors, etc.
@@ -1001,7 +1002,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             try {
                 this.execute(statement.body);
             } catch (reason) {
-                if (reason.kind === Stmt.StopReason.ExitFor) {
+                if (reason instanceof Stmt.ExitForReason) {
                     // break out of the loop
                     return false;
                 } else {
@@ -1022,7 +1023,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             try {
                 this.execute(statement.body);
             } catch (reason) {
-                if (reason.kind && reason.kind === Stmt.StopReason.ExitWhile) {
+                if (reason instanceof Stmt.ExitWhileReason) {
                     break;
                 } else {
                     // re-throw returns, runtime errors, etc.

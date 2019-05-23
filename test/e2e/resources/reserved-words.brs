@@ -14,6 +14,8 @@ sub main()
     immediatePromise("foo").then(sub(result)
         print "promise-like resolved to '" + result + "'"
     end sub)
+
+    print "Hello from line " LINE_NUM
 end sub
 
 ' A simple promise-like function that immediately resolves to the provided value.

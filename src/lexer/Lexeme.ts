@@ -93,7 +93,6 @@ export enum Lexeme {
     If = "If",
     Invalid = "Invalid",
     Let = "Let",
-    LineNum = "LineNum",
     Next = "Next",
     Not = "Not",
     ObjFun = "ObjFun",

@@ -55,6 +55,27 @@ describe("Environment", () => {
         ).toBe(newM);
     });
 
+    it("gets the current line number", () => {
+        let lineNum = {
+            kind: Lexeme.Identifier,
+            text: "line_num",
+            isReserved: true,
+            location: {
+                file: "does-not-exist.brs",
+                start: {
+                    line: 13,
+                    column: 0
+                },
+                end: {
+                    line: 13,
+                    column: 9
+                }
+            }
+        };
+
+        expect(env.get(lineNum)).toEqual(new Int32(13));
+    });
+
     it("checks all sources for existence", () => {
         let foo = new BrsString("function scope");
         let bar = new BrsString("module scope");

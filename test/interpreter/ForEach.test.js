@@ -123,7 +123,7 @@ describe("interpreter for-each loops", () => {
 
     it("exits early when it encounters 'exit for'", () => {
         const block = new Stmt.Block([
-            new Stmt.ExitFor()
+            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") })
         ]);
         const blockSpy = jest.spyOn(block, "accept");
 

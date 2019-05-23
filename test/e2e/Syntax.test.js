@@ -136,7 +136,8 @@ describe("end to end syntax", () => {
         ).toEqual([
             // note: associative array keys are sorted before iteration
             "createobject", "in", "run", "stop", "then",
-            "promise-like resolved to 'foo'"
+            "promise-like resolved to 'foo'",
+            "Hello from line ", "18"
         ]);
     });
 

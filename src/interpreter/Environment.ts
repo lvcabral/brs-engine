@@ -1,5 +1,5 @@
 import { Identifier } from "../lexer";
-import { BrsType, AssociativeArray } from "../brsTypes";
+import { BrsType, AssociativeArray, Int32 } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -94,6 +94,11 @@ export class Environment {
      */
     public get(name: Identifier): BrsType {
         let lowercaseName = name.text.toLowerCase();
+
+        // the special "LINE_NUM" variable always resolves to the line number on which it appears
+        if (lowercaseName === "line_num") {
+            return new Int32(name.location.start.line);
+        }
 
         // "m" always maps to the special `m` pointer
         if (lowercaseName === "m") {
