@@ -16,7 +16,7 @@
     "lint": "tslint --project .",
     "prettier:write": "prettier --write '{bin,src,test}/**/*.{js,ts}'",
     "prettier": "prettier --check '{bin,src,test}/**/*.{js,ts}'",
-    "prepublishOnly": "npm-run-all --serial clean build lint:check prettier:check test"
+    "prepublishOnly": "npm-run-all --serial clean build lint prettier test"
   },
   "files": [
     "bin/",
