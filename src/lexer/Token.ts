@@ -15,13 +15,13 @@ export interface Token {
     /** The literal value (using the BRS type system) associated with this token, if any. */
     literal?: BrsType;
     /** Where the token was found. */
-    location: Location
+    location: Location;
 }
 
 /** Represents the location at which a `Token` was found. */
 export interface Location {
     /** The line and column at which this token began. */
-    start: LineAndColumn,
+    start: LineAndColumn;
     /**
      * The line and column at which this token ended.
      * *NOTE*: The ending column follows the one-past-last convention, to allow direct use with
@@ -32,7 +32,7 @@ export interface Location {
      *
      * foo.location.end === { line: 1, column: 3 };
      */
-    end: LineAndColumn,
+    end: LineAndColumn;
     /** The name of the file in which this token was found. */
     file: string;
 }

@@ -19,7 +19,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "2", new Int32(2)),
                 token(Lexeme.Caret, "^"),
                 token(Lexeme.Integer, "3", new Int32(3)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -37,7 +37,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "3", new Int32(3)),
                 token(Lexeme.Caret, "^"),
                 token(Lexeme.Integer, "4", new Int32(4)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);

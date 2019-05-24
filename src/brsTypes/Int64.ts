@@ -21,9 +21,7 @@ export class Int64 implements Numeric, Comparable {
         if (value instanceof Long) {
             this.value = value;
         } else {
-            this.value = Long.fromNumber(
-                Math.round(value)
-            );
+            this.value = Long.fromNumber(Math.round(value));
         }
     }
 
@@ -44,7 +42,7 @@ export class Int64 implements Numeric, Comparable {
 
         let i64 = new Int64(Long.fromString(asString, undefined, radix));
         const decimalLocation = asString.indexOf(".");
-        if (decimalLocation > -1 && (decimalLocation + 1) < asString.length) {
+        if (decimalLocation > -1 && decimalLocation + 1 < asString.length) {
             // Long.fromString truncates to integers instead of rounding, so manually add one to
             // compensate if necessary
             if (asString[decimalLocation + 1] >= "5" && asString[decimalLocation + 1] <= "9") {
@@ -94,7 +92,11 @@ export class Int64 implements Numeric, Comparable {
         switch (rhs.kind) {
             case ValueKind.Int32:
             case ValueKind.Int64:
-                return new Float(this.getValue().divide(rhs.getValue()).toNumber());
+                return new Float(
+                    this.getValue()
+                        .divide(rhs.getValue())
+                        .toNumber()
+                );
             case ValueKind.Float:
                 return new Float(this.getValue().toNumber() / rhs.getValue());
             case ValueKind.Double:
@@ -121,26 +123,18 @@ export class Int64 implements Numeric, Comparable {
                 return new Int64(this.getValue().divide(rhs.getValue()));
             case ValueKind.Float:
             case ValueKind.Double:
-                return new Int64(
-                    Math.floor(this.getValue().toNumber() / rhs.getValue())
-                );
+                return new Int64(Math.floor(this.getValue().toNumber() / rhs.getValue()));
         }
     }
 
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
             case ValueKind.Int32:
-                return new Int64(
-                    Math.pow(this.getValue().toNumber(), exponent.getValue())
-                );
+                return new Int64(Math.pow(this.getValue().toNumber(), exponent.getValue()));
             case ValueKind.Float:
-                return new Float(
-                    Math.pow(this.getValue().toNumber(), exponent.getValue())
-                );
+                return new Float(Math.pow(this.getValue().toNumber(), exponent.getValue()));
             case ValueKind.Double:
-                return new Double(
-                    Math.pow(this.getValue().toNumber(), exponent.getValue())
-                );
+                return new Double(Math.pow(this.getValue().toNumber(), exponent.getValue()));
             case ValueKind.Int64:
                 return new Int64(
                     Math.pow(this.getValue().toNumber(), exponent.getValue().toNumber())

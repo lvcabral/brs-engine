@@ -22,22 +22,18 @@ describe("parser foreach loops", () => {
             // body would go here, but it's not necessary for this test
             token(Lexeme.EndFor, "end for"),
             token(Lexeme.Newline, "\n"),
-            EOF
+            EOF,
         ]);
 
-        expect(errors).toEqual([])
+        expect(errors).toEqual([]);
         expect(statements).toBeDefined();
 
         let forEach = statements[0];
         expect(forEach).toBeInstanceOf(Stmt.ForEach);
 
-        expect(forEach.item).toEqual(
-            identifier("word")
-        );
+        expect(forEach.item).toEqual(identifier("word"));
         expect(forEach.target).toBeInstanceOf(Expr.Variable);
-        expect(forEach.target.name).toEqual(
-            identifier("lipsum")
-        );
+        expect(forEach.target.name).toEqual(identifier("lipsum"));
 
         expect(statements).toMatchSnapshot();
     });
@@ -53,10 +49,10 @@ describe("parser foreach loops", () => {
             // body would go here, but it's not necessary for this test
             token(Lexeme.Next, "next"),
             token(Lexeme.Newline, "\n"),
-            EOF
+            EOF,
         ]);
 
-        expect(errors).toEqual([])
+        expect(errors).toEqual([]);
         expect(statements).toBeDefined();
         expect(errors).toEqual([]);
         expect(statements).toBeDefined();
@@ -79,8 +75,8 @@ describe("parser foreach loops", () => {
                 isReserved: true,
                 location: {
                     start: { line: 1, column: 0 },
-                    end: { line: 1, column: 8 }
-                }
+                    end: { line: 1, column: 8 },
+                },
             },
             {
                 kind: Lexeme.Identifier,
@@ -88,8 +84,8 @@ describe("parser foreach loops", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 9 },
-                    end: { line: 1, column: 10 }
-                }
+                    end: { line: 1, column: 10 },
+                },
             },
             {
                 kind: Lexeme.Identifier,
@@ -97,8 +93,8 @@ describe("parser foreach loops", () => {
                 isReserved: true,
                 location: {
                     start: { line: 1, column: 11 },
-                    end: { line: 1, column: 13 }
-                }
+                    end: { line: 1, column: 13 },
+                },
             },
             {
                 kind: Lexeme.Identifier,
@@ -106,8 +102,8 @@ describe("parser foreach loops", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 14 },
-                    end: { line: 1, column: 15 }
-                }
+                    end: { line: 1, column: 15 },
+                },
             },
             {
                 kind: Lexeme.Newline,
@@ -115,28 +111,32 @@ describe("parser foreach loops", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 15 },
-                    end: { line: 1, column: 16 }
-                }
+                    end: { line: 1, column: 16 },
+                },
             },
             // loop body isn't significant for location tracking, so helper functions are safe
-            identifier("Rnd"), token(Lexeme.LeftParen, "("), identifier("a"), token(Lexeme.RightParen, ")"), token(Lexeme.Newline, "\n"),
+            identifier("Rnd"),
+            token(Lexeme.LeftParen, "("),
+            identifier("a"),
+            token(Lexeme.RightParen, ")"),
+            token(Lexeme.Newline, "\n"),
             {
                 kind: Lexeme.EndFor,
                 text: "end for",
                 isReserved: false,
                 location: {
                     start: { line: 3, column: 0 },
-                    end: { line: 3, column: 7 }
-                }
+                    end: { line: 3, column: 7 },
+                },
             },
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
         expect(statements.length).toBe(1);
         expect(statements[0].location).toEqual({
             start: { line: 1, column: 0 },
-            end: { line: 3, column: 7 }
-        })
+            end: { line: 3, column: 7 },
+        });
     });
 });

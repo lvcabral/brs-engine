@@ -10,11 +10,7 @@ const { token, identifier } = require("../parser/ParserTests");
 let interpreter;
 
 describe("interpreter for-each loops", () => {
-    const arrayMembers = [
-            new BrsString("foo"),
-            new BrsString("bar"),
-            new BrsString("baz")
-    ];
+    const arrayMembers = [new BrsString("foo"), new BrsString("bar"), new BrsString("baz")];
 
     beforeEach(() => {
         interpreter = new Interpreter();
@@ -28,32 +24,28 @@ describe("interpreter for-each loops", () => {
     it("iterates across all elements of an array", () => {
         const emptyBlock = new Stmt.Block([]);
         const receivedElements = [];
-        const emptyBlockSpy = jest.spyOn(emptyBlock, "accept").mockImplementation(_interpreter =>
-            receivedElements.push(
-                _interpreter.environment.get(
-                    identifier("element")
-                )
-            )
-        );
+        const emptyBlockSpy = jest
+            .spyOn(emptyBlock, "accept")
+            .mockImplementation(_interpreter =>
+                receivedElements.push(_interpreter.environment.get(identifier("element")))
+            );
 
         const statements = [
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(
-                    arrayMembers.map(member => new Expr.Literal(member))
-                )
+                new Expr.ArrayLiteral(arrayMembers.map(member => new Expr.Literal(member)))
             ),
             new Stmt.ForEach(
                 {
                     forEach: token(Lexeme.ForEach, "for each"),
                     in: identifier("in"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 identifier("element"),
                 new Expr.Variable(identifier("array")),
                 emptyBlock
-            )
+            ),
         ];
 
         interpreter.exec(statements);
@@ -76,12 +68,12 @@ describe("interpreter for-each loops", () => {
                 {
                     forEach: token(Lexeme.ForEach, "for each"),
                     in: identifier("in"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 identifier("element"),
                 new Expr.Variable(identifier("empty")),
                 emptyBlock
-            )
+            ),
         ];
 
         interpreter.exec(statements);
@@ -96,34 +88,30 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(
-                    arrayMembers.map(member => new Expr.Literal(member))
-                )
+                new Expr.ArrayLiteral(arrayMembers.map(member => new Expr.Literal(member)))
             ),
             new Stmt.ForEach(
                 {
                     forEach: token(Lexeme.ForEach, "for each"),
                     in: identifier("in"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 identifier("element"),
                 new Expr.Variable(identifier("array")),
                 emptyBlock
-            )
+            ),
         ];
 
         interpreter.exec(statements);
 
-        expect(
-            interpreter.environment.get(
-                identifier("element")
-            )
-        ).toEqual(arrayMembers[arrayMembers.length - 1]);
+        expect(interpreter.environment.get(identifier("element"))).toEqual(
+            arrayMembers[arrayMembers.length - 1]
+        );
     });
 
     it("exits early when it encounters 'exit for'", () => {
         const block = new Stmt.Block([
-            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") })
+            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
         ]);
         const blockSpy = jest.spyOn(block, "accept");
 
@@ -131,20 +119,18 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(
-                    arrayMembers.map(member => new Expr.Literal(member))
-                )
+                new Expr.ArrayLiteral(arrayMembers.map(member => new Expr.Literal(member)))
             ),
             new Stmt.ForEach(
                 {
                     forEach: token(Lexeme.ForEach, "for each"),
                     in: identifier("in"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 identifier("element"),
                 new Expr.Variable(identifier("array")),
                 block
-            )
+            ),
         ];
 
         interpreter.exec(statements);

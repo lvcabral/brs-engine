@@ -90,8 +90,4 @@ export type BrsPrimitive = BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 export type Iterable = BrsArray | AssociativeArray;
 
 /** The set of all supported types in BrightScript. */
-export type BrsType =
-    BrsPrimitive |
-    Iterable |
-    Callable |
-    Uninitialized;
+export type BrsType = BrsPrimitive | Iterable | Callable | Uninitialized;

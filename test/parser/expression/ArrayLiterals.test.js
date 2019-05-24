@@ -18,7 +18,7 @@ describe("parser array literals", () => {
                 token(Lexeme.Equal, "="),
                 token(Lexeme.LeftSquare, "["),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -39,7 +39,7 @@ describe("parser array literals", () => {
                 token(Lexeme.Newline, "\n"),
                 token(Lexeme.Newline, "\n"),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -61,7 +61,7 @@ describe("parser array literals", () => {
                 token(Lexeme.Comma, ","),
                 token(Lexeme.Integer, "3", new Int32(3)),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -85,7 +85,7 @@ describe("parser array literals", () => {
                 token(Lexeme.Integer, "3", new Int32(3)),
                 token(Lexeme.Newline, "\n"),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -107,7 +107,7 @@ describe("parser array literals", () => {
                 token(Lexeme.Integer, "3", new Int32(3)),
                 token(Lexeme.Newline, "\n"),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -129,7 +129,7 @@ describe("parser array literals", () => {
                 token(Lexeme.Comma, ","),
                 token(Lexeme.Integer, "3", new Int32(3)),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -143,23 +143,23 @@ describe("parser array literals", () => {
                 identifier("_"),
                 token(Lexeme.Equal, "="),
                 token(Lexeme.LeftSquare, "["),
-                    token(Lexeme.LeftSquare, "["),
-                    token(Lexeme.Integer, "1", new Int32(1)),
-                    token(Lexeme.Comma, ","),
-                    token(Lexeme.Integer, "2", new Int32(2)),
-                    token(Lexeme.Comma, ","),
-                    token(Lexeme.Integer, "3", new Int32(3)),
-                    token(Lexeme.RightSquare, "]"),
+                token(Lexeme.LeftSquare, "["),
+                token(Lexeme.Integer, "1", new Int32(1)),
                 token(Lexeme.Comma, ","),
-                    token(Lexeme.LeftSquare, "["),
-                    token(Lexeme.Integer, "4", new Int32(4)),
-                    token(Lexeme.Comma, ","),
-                    token(Lexeme.Integer, "5", new Int32(5)),
-                    token(Lexeme.Comma, ","),
-                    token(Lexeme.Integer, "6", new Int32(6)),
-                    token(Lexeme.RightSquare, "]"),
+                token(Lexeme.Integer, "2", new Int32(2)),
+                token(Lexeme.Comma, ","),
+                token(Lexeme.Integer, "3", new Int32(3)),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                token(Lexeme.Comma, ","),
+                token(Lexeme.LeftSquare, "["),
+                token(Lexeme.Integer, "4", new Int32(4)),
+                token(Lexeme.Comma, ","),
+                token(Lexeme.Integer, "5", new Int32(5)),
+                token(Lexeme.Comma, ","),
+                token(Lexeme.Integer, "6", new Int32(6)),
+                token(Lexeme.RightSquare, "]"),
+                token(Lexeme.RightSquare, "]"),
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -180,7 +180,7 @@ describe("parser array literals", () => {
                 token(Lexeme.Not, "not"),
                 token(Lexeme.False, "false", BrsBoolean.False),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -209,8 +209,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 0 },
-                    end: { line: 1, column: 1 }
-                }
+                    end: { line: 1, column: 1 },
+                },
             },
             {
                 kind: Lexeme.Equal,
@@ -218,8 +218,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 2 },
-                    end: { line: 1, column: 3 }
-                }
+                    end: { line: 1, column: 3 },
+                },
             },
             {
                 kind: Lexeme.LeftSquare,
@@ -227,9 +227,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 4 },
-                    end: { line: 1, column: 5 }
-
-                }
+                    end: { line: 1, column: 5 },
+                },
             },
             {
                 kind: Lexeme.RightSquare,
@@ -237,8 +236,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 8 },
-                    end: { line: 1, column: 9 }
-                }
+                    end: { line: 1, column: 9 },
+                },
             },
             {
                 kind: Lexeme.Newline,
@@ -247,7 +246,7 @@ describe("parser array literals", () => {
                 location: {
                     start: { line: 1, column: 9 },
                     end: { line: 1, column: 10 },
-                }
+                },
             },
             {
                 kind: Lexeme.Newline,
@@ -256,7 +255,7 @@ describe("parser array literals", () => {
                 location: {
                     start: { line: 2, column: 0 },
                     end: { line: 2, column: 1 },
-                }
+                },
             },
             {
                 kind: Lexeme.Identifier,
@@ -264,8 +263,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 3, column: 0 },
-                    end: { line: 3, column: 1 }
-                }
+                    end: { line: 3, column: 1 },
+                },
             },
             {
                 kind: Lexeme.Equal,
@@ -273,8 +272,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 3, column: 2 },
-                    end: { line: 3, column: 3 }
-                }
+                    end: { line: 3, column: 3 },
+                },
             },
             {
                 kind: Lexeme.LeftSquare,
@@ -282,9 +281,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 3, column: 4 },
-                    end: { line: 3, column: 5 }
-
-                }
+                    end: { line: 3, column: 5 },
+                },
             },
             {
                 kind: Lexeme.Newline,
@@ -293,7 +291,7 @@ describe("parser array literals", () => {
                 location: {
                     start: { line: 4, column: 0 },
                     end: { line: 4, column: 1 },
-                }
+                },
             },
             {
                 kind: Lexeme.Newline,
@@ -302,7 +300,7 @@ describe("parser array literals", () => {
                 location: {
                     start: { line: 5, column: 0 },
                     end: { line: 5, column: 1 },
-                }
+                },
             },
             {
                 kind: Lexeme.RightSquare,
@@ -310,8 +308,8 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 6, column: 0 },
-                    end: { line: 6, column: 1 }
-                }
+                    end: { line: 6, column: 1 },
+                },
             },
             {
                 kind: Lexeme.Eof,
@@ -319,9 +317,9 @@ describe("parser array literals", () => {
                 isReserved: false,
                 location: {
                     start: { line: 6, column: 1 },
-                    end: { line: 6, column: 2 }
-                }
-            }
+                    end: { line: 6, column: 2 },
+                },
+            },
         ]);
 
         expect(errors).toEqual([]);
@@ -329,12 +327,12 @@ describe("parser array literals", () => {
         expect(statements.map(s => s.value.location)).toEqual([
             {
                 start: { line: 1, column: 4 },
-                end: { line: 1, column: 9 }
+                end: { line: 1, column: 9 },
             },
             {
                 start: { line: 3, column: 4 },
-                end: { line: 6, column: 1 }
-            }
+                end: { line: 6, column: 1 },
+            },
         ]);
     });
 });

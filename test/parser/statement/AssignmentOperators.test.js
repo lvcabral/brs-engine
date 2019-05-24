@@ -11,13 +11,12 @@ describe("parser assignment operators", () => {
         parser = new brs.parser.Parser();
     });
 
-
     test("+=", () => {
         let { statements, errors } = parser.parse([
             identifier("_"),
             token(Lexeme.PlusEqual),
             token(Lexeme.String, `"lorem"`, new BrsString("lorem")),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -30,7 +29,7 @@ describe("parser assignment operators", () => {
             identifier("_"),
             token(Lexeme.MinusEqual),
             token(Lexeme.Integer, "1", new Int32(1)),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -43,7 +42,7 @@ describe("parser assignment operators", () => {
             identifier("_"),
             token(Lexeme.StarEqual),
             token(Lexeme.Integer, "3", new Int32(3)),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -56,7 +55,7 @@ describe("parser assignment operators", () => {
             identifier("_"),
             token(Lexeme.SlashEqual),
             token(Lexeme.Integer, "4", new Int32(4)),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -69,7 +68,7 @@ describe("parser assignment operators", () => {
             identifier("_"),
             token(Lexeme.BackslashEqual),
             token(Lexeme.Integer, "5", new Int32(5)),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -82,7 +81,7 @@ describe("parser assignment operators", () => {
             identifier("_"),
             token(Lexeme.LeftShiftEqual),
             token(Lexeme.Integer, "6", new Int32(6)),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -95,7 +94,7 @@ describe("parser assignment operators", () => {
             identifier("_"),
             token(Lexeme.RightShiftEqual),
             token(Lexeme.Integer, "7", new Int32(7)),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);

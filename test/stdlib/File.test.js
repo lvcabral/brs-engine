@@ -1,4 +1,16 @@
-const { ListDir, CopyFile, MoveFile, DeleteFile, DeleteDirectory, CreateDirectory, FormatDrive, ReadAsciiFile, WriteAsciiFile, getMemfsPath, getVolumeByPath } = require("../../lib/stdlib/index");
+const {
+    ListDir,
+    CopyFile,
+    MoveFile,
+    DeleteFile,
+    DeleteDirectory,
+    CreateDirectory,
+    FormatDrive,
+    ReadAsciiFile,
+    WriteAsciiFile,
+    getMemfsPath,
+    getVolumeByPath,
+} = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("brs");
 const { BrsString } = brs.types;
@@ -12,13 +24,15 @@ describe("global file I/O functions", () => {
 
     describe("file I/O utility utilities", () => {
         it("gets a volume by path", () => {
-            expect(getVolumeByPath(interpreter, "tmp:///test.txt")).toEqual(interpreter.temporaryVolume);
+            expect(getVolumeByPath(interpreter, "tmp:///test.txt")).toEqual(
+                interpreter.temporaryVolume
+            );
         });
 
         it("converts a brs path to a memfs path", () => {
             expect(getMemfsPath("tmp:/test.txt")).toEqual("/test.txt");
             expect(getMemfsPath("tmp:///test.txt")).toEqual("/test.txt");
-        })
+        });
     });
 
     describe("ListDir", () => {
@@ -28,15 +42,15 @@ describe("global file I/O functions", () => {
             interpreter.temporaryVolume.mkdirpSync("/test_dir");
             interpreter.temporaryVolume.writeFileSync("/test_dir/test3.txt", "test contents 3");
 
-            expect(
-                ListDir.call(interpreter, new BrsString("tmp:///")).elements
-            ).toEqual([ new BrsString("test1.txt"), new BrsString("test2.txt"), new BrsString("test_dir") ]);
+            expect(ListDir.call(interpreter, new BrsString("tmp:///")).elements).toEqual([
+                new BrsString("test1.txt"),
+                new BrsString("test2.txt"),
+                new BrsString("test_dir"),
+            ]);
         });
 
         it("returns nothing on a bad path", () => {
-            expect(
-                ListDir.call(interpreter, new BrsString("tmp:///ack")).elements
-            ).toEqual([]);
+            expect(ListDir.call(interpreter, new BrsString("tmp:///ack")).elements).toEqual([]);
         });
     });
 
@@ -45,7 +59,11 @@ describe("global file I/O functions", () => {
             interpreter.temporaryVolume.writeFileSync("/test1.txt", "test contents 1");
 
             expect(
-                CopyFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("tmp:///test1.1.txt")).value
+                CopyFile.call(
+                    interpreter,
+                    new BrsString("tmp:///test1.txt"),
+                    new BrsString("tmp:///test1.1.txt")
+                ).value
             ).toBeTruthy();
             expect(interpreter.temporaryVolume.existsSync("/test1.txt")).toBeTruthy();
             expect(interpreter.temporaryVolume.existsSync("/test1.1.txt")).toBeTruthy();
@@ -53,11 +71,19 @@ describe("global file I/O functions", () => {
 
         it("fails with a false", () => {
             expect(
-                CopyFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("ack:///test1.txt")).value
+                CopyFile.call(
+                    interpreter,
+                    new BrsString("tmp:///test1.txt"),
+                    new BrsString("ack:///test1.txt")
+                ).value
             ).toBeFalsy();
 
             expect(
-                CopyFile.call(interpreter, new BrsString("tmp:///no_such_file.txt"), new BrsString("tmp:///test1.txt")).value
+                CopyFile.call(
+                    interpreter,
+                    new BrsString("tmp:///no_such_file.txt"),
+                    new BrsString("tmp:///test1.txt")
+                ).value
             ).toBeFalsy();
         });
     });
@@ -67,7 +93,11 @@ describe("global file I/O functions", () => {
             interpreter.temporaryVolume.writeFileSync("/test1.txt", "test contents 1");
 
             expect(
-                MoveFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("tmp:///test5.txt")).value
+                MoveFile.call(
+                    interpreter,
+                    new BrsString("tmp:///test1.txt"),
+                    new BrsString("tmp:///test5.txt")
+                ).value
             ).toBeTruthy();
             expect(interpreter.temporaryVolume.existsSync("/test1.txt")).toBeFalsy();
             expect(interpreter.temporaryVolume.existsSync("/test5.txt")).toBeTruthy();
@@ -75,11 +105,19 @@ describe("global file I/O functions", () => {
 
         it("fails with a false", () => {
             expect(
-                MoveFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("ack:///test1.txt")).value
+                MoveFile.call(
+                    interpreter,
+                    new BrsString("tmp:///test1.txt"),
+                    new BrsString("ack:///test1.txt")
+                ).value
             ).toBeFalsy();
 
             expect(
-                MoveFile.call(interpreter, new BrsString("tmp:///no_such_file.txt"), new BrsString("tmp:///test1.txt")).value
+                MoveFile.call(
+                    interpreter,
+                    new BrsString("tmp:///no_such_file.txt"),
+                    new BrsString("tmp:///test1.txt")
+                ).value
             ).toBeFalsy();
         });
     });
@@ -130,10 +168,10 @@ describe("global file I/O functions", () => {
             expect(interpreter.temporaryVolume.existsSync("/test_dir")).toBeTruthy();
 
             expect(
-                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir/test_sub_dir")).value
+                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir/test_sub_dir"))
+                    .value
             ).toBeTruthy();
             expect(interpreter.temporaryVolume.existsSync("/test_dir/test_sub_dir")).toBeTruthy();
-
         });
 
         it("fails with a false", () => {
@@ -158,29 +196,39 @@ describe("global file I/O functions", () => {
         it("reads an ascii file", () => {
             interpreter.temporaryVolume.writeFileSync("/test.txt", "test contents");
 
-            expect(
-                ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt")).value
-            ).toEqual("test contents");
+            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt")).value).toEqual(
+                "test contents"
+            );
 
-            expect(
-                ReadAsciiFile.call(interpreter, new BrsString("tmp:/test.txt")).value
-            ).toEqual("test contents");
+            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:/test.txt")).value).toEqual(
+                "test contents"
+            );
         });
     });
 
     describe("WriteAsciiFile", () => {
         it("fails writing to bad paths", () => {
             expect(
-                WriteAsciiFile.call(interpreter, new BrsString("hello.txt"), new BrsString("test contents")).value
+                WriteAsciiFile.call(
+                    interpreter,
+                    new BrsString("hello.txt"),
+                    new BrsString("test contents")
+                ).value
             ).toBeFalsy();
         });
 
         it("writes an ascii file", () => {
             expect(
-                WriteAsciiFile.call(interpreter, new BrsString("tmp:///hello.txt"), new BrsString("test contents")).value
+                WriteAsciiFile.call(
+                    interpreter,
+                    new BrsString("tmp:///hello.txt"),
+                    new BrsString("test contents")
+                ).value
             ).toBeTruthy();
 
-            expect(interpreter.temporaryVolume.readFileSync("/hello.txt").toString()).toEqual("test contents");
+            expect(interpreter.temporaryVolume.readFileSync("/hello.txt").toString()).toEqual(
+                "test contents"
+            );
         });
     });
 });

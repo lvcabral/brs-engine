@@ -19,7 +19,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "5", new Int32(5)),
                 token(Lexeme.Less, "<"),
                 token(Lexeme.Integer, "2", new Int32(2)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -35,7 +35,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "5", new Int32(5)),
                 token(Lexeme.LessEqual, "<="),
                 token(Lexeme.Integer, "2", new Int32(2)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -51,7 +51,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "5", new Int32(5)),
                 token(Lexeme.Greater, ">"),
                 token(Lexeme.Integer, "2", new Int32(2)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -67,7 +67,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "5", new Int32(5)),
                 token(Lexeme.GreaterEqual, ">="),
                 token(Lexeme.Integer, "2", new Int32(2)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -83,7 +83,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "5", new Int32(5)),
                 token(Lexeme.Equal, "="),
                 token(Lexeme.Integer, "2", new Int32(2)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -99,7 +99,7 @@ describe("parser", () => {
                 token(Lexeme.Integer, "5", new Int32(5)),
                 token(Lexeme.LessGreater, "<>"),
                 token(Lexeme.Integer, "2", new Int32(2)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);

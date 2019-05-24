@@ -25,9 +25,7 @@ export class Float implements Numeric, Comparable {
      *              precision and maintaining only seven significant digits of accuracy.
      */
     constructor(value: number) {
-        this.value = parseFloat(
-            Math.fround(value).toPrecision(IEEE_FLOAT_SIGFIGS)
-        );
+        this.value = parseFloat(Math.fround(value).toPrecision(IEEE_FLOAT_SIGFIGS));
     }
 
     /**
@@ -108,36 +106,24 @@ export class Float implements Numeric, Comparable {
     intDivide(rhs: BrsNumber): Int32 | Int64 {
         switch (rhs.kind) {
             case ValueKind.Int64:
-                return new Int64(
-                    Math.trunc(this.getValue() / rhs.getValue().toNumber())
-                );
+                return new Int64(Math.trunc(this.getValue() / rhs.getValue().toNumber()));
             case ValueKind.Int32:
             case ValueKind.Float:
             case ValueKind.Double:
-                return new Int32(
-                    Math.trunc(this.getValue() / rhs.getValue())
-                );
+                return new Int32(Math.trunc(this.getValue() / rhs.getValue()));
         }
     }
 
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
             case ValueKind.Int32:
-                return new Float(
-                    Math.pow(this.getValue(), exponent.getValue())
-                );
+                return new Float(Math.pow(this.getValue(), exponent.getValue()));
             case ValueKind.Int64:
-                return new Float(
-                    Math.pow(this.getValue(), exponent.getValue().toNumber())
-                );
+                return new Float(Math.pow(this.getValue(), exponent.getValue().toNumber()));
             case ValueKind.Float:
-                return new Float(
-                    Math.pow(this.getValue(), exponent.getValue())
-                );
+                return new Float(Math.pow(this.getValue(), exponent.getValue()));
             case ValueKind.Double:
-                return new Double(
-                    Math.pow(this.getValue(), exponent.getValue())
-                );
+                return new Double(Math.pow(this.getValue(), exponent.getValue()));
         }
     }
 

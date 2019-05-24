@@ -8,16 +8,16 @@ describe("Invalid", () => {
             new BrsTypes.Float(1.5),
             new BrsTypes.Double(2.5),
             new BrsTypes.BrsString("i'm super valid"),
-            BrsTypes.BrsBoolean.False
+            BrsTypes.BrsBoolean.False,
         ];
 
         notInvalid.forEach(other =>
             expect(BrsTypes.BrsInvalid.Instance.equalTo(other)).toBe(BrsTypes.BrsBoolean.False)
         );
 
-        expect(
-            BrsTypes.BrsInvalid.Instance.equalTo(BrsTypes.BrsInvalid.Instance)
-        ).toBe(BrsTypes.BrsBoolean.True);
+        expect(BrsTypes.BrsInvalid.Instance.equalTo(BrsTypes.BrsInvalid.Instance)).toBe(
+            BrsTypes.BrsBoolean.True
+        );
     });
 
     it("is less than nothing", () => {
@@ -28,7 +28,7 @@ describe("Invalid", () => {
             new BrsTypes.Double(2.5),
             new BrsTypes.BrsString("i'm super valid"),
             BrsTypes.BrsBoolean.False,
-            BrsTypes.BrsInvalid.Instance
+            BrsTypes.BrsInvalid.Instance,
         ];
 
         notInvalid.forEach(other =>
@@ -44,7 +44,7 @@ describe("Invalid", () => {
             new BrsTypes.Double(2.5),
             new BrsTypes.BrsString("i'm super valid"),
             BrsTypes.BrsBoolean.False,
-            BrsTypes.BrsInvalid.Instance
+            BrsTypes.BrsInvalid.Instance,
         ];
 
         notInvalid.forEach(other =>

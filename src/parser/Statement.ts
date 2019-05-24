@@ -31,7 +31,7 @@ export interface Statement {
      * @returns a BrightScript value (typically `invalid`) and the reason why
      *          the statement exited (typically `StopReason.End`)
      */
-    accept <R> (visitor: Visitor<R>): BrsType;
+    accept<R>(visitor: Visitor<R>): BrsType;
 
     /** The starting and ending location of the expression. */
     location: Location;
@@ -40,7 +40,7 @@ export interface Statement {
 export class Assignment implements Statement {
     constructor(
         readonly tokens: {
-            equals: Token
+            equals: Token;
         },
         readonly name: Identifier,
         readonly value: Expr.Expression
@@ -54,13 +54,16 @@ export class Assignment implements Statement {
         return {
             file: this.name.location.file,
             start: this.name.location.start,
-            end: this.value.location.end
+            end: this.value.location.end,
         };
     }
 }
 
 export class Block implements Statement {
-    constructor(readonly statements: ReadonlyArray<Statement>, readonly startingLocation: Location) {}
+    constructor(
+        readonly statements: ReadonlyArray<Statement>,
+        readonly startingLocation: Location
+    ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitBlock(this);
@@ -68,13 +71,13 @@ export class Block implements Statement {
 
     get location() {
         let end = this.statements.length
-                ? this.statements[this.statements.length - 1].location.end
-                : this.startingLocation.start;
+            ? this.statements[this.statements.length - 1].location.end
+            : this.startingLocation.start;
 
         return {
             file: this.startingLocation.file,
             start: this.startingLocation.start,
-            end: end
+            end: end,
         };
     }
 }
@@ -94,7 +97,7 @@ export class Expression implements Statement {
 export class ExitFor implements Statement {
     constructor(
         readonly tokens: {
-            exitFor: Token
+            exitFor: Token;
         }
     ) {}
 
@@ -108,10 +111,9 @@ export class ExitFor implements Statement {
 }
 
 export class ExitWhile implements Statement {
-
     constructor(
         readonly tokens: {
-            exitWhile: Token
+            exitWhile: Token;
         }
     ) {}
 
@@ -124,12 +126,8 @@ export class ExitWhile implements Statement {
     }
 }
 
-
 export class Function implements Statement {
-    constructor(
-        readonly name: Identifier,
-        readonly func: Expr.Function
-    ) {}
+    constructor(readonly name: Identifier, readonly func: Expr.Function) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitNamedFunction(this);
@@ -139,31 +137,31 @@ export class Function implements Statement {
         return {
             file: this.name.location.file,
             start: this.func.location.start,
-            end: this.func.location.end
+            end: this.func.location.end,
         };
     }
 }
 
 export interface ElseIf {
-    condition: Expr.Expression,
-    thenBranch: Block
+    condition: Expr.Expression;
+    thenBranch: Block;
 }
 
 export class If implements Statement {
     constructor(
         readonly tokens: {
-            if: Token,
-            then?: Token,
+            if: Token;
+            then?: Token;
             // TODO: figure a decent way to represent the if/then + elseif/then pairs to enable a
             // linter to check for the lack of `then` with this AST. maybe copy ESTree's format?
-            elseIfs?: Token[],
-            else?: Token,
-            endIf?: Token
+            elseIfs?: Token[];
+            else?: Token;
+            endIf?: Token;
         },
         readonly condition: Expr.Expression,
         readonly thenBranch: Block,
         readonly elseIfs: ElseIf[],
-        readonly elseBranch?: Block,
+        readonly elseBranch?: Block
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
@@ -186,18 +184,15 @@ export class If implements Statement {
         return {
             file: this.tokens.if.location.file,
             start: this.tokens.if.location.start,
-            end: this.getEndLocation().end
+            end: this.getEndLocation().end,
         };
     }
 }
 
 export class Increment implements Statement {
-    constructor(
-        readonly value: Expr.Expression,
-        readonly token: Token
-    ) {}
+    constructor(readonly value: Expr.Expression, readonly token: Token) {}
 
-    accept <R> (visitor: Visitor<R>): BrsType {
+    accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitIncrement(this);
     }
 
@@ -205,22 +200,21 @@ export class Increment implements Statement {
         return {
             file: this.value.location.file,
             start: this.value.location.start,
-            end: this.token.location.end
+            end: this.token.location.end,
         };
     }
 }
-
 
 /** The set of all accepted `print` statement separators. */
 export namespace PrintSeparator {
     /** Used to indent the current `print` position to the next 16-character-width output zone. */
     export interface Tab extends Token {
-        kind: Lexeme.Comma
+        kind: Lexeme.Comma;
     }
 
     /** Used to insert a single whitespace character at the current `print` position. */
     export interface Space extends Token {
-        kind: Lexeme.Semicolon
+        kind: Lexeme.Semicolon;
     }
 }
 
@@ -235,7 +229,7 @@ export class Print implements Statement {
      */
     constructor(
         readonly tokens: {
-            print: Token
+            print: Token;
         },
         readonly expressions: (Expr.Expression | Token)[]
     ) {}
@@ -246,13 +240,13 @@ export class Print implements Statement {
 
     get location() {
         let end = this.expressions.length
-                ? this.expressions[this.expressions.length - 1].location.end
-                : this.tokens.print.location.end;
+            ? this.expressions[this.expressions.length - 1].location.end
+            : this.tokens.print.location.end;
 
         return {
             file: this.tokens.print.location.file,
             start: this.tokens.print.location.start,
-            end: end
+            end: end,
         };
     }
 }
@@ -260,7 +254,7 @@ export class Print implements Statement {
 export class Return implements Statement {
     constructor(
         readonly tokens: {
-            return: Token
+            return: Token;
         },
         readonly value?: Expr.Expression
     ) {}
@@ -273,7 +267,7 @@ export class Return implements Statement {
         return {
             file: this.tokens.return.location.file,
             start: this.tokens.return.location.start,
-            end: this.value && this.value.location.end || this.tokens.return.location.end
+            end: (this.value && this.value.location.end) || this.tokens.return.location.end,
         };
     }
 }
@@ -281,9 +275,9 @@ export class Return implements Statement {
 export class End implements Statement {
     constructor(
         readonly tokens: {
-            end: Token
+            end: Token;
         }
-    ) { }
+    ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         //TODO implement this in the runtime. It should immediately terminate program execution, without error
@@ -294,7 +288,7 @@ export class End implements Statement {
         return {
             file: this.tokens.end.location.file,
             start: this.tokens.end.location.start,
-            end: this.tokens.end.location.end
+            end: this.tokens.end.location.end,
         };
     }
 }
@@ -302,10 +296,10 @@ export class End implements Statement {
 export class For implements Statement {
     constructor(
         readonly tokens: {
-            for: Token,
-            to: Token,
-            step?: Token,
-            endFor: Token
+            for: Token;
+            to: Token;
+            step?: Token;
+            endFor: Token;
         },
         readonly counterDeclaration: Assignment,
         readonly finalValue: Expr.Expression,
@@ -321,7 +315,7 @@ export class For implements Statement {
         return {
             file: this.tokens.for.location.file,
             start: this.tokens.for.location.start,
-            end: this.tokens.endFor.location.end
+            end: this.tokens.endFor.location.end,
         };
     }
 }
@@ -329,9 +323,9 @@ export class For implements Statement {
 export class ForEach implements Statement {
     constructor(
         readonly tokens: {
-            forEach: Token,
-            in: Token,
-            endFor: Token
+            forEach: Token;
+            in: Token;
+            endFor: Token;
         },
         readonly item: Token,
         readonly target: Expr.Expression,
@@ -346,7 +340,7 @@ export class ForEach implements Statement {
         return {
             file: this.tokens.forEach.location.file,
             start: this.tokens.forEach.location.start,
-            end: this.tokens.endFor.location.end
+            end: this.tokens.endFor.location.end,
         };
     }
 }
@@ -354,8 +348,8 @@ export class ForEach implements Statement {
 export class While implements Statement {
     constructor(
         readonly tokens: {
-            while: Token,
-            endWhile: Token
+            while: Token;
+            endWhile: Token;
         },
         readonly condition: Expr.Expression,
         readonly body: Block
@@ -369,16 +363,16 @@ export class While implements Statement {
         return {
             file: this.tokens.while.location.file,
             start: this.tokens.while.location.start,
-            end: this.tokens.endWhile.location.end
+            end: this.tokens.endWhile.location.end,
         };
     }
 }
 
 export class DottedSet implements Statement {
     constructor(
-       readonly obj: Expr.Expression,
-       readonly name: Identifier,
-       readonly value: Expr.Expression
+        readonly obj: Expr.Expression,
+        readonly name: Identifier,
+        readonly value: Expr.Expression
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
@@ -389,17 +383,17 @@ export class DottedSet implements Statement {
         return {
             file: this.obj.location.file,
             start: this.obj.location.start,
-            end: this.value.location.end
+            end: this.value.location.end,
         };
     }
 }
 
 export class IndexedSet implements Statement {
     constructor(
-       readonly obj: Expr.Expression,
-       readonly index: Expr.Expression,
-       readonly value: Expr.Expression,
-       readonly closingSquare: Token
+        readonly obj: Expr.Expression,
+        readonly index: Expr.Expression,
+        readonly value: Expr.Expression,
+        readonly closingSquare: Token
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
@@ -410,21 +404,18 @@ export class IndexedSet implements Statement {
         return {
             file: this.obj.location.file,
             start: this.obj.location.start,
-            end: this.value.location.end
+            end: this.value.location.end,
         };
     }
 }
 
-
 export class Library implements Statement {
     constructor(
         readonly tokens: {
-            library: Token,
-            filePath: Token | undefined
+            library: Token;
+            filePath: Token | undefined;
         }
-    ) {
-
-    }
+    ) {}
     accept<R>(visitor: Visitor<R>): BrsType {
         throw new Error("Library is not implemented");
     }
@@ -433,7 +424,9 @@ export class Library implements Statement {
         return {
             file: this.tokens.library.location.file,
             start: this.tokens.library.location.start,
-            end: this.tokens.filePath ? this.tokens.filePath.location.end : this.tokens.library.location.end
+            end: this.tokens.filePath
+                ? this.tokens.filePath.location.end
+                : this.tokens.library.location.end,
         };
     }
 }

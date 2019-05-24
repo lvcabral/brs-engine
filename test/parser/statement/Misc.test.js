@@ -8,7 +8,7 @@ describe("parser", () => {
     });
 
     describe("`end` keyword", () => {
-        it('does not produce errors', () => {
+        it("does not produce errors", () => {
             let { tokens } = brs.lexer.Lexer.scan(`
                 sub Main()
                     end
@@ -18,7 +18,7 @@ describe("parser", () => {
             expect(errors.length).toEqual(0);
             expect(statements).toMatchSnapshot();
         });
-        it('can be used as a property name on objects', () => {
+        it("can be used as a property name on objects", () => {
             let { tokens } = brs.lexer.Lexer.scan(`
                 sub Main()
                     person = {
@@ -31,7 +31,7 @@ describe("parser", () => {
             expect(statements).toMatchSnapshot();
         });
 
-        it('is not allowed as a standalone variable', () => {
+        it("is not allowed as a standalone variable", () => {
             //this test depends on token locations, so use the lexer to generate those locations.
             let { tokens } = brs.lexer.Lexer.scan(`
                 sub Main()
@@ -44,13 +44,13 @@ describe("parser", () => {
             expect(errors[0].location).toEqual({
                 file: "",
                 start: { line: 3, column: 20 },
-                end: { line: 3, column: 23 }
+                end: { line: 3, column: 23 },
             });
             expect(statements).toMatchSnapshot();
         });
     });
 
-    it('certain reserved words are allowed as local var identifiers', () => {
+    it("certain reserved words are allowed as local var identifiers", () => {
         let { tokens } = brs.lexer.Lexer.scan(`
             sub Main()
                 endfor = true
@@ -68,7 +68,7 @@ describe("parser", () => {
         expect(statements).toMatchSnapshot();
     });
 
-    it('most reserved words are not allowed as local var identifiers', () => {
+    it("most reserved words are not allowed as local var identifiers", () => {
         let statementList = [];
         for (var i = 0; i < brs.parser.Parser.disallowedIdentifiers; i++) {
             var identifier = brs.parser.Parser.disallowedIdentifiers[i];
@@ -100,7 +100,7 @@ describe("parser", () => {
         expect(statementList).toMatchSnapshot();
     });
 
-    it('allows whitelisted reserved words as object properties', () => {
+    it("allows whitelisted reserved words as object properties", () => {
         //use the lexer to generate token list because...this list is huge.
         let { tokens } = brs.lexer.Lexer.scan(`
             sub Main()
@@ -164,7 +164,7 @@ describe("parser", () => {
         expect(statements).toMatchSnapshot();
     });
 
-    it('does not add extra quotes to AA keys', () => {
+    it("does not add extra quotes to AA keys", () => {
         let { tokens } = brs.lexer.Lexer.scan(`
             function main(arg as string)
                 twoDimensional = {
@@ -178,6 +178,8 @@ describe("parser", () => {
         `);
 
         let { statements, errors } = brs.parser.Parser.parse(tokens);
-        expect(statements[0].func.body.statements[0].value.elements[0].name.value).toEqual("has-second-layer");
+        expect(statements[0].func.body.statements[0].value.elements[0].name.value).toEqual(
+            "has-second-layer"
+        );
     });
 });

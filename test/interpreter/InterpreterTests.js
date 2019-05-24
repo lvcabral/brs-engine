@@ -18,4 +18,4 @@ exports.binary = function(left, operator, right) {
             new Expr.Literal(right)
         )
     );
-}
+};

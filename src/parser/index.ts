@@ -3,7 +3,4 @@ import * as Statement from "./Statement";
 
 export { Parser } from "./Parser";
 export * from "./ParseError";
-export {
-    Expression as Expr,
-    Statement as Stmt
-};
+export { Expression as Expr, Statement as Stmt };

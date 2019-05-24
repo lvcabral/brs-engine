@@ -1,5 +1,16 @@
 const brs = require("brs");
-const { AssociativeArray, BrsArray, BrsInvalid, BrsBoolean, BrsString, Int32, Int64, Float, Double, Uninitialized } = brs.types;
+const {
+    AssociativeArray,
+    BrsArray,
+    BrsInvalid,
+    BrsBoolean,
+    BrsString,
+    Int32,
+    Int64,
+    Float,
+    Double,
+    Uninitialized,
+} = brs.types;
 const { CreateObject, Type } = require("../../lib/stdlib");
 const { Interpreter } = require("../../lib/interpreter");
 
@@ -31,12 +42,12 @@ describe("global runtime functions", () => {
                 { value: CreateObject, type: "Function" },
                 { value: new BrsArray([]), type: "roArray" },
                 { value: new AssociativeArray([]), type: "roAssociativeArray" },
-                { value: Uninitialized.Instance, type: "<UNINITIALIZED>" }
+                { value: Uninitialized.Instance, type: "<UNINITIALIZED>" },
             ].forEach(testCase =>
                 test(testCase.type, () => {
-                    expect(
-                        Type.call(interpreter, testCase.value, new Int32(3))
-                    ).toEqual(new BrsString(testCase.type));
+                    expect(Type.call(interpreter, testCase.value, new Int32(3))).toEqual(
+                        new BrsString(testCase.type)
+                    );
                 })
             );
         });
@@ -53,15 +64,14 @@ describe("global runtime functions", () => {
                 { value: CreateObject, type: "Function" },
                 { value: new BrsArray([]), type: "roArray" },
                 { value: new AssociativeArray([]), type: "roAssociativeArray" },
-                { value: Uninitialized.Instance, type: "<UNINITIALIZED>" }
+                { value: Uninitialized.Instance, type: "<UNINITIALIZED>" },
             ].forEach(testCase =>
                 test(testCase.type, () => {
-                    expect(
-                        Type.call(interpreter, testCase.value)
-                    ).toEqual(new BrsString(testCase.type));
+                    expect(Type.call(interpreter, testCase.value)).toEqual(
+                        new BrsString(testCase.type)
+                    );
                 })
             );
         });
-
     });
 });

@@ -20,17 +20,15 @@ describe("end to end brightscript functions", () => {
     test("multi-file/test1.brs and multi-file/test1.brs", async () => {
         let resourceFiles = [
             resourceFile("multi-file", "test1.brs"),
-            resourceFile("multi-file", "test2.brs")
+            resourceFile("multi-file", "test2.brs"),
         ];
 
         await execute(resourceFiles, outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "function in same file: from sameFileFunc()",
             "function in different file: from differentFileFunc()",
-            "function with dependency: from dependentFunc() with help from: from dependencyFunc()"
+            "function with dependency: from dependentFunc() with help from: from dependencyFunc()",
         ]);
     });
 });

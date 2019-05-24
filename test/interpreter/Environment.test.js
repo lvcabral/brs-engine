@@ -10,7 +10,7 @@ describe("Environment", () => {
     let lineNumber;
 
     /** Creates an identifier with the given text. */
-    let identifier = (text) => ({ kind: Lexeme.Identifier, text: text, line: lineNumber++ });
+    let identifier = text => ({ kind: Lexeme.Identifier, text: text, line: lineNumber++ });
 
     beforeEach(() => {
         env = new Environment();
@@ -21,38 +21,28 @@ describe("Environment", () => {
         let val = new BrsString("functionScope");
         env.define(Scope.Function, "foo", val);
 
-        expect(
-            env.get(identifier("foo"))
-        ).toBe(val);
+        expect(env.get(identifier("foo"))).toBe(val);
     });
 
     it("gets and sets from Module scope", () => {
         let val = new BrsString("moduleScope");
         env.define(Scope.Module, "foo", val);
 
-        expect(
-            env.get(identifier("foo"))
-        ).toBe(val);
+        expect(env.get(identifier("foo"))).toBe(val);
     });
 
     it("gets and sets from Module scope", () => {
         let val = new BrsString("globalScope");
         env.define(Scope.Global, "foo", val);
 
-        expect(
-            env.get(identifier("foo"))
-        ).toBe(val);
+        expect(env.get(identifier("foo"))).toBe(val);
     });
 
     it("gets and sets an m pointer", () => {
-        let newM = new AssociativeArray([
-            { name: new BrsString("id"), value: new Int32(1738) }
-        ]);
+        let newM = new AssociativeArray([{ name: new BrsString("id"), value: new Int32(1738) }]);
         env.setM(newM);
 
-        expect(
-            env.get(identifier("m"))
-        ).toBe(newM);
+        expect(env.get(identifier("m"))).toBe(newM);
     });
 
     it("gets the current line number", () => {
@@ -64,13 +54,13 @@ describe("Environment", () => {
                 file: "does-not-exist.brs",
                 start: {
                     line: 13,
-                    column: 0
+                    column: 0,
                 },
                 end: {
                     line: 13,
-                    column: 9
-                }
-            }
+                    column: 9,
+                },
+            },
         };
 
         expect(env.get(lineNum)).toEqual(new Int32(13));
@@ -114,11 +104,7 @@ describe("Environment", () => {
         env.define(Scope.Function, "funcScoped", new BrsString("funcScoped"));
         env.define(Scope.Module, "moduleScoped", new BrsString("module-scoped"));
         env.define(Scope.Global, "globalScoped", new BrsString("global-scoped"));
-        env.setM(
-            new AssociativeArray([
-                { name: new BrsString("id"), value: new Int32(679) }
-            ])
-        );
+        env.setM(new AssociativeArray([{ name: new BrsString("id"), value: new Int32(679) }]));
 
         let subEnv = env.createSubEnvironment();
 

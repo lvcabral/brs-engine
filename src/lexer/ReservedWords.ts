@@ -46,7 +46,7 @@ export const ReservedWords = new Set([
     "to",
     "true",
     "type",
-    "while"
+    "while",
 ]);
 
 /**
@@ -55,7 +55,7 @@ export const ReservedWords = new Set([
  *
  * Unfortunately there's no canonical source for this!
  */
-export const KeyWords: {[key: string]: L} = {
+export const KeyWords: { [key: string]: L } = {
     and: L.And,
     dim: L.Dim,
     else: L.Else,

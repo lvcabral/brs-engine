@@ -18,7 +18,7 @@ describe("parser boolean expressions", () => {
             token(Lexeme.True, "true", BrsBoolean.True),
             token(Lexeme.And, "and"),
             token(Lexeme.False, "false", BrsBoolean.False),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -34,7 +34,7 @@ describe("parser boolean expressions", () => {
             token(Lexeme.True, "true", BrsBoolean.True),
             token(Lexeme.Or, "or"),
             token(Lexeme.False, "false", BrsBoolean.False),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -58,7 +58,7 @@ describe("parser boolean expressions", () => {
                 location: {
                     start: { line: 1, column: 0 },
                     end: { line: 1, column: 1 },
-                }
+                },
             },
             {
                 kind: Lexeme.Equal,
@@ -67,7 +67,7 @@ describe("parser boolean expressions", () => {
                 location: {
                     start: { line: 1, column: 2 },
                     end: { line: 1, column: 3 },
-                }
+                },
             },
             {
                 kind: Lexeme.True,
@@ -77,7 +77,7 @@ describe("parser boolean expressions", () => {
                 location: {
                     start: { line: 1, column: 4 },
                     end: { line: 1, column: 8 },
-                }
+                },
             },
             {
                 kind: Lexeme.And,
@@ -86,7 +86,7 @@ describe("parser boolean expressions", () => {
                 location: {
                     start: { line: 1, column: 9 },
                     end: { line: 1, column: 12 },
-                }
+                },
             },
             {
                 kind: Lexeme.False,
@@ -96,7 +96,7 @@ describe("parser boolean expressions", () => {
                 location: {
                     start: { line: 1, column: 13 },
                     end: { line: 1, column: 18 },
-                }
+                },
             },
             {
                 kind: Lexeme.Eof,
@@ -104,16 +104,16 @@ describe("parser boolean expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 18 },
-                    end: { line: 1, column: 19 }
-                }
-            }
+                    end: { line: 1, column: 19 },
+                },
+            },
         ]);
 
         expect(errors).toEqual([]);
         expect(statements.length).toBe(1);
         expect(statements[0].value.location).toEqual({
             start: { line: 1, column: 4 },
-            end: { line: 1, column: 18 }
+            end: { line: 1, column: 18 },
         });
     });
 });

@@ -22,7 +22,7 @@ export class Preprocessor {
         return {
             dispose: () => {
                 this.events.removeListener("err", errorHandler);
-            }
+            },
         };
     }
 
@@ -34,11 +34,10 @@ export class Preprocessor {
         this.events.once("err", errorHandler);
     }
 
-
     constructor() {
         // plumb errors from the internal parser and preprocessor out to the public interface for convenience
-        this.parser.events.on("err", (err) => this.events.emit("err", err));
-        this._preprocessor.events.on("err", (err) => this.events.emit("err", err));
+        this.parser.events.on("err", err => this.events.emit("err", err));
+        this._preprocessor.events.on("err", err => this.events.emit("err", err));
     }
 
     /**
@@ -52,7 +51,7 @@ export class Preprocessor {
         if (parserResults.errors.length > 0) {
             return {
                 processedTokens: [],
-                errors: parserResults.errors
+                errors: parserResults.errors,
             };
         }
 

@@ -6,7 +6,7 @@ describe("Regex", () => {
     let interpreter;
 
     beforeEach(() => {
-        interpreter = new Interpreter;
+        interpreter = new Interpreter();
     });
 
     describe("isMatch", () => {
@@ -39,7 +39,9 @@ describe("Regex", () => {
         });
 
         it("matches a string in ISO8601 format", () => {
-            let regx = new Regex(new BrsString("P(\\d+Y)?(\\d+M)?(\\d+D)?T(\\d+H)?(\\d+M)?(\\d+(.\\d+)?S)?"));
+            let regx = new Regex(
+                new BrsString("P(\\d+Y)?(\\d+M)?(\\d+D)?T(\\d+H)?(\\d+M)?(\\d+(.\\d+)?S)?")
+            );
             let isMatch = regx.getMethod("isMatch");
             expect(isMatch).toBeTruthy();
 
@@ -83,7 +85,9 @@ describe("Regex", () => {
         });
 
         it("matches string in hh:mm:ss.ms date format", () => {
-            let regx = new Regex(new BrsString("(([0-9]{2}):)?(([0-9]{2}):)?([0-9]{2})\\.([0-9]{3})"));
+            let regx = new Regex(
+                new BrsString("(([0-9]{2}):)?(([0-9]{2}):)?([0-9]{2})\\.([0-9]{3})")
+            );
             let match = regx.getMethod("match");
             expect(match).toBeTruthy();
 
@@ -95,7 +99,9 @@ describe("Regex", () => {
         });
 
         it("matches strings using beginning and end of input", () => {
-            let regx = new Regex(new BrsString("^(.*:)\\/\\/([A-Za-z0-9\\-\\.]+)?(:[0-9]+)?\\/?(.*)$"));
+            let regx = new Regex(
+                new BrsString("^(.*:)\\/\\/([A-Za-z0-9\\-\\.]+)?(:[0-9]+)?\\/?(.*)$")
+            );
             let match = regx.getMethod("match");
             expect(match).toBeTruthy();
 
@@ -135,7 +141,11 @@ describe("Regex", () => {
             let replace = rgx.getMethod("replace");
             expect(replace).toBeTruthy();
 
-            let result = replace.call(interpreter, new BrsString("S6 E9"), new BrsString("Season \\1 Episode \\2"));
+            let result = replace.call(
+                interpreter,
+                new BrsString("S6 E9"),
+                new BrsString("Season \\1 Episode \\2")
+            );
             expect(result.kind).toBe(ValueKind.String);
             expect(result.value).toBe("Season 6 Episode 9");
         });
@@ -147,7 +157,11 @@ describe("Regex", () => {
             let replaceAll = rgx.getMethod("replaceall");
             expect(replaceAll).toBeTruthy();
 
-            let result = replaceAll.call(interpreter, new BrsString("2010-01-01"), new BrsString("."));
+            let result = replaceAll.call(
+                interpreter,
+                new BrsString("2010-01-01"),
+                new BrsString(".")
+            );
             expect(result.kind).toBe(ValueKind.String);
             expect(result.value).toBe("2010.01.01");
         });

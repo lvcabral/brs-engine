@@ -14,12 +14,10 @@ describe("preprocessor", () => {
             token(Lexeme.LeftParen, "("),
             token(Lexeme.RightParen, ")"),
             token(Lexeme.Newline, "\n"),
-            EOF
+            EOF,
         ];
 
-        let { processedTokens } = new Preprocessor().filter([
-            new Chunk.BrightScript(unprocessed)
-        ]);
+        let { processedTokens } = new Preprocessor().filter([new Chunk.BrightScript(unprocessed)]);
         expect(processedTokens).toEqual(unprocessed);
     });
 
@@ -29,7 +27,7 @@ describe("preprocessor", () => {
                 new Chunk.Declaration(
                     identifier("lorem"),
                     token(Lexeme.False, "false", BrsBoolean.False)
-                )
+                ),
             ]);
             expect(processedTokens).toEqual([]);
         });
@@ -41,7 +39,7 @@ describe("preprocessor", () => {
                         new Chunk.Declaration(
                             identifier("lorem"),
                             token(Lexeme.True, "true", BrsBoolean.True)
-                        )
+                        ),
                     ])
                 ).not.toThrow();
             });
@@ -52,7 +50,7 @@ describe("preprocessor", () => {
                         new Chunk.Declaration(
                             identifier("ipsum"),
                             token(Lexeme.False, "false", BrsBoolean.False)
-                        )
+                        ),
                     ])
                 ).not.toThrow();
             });
@@ -68,7 +66,7 @@ describe("preprocessor", () => {
                         new Chunk.Declaration(
                             identifier("dolor"),
                             token(Lexeme.True, "true", BrsBoolean.True)
-                        )
+                        ),
                     ])
                 ).not.toThrow();
             });
@@ -79,7 +77,7 @@ describe("preprocessor", () => {
                         new Chunk.Declaration(
                             identifier("sit"),
                             token(Lexeme.String, "good boy!", new BrsString("good boy!"))
-                        )
+                        ),
                     ])
                 ).toThrow("#const declarations can only have");
             });
@@ -105,10 +103,7 @@ describe("preprocessor", () => {
         it("throws error when #error directives encountered", () => {
             expect(() =>
                 new Preprocessor().filter([
-                    new Chunk.Error(
-                        token(Lexeme.HashError, "#error"),
-                        "I'm an error message!"
-                    )
+                    new Chunk.Error(token(Lexeme.HashError, "#error"), "I'm an error message!"),
                 ])
             ).toThrow();
         });
@@ -122,10 +117,10 @@ describe("preprocessor", () => {
                             new Chunk.Error(
                                 token(Lexeme.HasError, "#error"),
                                 "I'm an error message!"
-                            )
+                            ),
                         ],
                         [] // no else-ifs necessary
-                    )
+                    ),
                 ])
             ).not.toThrow();
         });
@@ -142,7 +137,7 @@ describe("preprocessor", () => {
             jest.spyOn(ifChunk, "accept");
             jest.spyOn(elseIfChunk, "accept");
             jest.spyOn(elseChunk, "accept");
-        })
+        });
 
         afterAll(() => {
             jest.restoreAllMocks();
@@ -152,15 +147,15 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.True, "true", BrsBoolean.True),
-                    [ ifChunk ],
+                    [ifChunk],
                     [
                         {
                             condition: token(Lexeme.True, "true", BrsBoolean.True),
-                            thenChunks: [ elseIfChunk ]
-                        }
+                            thenChunks: [elseIfChunk],
+                        },
                     ],
-                    [ elseChunk ]
-                )
+                    [elseChunk]
+                ),
             ]);
 
             expect(ifChunk.accept).toHaveBeenCalledTimes(1);
@@ -172,15 +167,15 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.False, "false", BrsBoolean.False),
-                    [ ifChunk ],
+                    [ifChunk],
                     [
                         {
                             condition: token(Lexeme.True, "true", BrsBoolean.True),
-                            thenChunks: [ elseIfChunk ]
-                        }
+                            thenChunks: [elseIfChunk],
+                        },
                     ],
-                    [ elseChunk ]
-                )
+                    [elseChunk]
+                ),
             ]);
 
             expect(ifChunk.accept).not.toHaveBeenCalled();
@@ -192,15 +187,15 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.False, "false", BrsBoolean.False),
-                    [ ifChunk ],
+                    [ifChunk],
                     [
                         {
                             condition: token(Lexeme.False, "false", BrsBoolean.False),
-                            thenChunks: [ elseIfChunk ]
-                        }
+                            thenChunks: [elseIfChunk],
+                        },
                     ],
-                    [ elseChunk ]
-                )
+                    [elseChunk]
+                ),
             ]);
 
             expect(ifChunk.accept).not.toHaveBeenCalled();
@@ -212,10 +207,10 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.False, "false", BrsBoolean.False),
-                    [ ifChunk ],
-                    [ ] // no else-if chunks
+                    [ifChunk],
+                    [] // no else-if chunks
                     // NOTE: no 'else" chunk!
-                )
+                ),
             ]);
 
             expect(ifChunk.accept).not.toHaveBeenCalled();
@@ -231,10 +226,10 @@ describe("preprocessor", () => {
                 ),
                 new Chunk.If(
                     identifier("lorem"),
-                    [ ifChunk ],
-                    [ ] // no else-if chunks
+                    [ifChunk],
+                    [] // no else-if chunks
                     // NOTE: no 'else" chunk!
-                )
+                ),
             ]);
 
             expect(ifChunk.accept).toHaveBeenCalledTimes(1);

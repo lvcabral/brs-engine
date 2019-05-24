@@ -18,16 +18,14 @@ describe("end to end syntax", () => {
     });
 
     test("comments.brs", async () => {
-        await execute([ resourceFile("comments.brs") ], outputStreams);
+        await execute([resourceFile("comments.brs")], outputStreams);
         expect(outputStreams.stdout.write).not.toBeCalled();
     });
 
     test("printLiterals.brs", async () => {
-        await execute([ resourceFile("printLiterals.brs") ], outputStreams);
+        await execute([resourceFile("printLiterals.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "invalid",
             "true",
             "false",
@@ -36,119 +34,143 @@ describe("end to end syntax", () => {
             "30",
             "40",
             "hello",
-            "255"
+            "255",
         ]);
     });
 
     test("arithmetic.brs", async () => {
-        await execute([ resourceFile("arithmetic.brs") ], outputStreams);
+        await execute([resourceFile("arithmetic.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "3", "3", "3", "3",       // addition
-            "5", "5", "5", "5",       // subtraction
-            "15", "15", "15", "15",   // multiplication
-            "2.5", "2", "2.5", "2.5", // division
-            "8", "8", "8", "8",       // exponentiation
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "3",
+            "3",
+            "3",
+            "3", // addition
+            "5",
+            "5",
+            "5",
+            "5", // subtraction
+            "15",
+            "15",
+            "15",
+            "15", // multiplication
+            "2.5",
+            "2",
+            "2.5",
+            "2.5", // division
+            "8",
+            "8",
+            "8",
+            "8", // exponentiation
         ]);
     });
 
     test("assignment.brs", async () => {
-        await execute([ resourceFile("assignment.brs") ], outputStreams);
+        await execute([resourceFile("assignment.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "new value"
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "new value",
         ]);
     });
 
     test("assignment-operators.brs", async () => {
-        await execute([ resourceFile("assignment-operators.brs") ], outputStreams);
+        await execute([resourceFile("assignment-operators.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "5", "2", "6", "3", "1"
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "5",
+            "2",
+            "6",
+            "3",
+            "1",
         ]);
     });
 
     test("conditionals.brs", async () => {
-        await execute([ resourceFile("conditionals.brs") ], outputStreams);
+        await execute([resourceFile("conditionals.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "1", "2", "3", "4", "5", "6"
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
         ]);
     });
 
     test("while-loops.brs", async () => {
-        await execute([ resourceFile("while-loops.brs") ], outputStreams);
+        await execute([resourceFile("while-loops.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "0", "1", "2", "3", "4", // count up
-            "5", "4"                 // count down with exit
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "0",
+            "1",
+            "2",
+            "3",
+            "4", // count up
+            "5",
+            "4", // count down with exit
         ]);
     });
 
     test("for-loops.brs", async () => {
-        await execute([ resourceFile("for-loops.brs") ], outputStreams);
+        await execute([resourceFile("for-loops.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "0", "2", "4", "6", // count up
-            "8",                // i after loop
-            "3", "2", "1", "0", // count down
-            "for loop exit",    // exit early
-            "0",                // e after loop
-            "initial = final"   // loop where initial equals final
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "0",
+            "2",
+            "4",
+            "6", // count up
+            "8", // i after loop
+            "3",
+            "2",
+            "1",
+            "0", // count down
+            "for loop exit", // exit early
+            "0", // e after loop
+            "initial = final", // loop where initial equals final
         ]);
     });
 
     test("print.brs", async () => {
-        await execute([ resourceFile("print.brs") ], outputStreams);
+        await execute([resourceFile("print.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).join("")).toEqual(
             "lorem 1psum\n" +
-            "9  is equal to 9\n" +
-        //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
-        //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
-            "column a        column b        column c        column d\n" +
-        //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
-        //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
-            "   I started at col 3    I started at col 25\n" +
-            "01234\n" +
-            "lorem    ipsum    dolor    sit    amet\n" +
-            "no newline"
+                "9  is equal to 9\n" +
+                //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
+                //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
+                "column a        column b        column c        column d\n" +
+                //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
+                //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
+                "   I started at col 3    I started at col 25\n" +
+                "01234\n" +
+                "lorem    ipsum    dolor    sit    amet\n" +
+                "no newline"
         );
     });
 
     test("reserved-words.brs", async () => {
-        await execute([ resourceFile("reserved-words.brs") ], outputStreams);
+        await execute([resourceFile("reserved-words.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             // note: associative array keys are sorted before iteration
-            "createobject", "in", "run", "stop", "then",
+            "createobject",
+            "in",
+            "run",
+            "stop",
+            "then",
             "promise-like resolved to 'foo'",
-            "Hello from line ", "18"
+            "Hello from line ",
+            "18",
         ]);
     });
 
     test("increment.brs", async () => {
-        await execute([ resourceFile("increment.brs") ], outputStreams);
+        await execute([resourceFile("increment.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "6",  // var = 5: var++
-            "2",  // aa = { foo: 3 }: aa.foo--
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "6", // var = 5: var++
+            "2", // aa = { foo: 3 }: aa.foo--
             "14", // arr = [13]: arr[0]++
         ]);
     });

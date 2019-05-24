@@ -25,7 +25,9 @@ export class BrsError extends Error {
             }
             formattedLocation = `${location.file}(${location.start.line},${columns})`;
         } else {
-            formattedLocation = `${location.file}(${location.start.line},${location.start.column},${location.end.line},${location.end.line})`;
+            formattedLocation = `${location.file}(${location.start.line},${location.start.column},${
+                location.end.line
+            },${location.end.line})`;
         }
 
         return `${formattedLocation}: ${this.message}`;
@@ -38,18 +40,18 @@ export interface TypeMismatchMetadata {
      * The base message to use for this error. Should be as helpful as possible, e.g.
      * "Attempting to subtract non-numeric values".
      */
-    message: string,
+    message: string;
     /** The value on the left-hand side of a binary operator, or the *only* value for a unary operator. */
-    left: TypeAndLocation,
+    left: TypeAndLocation;
     /** The value on the right-hand side of a binary operator. */
-    right?: TypeAndLocation,
+    right?: TypeAndLocation;
 }
 
 export type TypeAndLocation = {
     /** The type of a value involved in a type mismatch. */
-    type: BrsType | ValueKind,
+    type: BrsType | ValueKind;
     /** The location at which the offending value was resolved. */
-    location: Location
+    location: Location;
 };
 
 /**
@@ -60,13 +62,13 @@ export class TypeMismatch extends BrsError {
     constructor(mismatchMetadata: TypeMismatchMetadata) {
         let messageLines = [
             mismatchMetadata.message,
-            `    left: ${ValueKind.toString(getKind(mismatchMetadata.left.type))}`
+            `    left: ${ValueKind.toString(getKind(mismatchMetadata.left.type))}`,
         ];
         let location = mismatchMetadata.left.location;
 
         if (mismatchMetadata.right) {
             messageLines.push(
-            `    right: ${ValueKind.toString(getKind(mismatchMetadata.right.type))}`
+                `    right: ${ValueKind.toString(getKind(mismatchMetadata.right.type))}`
             );
 
             location.end = mismatchMetadata.right.location.end;

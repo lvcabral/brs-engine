@@ -23,17 +23,13 @@ describe("interpreter function expressions", () => {
                 new Expr.Grouping(
                     {
                         left: token(Lexeme.LeftParen),
-                        right: token(Lexeme.RightParen)
+                        right: token(Lexeme.RightParen),
                     },
-                    new Expr.Function(
-                        [],
-                        ValueKind.Void,
-                        emptyBlock
-                    )
+                    new Expr.Function([], ValueKind.Void, emptyBlock)
                 ),
                 token(Lexeme.RightParen, ")"),
                 []
-            )
+            ),
         ];
 
         interpreter.exec(statements);

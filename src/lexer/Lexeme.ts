@@ -17,20 +17,20 @@ export enum Lexeme {
     Backslash = "Backslash",
 
     // postfix operators
-    PlusPlus = "PlusPlus",   // ++
+    PlusPlus = "PlusPlus", // ++
     MinusMinus = "MinusMinus", // --
 
     // bitshift
-    LeftShift = "LeftShift",  // <<
+    LeftShift = "LeftShift", // <<
     RightShift = "RightShift", // >>
 
     // assignment operators
-    MinusEqual = "MinusEqual",      // -=
-    PlusEqual = "PlusEqual",       // +=
-    StarEqual = "StarEqual",       // *=
-    SlashEqual = "SlashEqual",      // /=
-    BackslashEqual = "BackslashEqual",  // \=
-    LeftShiftEqual = "LeftShiftEqual",  // <<=
+    MinusEqual = "MinusEqual", // -=
+    PlusEqual = "PlusEqual", // +=
+    StarEqual = "StarEqual", // *=
+    SlashEqual = "SlashEqual", // /=
+    BackslashEqual = "BackslashEqual", // \=
+    LeftShiftEqual = "LeftShiftEqual", // <<=
     RightShiftEqual = "RightShiftEqual", // >>=
 
     // comparators
@@ -111,5 +111,5 @@ export enum Lexeme {
 
     // structural
     Newline = "Newline",
-    Eof = "Eof"
+    Eof = "Eof",
 }

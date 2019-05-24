@@ -20,7 +20,11 @@ describe("interpreter arithmetic", () => {
     });
 
     it("concatenates strings", () => {
-        let ast = binary(new brs.types.BrsString("judge "), Lexeme.Plus, new brs.types.BrsString("judy"));
+        let ast = binary(
+            new brs.types.BrsString("judge "),
+            Lexeme.Plus,
+            new brs.types.BrsString("judy")
+        );
         let [result] = interpreter.exec([ast]);
         expect(result.toString()).toBe("judge judy");
     });
@@ -69,7 +73,7 @@ describe("interpreter arithmetic", () => {
                     new Expr.Grouping(
                         {
                             left: token(Lexeme.LeftParen),
-                            right: token(Lexeme.RightParen)
+                            right: token(Lexeme.RightParen),
                         },
                         new Expr.Binary(
                             new Expr.Literal(new brs.types.Int32(6)),
@@ -95,10 +99,7 @@ describe("interpreter arithmetic", () => {
 
     it("doesn't allow non-numeric negation", () => {
         let ast = new Stmt.Expression(
-            new Expr.Unary(
-                token(Lexeme.Minus),
-                new Expr.Literal(new brs.types.BrsString("four"))
-            )
+            new Expr.Unary(token(Lexeme.Minus), new Expr.Literal(new brs.types.BrsString("four")))
         );
 
         expect(() => interpreter.exec([ast])).toThrow(/Attempting to negate non-numeric value/);

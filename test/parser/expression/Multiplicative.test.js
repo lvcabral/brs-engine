@@ -21,7 +21,7 @@ describe("parser", () => {
                 token(Lexeme.Float, "5.0", new Float(5.0)),
                 token(Lexeme.Star, "*"),
                 token(Lexeme.Float, "7.0", new Float(7.0)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -39,7 +39,7 @@ describe("parser", () => {
                 token(Lexeme.Float, "5.0", new Float(5.0)),
                 token(Lexeme.Slash, "/"),
                 token(Lexeme.Float, "3.0", new Float(3.0)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -57,7 +57,7 @@ describe("parser", () => {
                 token(Lexeme.Float, "5.0", new Float(5.0)),
                 token(Lexeme.Mod, "MOD"),
                 token(Lexeme.Float, "3.0", new Float(3.0)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -75,7 +75,7 @@ describe("parser", () => {
                 token(Lexeme.Float, "5.0", new Float(5.0)),
                 token(Lexeme.Backslash, "\\"),
                 token(Lexeme.Float, "3.0", new Float(3.0)),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);

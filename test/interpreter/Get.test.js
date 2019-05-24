@@ -34,16 +34,14 @@ describe("property getting", () => {
                         new Expr.Literal(new Int32(1)),
                         token(Lexeme.RightSquare, "]")
                     )
-                )
+                ),
             ];
 
             interpreter.exec(ast);
 
-            expect(
-                interpreter.environment.get(
-                    identifier("result")
-                )
-            ).toEqual(new BrsString("index1"));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(
+                new BrsString("index1")
+            );
         });
 
         test("multi-dimensional", () => {
@@ -55,18 +53,18 @@ describe("property getting", () => {
                         new Expr.ArrayLiteral([
                             new Expr.Literal(new BrsString("(0,0)")),
                             new Expr.Literal(new BrsString("(0,1)")),
-                            new Expr.Literal(new BrsString("(0,2)"))
+                            new Expr.Literal(new BrsString("(0,2)")),
                         ]),
                         new Expr.ArrayLiteral([
                             new Expr.Literal(new BrsString("(1,0)")),
                             new Expr.Literal(new BrsString("(1,1)")),
-                            new Expr.Literal(new BrsString("(1,2)"))
+                            new Expr.Literal(new BrsString("(1,2)")),
                         ]),
                         new Expr.ArrayLiteral([
                             new Expr.Literal(new BrsString("(2,0)")),
                             new Expr.Literal(new BrsString("(2,1)")),
-                            new Expr.Literal(new BrsString("(2,2)"))
-                        ])
+                            new Expr.Literal(new BrsString("(2,2)")),
+                        ]),
                     ])
                 ),
                 new Stmt.Assignment(
@@ -81,16 +79,14 @@ describe("property getting", () => {
                         new Expr.Literal(new Int32(1)),
                         token(Lexeme.RightSquare, "]")
                     )
-                )
+                ),
             ];
 
             interpreter.exec(ast);
 
-            expect(
-                interpreter.environment.get(
-                    identifier("result")
-                )
-            ).toEqual(new BrsString("(2,1)"));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(
+                new BrsString("(2,1)")
+            );
         });
     });
 
@@ -107,27 +103,22 @@ describe("property getting", () => {
                                 new Expr.Literal(new BrsString("foo's ")),
                                 token(Lexeme.Plus, "+"),
                                 new Expr.Literal(new BrsString("value"))
-                            )
-                        }
+                            ),
+                        },
                     ])
                 ),
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
                     identifier("result"),
-                    new Expr.DottedGet(
-                        new Expr.Variable(identifier("aa")),
-                        identifier("foo")
-                    )
-                )
+                    new Expr.DottedGet(new Expr.Variable(identifier("aa")), identifier("foo"))
+                ),
             ];
 
             interpreter.exec(ast);
 
-            expect(
-                interpreter.environment.get(
-                    identifier("result")
-                )
-            ).toEqual(new BrsString("foo's value"));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(
+                new BrsString("foo's value")
+            );
         });
 
         test("multi-dimensional", () => {
@@ -141,31 +132,26 @@ describe("property getting", () => {
                             value: new Expr.AALiteral([
                                 {
                                     name: new BrsString("bar"),
-                                    value: new Expr.Literal(new BrsString("aa.foo.bar's value"))
-                                }
-                            ])
-                        }
+                                    value: new Expr.Literal(new BrsString("aa.foo.bar's value")),
+                                },
+                            ]),
+                        },
                     ])
                 ),
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
                     identifier("result"),
                     new Expr.DottedGet(
-                        new Expr.DottedGet(
-                            new Expr.Variable(identifier("aa")),
-                            identifier("foo")
-                        ),
+                        new Expr.DottedGet(new Expr.Variable(identifier("aa")), identifier("foo")),
                         identifier("bar")
                     )
-                )
+                ),
             ];
 
             interpreter.exec(ast);
-            expect(
-                interpreter.environment.get(
-                    identifier("result")
-                )
-            ).toEqual(new BrsString("aa.foo.bar's value"));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(
+                new BrsString("aa.foo.bar's value")
+            );
         });
     });
 });

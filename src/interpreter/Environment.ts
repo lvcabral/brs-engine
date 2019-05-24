@@ -8,7 +8,7 @@ export enum Scope {
     /** The set of named functions accessible from a set of files compiled together. */
     Module,
     /** The set of variables (including anonymous functions) accessible *only* from within a function body. */
-    Function
+    Function,
 }
 
 /** An error thrown when attempting to access an uninitialized variable. */
@@ -122,19 +122,29 @@ export class Environment {
      * @param scopeFilter the set of scopes with which to limit searches for `name`
      * @returns `true` if this environment contains `name`, otherwise `false`
      */
-    public has(name: Identifier, scopeFilter: Scope[] = [Scope.Global, Scope.Module, Scope.Function]): boolean {
+    public has(
+        name: Identifier,
+        scopeFilter: Scope[] = [Scope.Global, Scope.Module, Scope.Function]
+    ): boolean {
         if (name.text.toLowerCase() === "m") {
             return true; // we always have an `m` scope of some sort!
         }
 
         let lowercaseName = name.text.toLowerCase();
-        return scopeFilter.map(scopeName => {
-            switch (scopeName) {
-                case Scope.Global: return this.global;
-                case Scope.Module: return this.module;
-                case Scope.Function: return this.function;
-            }
-        }).find(scope => scope.has(lowercaseName)) != null;
+        return (
+            scopeFilter
+                .map(scopeName => {
+                    switch (scopeName) {
+                        case Scope.Global:
+                            return this.global;
+                        case Scope.Module:
+                            return this.module;
+                        case Scope.Function:
+                            return this.function;
+                    }
+                })
+                .find(scope => scope.has(lowercaseName)) != null
+        );
     }
 
     /**

@@ -19,7 +19,7 @@ describe("parser indexing", () => {
                 identifier("foo"),
                 token(Lexeme.Dot, "."),
                 identifier("bar"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -36,7 +36,7 @@ describe("parser indexing", () => {
                 token(Lexeme.LeftSquare, "["),
                 token(Lexeme.Integer, "2", new Int32(2)),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -60,8 +60,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 1, column: 0 },
-                        end: { line: 1, column: 1 }
-                    }
+                        end: { line: 1, column: 1 },
+                    },
                 },
                 {
                     kind: Lexeme.Equal,
@@ -70,7 +70,7 @@ describe("parser indexing", () => {
                     location: {
                         start: { line: 1, column: 2 },
                         end: { line: 1, column: 3 },
-                    }
+                    },
                 },
                 {
                     kind: Lexeme.Identifier,
@@ -78,8 +78,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 1, column: 4 },
-                        end: { line: 1, column: 7 }
-                    }
+                        end: { line: 1, column: 7 },
+                    },
                 },
                 {
                     kind: Lexeme.Dot,
@@ -88,7 +88,7 @@ describe("parser indexing", () => {
                     location: {
                         start: { line: 1, column: 7 },
                         end: { line: 1, column: 8 },
-                    }
+                    },
                 },
                 {
                     kind: Lexeme.Identifier,
@@ -96,8 +96,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 1, column: 8 },
-                        end: { line: 1, column: 11 }
-                    }
+                        end: { line: 1, column: 11 },
+                    },
                 },
                 {
                     kind: Lexeme.Newline,
@@ -105,8 +105,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 1, column: 11 },
-                        end: { line: 1, column: 12 }
-                    }
+                        end: { line: 1, column: 12 },
+                    },
                 },
                 {
                     kind: Lexeme.Identifier,
@@ -114,8 +114,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 2, column: 0 },
-                        end: { line: 2, column: 1 }
-                    }
+                        end: { line: 2, column: 1 },
+                    },
                 },
                 {
                     kind: Lexeme.Equal,
@@ -124,7 +124,7 @@ describe("parser indexing", () => {
                     location: {
                         start: { line: 2, column: 2 },
                         end: { line: 2, column: 3 },
-                    }
+                    },
                 },
                 {
                     kind: Lexeme.Identifier,
@@ -132,8 +132,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 2, column: 4 },
-                        end: { line: 2, column: 7 }
-                    }
+                        end: { line: 2, column: 7 },
+                    },
                 },
                 {
                     kind: Lexeme.LeftSquare,
@@ -141,8 +141,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 2, column: 7 },
-                        end: { line: 2, column: 8 }
-                    }
+                        end: { line: 2, column: 8 },
+                    },
                 },
                 {
                     kind: Lexeme.Integer,
@@ -151,8 +151,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 2, column: 8 },
-                        end: { line: 2, column: 9 }
-                    }
+                        end: { line: 2, column: 9 },
+                    },
                 },
                 {
                     kind: Lexeme.RightSquare,
@@ -160,8 +160,8 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 2, column: 9 },
-                        end: { line: 2, column: 10 }
-                    }
+                        end: { line: 2, column: 10 },
+                    },
                 },
                 {
                     kind: Lexeme.Eof,
@@ -169,9 +169,9 @@ describe("parser indexing", () => {
                     isReserved: false,
                     location: {
                         start: { line: 2, column: 10 },
-                        end: { line: 2, column: 11 }
-                    }
-                }
+                        end: { line: 2, column: 11 },
+                    },
+                },
             ]);
 
             expect(errors).toEqual([]);
@@ -179,12 +179,12 @@ describe("parser indexing", () => {
             expect(statements.map(s => s.value.location)).toEqual([
                 {
                     start: { line: 1, column: 4 },
-                    end: { line: 1, column: 11 }
+                    end: { line: 1, column: 11 },
                 },
                 {
                     start: { line: 2, column: 4 },
-                    end: { line: 2, column: 10 }
-                }
+                    end: { line: 2, column: 10 },
+                },
             ]);
         });
     });
@@ -197,7 +197,7 @@ describe("parser indexing", () => {
                 identifier("foo"),
                 token(Lexeme.Dot, "."),
                 identifier("bar"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -220,7 +220,7 @@ describe("parser indexing", () => {
                 token(Lexeme.LeftSquare, "["),
                 token(Lexeme.Integer, "6", new Int32(6)),
                 token(Lexeme.RightSquare, "]"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -241,7 +241,7 @@ describe("parser indexing", () => {
                 token(Lexeme.RightSquare, "]"),
                 token(Lexeme.Dot, "."),
                 identifier("baz"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);

@@ -18,24 +18,22 @@ describe("end to end iterables", () => {
     });
 
     test("arrays.brs", async () => {
-        await execute([ resourceFile("arrays.brs") ], outputStreams);
+        await execute([resourceFile("arrays.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "1", "4", "9", // squared values, via for-each
-            "27",          // two-dimensional index
-            "16",          // 2 ^ 4
-            "foo bar"      // oneDimensional[0] += " bar"
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "1",
+            "4",
+            "9", // squared values, via for-each
+            "27", // two-dimensional index
+            "16", // 2 ^ 4
+            "foo bar", // oneDimensional[0] += " bar"
         ]);
     });
 
     test("associative-arrays.brs", async () => {
-        await execute([ resourceFile("associative-arrays.brs") ], outputStreams);
+        await execute([resourceFile("associative-arrays.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             // iterate through keys
             "has-second-layer",
             "level",
@@ -51,7 +49,7 @@ describe("end to end iterables", () => {
             "6",
 
             // add `false` via expression to `empty`
-            "false"
+            "false",
         ]);
     });
 });

@@ -8,9 +8,9 @@ import { BrsError } from "../Error";
 /** The results of a Preprocessor's filtering pass. */
 export interface FilterResults {
     /** The tokens remaining after preprocessing. */
-    processedTokens: ReadonlyArray<Token>,
+    processedTokens: ReadonlyArray<Token>;
     /** The encountered during preprocessing. */
-    errors: ReadonlyArray<BrsError>
+    errors: ReadonlyArray<BrsError>;
 }
 
 /**
@@ -18,7 +18,6 @@ export interface FilterResults {
  * selecting chunks of tokens to be considered for later evaluation.
  */
 export class Preprocessor implements CC.Visitor {
-
     private constants = new Map<string, boolean>();
 
     /** Allows consumers to observe errors as they're detected. */
@@ -47,11 +46,13 @@ export class Preprocessor implements CC.Visitor {
     filter(chunks: ReadonlyArray<CC.Chunk>, bsConst: Map<string, boolean>): FilterResults {
         this.constants = new Map(bsConst);
         return {
-            processedTokens: chunks.map(chunk => chunk.accept(this)).reduce(
-                (allTokens: Token[], chunkTokens: Token[]) => [ ...allTokens, ...chunkTokens ],
-                []
-            ),
-            errors: this.errors
+            processedTokens: chunks
+                .map(chunk => chunk.accept(this))
+                .reduce(
+                    (allTokens: Token[], chunkTokens: Token[]) => [...allTokens, ...chunkTokens],
+                    []
+                ),
+            errors: this.errors,
         };
     }
 
@@ -73,7 +74,10 @@ export class Preprocessor implements CC.Visitor {
     visitDeclaration(chunk: CC.Declaration) {
         if (this.constants.has(chunk.name.text)) {
             return this.addError(
-                new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.location)
+                new BrsError(
+                    `Attempting to re-declare #const with name '${chunk.name.text}'`,
+                    chunk.name.location
+                )
             );
         }
 
@@ -92,11 +96,19 @@ export class Preprocessor implements CC.Visitor {
                 }
 
                 return this.addError(
-                    new BrsError(`Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`, chunk.value.location)
+                    new BrsError(
+                        `Attempting to create #const alias of '${
+                            chunk.value.text
+                        }', but no such #const exists`,
+                        chunk.value.location
+                    )
                 );
             default:
                 return this.addError(
-                    new BrsError("#const declarations can only have values of `true`, `false`, or other #const names", chunk.value.location)
+                    new BrsError(
+                        "#const declarations can only have values of `true`, `false`, or other #const names",
+                        chunk.value.location
+                    )
                 );
         }
 
@@ -122,14 +134,17 @@ export class Preprocessor implements CC.Visitor {
     visitIf(chunk: CC.If): Token[] {
         if (this.evaluateCondition(chunk.condition)) {
             return chunk.thenChunks
-                    .map(chunk => chunk.accept(this))
-                    .reduce((allTokens, chunkTokens: Token[]) => [ ...allTokens, ...chunkTokens ], []);
+                .map(chunk => chunk.accept(this))
+                .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
         } else {
             for (const elseIf of chunk.elseIfs) {
                 if (this.evaluateCondition(elseIf.condition)) {
                     return elseIf.thenChunks
                         .map(chunk => chunk.accept(this))
-                        .reduce((allTokens, chunkTokens: Token[]) => [ ...allTokens, ...chunkTokens ], []);
+                        .reduce(
+                            (allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens],
+                            []
+                        );
                 }
             }
         }
@@ -137,7 +152,7 @@ export class Preprocessor implements CC.Visitor {
         if (chunk.elseChunks) {
             return chunk.elseChunks
                 .map(chunk => chunk.accept(this))
-                .reduce((allTokens, chunkTokens: Token[]) => [ ...allTokens, ...chunkTokens ], []);
+                .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
         }
 
         return [];
@@ -150,19 +165,27 @@ export class Preprocessor implements CC.Visitor {
      */
     evaluateCondition(token: Token): boolean {
         switch (token.kind) {
-            case Lexeme.True: return true;
-            case Lexeme.False: return false;
+            case Lexeme.True:
+                return true;
+            case Lexeme.False:
+                return false;
             case Lexeme.Identifier:
                 if (this.constants.has(token.text)) {
                     return this.constants.get(token.text) as boolean;
                 }
 
                 return this.addError(
-                    new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.location)
+                    new BrsError(
+                        `Attempting to reference undefined #const with name '${token.text}'`,
+                        token.location
+                    )
                 );
             default:
                 return this.addError(
-                    new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.location)
+                    new BrsError(
+                        "#if conditionals can only be `true`, `false`, or other #const names",
+                        token.location
+                    )
                 );
         }
     }

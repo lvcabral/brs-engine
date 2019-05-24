@@ -2,7 +2,17 @@ const { binary } = require("./InterpreterTests");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("brs");
 const { Lexeme } = brs.lexer;
-const { Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsArray, BrsInvalid, AssociativeArray } = brs.types;
+const {
+    Int32,
+    Int64,
+    Float,
+    Double,
+    BrsString,
+    BrsBoolean,
+    BrsArray,
+    BrsInvalid,
+    AssociativeArray,
+} = brs.types;
 
 let interpreter;
 
@@ -88,19 +98,19 @@ describe("interpreter comparisons", () => {
 
     describe("array comparisons", () => {
         [
-            { name: "<",  operator: Lexeme.Less },
+            { name: "<", operator: Lexeme.Less },
             { name: "<=", operator: Lexeme.LessEqual },
-            { name: ">",  operator: Lexeme.Greater },
+            { name: ">", operator: Lexeme.Greater },
             { name: ">=", operator: Lexeme.GreaterEqual },
-            { name: "=",  operator: Lexeme.Equal },
-            { name: "<>", operator: Lexeme.LessGreater }
+            { name: "=", operator: Lexeme.Equal },
+            { name: "<>", operator: Lexeme.LessGreater },
         ].forEach(({ name, operator }) => {
             test(name, () => {
                 let arr = new BrsArray([]);
 
-                expect(() => interpreter.exec(
-                    [ binary(arr, operator, arr) ]
-                )).toThrow(/Attempting to compare non-primitive values/);
+                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow(
+                    /Attempting to compare non-primitive values/
+                );
             });
         });
     });
@@ -116,42 +126,39 @@ describe("interpreter comparisons", () => {
             { name: "float", value: new Float(3.4) },
             { name: "double", value: new Double(7.8) },
             { name: "array", value: new BrsArray([]) },
-            { name: "associative array", value: new AssociativeArray([]) }
+            { name: "associative array", value: new AssociativeArray([]) },
         ].forEach(({ name, value }) => {
             test(name, () => {
-                expect(interpreter.exec([
-                    binary(value, Lexeme.Equal, invalid),
-                    binary(invalid, Lexeme.Equal, value),
-                    binary(value, Lexeme.LessGreater, invalid),
-                    binary(invalid, Lexeme.LessGreater, value),
-                ])).toEqual([
-                    BrsBoolean.False,
-                    BrsBoolean.False,
-                    BrsBoolean.True,
-                    BrsBoolean.True
-                ]);
+                expect(
+                    interpreter.exec([
+                        binary(value, Lexeme.Equal, invalid),
+                        binary(invalid, Lexeme.Equal, value),
+                        binary(value, Lexeme.LessGreater, invalid),
+                        binary(invalid, Lexeme.LessGreater, value),
+                    ])
+                ).toEqual([BrsBoolean.False, BrsBoolean.False, BrsBoolean.True, BrsBoolean.True]);
 
-                [ Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual ].forEach(operator => {
-                    expect(() => interpreter.exec([
-                        binary(value, operator, invalid)
-                    ])).toThrow(/Attempting to compare non-primitive values/);
+                [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach(
+                    operator => {
+                        expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow(
+                            /Attempting to compare non-primitive values/
+                        );
 
-                    expect(() => interpreter.exec([
-                        binary(invalid, operator, value)
-                    ])).toThrow(/Attempting to compare non-primitive values/);
-                });
+                        expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow(
+                            /Attempting to compare non-primitive values/
+                        );
+                    }
+                );
             });
         });
 
         test("invalid", () =>
-            expect(interpreter.exec([
-                binary(invalid, Lexeme.Equal, invalid),
-                binary(invalid, Lexeme.LessGreater, invalid),
-            ])).toEqual([
-                BrsBoolean.True,
-                BrsBoolean.False
-            ])
-        );
+            expect(
+                interpreter.exec([
+                    binary(invalid, Lexeme.Equal, invalid),
+                    binary(invalid, Lexeme.LessGreater, invalid),
+                ])
+            ).toEqual([BrsBoolean.True, BrsBoolean.False]));
     });
 
     describe("disallowed mixed-type comparisons", () => {
@@ -168,14 +175,21 @@ describe("interpreter comparisons", () => {
             let greaterEqual = binary(int32, Lexeme.GreaterEqual, str);
             let equal = binary(int32, Lexeme.Equal, str);
             let notEqual = binary(int32, Lexeme.LessGreater, str);
-            let results = interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual]);
+            let results = interpreter.exec([
+                less,
+                lessEqual,
+                greater,
+                greaterEqual,
+                equal,
+                notEqual,
+            ]);
             expect(results).toEqual([
                 BrsBoolean.False,
                 BrsBoolean.False,
                 BrsBoolean.False,
                 BrsBoolean.False,
                 BrsBoolean.False,
-                BrsBoolean.True
+                BrsBoolean.True,
             ]);
         });
 
@@ -186,14 +200,21 @@ describe("interpreter comparisons", () => {
             let greaterEqual = binary(str, Lexeme.GreaterEqual, int64);
             let equal = binary(str, Lexeme.Equal, int64);
             let notEqual = binary(str, Lexeme.LessGreater, int64);
-            let results = interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual]);
+            let results = interpreter.exec([
+                less,
+                lessEqual,
+                greater,
+                greaterEqual,
+                equal,
+                notEqual,
+            ]);
             expect(results).toEqual([
                 BrsBoolean.False,
                 BrsBoolean.False,
                 BrsBoolean.False,
                 BrsBoolean.False,
                 BrsBoolean.False,
-                BrsBoolean.True
+                BrsBoolean.True,
             ]);
         });
     });

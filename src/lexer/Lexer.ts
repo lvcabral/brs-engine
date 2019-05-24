@@ -6,21 +6,14 @@ import { ReservedWords, KeyWords } from "./ReservedWords";
 import { BrsError } from "../Error";
 import { isAlpha, isDecimalDigit, isAlphaNumeric, isHexDigit } from "./Characters";
 
-import {
-    BrsType,
-    BrsString,
-    Int32,
-    Int64,
-    Float,
-    Double
-} from "../brsTypes";
+import { BrsType, BrsString, Int32, Int64, Float, Double } from "../brsTypes";
 
 /** The results of a Lexer's scanning pass. */
 interface ScanResults {
     /** The tokens produced by the Lexer. */
-    tokens: Token[],
+    tokens: Token[];
     /** The errors encountered by the Lexer. */
-    errors: BrsError[]
+    errors: BrsError[];
 }
 
 export class Lexer {
@@ -50,7 +43,7 @@ export class Lexer {
         return {
             dispose: () => {
                 this.events.removeListener("err", errorHandler);
-            }
+            },
         };
     }
 
@@ -106,19 +99,17 @@ export class Lexer {
             location: {
                 start: {
                     line: line,
-                    column: column
+                    column: column,
                 },
                 end: {
                     line: line,
-                    column: column + 1
+                    column: column + 1,
                 },
-                file: filename
-            }
+                file: filename,
+            },
         });
 
         return { tokens, errors };
-
-
 
         /**
          * Determines whether or not the lexer as reached the end of its input.
@@ -137,13 +128,27 @@ export class Lexer {
         function scanToken(): void {
             let c = advance();
             switch (c.toLowerCase()) {
-                case "(": addToken(Lexeme.LeftParen); break;
-                case ")": addToken(Lexeme.RightParen); break;
-                case "{": addToken(Lexeme.LeftBrace); break;
-                case "}": addToken(Lexeme.RightBrace); break;
-                case "[": addToken(Lexeme.LeftSquare); break;
-                case "]": addToken(Lexeme.RightSquare); break;
-                case ",": addToken(Lexeme.Comma); break;
+                case "(":
+                    addToken(Lexeme.LeftParen);
+                    break;
+                case ")":
+                    addToken(Lexeme.RightParen);
+                    break;
+                case "{":
+                    addToken(Lexeme.LeftBrace);
+                    break;
+                case "}":
+                    addToken(Lexeme.RightBrace);
+                    break;
+                case "[":
+                    addToken(Lexeme.LeftSquare);
+                    break;
+                case "]":
+                    addToken(Lexeme.RightSquare);
+                    break;
+                case ",":
+                    addToken(Lexeme.Comma);
+                    break;
                 case ".":
                     // this might be a float/double literal, because decimals without a leading 0
                     // are allowed
@@ -219,10 +224,18 @@ export class Lexer {
                             break;
                     }
                     break;
-                case "=": addToken(Lexeme.Equal); break;
-                case ":": addToken(Lexeme.Colon); break;
-                case ";": addToken(Lexeme.Semicolon); break;
-                case "?": addToken(Lexeme.Print); break;
+                case "=":
+                    addToken(Lexeme.Equal);
+                    break;
+                case ":":
+                    addToken(Lexeme.Colon);
+                    break;
+                case ";":
+                    addToken(Lexeme.Semicolon);
+                    break;
+                case "?":
+                    addToken(Lexeme.Print);
+                    break;
                 case "<":
                     switch (peek()) {
                         case "=":
@@ -245,7 +258,9 @@ export class Lexer {
                             advance();
                             addToken(Lexeme.LessGreater);
                             break;
-                        default: addToken(Lexeme.Less); break;
+                        default:
+                            addToken(Lexeme.Less);
+                            break;
                     }
                     break;
                 case ">":
@@ -266,12 +281,16 @@ export class Lexer {
                                     break;
                             }
                             break;
-                        default: addToken(Lexeme.Greater); break;
+                        default:
+                            addToken(Lexeme.Greater);
+                            break;
                     }
                     break;
                 case "'":
                     // BrightScript doesn't have block comments; only line
-                    while (peek() !== "\n" && !isAtEnd()) { advance(); }
+                    while (peek() !== "\n" && !isAtEnd()) {
+                        advance();
+                    }
                     break;
                 case " ":
                 case "\r":
@@ -290,7 +309,7 @@ export class Lexer {
                     // and always reset the column counter
                     column = 0;
                     break;
-                case "\"":
+                case '"':
                     string();
                     break;
                 case "#":
@@ -334,8 +353,12 @@ export class Lexer {
                 throw new Error(`Lexer#match expects a single character; received '${expected}'`);
             }
 
-            if (isAtEnd()) { return false; }
-            if (source.charAt(current) !== expected) { return false; }
+            if (isAtEnd()) {
+                return false;
+            }
+            if (source.charAt(current) !== expected) {
+                return false;
+            }
 
             current++;
             return true;
@@ -349,7 +372,9 @@ export class Lexer {
          *          character.
          */
         function peek() {
-            if (isAtEnd()) { return "\0"; }
+            if (isAtEnd()) {
+                return "\0";
+            }
             return source.charAt(current);
         }
 
@@ -361,7 +386,9 @@ export class Lexer {
          *          null character.
          */
         function peekNext() {
-            if (current + 1 > source.length) { return "\0"; }
+            if (current + 1 > source.length) {
+                return "\0";
+            }
             return source.charAt(current + 1);
         }
 
@@ -372,8 +399,8 @@ export class Lexer {
          */
         function string() {
             while (!isAtEnd()) {
-                if (peek() === "\"") {
-                    if (peekNext() === "\"") {
+                if (peek() === '"') {
+                    if (peekNext() === '"') {
                         // skip over two consecutive `"` characters to handle escaped `"` literals
                         advance();
                     } else {
@@ -384,7 +411,12 @@ export class Lexer {
 
                 if (peekNext() === "\n") {
                     // BrightScript doesn't support multi-line strings
-                    addError(new BrsError("Unterminated string at end of line", locationOf(source.slice(start, current))));
+                    addError(
+                        new BrsError(
+                            "Unterminated string at end of line",
+                            locationOf(source.slice(start, current))
+                        )
+                    );
                     return;
                 }
 
@@ -393,7 +425,12 @@ export class Lexer {
 
             if (isAtEnd()) {
                 // terminating a string with EOF is also not allowed
-                addError(new BrsError("Unterminated string at end of file", locationOf(source.slice(start, current))));
+                addError(
+                    new BrsError(
+                        "Unterminated string at end of file",
+                        locationOf(source.slice(start, current))
+                    )
+                );
                 return;
             }
 
@@ -401,7 +438,7 @@ export class Lexer {
             advance();
 
             // trim the surrounding quotes, and replace the double-" literal with a single
-            let value = source.slice(start + 1, current - 1).replace(/""/g, "\"");
+            let value = source.slice(start + 1, current - 1).replace(/""/g, '"');
             addToken(Lexeme.String, new BrsString(value));
         }
 
@@ -416,7 +453,9 @@ export class Lexer {
          */
         function decimalNumber(hasSeenDecimal: boolean) {
             let containsDecimal = hasSeenDecimal;
-            while (isDecimalDigit(peek())) { advance(); }
+            while (isDecimalDigit(peek())) {
+                advance();
+            }
 
             // look for a fractional portion
             if (!hasSeenDecimal && peek() === ".") {
@@ -426,7 +465,9 @@ export class Lexer {
                 advance();
 
                 // read the remaining digits
-                while (isDecimalDigit(peek())) { advance(); }
+                while (isDecimalDigit(peek())) {
+                    advance();
+                }
             }
 
             let asString = source.slice(start, current);
@@ -455,7 +496,9 @@ export class Lexer {
                 }
 
                 // consume the exponent
-                while (isDecimalDigit(peek())) { advance(); }
+                while (isDecimalDigit(peek())) {
+                    advance();
+                }
 
                 // replace the exponential marker with a JavaScript-friendly "e"
                 asString = source.slice(start, current).replace(/[dD]/, "e");
@@ -467,10 +510,7 @@ export class Lexer {
                 // numeric literals ending with "!" are forced to Floats
                 advance();
                 asString = source.slice(start, current);
-                addToken(
-                    Lexeme.Float,
-                    Float.fromString(asString)
-                );
+                addToken(Lexeme.Float, Float.fromString(asString));
                 return;
             } else if (designator === "e") {
                 // literals that use "E" as the exponent are also automatic Floats
@@ -484,20 +524,16 @@ export class Lexer {
                 }
 
                 // consume the exponent
-                while (isDecimalDigit(peek())) { advance(); }
+                while (isDecimalDigit(peek())) {
+                    advance();
+                }
 
                 asString = source.slice(start, current);
-                addToken(
-                    Lexeme.Float,
-                    Float.fromString(asString)
-                );
+                addToken(Lexeme.Float, Float.fromString(asString));
                 return;
             } else if (containsDecimal) {
                 // anything with a decimal but without matching Double rules is a Float
-                addToken(
-                    Lexeme.Float,
-                    Float.fromString(asString)
-                );
+                addToken(Lexeme.Float, Float.fromString(asString));
                 return;
             }
 
@@ -522,7 +558,9 @@ export class Lexer {
          * @see https://sdkdocs.roku.com/display/sdkdoc/Expressions%2C+Variables%2C+and+Types#Expressions,Variables,andTypes-NumericLiterals
          */
         function hexadecimalNumber() {
-            while (isHexDigit(peek())) { advance(); }
+            while (isHexDigit(peek())) {
+                advance();
+            }
 
             // fractional hex literals aren't valid
             if (peek() === "." && isHexDigit(peekNext())) {
@@ -552,15 +590,20 @@ export class Lexer {
          * produced token to the `tokens` array.
          */
         function identifier() {
-            while (isAlphaNumeric(peek())) { advance(); }
+            while (isAlphaNumeric(peek())) {
+                advance();
+            }
 
             let text = source.slice(start, current).toLowerCase();
 
             // some identifiers can be split into two words, so check the "next" word and see what we get
-            if ((text === "end" || text === "else" || text === "exit" || text === "for") && (peek() === " " || peek() === "\t")) {
+            if (
+                (text === "end" || text === "else" || text === "exit" || text === "for") &&
+                (peek() === " " || peek() === "\t")
+            ) {
                 let endOfFirstWord = {
                     position: current,
-                    column: column
+                    column: column,
                 };
 
                 // skip past any whitespace
@@ -570,7 +613,9 @@ export class Lexer {
                     whitespace += peek();
                     advance();
                 }
-                while (isAlphaNumeric(peek())) { advance(); } // read the next word
+                while (isAlphaNumeric(peek())) {
+                    advance();
+                } // read the next word
 
                 let twoWords = source.slice(start, current);
                 //replace all of the whitespace with a single space character so we can properly match keyword token types
@@ -599,7 +644,9 @@ export class Lexer {
                 // The 'rem' keyword can be used to indicate comments as well, so
                 // consume the rest of the line, but don't add the token; it's not
                 // particularly useful.
-                while (peek() !== "\n" && !isAtEnd()) { advance(); }
+                while (peek() !== "\n" && !isAtEnd()) {
+                    advance();
+                }
             } else {
                 addToken(tokenType);
             }
@@ -611,7 +658,9 @@ export class Lexer {
          */
         function preProcessedConditional() {
             advance(); // advance past the leading #
-            while (isAlphaNumeric(peek())) { advance(); }
+            while (isAlphaNumeric(peek())) {
+                advance();
+            }
 
             let text = source.slice(start, current).toLowerCase();
 
@@ -620,7 +669,9 @@ export class Lexer {
                 let endOfFirstWord = current;
 
                 advance(); // skip past the space
-                while (isAlphaNumeric(peek())) { advance(); } // read the next word
+                while (isAlphaNumeric(peek())) {
+                    advance();
+                } // read the next word
 
                 let twoWords = source.slice(start, current);
                 switch (twoWords.replace(/ {2,}/g, " ")) {
@@ -694,7 +745,7 @@ export class Lexer {
                 text: text,
                 isReserved: ReservedWords.has(text.toLowerCase()),
                 literal: literal,
-                location: locationOf(text)
+                location: locationOf(text),
             });
         }
 
@@ -707,13 +758,13 @@ export class Lexer {
             return {
                 start: {
                     line: line,
-                    column: column - text.length
+                    column: column - text.length,
                 },
                 end: {
                     line: line,
-                    column: Math.max(column - text.length + 1, column)
+                    column: Math.max(column - text.length + 1, column),
                 },
-                file: filename
+                file: filename,
             };
         }
     }

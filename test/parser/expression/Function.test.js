@@ -20,7 +20,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -41,7 +41,7 @@ describe("parser", () => {
                 token(Lexeme.String, "Lorem ipsum", new BrsString("Lorem ipsum")),
                 token(Lexeme.Colon, ":"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -62,7 +62,7 @@ describe("parser", () => {
                 token(Lexeme.String, "Lorem ipsum", new BrsString("Lorem ipsum")),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -83,7 +83,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -112,7 +112,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -147,7 +147,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -157,7 +157,7 @@ describe("parser", () => {
         });
 
         it("parses functions with typed arguments and default expressions", () => {
-             let { statements, errors } = parser.parse([
+            let { statements, errors } = parser.parse([
                 identifier("_"),
                 token(Lexeme.Equal, "="),
                 token(Lexeme.Function, "function"),
@@ -181,7 +181,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -201,7 +201,7 @@ describe("parser", () => {
                 identifier("void"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -221,7 +221,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -242,7 +242,7 @@ describe("parser", () => {
                 token(Lexeme.String, "Lorem ipsum", new BrsString("Lorem ipsum")),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -263,7 +263,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -292,7 +292,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -327,7 +327,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -337,7 +337,7 @@ describe("parser", () => {
         });
 
         it("parses subs with typed arguments and default expressions", () => {
-             let { statements, errors } = parser.parse([
+            let { statements, errors } = parser.parse([
                 identifier("_"),
                 token(Lexeme.Equal, "="),
                 token(Lexeme.Sub, "sub"),
@@ -361,7 +361,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -389,10 +389,10 @@ describe("parser", () => {
                 token(Lexeme.Newline, "\\n"),
 
                 token(Lexeme.RightParen, ")"),
-                EOF
+                EOF,
             ]);
 
-            expect(errors).toEqual([])
+            expect(errors).toEqual([]);
             expect(statements).toBeDefined();
             expect(statements).not.toBeNull();
             expect(statements).toMatchSnapshot();
@@ -412,10 +412,10 @@ describe("parser", () => {
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
 
-                EOF
+                EOF,
             ]);
 
-            expect(errors).toEqual([])
+            expect(errors).toEqual([]);
             expect(statements).toBeDefined();
             expect(statements).not.toBeNull();
             expect(statements).toMatchSnapshot();
@@ -438,8 +438,8 @@ describe("parser", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 0 },
-                    end: { line: 1, column: 1 }
-                }
+                    end: { line: 1, column: 1 },
+                },
             },
             {
                 kind: Lexeme.Equal,
@@ -447,8 +447,8 @@ describe("parser", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 2 },
-                    end: { line: 1, column: 3 }
-                }
+                    end: { line: 1, column: 3 },
+                },
             },
             {
                 kind: Lexeme.Sub,
@@ -456,8 +456,8 @@ describe("parser", () => {
                 isReserved: true,
                 location: {
                     start: { line: 1, column: 4 },
-                    end: { line: 1, column: 7 }
-                }
+                    end: { line: 1, column: 7 },
+                },
             },
             {
                 kind: Lexeme.LeftParen,
@@ -465,8 +465,8 @@ describe("parser", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 11 },
-                    end: { line: 1, column: 12 }
-                }
+                    end: { line: 1, column: 12 },
+                },
             },
             {
                 kind: Lexeme.RightParen,
@@ -474,8 +474,8 @@ describe("parser", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 12 },
-                    end: { line: 1, column: 13 }
-                }
+                    end: { line: 1, column: 13 },
+                },
             },
             {
                 kind: Lexeme.Newline,
@@ -483,8 +483,8 @@ describe("parser", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 13 },
-                    end: { line: 1, column: 14 }
-                }
+                    end: { line: 1, column: 14 },
+                },
             },
             {
                 kind: Lexeme.EndSub,
@@ -492,8 +492,8 @@ describe("parser", () => {
                 isReserved: false,
                 location: {
                     start: { line: 3, column: 0 },
-                    end: { line: 3, column: 7 }
-                }
+                    end: { line: 3, column: 7 },
+                },
             },
             {
                 kind: Lexeme.Eof,
@@ -502,15 +502,15 @@ describe("parser", () => {
                 location: {
                     start: { line: 3, column: 7 },
                     end: { line: 3, column: 8 },
-                }
-            }
+                },
+            },
         ]);
 
         expect(errors).toEqual([]);
-        expect(statements.length).toBe(1)
+        expect(statements.length).toBe(1);
         expect(statements[0].value.location).toEqual({
             start: { line: 1, column: 4 },
-            end: { line: 3, column: 7 }
+            end: { line: 3, column: 7 },
         });
     });
 });

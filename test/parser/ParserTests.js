@@ -14,16 +14,14 @@ exports.token = function(kind, text, literal) {
     return {
         kind: kind,
         text: text,
-        isReserved: brs.lexer.ReservedWords.has(
-            (text || "").toLowerCase()
-        ),
+        isReserved: brs.lexer.ReservedWords.has((text || "").toLowerCase()),
         literal: literal,
         location: {
             start: { line: -9, column: -9 },
             end: { line: -9, column: -9 },
-        }
+        },
     };
-}
+};
 
 /**
  * Creates an Identifier token with the given `text`.
@@ -32,7 +30,7 @@ exports.token = function(kind, text, literal) {
  */
 exports.identifier = function(text) {
     return exports.token(Lexeme.Identifier, text);
-}
+};
 
 /** An end-of-file token. */
 exports.EOF = exports.token(Lexeme.Eof, "\0");

@@ -80,8 +80,14 @@ describe("Timespan", () => {
                 let dateToParse1 = "2030-11-10T05:47:52Z";
                 let dateToParse2 = "1986-11-10T05:47:52Z";
 
-                let result1 = getsecondstoiso8601date.call(interpreter, new BrsString(dateToParse1));
-                let result2 = getsecondstoiso8601date.call(interpreter, new BrsString(dateToParse2));
+                let result1 = getsecondstoiso8601date.call(
+                    interpreter,
+                    new BrsString(dateToParse1)
+                );
+                let result2 = getsecondstoiso8601date.call(
+                    interpreter,
+                    new BrsString(dateToParse2)
+                );
 
                 expect(getsecondstoiso8601date).toBeTruthy();
                 expect(result1).toEqual(new Int32(373447701));
@@ -104,8 +110,14 @@ describe("Timespan", () => {
                 let dateToParse1 = "not a date";
                 let dateToParse2 = "14 Jun 2017 00:00:00 PDT";
 
-                let result1 = getsecondstoiso8601date.call(interpreter, new BrsString(dateToParse1));
-                let result2 = getsecondstoiso8601date.call(interpreter, new BrsString(dateToParse2));
+                let result1 = getsecondstoiso8601date.call(
+                    interpreter,
+                    new BrsString(dateToParse1)
+                );
+                let result2 = getsecondstoiso8601date.call(
+                    interpreter,
+                    new BrsString(dateToParse2)
+                );
 
                 expect(getsecondstoiso8601date).toBeTruthy();
                 expect(result1).toEqual(new Int32(2077252342));

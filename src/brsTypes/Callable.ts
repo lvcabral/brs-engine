@@ -7,22 +7,22 @@ import { Location } from "../lexer";
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
     /** Where the argument exists in the parsed source file(s). */
-    readonly location: Location,
+    readonly location: Location;
 
     /** The argument's name. */
     readonly name: {
-        text: string,
-        location: Location
-    },
+        text: string;
+        location: Location;
+    };
 
     /** The type of the argument expected by the BrightScript runtime. */
     readonly type: {
-        kind: Brs.ValueKind
-        location: Location
-    },
+        kind: Brs.ValueKind;
+        location: Location;
+    };
 
     /** The default value to use for the argument if none is provided. */
-    readonly defaultValue?: Expr.Expression,
+    readonly defaultValue?: Expr.Expression;
 }
 
 /**
@@ -43,7 +43,6 @@ export class StdlibArgument implements Argument {
      *                     provided at runtime
      */
     constructor(name: string, type: Brs.ValueKind, defaultValue?: Brs.BrsType) {
-
         this.location = StdlibArgument.InternalLocation;
         this.name = { text: name, location: StdlibArgument.InternalLocation };
         this.type = { kind: type, location: StdlibArgument.InternalLocation };
@@ -56,25 +55,24 @@ export class StdlibArgument implements Argument {
     static InternalLocation = {
         file: "(stdlib)",
         start: { line: -1, column: -1 },
-        end: { line: -1, column: -1 }
+        end: { line: -1, column: -1 },
     };
-
 }
 
 /** A BrightScript `function` or `sub`'s signature. */
 export interface Signature {
     /** The set of arguments a function accepts. */
-    readonly args: ReadonlyArray<Argument>,
+    readonly args: ReadonlyArray<Argument>;
     /** The type of BrightScript value the function will return. `sub`s must use `ValueKind.Void`. */
-    readonly returns: Brs.ValueKind
+    readonly returns: Brs.ValueKind;
 }
 
 /** A BrightScript function signature paired with its implementation. */
 type SignatureAndImplementation = {
     /** A BrightScript function's signature. */
-    signature: Signature,
+    signature: Signature;
     /** The implementation corresponding to `signature`. */
-    impl: CallableImplementation
+    impl: CallableImplementation;
 };
 
 type SignatureMismatch = AnonymousMismatch | ArgumentMismatch;
@@ -82,23 +80,23 @@ type SignatureMismatch = AnonymousMismatch | ArgumentMismatch;
 /** A mismatch between a BrightScript function's signature and its received arguments. */
 export interface AnonymousMismatch {
     /** The type of mismatch that was received. */
-    reason: MismatchReason.TooFewArguments | MismatchReason.TooManyArguments,
+    reason: MismatchReason.TooFewArguments | MismatchReason.TooManyArguments;
     /** The number of arguments that was expected. */
-    expected: string,
+    expected: string;
     /** The number of arguments that was actually received. */
-    received: string
+    received: string;
 }
 
 /** A mismatch between a function argument's expected type and its runtime type. */
 export interface ArgumentMismatch {
     /** The type of mismatch that was received. */
-    reason: MismatchReason.ArgumentTypeMismatch,
+    reason: MismatchReason.ArgumentTypeMismatch;
     /** The BrightScript type that was expected for argument `argName`. */
-    expected: string,
+    expected: string;
     /** The BrightScript type that was actually received. */
-    received: string
+    received: string;
     /** The name of the argument that had a type mismatch. */
-    argName: string
+    argName: string;
 }
 
 /** The set of possible reasons why a signature and runtime arguments don't match. */
@@ -108,15 +106,15 @@ export enum MismatchReason {
     /** Too many arguments were provided to satisfy a signature. */
     TooManyArguments,
     /** An argument's type didn't match the signature's type. */
-    ArgumentTypeMismatch
+    ArgumentTypeMismatch,
 }
 
 /** A BrightScript function's signature, paired with a set of detected signature mismatches. */
 export type SignatureAndMismatches = {
     /** A BrightScript function's signature. */
-    signature: Signature,
+    signature: Signature;
     /** The set of mismatches between `signature` and the detected mismatches. */
-    mismatches: SignatureMismatch[]
+    mismatches: SignatureMismatch[];
 };
 
 /*
@@ -151,8 +149,9 @@ export class Callable implements Brs.BrsValue {
         let satisfiedSignature = this.getFirstSatisfiedSignature(args);
         if (satisfiedSignature == null) {
             throw new Error(
-                "BrightScript function called without first checking for satisfied signatures. "
-                + "Ensure `Callable#getAllSignatureMismatches` is called before `Callable#call`.");
+                "BrightScript function called without first checking for satisfied signatures. " +
+                    "Ensure `Callable#getAllSignatureMismatches` is called before `Callable#call`."
+            );
         }
 
         let { signature, impl } = satisfiedSignature;
@@ -167,7 +166,11 @@ export class Callable implements Brs.BrsValue {
                     mutableArgs[index] = subInterpreter.evaluate(param.defaultValue);
                 }
 
-                subInterpreter.environment.define(Scope.Function, param.name.text, mutableArgs[index]);
+                subInterpreter.environment.define(
+                    Scope.Function,
+                    param.name.text,
+                    mutableArgs[index]
+                );
             });
 
             // then return whatever the selected implementation would return
@@ -203,7 +206,6 @@ export class Callable implements Brs.BrsValue {
             return `[Function ${this.name}]`;
         } else {
             return "[anonymous function]";
-
         }
     }
 
@@ -212,18 +214,16 @@ export class Callable implements Brs.BrsValue {
     }
 
     getFirstSatisfiedSignature(args: Brs.BrsType[]): SignatureAndImplementation | undefined {
-        return this.signatures.filter(sigAndImpl =>
-            this.getSignatureMismatches(sigAndImpl.signature, args).length === 0
+        return this.signatures.filter(
+            sigAndImpl => this.getSignatureMismatches(sigAndImpl.signature, args).length === 0
         )[0];
     }
 
     getAllSignatureMismatches(args: Brs.BrsType[]): SignatureAndMismatches[] {
-        return this.signatures.map(sigAndImpl => (
-            {
-                signature: sigAndImpl.signature,
-                mismatches: this.getSignatureMismatches(sigAndImpl.signature, args)
-            }
-        ));
+        return this.signatures.map(sigAndImpl => ({
+            signature: sigAndImpl.signature,
+            mismatches: this.getSignatureMismatches(sigAndImpl.signature, args),
+        }));
     }
 
     private getSignatureMismatches(sig: Signature, args: Brs.BrsType[]): SignatureMismatch[] {
@@ -234,29 +234,33 @@ export class Callable implements Brs.BrsValue {
             reasons.push({
                 reason: MismatchReason.TooFewArguments,
                 expected: sig.args.length.toString(),
-                received: args.length.toString()
+                received: args.length.toString(),
             });
         } else if (args.length > sig.args.length) {
             reasons.push({
                 reason: MismatchReason.TooManyArguments,
                 expected: sig.args.length.toString(),
-                received: args.length.toString()
+                received: args.length.toString(),
             });
         }
-
 
         sig.args.slice(0, Math.min(sig.args.length, args.length)).forEach((_value, index) => {
             let expected = sig.args[index];
             let received = args[index];
 
-            if (expected.type.kind === Brs.ValueKind.Dynamic || expected.type.kind === Brs.ValueKind.Object) { return; }
+            if (
+                expected.type.kind === Brs.ValueKind.Dynamic ||
+                expected.type.kind === Brs.ValueKind.Object
+            ) {
+                return;
+            }
 
             if (expected.type.kind !== received.kind) {
                 reasons.push({
                     reason: MismatchReason.ArgumentTypeMismatch,
                     expected: Brs.ValueKind.toString(expected.type.kind),
                     received: Brs.ValueKind.toString(received.kind),
-                    argName: expected.name.text
+                    argName: expected.name.text,
                 });
             }
         });

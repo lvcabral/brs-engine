@@ -15,7 +15,7 @@ describe("parser postfix unary expressions", () => {
         let { statements, errors } = parser.parse([
             identifier("foo"),
             token(Lexeme.PlusPlus, "++"),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -30,7 +30,7 @@ describe("parser postfix unary expressions", () => {
             token(Lexeme.Dot, "."),
             identifier("property"),
             token(Lexeme.MinusMinus, "--"),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -46,7 +46,7 @@ describe("parser postfix unary expressions", () => {
             identifier("property"),
             token(Lexeme.RightSquare, "]"),
             token(Lexeme.PlusPlus, "++"),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -60,12 +60,14 @@ describe("parser postfix unary expressions", () => {
             identifier("foo"),
             token(Lexeme.PlusPlus, "++"),
             token(Lexeme.PlusPlus, "++"),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toHaveLength(1);
         expect(errors[0]).toMatchObject({
-            message: expect.stringMatching("Consecutive increment/decrement operators are not allowed")
+            message: expect.stringMatching(
+                "Consecutive increment/decrement operators are not allowed"
+            ),
         });
     });
 
@@ -75,12 +77,14 @@ describe("parser postfix unary expressions", () => {
             token(Lexeme.LeftParen, "("),
             token(Lexeme.RightParen, ")"),
             token(Lexeme.MinusMinus, "--"),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toHaveLength(1);
         expect(errors[0]).toMatchObject({
-            message: expect.stringMatching("Increment/decrement operators are not allowed on the result of a function call")
+            message: expect.stringMatching(
+                "Increment/decrement operators are not allowed on the result of a function call"
+            ),
         });
     });
 
@@ -95,7 +99,7 @@ describe("parser postfix unary expressions", () => {
             token(Lexeme.PlusPlus, "++"),
             token(Lexeme.Newline, "\n"),
             token(Lexeme.EndSub, "end sub"),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -118,8 +122,8 @@ describe("parser postfix unary expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 0 },
-                    end: { line: 1, column: 10 }
-                }
+                    end: { line: 1, column: 10 },
+                },
             },
             {
                 kind: Lexeme.PlusPlus,
@@ -128,7 +132,7 @@ describe("parser postfix unary expressions", () => {
                 location: {
                     start: { line: 1, column: 10 },
                     end: { line: 1, column: 12 },
-                }
+                },
             },
             {
                 kind: Lexeme.Eof,
@@ -136,16 +140,16 @@ describe("parser postfix unary expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 12 },
-                    end: { line: 1, column: 13 }
-                }
-            }
+                    end: { line: 1, column: 13 },
+                },
+            },
         ]);
 
         expect(errors).toEqual([]);
         expect(statements).toHaveLength(1);
         expect(statements[0].location).toMatchObject({
             start: { line: 1, column: 0 },
-            end: { line: 1, column: 12 }
+            end: { line: 1, column: 12 },
         });
     });
 });

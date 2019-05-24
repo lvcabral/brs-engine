@@ -3,8 +3,7 @@ import { BrsError } from "../Error";
 import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */
-export class BlockEnd extends BrsError {
-}
+export class BlockEnd extends BrsError {}
 
 /** An error thrown to exit a for loop early. */
 export class ExitForReason extends BlockEnd {

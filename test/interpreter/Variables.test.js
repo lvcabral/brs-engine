@@ -16,44 +16,24 @@ describe("interpreter variables", () => {
     });
 
     it("returns 'invalid' for assignments", () => {
-        let ast = new Stmt.Assignment(
-            tokens,
-            identifier("foo"),
-            new Expr.Literal(new Int32(5))
-        );
+        let ast = new Stmt.Assignment(tokens, identifier("foo"), new Expr.Literal(new Int32(5)));
 
         let [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
     });
 
     it("stores assigned values in variable scope", () => {
-        let six = new Int32(6)
-        let ast = new Stmt.Assignment(
-            tokens,
-            identifier("bar"),
-            new Expr.Literal(six)
-        );
+        let six = new Int32(6);
+        let ast = new Stmt.Assignment(tokens, identifier("bar"), new Expr.Literal(six));
         interpreter.exec([ast]);
-        expect(
-            interpreter.environment.get(
-                identifier("bar")
-            )
-        ).toBe(six);
+        expect(interpreter.environment.get(identifier("bar"))).toBe(six);
     });
 
     it("retrieves variables from variable scope", () => {
         let seven = new Int32(7);
-        let assign = new Stmt.Assignment(
-            tokens,
-            identifier("baz"),
-            new Expr.Literal(seven)
-        );
-        let retrieve = new Stmt.Expression(
-            new Expr.Variable(
-                identifier("baz")
-            )
-        );
-        let results = interpreter.exec([ assign, retrieve ]);
+        let assign = new Stmt.Assignment(tokens, identifier("baz"), new Expr.Literal(seven));
+        let retrieve = new Stmt.Expression(new Expr.Variable(identifier("baz")));
+        let results = interpreter.exec([assign, retrieve]);
         expect(results).toEqual([BrsInvalid.Instance, seven]);
     });
 
@@ -63,7 +43,7 @@ describe("interpreter variables", () => {
                 tokens,
                 identifier("type"),
                 new Expr.Literal(new BrsString("this will fail"))
-            )
+            ),
         ];
 
         expect(() => interpreter.exec(ast)).toThrow(/reserved name/);
@@ -76,36 +56,16 @@ describe("interpreter variables", () => {
                 identifier("str$"),
                 new Expr.Literal(new BrsString("$ suffix for strings"))
             ),
-            new Stmt.Assignment(
-                tokens,
-                identifier("int32%"),
-                new Expr.Literal(new Int32(1))
-            ),
-            new Stmt.Assignment(
-                tokens,
-                identifier("float!"),
-                new Expr.Literal(new Float(2))
-            ),
-            new Stmt.Assignment(
-                tokens,
-                identifier("double#"),
-                new Expr.Literal(new Double(3))
-            ),
-            new Stmt.Assignment(
-                tokens,
-                identifier("int64&"),
-                new Expr.Literal(new Int64(4))
-            )
+            new Stmt.Assignment(tokens, identifier("int32%"), new Expr.Literal(new Int32(1))),
+            new Stmt.Assignment(tokens, identifier("float!"), new Expr.Literal(new Float(2))),
+            new Stmt.Assignment(tokens, identifier("double#"), new Expr.Literal(new Double(3))),
+            new Stmt.Assignment(tokens, identifier("int64&"), new Expr.Literal(new Int64(4))),
         ];
 
         expect(() => interpreter.exec(assign)).not.toThrow();
 
-        let retrieve = ["str$", "int32%", "float!", "double#", "int64&"].map(name =>
-                new Stmt.Expression(
-                    new Expr.Variable(
-                        identifier(name)
-                    )
-                )
+        let retrieve = ["str$", "int32%", "float!", "double#", "int64&"].map(
+            name => new Stmt.Expression(new Expr.Variable(identifier(name)))
         );
 
         let stored = interpreter.exec(retrieve);
@@ -114,7 +74,7 @@ describe("interpreter variables", () => {
             new Int32(1),
             new Float(2),
             new Double(3),
-            new Int64(4)
+            new Int64(4),
         ]);
     });
 
@@ -128,25 +88,25 @@ describe("interpreter variables", () => {
         [
             {
                 lhs: "string$",
-                values: [ int32, int64, float, double ]
+                values: [int32, int64, float, double],
             },
             {
                 lhs: "int32%",
-                values: [ str, float, double, int64 ]
+                values: [str, float, double, int64],
             },
             {
                 lhs: "float!",
-                values: [ str, int32, double, int64 ]
+                values: [str, int32, double, int64],
             },
             {
                 lhs: "double#",
-                values: [ str, int32, float, int64 ]
+                values: [str, int32, float, int64],
             },
             {
                 lhs: "int64&",
-                values: [ str, int32, float, double ]
-            }
-        ].forEach(({lhs, values}) => {
+                values: [str, int32, float, double],
+            },
+        ].forEach(({ lhs, values }) => {
             test(lhs, () => {
                 values.forEach(value => {
                     let assign = new Stmt.Assignment(
@@ -154,7 +114,9 @@ describe("interpreter variables", () => {
                         identifier(lhs),
                         new Expr.Literal(value)
                     );
-                    expect(() => interpreter.exec([assign])).toThrowError(/statically-typed variable/);
+                    expect(() => interpreter.exec([assign])).toThrowError(
+                        /statically-typed variable/
+                    );
                 });
             });
         });

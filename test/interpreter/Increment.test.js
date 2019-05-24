@@ -20,21 +20,12 @@ describe("interpreter increment/decrement operators", () => {
                 identifier("foo"),
                 new Expr.Literal(new Int32(4))
             ),
-            new Stmt.Increment(
-                new Expr.Variable(
-                    identifier("foo")
-                ),
-                token(Lexeme.PlusPlus, "++")
-            )
+            new Stmt.Increment(new Expr.Variable(identifier("foo")), token(Lexeme.PlusPlus, "++")),
         ];
 
         interpreter.exec(ast);
 
-        expect(
-            interpreter.environment.get(
-                identifier("foo")
-            )
-        ).toEqual(new Int32(5));
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(5));
     });
 
     it("decrements variables", () => {
@@ -45,20 +36,14 @@ describe("interpreter increment/decrement operators", () => {
                 new Expr.Literal(new Int32(4))
             ),
             new Stmt.Increment(
-                new Expr.Variable(
-                    identifier("foo")
-                ),
+                new Expr.Variable(identifier("foo")),
                 token(Lexeme.MinusMinus, "--")
-            )
+            ),
         ];
 
         interpreter.exec(ast);
 
-        expect(
-            interpreter.environment.get(
-                identifier("foo")
-            )
-        ).toEqual(new Int32(3));
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(3));
     });
 
     it("increments with dotted gets", () => {
@@ -67,37 +52,25 @@ describe("interpreter increment/decrement operators", () => {
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("aa"),
                 new Expr.AALiteral(
-                    [
-                        { name: new BrsString("foo"), value: new Expr.Literal(new Int32(7)) }
-                    ],
+                    [{ name: new BrsString("foo"), value: new Expr.Literal(new Int32(7)) }],
                     token(Lexeme.LeftBrace, "{"),
                     token(Lexeme.RightBrace, "}")
                 )
             ),
             new Stmt.Increment(
-                new Expr.DottedGet(
-                    new Expr.Variable( identifier("aa")),
-                    identifier("foo")
-                ),
+                new Expr.DottedGet(new Expr.Variable(identifier("aa")), identifier("foo")),
                 token(Lexeme.PlusPlus, "++")
             ),
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("result"),
-                new Expr.DottedGet(
-                    new Expr.Variable( identifier("aa")),
-                    identifier("foo")
-                )
-            )
+                new Expr.DottedGet(new Expr.Variable(identifier("aa")), identifier("foo"))
+            ),
         ];
 
         interpreter.exec(ast);
 
-        expect(
-            interpreter.environment.get(
-                identifier("result")
-            )
-        ).toEqual(new Int32(8));
+        expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(8));
     });
 
     it("decrements with indexed gets", () => {
@@ -106,16 +79,14 @@ describe("interpreter increment/decrement operators", () => {
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("arr"),
                 new Expr.ArrayLiteral(
-                    [
-                        new Expr.Literal(new Int32("11"))
-                    ],
+                    [new Expr.Literal(new Int32("11"))],
                     token(Lexeme.LeftSquare, "["),
                     token(Lexeme.RightSquare, "]")
                 )
             ),
             new Stmt.Increment(
                 new Expr.IndexedGet(
-                    new Expr.Variable( identifier("arr")),
+                    new Expr.Variable(identifier("arr")),
                     new Expr.Literal(new Int32(0)),
                     token(Lexeme.RightSquare, "]")
                 ),
@@ -125,19 +96,15 @@ describe("interpreter increment/decrement operators", () => {
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("result"),
                 new Expr.IndexedGet(
-                    new Expr.Variable( identifier("arr")),
+                    new Expr.Variable(identifier("arr")),
                     new Expr.Literal(new Int32(0)),
                     token(Lexeme.RightSquare, "]")
-                ),
-            )
+                )
+            ),
         ];
 
         interpreter.exec(ast);
 
-        expect(
-            interpreter.environment.get(
-                identifier("result")
-            )
-        ).toEqual(new Int32(10));
+        expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(10));
     });
 });

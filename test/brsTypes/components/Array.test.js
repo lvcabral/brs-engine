@@ -22,14 +22,14 @@ describe("Array", () => {
     describe("stringification", () => {
         it("lists all primitive values", () => {
             let arr = new BrsArray([
-                new BrsArray([ new BrsString("I shouldn't appear")]),
+                new BrsArray([new BrsString("I shouldn't appear")]),
                 BrsBoolean.True,
                 new BrsString("a string"),
                 new Int32(-1),
-                BrsInvalid.Instance
+                BrsInvalid.Instance,
             ]);
             expect(arr.toString()).toEqual(
-`<Component: roArray> =
+                `<Component: roArray> =
 [
     <Component: roArray>
     true
@@ -123,7 +123,7 @@ describe("Array", () => {
                 let pop = arr.getMethod("pop");
                 expect(pop).toBeTruthy();
                 expect(pop.call(interpreter)).toBe(c);
-                expect(arr.elements).toEqual([ a, b ]);
+                expect(arr.elements).toEqual([a, b]);
             });
 
             it("returns `invalid` and doesn't modify when empty", () => {
@@ -149,10 +149,9 @@ describe("Array", () => {
                 let push = arr.getMethod("push");
                 expect(push).toBeTruthy();
                 expect(push.call(interpreter, c)).toBe(BrsInvalid.Instance);
-                expect(arr.elements).toEqual([ a, b, c ]);
+                expect(arr.elements).toEqual([a, b, c]);
             });
         });
-
 
         describe("shift", () => {
             it("returns and removes the value at the lowest index", () => {
@@ -165,7 +164,7 @@ describe("Array", () => {
                 let shift = arr.getMethod("shift");
                 expect(shift).toBeTruthy();
                 expect(shift.call(interpreter)).toBe(a);
-                expect(arr.elements).toEqual([ b, c ]);
+                expect(arr.elements).toEqual([b, c]);
             });
 
             it("returns `invalid` and doesn't modify when empty", () => {
@@ -191,7 +190,7 @@ describe("Array", () => {
                 let unshift = arr.getMethod("unshift");
                 expect(unshift).toBeTruthy();
                 expect(unshift.call(interpreter, a)).toBe(BrsInvalid.Instance);
-                expect(arr.elements).toEqual([ a, b, c ]);
+                expect(arr.elements).toEqual([a, b, c]);
             });
         });
 
@@ -206,7 +205,7 @@ describe("Array", () => {
                 let deleteMethod = arr.getMethod("delete");
                 expect(deleteMethod).toBeTruthy();
                 expect(deleteMethod.call(interpreter, new Int32(1))).toBe(BrsBoolean.True);
-                expect(arr.elements).toEqual([ a, c ]);
+                expect(arr.elements).toEqual([a, c]);
             });
 
             it("doesn't remove elements from out-of-bounds indices", () => {
@@ -220,7 +219,7 @@ describe("Array", () => {
                 expect(deleteMethod).toBeTruthy();
                 expect(deleteMethod.call(interpreter, new Int32(1111))).toBe(BrsBoolean.False);
                 expect(deleteMethod.call(interpreter, new Int32(-1))).toBe(BrsBoolean.False);
-                expect(arr.elements).toEqual([ a, b, c ]);
+                expect(arr.elements).toEqual([a, b, c]);
             });
         });
 

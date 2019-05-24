@@ -23,35 +23,23 @@ describe("interpreter assignment operators", () => {
         return new Stmt.Assignment(
             { equals: token },
             identifier("foo"),
-            new Expr.Binary(
-                new Expr.Variable(identifier("foo")),
-                token,
-                new Expr.Literal(literal)
-            )
+            new Expr.Binary(new Expr.Variable(identifier("foo")), token, new Expr.Literal(literal))
         );
     }
 
     it("adds numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(3)),
-            fooAssignmentOperator(
-                token(Lexeme.PlusEqual, "+="),
-                new Int32(2)
-            )
+            fooAssignmentOperator(token(Lexeme.PlusEqual, "+="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Int32(5)
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(5));
     });
 
     it("concatenates strings", () => {
         interpreter.exec([
             initializeFoo(new BrsString("lorem")),
-            fooAssignmentOperator(
-                token(Lexeme.PlusEqual, "+="),
-                new BrsString(" ipsum")
-            )
+            fooAssignmentOperator(token(Lexeme.PlusEqual, "+="), new BrsString(" ipsum")),
         ]);
 
         expect(interpreter.environment.get(identifier("foo"))).toEqual(
@@ -62,86 +50,56 @@ describe("interpreter assignment operators", () => {
     it("subtracts numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(3)),
-            fooAssignmentOperator(
-                token(Lexeme.MinusEqual, "-="),
-                new Int32(2)
-            )
+            fooAssignmentOperator(token(Lexeme.MinusEqual, "-="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Int32(1)
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(1));
     });
 
     it("multiplies numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(3)),
-            fooAssignmentOperator(
-                token(Lexeme.StarEqual, "*="),
-                new Int32(2)
-            )
+            fooAssignmentOperator(token(Lexeme.StarEqual, "*="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Int32(6)
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(6));
     });
 
     it("divides numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(6)),
-            fooAssignmentOperator(
-                token(Lexeme.SlashEqual, "/="),
-                new Int32(2)
-            )
+            fooAssignmentOperator(token(Lexeme.SlashEqual, "/="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Float(3)
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Float(3));
     });
 
     it("integer-divides numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(3)),
-            fooAssignmentOperator(
-                token(Lexeme.BackslashEqual, "\\="),
-                new Int32(2)
-            )
+            fooAssignmentOperator(token(Lexeme.BackslashEqual, "\\="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Int32(1)
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(1));
     });
 
     // TODO: unskip once bitshift operators are supported
     it.skip("left-shifts numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(4)),
-            fooAssignmentOperator(
-                token(Lexeme.LeftShiftEqual, "<<="),
-                new Int32(2)
-            )
+            fooAssignmentOperator(token(Lexeme.LeftShiftEqual, "<<="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Int32(8)
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(8));
     });
 
     // TODO: unskip once bitshift operators are supported
     it.skip("right-shifts numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(8)),
-            fooAssignmentOperator(
-                token(Lexeme.RightShiftEqual, ">>="),
-                new Int32(2)
-            )
+            fooAssignmentOperator(token(Lexeme.RightShiftEqual, ">>="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new Int32(4)
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(4));
     });
 });

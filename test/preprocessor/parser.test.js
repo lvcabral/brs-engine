@@ -18,7 +18,7 @@ describe("preprocessor parser", () => {
             token(Lexeme.LeftParen, "("),
             token(Lexeme.RightParen, ")"),
             token(Lexeme.Newline, "\n"),
-            token(Lexeme.Eof, "\0")
+            token(Lexeme.Eof, "\0"),
         ]);
 
         expect(errors).toEqual([]);
@@ -34,7 +34,7 @@ describe("preprocessor parser", () => {
             token(Lexeme.Equal, "="),
             token(Lexeme.True, "true", BrsBoolean.True),
             token(Lexeme.Newline, "\n"),
-            token(Lexeme.Eof, "\0")
+            token(Lexeme.Eof, "\0"),
         ]);
 
         expect(errors).toEqual([]);
@@ -47,7 +47,7 @@ describe("preprocessor parser", () => {
         let { chunks, errors } = parser.parse([
             token(Lexeme.HashError, "#error"),
             token(Lexeme.HashErrorMessage, "I'm an error message!"),
-            token(Lexeme.Eof, "\0")
+            token(Lexeme.Eof, "\0"),
         ]);
 
         expect(errors).toEqual([]);
@@ -67,7 +67,7 @@ describe("preprocessor parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\n"),
                 token(Lexeme.HashEndIf, "#endif"),
-                token(Lexeme.Eof, "\0")
+                token(Lexeme.Eof, "\0"),
             ]);
 
             expect(errors).toEqual([]);
@@ -96,7 +96,7 @@ describe("preprocessor parser", () => {
                 token(Lexeme.Newline, "\n"),
 
                 token(Lexeme.HashEndIf, "#endif"),
-                token(Lexeme.Eof, "\0")
+                token(Lexeme.Eof, "\0"),
             ]);
 
             expect(errors).toEqual([]);
@@ -134,7 +134,7 @@ describe("preprocessor parser", () => {
                 token(Lexeme.Newline, "\n"),
 
                 token(Lexeme.HashEndIf, "#endif"),
-                token(Lexeme.Eof, "\0")
+                token(Lexeme.Eof, "\0"),
             ]);
 
             expect(errors).toEqual([]);

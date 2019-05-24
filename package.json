@@ -14,7 +14,9 @@
     "clean": "rimraf ./lib ./types",
     "test": "jest",
     "lint": "tslint --project .",
-    "prepublishOnly": "npm-run-all --serial clean build lint test"
+    "prettier:write": "prettier --write '{bin,src,test}/**/*.{js,ts}'",
+    "prettier": "prettier --check '{bin,src,test}/**/*.{js,ts}'",
+    "prepublishOnly": "npm-run-all --serial clean build lint:check prettier:check test"
   },
   "files": [
     "bin/",
@@ -37,16 +39,35 @@
     "@types/memory-fs": "^0.3.2",
     "@types/node": "^8.5.2",
     "@types/p-settle": "^2.0.1",
+    "husky": ">=1",
     "jest": "^24.0.0",
     "jest-junit": "^6.1.0",
+    "lint-staged": ">=8",
     "npm-run-all": "^4.1.2",
+    "prettier": "^1.17.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "tslint-language-service": "^0.9.9",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "3"
   },
   "repository": "https://github.com/sjbarag/brs",
   "jest": {
     "testEnvironment": "node"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 4,
+    "printWidth": 100
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "prettier --write",
+      "git add"
+    ]
   }
 }

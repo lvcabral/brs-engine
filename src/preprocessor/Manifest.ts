@@ -42,7 +42,10 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
 
             let equals = line.indexOf("=");
             if (equals === -1) {
-                throw new Error(`[manifest:${index + 1}] No '=' detected.  Manifest attributes must be of the form 'key=value'.`);
+                throw new Error(
+                    `[manifest:${index +
+                        1}] No '=' detected.  Manifest attributes must be of the form 'key=value'.`
+                );
             }
             return [line.slice(0, equals), line.slice(equals + 1)];
         })
@@ -51,15 +54,23 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
         // remove leading/trailing whitespace from keys and values
         .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean, integer, or leave as string
-        .map(([key, value]): [string, ManifestValue] => {
-            if (value.toLowerCase() === "true") { return [key, true]; }
-            if (value.toLowerCase() === "false") { return [key, false]; }
+        .map(
+            ([key, value]): [string, ManifestValue] => {
+                if (value.toLowerCase() === "true") {
+                    return [key, true];
+                }
+                if (value.toLowerCase() === "false") {
+                    return [key, false];
+                }
 
-            let maybeNumber = Number.parseInt(value);
-            // if it's not a number, it's just a string
-            if (Number.isNaN(maybeNumber)) { return [key, value]; }
-            return [key, maybeNumber];
-        });
+                let maybeNumber = Number.parseInt(value);
+                // if it's not a number, it's just a string
+                if (Number.isNaN(maybeNumber)) {
+                    return [key, value];
+                }
+                return [key, maybeNumber];
+            }
+        );
 
     return new Map<string, ManifestValue>(keyValuePairs);
 }
@@ -77,7 +88,9 @@ export function getBsConst(manifest: Manifest): Map<string, boolean> {
 
     let bsConstString = manifest.get("bs_const");
     if (typeof bsConstString !== "string") {
-        throw new Error("Invalid bs_const right-hand side.  bs_const must be a string of ';'-separated 'key=value' pairs");
+        throw new Error(
+            "Invalid bs_const right-hand side.  bs_const must be a string of ';'-separated 'key=value' pairs"
+        );
     }
 
     let keyValuePairs = bsConstString
@@ -89,18 +102,28 @@ export function getBsConst(manifest: Manifest): Map<string, boolean> {
         .map(keyValuePair => {
             let equals = keyValuePair.indexOf("=");
             if (equals === -1) {
-                throw new Error(`No '=' detected for key ${keyValuePair}.  bs_const constants must be of the form 'key=value'.`);
+                throw new Error(
+                    `No '=' detected for key ${keyValuePair}.  bs_const constants must be of the form 'key=value'.`
+                );
             }
             return [keyValuePair.slice(0, equals), keyValuePair.slice(equals + 1)];
         })
         // remove leading/trailing whitespace from keys and values
         .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean or throw
-        .map(([key, value]): [string, boolean] => {
-            if (value.toLowerCase() === "true") { return [key, true]; }
-            if (value.toLowerCase() === "false") { return [key, false]; }
-            throw new Error(`Invalid value for bs_const key '${key}'.  Values must be either 'true' or 'false'.`);
-        });
+        .map(
+            ([key, value]): [string, boolean] => {
+                if (value.toLowerCase() === "true") {
+                    return [key, true];
+                }
+                if (value.toLowerCase() === "false") {
+                    return [key, false];
+                }
+                throw new Error(
+                    `Invalid value for bs_const key '${key}'.  Values must be either 'true' or 'false'.`
+                );
+            }
+        );
 
     return new Map(keyValuePairs);
 }

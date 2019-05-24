@@ -7,11 +7,7 @@ const brs = require("../lib/");
 
 // read current version from package.json
 // I'll _definitely_ forget to do this one day
-const packageJson = JSON.parse(
-    fs.readFileSync(
-        path.join(__dirname, "..", "package.json")
-    )
-);
+const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json")));
 
 program
     .description("Off-Roku BrightScript interpreter")
@@ -24,7 +20,7 @@ program
     .action(async (brsFiles, program) => {
         if (brsFiles.length > 0) {
             try {
-                await brs.execute(brsFiles, { root: program.root })
+                await brs.execute(brsFiles, { root: program.root });
             } catch (err) {
                 if (err.messages && err.messages.length) {
                     err.messages.forEach(message => console.error(message));

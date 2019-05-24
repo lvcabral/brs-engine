@@ -21,7 +21,7 @@ describe("interpreter while loops", () => {
         { equals: token(Lexeme.Equals, "=") },
         identifier("foo"),
         new Expr.Binary(
-            new  Expr.Variable(identifier("foo")),
+            new Expr.Variable(identifier("foo")),
             token(Lexeme.Minus, "-"),
             new Expr.Literal(new Int32(1))
         )
@@ -44,17 +44,15 @@ describe("interpreter while loops", () => {
             new Stmt.While(
                 {
                     while: token(Lexeme.While, "while"),
-                    endWhile: token(Lexeme.EndWhile, "end while")
+                    endWhile: token(Lexeme.EndWhile, "end while"),
                 },
                 new Expr.Binary(
                     new Expr.Variable(identifier("foo")),
                     token(Lexeme.Greater, ">"),
                     new Expr.Literal(new Int32(0))
                 ),
-                new Stmt.Block([
-                    decrementFoo
-                ])
-            )
+                new Stmt.Block([decrementFoo])
+            ),
         ];
 
         interpreter.exec(statements);
@@ -74,13 +72,11 @@ describe("interpreter while loops", () => {
             new Stmt.While(
                 {
                     while: token(Lexeme.While, "while"),
-                    endWhile: token(Lexeme.EndWhile, "end while")
+                    endWhile: token(Lexeme.EndWhile, "end while"),
                 },
                 greaterThanZero,
-                new Stmt.Block([
-                    decrementFoo
-                ])
-            )
+                new Stmt.Block([decrementFoo])
+            ),
         ];
 
         let results = interpreter.exec(statements);
@@ -94,7 +90,7 @@ describe("interpreter while loops", () => {
             new Stmt.While(
                 {
                     while: token(Lexeme.While, "while"),
-                    endWhile: token(Lexeme.EndWhile, "end while")
+                    endWhile: token(Lexeme.EndWhile, "end while"),
                 },
                 new Expr.Binary(
                     new Expr.Variable(identifier("foo")),
@@ -103,13 +99,12 @@ describe("interpreter while loops", () => {
                 ),
                 new Stmt.Block([
                     decrementFoo,
-                    new Stmt.ExitWhile({ exitWhile: token(Lexeme.ExitWhile, "exit while") })
+                    new Stmt.ExitWhile({ exitWhile: token(Lexeme.ExitWhile, "exit while") }),
                 ])
-            )
+            ),
         ];
 
         interpreter.exec(statements);
         expect(decrementSpy).toHaveBeenCalledTimes(1);
     });
-
 });

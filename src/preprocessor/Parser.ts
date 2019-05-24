@@ -7,9 +7,9 @@ import * as CC from "./Chunk";
 /** The results of a chunk-parser's parsing pass. */
 export interface ChunkParserResult {
     /** The chunks produced by the chunk-parser. */
-    chunks: ReadonlyArray<CC.Chunk>,
+    chunks: ReadonlyArray<CC.Chunk>;
     /** The errors encountered by the chunk-parser. */
-    errors: ReadonlyArray<ParseError>
+    errors: ReadonlyArray<ParseError>;
 }
 
 /** * Parses `Tokens` into chunks of tokens, excluding conditional compilation directives. */
@@ -42,12 +42,12 @@ export class Parser {
         try {
             return {
                 chunks: nChunks(),
-                errors: errors
+                errors: errors,
             };
         } catch (conditionalCompilationError) {
             return {
                 chunks: [],
-                errors: errors
+                errors: errors,
             };
         }
 
@@ -115,7 +115,7 @@ export class Parser {
 
                     elseIfs.push({
                         condition: condition,
-                        thenChunks: nChunks()
+                        thenChunks: nChunks(),
                     });
                 }
 
@@ -159,7 +159,16 @@ export class Parser {
          */
         function brightScriptChunk(): CC.BrightScript | undefined {
             let chunkTokens: Token[] = [];
-            while (!check(Lexeme.HashIf, Lexeme.HashElseIf, Lexeme.HashElse, Lexeme.HashEndIf, Lexeme.HashConst, Lexeme.HashError)) {
+            while (
+                !check(
+                    Lexeme.HashIf,
+                    Lexeme.HashElseIf,
+                    Lexeme.HashElse,
+                    Lexeme.HashEndIf,
+                    Lexeme.HashConst,
+                    Lexeme.HashError
+                )
+            ) {
                 chunkTokens.push(advance());
 
                 if (isAtEnd()) {
@@ -176,7 +185,7 @@ export class Parser {
 
         function eof(): CC.BrightScript | undefined {
             if (isAtEnd()) {
-                return new CC.BrightScript([ peek() ]);
+                return new CC.BrightScript([peek()]);
             } else {
                 return undefined;
             }
@@ -194,23 +203,27 @@ export class Parser {
         }
 
         function consume(message: string, ...lexemes: Lexeme[]): Token {
-            let foundLexeme = lexemes.map(lexeme => peek().kind === lexeme)
-                .reduce(
-                    (foundAny, foundCurrent) => foundAny || foundCurrent,
-                    false
-                );
+            let foundLexeme = lexemes
+                .map(lexeme => peek().kind === lexeme)
+                .reduce((foundAny, foundCurrent) => foundAny || foundCurrent, false);
 
-            if (foundLexeme) { return advance(); }
+            if (foundLexeme) {
+                return advance();
+            }
             return emitError(new ParseError(peek(), message));
         }
 
         function advance(): Token {
-            if (!isAtEnd()) { current++; }
+            if (!isAtEnd()) {
+                current++;
+            }
             return previous();
         }
 
         function check(...lexemes: Lexeme[]) {
-            if (isAtEnd()) { return false; }
+            if (isAtEnd()) {
+                return false;
+            }
 
             return lexemes.some(lexeme => peek().kind === lexeme);
         }

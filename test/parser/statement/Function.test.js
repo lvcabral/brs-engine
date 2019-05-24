@@ -12,7 +12,7 @@ describe("parser", () => {
     });
 
     describe("function declarations", () => {
-        it('recovers when using `end sub` instead of `end function`', () => {
+        it("recovers when using `end sub` instead of `end function`", () => {
             const { tokens } = brs.lexer.Lexer.scan(`
                 function Main()
                     print "Hello world"
@@ -37,7 +37,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -57,7 +57,7 @@ describe("parser", () => {
                 token(Lexeme.String, "Lorem ipsum", new BrsString("Lorem ipsum")),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -77,7 +77,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -101,7 +101,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -135,7 +135,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -168,7 +168,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -187,7 +187,7 @@ describe("parser", () => {
                 identifier("void"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end function"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -196,7 +196,7 @@ describe("parser", () => {
             expect(statements).toMatchSnapshot();
         });
 
-        it('does not allow type designators at end of name', () => {
+        it("does not allow type designators at end of name", () => {
             const { tokens } = brs.lexer.Lexer.scan(`
                 function StringFunc#()
                     return 1
@@ -221,7 +221,7 @@ describe("parser", () => {
     });
 
     describe("sub declarations", () => {
-        it('recovers when using `end function` instead of `end sub`', () => {
+        it("recovers when using `end function` instead of `end sub`", () => {
             const { tokens } = brs.lexer.Lexer.scan(`
                 sub Main()
                     print "Hello world"
@@ -246,7 +246,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -266,7 +266,7 @@ describe("parser", () => {
                 token(Lexeme.String, "Lorem ipsum", new BrsString("Lorem ipsum")),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -286,7 +286,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -310,7 +310,7 @@ describe("parser", () => {
                 token(Lexeme.RightParen, ")"),
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndFunction, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -344,7 +344,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -377,7 +377,7 @@ describe("parser", () => {
 
                 token(Lexeme.Newline, "\\n"),
                 token(Lexeme.EndSub, "end sub"),
-                EOF
+                EOF,
             ]);
 
             expect(errors).toEqual([]);
@@ -386,7 +386,7 @@ describe("parser", () => {
             expect(statements).toMatchSnapshot();
         });
 
-        it('does not allow type designators at end of name', () => {
+        it("does not allow type designators at end of name", () => {
             const { tokens } = brs.lexer.Lexer.scan(`
                 sub StringSub#()
                 end sub

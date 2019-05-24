@@ -15,7 +15,7 @@ describe("parser print statements", () => {
         let { statements, errors } = parser.parse([
             token(Lexeme.Print),
             token(Lexeme.String, "Hello, world"),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -30,7 +30,7 @@ describe("parser print statements", () => {
             token(Lexeme.String, "Foo", new BrsString("Foo")),
             token(Lexeme.String, "bar", new BrsString("bar")),
             token(Lexeme.String, "baz", new BrsString("baz")),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -47,7 +47,7 @@ describe("parser print statements", () => {
             token(Lexeme.String, "bar", new BrsString("bar")),
             token(Lexeme.Semicolon),
             token(Lexeme.String, "baz", new BrsString("baz")),
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
@@ -70,8 +70,8 @@ describe("parser print statements", () => {
                 isReserved: true,
                 location: {
                     start: { line: 1, column: 0 },
-                    end: { line: 1, column: 5 }
-                }
+                    end: { line: 1, column: 5 },
+                },
             },
             {
                 kind: Lexeme.String,
@@ -80,8 +80,8 @@ describe("parser print statements", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 6 },
-                    end: { line: 1, column: 11 }
-                }
+                    end: { line: 1, column: 11 },
+                },
             },
             {
                 kind: Lexeme.Eof,
@@ -89,16 +89,16 @@ describe("parser print statements", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 11 },
-                    end: { line: 1, column: 12 }
-                }
-            }
+                    end: { line: 1, column: 12 },
+                },
+            },
         ]);
 
         expect(errors).toEqual([]);
         expect(statements.length).toBe(1);
         expect(statements[0].location).toEqual({
             start: { line: 1, column: 0 },
-            end: { line: 1, column: 11 }
+            end: { line: 1, column: 11 },
         });
     });
 });

@@ -18,7 +18,6 @@ export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
 
-
 /**
  * Executes a BrightScript file by path and writes its output to the streams
  * provided in `options`.
@@ -36,58 +35,60 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
     let manifest = await PP.getManifest(executionOptions.root);
 
     // wait for all files to be read, lexed, and parsed, but don't exit on the first error
-    let parsedFiles = await pSettle(filenames.map(async (filename) => {
-        let contents;
-        try {
-            contents = await readFile(filename, "utf-8");
-        } catch (err) {
-            return Promise.reject({
-                message: `brs: can't open file '${filename}': [Errno ${err.errno}]`
-            });
-        }
+    let parsedFiles = await pSettle(
+        filenames.map(async filename => {
+            let contents;
+            try {
+                contents = await readFile(filename, "utf-8");
+            } catch (err) {
+                return Promise.reject({
+                    message: `brs: can't open file '${filename}': [Errno ${err.errno}]`,
+                });
+            }
 
-        let lexer = new Lexer();
-        let preprocessor = new PP.Preprocessor();
-        let parser = new Parser();
-        [lexer, preprocessor, parser].forEach(emitter => emitter.onError(logError));
+            let lexer = new Lexer();
+            let preprocessor = new PP.Preprocessor();
+            let parser = new Parser();
+            [lexer, preprocessor, parser].forEach(emitter => emitter.onError(logError));
 
-        let scanResults = lexer.scan(contents, filename);
-        if (scanResults.errors.length > 0) {
-            return Promise.reject({
-                message: "Error occurred during lexing"
-            });
-        }
+            let scanResults = lexer.scan(contents, filename);
+            if (scanResults.errors.length > 0) {
+                return Promise.reject({
+                    message: "Error occurred during lexing",
+                });
+            }
 
-        let preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
-        if (preprocessResults.errors.length > 0) {
-            return Promise.reject({
-                message: "Error occurred during pre-processing"
-            });
-        }
+            let preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
+            if (preprocessResults.errors.length > 0) {
+                return Promise.reject({
+                    message: "Error occurred during pre-processing",
+                });
+            }
 
+            let parseResults = parser.parse(preprocessResults.processedTokens);
+            if (parseResults.errors.length > 0) {
+                return Promise.reject({
+                    message: "Error occurred parsing",
+                });
+            }
 
-        let parseResults = parser.parse(preprocessResults.processedTokens);
-        if (parseResults.errors.length > 0) {
-            return Promise.reject({
-                message: "Error occurred parsing"
-            });
-        }
-
-        return Promise.resolve(parseResults.statements);
-    }));
+            return Promise.resolve(parseResults.statements);
+        })
+    );
 
     // don't execute anything if there were reading, lexing, or parsing errors
     if (parsedFiles.some(file => file.isRejected)) {
         return Promise.reject({
-            messages: parsedFiles.filter(file => file.isRejected).map(rejection => rejection.reason.message)
+            messages: parsedFiles
+                .filter(file => file.isRejected)
+                .map(rejection => rejection.reason.message),
         });
     }
 
     // combine statements from all files into one array
-    let statements = parsedFiles.map(file => file.value || []).reduce(
-        (allStatements, fileStatements) => [ ...allStatements, ...fileStatements ],
-        []
-    );
+    let statements = parsedFiles
+        .map(file => file.value || [])
+        .reduce((allStatements, fileStatements) => [...allStatements, ...fileStatements], []);
 
     // execute them
     const interpreter = new Interpreter(executionOptions);
@@ -111,7 +112,7 @@ export function repl() {
     });
     rl.setPrompt("brs> ");
 
-    rl.on("line", (line) => {
+    rl.on("line", line => {
         let results = run(line, defaultExecutionOptions, replInterpreter);
         if (results) {
             results.map(result => console.log(result.toString()));
@@ -134,7 +135,11 @@ export function repl() {
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(contents: string, options: ExecutionOptions = defaultExecutionOptions, interpreter: Interpreter) {
+function run(
+    contents: string,
+    options: ExecutionOptions = defaultExecutionOptions,
+    interpreter: Interpreter
+) {
     const lexer = new Lexer();
     const parser = new Parser();
 
@@ -151,7 +156,9 @@ function run(contents: string, options: ExecutionOptions = defaultExecutionOptio
         return;
     }
 
-    if (parseResults.statements.length === 0) { return; }
+    if (parseResults.statements.length === 0) {
+        return;
+    }
 
     try {
         return interpreter.exec(parseResults.statements);

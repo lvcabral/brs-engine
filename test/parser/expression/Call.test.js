@@ -16,16 +16,16 @@ describe("parser call expressions", () => {
             identifier("RebootSystem"),
             { kind: Lexeme.LeftParen, text: "(", line: 1 },
             token(Lexeme.RightParen, ")"),
-            EOF
+            EOF,
         ]);
 
-        expect(errors).toEqual([])
+        expect(errors).toEqual([]);
         expect(statements).toBeDefined();
         expect(statements).not.toBeNull();
         expect(statements).toMatchSnapshot();
     });
 
-    it('does not invalidate the rest of the file on incomplete statement', () => {
+    it("does not invalidate the rest of the file on incomplete statement", () => {
         const { tokens } = brs.lexer.Lexer.scan(`
             sub DoThingOne()
                 DoThin
@@ -44,7 +44,7 @@ describe("parser call expressions", () => {
         expect(statements).toMatchSnapshot();
     });
 
-    it('does not invalidate the next statement on a multi-statement line', () => {
+    it("does not invalidate the next statement on a multi-statement line", () => {
         const { tokens } = brs.lexer.Lexer.scan(`
             sub DoThingOne()
                 DoThin:name = "bob"
@@ -67,10 +67,10 @@ describe("parser call expressions", () => {
             token(Lexeme.Newline, "\\n"),
             token(Lexeme.Newline, "\\n"),
             token(Lexeme.RightParen, ")"),
-            EOF
+            EOF,
         ]);
 
-        expect(errors).toEqual([])
+        expect(errors).toEqual([]);
         expect(statements).toBeDefined();
         expect(statements).not.toBeNull();
         expect(statements).toMatchSnapshot();
@@ -84,10 +84,10 @@ describe("parser call expressions", () => {
             { kind: Lexeme.Comma, text: ",", line: 1 },
             token(Lexeme.Integer, "2", new Int32(2)),
             token(Lexeme.RightParen, ")"),
-            EOF
+            EOF,
         ]);
 
-        expect(errors).toEqual([])
+        expect(errors).toEqual([]);
         expect(statements).toBeDefined();
         expect(statements).not.toBeNull();
         expect(statements[0].expression.args).toBeTruthy();
@@ -109,7 +109,7 @@ describe("parser call expressions", () => {
                 location: {
                     start: { line: 1, column: 0 },
                     end: { line: 1, column: 3 },
-                }
+                },
             },
             {
                 kind: Lexeme.LeftParen,
@@ -117,8 +117,8 @@ describe("parser call expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 3 },
-                    end: { line: 1, column: 4 }
-                }
+                    end: { line: 1, column: 4 },
+                },
             },
             {
                 kind: Lexeme.String,
@@ -127,8 +127,8 @@ describe("parser call expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 4 },
-                    end: { line: 1, column: 9 }
-                }
+                    end: { line: 1, column: 9 },
+                },
             },
             {
                 kind: Lexeme.Comma,
@@ -136,8 +136,8 @@ describe("parser call expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 9 },
-                    end: { line: 1, column: 10 }
-                }
+                    end: { line: 1, column: 10 },
+                },
             },
             {
                 kind: Lexeme.String,
@@ -146,8 +146,8 @@ describe("parser call expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 11 },
-                    end: { line: 1, column: 16 }
-                }
+                    end: { line: 1, column: 16 },
+                },
             },
             {
                 kind: Lexeme.RightParen,
@@ -155,8 +155,8 @@ describe("parser call expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 16 },
-                    end: { line: 1, column: 17 }
-                }
+                    end: { line: 1, column: 17 },
+                },
             },
             {
                 kind: Lexeme.Eof,
@@ -164,16 +164,16 @@ describe("parser call expressions", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 17 },
-                    end: { line: 1, column: 18 }
-                }
-            }
+                    end: { line: 1, column: 18 },
+                },
+            },
         ]);
 
         expect(errors).toEqual([]);
         expect(statements.length).toBe(1);
         expect(statements[0].location).toEqual({
             start: { line: 1, column: 0 },
-            end: { line: 1, column: 17 }
+            end: { line: 1, column: 17 },
         });
     });
 });

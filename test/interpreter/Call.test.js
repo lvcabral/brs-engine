@@ -16,13 +16,11 @@ describe("interpreter calls", () => {
 
     it("calls functions", () => {
         const call = new Stmt.Expression(
-            new Expr.Call(
-                new Expr.Variable(identifier("UCase")),
-                token(Lexeme.RightParen, ")"),
-                [ new Expr.Literal(new BrsString("h@lL0")) ]
-            )
+            new Expr.Call(new Expr.Variable(identifier("UCase")), token(Lexeme.RightParen, ")"), [
+                new Expr.Literal(new BrsString("h@lL0")),
+            ])
         );
-        const [ result ] = interpreter.exec([call]);
+        const [result] = interpreter.exec([call]);
         expect(result.toString()).toBe("H@LL0");
     });
 
@@ -42,31 +40,26 @@ describe("interpreter calls", () => {
                                     new Expr.Variable(identifier("m")),
                                     identifier("id"),
                                     new Expr.Literal(new BrsString("this is an ID"))
-                                )
+                                ),
                             ])
-                        )
-                    }
+                        ),
+                    },
                 ])
             ),
             new Stmt.Expression(
                 new Expr.Call(
-                    new Expr.DottedGet(
-                        new Expr.Variable(identifier("foo")),
-                        identifier("setMId")
-                    ),
+                    new Expr.DottedGet(new Expr.Variable(identifier("foo")), identifier("setMId")),
                     token(Lexeme.RightParen, ")"),
-                    [ ] // no args required
+                    [] // no args required
                 )
-            )
+            ),
         ];
 
         interpreter.exec(ast);
 
         let foo = interpreter.environment.get(identifier("foo"));
         expect(foo.kind).toBe(ValueKind.Object);
-        expect(
-            foo.get(new BrsString("id"))
-        ).toEqual(new BrsString("this is an ID"));
+        expect(foo.get(new BrsString("id"))).toEqual(new BrsString("this is an ID"));
     });
 
     it("errors when not enough arguments provided", () => {
@@ -83,14 +76,10 @@ describe("interpreter calls", () => {
 
     it("errors when too many arguments are provided", () => {
         const call = new Stmt.Expression(
-            new Expr.Call(
-                new Expr.Variable(identifier("UCase")),
-                token(Lexeme.RightParen, ")"),
-                [
-                    new Expr.Literal(new BrsString("h@lL0")),
-                    new Expr.Literal(new BrsString("too many args")),
-                ]
-            )
+            new Expr.Call(new Expr.Variable(identifier("UCase")), token(Lexeme.RightParen, ")"), [
+                new Expr.Literal(new BrsString("h@lL0")),
+                new Expr.Literal(new BrsString("too many args")),
+            ])
         );
 
         expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
@@ -98,13 +87,9 @@ describe("interpreter calls", () => {
 
     it("errors when argument types are incorrect", () => {
         const call = new Stmt.Expression(
-            new Expr.Call(
-                new Expr.Variable(identifier("UCase")),
-                token(Lexeme.RightParen, ")"),
-                [
-                    new Expr.Literal(new Int32(5)),
-                ]
-            )
+            new Expr.Call(new Expr.Variable(identifier("UCase")), token(Lexeme.RightParen, ")"), [
+                new Expr.Literal(new Int32(5)),
+            ])
         );
 
         expect(() => interpreter.exec([call])).toThrow(/Argument '.+' must be of type/);
@@ -122,7 +107,7 @@ describe("interpreter calls", () => {
                             new Stmt.Return(
                                 { return: token(Lexeme.Return, "return") },
                                 new Expr.Literal(new Int32(5))
-                            )
+                            ),
                         ],
                         token(Lexeme.Newline, "\n")
                     )
@@ -134,7 +119,7 @@ describe("interpreter calls", () => {
                     token(Lexeme.RightParen, ")"),
                     [] // no args required
                 )
-            )
+            ),
         ];
 
         expect(() => interpreter.exec(ast)).toThrow(
@@ -154,7 +139,7 @@ describe("interpreter calls", () => {
                             new Stmt.Return(
                                 { return: token(Lexeme.Return, "return") },
                                 new Expr.Literal(new Int32(5))
-                            )
+                            ),
                         ],
                         token(Lexeme.Newline, "\n")
                     )
@@ -166,12 +151,10 @@ describe("interpreter calls", () => {
                     token(Lexeme.RightParen, ")"),
                     [] // no args required
                 )
-            )
+            ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(
-            /Attempting to return value of non-void type/
-        );
+        expect(() => interpreter.exec(ast)).toThrow(/Attempting to return value of non-void type/);
     });
 
     it("errors when returning void from a non-void return", () => {
@@ -182,11 +165,7 @@ describe("interpreter calls", () => {
                     [],
                     ValueKind.String,
                     new Stmt.Block(
-                        [
-                            new Stmt.Return(
-                                { return: token(Lexeme.Return, "return") }
-                            )
-                        ],
+                        [new Stmt.Return({ return: token(Lexeme.Return, "return") })],
                         token(Lexeme.Newline, "\n")
                     )
                 )
@@ -197,11 +176,9 @@ describe("interpreter calls", () => {
                     token(Lexeme.RightParen, ")"),
                     [] // no args required
                 )
-            )
+            ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(
-            /Attempting to return void value/
-        );
+        expect(() => interpreter.exec(ast)).toThrow(/Attempting to return void value/);
     });
 });

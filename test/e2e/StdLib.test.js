@@ -18,11 +18,9 @@ describe("end to end standard libary", () => {
     });
 
     test("stdlib/files.brs", async () => {
-        await execute([ resourceFile("stdlib", "files.brs") ], outputStreams);
+        await execute([resourceFile("stdlib", "files.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "false",
             "true",
             "true",
@@ -32,16 +30,14 @@ describe("end to end standard libary", () => {
             "false",
             "true",
             "false",
-            "<Component: roArray> =\n[\n    test_backup.txt\n]"
+            "<Component: roArray> =\n[\n    test_backup.txt\n]",
         ]);
     });
 
     test("stdlib/strings.brs", async () => {
-        await execute([ resourceFile("stdlib", "strings.brs") ], outputStreams);
+        await execute([resourceFile("stdlib", "strings.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "MIXED CASE",
             "mixed case",
             "12359",
@@ -56,16 +52,14 @@ describe("end to end standard libary", () => {
             "-3",
             "12.34",
             "Mary and Bob",
-            "252"
+            "252",
         ]);
     });
 
     test("stdlib/math.brs", async () => {
-        await execute([ resourceFile("stdlib", "math.brs") ], outputStreams);
+        await execute([resourceFile("stdlib", "math.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "22.19795",
             "2.85647",
             "3.342155",
@@ -80,26 +74,20 @@ describe("end to end standard libary", () => {
             "-2",
             "7",
             "1",
-            "-1"
+            "-1",
         ]);
     });
 
     test("stdlib/runtime.brs", async () => {
-        await execute([ resourceFile("stdlib", "runtime.brs") ], outputStreams);
+        await execute([resourceFile("stdlib", "runtime.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
-            "true"
-        ]);
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual(["true"]);
     });
 
     test("stdlib/json.brs", async () => {
         await execute([resourceFile("stdlib", "json.brs")], outputStreams);
 
-        expect(
-            allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")
-        ).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "",
             `{"boolean":false,"float":3.14,"integer":2147483647,"longinteger":2147483650,"null":null,"string":"ok"}`,
             [
@@ -111,8 +99,8 @@ describe("end to end standard libary", () => {
                 "    longinteger: 2147483650",
                 "    null: invalid",
                 "    string: ok",
-                "}"
-            ].join("\n")
+                "}",
+            ].join("\n"),
         ]);
     });
 });

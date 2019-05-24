@@ -1,4 +1,5 @@
 {
+    "extends": ["tslint-config-prettier"],
     "defaultSeverity": "error",
     "jsRules": {},
     "rules": {
@@ -7,7 +8,6 @@
         "promise-function-async": true,
         "await-promise": [true, "warn"],
         "ban-comma-operator": true,
-        "curly": [true, "ignore-same-line"],
         "no-debugger": [true, "warn"],
         "no-for-in-array": true,
         "no-implicit-dependencies": true,
@@ -15,14 +15,10 @@
         "restrict-plus-operands": true,
         "triple-equals": [true, "allow-null-check"],
         "use-isnan": true,
-        "indent": [true, "spaces", 4],
-        "linebreak-style": [true, "LF"],
         "array-type": [true, "array"],
         "jsdoc-format": true,
         "new-parens": true,
-        "no-angle-bracket-type-assertion": true,
-        "quotemark": [true, "double"],
-        "semicolon": [true, "ignore-interfaces"]
+        "no-angle-bracket-type-assertion": true
     },
     "rulesDirectory": []
 }

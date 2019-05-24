@@ -13,7 +13,7 @@ export enum ValueKind {
     Uninitialized,
     Dynamic,
     Void,
-    Object
+    Object,
 }
 
 export namespace ValueKind {
@@ -23,18 +23,30 @@ export namespace ValueKind {
      */
     export function toString(kind: ValueKind): string {
         switch (kind) {
-            case ValueKind.Invalid: return "Invalid";
-            case ValueKind.Boolean: return "Boolean";
-            case ValueKind.String: return "String";
-            case ValueKind.Int32: return "Integer";
-            case ValueKind.Int64: return "LongInteger";
-            case ValueKind.Float: return "Float";
-            case ValueKind.Double: return "Double";
-            case ValueKind.Callable: return "Function";
-            case ValueKind.Dynamic: return "Dynamic";
-            case ValueKind.Void: return "Void";
-            case ValueKind.Uninitialized: return "<UNINITIALIZED>";
-            case ValueKind.Object: return "Object";
+            case ValueKind.Invalid:
+                return "Invalid";
+            case ValueKind.Boolean:
+                return "Boolean";
+            case ValueKind.String:
+                return "String";
+            case ValueKind.Int32:
+                return "Integer";
+            case ValueKind.Int64:
+                return "LongInteger";
+            case ValueKind.Float:
+                return "Float";
+            case ValueKind.Double:
+                return "Double";
+            case ValueKind.Callable:
+                return "Function";
+            case ValueKind.Dynamic:
+                return "Dynamic";
+            case ValueKind.Void:
+                return "Void";
+            case ValueKind.Uninitialized:
+                return "<UNINITIALIZED>";
+            case ValueKind.Object:
+                return "Object";
         }
     }
 
@@ -45,19 +57,32 @@ export namespace ValueKind {
      */
     export function fromString(kind: string): ValueKind | undefined {
         switch (kind.toLowerCase()) {
-            case "invalid": return ValueKind.Invalid;
-            case "boolean": return ValueKind.Boolean;
-            case "string": return ValueKind.String;
-            case "integer": return ValueKind.Int32;
-            case "longinteger": return ValueKind.Int64;
-            case "float": return ValueKind.Float;
-            case "double": return ValueKind.Double;
-            case "function": return ValueKind.Callable;
-            case "dynamic": return ValueKind.Dynamic;
-            case "void": return ValueKind.Void;
-            case "<uninitialized>": return ValueKind.Uninitialized;
-            case "object": return ValueKind.Object;
-            default: return undefined;
+            case "invalid":
+                return ValueKind.Invalid;
+            case "boolean":
+                return ValueKind.Boolean;
+            case "string":
+                return ValueKind.String;
+            case "integer":
+                return ValueKind.Int32;
+            case "longinteger":
+                return ValueKind.Int64;
+            case "float":
+                return ValueKind.Float;
+            case "double":
+                return ValueKind.Double;
+            case "function":
+                return ValueKind.Callable;
+            case "dynamic":
+                return ValueKind.Dynamic;
+            case "void":
+                return ValueKind.Void;
+            case "<uninitialized>":
+                return ValueKind.Uninitialized;
+            case "object":
+                return ValueKind.Object;
+            default:
+                return undefined;
         }
     }
 }
@@ -253,9 +278,7 @@ export class Uninitialized implements BrsValue, Comparable {
         if (other.kind === ValueKind.String) {
             // Allow variables to be compared to the string "<UNINITIALIZED>" to test if they've
             // been initialized
-            return BrsBoolean.from(
-                other.value === this.toString()
-            );
+            return BrsBoolean.from(other.value === this.toString());
         }
 
         return BrsBoolean.False;

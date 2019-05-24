@@ -6,7 +6,7 @@ const {
     Double,
     BrsString,
     BrsBoolean,
-    BrsInvalid
+    BrsInvalid,
 } = require("../../lib/brsTypes");
 
 describe("Double", () => {
@@ -260,41 +260,33 @@ describe("Double", () => {
             testLessThan({
                 lhs: lhs,
                 small: new Int32(1),
-                large: new Int32(3)
-            })
-        );
+                large: new Int32(3),
+            }));
 
         it("compares to Int64 right-hand sides", () =>
             testLessThan({
                 lhs: lhs,
                 small: new Int64(1),
-                large: new Int64(Math.pow(10, 18))
-            })
-        );
+                large: new Int64(Math.pow(10, 18)),
+            }));
 
         it("compares to Float right-hand sides", () =>
             testLessThan({
                 lhs: lhs,
                 small: new Float(0.12345),
-                large: new Float(2.001)
-            })
-        );
+                large: new Float(2.001),
+            }));
 
         it("compares to Double right-hand sides", () =>
             testLessThan({
                 lhs: lhs,
                 small: new Double(1.999999999),
-                large: new Double(2.000000001)
-            })
-        );
+                large: new Double(2.000000001),
+            }));
 
         it("returns false for all other types", () => {
-            let nonNumbers = [
-                new BrsString("hello"),
-                BrsBoolean.True,
-                BrsInvalid.Instance
-            ];
-            nonNumbers.forEach((rhs) => expect(lhs.lessThan(rhs)).toBe(BrsBoolean.False));
+            let nonNumbers = [new BrsString("hello"), BrsBoolean.True, BrsInvalid.Instance];
+            nonNumbers.forEach(rhs => expect(lhs.lessThan(rhs)).toBe(BrsBoolean.False));
         });
     });
 
@@ -310,41 +302,33 @@ describe("Double", () => {
             testGreaterThan({
                 lhs: lhs,
                 small: new Int32(1),
-                large: new Int32(3)
-            })
-        );
+                large: new Int32(3),
+            }));
 
         it("compares to Int64 right-hand sides", () =>
             testGreaterThan({
                 lhs: lhs,
                 small: new Int64(1),
-                large: new Int64(Math.pow(10, 18))
-            })
-        );
+                large: new Int64(Math.pow(10, 18)),
+            }));
 
         it("compares to Float right-hand sides", () =>
             testGreaterThan({
                 lhs: lhs,
                 small: new Float(0.12345),
-                large: new Float(2.001)
-            })
-        );
+                large: new Float(2.001),
+            }));
 
         it("compares to Double right-hand sides", () =>
             testGreaterThan({
                 lhs: lhs,
                 small: new Double(1.999999999),
-                large: new Double(2.000000001)
-            })
-        );
+                large: new Double(2.000000001),
+            }));
 
         it("returns false for all other types", () => {
-            let nonNumbers = [
-                new BrsString("hello"),
-                BrsBoolean.True,
-                BrsInvalid.Instance
-            ];
-            nonNumbers.forEach((rhs) => expect(lhs.greaterThan(rhs)).toBe(BrsBoolean.False));
+            let nonNumbers = [new BrsString("hello"), BrsBoolean.True, BrsInvalid.Instance];
+            nonNumbers.forEach(rhs => expect(lhs.greaterThan(rhs)).toBe(BrsBoolean.False));
         });
     });
 
@@ -360,41 +344,33 @@ describe("Double", () => {
             testGreaterThan({
                 lhs: lhs,
                 same: lhs,
-                diff: new Int32(3)
-            })
-        );
+                diff: new Int32(3),
+            }));
 
         it("compares to Int64 right-hand sides", () =>
             testGreaterThan({
                 lhs: lhs,
                 same: new Int64(2),
-                diff: new Int64(Math.pow(10, 18))
-            })
-        );
+                diff: new Int64(Math.pow(10, 18)),
+            }));
 
         it("compares to Float right-hand sides", () =>
             testGreaterThan({
                 lhs: lhs,
                 same: new Float(2),
-                diff: new Float(2.001)
-            })
-        );
+                diff: new Float(2.001),
+            }));
 
         it("compares to Double right-hand sides", () =>
             testGreaterThan({
                 lhs: lhs,
                 same: new Double(2),
-                diff: new Double(2.000000001)
-            })
-        );
+                diff: new Double(2.000000001),
+            }));
 
         it("returns false for all other types", () => {
-            let nonNumbers = [
-                new BrsString("hello"),
-                BrsBoolean.True,
-                BrsInvalid.Instance
-            ];
-            nonNumbers.forEach((rhs) => expect(lhs.equalTo(rhs)).toBe(BrsBoolean.False));
+            let nonNumbers = [new BrsString("hello"), BrsBoolean.True, BrsInvalid.Instance];
+            nonNumbers.forEach(rhs => expect(lhs.equalTo(rhs)).toBe(BrsBoolean.False));
         });
     });
 

@@ -33,13 +33,13 @@ describe("interpreter for loops", () => {
                 {
                     for: token(Lexeme.For, "for"),
                     to: token(Lexeme.To, "to"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 initializeCounter,
                 /* final value */ new Expr.Literal(new Int32(5)),
                 /* step */ new Expr.Literal(new Int32(1)),
                 /* body */ new Stmt.Block([])
-            )
+            ),
         ];
 
         interpreter.exec(statements);
@@ -55,13 +55,13 @@ describe("interpreter for loops", () => {
                 {
                     for: token(Lexeme.For, "for"),
                     to: token(Lexeme.To, "to"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 initializeCounter,
                 finalValue,
                 /* step */ new Expr.Literal(new Int32(1)),
                 /* body */ new Stmt.Block([])
-            )
+            ),
         ];
 
         interpreter.exec(statements);
@@ -77,13 +77,13 @@ describe("interpreter for loops", () => {
                 {
                     for: token(Lexeme.For, "for"),
                     to: token(Lexeme.To, "to"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 initializeCounter,
                 new Expr.Literal(new Int32(5)),
                 /* step */ stepValue,
                 /* body */ new Stmt.Block([])
-            )
+            ),
         ];
 
         interpreter.exec(statements);
@@ -99,13 +99,13 @@ describe("interpreter for loops", () => {
                 {
                     for: token(Lexeme.For, "for"),
                     to: token(Lexeme.To, "to"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 initializeCounter,
                 new Expr.Literal(new Int32(5)),
                 new Expr.Literal(new Int32(1)),
                 body
-            )
+            ),
         ];
 
         interpreter.exec(statements);
@@ -119,18 +119,14 @@ describe("interpreter for loops", () => {
                 {
                     for: token(Lexeme.For, "for"),
                     to: token(Lexeme.To, "to"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 initializeCounter,
                 /* finalValue */ new Expr.Literal(new Int32(5)),
                 /* step */ new Expr.Literal(new Int32(1)),
                 /* body */ new Stmt.Block([])
             ),
-            new Stmt.Expression(
-                new Expr.Variable(
-                    identifier("i")
-                )
-            )
+            new Stmt.Expression(new Expr.Variable(identifier("i"))),
         ];
 
         const [forLoop, i] = interpreter.exec(statements);
@@ -140,7 +136,7 @@ describe("interpreter for loops", () => {
 
     it("can be exited", () => {
         const body = new Stmt.Block([
-            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") })
+            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
         ]);
         const bodySpy = jest.spyOn(body, "accept");
 
@@ -149,13 +145,13 @@ describe("interpreter for loops", () => {
                 {
                     for: token(Lexeme.For, "for"),
                     to: token(Lexeme.To, "to"),
-                    endFor: token(Lexeme.EndFor, "end for")
+                    endFor: token(Lexeme.EndFor, "end for"),
                 },
                 initializeCounter,
                 /* finalValue */ new Expr.Literal(new Int32(5)),
                 /* step */ new Expr.Literal(new Int32(1)),
                 body
-            )
+            ),
         ];
 
         interpreter.exec(statements);

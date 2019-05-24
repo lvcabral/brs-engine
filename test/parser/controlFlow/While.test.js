@@ -19,10 +19,10 @@ describe("parser while statements", () => {
             token(Lexeme.String, "looping", new BrsString("looping")),
             token(Lexeme.Newline, "\n"),
             token(Lexeme.EndWhile, "end while"),
-            EOF
+            EOF,
         ]);
 
-        expect(errors).toEqual([])
+        expect(errors).toEqual([]);
         expect(statements).toBeDefined();
         expect(statements).not.toBeNull();
         expect(statements).toMatchSnapshot();
@@ -31,7 +31,7 @@ describe("parser while statements", () => {
     test("while with exit", () => {
         const { statements, errors } = parser.parse([
             token(Lexeme.While, "while"),
-            token(Lexeme.True, "true", BrsBoolean.True,),
+            token(Lexeme.True, "true", BrsBoolean.True),
             token(Lexeme.Newline, "\n"),
             token(Lexeme.Print, "print"),
             token(Lexeme.String, "looping", new BrsString("looping")),
@@ -39,10 +39,10 @@ describe("parser while statements", () => {
             token(Lexeme.ExitWhile, "exit while"),
             token(Lexeme.Newline, "\n"),
             token(Lexeme.EndWhile, "end while"),
-            EOF
+            EOF,
         ]);
 
-        expect(errors).toEqual([])
+        expect(errors).toEqual([]);
         expect(statements).toBeDefined();
         expect(statements).not.toBeNull();
         expect(statements).toMatchSnapshot();
@@ -64,8 +64,8 @@ describe("parser while statements", () => {
                 isReserved: true,
                 location: {
                     start: { line: 1, column: 0 },
-                    end: { line: 1, column: 5 }
-                }
+                    end: { line: 1, column: 5 },
+                },
             },
             {
                 kind: Lexeme.True,
@@ -74,8 +74,8 @@ describe("parser while statements", () => {
                 isReserved: true,
                 location: {
                     start: { line: 1, column: 6 },
-                    end: { line: 1, column: 10 }
-                }
+                    end: { line: 1, column: 10 },
+                },
             },
             {
                 kind: Lexeme.Newline,
@@ -83,8 +83,8 @@ describe("parser while statements", () => {
                 isReserved: false,
                 location: {
                     start: { line: 1, column: 10 },
-                    end: { line: 1, column: 11 }
-                }
+                    end: { line: 1, column: 11 },
+                },
             },
             // loop body isn't significant for location tracking, so helper functions are safe
             identifier("Rnd"),
@@ -99,18 +99,17 @@ describe("parser while statements", () => {
                 isReserved: false,
                 location: {
                     start: { line: 3, column: 0 },
-                    end: { line: 3, column: 9 }
-                }
+                    end: { line: 3, column: 9 },
+                },
             },
-            EOF
+            EOF,
         ]);
 
         expect(errors).toEqual([]);
         expect(statements.length).toBe(1);
         expect(statements[0].location).toEqual({
             start: { line: 1, column: 0 },
-            end: { line: 3, column: 9 }
+            end: { line: 3, column: 9 },
         });
-
     });
 });

@@ -15,17 +15,14 @@ import { Scope, Environment } from "./Environment";
  * @returns a `Callable` version of that function
  */
 export function toCallable(func: Expr.Function, name: string = "[Function]") {
-    return new Callable(
-        name,
-        {
-            signature: {
-                args: func.parameters,
-                returns: func.returns
-            },
-            impl: (interpreter: Interpreter, ...args: BrsType[]) => {
-                // just return whatever BrightScript returned
-                return func.body.accept(interpreter);
-            }
-        }
-    );
+    return new Callable(name, {
+        signature: {
+            args: func.parameters,
+            returns: func.returns,
+        },
+        impl: (interpreter: Interpreter, ...args: BrsType[]) => {
+            // just return whatever BrightScript returned
+            return func.body.accept(interpreter);
+        },
+    });
 }
