@@ -1,4 +1,4 @@
-import { Callable, ValueKind, BrsString, BrsBoolean, BrsArray, StdlibArgument } from "../brsTypes";
+import { Callable, ValueKind, BrsString, BrsBoolean, RoArray, StdlibArgument } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { URL } from "url";
 import MemoryFileSystem from "memory-fs";
@@ -182,15 +182,15 @@ export const ListDir = new Callable("ListDir", {
     impl: (interpreter: Interpreter, path: BrsString) => {
         const volume = getVolumeByPath(interpreter, path.value);
         if (volume === null) {
-            return new BrsArray([]);
+            return new RoArray([]);
         }
 
         const memfsPath = getMemfsPath(path.value);
         try {
             let subPaths = volume.readdirSync(memfsPath).map(s => new BrsString(s));
-            return new BrsArray(subPaths);
+            return new RoArray(subPaths);
         } catch (err) {
-            return new BrsArray([]);
+            return new RoArray([]);
         }
     },
 });

@@ -1,7 +1,7 @@
 const brs = require("brs");
 const {
-    AssociativeArray,
-    BrsArray,
+    RoAssociativeArray,
+    RoArray,
     BrsBoolean,
     BrsString,
     Int32,
@@ -13,27 +13,27 @@ const { Interpreter } = require("../../../lib/interpreter");
 describe("AssociativeArray", () => {
     describe("comparisons", () => {
         it("is less than nothing", () => {
-            let a = new AssociativeArray([]);
+            let a = new RoAssociativeArray([]);
             expect(a.lessThan(a)).toBe(BrsBoolean.False);
         });
         it("is greater than nothing", () => {
-            let a = new AssociativeArray([]);
+            let a = new RoAssociativeArray([]);
             expect(a.greaterThan(a)).toBe(BrsBoolean.False);
         });
         it("is equal to nothing", () => {
-            let a = new AssociativeArray([]);
+            let a = new RoAssociativeArray([]);
             expect(a.equalTo(a)).toBe(BrsBoolean.False);
         });
     });
 
     describe("stringification", () => {
         it("lists all primitive values", () => {
-            let aa = new AssociativeArray([
+            let aa = new RoAssociativeArray([
                 {
                     name: new BrsString("array"),
-                    value: new BrsArray([new BrsString("I shouldn't appear")]),
+                    value: new RoArray([new BrsString("I shouldn't appear")]),
                 },
-                { name: new BrsString("associative-array"), value: new AssociativeArray([]) },
+                { name: new BrsString("associative-array"), value: new RoAssociativeArray([]) },
                 { name: new BrsString("boolean"), value: BrsBoolean.True },
                 { name: new BrsString("string"), value: new BrsString("a string") },
                 { name: new BrsString("number"), value: new Int32(-1) },
@@ -55,13 +55,15 @@ describe("AssociativeArray", () => {
 
     describe("get", () => {
         it("returns value given a key it contains", () => {
-            let aa = new AssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
+            let aa = new RoAssociativeArray([
+                { name: new BrsString("foo"), value: new Int32(-99) },
+            ]);
 
             expect(aa.get(new BrsString("foo"))).toEqual(new Int32(-99));
         });
 
         it("returns 'invalid' given a key it doesn't contain", () => {
-            let aa = new AssociativeArray([]);
+            let aa = new RoAssociativeArray([]);
 
             expect(aa.get(new BrsString("does_not_exist"))).toEqual(BrsInvalid.Instance);
         });
@@ -69,7 +71,9 @@ describe("AssociativeArray", () => {
 
     describe("set", () => {
         it("sets values with new keys", () => {
-            let aa = new AssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
+            let aa = new RoAssociativeArray([
+                { name: new BrsString("foo"), value: new Int32(-99) },
+            ]);
             let ninetyNine = aa.get(new BrsString("foo"));
 
             aa.set(new BrsString("bar"), new Int32(808));
@@ -80,7 +84,9 @@ describe("AssociativeArray", () => {
         });
 
         it("overwrites values with existing keys", () => {
-            let aa = new AssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
+            let aa = new RoAssociativeArray([
+                { name: new BrsString("foo"), value: new Int32(-99) },
+            ]);
 
             aa.set(new BrsString("foo"), new BrsString("not ninetynine"));
 
@@ -97,7 +103,7 @@ describe("AssociativeArray", () => {
 
         describe("clear", () => {
             it("empties the associative array", () => {
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("foo"), value: new Int32(-99) },
                 ]);
 
@@ -110,7 +116,7 @@ describe("AssociativeArray", () => {
 
         describe("delete", () => {
             it("deletes a given item in the associative array", () => {
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("foo"), value: new Int32(-99) },
                     { name: new BrsString("bar"), value: new Int32(800) },
                 ]);
@@ -125,7 +131,7 @@ describe("AssociativeArray", () => {
 
         describe("addreplace", () => {
             it("adds new elements to the associative array", () => {
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("letter1"), value: new BrsString("a") },
                 ]);
 
@@ -138,7 +144,7 @@ describe("AssociativeArray", () => {
             });
 
             it("replaces the value of known elements in the associative array", () => {
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("letter1"), value: new BrsString("a") },
                 ]);
 
@@ -154,7 +160,7 @@ describe("AssociativeArray", () => {
 
         describe("count", () => {
             it("returns the number of items in the associative array", () => {
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("letter1"), value: new BrsString("a") },
                     { name: new BrsString("letter2"), value: new BrsString("b") },
                 ]);
@@ -169,7 +175,7 @@ describe("AssociativeArray", () => {
 
         describe("doesexist", () => {
             it("returns true when an item exists in the array", () => {
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("letter1"), value: new BrsString("a") },
                     { name: new BrsString("letter2"), value: new BrsString("b") },
                 ]);
@@ -183,7 +189,7 @@ describe("AssociativeArray", () => {
             });
 
             it("returns false when an item doesn't exist in the array", () => {
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("letter1"), value: new BrsString("a") },
                     { name: new BrsString("letter2"), value: new BrsString("b") },
                 ]);
@@ -197,33 +203,33 @@ describe("AssociativeArray", () => {
 
         describe("append", () => {
             it("appends a new associative array to an existing one", () => {
-                let aa1 = new AssociativeArray([
+                let aa1 = new RoAssociativeArray([
                     { name: new BrsString("letter1"), value: new BrsString("a") },
                 ]);
 
                 let append = aa1.getMethod("append");
                 expect(append).toBeTruthy();
 
-                let aa2 = new AssociativeArray([
+                let aa2 = new RoAssociativeArray([
                     { name: new BrsString("letter2"), value: new BrsString("b") },
                     { name: new BrsString("empty"), value: new BrsString("") },
                     {
                         name: new BrsString("arr"),
-                        value: new BrsArray([new Int32(1), new BrsString("two")]),
+                        value: new RoArray([new Int32(1), new BrsString("two")]),
                     },
-                    { name: new BrsString("obj"), value: new AssociativeArray([]) },
+                    { name: new BrsString("obj"), value: new RoAssociativeArray([]) },
                     { name: new BrsString("num"), value: new Int32(555) },
                 ]);
 
-                let resultAA = new AssociativeArray([
+                let resultAA = new RoAssociativeArray([
                     { name: new BrsString("letter1"), value: new BrsString("a") },
                     { name: new BrsString("letter2"), value: new BrsString("b") },
                     { name: new BrsString("empty"), value: new BrsString("") },
                     {
                         name: new BrsString("arr"),
-                        value: new BrsArray([new Int32(1), new BrsString("two")]),
+                        value: new RoArray([new Int32(1), new BrsString("two")]),
                     },
-                    { name: new BrsString("obj"), value: new AssociativeArray([]) },
+                    { name: new BrsString("obj"), value: new RoAssociativeArray([]) },
                     { name: new BrsString("num"), value: new Int32(555) },
                 ]);
 
@@ -239,7 +245,7 @@ describe("AssociativeArray", () => {
                 let letter2 = new BrsString("letter2");
                 let cletter = new BrsString("cletter");
 
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: letter1, value: new BrsString("a") },
                     { name: letter2, value: new BrsString("b") },
                     { name: cletter, value: new BrsString("c") },
@@ -249,17 +255,17 @@ describe("AssociativeArray", () => {
                 expect(keys).toBeTruthy();
 
                 let result = keys.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([cletter, letter1, letter2]).elements);
+                expect(result.elements).toEqual(new RoArray([cletter, letter1, letter2]).elements);
             });
 
             it("returns an empty array from an empty associative array", () => {
-                let aa = new AssociativeArray([]);
+                let aa = new RoAssociativeArray([]);
 
                 let keys = aa.getMethod("keys");
                 expect(keys).toBeTruthy();
 
                 let result = keys.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([]).elements);
+                expect(result.elements).toEqual(new RoArray([]).elements);
             });
         });
 
@@ -269,7 +275,7 @@ describe("AssociativeArray", () => {
                 let letter1 = new BrsString("a");
                 let letter2 = new BrsString("b");
 
-                let aa = new AssociativeArray([
+                let aa = new RoAssociativeArray([
                     { name: new BrsString("cletter"), value: cletter },
                     { name: new BrsString("letter1"), value: letter1 },
                     { name: new BrsString("letter2"), value: letter2 },
@@ -278,17 +284,17 @@ describe("AssociativeArray", () => {
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
                 let result = items.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([letter1, letter2, cletter]).elements);
+                expect(result.elements).toEqual(new RoArray([letter1, letter2, cletter]).elements);
             });
 
             it("returns an empty array from an empty associative array", () => {
-                let aa = new AssociativeArray([]);
+                let aa = new RoAssociativeArray([]);
 
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
 
                 let result = items.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([]).elements);
+                expect(result.elements).toEqual(new RoArray([]).elements);
             });
         });
     });

@@ -9,9 +9,9 @@ const {
     Double,
     BrsString,
     BrsBoolean,
-    BrsArray,
+    RoArray,
     BrsInvalid,
-    AssociativeArray,
+    RoAssociativeArray,
 } = brs.types;
 
 let interpreter;
@@ -106,7 +106,7 @@ describe("interpreter comparisons", () => {
             { name: "<>", operator: Lexeme.LessGreater },
         ].forEach(({ name, operator }) => {
             test(name, () => {
-                let arr = new BrsArray([]);
+                let arr = new RoArray([]);
 
                 expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow(
                     /Attempting to compare non-primitive values/
@@ -125,8 +125,8 @@ describe("interpreter comparisons", () => {
             { name: "64-bit integer", value: new Int64(-1111111111) },
             { name: "float", value: new Float(3.4) },
             { name: "double", value: new Double(7.8) },
-            { name: "array", value: new BrsArray([]) },
-            { name: "associative array", value: new AssociativeArray([]) },
+            { name: "array", value: new RoArray([]) },
+            { name: "associative array", value: new RoAssociativeArray([]) },
         ].forEach(({ name, value }) => {
             test(name, () => {
                 expect(

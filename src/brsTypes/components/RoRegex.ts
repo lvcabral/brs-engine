@@ -3,9 +3,9 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BrsArray } from "./BrsArray";
+import { RoArray } from "./RoArray";
 
-export class Regex extends BrsComponent implements BrsValue {
+export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly supportedFlags = "ims";
     private jsRegex: RegExp;
@@ -87,7 +87,7 @@ export class Regex extends BrsComponent implements BrsValue {
                 arr = result.map(match => (match ? new BrsString(match) : BrsInvalid.Instance));
             }
 
-            return new BrsArray(arr);
+            return new RoArray(arr);
         },
     });
 
@@ -135,7 +135,7 @@ export class Regex extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, str: BrsString) => {
             let items = this.jsRegex[Symbol.split](str.value);
             let brsItems = items.map(item => new BrsString(item));
-            return new BrsArray(brsItems);
+            return new RoArray(brsItems);
         },
     });
 
@@ -154,9 +154,9 @@ export class Regex extends BrsComponent implements BrsValue {
 
             while ((matches = this.jsRegex.exec(str.value)) !== null) {
                 let item = matches[0] ? new BrsString(matches[0]) : BrsInvalid.Instance;
-                arr.push(new BrsArray([item]));
+                arr.push(new RoArray([item]));
             }
-            return new BrsArray(arr);
+            return new RoArray(arr);
         },
     });
 }

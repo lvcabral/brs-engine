@@ -1,28 +1,28 @@
 const brs = require("brs");
-const { BrsArray, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
+const { RoArray, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
 const BrsError = require("../../../lib/Error");
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("Array", () => {
     describe("comparisons", () => {
         it("is less than nothing", () => {
-            let a = new BrsArray([]);
+            let a = new RoArray([]);
             expect(a.lessThan(a)).toBe(BrsBoolean.False);
         });
         it("is greater than nothing", () => {
-            let a = new BrsArray([]);
+            let a = new RoArray([]);
             expect(a.greaterThan(a)).toBe(BrsBoolean.False);
         });
         it("is equal to nothing", () => {
-            let a = new BrsArray([]);
+            let a = new RoArray([]);
             expect(a.equalTo(a)).toBe(BrsBoolean.False);
         });
     });
 
     describe("stringification", () => {
         it("lists all primitive values", () => {
-            let arr = new BrsArray([
-                new BrsArray([new BrsString("I shouldn't appear")]),
+            let arr = new RoArray([
+                new RoArray([new BrsString("I shouldn't appear")]),
                 BrsBoolean.True,
                 new BrsString("a string"),
                 new Int32(-1),
@@ -47,14 +47,14 @@ describe("Array", () => {
             let b = new BrsString("b");
             let c = new BrsString("c");
 
-            let arr = new BrsArray([a, b, c]);
+            let arr = new RoArray([a, b, c]);
 
             expect(arr.get(new Int32(0))).toBe(a);
             expect(arr.get(new Int32(2))).toBe(c);
         });
 
         it("returns invalid for out-of-bounds indexes", () => {
-            let arr = new BrsArray([]);
+            let arr = new RoArray([]);
 
             expect(arr.get(new Int32(555))).toBe(BrsInvalid.Instance);
         });
@@ -66,7 +66,7 @@ describe("Array", () => {
             let b = new BrsString("b");
             let c = new BrsString("c");
 
-            let arr = new BrsArray([a, b, c]);
+            let arr = new RoArray([a, b, c]);
 
             arr.set(new Int32(0), new BrsString("replacement for a"));
             arr.set(new Int32(2), new BrsString("replacement for c"));
@@ -76,7 +76,7 @@ describe("Array", () => {
         });
 
         it("sets values at out-of-bounds indexes", () => {
-            let arr = new BrsArray([]);
+            let arr = new RoArray([]);
 
             arr.set(new Int32(555), new BrsString("value set at index 555"));
             expect(arr.get(new Int32(555))).toEqual(new BrsString("value set at index 555"));
@@ -96,7 +96,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b, c]);
+                let arr = new RoArray([a, b, c]);
 
                 let peek = arr.getMethod("peek");
                 expect(peek).toBeTruthy();
@@ -104,7 +104,7 @@ describe("Array", () => {
             });
 
             it("returns `invalid` when empty", () => {
-                let arr = new BrsArray([]);
+                let arr = new RoArray([]);
 
                 let peek = arr.getMethod("peek");
                 expect(peek).toBeTruthy();
@@ -118,7 +118,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b, c]);
+                let arr = new RoArray([a, b, c]);
 
                 let pop = arr.getMethod("pop");
                 expect(pop).toBeTruthy();
@@ -127,7 +127,7 @@ describe("Array", () => {
             });
 
             it("returns `invalid` and doesn't modify when empty", () => {
-                let arr = new BrsArray([]);
+                let arr = new RoArray([]);
 
                 let pop = arr.getMethod("pop");
                 expect(pop).toBeTruthy();
@@ -144,7 +144,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b]);
+                let arr = new RoArray([a, b]);
 
                 let push = arr.getMethod("push");
                 expect(push).toBeTruthy();
@@ -159,7 +159,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b, c]);
+                let arr = new RoArray([a, b, c]);
 
                 let shift = arr.getMethod("shift");
                 expect(shift).toBeTruthy();
@@ -168,7 +168,7 @@ describe("Array", () => {
             });
 
             it("returns `invalid` and doesn't modify when empty", () => {
-                let arr = new BrsArray([]);
+                let arr = new RoArray([]);
 
                 let shift = arr.getMethod("shift");
                 expect(shift).toBeTruthy();
@@ -185,7 +185,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([b, c]);
+                let arr = new RoArray([b, c]);
 
                 let unshift = arr.getMethod("unshift");
                 expect(unshift).toBeTruthy();
@@ -200,7 +200,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b, c]);
+                let arr = new RoArray([a, b, c]);
 
                 let deleteMethod = arr.getMethod("delete");
                 expect(deleteMethod).toBeTruthy();
@@ -213,7 +213,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b, c]);
+                let arr = new RoArray([a, b, c]);
 
                 let deleteMethod = arr.getMethod("delete");
                 expect(deleteMethod).toBeTruthy();
@@ -229,7 +229,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b, c]);
+                let arr = new RoArray([a, b, c]);
 
                 let count = arr.getMethod("count");
                 expect(count).toBeTruthy();
@@ -243,7 +243,7 @@ describe("Array", () => {
                 let b = new BrsString("b");
                 let c = new BrsString("c");
 
-                let arr = new BrsArray([a, b]);
+                let arr = new RoArray([a, b]);
 
                 let clear = arr.getMethod("clear");
                 expect(clear).toBeTruthy();
@@ -256,13 +256,13 @@ describe("Array", () => {
             it("adds non-empty elements to the current array", () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
-                let src = new BrsArray([a, b]);
+                let src = new RoArray([a, b]);
 
                 let c = new BrsString("c");
                 let d = new BrsString("d");
                 let e = new BrsString("e");
                 let f = new BrsString("f");
-                let other = new BrsArray([c, undefined, d, undefined, undefined, e, f, undefined]);
+                let other = new RoArray([c, undefined, d, undefined, undefined, e, f, undefined]);
 
                 let append = src.getMethod("append");
                 expect(append).toBeTruthy();

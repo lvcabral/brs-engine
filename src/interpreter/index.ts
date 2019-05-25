@@ -12,7 +12,7 @@ import {
     Int32,
     isBrsCallable,
     Uninitialized,
-    BrsArray,
+    RoArray,
     isIterable,
     SignatureAndMismatches,
     MismatchReason,
@@ -31,7 +31,7 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
 import { Runtime } from "../parser/Statement";
-import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
+import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 
@@ -743,7 +743,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ) {
                     let maybeM = this.evaluate(expression.callee.obj);
                     if (maybeM.kind === ValueKind.Object) {
-                        if (maybeM instanceof AssociativeArray) {
+                        if (maybeM instanceof RoAssociativeArray) {
                             mPointer = maybeM;
                         }
                     } else {
@@ -1095,12 +1095,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return expression.value;
     }
 
-    visitArrayLiteral(expression: Expr.ArrayLiteral): BrsArray {
-        return new BrsArray(expression.elements.map(expr => this.evaluate(expr)));
+    visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
+        return new RoArray(expression.elements.map(expr => this.evaluate(expr)));
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {
-        return new AssociativeArray(
+        return new RoAssociativeArray(
             expression.elements.map(member => ({
                 name: member.name,
                 value: this.evaluate(member.value),
