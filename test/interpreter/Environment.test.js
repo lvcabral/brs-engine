@@ -1,7 +1,7 @@
 const { Environment, Scope } = require("../../lib/interpreter/Environment");
 const brs = require("brs");
 const { Lexeme } = brs.lexer;
-const { BrsString, AssociativeArray, Int32 } = brs.types;
+const { BrsString, RoAssociativeArray, Int32 } = brs.types;
 
 const { token, identifier } = require("../parser/ParserTests");
 
@@ -39,7 +39,7 @@ describe("Environment", () => {
     });
 
     it("gets and sets an m pointer", () => {
-        let newM = new AssociativeArray([{ name: new BrsString("id"), value: new Int32(1738) }]);
+        let newM = new RoAssociativeArray([{ name: new BrsString("id"), value: new Int32(1738) }]);
         env.setM(newM);
 
         expect(env.get(identifier("m"))).toBe(newM);
@@ -104,7 +104,7 @@ describe("Environment", () => {
         env.define(Scope.Function, "funcScoped", new BrsString("funcScoped"));
         env.define(Scope.Module, "moduleScoped", new BrsString("module-scoped"));
         env.define(Scope.Global, "globalScoped", new BrsString("global-scoped"));
-        env.setM(new AssociativeArray([{ name: new BrsString("id"), value: new Int32(679) }]));
+        env.setM(new RoAssociativeArray([{ name: new BrsString("id"), value: new Int32(679) }]));
 
         let subEnv = env.createSubEnvironment();
 

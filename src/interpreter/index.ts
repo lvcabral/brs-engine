@@ -31,7 +31,7 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
 import { Runtime } from "../parser/Statement";
-import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
+import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 
@@ -743,7 +743,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ) {
                     let maybeM = this.evaluate(expression.callee.obj);
                     if (maybeM.kind === ValueKind.Object) {
-                        if (maybeM instanceof AssociativeArray) {
+                        if (maybeM instanceof RoAssociativeArray) {
                             mPointer = maybeM;
                         }
                     } else {
@@ -1100,7 +1100,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {
-        return new AssociativeArray(
+        return new RoAssociativeArray(
             expression.elements.map(member => ({
                 name: member.name,
                 value: this.evaluate(member.value),
