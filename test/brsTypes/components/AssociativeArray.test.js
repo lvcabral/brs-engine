@@ -1,7 +1,7 @@
 const brs = require("brs");
 const {
     AssociativeArray,
-    BrsArray,
+    RoArray,
     BrsBoolean,
     BrsString,
     Int32,
@@ -31,7 +31,7 @@ describe("AssociativeArray", () => {
             let aa = new AssociativeArray([
                 {
                     name: new BrsString("array"),
-                    value: new BrsArray([new BrsString("I shouldn't appear")]),
+                    value: new RoArray([new BrsString("I shouldn't appear")]),
                 },
                 { name: new BrsString("associative-array"), value: new AssociativeArray([]) },
                 { name: new BrsString("boolean"), value: BrsBoolean.True },
@@ -209,7 +209,7 @@ describe("AssociativeArray", () => {
                     { name: new BrsString("empty"), value: new BrsString("") },
                     {
                         name: new BrsString("arr"),
-                        value: new BrsArray([new Int32(1), new BrsString("two")]),
+                        value: new RoArray([new Int32(1), new BrsString("two")]),
                     },
                     { name: new BrsString("obj"), value: new AssociativeArray([]) },
                     { name: new BrsString("num"), value: new Int32(555) },
@@ -221,7 +221,7 @@ describe("AssociativeArray", () => {
                     { name: new BrsString("empty"), value: new BrsString("") },
                     {
                         name: new BrsString("arr"),
-                        value: new BrsArray([new Int32(1), new BrsString("two")]),
+                        value: new RoArray([new Int32(1), new BrsString("two")]),
                     },
                     { name: new BrsString("obj"), value: new AssociativeArray([]) },
                     { name: new BrsString("num"), value: new Int32(555) },
@@ -249,7 +249,7 @@ describe("AssociativeArray", () => {
                 expect(keys).toBeTruthy();
 
                 let result = keys.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([cletter, letter1, letter2]).elements);
+                expect(result.elements).toEqual(new RoArray([cletter, letter1, letter2]).elements);
             });
 
             it("returns an empty array from an empty associative array", () => {
@@ -259,7 +259,7 @@ describe("AssociativeArray", () => {
                 expect(keys).toBeTruthy();
 
                 let result = keys.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([]).elements);
+                expect(result.elements).toEqual(new RoArray([]).elements);
             });
         });
 
@@ -278,7 +278,7 @@ describe("AssociativeArray", () => {
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
                 let result = items.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([letter1, letter2, cletter]).elements);
+                expect(result.elements).toEqual(new RoArray([letter1, letter2, cletter]).elements);
             });
 
             it("returns an empty array from an empty associative array", () => {
@@ -288,7 +288,7 @@ describe("AssociativeArray", () => {
                 expect(items).toBeTruthy();
 
                 let result = items.call(interpreter);
-                expect(result.elements).toEqual(new BrsArray([]).elements);
+                expect(result.elements).toEqual(new RoArray([]).elements);
             });
         });
     });
