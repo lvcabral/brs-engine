@@ -11,7 +11,7 @@ const {
     BrsBoolean,
     RoArray,
     BrsInvalid,
-    AssociativeArray,
+    RoAssociativeArray,
 } = brs.types;
 
 let interpreter;
@@ -126,7 +126,7 @@ describe("interpreter comparisons", () => {
             { name: "float", value: new Float(3.4) },
             { name: "double", value: new Double(7.8) },
             { name: "array", value: new RoArray([]) },
-            { name: "associative array", value: new AssociativeArray([]) },
+            { name: "associative array", value: new RoAssociativeArray([]) },
         ].forEach(({ name, value }) => {
             test(name, () => {
                 expect(

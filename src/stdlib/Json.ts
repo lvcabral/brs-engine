@@ -1,4 +1,4 @@
-import { AssociativeArray } from "../brsTypes/components/AssociativeArray";
+import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { RoArray } from "../brsTypes/components/RoArray";
 import { Interpreter } from "../interpreter";
 import { Literal } from "../parser/Expression";
@@ -42,7 +42,7 @@ function brsValueOf(x: any): BrsType {
             if (Array.isArray(x)) {
                 return new RoArray(x.map(brsValueOf));
             }
-            return new AssociativeArray(
+            return new RoAssociativeArray(
                 Object.getOwnPropertyNames(x).map((k: string) => ({
                     name: new BrsString(k),
                     value: brsValueOf(x[k]),
@@ -53,7 +53,7 @@ function brsValueOf(x: any): BrsType {
     }
 }
 
-type BrsAggregate = AssociativeArray | RoArray;
+type BrsAggregate = RoAssociativeArray | RoArray;
 
 function visit(x: BrsAggregate, visited: Set<BrsAggregate>): void {
     if (visited.has(x)) {
@@ -69,7 +69,7 @@ function visit(x: BrsAggregate, visited: Set<BrsAggregate>): void {
  * @param {Interpreter} interpreter An Interpreter.
  * @param {BrsType} x Some BrsType value.
  * @param {Set<BrsAggregate>} visited An optional Set of visited of RoArray or
- *   AssociativeArray. If not provided, a new Set will be created.
+ *   RoAssociativeArray. If not provided, a new Set will be created.
  * @return {string} The JSON string representation of `x`.
  * @throws {Error} If `x` cannot be represented as a JSON string.
  */
@@ -90,7 +90,7 @@ function jsonOf(
         case ValueKind.Int64:
             return x.toString();
         case ValueKind.Object:
-            if (x instanceof AssociativeArray) {
+            if (x instanceof RoAssociativeArray) {
                 visit(x, visited);
                 return `{${x
                     .getElements()
