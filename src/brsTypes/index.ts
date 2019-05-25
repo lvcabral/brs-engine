@@ -17,7 +17,7 @@ export * from "./components/RoArray";
 export * from "./components/RoAssociativeArray";
 export * from "./components/Timespan";
 export * from "./components/BrsObjects";
-export * from "./components/Regex";
+export * from "./components/RoRegex";
 export * from "./Callable";
 
 /**
