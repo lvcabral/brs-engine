@@ -12,7 +12,7 @@ import {
     Int32,
     isBrsCallable,
     Uninitialized,
-    BrsArray,
+    RoArray,
     isIterable,
     SignatureAndMismatches,
     MismatchReason,
@@ -1095,8 +1095,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return expression.value;
     }
 
-    visitArrayLiteral(expression: Expr.ArrayLiteral): BrsArray {
-        return new BrsArray(expression.elements.map(expr => this.evaluate(expr)));
+    visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
+        return new RoArray(expression.elements.map(expr => this.evaluate(expr)));
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {

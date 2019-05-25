@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
-export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
+export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private elements: BrsType[];
 
@@ -175,7 +175,7 @@ export class BrsArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, array: BrsComponent) => {
-            if (!(array instanceof BrsArray)) {
+            if (!(array instanceof RoArray)) {
                 // TODO: validate against RBI
                 return BrsInvalid.Instance;
             }
