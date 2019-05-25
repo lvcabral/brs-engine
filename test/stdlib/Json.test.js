@@ -1,6 +1,6 @@
 const { Interpreter } = require("../../lib/interpreter");
 const { FormatJson, ParseJson } = require("../../lib/stdlib/index");
-const { RoArray } = require("../../lib/brsTypes/components/RoArray");
+const { BrsArray } = require("../../lib/brsTypes/components/BrsArray");
 const { AssociativeArray } = require("../../lib/brsTypes/components/AssociativeArray");
 const {
     BrsBoolean,
@@ -62,7 +62,7 @@ describe("global JSON functions", () => {
         });
 
         it("rejects nested array references", () => {
-            let a = new RoArray([new BrsString("bar"), Float.fromString("1.234")]);
+            let a = new BrsArray([new BrsString("bar"), Float.fromString("1.234")]);
             a.getMethod("push").call(interpreter, a);
             expectConsoleError(/BRIGHTSCRIPT: ERROR: FormatJSON: Nested object reference/, () => {
                 expect(FormatJson.call(interpreter, a)).toEqual(new BrsString(""));
@@ -110,7 +110,7 @@ describe("global JSON functions", () => {
         });
 
         it("converts from BRS array", () => {
-            let roArray = new RoArray([
+            let brsArray = new BrsArray([
                 new BrsBoolean(false),
                 Float.fromString("3.14"),
                 Int32.fromString("2147483647"),
@@ -118,7 +118,7 @@ describe("global JSON functions", () => {
                 BrsInvalid.Instance,
                 new BrsString("ok"),
             ]);
-            expect(FormatJson.call(interpreter, roArray)).toEqual(
+            expect(FormatJson.call(interpreter, brsArray)).toEqual(
                 new BrsString(`[false,3.14,2147483647,9223372036854775807,null,"ok"]`)
             );
         });
@@ -188,7 +188,7 @@ describe("global JSON functions", () => {
         });
 
         it("converts to BRS array", () => {
-            let expected = new RoArray([
+            let expected = new BrsArray([
                 new BrsBoolean(false),
                 Float.fromString("3.14"),
                 Int32.fromString("2147483647"),
@@ -200,7 +200,7 @@ describe("global JSON functions", () => {
                 interpreter,
                 new BrsString(`[false,3.14,2147483647,9223372036854775807,null,"ok"]`)
             );
-            expect(actual).toBeInstanceOf(RoArray);
+            expect(actual).toBeInstanceOf(BrsArray);
             expect(actual.getElements()).toEqual(expected.getElements());
         });
 

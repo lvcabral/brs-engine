@@ -4,7 +4,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoArray } from "./RoArray";
+import { BrsArray } from "./BrsArray";
 
 /** A member of an `AssociativeArray` in BrightScript. */
 export interface AAMember {
@@ -199,7 +199,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            return new RoArray(this.getElements());
+            return new BrsArray(this.getElements());
         },
     });
 
@@ -210,7 +210,7 @@ export class AssociativeArray extends BrsComponent implements BrsValue, BrsItera
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            return new RoArray(this.getValues());
+            return new BrsArray(this.getValues());
         },
     });
 

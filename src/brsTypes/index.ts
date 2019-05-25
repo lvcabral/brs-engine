@@ -1,5 +1,5 @@
 import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized, Comparable } from "./BrsType";
-import { RoArray } from "./components/RoArray";
+import { BrsArray } from "./components/BrsArray";
 import { AssociativeArray } from "./components/AssociativeArray";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
@@ -13,7 +13,7 @@ export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
-export * from "./components/RoArray";
+export * from "./components/BrsArray";
 export * from "./components/AssociativeArray";
 export * from "./components/Timespan";
 export * from "./components/BrsObjects";
@@ -87,7 +87,7 @@ export type BrsNumber = Int32 | Int64 | Float | Double;
 export type BrsPrimitive = BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 
 /** The set of BrightScript iterable types. */
-export type Iterable = RoArray | AssociativeArray;
+export type Iterable = BrsArray | AssociativeArray;
 
 /** The set of all supported types in BrightScript. */
 export type BrsType = BrsPrimitive | Iterable | Callable | Uninitialized;

@@ -3,7 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoArray } from "./RoArray";
+import { BrsArray } from "./BrsArray";
 
 export class Regex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -87,7 +87,7 @@ export class Regex extends BrsComponent implements BrsValue {
                 arr = result.map(match => (match ? new BrsString(match) : BrsInvalid.Instance));
             }
 
-            return new RoArray(arr);
+            return new BrsArray(arr);
         },
     });
 
@@ -135,7 +135,7 @@ export class Regex extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, str: BrsString) => {
             let items = this.jsRegex[Symbol.split](str.value);
             let brsItems = items.map(item => new BrsString(item));
-            return new RoArray(brsItems);
+            return new BrsArray(brsItems);
         },
     });
 
@@ -154,9 +154,9 @@ export class Regex extends BrsComponent implements BrsValue {
 
             while ((matches = this.jsRegex.exec(str.value)) !== null) {
                 let item = matches[0] ? new BrsString(matches[0]) : BrsInvalid.Instance;
-                arr.push(new RoArray([item]));
+                arr.push(new BrsArray([item]));
             }
-            return new RoArray(arr);
+            return new BrsArray(arr);
         },
     });
 }
