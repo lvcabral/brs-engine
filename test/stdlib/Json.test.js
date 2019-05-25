@@ -1,7 +1,7 @@
 const { Interpreter } = require("../../lib/interpreter");
 const { FormatJson, ParseJson } = require("../../lib/stdlib/index");
 const { RoArray } = require("../../lib/brsTypes/components/RoArray");
-const { RoAssociativeArray } = require("../../lib/brsTypes/components/RoAssociativeArray");
+const { AssociativeArray } = require("../../lib/brsTypes/components/AssociativeArray");
 const {
     BrsBoolean,
     BrsInvalid,
@@ -51,7 +51,7 @@ describe("global JSON functions", () => {
         });
 
         it("rejects nested associative array references", () => {
-            let aa = new RoAssociativeArray([
+            let aa = new AssociativeArray([
                 { name: new BrsString("foo"), value: new BrsString("bar") },
                 { name: new BrsString("lorem"), value: Float.fromString("1.234") },
             ]);
@@ -124,7 +124,7 @@ describe("global JSON functions", () => {
         });
 
         it("converts from BRS associative array to key-sorted JSON string", () => {
-            let brsAssociativeArrayDesc = new RoAssociativeArray([
+            let brsAssociativeArrayDesc = new AssociativeArray([
                 { name: new BrsString("string"), value: new BrsString("ok") },
                 { name: new BrsString("null"), value: BrsInvalid.Instance },
                 {
@@ -205,7 +205,7 @@ describe("global JSON functions", () => {
         });
 
         it("converts to BRS associative array", () => {
-            let expected = new RoAssociativeArray([
+            let expected = new AssociativeArray([
                 { name: new BrsString("string"), value: new BrsString("ok") },
                 { name: new BrsString("null"), value: BrsInvalid.Instance },
                 {
@@ -220,7 +220,7 @@ describe("global JSON functions", () => {
                 `{"boolean":false,"float":3.14,"integer":2147483647,"longinteger":9223372036854775807,"null":null,"string":"ok"}`
             );
             let actual = ParseJson.call(interpreter, brsAssociativeArrayStrAsc);
-            expect(actual).toBeInstanceOf(RoAssociativeArray);
+            expect(actual).toBeInstanceOf(AssociativeArray);
             actualKeys = actual.getElements();
             expect(actualKeys).toEqual(expected.getElements());
             actualKeys.forEach(key => {

@@ -1,6 +1,6 @@
 const brs = require("brs");
 const {
-    RoAssociativeArray,
+    AssociativeArray,
     RoArray,
     BrsInvalid,
     BrsBoolean,
@@ -41,7 +41,7 @@ describe("global runtime functions", () => {
                 { value: new Double(1.001), type: "Double" },
                 { value: CreateObject, type: "Function" },
                 { value: new RoArray([]), type: "roArray" },
-                { value: new RoAssociativeArray([]), type: "roAssociativeArray" },
+                { value: new AssociativeArray([]), type: "roAssociativeArray" },
                 { value: Uninitialized.Instance, type: "<UNINITIALIZED>" },
             ].forEach(testCase =>
                 test(testCase.type, () => {
@@ -63,7 +63,7 @@ describe("global runtime functions", () => {
                 { value: new Double(1.001), type: "Double" },
                 { value: CreateObject, type: "Function" },
                 { value: new RoArray([]), type: "roArray" },
-                { value: new RoAssociativeArray([]), type: "roAssociativeArray" },
+                { value: new AssociativeArray([]), type: "roAssociativeArray" },
                 { value: Uninitialized.Instance, type: "<UNINITIALIZED>" },
             ].forEach(testCase =>
                 test(testCase.type, () => {

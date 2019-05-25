@@ -14,7 +14,7 @@ export interface AAMember {
     value: BrsType;
 }
 
-export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIterable {
+export class AssociativeArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private elements = new Map<string, BrsType>();
 
@@ -95,7 +95,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         // `Interpreter#visitCall` need to check for `invalid` in its callable, then try to find a
         // method with the desired name separately? That last bit would work but it's pretty gross.
         // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
-        // Same with RoAssociativeArrays I guess.
+        // Same with AssociativeArrays I guess.
         return (
             this.elements.get(index.value.toLowerCase()) ||
             this.getMethod(index.value) ||
@@ -181,7 +181,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, obj: BrsType) => {
-            if (!(obj instanceof RoAssociativeArray)) {
+            if (!(obj instanceof AssociativeArray)) {
                 // TODO: validate against RBI
                 return BrsInvalid.Instance;
             }

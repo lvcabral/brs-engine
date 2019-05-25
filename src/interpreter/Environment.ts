@@ -1,5 +1,5 @@
 import { Identifier } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
+import { BrsType, AssociativeArray, Int32 } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -36,7 +36,7 @@ export class Environment {
      */
     private function = new Map<string, BrsType>();
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
-    private mPointer = new RoAssociativeArray([]);
+    private mPointer = new AssociativeArray([]);
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -66,7 +66,7 @@ export class Environment {
      * Sets the value of the special `m` variable, which is analogous to JavaScript's `this`.
      * @param newMPointer the new value to be used for the `m` pointer
      */
-    public setM(newMPointer: RoAssociativeArray): void {
+    public setM(newMPointer: AssociativeArray): void {
         this.mPointer = newMPointer;
     }
 
@@ -74,7 +74,7 @@ export class Environment {
      * Retrieves the current value of the special `m` variable, which is analogous to JavaScript's `this`.
      * @returns the current value used for the `m` pointer.
      */
-    public getM(): RoAssociativeArray {
+    public getM(): AssociativeArray {
         return this.mPointer;
     }
 
