@@ -1,8 +1,8 @@
 const brs = require("brs");
-const { BrsBoolean, BrsInvalid, BrsString, Int32, Regex, ValueKind } = brs.types;
+const { BrsBoolean, BrsInvalid, BrsString, Int32, RoRegex, ValueKind } = brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
-describe("Regex", () => {
+describe("RoRegex", () => {
     let interpreter;
 
     beforeEach(() => {
@@ -11,7 +11,7 @@ describe("Regex", () => {
 
     describe("isMatch", () => {
         it("matches strings with case sensitive flag", () => {
-            let regx = new Regex(new BrsString("hello_[0-9]*_world"));
+            let regx = newRoRegex(new BrsString("hello_[0-9]*_world"));
             let isMatch = regx.getMethod("isMatch");
             expect(isMatch).toBeTruthy();
 
@@ -25,7 +25,7 @@ describe("Regex", () => {
         });
 
         it("matches strings with case insensitive flag", () => {
-            let regx = new Regex(new BrsString("hello_[0-9]*_world"), new BrsString("i"));
+            let regx = newRoRegex(new BrsString("hello_[0-9]*_world"), new BrsString("i"));
             let isMatch = regx.getMethod("isMatch");
             expect(isMatch).toBeTruthy();
 
@@ -39,7 +39,7 @@ describe("Regex", () => {
         });
 
         it("matches a string in ISO8601 format", () => {
-            let regx = new Regex(
+            let regx = newRoRegex(
                 new BrsString("P(\\d+Y)?(\\d+M)?(\\d+D)?T(\\d+H)?(\\d+M)?(\\d+(.\\d+)?S)?")
             );
             let isMatch = regx.getMethod("isMatch");
@@ -57,7 +57,7 @@ describe("Regex", () => {
 
     describe("match", () => {
         it("doesn't match string", () => {
-            let rgx = new Regex(new BrsString("(a|(z))(bc)"));
+            let rgx = newRoRegex(new BrsString("(a|(z))(bc)"));
             let match = rgx.getMethod("match");
             expect(match).toBeTruthy();
 
@@ -69,7 +69,7 @@ describe("Regex", () => {
         });
 
         it("matches groups in string", () => {
-            let rgx = new Regex(new BrsString("(a|(z))(bc)"));
+            let rgx = newRoRegex(new BrsString("(a|(z))(bc)"));
             let match = rgx.getMethod("match");
             expect(match).toBeTruthy();
 
@@ -85,7 +85,7 @@ describe("Regex", () => {
         });
 
         it("matches string in hh:mm:ss.ms date format", () => {
-            let regx = new Regex(
+            let regx = newRoRegex(
                 new BrsString("(([0-9]{2}):)?(([0-9]{2}):)?([0-9]{2})\\.([0-9]{3})")
             );
             let match = regx.getMethod("match");
@@ -99,7 +99,7 @@ describe("Regex", () => {
         });
 
         it("matches strings using beginning and end of input", () => {
-            let regx = new Regex(
+            let regx = newRoRegex(
                 new BrsString("^(.*:)\\/\\/([A-Za-z0-9\\-\\.]+)?(:[0-9]+)?\\/?(.*)$")
             );
             let match = regx.getMethod("match");
@@ -127,7 +127,7 @@ describe("Regex", () => {
 
     describe("replace", () => {
         it("replaces first matched instance from string", () => {
-            let rgx = new Regex(new BrsString("-"));
+            let rgx = newRoRegex(new BrsString("-"));
             let replace = rgx.getMethod("replace");
             expect(replace).toBeTruthy();
 
@@ -137,7 +137,7 @@ describe("Regex", () => {
         });
 
         it("replaces string by using positional replacement patterns", () => {
-            let rgx = new Regex(new BrsString("S([0-9]+) E([0-9]+)"), new BrsString("i"));
+            let rgx = newRoRegex(new BrsString("S([0-9]+) E([0-9]+)"), new BrsString("i"));
             let replace = rgx.getMethod("replace");
             expect(replace).toBeTruthy();
 
@@ -153,7 +153,7 @@ describe("Regex", () => {
 
     describe("replaceAll", () => {
         it("replaces all matched instances from string", () => {
-            let rgx = new Regex(new BrsString("-"));
+            let rgx = newRoRegex(new BrsString("-"));
             let replaceAll = rgx.getMethod("replaceall");
             expect(replaceAll).toBeTruthy();
 
@@ -169,7 +169,7 @@ describe("Regex", () => {
 
     describe("split", () => {
         it("splits in the correct number of items", () => {
-            let rgx = new Regex(new BrsString(","));
+            let rgx = newRoRegex(new BrsString(","));
             let split = rgx.getMethod("split");
             expect(split).toBeTruthy();
 
@@ -182,7 +182,7 @@ describe("Regex", () => {
 
     describe("matchAll", () => {
         it("matches all patterns in the string", () => {
-            let rgx = new Regex(new BrsString("\\d+"));
+            let rgx = newRoRegex(new BrsString("\\d+"));
             let matchAll = rgx.getMethod("matchall");
             expect(matchAll).toBeTruthy();
 

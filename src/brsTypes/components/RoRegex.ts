@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoArray } from "./RoArray";
 
-export class Regex extends BrsComponent implements BrsValue {
+export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly supportedFlags = "ims";
     private jsRegex: RegExp;
