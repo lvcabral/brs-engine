@@ -14,8 +14,8 @@
     "clean": "rimraf ./lib ./types",
     "test": "jest",
     "lint": "tslint --project .",
-    "prettier:write": "prettier --write '{bin,src,test}/**/*.{js,ts}'",
-    "prettier": "prettier --check '{bin,src,test}/**/*.{js,ts}'",
+    "prettier:write": "prettier --write \"{bin,src,test}/**/*.{js,ts}\"",
+    "prettier": "prettier --check \"{bin,src,test}/**/*.{js,ts}\"",
     "prepublishOnly": "npm-run-all --serial clean build lint prettier test"
   },
   "files": [

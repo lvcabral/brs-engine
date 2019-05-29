@@ -24,6 +24,14 @@ describe("parser print statements", () => {
         expect(statements).toMatchSnapshot();
     });
 
+    it("supports empty print", () => {
+        let { statements, errors } = brs.parser.Parser.parse([token(Lexeme.Print), EOF]);
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
+    });
+
     it("parses print lists with no separator", () => {
         let { statements, errors } = parser.parse([
             token(Lexeme.Print),
