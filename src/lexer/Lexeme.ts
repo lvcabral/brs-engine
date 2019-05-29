@@ -102,6 +102,7 @@ export enum Lexeme {
     Rem = "Rem",
     Return = "Return",
     Step = "Step",
+    Stop = "Stop",
     Sub = "Sub",
     Tab = "Tab",
     To = "To",

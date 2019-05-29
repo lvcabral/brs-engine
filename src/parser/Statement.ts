@@ -293,6 +293,27 @@ export class End implements Statement {
     }
 }
 
+export class Stop implements Statement {
+    constructor(
+        readonly tokens: {
+            stop: Token;
+        }
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        //TODO implement this in the runtime. It should pause code execution until a `c` command is issued from the console
+        throw new Error("Not implemented");
+    }
+
+    get location() {
+        return {
+            file: this.tokens.stop.location.file,
+            start: this.tokens.stop.location.start,
+            end: this.tokens.stop.location.end,
+        };
+    }
+}
+
 export class For implements Statement {
     constructor(
         readonly tokens: {

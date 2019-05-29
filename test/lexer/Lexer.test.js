@@ -23,6 +23,11 @@ describe("lexer", () => {
         ]);
     });
 
+    it("gives the `stop` keyword its own Lexeme", () => {
+        let { tokens } = Lexer.scan("stop");
+        expect(tokens.map(t => t.kind)).toEqual([Lexeme.Stop, Lexeme.Eof]);
+    });
+
     it("aliases '?' to 'print'", () => {
         let { tokens } = Lexer.scan("?2");
         expect(tokens.map(t => t.kind)).toEqual([Lexeme.Print, Lexeme.Integer, Lexeme.Eof]);

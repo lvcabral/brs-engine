@@ -78,6 +78,7 @@ const allowedProperties = [
     Lexeme.Rem,
     Lexeme.Return,
     Lexeme.Step,
+    Lexeme.Stop,
     Lexeme.Sub,
     Lexeme.Tab,
     Lexeme.To,
@@ -550,6 +551,10 @@ export class Parser {
         function statement(...additionalterminators: BlockTerminator[]): Statement | undefined {
             if (checkLibrary()) {
                 return libraryStatement();
+            }
+
+            if (check(Lexeme.Stop)) {
+                return stopStatement();
             }
 
             if (check(Lexeme.If)) {
@@ -1113,12 +1118,23 @@ export class Parser {
          * Parses an `end` statement
          * @returns an AST representation of an `end` statement.
          */
-        function endStatement(): Stmt.End {
+        function endStatement() {
             let tokens = { end: advance() };
 
             while (match(Lexeme.Newline));
 
             return new Stmt.End(tokens);
+        }
+        /**
+         * Parses a `stop` statement
+         * @returns an AST representation of a `stop` statement
+         */
+        function stopStatement() {
+            let tokens = { stop: advance() };
+
+            while (match(Lexeme.Newline, Lexeme.Colon));
+
+            return new Stmt.Stop(tokens);
         }
 
         /**

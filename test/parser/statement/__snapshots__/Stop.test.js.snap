@@ -1,0 +1,282 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`stop statement can be used as an object property 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 25,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 3,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 25,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 3,
+                },
+              },
+              "text": "theObject",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": "Equal",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 27,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 26,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": AALiteral {
+              "close": Object {
+                "isReserved": false,
+                "kind": "RightBrace",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 17,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 5,
+                  },
+                },
+                "text": "}",
+              },
+              "elements": Array [
+                Object {
+                  "name": BrsString {
+                    "kind": 2,
+                    "value": "stop",
+                  },
+                  "value": Literal {
+                    "_location": Object {
+                      "end": Object {
+                        "column": 31,
+                        "line": 4,
+                      },
+                      "file": "",
+                      "start": Object {
+                        "column": 26,
+                        "line": 4,
+                      },
+                    },
+                    "value": BrsBoolean {
+                      "kind": 1,
+                      "value": false,
+                    },
+                  },
+                },
+              ],
+              "open": Object {
+                "isReserved": false,
+                "kind": "LeftBrace",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 29,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 28,
+                    "line": 3,
+                  },
+                },
+                "text": "{",
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 30,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 26,
+                  "line": 6,
+                },
+              },
+              "text": "stop",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 25,
+                    "line": 6,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 6,
+                  },
+                },
+                "text": "theObject",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 37,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 33,
+                  "line": 6,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 7,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 7,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 20,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`stop statement cannot be used as a local variable 1`] = `
+Array [
+  Stop {
+    "tokens": Object {
+      "stop": Object {
+        "isReserved": true,
+        "kind": "Stop",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "stop",
+      },
+    },
+  },
+]
+`;
+
+exports[`stop statement is valid as a statement 1`] = `
+Array [
+  Stop {
+    "tokens": Object {
+      "stop": Object {
+        "isReserved": true,
+        "kind": "Stop",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "stop",
+      },
+    },
+  },
+]
+`;
