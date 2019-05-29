@@ -341,11 +341,13 @@ describe("lexer", () => {
         });
 
         it("reads conditional directives", () => {
-            let { tokens } = Lexer.scan("#if #else if #else #end if");
+            let { tokens } = Lexer.scan("#if #else if #elseif #else #end if #endif");
             expect(tokens.map(t => t.kind)).toEqual([
                 Lexeme.HashIf,
                 Lexeme.HashElseIf,
+                Lexeme.HashElseIf,
                 Lexeme.HashElse,
+                Lexeme.HashEndIf,
                 Lexeme.HashEndIf,
                 Lexeme.Eof,
             ]);

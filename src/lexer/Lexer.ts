@@ -694,6 +694,12 @@ export class Lexer {
                 case "#else":
                     addToken(Lexeme.HashElse);
                     return;
+                case "#elseif":
+                    addToken(Lexeme.HashElseIf);
+                    return;
+                case "#endif":
+                    addToken(Lexeme.HashEndIf);
+                    return;
                 case "#const":
                     addToken(Lexeme.HashConst);
                     return;
