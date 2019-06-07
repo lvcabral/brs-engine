@@ -27,7 +27,17 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
     } catch (err) {
         return new Map();
     }
+    return parseManifest(contents);
+}
 
+/**
+ * Attempts to parse a `manifest` file's contents into a map of string to JavaScript
+ * number, string, or boolean.
+ * @param contents the text contents of a manifest file.
+ * @returns a Promise that resolves to a map of string to JavaScript number, string, or boolean,
+ *          representing the manifest file's contents
+ */
+export function parseManifest(contents: string) {
     let keyValuePairs = contents
         // for each line
         .split("\n")
