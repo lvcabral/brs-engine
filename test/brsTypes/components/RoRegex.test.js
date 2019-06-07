@@ -11,7 +11,7 @@ describe("RoRegex", () => {
 
     describe("isMatch", () => {
         it("matches strings with case sensitive flag", () => {
-            let regx = newRoRegex(new BrsString("hello_[0-9]*_world"));
+            let regx = new RoRegex(new BrsString("hello_[0-9]*_world"));
             let isMatch = regx.getMethod("isMatch");
             expect(isMatch).toBeTruthy();
 
@@ -25,7 +25,7 @@ describe("RoRegex", () => {
         });
 
         it("matches strings with case insensitive flag", () => {
-            let regx = newRoRegex(new BrsString("hello_[0-9]*_world"), new BrsString("i"));
+            let regx = new RoRegex(new BrsString("hello_[0-9]*_world"), new BrsString("i"));
             let isMatch = regx.getMethod("isMatch");
             expect(isMatch).toBeTruthy();
 
@@ -39,7 +39,7 @@ describe("RoRegex", () => {
         });
 
         it("matches a string in ISO8601 format", () => {
-            let regx = newRoRegex(
+            let regx = new RoRegex(
                 new BrsString("P(\\d+Y)?(\\d+M)?(\\d+D)?T(\\d+H)?(\\d+M)?(\\d+(.\\d+)?S)?")
             );
             let isMatch = regx.getMethod("isMatch");
@@ -57,7 +57,7 @@ describe("RoRegex", () => {
 
     describe("match", () => {
         it("doesn't match string", () => {
-            let rgx = newRoRegex(new BrsString("(a|(z))(bc)"));
+            let rgx = new RoRegex(new BrsString("(a|(z))(bc)"));
             let match = rgx.getMethod("match");
             expect(match).toBeTruthy();
 
@@ -69,7 +69,7 @@ describe("RoRegex", () => {
         });
 
         it("matches groups in string", () => {
-            let rgx = newRoRegex(new BrsString("(a|(z))(bc)"));
+            let rgx = new RoRegex(new BrsString("(a|(z))(bc)"));
             let match = rgx.getMethod("match");
             expect(match).toBeTruthy();
 
@@ -80,12 +80,12 @@ describe("RoRegex", () => {
             expect(count.value).toBe(4);
             expect(result.get(new Int32(0)).value).toBe("abc"); //Entire match
             expect(result.get(new Int32(1)).value).toBe("a");
-            expect(result.get(new Int32(2))).toEqual(BrsInvalid.Instance);
+            expect(result.get(new Int32(2)).value).toBe("");
             expect(result.get(new Int32(3)).value).toBe("bc");
         });
 
         it("matches string in hh:mm:ss.ms date format", () => {
-            let regx = newRoRegex(
+            let regx = new RoRegex(
                 new BrsString("(([0-9]{2}):)?(([0-9]{2}):)?([0-9]{2})\\.([0-9]{3})")
             );
             let match = regx.getMethod("match");
@@ -99,7 +99,7 @@ describe("RoRegex", () => {
         });
 
         it("matches strings using beginning and end of input", () => {
-            let regx = newRoRegex(
+            let regx = new RoRegex(
                 new BrsString("^(.*:)\\/\\/([A-Za-z0-9\\-\\.]+)?(:[0-9]+)?\\/?(.*)$")
             );
             let match = regx.getMethod("match");
@@ -127,7 +127,7 @@ describe("RoRegex", () => {
 
     describe("replace", () => {
         it("replaces first matched instance from string", () => {
-            let rgx = newRoRegex(new BrsString("-"));
+            let rgx = new RoRegex(new BrsString("-"));
             let replace = rgx.getMethod("replace");
             expect(replace).toBeTruthy();
 
@@ -137,7 +137,7 @@ describe("RoRegex", () => {
         });
 
         it("replaces string by using positional replacement patterns", () => {
-            let rgx = newRoRegex(new BrsString("S([0-9]+) E([0-9]+)"), new BrsString("i"));
+            let rgx = new RoRegex(new BrsString("S([0-9]+) E([0-9]+)"), new BrsString("i"));
             let replace = rgx.getMethod("replace");
             expect(replace).toBeTruthy();
 
@@ -153,7 +153,7 @@ describe("RoRegex", () => {
 
     describe("replaceAll", () => {
         it("replaces all matched instances from string", () => {
-            let rgx = newRoRegex(new BrsString("-"));
+            let rgx = new RoRegex(new BrsString("-"));
             let replaceAll = rgx.getMethod("replaceall");
             expect(replaceAll).toBeTruthy();
 
@@ -169,7 +169,7 @@ describe("RoRegex", () => {
 
     describe("split", () => {
         it("splits in the correct number of items", () => {
-            let rgx = newRoRegex(new BrsString(","));
+            let rgx = new RoRegex(new BrsString(","));
             let split = rgx.getMethod("split");
             expect(split).toBeTruthy();
 
@@ -182,7 +182,7 @@ describe("RoRegex", () => {
 
     describe("matchAll", () => {
         it("matches all patterns in the string", () => {
-            let rgx = newRoRegex(new BrsString("\\d+"));
+            let rgx = new RoRegex(new BrsString("\\d+"));
             let matchAll = rgx.getMethod("matchall");
             expect(matchAll).toBeTruthy();
 
