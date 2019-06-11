@@ -64,23 +64,21 @@ export function parseManifest(contents: string) {
         // remove leading/trailing whitespace from keys and values
         .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean, integer, or leave as string
-        .map(
-            ([key, value]): [string, ManifestValue] => {
-                if (value.toLowerCase() === "true") {
-                    return [key, true];
-                }
-                if (value.toLowerCase() === "false") {
-                    return [key, false];
-                }
-
-                let maybeNumber = Number.parseInt(value);
-                // if it's not a number, it's just a string
-                if (Number.isNaN(maybeNumber)) {
-                    return [key, value];
-                }
-                return [key, maybeNumber];
+        .map(([key, value]): [string, ManifestValue] => {
+            if (value.toLowerCase() === "true") {
+                return [key, true];
             }
-        );
+            if (value.toLowerCase() === "false") {
+                return [key, false];
+            }
+
+            let maybeNumber = Number.parseInt(value);
+            // if it's not a number, it's just a string
+            if (Number.isNaN(maybeNumber)) {
+                return [key, value];
+            }
+            return [key, maybeNumber];
+        });
 
     return new Map<string, ManifestValue>(keyValuePairs);
 }
@@ -121,19 +119,17 @@ export function getBsConst(manifest: Manifest): Map<string, boolean> {
         // remove leading/trailing whitespace from keys and values
         .map(([key, value]) => [key.trim(), value.trim()])
         // convert value to boolean or throw
-        .map(
-            ([key, value]): [string, boolean] => {
-                if (value.toLowerCase() === "true") {
-                    return [key, true];
-                }
-                if (value.toLowerCase() === "false") {
-                    return [key, false];
-                }
-                throw new Error(
-                    `Invalid value for bs_const key '${key}'.  Values must be either 'true' or 'false'.`
-                );
+        .map(([key, value]): [string, boolean] => {
+            if (value.toLowerCase() === "true") {
+                return [key, true];
             }
-        );
+            if (value.toLowerCase() === "false") {
+                return [key, false];
+            }
+            throw new Error(
+                `Invalid value for bs_const key '${key}'.  Values must be either 'true' or 'false'.`
+            );
+        });
 
     return new Map(keyValuePairs);
 }

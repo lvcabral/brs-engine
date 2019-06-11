@@ -97,9 +97,7 @@ export class Preprocessor implements CC.Visitor {
 
                 return this.addError(
                     new BrsError(
-                        `Attempting to create #const alias of '${
-                            chunk.value.text
-                        }', but no such #const exists`,
+                        `Attempting to create #const alias of '${chunk.value.text}', but no such #const exists`,
                         chunk.value.location
                     )
                 );

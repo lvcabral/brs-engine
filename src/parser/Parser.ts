@@ -331,9 +331,7 @@ export class Parser {
                         //don't throw this error; let the parser continue
                         addError(
                             name,
-                            `Function name '${
-                                name.text
-                            }' cannot end with type designator '${lastChar}'`
+                            `Function name '${name.text}' cannot end with type designator '${lastChar}'`
                         );
                     }
                 }
@@ -380,9 +378,7 @@ export class Parser {
                                 isReserved: ReservedWords.has(arg.name.text),
                                 location: arg.location,
                             },
-                            `Argument '${
-                                arg.name.text
-                            }' has no default value, but comes after arguments with default values`
+                            `Argument '${arg.name.text}' has no default value, but comes after arguments with default values`
                         );
                     }
 
@@ -399,9 +395,7 @@ export class Parser {
                 if (!body) {
                     throw addError(
                         peek(),
-                        `Expected 'end ${functionType.text}' to terminate ${
-                            functionType.text
-                        } block`
+                        `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`
                     );
                 }
                 // consume 'end sub' or 'end function'
@@ -413,9 +407,7 @@ export class Parser {
                 if (endingKeyword.kind !== expectedEndKind) {
                     addError(
                         endingKeyword,
-                        `Expected 'end ${functionType.text}' to terminate ${
-                            functionType.text
-                        } block`
+                        `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`
                     );
                 }
 
@@ -502,9 +494,7 @@ export class Parser {
                 addError(name, `Cannot use reserved word "${name.text}" as an identifier`);
             }
             let operator = consume(
-                `Expected operator ('=', '+=', '-=', '*=', '/=', '\\=', '^=', '<<=', or '>>=') after idenfifier '${
-                    name.text
-                }'`,
+                `Expected operator ('=', '+=', '-=', '*=', '/=', '\\=', '^=', '<<=', or '>>=') after idenfifier '${name.text}'`,
                 ...assignmentOperators
             );
 

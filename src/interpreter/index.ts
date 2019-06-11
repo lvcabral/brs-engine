@@ -861,17 +861,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         .map(mm => {
                             switch (mm.reason) {
                                 case MismatchReason.TooFewArguments:
-                                    return `* ${functionName} requires at least ${
-                                        mm.expected
-                                    } arguments, but received ${mm.received}.`;
+                                    return `* ${functionName} requires at least ${mm.expected} arguments, but received ${mm.received}.`;
                                 case MismatchReason.TooManyArguments:
-                                    return `* ${functionName} accepts at most ${
-                                        mm.expected
-                                    } arguments, but received ${mm.received}.`;
+                                    return `* ${functionName} accepts at most ${mm.expected} arguments, but received ${mm.received}.`;
                                 case MismatchReason.ArgumentTypeMismatch:
-                                    return `* Argument '${mm.argName}' must be of type ${
-                                        mm.expected
-                                    }, but received ${mm.received}.`;
+                                    return `* Argument '${mm.argName}' must be of type ${mm.expected}, but received ${mm.received}.`;
                             }
                         })
                         .map(line => `    ${line}`)

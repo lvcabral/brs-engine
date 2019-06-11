@@ -25,7 +25,6 @@
   ],
   "dependencies": {
     "commander": "^2.12.2",
-    "lolex": "^3.0.0",
     "long": "^3.2.0",
     "luxon": "^1.8.3",
     "memory-fs": "^0.4.1",
@@ -43,6 +42,7 @@
     "jest": "^24.0.0",
     "jest-junit": "^6.1.0",
     "lint-staged": ">=8",
+    "lolex": "^3.0.0",
     "npm-run-all": "^4.1.2",
     "prettier": "^1.17.0",
     "rimraf": "^2.6.2",
