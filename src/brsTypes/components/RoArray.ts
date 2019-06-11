@@ -38,14 +38,6 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         ].join("\n");
     }
 
-    lessThan(other: BrsType) {
-        return BrsBoolean.False;
-    }
-
-    greaterThan(other: BrsType) {
-        return BrsBoolean.False;
-    }
-
     equalTo(other: BrsType) {
         return BrsBoolean.False;
     }

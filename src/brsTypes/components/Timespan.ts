@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -28,6 +28,10 @@ export class Timespan extends BrsComponent implements BrsValue {
 
     toString(parent?: BrsType): string {
         return "<Component: roTimespan>";
+    }
+
+    equalTo(other: BrsType) {
+        return BrsBoolean.False;
     }
 
     /** Sets timespan object to the current time */

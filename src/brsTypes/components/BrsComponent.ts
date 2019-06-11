@@ -6,8 +6,11 @@ export class BrsComponent {
     private methods: Map<string, Callable> = new Map();
     private readonly componentName: string;
 
-    constructor(name: string) {
+    readonly interfaces: Set<string>;
+
+    constructor(name: string, interfaces: string[] = []) {
         this.componentName = name;
+        this.interfaces = new Set(interfaces);
     }
 
     /**
@@ -19,7 +22,9 @@ export class BrsComponent {
     }
 
     protected registerMethods(methods: Callable[]) {
-        this.methods = new Map(methods.map(m => [m.name!, m] as [string, Callable]));
+        this.methods = new Map(
+            methods.map(m => [(m.name || "").toLowerCase(), m] as [string, Callable])
+        );
     }
 
     getMethod(index: string): Callable | undefined {

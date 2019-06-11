@@ -24,8 +24,12 @@ export class RoRegex extends BrsComponent implements BrsValue {
         ]);
     }
 
-    toString(parent?: BrsType): string {
+    toString(parent?: BrsType) {
         return "<Component: roRegex>";
+    }
+
+    equalTo(other: BrsType) {
+        return BrsBoolean.False;
     }
 
     /**

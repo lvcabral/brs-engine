@@ -3,16 +3,8 @@ const { RoArray, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
 const BrsError = require("../../../lib/Error");
 const { Interpreter } = require("../../../lib/interpreter");
 
-describe("Array", () => {
+describe("RoArray", () => {
     describe("comparisons", () => {
-        it("is less than nothing", () => {
-            let a = new RoArray([]);
-            expect(a.lessThan(a)).toBe(BrsBoolean.False);
-        });
-        it("is greater than nothing", () => {
-            let a = new RoArray([]);
-            expect(a.greaterThan(a)).toBe(BrsBoolean.False);
-        });
         it("is equal to nothing", () => {
             let a = new RoArray([]);
             expect(a.equalTo(a)).toBe(BrsBoolean.False);

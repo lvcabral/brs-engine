@@ -12,6 +12,7 @@ const {
     RoArray,
     BrsInvalid,
     RoAssociativeArray,
+    RoString,
 } = brs.types;
 
 let interpreter;
@@ -164,6 +165,7 @@ describe("interpreter comparisons", () => {
     describe("disallowed mixed-type comparisons", () => {
         let int32 = new Int32(2);
         let str = new BrsString("two");
+        let rostr = new RoString(str);
         let int64 = new Int64(2);
 
         // due to a combinatoric explosion of LHS-RHS-operator pairs, just test a representative
@@ -193,13 +195,13 @@ describe("interpreter comparisons", () => {
             ]);
         });
 
-        test("string and 64-bit int", () => {
-            let less = binary(str, Lexeme.Less, int64);
-            let lessEqual = binary(str, Lexeme.LessEqual, int64);
-            let greater = binary(str, Lexeme.Greater, int64);
-            let greaterEqual = binary(str, Lexeme.GreaterEqual, int64);
-            let equal = binary(str, Lexeme.Equal, int64);
-            let notEqual = binary(str, Lexeme.LessGreater, int64);
+        test("roString and 64-bit int", () => {
+            let less = binary(rostr, Lexeme.Less, int64);
+            let lessEqual = binary(rostr, Lexeme.LessEqual, int64);
+            let greater = binary(rostr, Lexeme.Greater, int64);
+            let greaterEqual = binary(rostr, Lexeme.GreaterEqual, int64);
+            let equal = binary(rostr, Lexeme.Equal, int64);
+            let notEqual = binary(rostr, Lexeme.LessGreater, int64);
             let results = interpreter.exec([
                 less,
                 lessEqual,

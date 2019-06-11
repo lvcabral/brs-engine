@@ -10,16 +10,8 @@ const {
 } = brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
-describe("AssociativeArray", () => {
+describe("RoAssociativeArray", () => {
     describe("comparisons", () => {
-        it("is less than nothing", () => {
-            let a = new RoAssociativeArray([]);
-            expect(a.lessThan(a)).toBe(BrsBoolean.False);
-        });
-        it("is greater than nothing", () => {
-            let a = new RoAssociativeArray([]);
-            expect(a.greaterThan(a)).toBe(BrsBoolean.False);
-        });
         it("is equal to nothing", () => {
             let a = new RoAssociativeArray([]);
             expect(a.equalTo(a)).toBe(BrsBoolean.False);

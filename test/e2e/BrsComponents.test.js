@@ -104,4 +104,17 @@ describe("end to end brightscript functions", () => {
             " ]",
         ]);
     });
+
+    test("components/roString.brs", async () => {
+        await execute([resourceFile("components", "roString.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "true", // comparison
+            "5", // length
+            "b", // split("/")[1]
+            "%F0%9F%90%B6", // dog emoji, uri-encoded
+            "🐶", // uri-encoded dog emoji, decoded
+        ]);
+    });
 });

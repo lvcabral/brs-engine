@@ -18,6 +18,7 @@ import {
     MismatchReason,
     Callable,
     BrsNumber,
+    Comparable,
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
@@ -34,6 +35,8 @@ import { Runtime } from "../parser/Statement";
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
+import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
+import { DottedGet } from "../parser/Expression";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -313,15 +316,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
          * @returns `true` if `left` and `right` are allowed to be compared to each other with `operator`,
          *          otherwise `false`.
          */
-        function canCompare(left: BrsType, operator: Lexeme, right: BrsType): boolean {
+        function canCheckEquality(left: BrsType, operator: Lexeme, right: BrsType): boolean {
             if (left.kind === ValueKind.Invalid || right.kind === ValueKind.Invalid) {
                 // anything can be checked for *equality* with `invalid`, but greater than / less than comparisons
                 // are type mismatches
                 return operator === Lexeme.Equal || operator === Lexeme.LessGreater;
             }
 
-            // and only primitive non-invalid values can be compared to each other (i.e. no `foo <> []`)
-            return left.kind < ValueKind.Dynamic && right.kind < ValueKind.Dynamic;
+            return (
+                (left.kind < ValueKind.Dynamic || isUnboxable(left)) &&
+                (right.kind < ValueKind.Dynamic || isUnboxable(right))
+            );
         }
 
         switch (lexeme) {
@@ -458,113 +463,131 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Greater:
-                if (!canCompare(left, lexeme, right)) {
-                    return this.addError(
-                        new TypeMismatch({
-                            message: "Attempting to compare non-primitive values.",
-                            left: {
-                                type: left,
-                                location: expression.left.location,
-                            },
-                            right: {
-                                type: right,
-                                location: expression.right.location,
-                            },
-                        })
-                    );
+                if (
+                    (isBrsNumber(left) || isBrsString(left)) &&
+                    (isBrsNumber(right) || isBrsString(right))
+                ) {
+                    return left.greaterThan(right);
                 }
 
-                return left.greaterThan(right);
+                return this.addError(
+                    new TypeMismatch({
+                        message: "Attempting to compare non-primitive values.",
+                        left: {
+                            type: left,
+                            location: expression.left.location,
+                        },
+                        right: {
+                            type: right,
+                            location: expression.right.location,
+                        },
+                    })
+                );
+
             case Lexeme.GreaterEqual:
-                if (!canCompare(left, lexeme, right)) {
-                    return this.addError(
-                        new TypeMismatch({
-                            message: "Attempting to compare non-primitive values.",
-                            left: {
-                                type: left,
-                                location: expression.left.location,
-                            },
-                            right: {
-                                type: right,
-                                location: expression.right.location,
-                            },
-                        })
-                    );
+                if (
+                    (isBrsNumber(left) || isBrsString(left)) &&
+                    (isBrsNumber(right) || isBrsString(right))
+                ) {
+                    return left.greaterThan(right).or(left.equalTo(right));
+                } else if (canCheckEquality(left, lexeme, right)) {
+                    return left.equalTo(right);
                 }
 
-                return left.greaterThan(right).or(left.equalTo(right));
+                return this.addError(
+                    new TypeMismatch({
+                        message: "Attempting to compare non-primitive values.",
+                        left: {
+                            type: left,
+                            location: expression.left.location,
+                        },
+                        right: {
+                            type: right,
+                            location: expression.right.location,
+                        },
+                    })
+                );
+
             case Lexeme.Less:
-                if (!canCompare(left, lexeme, right)) {
-                    return this.addError(
-                        new TypeMismatch({
-                            message: "Attempting to compare non-primitive values.",
-                            left: {
-                                type: left,
-                                location: expression.left.location,
-                            },
-                            right: {
-                                type: right,
-                                location: expression.right.location,
-                            },
-                        })
-                    );
+                if (
+                    (isBrsNumber(left) || isBrsString(left)) &&
+                    (isBrsNumber(right) || isBrsString(right))
+                ) {
+                    return left.lessThan(right);
                 }
 
-                return left.lessThan(right);
+                return this.addError(
+                    new TypeMismatch({
+                        message: "Attempting to compare non-primitive values.",
+                        left: {
+                            type: left,
+                            location: expression.left.location,
+                        },
+                        right: {
+                            type: right,
+                            location: expression.right.location,
+                        },
+                    })
+                );
             case Lexeme.LessEqual:
-                if (!canCompare(left, lexeme, right)) {
-                    return this.addError(
-                        new TypeMismatch({
-                            message: "Attempting to compare non-primitive values.",
-                            left: {
-                                type: left,
-                                location: expression.left.location,
-                            },
-                            right: {
-                                type: right,
-                                location: expression.right.location,
-                            },
-                        })
-                    );
+                if (
+                    (isBrsNumber(left) || isBrsString(left)) &&
+                    (isBrsNumber(right) || isBrsString(right))
+                ) {
+                    return left.lessThan(right).or(left.equalTo(right));
+                } else if (canCheckEquality(left, lexeme, right)) {
+                    return left.equalTo(right);
                 }
 
-                return left.lessThan(right).or(left.equalTo(right));
+                return this.addError(
+                    new TypeMismatch({
+                        message: "Attempting to compare non-primitive values.",
+                        left: {
+                            type: left,
+                            location: expression.left.location,
+                        },
+                        right: {
+                            type: right,
+                            location: expression.right.location,
+                        },
+                    })
+                );
             case Lexeme.Equal:
-                if (!canCompare(left, lexeme, right)) {
-                    return this.addError(
-                        new TypeMismatch({
-                            message: "Attempting to compare non-primitive values.",
-                            left: {
-                                type: left,
-                                location: expression.left.location,
-                            },
-                            right: {
-                                type: right,
-                                location: expression.right.location,
-                            },
-                        })
-                    );
+                if (canCheckEquality(left, lexeme, right)) {
+                    return left.equalTo(right);
                 }
 
-                return left.equalTo(right);
+                return this.addError(
+                    new TypeMismatch({
+                        message: "Attempting to compare non-primitive values.",
+                        left: {
+                            type: left,
+                            location: expression.left.location,
+                        },
+                        right: {
+                            type: right,
+                            location: expression.right.location,
+                        },
+                    })
+                );
             case Lexeme.LessGreater:
-                if (!canCompare(left, lexeme, right)) {
-                    return this.addError(
-                        new TypeMismatch({
-                            message: "Attempting to compare non-primitive values.",
-                            left: {
-                                type: left,
-                                location: expression.left.location,
-                            },
-                            right: {
-                                type: right,
-                                location: expression.right.location,
-                            },
-                        })
-                    );
+                if (canCheckEquality(left, lexeme, right)) {
+                    return left.equalTo(right).not();
                 }
 
-                return left.equalTo(right).not();
+                return this.addError(
+                    new TypeMismatch({
+                        message: "Attempting to compare non-primitive values.",
+                        left: {
+                            type: left,
+                            location: expression.left.location,
+                        },
+                        right: {
+                            type: right,
+                            location: expression.right.location,
+                        },
+                    })
+                );
             case Lexeme.And:
                 if (isBrsBoolean(left) && !left.toBoolean()) {
                     // short-circuit ANDs - don't evaluate RHS if LHS is false
@@ -709,10 +732,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitCall(expression: Expr.Call) {
         let functionName = "[anonymous function]";
-        if (expression.callee instanceof Expr.Variable) {
-            if (expression.callee.name.text) {
-                functionName = expression.callee.name.text;
-            }
+        // TODO: autobox
+        if (
+            expression.callee instanceof Expr.Variable ||
+            expression.callee instanceof Expr.DottedGet
+        ) {
+            functionName = expression.callee.name.text;
         }
 
         // evaluate the function to call (it could be the result of another function call)
@@ -742,6 +767,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     expression.callee instanceof Expr.IndexedGet
                 ) {
                     let maybeM = this.evaluate(expression.callee.obj);
+                    maybeM = isBoxable(maybeM) ? maybeM.box() : maybeM;
+
                     if (maybeM.kind === ValueKind.Object) {
                         if (maybeM instanceof RoAssociativeArray) {
                             mPointer = maybeM;
@@ -880,20 +907,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } catch (err) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
-        } else if (source instanceof BrsComponent) {
+        }
+
+        let boxedSource = isBoxable(source) ? source.box() : source;
+        if (boxedSource instanceof BrsComponent) {
             try {
-                return source.getMethod(expression.name.text) || BrsInvalid.Instance;
+                return boxedSource.getMethod(expression.name.text) || BrsInvalid.Instance;
             } catch (err) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
         } else {
-            throw new TypeMismatch({
-                message: "Attempting to retrieve property from non-iterable value",
-                left: {
-                    type: source,
-                    location: expression.location,
-                },
-            });
+            return this.addError(
+                new TypeMismatch({
+                    message: "Attempting to retrieve property from non-iterable value",
+                    left: {
+                        type: source,
+                        location: expression.location,
+                    },
+                })
+            );
         }
     }
 
