@@ -31,6 +31,23 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
 }
 
 /**
+ * A synchronous version of `getManifest`.
+ * @param rootDir the root directory in which a `manifest` file is expected
+ * @returns a map of string to JavaScript number, string, or boolean, representing the manifest
+ *          file's contents
+ */
+export function getManifestSync(rootDir: string): Manifest {
+    let manifestPath = path.join(rootDir, "manifest");
+
+    if (!fs.existsSync(manifestPath)) {
+        return new Map();
+    }
+
+    let contents = fs.readFileSync(manifestPath, "utf-8");
+    return parseManifest(contents);
+}
+
+/**
  * Attempts to parse a `manifest` file's contents into a map of string to JavaScript
  * number, string, or boolean.
  * @param contents the text contents of a manifest file.

@@ -8,7 +8,7 @@ const {
     FormatDrive,
     ReadAsciiFile,
     WriteAsciiFile,
-    getMemfsPath,
+    getPath,
     getVolumeByPath,
 } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
@@ -30,8 +30,8 @@ describe("global file I/O functions", () => {
         });
 
         it("converts a brs path to a memfs path", () => {
-            expect(getMemfsPath("tmp:/test.txt")).toEqual("/test.txt");
-            expect(getMemfsPath("tmp:///test.txt")).toEqual("/test.txt");
+            expect(getPath("tmp:/test.txt")).toEqual("/test.txt");
+            expect(getPath("tmp:///test.txt")).toEqual("/test.txt");
         });
     });
 

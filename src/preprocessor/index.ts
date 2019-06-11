@@ -64,4 +64,4 @@ import { BrsError } from "../Error";
 import { ParseError } from "../parser";
 export { Chunk };
 export { Parser } from "./Parser";
-export { getManifest, getBsConst, Manifest } from "./Manifest";
+export { getManifest, getManifestSync, getBsConst, Manifest } from "./Manifest";

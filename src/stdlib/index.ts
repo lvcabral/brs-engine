@@ -1,5 +1,4 @@
-import { Callable, ValueKind, BrsType, BrsInvalid } from "../brsTypes";
-import { Interpreter } from "../interpreter";
+import { Callable, ValueKind, BrsInvalid } from "../brsTypes";
 
 let warningShown = false;
 
@@ -23,5 +22,6 @@ export * from "./File";
 export * from "./Json";
 export * from "./Math";
 export * from "./Print";
+export * from "./Run";
 export * from "./String";
 export * from "./Type";

@@ -56,6 +56,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
 
+    readonly options: ExecutionOptions;
     readonly stdout: OutputProxy;
     readonly stderr: OutputProxy;
     readonly temporaryVolume: MemoryFileSystem = new MemoryFileSystem();
@@ -94,11 +95,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Creates a new Interpreter, including any global properties and functions.
-     * @param outputStreams the WriteStreams to use for `stdout` and `stderr`.
+     * @param options configuration for the execution, including the streams to use for `stdout` and
+     *                `stderr` and the base directory for path resolution
      */
-    constructor(outputStreams: ExecutionOptions = defaultExecutionOptions) {
-        this.stdout = new OutputProxy(outputStreams.stdout);
-        this.stderr = new OutputProxy(outputStreams.stderr);
+    constructor(options: ExecutionOptions = defaultExecutionOptions) {
+        this.stdout = new OutputProxy(options.stdout);
+        this.stderr = new OutputProxy(options.stderr);
+        this.options = options;
 
         Object.keys(StdLib)
             .map(name => (StdLib as any)[name])
@@ -137,10 +140,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    exec(statements: ReadonlyArray<Stmt.Statement>) {
+    exec(statements: ReadonlyArray<Stmt.Statement>, ...args: BrsType[]) {
         let results = statements.map(statement => this.execute(statement));
         try {
-            let maybeMain = this._environment.get({
+            let mainVariable = new Expr.Variable({
                 kind: Lexeme.Identifier,
                 text: "main",
                 isReserved: false,
@@ -156,11 +159,26 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     file: "(internal)",
                 },
             });
+
+            let maybeMain = this.visitVariable(mainVariable);
+
             if (maybeMain.kind === ValueKind.Callable) {
-                results = [maybeMain.call(this)];
+                results = [
+                    this.visitCall(
+                        new Expr.Call(
+                            mainVariable,
+                            mainVariable.name,
+                            args.map(arg => new Expr.Literal(arg, mainVariable.location))
+                        )
+                    ),
+                ];
             }
         } catch (err) {
-            throw err;
+            if (err instanceof Stmt.ReturnValue) {
+                results = [err.value || BrsInvalid.Instance];
+            } else {
+                throw err;
+            }
         } finally {
             return results;
         }

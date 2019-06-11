@@ -68,7 +68,7 @@ export interface Signature {
 }
 
 /** A BrightScript function signature paired with its implementation. */
-type SignatureAndImplementation = {
+export type SignatureAndImplementation = {
     /** A BrightScript function's signature. */
     signature: Signature;
     /** The implementation corresponding to `signature`. */

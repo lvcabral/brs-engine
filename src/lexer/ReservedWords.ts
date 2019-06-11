@@ -50,7 +50,7 @@ export const ReservedWords = new Set([
 ]);
 
 /**
- * The set of keywords in the refrence BrightScript runtime. Any of these that *are not* reserved
+ * The set of keywords in the reference BrightScript runtime. Any of these that *are not* reserved
  * words can be used within a BrightScript file for other purposes, e.g. `tab`.
  *
  * Unfortunately there's no canonical source for this!
