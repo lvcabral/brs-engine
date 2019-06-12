@@ -1,0 +1,277 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser goto statements allows multiple goto statements on one line 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "startingLocation": Object {
+          "end": Object {
+            "column": 20,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 16,
+            "line": 4,
+          },
+        },
+        "statements": Array [
+          Goto {
+            "tokens": Object {
+              "goto": Object {
+                "isReserved": true,
+                "kind": "Goto",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 20,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 4,
+                  },
+                },
+                "text": "goto",
+              },
+              "label": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 28,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 21,
+                    "line": 4,
+                  },
+                },
+                "text": "myLabel",
+              },
+            },
+          },
+          Goto {
+            "tokens": Object {
+              "goto": Object {
+                "isReserved": true,
+                "kind": "Goto",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 35,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 31,
+                    "line": 4,
+                  },
+                },
+                "text": "goto",
+              },
+              "label": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 43,
+                    "line": 4,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 36,
+                    "line": 4,
+                  },
+                },
+                "text": "myLabel",
+              },
+            },
+          },
+          Label {
+            "tokens": Object {
+              "colon": Object {
+                "isReserved": false,
+                "kind": "Colon",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 24,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 23,
+                    "line": 5,
+                  },
+                },
+                "text": ":",
+              },
+              "identifier": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 23,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 5,
+                  },
+                },
+                "text": "myLabel",
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 6,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 20,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`parser goto statements detects labels 1`] = `
+Array [
+  Label {
+    "tokens": Object {
+      "colon": Object {
+        "isReserved": false,
+        "kind": "Colon",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": ":",
+      },
+      "identifier": Object {
+        "isReserved": false,
+        "kind": "Identifier",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": -9,
+            "line": -9,
+          },
+          "start": Object {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "SomeLabel",
+      },
+    },
+  },
+]
+`;
+
+exports[`parser goto statements parses standalone statement properly 1`] = `
+Object {
+  "errors": Array [],
+  "statements": Array [
+    Goto {
+      "tokens": Object {
+        "goto": Object {
+          "isReserved": true,
+          "kind": "Goto",
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "goto",
+        },
+        "label": Object {
+          "isReserved": false,
+          "kind": "Identifier",
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "SomeLabel",
+        },
+      },
+    },
+  ],
+}
+`;

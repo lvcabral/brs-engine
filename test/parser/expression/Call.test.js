@@ -47,7 +47,8 @@ describe("parser call expressions", () => {
     it("does not invalidate the next statement on a multi-statement line", () => {
         const { tokens } = brs.lexer.Lexer.scan(`
             sub DoThingOne()
-                DoThin:name = "bob"
+                'missing closing paren
+                DoThin(:name = "bob"
             end sub
             sub DoThingTwo()
             end sub 
@@ -56,7 +57,7 @@ describe("parser call expressions", () => {
         //there should only be 1 error
         expect(errors.length).toEqual(1);
         //the error should be BEFORE the `name = "bob"` statement
-        expect(errors[0].location.end.column).toBeLessThan(24);
+        expect(errors[0].location.end.column).toBeLessThan(25);
         expect(statements).toMatchSnapshot();
     });
 

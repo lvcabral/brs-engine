@@ -251,6 +251,49 @@ export class Print implements Statement {
     }
 }
 
+export class Goto implements Statement {
+    constructor(
+        readonly tokens: {
+            goto: Token;
+            label: Token;
+        }
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        //should search the code for the corresponding label, and set that as the next line to execute
+        throw new Error("Not implemented");
+    }
+
+    get location() {
+        return {
+            file: this.tokens.goto.location.file,
+            start: this.tokens.goto.location.start,
+            end: this.tokens.label.location.end,
+        };
+    }
+}
+
+export class Label implements Statement {
+    constructor(
+        readonly tokens: {
+            identifier: Token;
+            colon: Token;
+        }
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        throw new Error("Not implemented");
+    }
+
+    get location() {
+        return {
+            file: this.tokens.identifier.location.file,
+            start: this.tokens.identifier.location.start,
+            end: this.tokens.colon.location.end,
+        };
+    }
+}
+
 export class Return implements Statement {
     constructor(
         readonly tokens: {

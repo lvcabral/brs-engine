@@ -129,12 +129,12 @@ Array [
         "startingLocation": Object {
           "end": Object {
             "column": 22,
-            "line": 3,
+            "line": 4,
           },
           "file": "",
           "start": Object {
             "column": 16,
-            "line": 3,
+            "line": 4,
           },
         },
         "statements": Array [
@@ -145,13 +145,13 @@ Array [
               "literal": undefined,
               "location": Object {
                 "end": Object {
-                  "column": 27,
-                  "line": 3,
+                  "column": 28,
+                  "line": 4,
                 },
                 "file": "",
                 "start": Object {
-                  "column": 23,
-                  "line": 3,
+                  "column": 24,
+                  "line": 4,
                 },
               },
               "text": "name",
@@ -163,13 +163,13 @@ Array [
                 "literal": undefined,
                 "location": Object {
                   "end": Object {
-                    "column": 29,
-                    "line": 3,
+                    "column": 30,
+                    "line": 4,
                   },
                   "file": "",
                   "start": Object {
-                    "column": 28,
-                    "line": 3,
+                    "column": 29,
+                    "line": 4,
                   },
                 },
                 "text": "=",
@@ -178,13 +178,13 @@ Array [
             "value": Literal {
               "_location": Object {
                 "end": Object {
-                  "column": 35,
-                  "line": 3,
+                  "column": 36,
+                  "line": 4,
                 },
                 "file": "",
                 "start": Object {
-                  "column": 30,
-                  "line": 3,
+                  "column": 31,
+                  "line": 4,
                 },
               },
               "value": BrsString {
@@ -202,12 +202,12 @@ Array [
         "location": Object {
           "end": Object {
             "column": 19,
-            "line": 4,
+            "line": 5,
           },
           "file": "",
           "start": Object {
             "column": 12,
-            "line": 4,
+            "line": 5,
           },
         },
         "text": "end sub",
@@ -256,12 +256,12 @@ Array [
         "startingLocation": Object {
           "end": Object {
             "column": 19,
-            "line": 6,
+            "line": 7,
           },
           "file": "",
           "start": Object {
             "column": 12,
-            "line": 6,
+            "line": 7,
           },
         },
         "statements": Array [],
@@ -273,12 +273,12 @@ Array [
         "location": Object {
           "end": Object {
             "column": 19,
-            "line": 6,
+            "line": 7,
           },
           "file": "",
           "start": Object {
             "column": 12,
-            "line": 6,
+            "line": 7,
           },
         },
         "text": "end sub",
@@ -290,12 +290,12 @@ Array [
         "location": Object {
           "end": Object {
             "column": 15,
-            "line": 5,
+            "line": 6,
           },
           "file": "",
           "start": Object {
             "column": 12,
-            "line": 5,
+            "line": 6,
           },
         },
         "text": "sub",
@@ -310,12 +310,12 @@ Array [
       "location": Object {
         "end": Object {
           "column": 26,
-          "line": 5,
+          "line": 6,
         },
         "file": "",
         "start": Object {
           "column": 16,
-          "line": 5,
+          "line": 6,
         },
       },
       "text": "DoThingTwo",

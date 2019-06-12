@@ -583,6 +583,15 @@ export class Parser {
                 return returnStatement();
             }
 
+            if (check(Lexeme.Goto)) {
+                return gotoStatement();
+            }
+
+            //does this line look like a label? (i.e.  `someIdentifier:` )
+            if (check(Lexeme.Identifier) && checkNext(Lexeme.Colon)) {
+                return labelStatement();
+            }
+
             // TODO: support multi-statements
             return setStatement(...additionalterminators);
         }
@@ -1105,6 +1114,36 @@ export class Parser {
         }
 
         /**
+         * Parses a `label` statement
+         * @returns an AST representation of an `label` statement.
+         */
+        function labelStatement() {
+            let tokens = {
+                identifier: advance(),
+                colon: advance(),
+            };
+
+            consume("Labels must be declared on their own line", Lexeme.Newline, Lexeme.Eof);
+
+            return new Stmt.Label(tokens);
+        }
+
+        /**
+         * Parses a `goto` statement
+         * @returns an AST representation of an `goto` statement.
+         */
+        function gotoStatement() {
+            let tokens = {
+                goto: advance(),
+                label: consume("Expected label identifier after goto keyword", Lexeme.Identifier),
+            };
+
+            while (match(Lexeme.Newline, Lexeme.Colon));
+
+            return new Stmt.Goto(tokens);
+        }
+
+        /**
          * Parses an `end` statement
          * @returns an AST representation of an `end` statement.
          */
@@ -1484,6 +1523,21 @@ export class Parser {
                 current++;
             }
             return previous();
+        }
+
+        /**
+         * Check that the previous token matches one of the specified Lexemes
+         * @param lexemes
+         */
+        function checkPrevious(...lexemes: Lexeme[]) {
+            if (current === 0) {
+                return false;
+            } else {
+                current--;
+                var result = check(...lexemes);
+                current++;
+                return result;
+            }
         }
 
         function check(...lexemes: Lexeme[]) {
