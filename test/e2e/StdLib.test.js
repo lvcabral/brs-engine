@@ -31,6 +31,7 @@ describe("end to end standard libary", () => {
             "true",
             "false",
             "<Component: roArray> =\n[\n    test_backup.txt\n]",
+            "true",
         ]);
     });
 

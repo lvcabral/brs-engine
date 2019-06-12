@@ -2,7 +2,10 @@ import { Callable, ValueKind, BrsString, BrsBoolean, RoArray, StdlibArgument } f
 import { Interpreter } from "../interpreter";
 import { URL } from "url";
 import MemoryFileSystem from "memory-fs";
+import * as nanomatch from "nanomatch";
+
 import * as fs from "fs";
+import * as path from "path";
 
 type Volume = MemoryFileSystem | typeof fs;
 
@@ -238,5 +241,42 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         const memfsPath = getPath(filepath.value);
         volume.writeFileSync(memfsPath, text.value);
         return BrsBoolean.True;
+    },
+});
+
+/** Searches a directory for filenames that match a certain pattern. */
+export const MatchFiles = new Callable("MatchFiles", {
+    signature: {
+        args: [
+            new StdlibArgument("path", ValueKind.String),
+            new StdlibArgument("pattern_in", ValueKind.String),
+        ],
+        returns: ValueKind.Object,
+    },
+    impl: (interpreter: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
+        let volume = getVolumeByPath(interpreter, pathArg.value);
+        if (volume == null) {
+            // TODO: replace with RoList when that's implemented
+            return new RoArray([]);
+        }
+
+        let localPath = path.join(interpreter.options.root, getPath(pathArg.value));
+        try {
+            let knownFiles = fs.readdirSync(localPath, "utf8");
+            let matchedFiles = nanomatch.match(knownFiles, patternIn.value, {
+                nocase: true,
+                nodupes: true,
+                noglobstar: true,
+                nonegate: true,
+            });
+
+            matchedFiles = (matchedFiles || []).map((match: string) => new BrsString(match));
+
+            // TODO: replace with RoList when that's implemented
+            return new RoArray(matchedFiles);
+        } catch (err) {
+            // TODO: replace with RoList when that's implemented
+            return new RoArray([]);
+        }
     },
 });

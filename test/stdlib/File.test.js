@@ -8,12 +8,16 @@ const {
     FormatDrive,
     ReadAsciiFile,
     WriteAsciiFile,
+    MatchFiles,
     getPath,
     getVolumeByPath,
 } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("brs");
-const { BrsString } = brs.types;
+const { BrsString, RoArray } = brs.types;
+
+const fs = require("fs");
+jest.mock("fs");
 
 let interpreter;
 
@@ -229,6 +233,123 @@ describe("global file I/O functions", () => {
             expect(interpreter.temporaryVolume.readFileSync("/hello.txt").toString()).toEqual(
                 "test contents"
             );
+        });
+    });
+
+    describe("MatchFiles", () => {
+        afterEach(() => {
+            fs.readdirSync.mockRestore();
+        });
+
+        it("returns an empty array for unrecognized paths", () => {
+            let result = MatchFiles.call(
+                interpreter,
+                new BrsString("cat:/kitten.cute"),
+                new BrsString("*")
+            );
+            expect(result).toBeInstanceOf(RoArray);
+            expect(result.elements).toEqual([]);
+        });
+
+        it("returns an empty array for non-existent directories", () => {
+            fs.readdirSync.mockImplementation(() => {
+                throw new Error("directory not found");
+            });
+
+            let result = MatchFiles.call(
+                interpreter,
+                new BrsString("pkg:/does-not-exist"),
+                new BrsString("*")
+            );
+            expect(result).toBeInstanceOf(RoArray);
+            expect(result.elements).toEqual([]);
+        });
+
+        describe("patterns", () => {
+            beforeEach(() => {
+                fs.readdirSync.mockImplementation(() => [
+                    "foo.brs",
+                    "bar.brs",
+                    "baz.brs",
+                    "car.brs",
+                    "directory",
+                    "b*a?d n\\a[me",
+                ]);
+            });
+
+            test("empty patterns", () => {
+                let result = MatchFiles.call(
+                    interpreter,
+                    new BrsString("pkg:/source"),
+                    new BrsString("")
+                );
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([]);
+            });
+
+            test("* matches 0 or more characters", () => {
+                let result = MatchFiles.call(
+                    interpreter,
+                    new BrsString("pkg:/source"),
+                    new BrsString("*.brs")
+                );
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([
+                    new BrsString("foo.brs"),
+                    new BrsString("bar.brs"),
+                    new BrsString("baz.brs"),
+                    new BrsString("car.brs"),
+                ]);
+            });
+
+            test("? matches a single character", () => {
+                let result = MatchFiles.call(
+                    interpreter,
+                    new BrsString("pkg:/source"),
+                    new BrsString("ba?.brs")
+                );
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([
+                    new BrsString("bar.brs"),
+                    new BrsString("baz.brs"),
+                ]);
+            });
+
+            test("character classes in […]", () => {
+                let result = MatchFiles.call(
+                    interpreter,
+                    new BrsString("pkg:/source"),
+                    new BrsString("[a-c]ar.brs")
+                );
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([
+                    new BrsString("bar.brs"),
+                    new BrsString("car.brs"),
+                ]);
+            });
+
+            test("character class negation with [^…]", () => {
+                let result = MatchFiles.call(
+                    interpreter,
+                    new BrsString("pkg:/source"),
+                    new BrsString("[^d-zD-Z]ar.brs")
+                );
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([
+                    new BrsString("bar.brs"),
+                    new BrsString("car.brs"),
+                ]);
+            });
+
+            test("escaped special characters", () => {
+                let result = MatchFiles.call(
+                    interpreter,
+                    new BrsString("pkg:/source"),
+                    new BrsString(String.raw`*\**\?*\\*\[*`)
+                );
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([new BrsString("b*a?d n\\a[me")]);
+            });
         });
     });
 });

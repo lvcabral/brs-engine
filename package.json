@@ -28,6 +28,7 @@
     "long": "^3.2.0",
     "luxon": "^1.8.3",
     "memory-fs": "^0.4.1",
+    "nanomatch": "^1.2.13",
     "p-settle": "^2.1.0"
   },
   "devDependencies": {
