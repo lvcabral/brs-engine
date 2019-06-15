@@ -1,30 +1,30 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
+import { AAMember } from "./RoAssociativeArray";
 
-/** A member of an `AssociativeArray` in BrightScript. */
-export interface AAMember {
-    /** The member's name. */
-    name: BrsString;
-    /** The value associated with `name`. */
-    value: BrsType;
+class Field {
+    constructor(readonly type: string, readonly alwaysNotify: boolean) {}
 }
 
-export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIterable {
+export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     elements = new Map<string, BrsType>();
+    private fields = new Map<string, Field>();
 
-    constructor(elements: AAMember[]) {
-        super("roAssociativeArray");
+    constructor(elements: AAMember[], readonly type: string = "Node") {
+        super("roSGNode");
         elements.forEach(member =>
             this.elements.set(member.name.value.toLowerCase(), member.value)
         );
 
         this.registerMethods([
+            // ifAssociativeArray methods
             this.clear,
             this.delete,
             this.addreplace,
@@ -38,12 +38,14 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     toString(parent?: BrsType): string {
+        let componentName = "roSGNode:" + this.type;
+
         if (parent) {
-            return "<Component: roAssociativeArray>";
+            return `<Component: ${componentName}>`;
         }
 
         return [
-            "<Component: roAssociativeArray> =",
+            `<Component: ${componentName}> =`,
             "{",
             ...Array.from(this.elements.entries()).map(
                 ([key, value]) => `    ${key}: ${value.toString(this)}`
@@ -53,11 +55,8 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     equalTo(other: BrsType) {
+        // SceneGraph nodes are never equal to anything
         return BrsBoolean.False;
-    }
-
-    getValue() {
-        return this.elements;
     }
 
     getElements() {
@@ -74,7 +73,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     get(index: BrsType) {
         if (index.kind !== ValueKind.String) {
-            throw new Error("Associative array indexes must be strings");
+            throw new Error("RoSGNode indexes must be strings");
         }
 
         // TODO: this works for now, in that a property with the same name as a method essentially
@@ -97,13 +96,13 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     set(index: BrsType, value: BrsType) {
         if (index.kind !== ValueKind.String) {
-            throw new Error("Associative array indexes must be strings");
+            throw new Error("RoSGNode indexes must be strings");
         }
         this.elements.set(index.value.toLowerCase(), value);
         return BrsInvalid.Instance;
     }
 
-    /** Removes all elements from the associative array */
+    /** Removes all elements from the node */
     private clear = new Callable("clear", {
         signature: {
             args: [],
@@ -115,7 +114,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
     });
 
-    /** Removes a given item from the associative array */
+    /** Removes a given item from the node */
     private delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
@@ -127,8 +126,8 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
     });
 
-    /** Given a key and value, adds an item to the associative array if it doesn't exist
-     * Or replaces the value of a key that already exists in the associative array
+    /** Given a key and value, adds an item to the node if it doesn't exist
+     * Or replaces the value of a key that already exists in the node
      */
     private addreplace = new Callable("addreplace", {
         signature: {
@@ -144,7 +143,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
     });
 
-    /** Returns the number of items in the associative array */
+    /** Returns the number of items in the node */
     private count = new Callable("count", {
         signature: {
             args: [],
@@ -155,7 +154,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
     });
 
-    /** Returns a boolean indicating whether or not a given key exists in the associative array */
+    /** Returns a boolean indicating whether or not a given key exists in the node */
     private doesexist = new Callable("doesexist", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
@@ -166,25 +165,22 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
     });
 
-    /** Appends a new associative array to another. If two keys are the same, the value of the original AA is replaced with the new one. */
+    /** Appends a new node to another. If two keys are the same, the value of the original AA is replaced with the new one. */
     private append = new Callable("append", {
         signature: {
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, obj: BrsType) => {
-            if (!(obj instanceof RoAssociativeArray)) {
-                // TODO: validate against RBI
-                return BrsInvalid.Instance;
+            if (obj instanceof RoAssociativeArray || obj instanceof RoSGNode) {
+                this.elements = new Map<string, BrsType>([...this.elements, ...obj.elements]);
             }
-
-            this.elements = new Map<string, BrsType>([...this.elements, ...obj.elements]);
 
             return BrsInvalid.Instance;
         },
     });
 
-    /** Returns an array of keys from the associative array in lexicographical order */
+    /** Returns an array of keys from the node in lexicographical order */
     private keys = new Callable("keys", {
         signature: {
             args: [],
@@ -195,7 +191,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
     });
 
-    /** Returns an array of values from the associative array in lexicographical order */
+    /** Returns an array of values from the node in lexicographical order */
     private items = new Callable("items", {
         signature: {
             args: [],
@@ -217,4 +213,12 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             return this.get(new BrsString(lKey));
         },
     });
+}
+
+export function createNodeByType(type: BrsString) {
+    if (type.value === "Node") {
+        return new RoSGNode([]);
+    } else {
+        return BrsInvalid.Instance;
+    }
 }

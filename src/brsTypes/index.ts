@@ -25,6 +25,7 @@ export * from "./Double";
 export * from "./components/RoArray";
 export * from "./components/RoAssociativeArray";
 export * from "./components/Timespan";
+export * from "./components/RoSGNode";
 export * from "./components/BrsObjects";
 export * from "./components/RoRegex";
 export * from "./components/RoString";
@@ -80,7 +81,7 @@ export function isBrsCallable(value: BrsType): value is Callable {
  * @returns `true` if `value` can be iterated across, otherwise `false`.
  */
 export function isIterable(value: BrsType): value is Iterable {
-    return value instanceof RoArray || value instanceof RoAssociativeArray;
+    return "get" in value && "getElements" in value && "set" in value;
 }
 
 /** The set of BrightScript numeric types. */

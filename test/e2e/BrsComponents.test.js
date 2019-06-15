@@ -51,6 +51,8 @@ describe("end to end brightscript functions", () => {
             "true",
             "can look up elements: ",
             "true",
+            "can look up elements (brackets): ",
+            "true",
             "can check for existence: ",
             "true",
             "can empty itself: ",
@@ -66,6 +68,29 @@ describe("end to end brightscript functions", () => {
             "373447701",
             "can return 2077252342 for date that can't be parsed: ",
             "2077252342",
+        ]);
+    });
+
+    test("components/roSGNode.brs", async () => {
+        await execute([resourceFile("components", "roSGNode.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "node size: ",
+            "3",
+            "node keys size: ",
+            "3",
+            "node items size: ",
+            "3",
+            "can delete elements: ",
+            "true",
+            "can look up elements: ",
+            "true",
+            "can look up elements (brackets): ",
+            "true",
+            "can check for existence: ",
+            "true",
+            "can empty itself: ",
+            "true",
         ]);
     });
 
