@@ -16,6 +16,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     elements = new Map<string, BrsType>();
     private fields = new Map<string, Field>();
+    private children: RoSGNode[] = [];
+    private parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
 
     constructor(elements: AAMember[], readonly type: string = "Node") {
         super("roSGNode");
@@ -34,6 +36,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.keys,
             this.items,
             this.lookup,
+            //ifSGNodeChildren
+            this.appendchild,
+            this.getchildcount,
+            this.getchildren,
+            this.removechild,
+            this.getparent,
+            this.createchild,
         ]);
     }
 
@@ -100,6 +109,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
         this.elements.set(index.value.toLowerCase(), value);
         return BrsInvalid.Instance;
+    }
+
+    setParent(parent: RoSGNode) {
+        this.parent = parent;
+    }
+
+    removeParent() {
+        this.parent = BrsInvalid.Instance;
     }
 
     /** Removes all elements from the node */
@@ -211,6 +228,120 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, key: BrsString) => {
             let lKey = key.value.toLowerCase();
             return this.get(new BrsString(lKey));
+        },
+    });
+
+    /* Return the current number of children in the subject node list of children.
+    This is always a non-negative number. */
+    private getchildcount = new Callable("getchildcount", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new Int32(this.children.length);
+        },
+    });
+
+    /* Adds a child node to the end of the subject node list of children so that it is
+    traversed last (of those children) during render. */
+    private appendchild = new Callable("appendchild", {
+        signature: {
+            args: [new StdlibArgument("child", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, child: BrsType) => {
+            if (child instanceof RoSGNode) {
+                if (this.children.includes(child)) {
+                    return BrsBoolean.True;
+                }
+                this.children.push(child);
+                child.setParent(this);
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /* Retrieves the number of child nodes specified by num_children from the subject
+    node, starting at the position specified by index. Returns an array of the child nodes
+    retrieved. If num_children is -1, return all the children. */
+    private getchildren = new Callable("getchildren", {
+        signature: {
+            args: [
+                new StdlibArgument("num_children", ValueKind.Int32),
+                new StdlibArgument("index", ValueKind.Int32),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+            let numChildrenValue = num_children.getValue();
+            let indexValue = index.getValue();
+            let childrenSize = this.children.length;
+            if (numChildrenValue <= -1 && indexValue === 0) {
+                //short hand to return all children
+                return new RoArray(this.children.slice());
+            } else if (numChildrenValue <= 0 || indexValue < 0 || indexValue >= childrenSize) {
+                //these never return any children
+                return new RoArray([]);
+            } else {
+                //only valid cases
+                return new RoArray(this.children.slice(indexValue, indexValue + numChildrenValue));
+            }
+
+            return new RoArray([]);
+        },
+    });
+
+    /* Finds a child node in the subject node list of children, and if found,
+    remove it from the list of children. The match is made on the basis of actual
+    object identity, that is, the value of the pointer to the child node.
+    return false if trying to remove anything that's not a node */
+    private removechild = new Callable("removechild", {
+        signature: {
+            args: [new StdlibArgument("child", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, child: BrsType) => {
+            if (child instanceof RoSGNode) {
+                let spliceIndex = this.children.indexOf(child);
+                if (spliceIndex >= 0) {
+                    child.removeParent();
+                    this.children.splice(spliceIndex, 1);
+                }
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
+        },
+    });
+    /* If the subject node has been added to a parent node list of children,
+    return the parent node, otherwise return invalid.*/
+    private getparent = new Callable("getparent", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (interpreter: Interpreter) => {
+            return this.parent;
+        },
+    });
+
+    /* Creates a child node of type nodeType, and adds the new node to the end of the
+    subject node list of children */
+    private createchild = new Callable("createchild", {
+        signature: {
+            args: [new StdlibArgument("nodetype", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, nodetype: BrsString) => {
+            // currently we can't create a custom subclass object of roSGNode,
+            // so we'll always create generic RoSGNode object as child
+            let child = createNodeByType(nodetype);
+            if (child instanceof RoSGNode) {
+                this.children.push(child);
+                child.setParent(this);
+            }
+            return child;
         },
     });
 }

@@ -16,4 +16,22 @@ sub main()
 
     node1.clear()
     print "can empty itself: " node1.count() = 0                   ' => true
+
+    'ifNodeChildren tests
+    parentNode = createObject("roSGNode", "Node")
+    parentNode.id = "parent"
+    print "parent child count: " parentNode.getChildCount()        ' => 0
+    childNode = parentNode.createChild("Node")
+    testParent = childNode.getParent()
+    print "get same parent from child: " parentNode.id = testParent.id '=> true
+    print "parent child count: " parentNode.getChildCount()        ' => 1
+    childNode2 = createObject("roSGNode", "Node")
+    parentNode.appendChild(childNode2)
+    print "parent child count: " parentNode.getChildCount()        ' => 2
+    childNode3 = parentNode.createChild("Node")
+    print "parent child count: " parentNode.getChildCount()        ' => 3
+    parentNode.removeChild(childNode)
+    print "parent child count: " parentNode.getChildCount()        ' => 2
+    children = parentNode.getChildren(-1, 0)
+    print "children size: " children.count()                       ' => 2
 end sub

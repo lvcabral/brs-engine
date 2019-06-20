@@ -278,4 +278,304 @@ describe("RoSGNode", () => {
             });
         });
     });
+
+    describe("ifSGNodeChildren", () => {
+        let interpreter, parent, child1, child2, child3, child4;
+
+        beforeEach(() => {
+            interpreter = new Interpreter();
+            parent = new RoSGNode([{ name: new BrsString("parent"), value: new BrsString("1") }]);
+            child1 = new RoSGNode([{ name: new BrsString("child"), value: new BrsString("2") }]);
+            child2 = new RoSGNode([{ name: new BrsString("child"), value: new BrsString("3") }]);
+            child3 = new RoSGNode([{ name: new BrsString("child"), value: new BrsString("4") }]);
+            child4 = new RoSGNode([{ name: new BrsString("child"), value: new BrsString("5") }]);
+        });
+
+        describe("getchildcount", () => {
+            it("returns the number of children", () => {
+                let getChildCount = parent.getMethod("getchildcount");
+                expect(getChildCount).toBeTruthy();
+
+                let result = getChildCount.call(interpreter);
+                expect(result).toEqual(new Int32(0));
+            });
+        });
+
+        describe("appendchild", () => {
+            it("appends a child to the node", () => {
+                let appendChild = parent.getMethod("appendchild");
+                let getChildCount = parent.getMethod("getchildcount");
+
+                let result = appendChild.call(interpreter, child1);
+                let childCount = getChildCount.call(interpreter);
+                expect(result).toEqual(BrsBoolean.True);
+                expect(appendChild).toBeTruthy();
+                expect(childCount).toEqual(new Int32(1));
+            });
+
+            it("appends invalid to the node", () => {
+                let invalidChild = BrsInvalid.Instance;
+
+                let appendChild = parent.getMethod("appendchild");
+                let getChildCount = parent.getMethod("getchildcount");
+
+                let result = appendChild.call(interpreter, invalidChild);
+                let childCount = getChildCount.call(interpreter);
+                expect(result).toEqual(BrsBoolean.False);
+                expect(childCount).toEqual(new Int32(0));
+            });
+
+            it("doesn't append the same node twice", () => {
+                let appendChild = parent.getMethod("appendchild");
+                let getChildCount = parent.getMethod("getchildcount");
+
+                let result = appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child1);
+                let childCount = getChildCount.call(interpreter);
+                expect(result).toEqual(BrsBoolean.True);
+                expect(childCount).toEqual(new Int32(1));
+            });
+        });
+
+        describe("getchildren", () => {
+            it("get children of node without children", () => {
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+
+                let result = getChildren.call(interpreter, new Int32(-1), new Int32(0));
+                let childCount = getChildCount.call(interpreter);
+                expect(getChildren).toBeTruthy();
+                expect(childCount).toEqual(new Int32(0));
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([]);
+            });
+
+            it("get all children of node with children", () => {
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+
+                let result = getChildren.call(interpreter, new Int32(-1), new Int32(0));
+                let childCount = getChildCount.call(interpreter);
+                expect(childCount).toEqual(new Int32(3));
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([child1, child2, child3]);
+            });
+
+            it("get last two children", () => {
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+                appendChild.call(interpreter, child4);
+
+                // get last 2 children
+                let result = getChildren.call(interpreter, new Int32(2), new Int32(2));
+                let childCount = getChildCount.call(interpreter);
+                expect(childCount).toEqual(new Int32(4));
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([child3, child4]);
+            });
+
+            it("pass in large child count", () => {
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+                appendChild.call(interpreter, child4);
+
+                // pass in more children count than there are children, should just return 2 with offset of 2
+                let result1 = getChildren.call(interpreter, new Int32(20), new Int32(2));
+                expect(result1).toBeInstanceOf(RoArray);
+                expect(result1.elements).toEqual([child3, child4]);
+            });
+
+            it("pass in negative indices", () => {
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+                appendChild.call(interpreter, child4);
+
+                // pass in negative indices
+                let result2 = getChildren.call(interpreter, new Int32(-10), new Int32(-50));
+                expect(result2).toBeInstanceOf(RoArray);
+                expect(result2.elements).toEqual([]);
+            });
+
+            it("pass in negative start index", () => {
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+                appendChild.call(interpreter, child4);
+
+                // pass in just negative start index
+                let result3 = getChildren.call(interpreter, new Int32(5), new Int32(-50));
+                expect(result3).toBeInstanceOf(RoArray);
+                expect(result3.elements).toEqual([]);
+            });
+
+            it("get first 3 children", () => {
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+                appendChild.call(interpreter, child4);
+
+                // get first 3 children
+                let result4 = getChildren.call(interpreter, new Int32(3), new Int32(0));
+                expect(result4).toBeInstanceOf(RoArray);
+                expect(result4.elements).toEqual([child1, child2, child3]);
+            });
+        });
+
+        describe("removechild", () => {
+            it("remove a child node from parent", () => {
+                let removeChild = parent.getMethod("removechild");
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+                expect(removeChild).toBeTruthy();
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+
+                // remove child 2
+                removeChild.call(interpreter, child2);
+                let result = getChildren.call(interpreter, new Int32(-1), new Int32(0));
+                let childCount = getChildCount.call(interpreter);
+                expect(childCount).toEqual(new Int32(2));
+                expect(result).toBeInstanceOf(RoArray);
+                expect(result.elements).toEqual([child1, child3]);
+
+                // remove child 3
+                removeChild.call(interpreter, child3);
+                let result1 = getChildren.call(interpreter, new Int32(-1), new Int32(0));
+                let childCount1 = getChildCount.call(interpreter);
+                expect(childCount1).toEqual(new Int32(1));
+                expect(result1).toBeInstanceOf(RoArray);
+                expect(result1.elements).toEqual([child1]);
+
+                // remove child 1
+                removeChild.call(interpreter, child1);
+                let result2 = getChildren.call(interpreter, new Int32(-1), new Int32(0));
+                let childCount2 = getChildCount.call(interpreter);
+                expect(childCount2).toEqual(new Int32(0));
+                expect(result2).toBeInstanceOf(RoArray);
+                expect(result2.elements).toEqual([]);
+
+                // try to remove child 1 again, but shouldn't do anything
+                removeChild.call(interpreter, child1);
+                let result3 = getChildren.call(interpreter, new Int32(-1), new Int32(0));
+                let childCount3 = getChildCount.call(interpreter);
+                expect(childCount3).toEqual(new Int32(0));
+                expect(result3).toBeInstanceOf(RoArray);
+                expect(result3.elements).toEqual([]);
+            });
+
+            it("remove non-node things from parent", () => {
+                let removeChild = parent.getMethod("removechild");
+                let getChildren = parent.getMethod("getchildren");
+                let getChildCount = parent.getMethod("getchildcount");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child2);
+                appendChild.call(interpreter, child3);
+
+                // only returns true if we are removing roSGNode type object
+                let result = removeChild.call(interpreter, child1);
+                expect(result).toEqual(BrsBoolean.True);
+                let result1 = removeChild.call(interpreter, new BrsString("some string"));
+                expect(result1).toEqual(BrsBoolean.False);
+                let result2 = removeChild.call(interpreter, new Int32(5));
+                expect(result2).toEqual(BrsBoolean.False);
+                let childCount = getChildCount.call(interpreter);
+                expect(childCount).toEqual(new Int32(2));
+            });
+        });
+
+        describe("getparent", () => {
+            it("get parent of node", () => {
+                let parent = new RoSGNode([
+                    { name: new BrsString("parent"), value: new BrsString("1") },
+                ]);
+                let child1 = new RoSGNode([
+                    { name: new BrsString("child"), value: new BrsString("2") },
+                ]);
+
+                let getParent = child1.getMethod("getparent");
+                let appendChild = parent.getMethod("appendchild");
+
+                appendChild.call(interpreter, child1);
+                let parentNode = getParent.call(interpreter);
+                expect(getParent).toBeTruthy();
+                expect(parentNode).toEqual(parent);
+            });
+
+            it("get parent of node without parent", () => {
+                let parent = new RoSGNode([
+                    { name: new BrsString("parent"), value: new BrsString("1") },
+                ]);
+                let child1 = new RoSGNode([
+                    { name: new BrsString("child"), value: new BrsString("2") },
+                ]);
+
+                let getParent = child1.getMethod("getparent");
+                let appendChild = parent.getMethod("appendchild");
+                let removeChild = parent.getMethod("removechild");
+
+                // node should start without a parent
+                let parentNode = getParent.call(interpreter);
+                expect(parentNode).toEqual(BrsInvalid.Instance);
+
+                // appends a node as child
+                appendChild.call(interpreter, child1);
+                let parentNode1 = getParent.call(interpreter);
+                expect(parentNode1).toEqual(parent);
+
+                // remove parent from child again, should get invalid as parent
+                removeChild.call(interpreter, child1);
+                let parentNode2 = getParent.call(interpreter);
+                expect(parentNode2).toEqual(BrsInvalid.Instance);
+            });
+        });
+
+        describe("createchild", () => {
+            it("create generic roSGNode as child", () => {
+                let parent = new RoSGNode([
+                    { name: new BrsString("parent"), value: new BrsString("1") },
+                ]);
+
+                let createChild = parent.getMethod("createchild");
+                let getChildren = parent.getMethod("getchildren");
+
+                let childNode = createChild.call(interpreter, new BrsString("Node"));
+                let result = getChildren.call(interpreter, new Int32(-1), new Int32(0));
+                expect(createChild).toBeTruthy();
+                expect(result.elements[0]).toEqual(childNode);
+            });
+        });
+    });
 });
