@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -7,22 +7,70 @@ import { Int32 } from "../Int32";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { AAMember } from "./RoAssociativeArray";
+import { Float } from "../Float";
 
 class Field {
-    constructor(readonly type: string, readonly alwaysNotify: boolean) {}
+    private type: string;
+    private value: BrsType;
+    private observers: string[] = [];
+
+    constructor(value: BrsType, private alwaysNotify: boolean) {
+        this.type = ValueKind.toString(value.kind);
+        this.value = value;
+    }
+
+    toString(parent?: BrsType): string {
+        return this.value.toString(parent);
+    }
+
+    getType(): string {
+        return this.type;
+    }
+
+    getValue(): BrsType {
+        return this.value;
+    }
+
+    setValue(value: BrsType) {
+        // This is where the Callbacks are called
+        if (this.alwaysNotify || this.value !== value) {
+            this.executeCallbacks();
+        }
+        this.value = value;
+    }
+
+    addObserver(functionName: BrsString) {
+        this.observers.push(functionName.value);
+    }
+
+    private executeCallbacks() {}
 }
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    elements = new Map<string, BrsType>();
     private fields = new Map<string, Field>();
     private children: RoSGNode[] = [];
     private parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
+    readonly builtInFields = [
+        { name: "change", type: "roAssociativeArray" },
+        { name: "focusable", type: "boolean" },
+        { name: "focusedChild", type: "dynamic" },
+        { name: "id", type: "string" },
+    ];
 
-    constructor(elements: AAMember[], readonly type: string = "Node") {
+    constructor(members: AAMember[], readonly type: string = "Node") {
         super("roSGNode");
-        elements.forEach(member =>
-            this.elements.set(member.name.value.toLowerCase(), member.value)
+
+        // All nodes start have some built-in fields when created
+        this.builtInFields.forEach(field => {
+            this.fields.set(
+                field.name.toLowerCase(),
+                new Field(this.getDefaultValue(field.type), false)
+            );
+        });
+
+        members.forEach(member =>
+            this.fields.set(member.name.value.toLowerCase(), new Field(member.value, false))
         );
 
         this.registerMethods([
@@ -36,6 +84,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.keys,
             this.items,
             this.lookup,
+            //ifSGNodeField methods
+            this.addfield,
+            this.addfields,
+            this.getfield,
+            this.observefield,
+            this.removefield,
+            this.setfield,
+            this.setfields,
+            this.update,
             //ifSGNodeChildren
             this.appendchild,
             this.getchildcount,
@@ -56,7 +113,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return [
             `<Component: ${componentName}> =`,
             "{",
-            ...Array.from(this.elements.entries()).map(
+            ...Array.from(this.fields.entries()).map(
                 ([key, value]) => `    ${key}: ${value.toString(this)}`
             ),
             "}",
@@ -69,15 +126,19 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     getElements() {
-        return Array.from(this.elements.keys())
+        return Array.from(this.fields.keys())
             .sort()
             .map(key => new BrsString(key));
     }
 
     getValues() {
-        return Array.from(this.elements.values())
+        return Array.from(this.fields.values())
             .sort()
-            .map((value: BrsType) => value);
+            .map((field: Field) => field.getValue());
+    }
+
+    getFields() {
+        return this.fields;
     }
 
     get(index: BrsType) {
@@ -96,18 +157,28 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // method with the desired name separately? That last bit would work but it's pretty gross.
         // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
         // Same with RoAssociativeArrays I guess.
-        return (
-            this.elements.get(index.value.toLowerCase()) ||
-            this.getMethod(index.value) ||
-            BrsInvalid.Instance
-        );
+        let field = this.fields.get(index.value.toLowerCase());
+        if (field) {
+            return field.getValue();
+        }
+        return this.getMethod(index.value) || BrsInvalid.Instance;
     }
 
-    set(index: BrsType, value: BrsType) {
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        this.elements.set(index.value.toLowerCase(), value);
+        let mapKey = index.value.toLowerCase();
+        let field = this.fields.get(mapKey);
+        let valueType = ValueKind.toString(value.kind);
+
+        if (!field) {
+            field = new Field(value, alwaysNotify);
+        } else if (field.getType() === valueType) {
+            //Fields are not overwritten if they haven't the same type
+            field.setValue(value);
+        }
+        this.fields.set(mapKey, field);
         return BrsInvalid.Instance;
     }
 
@@ -119,27 +190,62 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         this.parent = BrsInvalid.Instance;
     }
 
-    /** Removes all elements from the node */
+    private getDefaultValue(type: string): BrsType {
+        let value: BrsType;
+
+        switch (type.toLowerCase()) {
+            case "boolean":
+                value = BrsBoolean.False;
+                break;
+            case "dynamic":
+                value = BrsInvalid.Instance;
+                break;
+            case "integer":
+                value = new Int32(0);
+                break;
+            case "float":
+                value = new Float(0);
+                break;
+            case "roArray":
+                value = BrsInvalid.Instance;
+                break;
+            case "roAssociativeArray":
+                value = BrsInvalid.Instance;
+                break;
+            case "string":
+                value = new BrsString("");
+                break;
+            default:
+                value = Uninitialized.Instance;
+                break;
+        }
+
+        return value;
+    }
+
+    /** Removes all fields from the node */
+    // ToDo: Built-in fields shouldn't be removed
     private clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter) => {
-            this.elements.clear();
+            this.fields.clear();
             return BrsInvalid.Instance;
         },
     });
 
     /** Removes a given item from the node */
+    // ToDo: Built-in fields shouldn't be removed
     private delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, str: BrsString) => {
-            let deleted = this.elements.delete(str.value);
-            return BrsBoolean.from(deleted);
+            this.fields.delete(str.value);
+            return BrsBoolean.True; //RBI always returns true
         },
     });
 
@@ -167,7 +273,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter) => {
-            return new Int32(this.elements.size);
+            return new Int32(this.fields.size);
         },
     });
 
@@ -189,8 +295,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, obj: BrsType) => {
-            if (obj instanceof RoAssociativeArray || obj instanceof RoSGNode) {
-                this.elements = new Map<string, BrsType>([...this.elements, ...obj.elements]);
+            if (obj instanceof RoAssociativeArray) {
+                obj.elements.forEach((value, key) => {
+                    this.fields.set(key, new Field(value, false));
+                });
+            } else if (obj instanceof RoSGNode) {
+                obj.getFields().forEach((value, key) => {
+                    this.fields.set(key, value);
+                });
             }
 
             return BrsInvalid.Instance;
@@ -228,6 +340,166 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, key: BrsString) => {
             let lKey = key.value.toLowerCase();
             return this.get(new BrsString(lKey));
+        },
+    });
+
+    /** Adds a new field to the node, if the field already exists it doesn't change the current value. */
+    private addfield = new Callable("addfield", {
+        signature: {
+            args: [
+                new StdlibArgument("fieldname", ValueKind.String),
+                new StdlibArgument("type", ValueKind.String),
+                new StdlibArgument("alwaysnotify", ValueKind.Boolean),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            interpreter: Interpreter,
+            fieldname: BrsString,
+            type: BrsString,
+            alwaysnotify: BrsBoolean
+        ) => {
+            let defaultValue = this.getDefaultValue(type.value);
+
+            if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldname.value)) {
+                this.set(fieldname, defaultValue, alwaysnotify.toBoolean());
+            }
+
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Adds one or more fields defined as an associative aray of key values. */
+    private addfields = new Callable("addfields", {
+        signature: {
+            args: [new StdlibArgument("fields", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+            if (!(fields instanceof RoAssociativeArray)) {
+                return BrsBoolean.False;
+            }
+
+            fields.getValue().forEach((value, key) => {
+                let fieldName = new BrsString(key);
+                if (!this.fields.has(key)) {
+                    this.set(fieldName, value);
+                }
+            });
+
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Returns the value of the field passed as argument, if the field doesn't exist it returns invalid. */
+    private getfield = new Callable("getfield", {
+        signature: {
+            args: [new StdlibArgument("fieldname", ValueKind.String)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (interpreter: Interpreter, fieldname: BrsString) => {
+            return this.get(fieldname);
+        },
+    });
+
+    /** Registers a callback to be executed when the value of the field changes */
+    private observefield = new Callable("observefield", {
+        signature: {
+            args: [
+                new StdlibArgument("fieldname", ValueKind.String),
+                new StdlibArgument("functionname", ValueKind.String),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, fieldname: BrsString, functionname: BrsString) => {
+            let field = this.fields.get(fieldname.value);
+            if (field instanceof Field) {
+                field.addObserver(functionname);
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Removes the given field from the node */
+    /** TODO: node built-in fields shouldn't be removable (i.e. id, change, focusable,) */
+    private removefield = new Callable("removefield", {
+        signature: {
+            args: [new StdlibArgument("fieldname", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, fieldname: BrsString) => {
+            this.fields.delete(fieldname.value);
+            return BrsBoolean.True; //RBI always returns true
+        },
+    });
+
+    /** Updates the value of an existing field only if the types match. */
+    private setfield = new Callable("setfield", {
+        signature: {
+            args: [
+                new StdlibArgument("fieldname", ValueKind.String),
+                new StdlibArgument("value", ValueKind.Dynamic),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, fieldname: BrsString, value: BrsType) => {
+            let field = this.get(fieldname);
+
+            if (!this.fields.has(fieldname.value)) {
+                return BrsBoolean.False;
+            }
+
+            if (ValueKind.toString(field.kind) !== ValueKind.toString(value.kind)) {
+                return BrsBoolean.False;
+            }
+
+            this.set(fieldname, value);
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Updates the value of multiple existing field only if the types match. */
+    private setfields = new Callable("setfields", {
+        signature: {
+            args: [new StdlibArgument("fields", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+            if (!(fields instanceof RoAssociativeArray)) {
+                return BrsBoolean.False;
+            }
+
+            fields.getValue().forEach((value, key) => {
+                let fieldName = new BrsString(key);
+                if (this.fields.has(key)) {
+                    this.set(fieldName, value);
+                }
+            });
+
+            return BrsBoolean.True;
+        },
+    });
+
+    /* Updates the value of multiple existing field only if the types match.
+    In contrast to setFields method, update always return Uninitialized */
+    private update = new Callable("update", {
+        signature: {
+            args: [new StdlibArgument("aa", ValueKind.Object)],
+            returns: ValueKind.Uninitialized,
+        },
+        impl: (interpreter: Interpreter, aa: RoAssociativeArray) => {
+            if (!(aa instanceof RoAssociativeArray)) {
+                return Uninitialized.Instance;
+            }
+
+            aa.getValue().forEach((value, key) => {
+                let fieldName = new BrsString(key);
+                if (this.fields.has(key)) {
+                    this.set(fieldName, value);
+                }
+            });
+
+            return Uninitialized.Instance;
         },
     });
 
