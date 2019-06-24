@@ -93,13 +93,17 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.setfield,
             this.setfields,
             this.update,
-            //ifSGNodeChildren
+            // ifSGNodeChildren methods
             this.appendchild,
             this.getchildcount,
             this.getchildren,
             this.removechild,
             this.getparent,
             this.createchild,
+            // ifSGNodeFocus methods
+            this.hasfocus,
+            this.setfocus,
+            this.isinfocuschain,
             //ifSGNodeDict
             this.findnode,
         ]);
@@ -190,6 +194,22 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     removeParent() {
         this.parent = BrsInvalid.Instance;
+    }
+
+    // recursively search for any child that's focused via DFS
+    isChildrenFocused(interpreter: Interpreter): boolean {
+        if (this.children.length === 0) {
+            return false;
+        }
+
+        for (let childNode of this.children) {
+            if (interpreter.environment.getFocusedNode() === childNode) {
+                return true;
+            } else if (childNode.isChildrenFocused(interpreter)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private getDefaultValue(type: string): BrsType {
@@ -636,6 +656,52 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 child.setParent(this);
             }
             return child;
+        },
+    });
+
+    /* Returns true if the subject node has the remote control focus, and false otherwise */
+    private hasfocus = new Callable("hasfocus", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(interpreter.environment.getFocusedNode() === this);
+        },
+    });
+
+    /**
+     *  If on is set to true, sets the current remote control focus to the subject node,
+     *  also automatically removing it from the node on which it was previously set.
+     *  If on is set to false, removes focus from the subject node if it had it
+     */
+    private setfocus = new Callable("setfocus", {
+        signature: {
+            args: [new StdlibArgument("on", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, on: BrsBoolean) => {
+            interpreter.environment.setFocusedNode(on.toBoolean() ? this : BrsInvalid.Instance);
+            return BrsBoolean.False; //brightscript always returns false for some reason
+        },
+    });
+
+    /**
+     *  Returns true if the subject node or any of its descendants in the SceneGraph node tree
+     *  has remote control focus
+     */
+    private isinfocuschain = new Callable("isinfocuschain", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            // loop through all children DFS and check if any children has focus
+            if (interpreter.environment.getFocusedNode() === this) {
+                return BrsBoolean.True;
+            }
+
+            return BrsBoolean.from(this.isChildrenFocused(interpreter));
         },
     });
 

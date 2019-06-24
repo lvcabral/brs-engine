@@ -56,6 +56,22 @@ sub main()
     children = parentNode.getChildren(-1, 0)
     print "children size: " children.count()                       ' => 2
 
+    ' ifSGNodeFocus tests
+    ' assume parent node will be attached to the rootscene node tree, otherwise
+    ' node focus is meaningless and won't work as expected.
+    parentNode = createObject("roSGNode", "Node")
+    childNode1 = parentNode.createChild("Node")
+    childNode2 = parentNode.createChild("Node")
+    grandChild1 = childNode1.createChild("Node")
+    grandChild2 = childNode2.createChild("Node")
+    print "is parent in focus chain: " parentNode.isInFocusChain()     ' => false
+    grandChild1.setFocus(true)
+    print "is parent in focus chain: " parentNode.isInFocusChain()     ' => true
+    print "does grand child1 have focus: " grandChild1.hasFocus()  ' => true
+    childNode2.setFocus(true)
+    print "does grand child1 still have focus: " grandChild1.hasFocus() ' => false
+    print "does child2 have focus: " childNode2.hasFocus()  ' => true
+
     'ifNodeDict tests
     ' no node exists
     currentNode = createObject("roSGNode", "Node")

@@ -1,5 +1,5 @@
 import { Identifier } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
+import { BrsType, RoAssociativeArray, Int32, BrsInvalid, RoSGNode } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -37,6 +37,13 @@ export class Environment {
     private function = new Map<string, BrsType>();
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer = new RoAssociativeArray([]);
+    /**
+     * The one true focus of the scenegraph app, only one component can have focus at a time.
+     * Note: this focus is only meaningful if the node being set focus to
+     * is a child of the main scene graph tree.  Otherwise, it will not follow the rule
+     * of stealing focus away from another node if a new node got focus.
+     */
+    private focusedNode: RoSGNode | BrsInvalid = BrsInvalid.Instance;
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -158,6 +165,7 @@ export class Environment {
      * 2. Named functions compiled together into a single "module"
      * 3. Parameters passed into the function
      * 4. The `m` pointer, defined by the way in which a function was called
+     * 5. Currently focused node object that reacts to onKey button presses
      *
      * @returns a copy of this environment but with no function-scoped values.
      */
@@ -166,7 +174,24 @@ export class Environment {
         newEnvironment.global = this.global;
         newEnvironment.module = this.module;
         newEnvironment.mPointer = this.mPointer;
+        newEnvironment.focusedNode = this.focusedNode;
 
         return newEnvironment;
+    }
+
+    /**
+     * Sets the currently focused node, which reacts to onKey button presses
+     * @param node either node object or invalid
+     */
+    public setFocusedNode(node: RoSGNode | BrsInvalid) {
+        this.focusedNode = node;
+    }
+
+    /**
+     * Gets the currently focused node, which reacts to onKey button presses
+     * @returns currently focused node
+     */
+    public getFocusedNode(): RoSGNode | BrsInvalid {
+        return this.focusedNode;
     }
 }

@@ -119,6 +119,17 @@ describe("end to end brightscript functions", () => {
             "2",
             "children size: ",
             "2",
+            //ifSGNodeFocus tests
+            "is parent in focus chain: ",
+            "false",
+            "is parent in focus chain: ",
+            "true",
+            "does grand child1 have focus: ",
+            "true",
+            "does grand child1 still have focus: ",
+            "false",
+            "does child2 have focus: ",
+            "true",
             //ifNodeDict tests
             "find node that does not exist: ",
             "invalid",
