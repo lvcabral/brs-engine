@@ -100,6 +100,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.removechild,
             this.getparent,
             this.createchild,
+            //ifSGNodeDict
+            this.findnode,
         ]);
     }
 
@@ -221,6 +223,26 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
 
         return value;
+    }
+
+    /* searches the node tree for a node with the given id */
+    private findNodeById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
+        // test current node in tree
+        let currentId = node.get(new BrsString("id"));
+        if (currentId.toString() === id.toString()) {
+            return node;
+        }
+
+        // visit each child
+        for (let child of node.children) {
+            let result = this.findNodeById(child, id);
+            if (result instanceof RoSGNode) {
+                return result;
+            }
+        }
+
+        // name was not found anywhere in tree
+        return BrsInvalid.Instance;
     }
 
     /** Removes all fields from the node */
@@ -614,6 +636,26 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 child.setParent(this);
             }
             return child;
+        },
+    });
+
+    /* Returns the node that is a descendant of the nearest component ancestor of the subject node whose id field matches the given name,
+        otherwise return invalid.
+        Implemented as a DFS from the top of parent hierarchy to match the observed behavior as opposed to the BFS mentioned in the docs. */
+    private findnode = new Callable("findnode", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            // climb parent hierarchy to find node to start search at
+            let root: RoSGNode = this;
+            while (root.parent && root.parent instanceof RoSGNode) {
+                root = root.parent;
+            }
+
+            // perform search
+            return this.findNodeById(root, name);
         },
     });
 }

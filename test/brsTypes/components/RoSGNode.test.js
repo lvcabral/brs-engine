@@ -1005,4 +1005,111 @@ describe("RoSGNode", () => {
             });
         });
     });
+
+    describe("ifSGNodeDict", () => {
+        let interpreter, parent, child1, child2, child3, child4;
+
+        beforeEach(() => {
+            interpreter = new Interpreter();
+            let idString = new BrsString("id");
+            parent = new RoSGNode([{ name: idString, value: new BrsString("root") }]);
+            child1 = new RoSGNode([{ name: idString, value: new BrsString("child1") }]);
+            child2 = new RoSGNode([{ name: idString, value: new BrsString("child2") }]);
+            child3 = new RoSGNode([{ name: idString, value: new BrsString("child3") }]);
+            child4 = new RoSGNode([{ name: idString, value: new BrsString("child4") }]);
+        });
+
+        describe("findnode", () => {
+            it("returns invalid if no node is found", () => {
+                let findNode = parent.getMethod("findnode");
+                expect(findNode).toBeTruthy();
+
+                let invalidNode = findNode.call(interpreter, new BrsString("someRandomId"));
+                expect(invalidNode).toEqual(BrsInvalid.Instance);
+            });
+
+            it("finds itself", () => {
+                let findNode = parent.getMethod("findnode");
+
+                let result = findNode.call(interpreter, new BrsString("root"));
+                expect(result).toBeTruthy();
+                expect(result).toBe(parent);
+            });
+
+            it("finds a node in its direct children", () => {
+                let appendChild = parent.getMethod("appendchild");
+                let children = [child1, child2, child3, child4];
+                for (let child of children) {
+                    appendChild.call(interpreter, child);
+                }
+
+                let findNode = parent.getMethod("findnode");
+                let result = findNode.call(interpreter, new BrsString("child3"));
+                expect(result).toBeTruthy();
+                expect(child3).toBe(result);
+            });
+
+            it("finds a grandchild", () => {
+                let appendGrandChild = child4.getMethod("appendchild");
+                appendGrandChild.call(interpreter, child3);
+
+                let appendChild = parent.getMethod("appendchild");
+                let children = [child1, child2, child4];
+                for (let child of children) {
+                    appendChild.call(interpreter, child);
+                }
+
+                let findNode = parent.getMethod("findNode");
+                let result = findNode.call(interpreter, new BrsString("child3"));
+                expect(result).toBeTruthy();
+                expect(child3).toBe(result);
+            });
+
+            it("finds a cousin", () => {
+                let appendChild1 = child1.getMethod("appendchild");
+                appendChild1.call(interpreter, child2);
+
+                let appendChild3 = child3.getMethod("appendchild");
+                appendChild3.call(interpreter, child4);
+
+                let appendChild = parent.getMethod("appendChild");
+                appendChild.call(interpreter, child1);
+                appendChild.call(interpreter, child3);
+
+                let findNode = child2.getMethod("findnode");
+                let result = findNode.call(interpreter, new BrsString("child4"));
+                expect(result).toBeTruthy();
+                expect(child4).toBe(result);
+            });
+
+            it("finds a sibling node", () => {
+                let appendChild = parent.getMethod("appendchild");
+                let children = [child1, child2, child3, child4];
+                for (let child of children) {
+                    appendChild.call(interpreter, child);
+                }
+
+                let findNode = child4.getMethod("findnode");
+                let result = findNode.call(interpreter, new BrsString("child1"));
+                expect(result).toBeTruthy();
+                expect(child1).toBe(result);
+            });
+
+            it("finds its grandparent", () => {
+                let appendChild4 = child4.getMethod("appendchild");
+                appendChild4.call(interpreter, child3);
+
+                let appendChild = parent.getMethod("appendchild");
+                let children = [child1, child2, child4];
+                for (let child of children) {
+                    appendChild.call(interpreter, child);
+                }
+
+                let findNode = child3.getMethod("findNode");
+                let result = findNode.call(interpreter, new BrsString("root"));
+                expect(result).toBeTruthy();
+                expect(parent).toBe(result);
+            });
+        });
+    });
 });
