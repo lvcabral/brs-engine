@@ -145,6 +145,12 @@ describe("end to end brightscript functions", () => {
             "Cousin-2",
             "node finds its grandparent: ",
             "root-node",
+            "is same node returns true:",
+            "true",
+            "is same node returns false:",
+            "false",
+            "Node subtype is returned:",
+            "Node",
         ]);
     });
 

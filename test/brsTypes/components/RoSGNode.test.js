@@ -1231,5 +1231,43 @@ describe("RoSGNode", () => {
                 expect(parent).toBe(result);
             });
         });
+
+        describe("issamenode", () => {
+            it("returns true if the nodes are the same", () => {
+                let isSameNode = parent.getMethod("issamenode");
+                expect(isSameNode).toBeTruthy();
+
+                let result = isSameNode.call(interpreter, parent);
+                expect(result).toBe(BrsBoolean.True);
+            });
+
+            it("returns false if the nodes are different", () => {
+                let isSameNode = parent.getMethod("issamenode");
+
+                let result = isSameNode.call(interpreter, child4);
+                expect(result).toBe(BrsBoolean.False);
+            });
+        });
+
+        describe("subtype", () => {
+            it("returns 'Node' for Node roSGNode", () => {
+                let subtype = parent.getMethod("subtype");
+                expect(subtype).toBeTruthy();
+
+                let result = subtype.call(interpreter);
+                expect(result.value).toBe("Node");
+            });
+
+            it("returns type for arbitrary roSGNode", () => {
+                let someNode = new RoSGNode(
+                    [{ name: new BrsString("id"), value: new BrsString("someNode") }],
+                    "randomType"
+                );
+                let subtype = someNode.getMethod("subtype");
+
+                let result = subtype.call(interpreter);
+                expect(result.value).toBe("randomType");
+            });
+        });
     });
 });

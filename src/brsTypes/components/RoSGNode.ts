@@ -106,6 +106,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.isinfocuschain,
             //ifSGNodeDict
             this.findnode,
+            this.issamenode,
+            this.subtype,
         ]);
     }
 
@@ -722,6 +724,29 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             // perform search
             return this.findNodeById(root, name);
+        },
+    });
+
+    /* Returns a Boolean value indicating whether the roSGNode parameter
+            refers to the same node object as this node */
+    private issamenode = new Callable("issamenode", {
+        signature: {
+            args: [new StdlibArgument("roSGNode", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, roSGNode: RoSGNode) => {
+            return BrsBoolean.from(this === roSGNode);
+        },
+    });
+
+    /* Returns the subtype of this node as specified when it was created */
+    private subtype = new Callable("subtype", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(this.type);
         },
     });
 }
