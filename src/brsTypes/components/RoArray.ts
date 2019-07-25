@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsType } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -22,6 +22,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             this.count,
             this.clear,
             this.append,
+            this.join,
         ]);
     }
 
@@ -178,6 +179,23 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             ];
 
             return BrsInvalid.Instance;
+        },
+    });
+
+    private join = new Callable("join", {
+        signature: {
+            args: [new StdlibArgument("separator", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter, separator: BrsString) => {
+            if (
+                this.elements.some(function(element) {
+                    return !(element instanceof BrsString);
+                })
+            ) {
+                throw new Error("roArray.Join: Array contains non-string value(s).");
+            }
+            return new BrsString(this.elements.join(separator.value));
         },
     });
 }
