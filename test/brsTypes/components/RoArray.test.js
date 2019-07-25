@@ -262,5 +262,18 @@ describe("RoArray", () => {
                 expect(src.elements).toEqual([a, b, c, d, e, f]);
             });
         });
+
+        describe("join", () => {
+            it("joins the string elements of the current array", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("b");
+                let c = new BrsString("c");
+                let src = new RoArray([a, b, c]);
+
+                let join = src.getMethod("join");
+                expect(join).toBeTruthy();
+                expect(join.call(interpreter, new BrsString(","))).toEqual(new BrsString("a,b,c"));
+            });
+        });
     });
 });
