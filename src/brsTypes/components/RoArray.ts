@@ -23,6 +23,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             this.clear,
             this.append,
             this.join,
+            this.sort,
+            this.reverse,
         ]);
     }
 
@@ -181,7 +183,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             return BrsInvalid.Instance;
         },
     });
-
+    // ifArrayJoin
     private join = new Callable("join", {
         signature: {
             args: [new StdlibArgument("separator", ValueKind.String)],
@@ -196,6 +198,49 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 throw new Error("roArray.Join: Array contains non-string value(s).");
             }
             return new BrsString(this.elements.join(separator.value));
+        },
+    });
+    // ifArraySort
+    private sort = new Callable("sort", {
+        signature: {
+            args: [new StdlibArgument("flags", ValueKind.String, new BrsString(""))],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, flags: BrsString) => {
+            if (flags.toString().match(/([^ir])/g) != null) {
+                throw new Error("roArray.Sort: Flags contains invalid option(s).");
+            }
+            if (flags.toString().length == 0) {
+                this.elements = this.elements.sort();
+            } else if (flags.toString().indexOf("i") > -1 && flags.toString().indexOf("r") > -1) {
+                this.elements = this.elements.sort(function(a, b) {
+                    return -a
+                        .toString()
+                        .toLowerCase()
+                        .localeCompare(b.toString().toLowerCase());
+                });
+            } else if (flags.toString().indexOf("i") > -1) {
+                this.elements = this.elements.sort(function(a, b) {
+                    return a
+                        .toString()
+                        .toLowerCase()
+                        .localeCompare(b.toString().toLowerCase());
+                });
+            } else if (flags.toString().indexOf("r") > -1) {
+                this.elements = this.elements.sort((a, b) => (a > b ? -1 : 1));
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private reverse = new Callable("reverse", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, separator: BrsString) => {
+            this.elements = this.elements.reverse();
+            return BrsInvalid.Instance;
         },
     });
 }
