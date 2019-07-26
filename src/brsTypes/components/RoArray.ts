@@ -1,9 +1,10 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType } from "..";
+import { BrsType, isBrsString, isBrsNumber } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { RoAssociativeArray } from "./RoAssociativeArray";
 
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -24,6 +25,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             this.append,
             this.join,
             this.sort,
+            this.sortBy,
             this.reverse,
         ]);
     }
@@ -212,6 +214,48 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             }
             if (flags.toString().length == 0) {
                 this.elements = this.elements.sort();
+            } else if (flags.toString().indexOf("i") > -1 && flags.toString().indexOf("r") > -1) {
+                this.elements = this.elements.sort(function(a, b) {
+                    return -a
+                        .toString()
+                        .toLowerCase()
+                        .localeCompare(b.toString().toLowerCase());
+                });
+            } else if (flags.toString().indexOf("i") > -1) {
+                this.elements = this.elements.sort(function(a, b) {
+                    return a
+                        .toString()
+                        .toLowerCase()
+                        .localeCompare(b.toString().toLowerCase());
+                });
+            } else if (flags.toString().indexOf("r") > -1) {
+                this.elements = this.elements.sort((a, b) => (a > b ? -1 : 1));
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private sortBy = new Callable("sortBy", {
+        signature: {
+            args: [
+                new StdlibArgument("fieldName", ValueKind.String),
+                new StdlibArgument("flags", ValueKind.String, new BrsString("")),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, fieldName: BrsString, flags: BrsString) => {
+            if (flags.toString().match(/([^ir])/g) != null) {
+                throw new Error("roArray.SortBy: Flags contains invalid option(s).");
+            }
+            if (flags.toString().length == 0) {
+                this.elements = this.elements.sort(function(a, b) {
+                    var compare = 0;
+                    if ((isBrsString(a) && isBrsString(b)) || (isBrsNumber(a) && isBrsNumber(b))) {
+                        compare = a > b ? 1 : -1;
+                    } else {
+                    }
+                    return compare;
+                });
             } else if (flags.toString().indexOf("i") > -1 && flags.toString().indexOf("r") > -1) {
                 this.elements = this.elements.sort(function(a, b) {
                     return -a
