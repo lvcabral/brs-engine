@@ -215,7 +215,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             } else {
                 this.elements = this.elements.sort(function(a, b) {
                     var compare = 0;
-                    if (a != undefined && b != undefined) {
+                    if (a !== undefined && b !== undefined) {
                         if (a instanceof RoArray && b instanceof RoAssociativeArray) {
                             compare = 1;
                         } else if (a instanceof RoAssociativeArray && b instanceof RoArray) {
@@ -283,11 +283,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                                     .toString()
                                     .toLowerCase()
                                     .localeCompare(valueB.toString().toLowerCase());
-                            } else if (valueA != undefined && valueB != undefined) {
+                            } else if (valueA !== undefined && valueB !== undefined) {
                                 compare = valueA > valueB ? 1 : -1;
                             }
                         }
-                    } else if (a != undefined && b != undefined) {
+                    } else if (a !== undefined && b !== undefined) {
                         if (a instanceof RoArray && b instanceof RoAssociativeArray) {
                             compare = 1;
                         } else if (a instanceof RoAssociativeArray && b instanceof RoArray) {
