@@ -308,11 +308,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                             compare = -1;
                         }
                     }
-                    if (flags.toString().indexOf("r") > -1) {
-                        compare = -compare;
-                    }
                     return compare;
                 });
+                if (flags.toString().indexOf("r") > -1) {
+                    this.elements = this.elements.reverse();
+                }
             }
             return BrsInvalid.Instance;
         },
