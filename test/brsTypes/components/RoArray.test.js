@@ -1,5 +1,5 @@
 const brs = require("brs");
-const { RoArray, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
+const { RoArray, RoAssociativeArray, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
 const BrsError = require("../../../lib/Error");
 const { Interpreter } = require("../../../lib/interpreter");
 
@@ -299,6 +299,214 @@ describe("RoArray", () => {
                 let join = src.getMethod("join");
                 expect(join).toBeTruthy();
                 expect(join.call(interpreter, new BrsString(","))).toEqual(new BrsString(""));
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with no flags", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([i1, i2, i3, b, a, c]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with empty flags", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString(""))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([i1, i2, i3, b, a, c]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with flags = i", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("i"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([i1, i2, i3, a, b, c]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with flags = ii", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("ii"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([i1, i2, i3, a, b, c]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with flag = r", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("r"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([c, a, b, i3, i2, i1]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with flag = ir", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("ir"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([c, b, a, i3, i2, i1]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with flag = ri", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("ri"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([c, b, a, i3, i2, i1]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with flag = rir", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("rir"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([c, b, a, i3, i2, i1]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with array elements and no flags", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let ar = new RoArray([]);
+                let aa = new RoAssociativeArray([]);
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, ar, aa, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([i1, i2, i3, b, a, c, aa, ar]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with array elements and flag = ir", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let ar = new RoArray([]);
+                let aa = new RoAssociativeArray([]);
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, ar, aa, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("ir"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([ar, aa, c, b, a, i3, i2, i1]);
+            });
+        });
+
+        describe("sort", () => {
+            it("sorts the elements of the array with invalid flag", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("B");
+                let c = new BrsString("c");
+                let i3 = new Int32(3);
+                let i1 = new Int32(1);
+                let i2 = new Int32(2);
+                let src = new RoArray([a, b, c, i3, i1, i2]);
+
+                let sort = src.getMethod("sort");
+                expect(sort).toBeTruthy();
+                expect(sort.call(interpreter, new BrsString("ari"))).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([a, b, c, i3, i1, i2]);
+            });
+        });
+
+        describe("reverse", () => {
+            it("reverts the sequence of array elements", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("b");
+                let c = new BrsString("c");
+                let i1 = new Int32(1);
+                let d = new BrsString("d");
+                let e = new BrsString("e");
+                let src = new RoArray([a, b, c, i1, d, e]);
+
+                let reverse = src.getMethod("reverse");
+                expect(reverse).toBeTruthy();
+                expect(reverse.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(src.elements).toEqual([e, d, i1, c, b, a]);
             });
         });
     });
