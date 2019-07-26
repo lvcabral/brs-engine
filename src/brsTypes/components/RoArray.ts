@@ -197,7 +197,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                     return !(element instanceof BrsString);
                 })
             ) {
-                throw new Error("roArray.Join: Array contains non-string value(s).");
+                interpreter.stderr.write("roArray.Join: Array contains non-string value(s).\n");
+                return new BrsString("");
             }
             return new BrsString(this.elements.join(separator.value));
         },
