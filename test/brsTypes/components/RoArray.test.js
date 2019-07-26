@@ -275,5 +275,31 @@ describe("RoArray", () => {
                 expect(join.call(interpreter, new BrsString(","))).toEqual(new BrsString("a,b,c"));
             });
         });
+
+        describe("join", () => {
+            it("return empty string when any element is a non string value", () => {
+                let a = new BrsString("a");
+                let b = new Int32(1);
+                let c = new BrsString("c");
+                let src = new RoArray([a, b, c]);
+
+                let join = src.getMethod("join");
+                expect(join).toBeTruthy();
+                expect(join.call(interpreter, new BrsString(","))).toEqual(new BrsString(""));
+            });
+        });
+
+        describe("join", () => {
+            it("return empty string when any element is invalid", () => {
+                let a = new BrsString("a");
+                let b = new BrsString("b");
+                let c = new BrsInvalid.Instance();
+                let src = new RoArray([a, b, c]);
+
+                let join = src.getMethod("join");
+                expect(join).toBeTruthy();
+                expect(join.call(interpreter, new BrsString(","))).toEqual(new BrsString(""));
+            });
+        });
     });
 });
