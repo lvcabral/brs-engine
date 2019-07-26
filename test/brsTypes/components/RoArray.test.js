@@ -293,7 +293,7 @@ describe("RoArray", () => {
             it("return empty string when any element is invalid", () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
-                let c = new BrsInvalid.Instance();
+                let c = BrsInvalid.Instance;
                 let src = new RoArray([a, b, c]);
 
                 let join = src.getMethod("join");
