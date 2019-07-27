@@ -16,6 +16,4 @@ sub Main()
     print "Milliseconds: " date.getMilliseconds()
     print "Timezone Offset: " date.getTimeZoneOffset()
     print "ISO String UTC: " date.toISOString()
-    date.toLocalTime()
-    print "ISO String Local: " date.toISOString()
 end sub

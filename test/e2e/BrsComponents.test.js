@@ -94,8 +94,6 @@ describe("end to end brightscript functions", () => {
             "420",
             "ISO String UTC: ",
             "2010-11-12T13:14:15Z",
-            "ISO String Local: ",
-            "2010-11-12T06:14:15Z",
         ]);
     });
 
