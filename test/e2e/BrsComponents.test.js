@@ -90,8 +90,6 @@ describe("end to end brightscript functions", () => {
             "30",
             "Milliseconds: ",
             "160",
-            "Timezone Offset: ",
-            "420",
             "ISO String UTC: ",
             "2010-11-12T13:14:15Z",
         ]);

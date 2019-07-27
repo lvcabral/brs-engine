@@ -14,6 +14,5 @@ sub Main()
     print "Seconds: " date.getSeconds()
     print "Last Day of Month: " date.getLastDayOfMonth()
     print "Milliseconds: " date.getMilliseconds()
-    print "Timezone Offset: " date.getTimeZoneOffset()
     print "ISO String UTC: " date.toISOString()
 end sub
