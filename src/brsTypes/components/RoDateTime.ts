@@ -73,7 +73,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             switch (format.toString()) {
                 case "short-weekday": {
                     dateString = date
-                        .toLocaleDateString("default", {
+                        .toLocaleDateString("en-US", {
                             weekday: "short",
                             year: "numeric",
                             month: "long",
@@ -84,7 +84,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                     break;
                 }
                 case "no-weekday": {
-                    dateString = date.toLocaleDateString("default", {
+                    dateString = date.toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -94,7 +94,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 }
                 case "short-month": {
                     dateString = date
-                        .toLocaleDateString("default", {
+                        .toLocaleDateString("en-US", {
                             weekday: "long",
                             year: "numeric",
                             month: "short",
@@ -106,7 +106,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 }
                 case "short-month-short-weekday": {
                     dateString = date
-                        .toLocaleDateString("default", {
+                        .toLocaleDateString("en-US", {
                             weekday: "short",
                             year: "numeric",
                             month: "short",
@@ -117,7 +117,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                     break;
                 }
                 case "short-month-no-weekday": {
-                    dateString = date.toLocaleDateString("default", {
+                    dateString = date.toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
@@ -127,7 +127,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 }
                 case "short-date": {
                     var dateArray = date
-                        .toLocaleDateString("default", {
+                        .toLocaleDateString("en-US", {
                             year: "2-digit",
                             month: "numeric",
                             day: "numeric",
@@ -140,7 +140,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 }
                 case "short-date-dashes": {
                     var dateArray = date
-                        .toLocaleDateString("default", {
+                        .toLocaleDateString("en-US", {
                             year: "2-digit",
                             month: "numeric",
                             day: "numeric",
@@ -154,7 +154,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 default: {
                     // default format: long-date
                     dateString = date
-                        .toLocaleDateString("default", {
+                        .toLocaleDateString("en-US", {
                             weekday: "long",
                             year: "numeric",
                             month: "long",
@@ -184,7 +184,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 day: "numeric",
                 timeZone: "UTC",
             };
-            return new BrsString(date.toLocaleDateString("default", options).replace(",", ""));
+            return new BrsString(date.toLocaleDateString("en-US", options).replace(",", ""));
         },
     });
 
@@ -347,7 +347,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             var date = new Date(this.markTime);
             return new BrsString(
-                date.toLocaleDateString("default", { weekday: "long", timeZone: "UTC" })
+                date.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" })
             );
         },
     });
