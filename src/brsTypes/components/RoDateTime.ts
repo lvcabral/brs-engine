@@ -376,8 +376,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Offsets the date/time value from an assumed UTC date/time to a local date/time using the system time zone setting.
-        This function is not idempotent, and multiple calls will do multiple timezone adjustments to the time yielding an incorrect result  */
+    /** Offsets the date/time value from an assumed UTC date/time to a local date/time using the system time zone setting. */
     private toLocalTime = new Callable("toLocalTime", {
         signature: {
             args: [],
