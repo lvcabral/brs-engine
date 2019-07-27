@@ -289,8 +289,9 @@ describe("RoDateTime", () => {
             it("offsets the date/time from UTC to local time using the system time zone setting", () => {
                 let toLocalTime = dt.getMethod("toLocalTime");
                 let result = toLocalTime.call(interpreter);
+                let local = 1230768000123 - new Date(1230768000123).getTimezoneOffset() * 60 * 1000;
                 expect(toLocalTime).toBeTruthy();
-                expect(new Int32(dt.markTime)).toEqual(new Int32(1230742800123));
+                expect(new Int32(dt.markTime)).toEqual(new Int32(local));
                 expect(result).toBe(BrsInvalid.Instance);
             });
         });
