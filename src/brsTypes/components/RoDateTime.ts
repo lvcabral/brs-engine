@@ -11,7 +11,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     private markTime = Date.now();
 
     constructor() {
-        super("roTimespan");
+        super("roDateTime");
         this.registerMethods([
             this.mark,
             this.asDateString,
@@ -72,13 +72,15 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             var dateString = "";
             switch (format.toString()) {
                 case "short-weekday": {
-                    dateString = date.toLocaleDateString("default", {
-                        weekday: "short",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    });
+                    dateString = date
+                        .toLocaleDateString("default", {
+                            weekday: "short",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            timeZone: "UTC",
+                        })
+                        .replace(",", "");
                     break;
                 }
                 case "no-weekday": {
@@ -91,23 +93,27 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                     break;
                 }
                 case "short-month": {
-                    dateString = date.toLocaleDateString("default", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    });
+                    dateString = date
+                        .toLocaleDateString("default", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            timeZone: "UTC",
+                        })
+                        .replace(",", "");
                     break;
                 }
                 case "short-month-short-weekday": {
-                    dateString = date.toLocaleDateString("default", {
-                        weekday: "short",
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    });
+                    dateString = date
+                        .toLocaleDateString("default", {
+                            weekday: "short",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            timeZone: "UTC",
+                        })
+                        .replace(",", "");
                     break;
                 }
                 case "short-month-no-weekday": {
@@ -120,34 +126,42 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                     break;
                 }
                 case "short-date": {
-                    dateString = date.toLocaleDateString("default", {
-                        year: "numeric",
-                        month: "numeric",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    });
-                    break;
-                }
-                case "short-date-dashes": {
-                    dateString = date
+                    var dateArray = date
                         .toLocaleDateString("default", {
-                            year: "numeric",
+                            year: "2-digit",
                             month: "numeric",
                             day: "numeric",
                             timeZone: "UTC",
                         })
-                        .replace(/[\/,.]/g, "-");
+                        .split("/");
+                    dateString =
+                        dateArray[0] + "/" + dateArray[1] + "/" + parseInt(dateArray[2]).toString();
+                    break;
+                }
+                case "short-date-dashes": {
+                    var dateArray = date
+                        .toLocaleDateString("default", {
+                            year: "2-digit",
+                            month: "numeric",
+                            day: "numeric",
+                            timeZone: "UTC",
+                        })
+                        .split("/");
+                    dateString =
+                        dateArray[0] + "-" + dateArray[1] + "-" + parseInt(dateArray[2]).toString();
                     break;
                 }
                 default: {
                     // default format: long-date
-                    dateString = date.toLocaleDateString("default", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    });
+                    dateString = date
+                        .toLocaleDateString("default", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            timeZone: "UTC",
+                        })
+                        .replace(",", "");
                     break;
                 }
             }
@@ -170,7 +184,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 day: "numeric",
                 timeZone: "UTC",
             };
-            return new BrsString(date.toLocaleDateString("default", options));
+            return new BrsString(date.toLocaleDateString("default", options).replace(",", ""));
         },
     });
 
@@ -358,7 +372,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             var date = new Date(this.markTime);
-            return new BrsString(date.toISOString());
+            return new BrsString(date.toISOString().split(".")[0] + "Z");
         },
     });
 
