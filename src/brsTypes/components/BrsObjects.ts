@@ -1,11 +1,11 @@
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
+import { RoDateTime } from "./RoDateTime";
 import { Timespan } from "./Timespan";
 import { RoSGNode, createNodeByType } from "./RoSGNode";
 import { RoRegex } from "./RoRegex";
 import { BrsString } from "../BrsType";
 import { RoString } from "./RoString";
-import { RoDateTime } from "./RoDateTime";
 
 /** Map containing a list of brightscript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
