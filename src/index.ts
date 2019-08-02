@@ -147,10 +147,13 @@ export function repl() {
     rl.setPrompt("brs> ");
 
     rl.on("line", line => {
-        let results = run(line, defaultExecutionOptions, replInterpreter);
-        if (results) {
-            results.map(result => console.log(result.toString()));
+        if (line.toLowerCase() === "quit" || line.toLowerCase() === "exit") {
+            process.exit();
         }
+        let results = run(line, defaultExecutionOptions, replInterpreter);
+        // if (results) {
+        //     results.map(result => console.log(result.toString()));
+        // }
 
         rl.prompt();
     });
