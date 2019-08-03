@@ -1,9 +1,9 @@
-import * as fs from "fs";
+//import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
 
-const access = promisify(fs.access);
-const readFile = promisify(fs.readFile);
+//const access = promisify(fs.access);
+//const readFile = promisify(fs.readFile);
 
 /** The set of possible value types in a `manifest` file's `key=value` pair. */
 export type ManifestValue = number | string | boolean;
@@ -19,15 +19,15 @@ export type Manifest = Map<string, ManifestValue>;
  *          representing the manifest file's contents
  */
 export async function getManifest(rootDir: string): Promise<Manifest> {
-    let manifestPath = path.join(rootDir, "manifest");
+    // let manifestPath = path.join(rootDir, "manifest");
 
-    let contents: string;
-    try {
-        contents = await readFile(manifestPath, "utf-8");
-    } catch (err) {
-        return new Map();
-    }
-    return parseManifest(contents);
+    // let contents: string;
+    // try {
+    //     contents = await readFile(manifestPath, "utf-8");
+    // } catch (err) {
+    return new Map();
+    // }
+    // return parseManifest(contents);
 }
 
 /**
@@ -37,14 +37,14 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
  *          file's contents
  */
 export function getManifestSync(rootDir: string): Manifest {
-    let manifestPath = path.join(rootDir, "manifest");
+    // let manifestPath = path.join(rootDir, "manifest");
 
-    if (!fs.existsSync(manifestPath)) {
-        return new Map();
-    }
+    // if (!fs.existsSync(manifestPath)) {
+    return new Map();
+    // }
 
-    let contents = fs.readFileSync(manifestPath, "utf-8");
-    return parseManifest(contents);
+    // let contents = fs.readFileSync(manifestPath, "utf-8");
+    // return parseManifest(contents);
 }
 
 /**

@@ -38,6 +38,8 @@ import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { DottedGet } from "../parser/Expression";
 
+process.stdout = require("browser-stdout")({ label: false });
+
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
     /** The base path for  */
