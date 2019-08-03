@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <script src="./lib/brsLib.js" type="text/javascript"></script>
+    <script>
+            var x = new brsLib.default;
+            var lines=[];
+            lines.push('for t = 1 to 10\nprint t;\nnext');
+            lines.push('date=CreateObject("roDateTime")');
+            lines.push('date.toLocalTime()');
+            lines.push('print date.AsDateStringNoParam();');
+            x.run(lines);
+    </script>
+</body>
+</html>

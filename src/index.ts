@@ -1,8 +1,8 @@
-import * as fs from "fs";
-import * as readline from "readline";
-import { promisify } from "util";
-import pSettle from "p-settle";
-const readFile = promisify(fs.readFile);
+//import * as fs from "fs";
+//import * as readline from "readline";
+//import { promisify } from "util";
+//import pSettle from "p-settle";
+//const readFile = promisify(fs.readFile);
 
 import { Lexer } from "./lexer";
 import * as PP from "./preprocessor";
@@ -18,6 +18,17 @@ export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
 
+export default class brs {
+    constructor() {}
+    run(lines: string[]) {
+        const replInterpreter = new Interpreter();
+        replInterpreter.onError(logError);
+        lines.forEach(line => {
+            run(line, defaultExecutionOptions, replInterpreter);
+        });
+    }
+}
+
 /**
  * Executes a BrightScript file by path and writes its output to the streams
  * provided in `options`.
@@ -29,72 +40,72 @@ export { _parser as parser };
  * @returns a `Promise` that will be resolve if `filename` is successfully
  *          executed, or be rejected if an error occurs.
  */
-export async function execute(filenames: string[], options: Partial<ExecutionOptions>) {
-    const executionOptions = Object.assign(defaultExecutionOptions, options);
+// export async function execute(filenames: string[], options: Partial<ExecutionOptions>) {
+//     const executionOptions = Object.assign(defaultExecutionOptions, options);
 
-    let manifest = await PP.getManifest(executionOptions.root);
+//     let manifest = await PP.getManifest(executionOptions.root);
 
-    // wait for all files to be read, lexed, and parsed, but don't exit on the first error
-    let parsedFiles = await pSettle(
-        filenames.map(async filename => {
-            let contents;
-            try {
-                contents = await readFile(filename, "utf-8");
-            } catch (err) {
-                return Promise.reject({
-                    message: `brs: can't open file '${filename}': [Errno ${err.errno}]`,
-                });
-            }
+//     // wait for all files to be read, lexed, and parsed, but don't exit on the first error
+//     let parsedFiles = await pSettle(
+//         filenames.map(async filename => {
+//             let contents;
+//             try {
+//                 contents = await readFile(filename, "utf-8");
+//             } catch (err) {
+//                 return Promise.reject({
+//                     message: `brs: can't open file '${filename}': [Errno ${err.errno}]`,
+//                 });
+//             }
 
-            let lexer = new Lexer();
-            let preprocessor = new PP.Preprocessor();
-            let parser = new Parser();
-            [lexer, preprocessor, parser].forEach(emitter => emitter.onError(logError));
+//             let lexer = new Lexer();
+//             let preprocessor = new PP.Preprocessor();
+//             let parser = new Parser();
+//             [lexer, preprocessor, parser].forEach(emitter => emitter.onError(logError));
 
-            let scanResults = lexer.scan(contents, filename);
-            if (scanResults.errors.length > 0) {
-                return Promise.reject({
-                    message: "Error occurred during lexing",
-                });
-            }
+//             let scanResults = lexer.scan(contents, filename);
+//             if (scanResults.errors.length > 0) {
+//                 return Promise.reject({
+//                     message: "Error occurred during lexing",
+//                 });
+//             }
 
-            let preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
-            if (preprocessResults.errors.length > 0) {
-                return Promise.reject({
-                    message: "Error occurred during pre-processing",
-                });
-            }
+//             let preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
+//             if (preprocessResults.errors.length > 0) {
+//                 return Promise.reject({
+//                     message: "Error occurred during pre-processing",
+//                 });
+//             }
 
-            let parseResults = parser.parse(preprocessResults.processedTokens);
-            if (parseResults.errors.length > 0) {
-                return Promise.reject({
-                    message: "Error occurred parsing",
-                });
-            }
+//             let parseResults = parser.parse(preprocessResults.processedTokens);
+//             if (parseResults.errors.length > 0) {
+//                 return Promise.reject({
+//                     message: "Error occurred parsing",
+//                 });
+//             }
 
-            return Promise.resolve(parseResults.statements);
-        })
-    );
+//             return Promise.resolve(parseResults.statements);
+//         })
+//     );
 
-    // don't execute anything if there were reading, lexing, or parsing errors
-    if (parsedFiles.some(file => file.isRejected)) {
-        return Promise.reject({
-            messages: parsedFiles
-                .filter(file => file.isRejected)
-                .map(rejection => rejection.reason.message),
-        });
-    }
+//     // don't execute anything if there were reading, lexing, or parsing errors
+//     if (parsedFiles.some(file => file.isRejected)) {
+//         return Promise.reject({
+//             messages: parsedFiles
+//                 .filter(file => file.isRejected)
+//                 .map(rejection => rejection.reason.message),
+//         });
+//     }
 
-    // combine statements from all files into one array
-    let statements = parsedFiles
-        .map(file => file.value || [])
-        .reduce((allStatements, fileStatements) => [...allStatements, ...fileStatements], []);
+//     // combine statements from all files into one array
+//     let statements = parsedFiles
+//         .map(file => file.value || [])
+//         .reduce((allStatements, fileStatements) => [...allStatements, ...fileStatements], []);
 
-    // execute them
-    const interpreter = new Interpreter(executionOptions);
-    interpreter.onError(logError);
-    return interpreter.exec(statements);
-}
+//     // execute them
+//     const interpreter = new Interpreter(executionOptions);
+//     interpreter.onError(logError);
+//     return interpreter.exec(statements);
+// }
 
 /**
  * A synchronous version of `execute`. Executes a BrightScript file by path and writes its output to the streams
@@ -107,28 +118,28 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
  *
  * @returns the value returned by the executed file(s)
  */
-export function executeSync(
-    filenames: string[],
-    options: Partial<ExecutionOptions>,
-    args: BrsTypes.BrsType[]
-) {
-    const executionOptions = Object.assign(defaultExecutionOptions, options);
-    const interpreter = new Interpreter(executionOptions); // shared between files
+// export function executeSync(
+//     filenames: string[],
+//     options: Partial<ExecutionOptions>,
+//     args: BrsTypes.BrsType[]
+// ) {
+//     const executionOptions = Object.assign(defaultExecutionOptions, options);
+//     const interpreter = new Interpreter(executionOptions); // shared between files
 
-    let manifest = PP.getManifestSync(executionOptions.root);
+//     let manifest = PP.getManifestSync(executionOptions.root);
 
-    let allStatements = filenames
-        .map(filename => {
-            let contents = fs.readFileSync(filename, "utf8");
-            let scanResults = Lexer.scan(contents, filename);
-            let preprocessor = new PP.Preprocessor();
-            let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
-            return Parser.parse(preprocessorResults.processedTokens).statements;
-        })
-        .reduce((allStatements, statements) => [...allStatements, ...statements], []);
+//     let allStatements = filenames
+//         .map(filename => {
+//             let contents = fs.readFileSync(filename, "utf8");
+//             let scanResults = Lexer.scan(contents, filename);
+//             let preprocessor = new PP.Preprocessor();
+//             let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
+//             return Parser.parse(preprocessorResults.processedTokens).statements;
+//         })
+//         .reduce((allStatements, statements) => [...allStatements, ...statements], []);
 
-    return interpreter.exec(allStatements, ...args);
-}
+//     return interpreter.exec(allStatements, ...args);
+// }
 
 /**
  * Launches an interactive read-execute-print loop, which reads input from
@@ -136,30 +147,30 @@ export function executeSync(
  *
  * **NOTE:** Currently limited to single-line inputs :(
  */
-export function repl() {
-    const replInterpreter = new Interpreter();
-    replInterpreter.onError(logError);
+// export function repl() {
+//     const replInterpreter = new Interpreter();
+//     replInterpreter.onError(logError);
 
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-    });
-    rl.setPrompt("brs> ");
+//     const rl = readline.createInterface({
+//         input: process.stdin,
+//         output: process.stdout,
+//     });
+//     rl.setPrompt("brs> ");
 
-    rl.on("line", line => {
-        if (line.toLowerCase() === "quit" || line.toLowerCase() === "exit") {
-            process.exit();
-        }
-        let results = run(line, defaultExecutionOptions, replInterpreter);
-        // if (results) {
-        //     results.map(result => console.log(result.toString()));
-        // }
+//     rl.on("line", line => {
+//         if (line.toLowerCase() === "quit" || line.toLowerCase() === "exit") {
+//             process.exit();
+//         }
+//         let results = run(line, defaultExecutionOptions, replInterpreter);
+//         // if (results) {
+//         //     results.map(result => console.log(result.toString()));
+//         // }
 
-        rl.prompt();
-    });
+//         rl.prompt();
+//     });
 
-    rl.prompt();
-}
+//     rl.prompt();
+// }
 
 /**
  * Runs an arbitrary string of BrightScript code.
@@ -201,6 +212,7 @@ function run(
         return interpreter.exec(parseResults.statements);
     } catch (e) {
         //options.stderr.write(e.message);
+        console.error(e.message);
         return;
     }
 }

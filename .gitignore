@@ -3,3 +3,4 @@ lib/
 types/
 node_modules/
 .vscode/
+dist/
