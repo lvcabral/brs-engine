@@ -5,41 +5,33 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoBitmap } from "./RoBitmap";
+import { URL } from "url";
+import * as path from "path";
 
-export class RoScreen extends BrsComponent implements BrsValue {
+export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private alphaEnable: boolean;
-    private dblBuffer: boolean;
-    private width: number;
-    private height: number;
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
 
-    // TODO: Only allow the screensizes below, return invalid if bad resolution is passed
-    // HD mode screensizes
-    // 1280x720PAR=1:1 (default for HD)
-    // 854x480 PAR=1:1 useful for higher performance HD games, also for 640x480 games
-    // 940x480 PAR=1.1:1 used for displaying a RokuSD (720x480) games
-
-    // SD mode screensizes
-    // 720x480 PAR=1.1:1 (default for SD)
-    // 640x480 PAR=1:1 (used for 640x480 games)
-    // 854x626 PAR=1:1 (used for 854x480 HD games)
-    constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
-        super("roScreen", ["ifScreen", "ifDraw2D"]);
-        let canvas = document.getElementById("display") as HTMLCanvasElement;
+    constructor(fileUrl: BrsString) {
+        super("roBitmap", ["ifDraw2D"]);
+        let ready = false;
+        let filePath = fileUrl.value;
+        if (filePath.substr(0, 4) === "pkg:") {
+            //let filePath = path.join(interpreter.options.root, url.pathname);
+            filePath = filePath.substr(5); // TODO: Use options configuration that defines root
+        }
+        let canvas = document.createElement("canvas");
         this.canvas = canvas;
         let context = canvas.getContext("2d");
         this.context = (context && canvas.getContext("2d")) || new CanvasRenderingContext2D();
         this.alphaEnable = false;
-        this.dblBuffer = (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
-        this.width = (width instanceof Int32 && width.getValue()) || canvas.width; // TODO: Get default width from display
-        this.height = (height instanceof Int32 && height.getValue()) || canvas.height; // TODO: Get default height from display
-        canvas.width = this.width;
-        canvas.height = this.height;
+        const image = document.getElementById(filePath) as HTMLImageElement;
+        createContext();
+        //image.onload = createContext;
+        //image.src = filePath;
         this.registerMethods([
-            this.swapBuffers,
             this.clear,
             this.drawObject,
             this.drawRotatedObject,
@@ -56,30 +48,28 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.getWidth,
             this.getHeight,
         ]);
+        function createContext() {
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+            if (context != null) {
+                context.drawImage(image, 0, 0);
+            }
+            ready = true;
+            return;
+        }
     }
+
+    getCanvas(): HTMLCanvasElement {
+        return this.canvas;
+    }
+
     toString(parent?: BrsType): string {
-        return "<Component: roScreen>";
+        return "<Component: roBitmap>";
     }
 
     equalTo(other: BrsType) {
         return BrsBoolean.False;
     }
-
-    // ifScreen ------------------------------------------------------------------------------------
-
-    /** If the screen is double buffered, SwapBuffers swaps the back buffer with the front buffer */
-    private swapBuffers = new Callable("swapBuffers", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            if (this.dblBuffer) {
-                //TODO: Swap buffers (not sure if needed as the browser handles it)
-            }
-            return BrsInvalid.Instance;
-        },
-    });
 
     // ifDraw2D  -----------------------------------------------------------------------------------
 
@@ -92,7 +82,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, rgba: Int32) => {
             let ctx = this.context;
             ctx.fillStyle = this.rgbToHex(rgba.getValue());
-            ctx.fillRect(0, 0, this.width, this.height);
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             return BrsInvalid.Instance;
         },
     });
@@ -280,9 +270,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (this.dblBuffer) {
-                //TODO: Show pending paint
-            }
             return BrsInvalid.Instance;
         },
     });
@@ -317,7 +304,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.width);
+            return new Int32(this.canvas.width);
         },
     });
 
@@ -328,7 +315,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.height);
+            return new Int32(this.canvas.height);
         },
     });
 

@@ -7,6 +7,8 @@
     <title>Document</title>
 </head>
 <body>
+    <img src="img/roku-logo.png" id="img/roku-logo.png" style="display:none" />
+    <img src="img/AmigaBoingBall.png" id="img/AmigaBoingBall.png" style="display:none" />
     <canvas id="display" width="1280" height="720" style="background-color: black"></canvas>
     <script src="./lib/brsLib.js" type="text/javascript"></script>
     <script>
@@ -17,13 +19,20 @@
             lines.push('date.toLocalTime()');
             lines.push('print date.AsDateStringNoParam();');
             lines.push('screen=CreateObject("roScreen", true, 854, 480)');
+            lines.push('screen.SetAlphaEnable(true)');
             lines.push('print screen.getWidth() "x" screen.getHeight();');
             lines.push('print &HFF0000');
-            lines.push('screen.Clear(&H303030FF)')
-            lines.push('screen.DrawLine(0,0,200,300,&HFFD800FF)')
-            lines.push('screen.DrawRect(210,0,200,300,&HFF0000FF)')
-            lines.push('screen.DrawPoint(310,150,2.0,&HFFFFFFFF)')
-            lines.push('screen.DrawText("brsLib", 200, 330, &HFFFFFFFF, "30px Arial")')
+            lines.push('screen.Clear(&H303030FF)');
+            lines.push('screen.DrawLine(0,0,200,300,&HFFD800FF)');
+            lines.push('screen.DrawRect(210,0,200,300,&HFF0000FF)');
+            lines.push('screen.DrawPoint(310,150,7.0,&HFFFFFFFF)');
+            lines.push('screen.DrawText("brsLib", 230, 50, &HFFFFFFFF, "30px Arial")');
+            lines.push('bmp = CreateObject("roBitmap", "pkg:/img/roku-logo.png")');
+            lines.push('bmp.DrawLine(0,0,200,300,&HFFFFFFFF)');
+            lines.push('screen.DrawObject(450, 50, bmp)');
+            lines.push('screen.DrawScaledObject(0,300,0.3,0.3,bmp)');
+            lines.push('ball = CreateObject("roBitmap", "pkg:/img/AmigaBoingBall.png")');
+            lines.push('screen.DrawRotatedObject(200,300,30.0,ball)');
             lines.push('screen.SwapBuffers()');
             x.run(lines);
     </script>
