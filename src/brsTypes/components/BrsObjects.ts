@@ -7,6 +7,7 @@ import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoString } from "./RoString";
 import { RoBitmap } from "./RoBitmap";
+import { RoRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
 import { Int32 } from "../Int32";
 
@@ -20,6 +21,11 @@ export const BrsObjects = new Map<string, Function>([
     ["roregex", (expression: BrsString, flags: BrsString) => new RoRegex(expression, flags)],
     ["rostring", (literal: BrsString) => new RoString(literal)],
     ["robitmap", (fileUrl: BrsString) => new RoBitmap(fileUrl)],
+    [
+        "roregion",
+        (bitmap: RoBitmap, x: Int32, y: Int32, width: Int32, height: Int32) =>
+            new RoRegion(bitmap, x, y, width, height),
+    ],
     [
         "roscreen",
         (dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>

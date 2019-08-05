@@ -30,6 +30,8 @@ export * from "./components/RoSGNode";
 export * from "./components/BrsObjects";
 export * from "./components/RoRegex";
 export * from "./components/RoString";
+export * from "./components/RoBitmap";
+export * from "./components/RoRegion";
 export * from "./components/RoScreen";
 export * from "./Callable";
 
