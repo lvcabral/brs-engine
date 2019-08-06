@@ -30,8 +30,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
         super("roScreen", ["ifScreen", "ifDraw2D"]);
         let canvas = document.getElementById("display") as HTMLCanvasElement;
         this.canvas = canvas;
-        let context = canvas.getContext("2d");
-        this.context = (context && canvas.getContext("2d")) || new CanvasRenderingContext2D();
+        let context = canvas.getContext("2d", { alpha: false });
+        this.context =
+            (context && canvas.getContext("2d", { alpha: false })) ||
+            new CanvasRenderingContext2D();
         this.alphaEnable = false;
         this.dblBuffer = (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
         this.width = (width instanceof Int32 && width.getValue()) || canvas.width; // TODO: Get default width from display
@@ -306,6 +308,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
             this.alphaEnable = alphaEnabled.toBoolean();
+            let context = this.canvas.getContext("2d", { alpha: this.alphaEnable });
+            this.context =
+                (context && this.canvas.getContext("2d", { alpha: this.alphaEnable })) ||
+                new CanvasRenderingContext2D();
             return BrsInvalid.Instance;
         },
     });
