@@ -6,6 +6,8 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RoBitmap } from "./RoBitmap";
+import { RoMessagePort } from "./RoMessagePort";
+import { RoFont } from "./RoFont";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -15,6 +17,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private height: number;
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
+    private port?: RoMessagePort;
 
     // TODO: Only allow the screensizes below, return invalid if bad resolution is passed
     // HD mode screensizes
@@ -28,7 +31,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     // 854x626 PAR=1:1 (used for 854x480 HD games)
     constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen", ["ifScreen", "ifDraw2D"]);
-        let canvas = document.getElementById("display") as HTMLCanvasElement;
+        let canvas = document.getElementById("display") as HTMLCanvasElement; //TODO: Create an empty canvas and use the browser one as TV Display
         this.canvas = canvas;
         let context = canvas.getContext("2d", { alpha: false });
         this.context =
@@ -57,6 +60,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             // this.getPng,
             this.getWidth,
             this.getHeight,
+            this.getMessagePort,
+            this.setMessagePort,
         ]);
     }
     toString(parent?: BrsType): string {
@@ -255,21 +260,15 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("rgba", ValueKind.Int32),
-                new StdlibArgument("font", ValueKind.String),
-            ], // TODO: Implement roFont
+                new StdlibArgument("font", ValueKind.Object),
+            ],
             returns: ValueKind.Boolean,
         },
-        impl: (
-            _: Interpreter,
-            text: BrsString,
-            x: Int32,
-            y: Int32,
-            rgba: Int32,
-            font: BrsString
-        ) => {
+        impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
             let ctx = this.context;
             ctx.fillStyle = this.rgbToHex(rgba.getValue());
-            ctx.font = font.toString();
+            ctx.font = font.toFontString();
+            ctx.textBaseline = "top";
             ctx.fillText(text.toString(), x.getValue(), y.getValue());
             return BrsBoolean.True;
         },
@@ -337,6 +336,35 @@ export class RoScreen extends BrsComponent implements BrsValue {
             return new Int32(this.height);
         },
     });
+
+    // ifGetMessagePort ----------------------------------------------------------------------------------
+
+    /** Returns the message port (if any) currently associated with the object */
+    private getMessagePort = new Callable("getMessagePort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.port === undefined ? BrsInvalid.Instance : this.port;
+        },
+    });
+
+    // ifSetMessagePort ----------------------------------------------------------------------------------
+
+    /** Sets the roMessagePort to be used for all events from the screen */
+    private setMessagePort = new Callable("setMessagePort", {
+        signature: {
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, port: RoMessagePort) => {
+            this.port = port;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    // Aux functions  ------------------------------------------------------------------------------------
 
     private rgbToHex = function(rgb: number) {
         var hex = Number(rgb).toString(16);
