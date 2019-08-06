@@ -33,6 +33,9 @@ export * from "./components/RoString";
 export * from "./components/RoBitmap";
 export * from "./components/RoRegion";
 export * from "./components/RoScreen";
+export * from "./components/RoMessagePort";
+export * from "./components/RoFontRegistry";
+export * from "./components/RoFont";
 export * from "./Callable";
 
 /**

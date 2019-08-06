@@ -258,6 +258,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             let ctx = this.context;
             ctx.fillStyle = this.rgbToHex(rgba.getValue());
             ctx.font = font.toString();
+            ctx.textBaseline = "top";
             ctx.fillText(text.toString(), x.getValue(), y.getValue());
             return BrsBoolean.True;
         },
