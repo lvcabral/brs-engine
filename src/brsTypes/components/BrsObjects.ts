@@ -1,3 +1,4 @@
+import { BrsComponent } from "./BrsComponent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { RoDateTime } from "./RoDateTime";
@@ -23,7 +24,7 @@ export const BrsObjects = new Map<string, Function>([
     ["rosgnode", (nodeType: BrsString) => createNodeByType(nodeType)],
     ["roregex", (expression: BrsString, flags: BrsString) => new RoRegex(expression, flags)],
     ["rostring", (literal: BrsString) => new RoString(literal)],
-    ["robitmap", (fileUrl: BrsString) => new RoBitmap(fileUrl)],
+    ["robitmap", (param: BrsComponent) => new RoBitmap(param)],
     ["romessageport", () => new RoMessagePort()],
     ["rofontregistry", () => new RoFontRegistry()],
     [
