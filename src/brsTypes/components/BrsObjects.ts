@@ -9,6 +9,7 @@ import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFontRegistry } from "./RoFontRegistry";
 import { RoFont } from "./RoFont";
+import { RoCompositor } from "./RoCompositor";
 import { RoString } from "./RoString";
 import { RoBitmap } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
@@ -27,6 +28,7 @@ export const BrsObjects = new Map<string, Function>([
     ["robitmap", (param: BrsComponent) => new RoBitmap(param)],
     ["romessageport", () => new RoMessagePort()],
     ["rofontregistry", () => new RoFontRegistry()],
+    ["rocompositor", () => new RoCompositor()],
     [
         "rofont",
         (family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean) =>

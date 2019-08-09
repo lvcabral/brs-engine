@@ -9,6 +9,7 @@ import { RoBitmap } from "./RoBitmap";
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private bitmap: RoBitmap;
+    private context: CanvasRenderingContext2D;
     private x: number;
     private y: number;
     private width: number;
@@ -23,8 +24,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private collisionRect: object;
 
     constructor(bitmap: RoBitmap, x: Int32, y: Int32, width: Int32, height: Int32) {
-        super("RoRegion");
+        super("roRegion");
         this.bitmap = bitmap;
+        this.context = bitmap.getContext();
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
         this.x = x.getValue();
         this.y = y.getValue();
@@ -62,6 +64,25 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.setWrap,
         ]);
     }
+    applyOffset(x: number, y: number, width: number, height: number) {
+        this.x += x;
+        this.y += y;
+        this.width += width;
+        this.height += height;
+        // TODO: Check what is the effect on collision parameters
+    }
+    getImageWidth(): number {
+        return this.width;
+    }
+
+    getImageHeight(): number {
+        return this.height;
+    }
+
+    getImageData(): ImageData {
+        return this.context.getImageData(this.x, this.y, this.width, this.height);
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roRegion>";
     }
@@ -220,11 +241,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, w: Int32, h: Int32) => {
-            this.x += x.getValue();
-            this.y += y.getValue();
-            this.width += w.getValue();
-            this.height += h.getValue();
-            // TODO: Check what is the effect on collision parameters
+            this.applyOffset(x.getValue(), y.getValue(), w.getValue(), h.getValue());
             return BrsInvalid.Instance;
         },
     });

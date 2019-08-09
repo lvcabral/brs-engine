@@ -5,9 +5,8 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { URL } from "url";
-import * as path from "path";
 import { RoString } from "./RoString";
+import { RoRegion } from "./RoRegion";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 
@@ -75,9 +74,16 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             this.getHeight,
         ]);
     }
+    drawImage(image: HTMLCanvasElement, x: number, y: number) {
+        this.context.drawImage(image, x, y);
+    }
 
     getCanvas(): HTMLCanvasElement {
         return this.canvas;
+    }
+
+    getContext(): CanvasRenderingContext2D {
+        return this.context;
     }
 
     toString(parent?: BrsType): string {
@@ -110,14 +116,21 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
+                new StdlibArgument("object", ValueKind.Object),
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, object: RoBitmap) => {
+        impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent) => {
             let ctx = this.context;
-            ctx.drawImage(object.getCanvas(), x.getValue(), y.getValue());
-            return BrsBoolean.True;
+            let result = BrsBoolean.True;
+            if (object instanceof RoBitmap) {
+                ctx.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+            } else if (object instanceof RoRegion) {
+                ctx.putImageData(object.getImageData(), x.getValue(), y.getValue());
+            } else {
+                result = BrsBoolean.False;
+            }
+            return result;
         },
     });
 
