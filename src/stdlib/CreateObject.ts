@@ -12,6 +12,7 @@ export const CreateObject = new Callable("CreateObject", {
             new StdlibArgument("arg2", ValueKind.Dynamic, BrsInvalid.Instance),
             new StdlibArgument("arg3", ValueKind.Dynamic, BrsInvalid.Instance),
             new StdlibArgument("arg4", ValueKind.Dynamic, BrsInvalid.Instance),
+            new StdlibArgument("arg5", ValueKind.Dynamic, BrsInvalid.Instance),
         ],
         returns: ValueKind.Dynamic,
     },

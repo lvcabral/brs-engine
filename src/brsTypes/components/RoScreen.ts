@@ -6,6 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RoBitmap } from "./RoBitmap";
+import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 
@@ -64,6 +65,14 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.setMessagePort,
         ]);
     }
+    getCanvas(): HTMLCanvasElement {
+        return this.canvas;
+    }
+
+    drawImage(image: HTMLCanvasElement, x: number, y: number) {
+        this.context.drawImage(image, x, y);
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roScreen>";
     }
@@ -112,12 +121,26 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
             ],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, object: RoBitmap) => {
+        impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent) => {
             let ctx = this.context;
-            ctx.drawImage(object.getCanvas(), x.getValue(), y.getValue());
-            return BrsInvalid.Instance;
+            let result = BrsBoolean.True;
+            if (object instanceof RoBitmap) {
+                this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+            } else if (object instanceof RoRegion) {
+                const region = document.createElement("canvas");
+                region.width = object.getImageWidth();
+                region.height = object.getImageHeight();
+                const rctx = region.getContext("2d", { alpha: true });
+                if (rctx) {
+                    rctx.putImageData(object.getImageData(), 0, 0);
+                    this.drawImage(region, x.getValue(), y.getValue());
+                }
+            } else {
+                result = BrsBoolean.False;
+            }
+            return result;
         },
     });
 
@@ -130,7 +153,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("theta", ValueKind.Float),
                 new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
             ],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, theta: Float, object: RoBitmap) => {
             let ctx = this.context;
@@ -147,7 +170,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.rotate(-angleInRad);
             ctx.translate(-positionX, -positionY);
 
-            return BrsInvalid.Instance;
+            return BrsBoolean.True;
         },
     });
 
@@ -161,7 +184,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("scaleY", ValueKind.Float),
                 new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
             ],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
         impl: (
             _: Interpreter,
@@ -180,7 +203,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 obj.width * scaleX.getValue(),
                 obj.height * scaleY.getValue()
             );
-            return BrsInvalid.Instance;
+            return BrsBoolean.True;
         },
     });
 
@@ -194,7 +217,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("yEnd", ValueKind.Int32),
                 new StdlibArgument("rgba", ValueKind.Int32),
             ],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
         impl: (
             _: Interpreter,
@@ -209,7 +232,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.moveTo(xStart.getValue(), yStart.getValue());
             ctx.lineTo(xEnd.getValue(), yEnd.getValue());
             ctx.stroke();
-            return BrsInvalid.Instance;
+            return BrsBoolean.True;
         },
     });
 
@@ -222,13 +245,13 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("size", ValueKind.Float),
                 new StdlibArgument("rgba", ValueKind.Int32),
             ],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
             let ctx = this.context;
             ctx.fillStyle = this.rgbToHex(rgba.getValue());
             ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
-            return BrsInvalid.Instance;
+            return BrsBoolean.True;
         },
     });
 
@@ -242,13 +265,13 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("height", ValueKind.Int32),
                 new StdlibArgument("rgba", ValueKind.Int32),
             ],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             let ctx = this.context;
             ctx.fillStyle = this.rgbToHex(rgba.getValue());
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
-            return BrsInvalid.Instance;
+            return BrsBoolean.True;
         },
     });
 
@@ -299,7 +322,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if alpha blending is enabled */
+    /** If enable is true, do alpha blending when this bitmap is the destination */
     private setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
             args: [new StdlibArgument("alphaEnabled", ValueKind.Boolean)],
@@ -365,7 +388,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     });
 
     // Aux functions  ------------------------------------------------------------------------------------
-
+    // TODO: Review color conversion of hex numbers
     private rgbToHex = function(rgb: number) {
         var hex = Number(rgb).toString(16);
         if (hex.length < 2) {
