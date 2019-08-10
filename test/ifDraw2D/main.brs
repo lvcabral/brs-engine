@@ -5,7 +5,7 @@ sub main()
     date=CreateObject("roDateTime")
     date.toLocalTime()
     print date.AsDateStringNoParam();
-    screen=CreateObject("roScreen", true)
+    screen=CreateObject("roScreen", true, 854, 480)
     screen.SetAlphaEnable(true)
     port = CreateObject("roMessagePort")
     screen.SetMessagePort(port)
