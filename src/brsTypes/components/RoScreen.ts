@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoBitmap } from "./RoBitmap";
+import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
@@ -107,7 +107,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, rgba: Int32) => {
             let ctx = this.context;
-            ctx.fillStyle = this.rgbToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.fillRect(0, 0, this.width, this.height);
             return BrsInvalid.Instance;
         },
@@ -228,7 +228,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32
         ) => {
             let ctx = this.context;
-            ctx.strokeStyle = this.rgbToHex(rgba.getValue());
+            ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
             ctx.moveTo(xStart.getValue(), yStart.getValue());
             ctx.lineTo(xEnd.getValue(), yEnd.getValue());
             ctx.stroke();
@@ -249,7 +249,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
             let ctx = this.context;
-            ctx.fillStyle = this.rgbToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
             return BrsBoolean.True;
         },
@@ -269,7 +269,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             let ctx = this.context;
-            ctx.fillStyle = this.rgbToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
             return BrsBoolean.True;
         },
@@ -289,7 +289,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
             let ctx = this.context;
-            ctx.fillStyle = this.rgbToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(text.toString(), x.getValue(), y.getValue());
@@ -386,14 +386,4 @@ export class RoScreen extends BrsComponent implements BrsValue {
             return BrsInvalid.Instance;
         },
     });
-
-    // Aux functions  ------------------------------------------------------------------------------------
-    // TODO: Review color conversion of hex numbers
-    private rgbToHex = function(rgb: number) {
-        var hex = Number(rgb).toString(16);
-        if (hex.length < 2) {
-            hex = "0" + hex;
-        }
-        return "#" + hex;
-    };
 }
