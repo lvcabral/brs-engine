@@ -4,11 +4,8 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { Float } from "../Float";
 import { RoRegion } from "./RoRegion";
-import { RoBitmap } from "./RoBitmap";
-import { RoFont } from "./RoFont";
-import { RoAssociativeArray } from "./RoAssociativeArray";
+import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
 
@@ -123,7 +120,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             let ctx = this.context;
             let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
-            ctx.fillStyle = this.rgbToHex(rgba);
+            ctx.fillStyle = rgbaIntToHex(rgba);
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
             layers.forEach(z => {
                 const layer = this.sprites.get(z);
@@ -140,13 +137,4 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             return BrsInvalid.Instance;
         },
     });
-
-    // TODO: Review color conversion of hex numbers
-    private rgbToHex = function(rgb: number) {
-        var hex = Number(rgb).toString(16);
-        if (hex.length < 2) {
-            hex = "0" + hex;
-        }
-        return "#" + hex;
-    };
 }
