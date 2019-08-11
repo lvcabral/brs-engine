@@ -78,6 +78,10 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return this.region ? this.region.getImageData() : new ImageData(1, 1);
     }
 
+    getId(): number {
+        return this.id;
+    }
+
     getPosX(): number {
         return this.x;
     }
@@ -309,6 +313,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, region: RoRegion) => {
             this.region = region;
+            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
@@ -320,21 +325,9 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, z: Int32) => {
-            let layer = this.compositor.sprites.get(this.z);
-            if (layer) {
-                layer.forEach(sprite => {
-                    if (sprite.id === this.id) {
-                        //TODO: Remove element
-                    }
-                });
+            if (this.z !== z.getValue()) {
+                this.compositor.setSpriteZ(this.id, this.z, z.getValue());
                 this.z = z.getValue();
-                if (this.compositor.sprites.has(z.getValue())) {
-                    let newLayer = this.compositor.sprites.get(z.getValue());
-                    newLayer ? newLayer.push(this) : (newLayer = []);
-                    this.compositor.sprites.set(z.getValue(), layer);
-                } else {
-                    this.compositor.sprites.set(z.getValue(), [this]);
-                }
             }
             this.dirty = true;
             return BrsInvalid.Instance;
@@ -348,15 +341,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, z: Int32) => {
-            let layer = this.compositor.sprites.get(this.z);
-            if (layer) {
-                layer.forEach(sprite => {
-                    if (sprite.id === this.id) {
-                        //TODO: Remove element
-                    }
-                });
-            }
-            // TODO: Can self destruct ? Maybe send id to compositor to delete from there
+            this.compositor.removeSprite(this.id);
             this.dirty = true;
             return BrsInvalid.Instance;
         },

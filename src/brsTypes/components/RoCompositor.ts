@@ -37,6 +37,42 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         ]);
     }
 
+    setSpriteZ(id: number, currentZ: number, newZ: number) {
+        let layer = this.sprites.get(currentZ);
+        if (layer) {
+            let sprite;
+            layer.some(function(element, index, object) {
+                if (element.getId() === id) {
+                    object.splice(index, 1);
+                    sprite = element;
+                    return true; // break
+                }
+                return false;
+            });
+            if (sprite) {
+                if (this.sprites.has(newZ)) {
+                    let newLayer = this.sprites.get(newZ);
+                    newLayer ? newLayer.push(sprite) : (newLayer = [sprite]);
+                    this.sprites.set(newZ, layer);
+                } else {
+                    this.sprites.set(newZ, [sprite]);
+                }
+            }
+        }
+    }
+
+    removeSprite(id: number) {
+        this.sprites.forEach(function(layer) {
+            layer.some(function(sprite, index, object) {
+                if (sprite.getId() === id) {
+                    object.splice(index, 1);
+                    return true; // break
+                }
+                return false;
+            });
+        });
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roCompositor>";
     }
