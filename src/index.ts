@@ -20,6 +20,7 @@ export { _parser as parser };
 
 export default class brs {
     constructor() {}
+
     run(lines: string[]) {
         const replInterpreter = new Interpreter();
         replInterpreter.onError(logError);
@@ -28,6 +29,12 @@ export default class brs {
         });
     }
 }
+
+self.onmessage = function(event) {
+    const replInterpreter = new Interpreter();
+    replInterpreter.onError(logError);
+    run(event.data, defaultExecutionOptions, replInterpreter);
+};
 
 /**
  * Executes a BrightScript file by path and writes its output to the streams
