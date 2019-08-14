@@ -9,7 +9,7 @@ import { RoBitmap } from "./RoBitmap";
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private bitmap: RoBitmap;
-    private context: CanvasRenderingContext2D;
+    private context: OffscreenCanvasRenderingContext2D;
     private x: number;
     private y: number;
     private width: number;
@@ -71,6 +71,19 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.height += height;
         // TODO: Check what is the effect on collision parameters
     }
+
+    getCanvas(): OffscreenCanvas {
+        return this.bitmap.getCanvas();
+    }
+
+    getPosX(): number {
+        return this.x;
+    }
+
+    getPosY(): number {
+        return this.y;
+    }
+
     getImageWidth(): number {
         return this.width;
     }

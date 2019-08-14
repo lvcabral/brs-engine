@@ -16,8 +16,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private dblBuffer: boolean;
     private width: number;
     private height: number;
-    private canvas: HTMLCanvasElement;
-    private context: CanvasRenderingContext2D;
+    private display: HTMLCanvasElement;
+    private canvas: OffscreenCanvas;
+    private context: OffscreenCanvasRenderingContext2D;
     private port?: RoMessagePort;
 
     // TODO: Only allow the screensizes below, return invalid if bad resolution is passed
@@ -32,18 +33,19 @@ export class RoScreen extends BrsComponent implements BrsValue {
     // 854x626 PAR=1:1 (used for 854x480 HD games)
     constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen", ["ifScreen", "ifDraw2D"]);
-        let canvas = document.getElementById("display") as HTMLCanvasElement; //TODO: Create an empty canvas and use the browser one as TV Display
-        this.canvas = canvas;
-        let context = canvas.getContext("2d", { alpha: false });
-        this.context =
-            (context && canvas.getContext("2d", { alpha: false })) ||
-            new CanvasRenderingContext2D();
+        this.display = document.getElementById("display") as HTMLCanvasElement; //TODO: Create an empty canvas and use the browser one as TV Display
+        this.width = (width instanceof Int32 && width.getValue()) || this.display.width; // TODO: Get default width from display
+        this.height = (height instanceof Int32 && height.getValue()) || this.display.height; // TODO: Get default height from display
+
+        let canvas = new OffscreenCanvas(this.width, this.height);
+        this.context = canvas.getContext("2d", {
+            alpha: false,
+        }) as OffscreenCanvasRenderingContext2D;
         this.alphaEnable = false;
         this.dblBuffer = (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
-        this.width = (width instanceof Int32 && width.getValue()) || canvas.width; // TODO: Get default width from display
-        this.height = (height instanceof Int32 && height.getValue()) || canvas.height; // TODO: Get default height from display
-        canvas.width = this.width;
-        canvas.height = this.height;
+        this.canvas = canvas;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
         this.registerMethods([
             this.swapBuffers,
             this.clear,
@@ -65,11 +67,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.setMessagePort,
         ]);
     }
-    getCanvas(): HTMLCanvasElement {
+    getCanvas(): OffscreenCanvas {
         return this.canvas;
     }
 
-    drawImage(image: HTMLCanvasElement, x: number, y: number) {
+    drawImage(image: OffscreenCanvas, x: number, y: number) {
         this.context.drawImage(image, x, y);
     }
 
@@ -91,7 +93,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.dblBuffer) {
-                //TODO: Swap buffers (not sure if needed as the browser handles it)
+                const context = this.display.getContext("2d");
+                if (context) {
+                    context.drawImage(this.canvas, 0, 0);
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -129,14 +134,17 @@ export class RoScreen extends BrsComponent implements BrsValue {
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
-                const region = document.createElement("canvas");
-                region.width = object.getImageWidth();
-                region.height = object.getImageHeight();
-                const rctx = region.getContext("2d", { alpha: true });
-                if (rctx) {
-                    rctx.putImageData(object.getImageData(), 0, 0);
-                    this.drawImage(region, x.getValue(), y.getValue());
-                }
+                this.context.drawImage(
+                    object.getCanvas(),
+                    object.getPosX(),
+                    object.getPosY(),
+                    object.getImageWidth(),
+                    object.getImageHeight(),
+                    x.getValue(),
+                    y.getValue(),
+                    object.getImageWidth(),
+                    object.getImageHeight()
+                );
             } else {
                 result = BrsBoolean.False;
             }
@@ -304,8 +312,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (this.dblBuffer) {
-                //TODO: Show pending paint
+            if (!this.dblBuffer) {
+                const context = this.display.getContext("2d");
+                if (context) {
+                    context.drawImage(this.canvas, 0, 0);
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -330,10 +341,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
             this.alphaEnable = alphaEnabled.toBoolean();
-            let context = this.canvas.getContext("2d", { alpha: this.alphaEnable });
-            this.context =
-                (context && this.canvas.getContext("2d", { alpha: this.alphaEnable })) ||
-                new CanvasRenderingContext2D();
+            this.context = this.canvas.getContext("2d", {
+                alpha: this.alphaEnable,
+            }) as OffscreenCanvasRenderingContext2D;
             return BrsInvalid.Instance;
         },
     });
