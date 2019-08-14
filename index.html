@@ -8,7 +8,6 @@
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
 </head>
 <body>
-    <script src="./lib/brsLib.js" type="text/javascript"></script>
     <img src="img/sprite.png" id="img/sprite.png" style="display:none" />
     <img src="img/roku-logo.png" id="img/roku-logo.png" style="display:none" />
     <img src="img/AmigaBoingBall.png" id="img/AmigaBoingBall.png" style="display:none" />
@@ -19,7 +18,9 @@
         <input type="file" id="file" accept=".brs">
     </div>    
     <script>
-        //var brsWorker = new Worker("./lib/brsLib.js");
+        var display = document.getElementById('display');
+        var ctx = display.getContext("2d", {alpha: false});
+        var brsWorker;
         var fileSelector = document.getElementById('file');
         fileSelector.onclick = function () {
             this.value = null;
@@ -28,17 +29,22 @@
             var file = this.files[0];
             var reader = new FileReader();
             reader.onload = function(progressEvent){
-                var display = document.getElementById('display');
-                ctx = display.getContext("2d", {alpha: false});
                 ctx.fillStyle = "rgba(0, 0, 0, 1)";
                 ctx.fillRect(0, 0, display.width, display.height)               
                 display.style.display = 'initial';
-                var x = new brsLib.default;
-                x.run([this.result]);
-                //brsWorker.postMessage(this.result);
+                if (brsWorker != undefined) {
+                    brsWorker.terminate();                    
+                }
+                brsWorker = new Worker("./lib/brsLib.js")
+                brsWorker.addEventListener('message', drawCanvas);
+                brsWorker.postMessage(this.result);
             };
             reader.readAsText(file);
         };
+        
+        function drawCanvas(event) {
+            ctx.putImageData(event.data, 0, 0);
+        }
     </script>
     <style>
         body {

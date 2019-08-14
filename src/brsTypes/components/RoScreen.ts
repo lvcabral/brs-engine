@@ -16,7 +16,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private dblBuffer: boolean;
     private width: number;
     private height: number;
-    private display: HTMLCanvasElement;
+    //private display: HTMLCanvasElement;
     private canvas: OffscreenCanvas;
     private context: OffscreenCanvasRenderingContext2D;
     private port?: RoMessagePort;
@@ -33,9 +33,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
     // 854x626 PAR=1:1 (used for 854x480 HD games)
     constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen", ["ifScreen", "ifDraw2D"]);
-        this.display = document.getElementById("display") as HTMLCanvasElement; //TODO: Create an empty canvas and use the browser one as TV Display
-        this.width = (width instanceof Int32 && width.getValue()) || this.display.width; // TODO: Get default width from display
-        this.height = (height instanceof Int32 && height.getValue()) || this.display.height; // TODO: Get default height from display
+        //this.display = document.getElementById("display") as HTMLCanvasElement; //TODO: Create an empty canvas and use the browser one as TV Display
+        this.width = (width instanceof Int32 && width.getValue()) || 854; //this.display.width;
+        this.height = (height instanceof Int32 && height.getValue()) || 480; //this.display.height;
 
         let canvas = new OffscreenCanvas(this.width, this.height);
         this.context = canvas.getContext("2d", {
@@ -93,10 +93,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.dblBuffer) {
-                const context = this.display.getContext("2d");
-                if (context) {
-                    context.drawImage(this.canvas, 0, 0);
-                }
+                postMessage(this.context.getImageData(0, 0, this.width, this.height));
+                // const context = this.display.getContext("2d");
+                // if (context) {
+                //     context.drawImage(this.canvas, 0, 0);
+                // }
             }
             return BrsInvalid.Instance;
         },
@@ -313,10 +314,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (!this.dblBuffer) {
-                const context = this.display.getContext("2d");
-                if (context) {
-                    context.drawImage(this.canvas, 0, 0);
-                }
+                // const context = this.display.getContext("2d");
+                // if (context) {
+                //     context.drawImage(this.canvas, 0, 0);
+                // }
             }
             return BrsInvalid.Instance;
         },
