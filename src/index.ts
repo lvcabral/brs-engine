@@ -18,12 +18,17 @@ export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
 
-var replInterpreter: Interpreter;
+export const assets = new Map<string, Uint8ClampedArray>();
+export const sizes = new Map<string, any>();
 
 onmessage = function(event) {
-    replInterpreter = new Interpreter();
+    const replInterpreter = new Interpreter();
     replInterpreter.onError(logError);
-    run(event.data, defaultExecutionOptions, replInterpreter);
+    for (let index = 0; index < event.data.urls.length; index++) {
+        assets.set(event.data.urls[index], event.data.images[index]);
+        sizes.set(event.data.urls[index], event.data.sizes[index]);
+    }
+    run(event.data.brs, defaultExecutionOptions, replInterpreter);
 };
 
 /**
