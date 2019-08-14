@@ -13,14 +13,14 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private alphaEnable: boolean;
-    private canvas: HTMLCanvasElement;
-    private context: CanvasRenderingContext2D;
+    private canvas: OffscreenCanvas;
+    private context: OffscreenCanvasRenderingContext2D;
 
     constructor(param: BrsComponent) {
         super("roBitmap", ["ifDraw2D"]);
-        let canvas = document.createElement("canvas");
         let filePath = "";
-        this.canvas = canvas;
+        let width = 300;
+        let height = 150;
         this.alphaEnable = false;
         if (param instanceof BrsString) {
             filePath = param.value;
@@ -30,29 +30,28 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             }
             this.alphaEnable = true;
         } else if (param instanceof RoAssociativeArray) {
-            let width = param.get(new BrsString("width"));
-            if (width instanceof Int32) {
-                canvas.width = width.getValue();
+            let paramWidth = param.get(new BrsString("width"));
+            if (paramWidth instanceof Int32) {
+                width = paramWidth.getValue();
             }
-            let height = param.get(new BrsString("height"));
-            if (height instanceof Int32) {
-                canvas.height = height.getValue();
+            let paramHeight = param.get(new BrsString("height"));
+            if (paramHeight instanceof Int32) {
+                height = paramHeight.getValue();
             }
             let alphaEnable = param.get(new BrsString("alphaEnable"));
             if (alphaEnable instanceof BrsBoolean) {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
         }
+        this.canvas = new OffscreenCanvas(width, height);
         //TODO: Review alpha enable, it should only affect bitmap as destination.
-        let context = canvas.getContext("2d", { alpha: this.alphaEnable });
-        this.context =
-            (context && canvas.getContext("2d", { alpha: this.alphaEnable })) ||
-            new CanvasRenderingContext2D();
-
+        this.context = this.canvas.getContext("2d", {
+            alpha: this.alphaEnable,
+        }) as OffscreenCanvasRenderingContext2D;
         if (filePath !== "") {
             const image = document.getElementById(filePath) as HTMLImageElement;
-            canvas.width = image.naturalWidth;
-            canvas.height = image.naturalHeight;
+            this.canvas.width = image.naturalWidth;
+            this.canvas.height = image.naturalHeight;
             this.context.drawImage(image, 0, 0);
         }
 
@@ -74,15 +73,15 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             this.getHeight,
         ]);
     }
-    drawImage(image: HTMLCanvasElement, x: number, y: number) {
+    drawImage(image: OffscreenCanvas, x: number, y: number) {
         this.context.drawImage(image, x, y);
     }
 
-    getCanvas(): HTMLCanvasElement {
+    getCanvas(): OffscreenCanvas {
         return this.canvas;
     }
 
-    getContext(): CanvasRenderingContext2D {
+    getContext(): OffscreenCanvasRenderingContext2D {
         return this.context;
     }
 
@@ -317,10 +316,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
             this.alphaEnable = alphaEnabled.toBoolean();
-            let context = this.canvas.getContext("2d", { alpha: this.alphaEnable });
-            this.context =
-                (context && this.canvas.getContext("2d", { alpha: this.alphaEnable })) ||
-                new CanvasRenderingContext2D();
+            let context = this.canvas.getContext("2d", {
+                alpha: this.alphaEnable,
+            }) as OffscreenCanvasRenderingContext2D;
+            this.context = context;
             return BrsInvalid.Instance;
         },
     });

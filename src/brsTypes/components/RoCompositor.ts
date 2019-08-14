@@ -12,19 +12,19 @@ import { RoArray } from "./RoArray";
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly sprites = new Map<number, RoSprite[]>();
-    private canvas: HTMLCanvasElement;
-    private context: CanvasRenderingContext2D;
+    private canvas: OffscreenCanvas;
+    private context: OffscreenCanvasRenderingContext2D;
     private destBitmap?: RoBitmap;
     private rgbaBackground?: number;
     private spriteId: number;
 
     constructor() {
         super("roCompositor");
-        let canvas = document.createElement("canvas");
-        this.canvas = canvas;
-        let context = canvas.getContext("2d", { alpha: true });
-        this.context =
-            (context && canvas.getContext("2d", { alpha: true })) || new CanvasRenderingContext2D();
+        this.canvas = new OffscreenCanvas(10, 10);
+        let context = this.canvas.getContext("2d", {
+            alpha: true,
+        }) as OffscreenCanvasRenderingContext2D;
+        this.context = context;
         this.spriteId = 0;
         this.registerMethods([
             this.setDrawTo,
