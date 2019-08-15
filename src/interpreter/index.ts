@@ -238,7 +238,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        this.stdout.write(" ".repeat(16 - (this.stdout.position() % 16)));
+                        console.log(" ".repeat(16 - (this.stdout.position() % 16)));
+                        //this.stdout.write(" ".repeat(16 - (this.stdout.position() % 16)));
                         break;
                     case Lexeme.Semicolon:
                         if (index === statement.expressions.length - 1) {
@@ -246,8 +247,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             // They're used to suppress trailing newlines in `print` statements
                             break;
                         }
-
-                        this.stdout.write(" ");
+                        console.log(" ");
+                        //this.stdout.write(" ");
                         break;
                     default:
                         this.addError(
@@ -258,13 +259,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                 }
             } else {
-                this.stdout.write(this.evaluate(printable).toString());
+                //this.stdout.write(this.evaluate(printable).toString());
+                console.log(this.evaluate(printable).toString());
             }
         });
 
         let lastExpression = statement.expressions[statement.expressions.length - 1];
         if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
-            this.stdout.write("\n");
+            console.log("\n");
+            //this.stdout.write("\n");
         }
 
         // `tab` is only in-scope when executing print statements, so remove it before we leave
