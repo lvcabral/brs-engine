@@ -9,6 +9,7 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
+import { frame } from "../..";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -92,12 +93,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (this.dblBuffer) {
+            if (this.dblBuffer && frame.flag) {
                 postMessage(this.context.getImageData(0, 0, this.width, this.height));
-                // const context = this.display.getContext("2d");
-                // if (context) {
-                //     context.drawImage(this.canvas, 0, 0);
-                // }
+                //frame.flag = false;
             }
             return BrsInvalid.Instance;
         },
@@ -313,11 +311,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (!this.dblBuffer) {
-                // const context = this.display.getContext("2d");
-                // if (context) {
-                //     context.drawImage(this.canvas, 0, 0);
-                // }
+            if (!this.dblBuffer && frame.flag) {
+                postMessage(this.context.getImageData(0, 0, this.width, this.height));
+                //frame.flag = false;
             }
             return BrsInvalid.Instance;
         },
