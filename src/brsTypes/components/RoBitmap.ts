@@ -9,8 +9,7 @@ import { RoString } from "./RoString";
 import { RoRegion } from "./RoRegion";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { assets } from "../..";
-import { sizes } from "../..";
+import { images } from "../..";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -51,13 +50,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             alpha: this.alphaEnable,
         }) as OffscreenCanvasRenderingContext2D;
         if (filePath !== "") {
-            let imgSize = sizes.get(filePath);
-            this.canvas.width = imgSize.width;
-            this.canvas.height = imgSize.height;
-            let image = assets.get(filePath);
-            if (image) {
-                let imageData = this.context.getImageData(0, 0, imgSize.width, imgSize.height);
-                imageData.data.set(image);
+            let imageData = images.get(filePath);
+            if (imageData) {
+                this.canvas.width = imageData.width;
+                this.canvas.height = imageData.height;
                 this.context.putImageData(imageData, 0, 0);
             }
         }

@@ -18,17 +18,20 @@ export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
 
-export const assets = new Map<string, Uint8ClampedArray>();
-export const sizes = new Map<string, any>();
+export const images = new Map<string, ImageData>();
+export const frame = { flag: true };
 
 onmessage = function(event) {
-    const replInterpreter = new Interpreter();
-    replInterpreter.onError(logError);
-    for (let index = 0; index < event.data.urls.length; index++) {
-        assets.set(event.data.urls[index], event.data.images[index]);
-        sizes.set(event.data.urls[index], event.data.sizes[index]);
+    if (event.data.brs) {
+        const replInterpreter = new Interpreter();
+        replInterpreter.onError(logError);
+        for (let index = 0; index < event.data.urls.length; index++) {
+            images.set(event.data.urls[index], event.data.images[index]);
+        }
+        run(event.data.brs, defaultExecutionOptions, replInterpreter);
+    } else if (event.data.frame) {
+        frame.flag = true;
     }
-    run(event.data.brs, defaultExecutionOptions, replInterpreter);
 };
 
 /**
@@ -70,7 +73,6 @@ function run(
     try {
         return interpreter.exec(parseResults.statements);
     } catch (e) {
-        //options.stderr.write(e.message);
         console.error(e.message);
         return;
     }
