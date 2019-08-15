@@ -10,7 +10,8 @@
     "brs": "./bin/cli.js"
   },
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --env.NODE_ENV=development",
+    "release": "webpack --env.NODE_ENV=production --env.production",
     "clean": "rimraf ./lib ./types",
     "test": "tsc && jest",
     "lint": "tslint --project .",
