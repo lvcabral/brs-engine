@@ -6,19 +6,20 @@ sub main()
     screen.SetMessagePort(port)
     compositor=CreateObject("roCompositor")
     compositor.SetDrawTo(screen, 0)
-    rectboing(screen, port, 0, 0, 854, 480, 1)
+    scaleblit(screen, port, 0, 0, 854, 480, 1)
 end sub
 
-sub rectboing(screenFull as object, msgport as object, topx, topy, w, h, par)
+sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
 
-        print "Rect Boing"
+        print "Scale Boing"
         screen = screenFull
-
+        
         red = 255*256*256*256+255
         green = 255*256*256+255
         blue = 255*256+255
         
-        background = &h8C8C8CFF
+        clr = int(255*.55)
+        background = &h8c8c8cff
         sidebarcolor = green
 
         screen.Clear(background)
@@ -30,64 +31,84 @@ sub rectboing(screenFull as object, msgport as object, topx, topy, w, h, par)
         ballsizey = int(ballsize)
         ballsizex = int(ballsize*par)
 
-        ballbitmap = createobject("robitmap",{width:ballsizex,height:ballsizey,alphaenable:false})
-        ballbitmap.clear(red)
+        tmpballbitmap = createobject("robitmap","pkg:/img/AmigaBoingBall.png")
+
+        scaley = ballsizey/tmpballbitmap.getheight()
+        scalex = scaley*par
+
+        ballbitmap = createobject("robitmap",{width:ballsizex,height:ballsizey,alphaenable:true})
+        ballbitmap.drawscaledobject(0,0,scalex*1.0,scaley*1.0,tmpballbitmap)
+
+        ballregion = createobject("roregion",ballbitmap,0,0,ballsizex,ballsizey)
+        ballcenterX = int(ballsizex/2)
+        ballcenterY = int(ballsizey/2)
+        ballregion.setpretranslation(-ballcenterX, -ballcenterY)
+        ballregion.setscalemode(0)
         
+        ' construct ball shadow
+        tmpballbitmap = createobject("robitmap","pkg:/img/BallShadow.png")
         ballshadow = createobject("robitmap",{width:ballsizex,height:ballsizey,alphaenable:true})
-        ballshadow.clear(&h80)
+        ballshadow.drawscaledobject(0,0,ballsizex/tmpballbitmap.getwidth(),ballsizey/tmpballbitmap.getheight(),tmpballbitmap)
+        
+        shadowregion = createobject("roregion",ballshadow,0,0,ballsizex,ballsizey)
+        shadowregion.setpretranslation(-ballcenterX, -ballcenterY)
+        shadowregion.setscalemode(0)
 
         ' calculate starting position and motion dynamics
-        x = w/10
-        y = h/10
-
+        x = w/10 + ballcenterX
+        y = h/10 + ballcenterY
+        
         dx = 2
         dy = 1
         ay = 1
-        oldx = x
-        oldy = y
         framecount = 0
         timestamp = createobject("rotimespan")
         swapbuff_timestamp = createobject("rotimespan")
         start = timestamp.totalmilliseconds()
         swapbuff_time = 0
-        ballsizex_over_3 = ballsizex/3
-        ballsizey_over_6 = ballsizey/6
+        shadow_dx = int(ballsizex/4)
+        shadow_dy = int(ballsizey/10)
         w_over_10 = w/10
-        w_times9_over10 = (w*9)/10
-        h_times9_over10 = (h*9)/10
-        'codes = bslUniversalControlEventCodes()
+        rightedge = int(ballcenterx + (w*9)/10)
+        bottomedge = int(ballcentery + (h*9)/10)
+        running = true
+        ' codes = bslUniversalControlEventCodes()
         grid = createobject("robitmap", {width:screen.getWidth(),height:screen.getheight(),alphaenable:false})
         regiondrawgrid(grid, background)
         grid.finish()
         while true
                 screen.drawobject(0, 0, grid)
-                screen.SetAlphaEnable(true)
-                screen.drawobject(toInt(x+ballsizex_over_3),toInt(y+ballsizey_over_6),ballshadow)
-                screen.SetAlphaEnable(false)
-                screen.drawobject(toInt(x),toInt(y),ballbitmap)
+                'screen.SetAlphaEnable(true)
+                scalex = x/rightedge
+                scaley = y/bottomedge
+                screen.drawscaledobject(toInt(x+shadow_dx),toInt(y+shadow_dy),scalex*1.0,scaley*1.0,shadowregion)
+
+                screen.drawscaledobject(toInt(x),toInt(y),scalex*1.0,scaley*1.0,ballregion)
+                'screen.SetAlphaEnable(false)
+                screen.drawrect(toInt(x-2),toInt(y-2),5,5,green)        ' show where the (x,y) is
+                
                 swapbuff_timestamp.mark()
                 screenFull.SwapBuffers()
                 swapbuff_time = swapbuff_time + swapbuff_timestamp.totalmilliseconds()
                 
-                ' check for input
                 pullingmsgs = true
                 while pullingmsgs
+                    deltatime = timestamp.totalmilliseconds() - start
                     msg = msgport.getmessage()
-                    if msg = invalid
+                    if msg = invalid and deltatime > 16 'aprox 60fps	
+                        timestamp.mark()
+                        start = timestamp.totalmilliseconds()
                         pullingmsgs = false
                     else
                         if type(msg) = "roUniversalControlEvent"
                             button = msg.getint()
                             print "button=";button
-                        '     if button=codes.BUTTON_BACK_PRESSED   
-                        '         return
-                        '     endif
+                            'if button=codes.BUTTON_BACK_PRESSED   
+                                return
+                            'endif
                         endif
                     endif
                 end while
-
-                oldx = x
-                oldy = y
                 x = x + dx
                 y = y + dy
                 dy = dy + ay
@@ -99,24 +120,23 @@ sub rectboing(screenFull as object, msgport as object, topx, topy, w, h, par)
                         y = -y
                         dy = -dy
                 endif
-                if x+ballsizex > w_times9_over10
-                        x = 2*w_times9_over10 - x - 2*ballsizex
+                if x+ballsizex > rightedge
+                        x = 2*rightedge - x - 2*ballsizex
                         dx = -dx
                 endif
-                if y+ballsizey > h_times9_over10
+                if y+ballsizey > bottomedge
                         y = 2*y - y
                         dy = -dy + ay
                 endif
-
-                framecount = framecount + 1
-                if framecount >= 100
-                      deltatime = timestamp.totalmilliseconds() - start
-                      print "frames per second = "; (framecount*1000)/deltatime
-                      'print " average swapbuff time = "; swapbuff_time/framecount; " milliseconds"
-                      swapbuff_time = 0
-                      framecount = 0
-                      timestamp.mark()
-                endif
+                ' framecount = framecount + 1
+                ' if framecount >= 100
+                '       deltatime = timestamp.totalmilliseconds() - start
+                '       print "frames per second = "; (framecount*1000)/deltatime;
+                '       print " average swapbuff time = "; swapbuff_time/framecount; " milliseconds"
+                '       swapbuff_time = 0
+                '       framecount = 0
+                '       timestamp.mark()
+                ' endif
         end while
         print "Exiting APP"
 End Sub
