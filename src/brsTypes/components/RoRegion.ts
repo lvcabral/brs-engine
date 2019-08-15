@@ -84,6 +84,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.y;
     }
 
+    getTransX(): number {
+        return this.translationX;
+    }
+
+    getTransY(): number {
+        return this.translationY;
+    }
+
     getImageWidth(): number {
         return this.width;
     }

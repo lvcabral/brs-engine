@@ -123,7 +123,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
+                new StdlibArgument("object", ValueKind.Object),
             ],
             returns: ValueKind.Boolean,
         },
@@ -133,14 +133,14 @@ export class RoScreen extends BrsComponent implements BrsValue {
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
-                this.context.drawImage(
+                ctx.drawImage(
                     object.getCanvas(),
                     object.getPosX(),
                     object.getPosY(),
                     object.getImageWidth(),
                     object.getImageHeight(),
-                    x.getValue(),
-                    y.getValue(),
+                    x.getValue() + object.getTransX(),
+                    y.getValue() + object.getTransY(),
                     object.getImageWidth(),
                     object.getImageHeight()
                 );
@@ -189,7 +189,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("scaleX", ValueKind.Float),
                 new StdlibArgument("scaleY", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
+                new StdlibArgument("object", ValueKind.Object),
             ],
             returns: ValueKind.Boolean,
         },
@@ -199,18 +199,38 @@ export class RoScreen extends BrsComponent implements BrsValue {
             y: Int32,
             scaleX: Float,
             scaleY: Float,
-            object: RoBitmap
+            object: BrsComponent
         ) => {
+            let result = BrsBoolean.True;
             let ctx = this.context;
-            let obj = object.getCanvas();
-            ctx.drawImage(
-                obj,
-                x.getValue(),
-                y.getValue(),
-                obj.width * scaleX.getValue(),
-                obj.height * scaleY.getValue()
-            );
-            return BrsBoolean.True;
+            if (object instanceof RoBitmap) {
+                let cvs = object.getCanvas();
+                ctx.drawImage(
+                    cvs,
+                    x.getValue(),
+                    y.getValue(),
+                    cvs.width * scaleX.getValue(),
+                    cvs.height * scaleY.getValue()
+                );
+            } else if (object instanceof RoRegion) {
+                let cvs = object.getCanvas();
+                let tx = object.getTransX() * scaleX.getValue();
+                let ty = object.getTransY() * scaleY.getValue();
+                ctx.drawImage(
+                    cvs,
+                    object.getPosX(),
+                    object.getPosY(),
+                    object.getImageWidth(),
+                    object.getImageHeight(),
+                    x.getValue() + tx,
+                    y.getValue() + ty,
+                    cvs.width * scaleX.getValue(),
+                    cvs.height * scaleY.getValue()
+                );
+            } else {
+                result = BrsBoolean.False;
+            }
+            return result;
         },
     });
 
