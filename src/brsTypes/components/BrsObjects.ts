@@ -2,7 +2,7 @@ import { BrsComponent } from "./BrsComponent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { RoDateTime } from "./RoDateTime";
-import { Timespan } from "./Timespan";
+import { Timespan } from "./RoTimespan";
 import { RoSGNode, createNodeByType } from "./RoSGNode";
 import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
