@@ -24,8 +24,8 @@
         var buffer = new ImageData(854, 480);
         var dirty = false;
         var brsWorker;
-        var images;
-        var urls;
+        var imgs = [];
+        var urls = [];
         var fileSelector = document.getElementById('file');
         fileSelector.onclick = function () {
             this.value = null;
@@ -42,12 +42,12 @@
                 }
                 brsWorker = new Worker("./lib/brsLib.js")
                 brsWorker.addEventListener('message', saveBuffer);
-                imgs = [];
-                urls = [];
-                imgs.push(getImageData("img/sprite.png"));
-                imgs.push(getImageData("img/roku-logo.png"));
-                imgs.push(getImageData("img/AmigaBoingBall.png"));
-                imgs.push(getImageData("img/BallShadow.png"));
+                if (imgs.length == 0) {
+                    imgs.push(getImageData("img/sprite.png"));
+                    imgs.push(getImageData("img/roku-logo.png"));
+                    imgs.push(getImageData("img/AmigaBoingBall.png"));
+                    imgs.push(getImageData("img/BallShadow.png"));
+                }
                 var payload = {brs: this.result, urls: urls, images: imgs}
                 brsWorker.postMessage(payload);
             };
