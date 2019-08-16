@@ -1,5 +1,5 @@
 const brs = require("brs");
-const { Timespan, Int32, BrsString, BrsInvalid } = brs.types;
+const { RoTimespan, Int32, BrsString, BrsInvalid } = brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 const lolex = require("lolex");
 
@@ -9,7 +9,7 @@ describe("Timespan", () => {
 
     beforeEach(() => {
         clock = lolex.install({ now: 1547072370937 });
-        ts = new Timespan();
+        ts = new RoTimespan();
     });
 
     afterAll(() => {
