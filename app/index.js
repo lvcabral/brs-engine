@@ -3,22 +3,36 @@ var ctx = display.getContext("2d", { alpha: false });
 var buffer = new ImageData(854, 480);
 var dirty = false;
 var brsWorker;
+var paths = [];
 var imgs = [];
-var urls = [];
+var assets = [];
 var files = [];
-var localFiles = [];
-
-files.push({ fileName: "sprite.png", folder: "img", type: "image/png" });
-files.push({ fileName: "roku-logo.png", folder: "img", type: "image/png" });
-files.push({ fileName: "AmigaBoingBall.png", folder: "img", type: "image/png" });
-files.push({ fileName: "BallShadow.png", folder: "img", type: "image/png" });
 var loader = new Worker("app/loader.js");
 loader.onmessage = function(e) {
-    localFiles = e.data;
-    fileSelector.style = "";
-    loader.terminate();
+    files = e.data;
+    packImages().then(function() {
+        fileSelector.style = "";
+        loader.terminate();
+    });
 };
-loader.postMessage({ files: files });
+assets.push({ path: "img/sprite.png", type: "image/png" });
+assets.push({ path: "img/roku-logo.png", type: "image/png" });
+assets.push({ path: "img/AmigaBoingBall.png", type: "image/png" });
+assets.push({ path: "img/BallShadow.png", type: "image/png" });
+loader.postMessage({ assets: assets });
+
+async function packImages() {
+    events = [];
+    files.forEach(file => {
+        paths.push(file.path);
+        events.push(createImageBitmap(file.blob));
+    });
+    return Promise.all(events).then(bmps => {
+        for (var index = 0; index < bmps.length; index++) {
+            imgs.push(bmps[index]);
+        }
+    });
+}
 
 var fileSelector = document.getElementById("file");
 fileSelector.onclick = function() {
@@ -31,33 +45,23 @@ fileSelector.onchange = function() {
         ctx.fillStyle = "rgba(0, 0, 0, 1)";
         ctx.fillRect(0, 0, display.width, display.height);
         display.style.display = "initial";
-        if (brsWorker != undefined) {
-            brsWorker.terminate();
-        }
         brsWorker = new Worker("./lib/brsLib.js");
         brsWorker.addEventListener("message", saveBuffer);
-        if (imgs.length == 0) {
-            imgs.push(getImageData("img/sprite.png"));
-            imgs.push(getImageData("img/roku-logo.png"));
-            imgs.push(getImageData("img/AmigaBoingBall.png"));
-            imgs.push(getImageData("img/BallShadow.png"));
-        }
-        var payload = { brs: this.result, urls: urls, images: imgs };
-        brsWorker.postMessage(payload);
+        var payload = { brs: this.result, paths: paths, images: imgs };
+        brsWorker.postMessage(payload, imgs);
     };
-    reader.readAsText(file);
+    if (brsWorker != undefined) {
+        brsWorker.terminate();
+        paths = [];
+        imgs = [];
+        packImages().then(function() {
+            reader.readAsText(file);
+        });
+    } else {
+        reader.readAsText(file);
+    }
 };
 
-function getImageData(id) {
-    urls.push(id);
-    var canvas = document.createElement("canvas");
-    var context = canvas.getContext("2d");
-    var img = document.getElementById(id);
-    canvas.width = img.width;
-    canvas.height = img.height;
-    context.drawImage(img, 0, 0);
-    return context.getImageData(0, 0, img.width, img.height);
-}
 function saveBuffer(event) {
     buffer = event.data;
     dirty = true;
