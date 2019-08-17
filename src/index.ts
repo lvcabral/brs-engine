@@ -9,6 +9,8 @@ import * as PP from "./preprocessor";
 import { Parser } from "./parser";
 import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interpreter";
 import * as BrsError from "./Error";
+import * as bslCore from "raw-loader!../bsl/v30/bslCore.brs";
+import * as bslDefender from "raw-loader!../bsl/v30/bslDefender.brs";
 
 import * as _lexer from "./lexer";
 export { _lexer as lexer };
@@ -68,6 +70,19 @@ function run(
 
     if (parseResults.statements.length === 0) {
         return;
+    }
+
+    if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
+        const libScan = lexer.scan(bslDefender.default, "REPL");
+        const libParse = parser.parse(libScan.tokens);
+        parseResults.libraries.set("v30/bslCore.brs", true);
+        parseResults.statements = parseResults.statements.concat(libParse.statements);
+    }
+
+    if (parseResults.libraries.get("v30/bslCore.brs") === true) {
+        const libScan = lexer.scan(bslCore.default, "REPL");
+        const libParse = parser.parse(libScan.tokens);
+        parseResults.statements = parseResults.statements.concat(libParse.statements);
     }
 
     try {

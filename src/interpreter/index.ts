@@ -1319,6 +1319,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
+    visitLibrary(statement: Stmt.Library) {
+        // ignore during run time, already handled by lexer/parser
+        return BrsInvalid.Instance;
+    }
+
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {
         return expression.accept<BrsType>(this);
     }
