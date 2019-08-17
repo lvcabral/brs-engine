@@ -18,15 +18,15 @@ export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
 
-export const images = new Map<string, ImageData>();
+export const images = new Map<string, ImageBitmap>();
 export const frame = { flag: true };
 
 onmessage = function(event) {
     if (event.data.brs) {
         const replInterpreter = new Interpreter();
         replInterpreter.onError(logError);
-        for (let index = 0; index < event.data.urls.length; index++) {
-            images.set(event.data.urls[index], event.data.images[index]);
+        for (let index = 0; index < event.data.paths.length; index++) {
+            images.set(event.data.paths[index], event.data.images[index]);
         }
         run(event.data.brs, defaultExecutionOptions, replInterpreter);
     } else if (event.data.frame) {
@@ -118,4 +118,12 @@ export function executeSync(
  */
 function logError(err: BrsError.BrsError) {
     console.error(err.format());
+}
+
+function makeRequest(url: string): ArrayBuffer {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, false); // Note: synchronous
+    xhr.responseType = "arraybuffer";
+    xhr.send();
+    return xhr.response;
 }

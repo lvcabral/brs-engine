@@ -50,11 +50,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             alpha: this.alphaEnable,
         }) as OffscreenCanvasRenderingContext2D;
         if (filePath !== "") {
-            let imageData = images.get(filePath);
-            if (imageData) {
-                this.canvas.width = imageData.width;
-                this.canvas.height = imageData.height;
-                this.context.putImageData(imageData, 0, 0);
+            let image = images.get(filePath);
+            if (image) {
+                this.canvas.width = image.width;
+                this.canvas.height = image.height;
+                this.context.drawImage(image, 0, 0);
             }
         }
 
