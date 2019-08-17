@@ -9,6 +9,7 @@ assets.push({ path: "img/sprite.png", type: "image/png" });
 assets.push({ path: "img/roku-logo.png", type: "image/png" });
 assets.push({ path: "img/AmigaBoingBall.png", type: "image/png" });
 assets.push({ path: "img/BallShadow.png", type: "image/png" });
+assets.push({ path: "img/earth.png", type: "image/png" });
 
 var fileSelector = document.getElementById("file");
 fileSelector.onclick = function() {
