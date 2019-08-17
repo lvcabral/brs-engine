@@ -31,7 +31,7 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
         ballsizey = int(ballsize)
         ballsizex = int(ballsize*par)
 
-        tmpballbitmap = createobject("robitmap","pkg:/img/AmigaBoingBall.png")
+        tmpballbitmap = createobject("robitmap","pkg:/images/AmigaBoingBall.png")
 
         scaley = ballsizey/tmpballbitmap.getheight()
         scalex = scaley*par
@@ -72,19 +72,20 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
         rightedge = int(ballcenterx + (w*9)/10)
         bottomedge = int(ballcentery + (h*9)/10)
         running = true
-        ' codes = bslUniversalControlEventCodes()
+        codes = bslUniversalControlEventCodes()
+        print codes
         grid = createobject("robitmap", {width:screen.getWidth(),height:screen.getheight(),alphaenable:false})
         regiondrawgrid(grid, background)
         grid.finish()
         while true
                 screen.drawobject(0, 0, grid)
-                'screen.SetAlphaEnable(true)
+                screen.SetAlphaEnable(true)
                 scalex = x/rightedge
                 scaley = y/bottomedge
                 screen.drawscaledobject(toInt(x+shadow_dx),toInt(y+shadow_dy),scalex*1.0,scaley*1.0,shadowregion)
 
                 screen.drawscaledobject(toInt(x),toInt(y),scalex*1.0,scaley*1.0,ballregion)
-                'screen.SetAlphaEnable(false)
+                screen.SetAlphaEnable(false)
                 screen.drawrect(toInt(x-2),toInt(y-2),5,5,green)        ' show where the (x,y) is
                 
                 swapbuff_timestamp.mark()

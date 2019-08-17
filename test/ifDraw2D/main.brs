@@ -18,7 +18,7 @@ sub main()
     fontRegistry = CreateObject("roFontRegistry")
     font = fontRegistry.GetFont("Arial", 40, false, false)
     screen.DrawText("brsLib", 230, 30, &HFFFFFFFF, font)
-    bmp = CreateObject("roBitmap", "pkg:/img/roku-logo.png")
+    bmp = CreateObject("roBitmap", "pkg:/images/roku-logo.png")
     rgn = CreateObject("roRegion", bmp, 100, 100, 100, 100)
     bmp.DrawLine(0,0,200,300,&HFFFFFFFF)
     screen.DrawObject(450, 50, bmp)
@@ -33,6 +33,6 @@ sub main()
 end sub
 
 sub DrawBall(screen as object)
-    ball = CreateObject("roBitmap", "pkg:/img/AmigaBoingBall.png")
+    ball = CreateObject("roBitmap", "pkg:/images/AmigaBoingBall.png")
     screen.DrawRotatedObject(200,300,30.0,ball)
 end sub
