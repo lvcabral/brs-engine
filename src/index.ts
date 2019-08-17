@@ -1,4 +1,4 @@
-//import * as fs from "fs";
+import * as fs from "fs";
 //import * as readline from "readline";
 //import { promisify } from "util";
 //import pSettle from "p-settle";
@@ -76,6 +76,40 @@ function run(
         console.error(e.message);
         return;
     }
+}
+
+/**
+ * A synchronous version of `execute`. Executes a BrightScript file by path and writes its output to the streams
+ * provided in `options`.
+ *
+ * @param filename the paths to BrightScript files to execute synchronously
+ * @param options configuration for the execution, including the streams to use for `stdout` and
+ *                `stderr` and the base directory for path resolution
+ * @param args the set of arguments to pass to the `main` function declared in one of the provided filenames
+ *
+ * @returns the value returned by the executed file(s)
+ */
+export function executeSync(
+    filenames: string[],
+    options: Partial<ExecutionOptions>,
+    args: BrsTypes.BrsType[]
+) {
+    const executionOptions = Object.assign(defaultExecutionOptions, options);
+    const interpreter = new Interpreter(executionOptions); // shared between files
+
+    let manifest = PP.getManifestSync(executionOptions.root);
+
+    let allStatements = filenames
+        .map(filename => {
+            let contents = fs.readFileSync(filename, "utf8");
+            let scanResults = Lexer.scan(contents, filename);
+            let preprocessor = new PP.Preprocessor();
+            let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
+            return Parser.parse(preprocessorResults.processedTokens).statements;
+        })
+        .reduce((allStatements, statements) => [...allStatements, ...statements], []);
+
+    return interpreter.exec(allStatements, ...args);
 }
 
 /**
