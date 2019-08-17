@@ -16,25 +16,18 @@ onmessage = function(e) {
     var data = e.data;
 
     // Make sure we have the right parameters.
-    if (!data.files) {
+    if (!data.assets) {
         return;
     }
 
     try {
-        var localFiles = [];
-        var fs = requestFileSystemSync(TEMPORARY, 1024 * 1024 /*1MB*/);
-        data.files.forEach(file => {
-            var fileEntry = fs.root.getFile(file.fileName, { create: true });
-            var arrayBuffer = makeRequest("../" + file.folder + "/" + file.fileName);
-            var blob = new Blob([new Uint8Array(arrayBuffer)], { type: file.type });
-            fileEntry.createWriter().write(blob);
-            localFiles.push({
-                name: fileEntry.name,
-                path: fileEntry.fullPath,
-                url: fileEntry.toURL(),
-            });
+        var message = [];
+        data.assets.forEach(asset => {
+            var arrayBuffer = makeRequest("../" + asset.path);
+            var blob = new Blob([new Uint8Array(arrayBuffer)], { type: asset.type });
+            message.push({ path: asset.path, blob: blob });
         });
-        postMessage(localFiles);
+        postMessage(message);
     } catch (e) {
         onError(e);
     }
