@@ -38,8 +38,6 @@ import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { DottedGet } from "../parser/Expression";
 
-process.stdout = require("browser-stdout")({ label: false });
-
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
     /** The base path for  */
@@ -234,11 +232,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // the `tab` function is only in-scope while executing print statements
         this.environment.define(Scope.Function, "Tab", StdLib.Tab);
 
+        let printStream = "";
         statement.expressions.forEach((printable, index) => {
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        console.log(" ".repeat(16 - (this.stdout.position() % 16)));
+                        printStream += " ".repeat(16 - (this.stdout.position() % 16));
                         //this.stdout.write(" ".repeat(16 - (this.stdout.position() % 16)));
                         break;
                     case Lexeme.Semicolon:
@@ -247,7 +246,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             // They're used to suppress trailing newlines in `print` statements
                             break;
                         }
-                        console.log(" ");
+                        printStream += " ";
                         //this.stdout.write(" ");
                         break;
                     default:
@@ -260,15 +259,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 //this.stdout.write(this.evaluate(printable).toString());
-                console.log(this.evaluate(printable).toString());
+                printStream += this.evaluate(printable).toString();
             }
         });
-
-        let lastExpression = statement.expressions[statement.expressions.length - 1];
-        if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
-            console.log("\n");
-            //this.stdout.write("\n");
-        }
+        console.log(printStream);
+        // let lastExpression = statement.expressions[statement.expressions.length - 1];
+        // if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
+        //     this.stdout.write("\n");
+        // }
 
         // `tab` is only in-scope when executing print statements, so remove it before we leave
         this.environment.remove("Tab");
