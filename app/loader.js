@@ -11,9 +11,6 @@ onmessage = function(e) {
         var files = [];
         data.assets.forEach(asset => {
             var url = asset.path;
-            if (asset.path.substr(0, 4) !== "http") {
-                url = "../" + asset.path;
-            }
             var arrayBuffer = download(url);
             var blob = new Blob([new Uint8Array(arrayBuffer)], { type: asset.type });
             files.push({ path: asset.path, blob: blob });
