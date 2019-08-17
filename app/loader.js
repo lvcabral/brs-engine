@@ -1,6 +1,46 @@
 self.requestFileSystemSync = self.webkitRequestFileSystemSync || self.requestFileSystemSync;
 
-function makeRequest(url) {
+var message = [];
+
+onmessage = function(e) {
+    var data = e.data;
+    if (!data.assets) {
+        return;
+    }
+    try {
+        var files = [];
+        data.assets.forEach(asset => {
+            var arrayBuffer = download("../" + asset.path);
+            var blob = new Blob([new Uint8Array(arrayBuffer)], { type: asset.type });
+            files.push({ path: asset.path, blob: blob });
+        });
+        packImages(files).then(function() {
+            postMessage(message);
+        });
+    } catch (e) {
+        onError(e);
+    }
+};
+
+function onError(e) {
+    throw e;
+}
+
+async function packImages(files) {
+    events = [];
+    paths = [];
+    files.forEach(file => {
+        paths.push(file.path);
+        events.push(createImageBitmap(file.blob));
+    });
+    return Promise.all(events).then(bmps => {
+        for (var index = 0; index < bmps.length; index++) {
+            message.push({ path: paths[index], bmp: bmps[index] });
+        }
+    });
+}
+
+function download(url) {
     try {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Note: synchronous
@@ -10,29 +50,4 @@ function makeRequest(url) {
     } catch (e) {
         onError(e);
     }
-}
-
-onmessage = function(e) {
-    var data = e.data;
-
-    // Make sure we have the right parameters.
-    if (!data.assets) {
-        return;
-    }
-
-    try {
-        var message = [];
-        data.assets.forEach(asset => {
-            var arrayBuffer = makeRequest("../" + asset.path);
-            var blob = new Blob([new Uint8Array(arrayBuffer)], { type: asset.type });
-            message.push({ path: asset.path, blob: blob });
-        });
-        postMessage(message);
-    } catch (e) {
-        onError(e);
-    }
-};
-
-function onError(e) {
-    throw e;
 }
