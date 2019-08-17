@@ -1,3 +1,5 @@
+Library "v30/bslCore.brs"
+
 sub main()
     screen=CreateObject("roScreen", true, 854, 480)
     screen.SetAlphaEnable(true)
