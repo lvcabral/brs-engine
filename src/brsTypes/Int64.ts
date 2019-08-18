@@ -127,6 +127,28 @@ export class Int64 implements Numeric, Comparable {
         }
     }
 
+    leftShift(rhs: BrsNumber): Int64 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int64(this.getValue().toNumber() << Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int64(this.getValue().toNumber() << rhs.getValue().toNumber());
+        }
+    }
+
+    rightShift(rhs: BrsNumber): Int64 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int64(this.getValue().toNumber() >> Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int64(this.getValue().toNumber() >> rhs.getValue().toNumber());
+        }
+    }
+
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
             case ValueKind.Int32:
