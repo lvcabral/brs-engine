@@ -24,6 +24,7 @@ export * from "./Float";
 export * from "./Double";
 export * from "./components/RoArray";
 export * from "./components/RoDateTime";
+export * from "./components/RoList";
 export * from "./components/RoAssociativeArray";
 export * from "./components/RoTimespan";
 export * from "./components/RoSGNode";
@@ -36,6 +37,7 @@ export * from "./components/RoScreen";
 export * from "./components/RoMessagePort";
 export * from "./components/RoFontRegistry";
 export * from "./components/RoFont";
+export * from "./components/RoXMLElement";
 export * from "./Callable";
 
 /**
