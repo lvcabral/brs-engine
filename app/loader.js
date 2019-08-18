@@ -11,9 +11,14 @@ onmessage = function(e) {
         var files = [];
         data.assets.forEach(asset => {
             var url = asset.path;
-            var arrayBuffer = download(url);
-            var blob = new Blob([new Uint8Array(arrayBuffer)], { type: asset.type });
-            files.push({ path: asset.path, blob: blob });
+            if (asset.type == "image/png") {
+                var arrayBuffer = download(url, "arraybuffer");
+                var blob = new Blob([new Uint8Array(arrayBuffer)], { type: asset.type });
+                files.push({ path: asset.path, blob: blob });
+            } else {
+                var xml = download(url, "text");
+                files.push({ path: asset.path, text: xml });
+            }
         });
         packImages(files).then(function() {
             postMessage(message);
@@ -30,22 +35,35 @@ function onError(e) {
 async function packImages(files) {
     events = [];
     paths = [];
+    bmps = 0;
+    txts = 0;
     files.forEach(file => {
-        paths.push(file.path);
-        events.push(createImageBitmap(file.blob));
+        if (file.blob) {
+            paths.push({ url: file.path, id: bmps, binary: true });
+            events.push(createImageBitmap(file.blob));
+            bmps++;
+        } else {
+            paths.push({ url: file.path, id: txts, binary: false });
+            events.push(Promise.resolve(file.text));
+            txts++;
+        }
     });
-    return Promise.all(events).then(bmps => {
-        for (var index = 0; index < bmps.length; index++) {
-            message.push({ path: paths[index], bmp: bmps[index] });
+    return Promise.all(events).then(assets => {
+        for (var index = 0; index < assets.length; index++) {
+            if (assets[index] instanceof ImageBitmap) {
+                message.push({ path: paths[index], bmp: assets[index] });
+            } else {
+                message.push({ path: paths[index], txt: assets[index] });
+            }
         }
     });
 }
 
-function download(url) {
+function download(url, type) {
     try {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Note: synchronous
-        xhr.responseType = "arraybuffer";
+        xhr.responseType = type;
         xhr.send();
         return xhr.response;
     } catch (e) {

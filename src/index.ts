@@ -21,6 +21,7 @@ import * as _parser from "./parser";
 export { _parser as parser };
 
 export const images = new Map<string, ImageBitmap>();
+export const texts = new Map<string, string>();
 export const frame = { flag: true };
 
 onmessage = function(event) {
@@ -28,7 +29,12 @@ onmessage = function(event) {
         const replInterpreter = new Interpreter();
         replInterpreter.onError(logError);
         for (let index = 0; index < event.data.paths.length; index++) {
-            images.set(event.data.paths[index], event.data.images[index]);
+            let path = event.data.paths[index];
+            if (path.binary) {
+                images.set(path.url, event.data.images[path.id]);
+            } else {
+                texts.set(path.url, event.data.texts[path.id]);
+            }
         }
         run(event.data.brs, defaultExecutionOptions, replInterpreter);
     } else if (event.data.frame) {
