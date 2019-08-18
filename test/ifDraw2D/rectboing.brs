@@ -62,9 +62,9 @@ sub rectboing(screenFull as object, msgport as object, topx, topy, w, h, par)
         while true
                 screen.drawobject(0, 0, grid)
                 screen.SetAlphaEnable(true)
-                screen.drawobject(toInt(x+ballsizex_over_3),toInt(y+ballsizey_over_6),ballshadow)
+                screen.drawobject(ntoi(x+ballsizex_over_3),ntoi(y+ballsizey_over_6),ballshadow)
                 screen.SetAlphaEnable(false)
-                screen.drawobject(toInt(x),toInt(y),ballbitmap)
+                screen.drawobject(ntoi(x),ntoi(y),ballbitmap)
                 swapbuff_timestamp.mark()
                 screenFull.SwapBuffers()
                 swapbuff_time = swapbuff_time + swapbuff_timestamp.totalmilliseconds()
@@ -124,7 +124,7 @@ End Sub
 sub drawline(screen, x0,y0,x1,y1,width,color)
 
     if (width = 1) and (y0 <> y1) and (x0 <> x1)
-        screen.drawline(x0, y0, toInt(x1), y1, color)
+        screen.drawline(x0, y0, ntoi(x1), y1, color)
         return
     end if
 
@@ -135,21 +135,16 @@ sub drawline(screen, x0,y0,x1,y1,width,color)
             y0=y1
             h = -h
         endif            
-        screen.drawrect(toInt(x0),y0,toInt(width),h+1,color)
+        screen.drawrect(ntoi(x0),y0,ntoi(width),h+1,color)
     else if (y0=y1)
         w = x1-x0
         if w<0
             x0=x1
             w = -w
         endif
-        screen.drawrect(toInt(x0),y0,toInt(w+1),width,color)
+        screen.drawrect(ntoi(x0),y0,ntoi(w+1),width,color)
     end if
 end sub
-
-function toInt(value) as integer
-    if type(value) = "Integer" then return value
-    return int(value)
-end function
 
 sub regiondrawgrid(screen, background)
     ' only draw into primary surface area now - do not touch sidebars
@@ -190,3 +185,8 @@ sub regiondrawgrid(screen, background)
     ' draw floor
     drawline(screen, left-bottomXdeltainit, bottom+deltay_over_2,right-bottomXdelta-deltax_over_20 , bottom+deltay_over_2, 1, color)
 end sub
+
+function ntoi(value) as integer
+    if type(value) = "Integer" then return value
+    return int(value)
+end function

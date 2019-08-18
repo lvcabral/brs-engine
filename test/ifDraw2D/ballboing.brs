@@ -1,4 +1,4 @@
-Library "v30/bslCore.brs"
+Library "v30/bslDefender.brs"
 
 sub main()
     screen=CreateObject("roScreen", true, 854, 480)
@@ -84,11 +84,11 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
                 screen.SetAlphaEnable(true)
                 scalex = x/rightedge
                 scaley = y/bottomedge
-                screen.drawscaledobject(toInt(x+shadow_dx),toInt(y+shadow_dy),scalex*1.0,scaley*1.0,shadowregion)
+                screen.drawscaledobject(ntoi(x+shadow_dx),ntoi(y+shadow_dy),scalex*1.0,scaley*1.0,shadowregion)
 
-                screen.drawscaledobject(toInt(x),toInt(y),scalex*1.0,scaley*1.0,ballregion)
+                screen.drawscaledobject(ntoi(x),ntoi(y),scalex*1.0,scaley*1.0,ballregion)
                 screen.SetAlphaEnable(false)
-                screen.drawrect(toInt(x-2),toInt(y-2),5,5,green)        ' show where the (x,y) is
+                screen.drawrect(ntoi(x-2),ntoi(y-2),5,5,green)        ' show where the (x,y) is
                 
                 swapbuff_timestamp.mark()
                 screenFull.SwapBuffers()
@@ -147,7 +147,7 @@ End Sub
 sub drawline(screen, x0,y0,x1,y1,width,color)
 
     if (width = 1) and (y0 <> y1) and (x0 <> x1)
-        screen.drawline(x0, y0, toInt(x1), y1, color)
+        screen.drawline(x0, y0, ntoi(x1), y1, color)
         return
     end if
 
@@ -158,21 +158,16 @@ sub drawline(screen, x0,y0,x1,y1,width,color)
             y0=y1
             h = -h
         endif            
-        screen.drawrect(toInt(x0),y0,toInt(width),h+1,color)
+        screen.drawrect(ntoi(x0),y0,ntoi(width),h+1,color)
     else if (y0=y1)
         w = x1-x0
         if w<0
             x0=x1
             w = -w
         endif
-        screen.drawrect(toInt(x0),y0,toInt(w+1),width,color)
+        screen.drawrect(ntoi(x0),y0,ntoi(w+1),width,color)
     end if
 end sub
-
-function toInt(value) as integer
-    if type(value) = "Integer" then return value
-    return int(value)
-end function
 
 sub regiondrawgrid(screen, background)
     ' only draw into primary surface area now - do not touch sidebars
@@ -213,3 +208,8 @@ sub regiondrawgrid(screen, background)
     ' draw floor
     drawline(screen, left-bottomXdeltainit, bottom+deltay_over_2,right-bottomXdelta-deltax_over_20 , bottom+deltay_over_2, 1, color)
 end sub
+
+function ntoi(value) as integer
+    if type(value) = "Integer" then return value
+    return int(value)
+end function
