@@ -422,4 +422,23 @@ describe("lexer", () => {
             ]);
         });
     });
+
+    describe("isToken", () => {
+        it("returns booleans", () => {
+            let location = {
+                start: {
+                    line: 1,
+                    column: 1,
+                },
+                end: {
+                    line: 1,
+                    column: 2,
+                },
+                file: "SomeFile.brs",
+            };
+
+            expect(lexer.isToken({ kind: Lexeme.And, text: "and", location: location })).toBe(true);
+            expect(lexer.isToken({ text: "and", location: location })).toBe(false);
+        });
+    });
 }); // lexer
