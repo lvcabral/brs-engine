@@ -349,6 +349,74 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         switch (lexeme) {
+            case Lexeme.LeftShift:
+            case Lexeme.LeftShiftEqual:
+                if (isBrsNumber(left) && isBrsNumber(right) && right.lessThan(new Int32(32))) {
+                    return left.leftShift(right);
+                } else if (isBrsNumber(left) && isBrsNumber(right)) {
+                    return this.addError(
+                        new TypeMismatch({
+                            message:
+                                "In a bitshift expression the right value shall be lower than 32.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                } else {
+                    return this.addError(
+                        new TypeMismatch({
+                            message: "Attempting to bitshift non-numeric values.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                }
+            case Lexeme.RightShift:
+            case Lexeme.RightShiftEqual:
+                if (isBrsNumber(left) && isBrsNumber(right) && right.lessThan(new Int32(32))) {
+                    return left.rightShift(right);
+                } else if (isBrsNumber(left) && isBrsNumber(right)) {
+                    return this.addError(
+                        new TypeMismatch({
+                            message:
+                                "In a bitshift expression the right value shall be lower than 32.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                } else {
+                    return this.addError(
+                        new TypeMismatch({
+                            message: "Attempting to bitshift non-numeric values.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                }
             case Lexeme.Minus:
             case Lexeme.MinusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
