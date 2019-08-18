@@ -10,6 +10,12 @@ assets.push({ path: "images/roku-logo.png", type: "image/png" });
 assets.push({ path: "images/AmigaBoingBall.png", type: "image/png" });
 assets.push({ path: "images/BallShadow.png", type: "image/png" });
 assets.push({ path: "images/earth.png", type: "image/png" });
+assets.push({ path: "assets/3ballset.png", type: "image/png" });
+assets.push({ path: "assets/4ballset.png", type: "image/png" });
+assets.push({ path: "assets/5ballset.png", type: "image/png" });
+assets.push({ path: "assets/6ballset.png", type: "image/png" });
+assets.push({ path: "assets/8ballset.png", type: "image/png" });
+assets.push({ path: "assets/bitmapset.xml", type: "text/xml" });
 
 var fileSelector = document.getElementById("file");
 fileSelector.onclick = function() {
@@ -30,9 +36,14 @@ function loadAssets() {
     loader.onmessage = function(e) {
         paths = [];
         imgs = [];
+        txts = [];
         e.data.forEach(file => {
             paths.push(file.path);
-            imgs.push(file.bmp);
+            if (file.bmp) {
+                imgs.push(file.bmp);
+            } else {
+                txts.push(file.txt);
+            }
         });
         fileSelector.style = "";
         loader.terminate();
@@ -44,7 +55,7 @@ function loadAssets() {
         }
         brsWorker = new Worker("./lib/brsLib.js");
         brsWorker.addEventListener("message", saveBuffer);
-        var payload = { brs: source[0], paths: paths, images: imgs };
+        var payload = { brs: source[0], paths: paths, texts: txts, images: imgs };
         brsWorker.postMessage(payload, imgs);
     };
     loader.postMessage({ assets: assets });
