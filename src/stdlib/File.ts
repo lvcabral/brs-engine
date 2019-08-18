@@ -1,6 +1,7 @@
 import { Callable, ValueKind, BrsString, BrsBoolean, RoArray, StdlibArgument } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { URL } from "url";
+import { texts } from "..";
 import MemoryFileSystem from "memory-fs";
 import * as nanomatch from "nanomatch";
 
@@ -215,9 +216,15 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
     impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
         const volume = getVolumeByPath(interpreter, filepath.value);
         if (volume === null) {
+            if (filepath.value.substr(0, 4) === "pkg:") {
+                let path = filepath.value.substr(5);
+                let ascii = texts.get(path);
+                if (ascii) {
+                    return new BrsString(ascii);
+                }
+            }
             return new BrsString("");
         }
-
         const memfsPath = getPath(filepath.value);
         return new BrsString(volume.readFileSync(memfsPath).toString());
     },
