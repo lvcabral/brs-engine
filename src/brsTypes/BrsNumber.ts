@@ -60,6 +60,22 @@ export interface Numeric extends BrsValue {
     intDivide(rhs: BrsNumber): Int32 | Int64;
 
     /**
+     * Shift left in a bitwise operation the current number by `rhs` and
+     * returns and integer as result.
+     * @param rhs The right-hand side value to left shift the current value by.
+     * @returns The current value << `rhs`
+     */
+    leftShift(rhs: BrsNumber): Int32 | Int64;
+
+    /**
+     * Shift right in a bitwise operation the current number by `rhs` and
+     * returns and integer as result.
+     * @param rhs The right-hand side value to right shift the current value by.
+     * @returns The current value >> `rhs`
+     */
+    rightShift(rhs: BrsNumber): Int32 | Int64;
+
+    /**
      * Calculates the current value to the power of `exponent`.
      * @param exponent The exponent to take the current value to the power of.
      * @returns The current value ^ `exponent`, with precision matching `max(current, rhs)`.
