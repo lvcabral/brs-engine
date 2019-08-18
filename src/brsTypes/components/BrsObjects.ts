@@ -1,5 +1,6 @@
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
+import { RoList } from "./RoList";
 import { Timespan } from "./Timespan";
 import { RoSGNode, createNodeByType } from "./RoSGNode";
 import { RoRegex } from "./RoRegex";
@@ -10,6 +11,7 @@ import { RoString } from "./RoString";
 export const BrsObjects = new Map<string, Function>([
     ["roassociativearray", () => new RoAssociativeArray([])],
     ["roarray", () => new RoArray([])],
+    ["rolist", () => new RoList()],
     ["rotimespan", () => new Timespan()],
     ["rosgnode", (nodeType: BrsString) => createNodeByType(nodeType)],
     ["roregex", (expression: BrsString, flags: BrsString) => new RoRegex(expression, flags)],
