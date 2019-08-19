@@ -32,7 +32,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             this.drawAll,
             this.newSprite,
             this.newAnimatedSprite,
-            // this.animationTick,
+            this.animationTick,
             // this.changeMatchingRegions,
         ]);
     }
@@ -130,7 +130,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("regions", ValueKind.Object),
-                new StdlibArgument("z", ValueKind.Int32),
+                new StdlibArgument("z", ValueKind.Int32, new Int32(0)),
             ],
             returns: ValueKind.Object,
         },
@@ -144,6 +144,17 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 this.sprites.set(z.getValue(), [sprite]);
             }
             return sprite;
+        },
+    });
+
+    /**  */
+    private animationTick = new Callable("animationTick", {
+        signature: {
+            args: [new StdlibArgument("duration", ValueKind.Int32)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, duration: Int32) => {
+            return BrsInvalid.Instance;
         },
     });
 
