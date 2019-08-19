@@ -1,6 +1,6 @@
-<BitmapSet>
+<BitmapSet name="balls">
 
-	<ExtraInfo ballsize="128" />
+	<ExtraInfo ballsize="128">Text</ExtraInfo>
 	<Bitmap name="3ball_bitmapset" filespec="pkg:/assets/3ballset.png">
 		<Region name="r1" x="0" y="0" w="128" h="128" />
 		<Region name="r2" x="128" y="0" w="128" h="128" />
@@ -62,6 +62,4 @@
 		<frame use="8ball_bitmapset.r3" />
 		<frame use="8ball_bitmapset.r4" />		
 	</Animation>
-
 </BitmapSet>
-

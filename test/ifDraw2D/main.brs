@@ -29,6 +29,21 @@ sub main()
     screen.DrawObject(40,40, rgn)
     DrawBall(screen)
     screen.SwapBuffers()
+    bitmap_set = CreateObject("roXMLElement")
+    xmlString = ReadAsciiFile("pkg:/assets/bitmapset.xml")
+    if not bitmap_set.Parse(xmlString)
+        print "dfNewBitmapSet: Error parsing XML"
+    end if
+    print bitmap_set
+    print bitmap_set.getAttributes()
+    print bitmap_set.ExtraInfo
+    extra = bitmap_set.ExtraInfo
+    print extra.getAttributes()
+    print bitmap_set.getName()
+    print bitmap_set.getChildElements()
+    print bitmap_set.getNamedElements("extrainfo")
+    print bitmap_set.genXML(true)
+
     msg = port.WaitMessage(0) 'Not working yet on brsLib
 end sub
 

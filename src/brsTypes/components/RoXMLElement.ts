@@ -5,207 +5,327 @@ import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
-import { RoArray } from "./RoArray";
+import { RoAssociativeArray } from "./RoAssociativeArray";
+import { RoList } from "./RoList";
+import { RoXMLList } from "./RoXMLList";
 
 export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    elements = new Map<string, BrsType>();
-
+    parsedXML: any;
     constructor() {
         super("roXMLElement");
-
+        this.parsedXML = {};
         this.registerMethods([
             this.parse,
+            this.getBody,
+            this.getAttributes,
+            this.getName,
+            this.getText,
+            this.getChildElements,
+            this.getChildNodes,
+            this.getNamedElements,
+            this.getNamedElementsCi,
+            this.genXML,
+            // this.genXMLHdr,
+            // this.isName,
+            // this.hasAttribute,
+            // this.setBody,
+            // this.addBodyElement,
+            // this.addElement,
+            // this.addElementWithBody,
+            // this.addText,
+            // this.addAttribute,
+            // this.setName,
             this.clear,
-            this.delete,
-            this.addreplace,
-            this.count,
-            this.doesexist,
-            this.keys,
-            this.items,
-            this.lookup,
         ]);
     }
 
     toString(parent?: BrsType): string {
-        if (parent) {
-            return "<Component: roXMLElement>";
-        }
-
-        return [
-            "<Component: roXMLElement> =",
-            "{",
-            ...Array.from(this.elements.entries()).map(
-                ([key, value]) => `    ${key}: ${value.toString(this)}`
-            ),
-            "}",
-        ].join("\n");
+        return "<Component: roXMLElement>";
     }
 
     equalTo(other: BrsType) {
         return BrsBoolean.False;
     }
 
-    getValue() {
-        return this.elements;
-    }
-
     getElements() {
-        return Array.from(this.elements.keys())
-            .sort()
-            .map(key => new BrsString(key));
-    }
-
-    getValues() {
-        return Array.from(this.elements.values())
-            .sort()
-            .map((value: BrsType) => value);
+        return Array.from([]);
     }
 
     get(index: BrsType) {
         if (index.kind !== ValueKind.String) {
-            throw new Error("Associative array indexes must be strings");
+            throw new Error("XML Element indexes must be strings");
         }
 
-        // TODO: this works for now, in that a property with the same name as a method essentially
-        // overwrites the method. The only reason this doesn't work is that getting a method from an
-        // associative array and _not_ calling it returns `invalid`, but calling it returns the
-        // function itself. I'm not entirely sure why yet, but it's gotta have something to do with
-        // how methods are implemented within RBI.
-        //
-        // Are they stored separately from elements, like they are here? Or does
-        // `Interpreter#visitCall` need to check for `invalid` in its callable, then try to find a
-        // method with the desired name separately? That last bit would work but it's pretty gross.
-        // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
-        // Same with RoAssociativeArrays I guess.
-        return (
-            this.elements.get(index.value.toLowerCase()) ||
-            this.getMethod(index.value) ||
-            BrsInvalid.Instance
-        );
+        return this.getMethod(index.value) || this.namedElements(index.value, true);
     }
 
     set(index: BrsType, value: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("Associative array indexes must be strings");
         }
-        this.elements.set(index.value.toLowerCase(), value);
+        //this.elements.set(index.value.toLowerCase(), value);
         return BrsInvalid.Instance;
     }
 
+    attributes() {
+        let attributes = new RoAssociativeArray([]);
+        if (Object.keys(this.parsedXML).length > 0) {
+            let root = Object.keys(this.parsedXML)[0];
+            if (this.parsedXML.$ || this.parsedXML[root].$) {
+                let attrs = this.parsedXML.$ || this.parsedXML[root].$;
+                let keys = Object.keys(attrs);
+                let values = Object.values(attrs) as string[];
+                for (let index = 0; index < keys.length; index++) {
+                    attributes.set(new BrsString(keys[index]), new BrsString(values[index]));
+                }
+            }
+        }
+        return attributes;
+    }
+
+    name() {
+        let name = "";
+        if (Object.keys(this.parsedXML).length > 0) {
+            name = Object.keys(this.parsedXML)[0];
+        }
+        return new BrsString(name);
+    }
+
+    text() {
+        let text = "";
+        let root = Object.keys(this.parsedXML)[0];
+        if (this.parsedXML[root]._) {
+            text = this.parsedXML[root]._;
+        }
+        return new BrsString(text);
+    }
+
+    childElements() {
+        let elements = new RoXMLList();
+        if (Object.keys(this.parsedXML).length > 0) {
+            let root = Object.keys(this.parsedXML)[0];
+            for (let [key, value] of Object.entries(this.parsedXML[root])) {
+                if (key !== "$" && key !== "_") {
+                    if (value instanceof Array) {
+                        value.forEach(item => {
+                            let element = new RoXMLElement();
+                            element.parsedXML = item;
+                            elements.add(element);
+                        });
+                    }
+                }
+            }
+        }
+        return elements;
+    }
+
+    childNodes() {
+        let nodes = new RoList();
+        if (Object.keys(this.parsedXML).length > 0) {
+            let root = Object.keys(this.parsedXML)[0];
+            for (let [key, value] of Object.entries(this.parsedXML[root])) {
+                if (key !== "$") {
+                    if (value instanceof Array) {
+                        value.forEach(item => {
+                            let element = new RoXMLElement();
+                            element.parsedXML = item;
+                            nodes.add(element);
+                        });
+                    } else if (typeof value === "string") {
+                        nodes.add(new BrsString(value));
+                    }
+                }
+            }
+        }
+        return nodes;
+    }
+
+    namedElements(name: string, ci: boolean) {
+        let elements = new RoXMLList();
+        if (ci) {
+            name = name.toLocaleLowerCase();
+        }
+        if (Object.keys(this.parsedXML).length > 0) {
+            let root = Object.keys(this.parsedXML)[0];
+            for (let [key, value] of Object.entries(this.parsedXML[root])) {
+                if (ci) {
+                    key = key.toLocaleLowerCase();
+                }
+                if (key === name) {
+                    if (value instanceof Array) {
+                        value.forEach(item => {
+                            let element = new RoXMLElement();
+                            element.parsedXML = item;
+                            elements.add(element);
+                        });
+                    }
+                }
+            }
+        }
+        return elements;
+    }
+
     /** Parse a string of XML. Returns true if successful. In that case, XML elements are available using other methods */
-    private parse = new Callable("delete", {
+    private parse = new Callable("parse", {
         signature: {
-            args: [new StdlibArgument("str", ValueKind.String)],
+            args: [new StdlibArgument("xml", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (interpreter: Interpreter, xml: BrsString) => {
             let result = false;
             let xmlParser = new xml2js.Parser();
-            xmlParser.parseString(str.value, function(err: any, parsed: any) {
-                //Extract the value from the data element
-                result = !err;
-                console.log(parsed);
+            let parsedXML;
+            xmlParser.parseString(xml.value, function(err: Error, parsed: any) {
+                if (err) {
+                    console.error("Error parsing XML:" + err.message);
+                } else if (parsed) {
+                    parsedXML = parsed;
+                    console.log(parsed);
+                    result = true;
+                } else {
+                    console.error("Error parsing XML: Empty input");
+                }
             });
+            this.parsedXML = parsedXML;
             return BrsBoolean.from(result);
         },
     });
 
-    /** Removes all elements from the associative array */
+    /** Returns the body of the element. If the element contains child elements,
+     * returns an roXMLList representing those elements, like GetChildElements().
+     * If there are no children but the element contains text, returns an roString like GetText().
+     * If the element is empty, GetBody() returns invalid */
+    private getBody = new Callable("getBody", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let elements = this.childElements();
+            if (elements.length() > 0) {
+                return elements;
+            } else if (this.text().value !== "") {
+                return this.text();
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns an roXMLList of child elements. If there are no child elements, returns invalid.  */
+    private getChildElements = new Callable("getChildElements", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let elements = this.childElements();
+            if (elements.length() > 0) {
+                return elements;
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns an roXMLList of child elements. If there are no child elements, returns invalid. */
+    private getChildNodes = new Callable("getChildNodes", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let nodes = this.childNodes();
+            if (nodes.length() > 0) {
+                return nodes;
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns an roXMLList representing all child elements of this element whose name is specified. */
+    private getNamedElements = new Callable("getNamedElements", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            return this.namedElements(name.value, false);
+        },
+    });
+
+    /** Same as GetNamedElements except the name matching is case-insensitive. */
+    private getNamedElementsCi = new Callable("getNamedElementsCi", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            return this.namedElements(name.value, true);
+        },
+    });
+
+    /** Returns an Associative Array representing the XML attributes of the element */
+    private getAttributes = new Callable("getAttributes", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            return this.attributes();
+        },
+    });
+
+    /** Returns the name of the element */
+    private getName = new Callable("getName", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return this.name();
+        },
+    });
+
+    /** Returns any text contained in the element. */
+    private getText = new Callable("getText", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return this.text();
+        },
+    });
+
+    /** Serializes the element to XML document text. */
+    private genXML = new Callable("genXML", {
+        signature: {
+            args: [new StdlibArgument("gen_header", ValueKind.Boolean)],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter, gen_header: BrsBoolean) => {
+            let options = {
+                headless: !gen_header.toBoolean(),
+                renderOpts: { pretty: false },
+                xmldec: {
+                    version: "1.0",
+                    encoding: "UTF-8",
+                },
+            };
+            let builder = new xml2js.Builder(options);
+            return new BrsString(builder.buildObject(this.parsedXML));
+        },
+    });
+
+    /** Removes all sub-elements and clear the name of the element */
     private clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter) => {
-            this.elements.clear();
+            this.parsedXML = {};
             return BrsInvalid.Instance;
-        },
-    });
-
-    /** Removes a given item from the associative array */
-    private delete = new Callable("delete", {
-        signature: {
-            args: [new StdlibArgument("str", ValueKind.String)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter, str: BrsString) => {
-            let deleted = this.elements.delete(str.value);
-            return BrsBoolean.from(deleted);
-        },
-    });
-
-    /** Given a key and value, adds an item to the associative array if it doesn't exist
-     * Or replaces the value of a key that already exists in the associative array
-     */
-    private addreplace = new Callable("addreplace", {
-        signature: {
-            args: [
-                new StdlibArgument("key", ValueKind.String),
-                new StdlibArgument("value", ValueKind.Dynamic),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
-            this.set(key, value);
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns the number of items in the associative array */
-    private count = new Callable("count", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (interpreter: Interpreter) => {
-            return new Int32(this.elements.size);
-        },
-    });
-
-    /** Returns a boolean indicating whether or not a given key exists in the associative array */
-    private doesexist = new Callable("doesexist", {
-        signature: {
-            args: [new StdlibArgument("str", ValueKind.String)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter, str: BrsString) => {
-            return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
-        },
-    });
-
-    /** Returns an array of keys from the associative array in lexicographical order */
-    private keys = new Callable("keys", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (interpreter: Interpreter) => {
-            return new RoArray(this.getElements());
-        },
-    });
-
-    /** Returns an array of values from the associative array in lexicographical order */
-    private items = new Callable("items", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (interpreter: Interpreter) => {
-            return new RoArray(this.getValues());
-        },
-    });
-
-    /** Given a key, returns the value associated with that key. This method is case insensitive. */
-    private lookup = new Callable("lookup", {
-        signature: {
-            args: [new StdlibArgument("key", ValueKind.String)],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (interpreter: Interpreter, key: BrsString) => {
-            let lKey = key.value.toLowerCase();
-            return this.get(new BrsString(lKey));
         },
     });
 }
