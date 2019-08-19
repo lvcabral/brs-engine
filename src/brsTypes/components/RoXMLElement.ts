@@ -72,8 +72,8 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         let attributes = new RoAssociativeArray([]);
         if (Object.keys(this.parsedXML).length > 0) {
             let root = Object.keys(this.parsedXML)[0];
-            if (this.parsedXML.$ || this.parsedXML[root].$) {
-                let attrs = this.parsedXML.$ || this.parsedXML[root].$;
+            if (this.parsedXML[root].$) {
+                let attrs = this.parsedXML[root].$;
                 let keys = Object.keys(attrs);
                 let values = Object.values(attrs) as string[];
                 for (let index = 0; index < keys.length; index++) {
@@ -110,7 +110,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                     if (value instanceof Array) {
                         value.forEach(item => {
                             let element = new RoXMLElement();
-                            element.parsedXML = item;
+                            element.parsedXML = { [key]: item };
                             elements.add(element);
                         });
                     }
@@ -129,7 +129,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                     if (value instanceof Array) {
                         value.forEach(item => {
                             let element = new RoXMLElement();
-                            element.parsedXML = item;
+                            element.parsedXML = { [key]: item };
                             nodes.add(element);
                         });
                     } else if (typeof value === "string") {
@@ -156,7 +156,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                     if (value instanceof Array) {
                         value.forEach(item => {
                             let element = new RoXMLElement();
-                            element.parsedXML = item;
+                            element.parsedXML = { [key]: item };
                             elements.add(element);
                         });
                     }
