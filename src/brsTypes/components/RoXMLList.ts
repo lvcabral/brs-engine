@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsType } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -6,42 +6,42 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { LinkedList } from "linked-list-typescript";
 import { RoArray } from "./RoArray";
+import { RoXMLElement } from "./RoXMLElement";
 
-export class RoList extends BrsComponent implements BrsValue, BrsIterable {
+export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private elements: LinkedList<BrsType>;
+    private elements: LinkedList<RoXMLElement>;
 
     constructor() {
-        super("roList");
-        this.elements = new LinkedList<BrsType>();
+        super("roXMLList");
+        this.elements = new LinkedList<RoXMLElement>();
         this.registerMethods([
+            this.getAttributes,
+            this.getChildElements,
+            this.getNamedElements,
+            this.getNamedElementsCi,
+            this.getText,
+            this.simplify,
             this.addHead,
             this.addTail,
             this.getHead,
             this.getTail,
             this.removeHead,
             this.removeTail,
-            this.isEmpty,
-            this.peek,
-            this.pop,
-            this.push,
-            this.shift,
-            this.unshift,
-            this.delete,
             this.count,
             this.clear,
-            this.append,
+            this.isEmpty,
             this.toArray,
         ]);
     }
 
     toString(parent?: BrsType): string {
         if (parent) {
-            return "<Component: roList>";
+            return "<Component: roXMLList>";
         }
 
         return [
-            "<Component: roList> =",
+            "<Component: roXMLList> =",
             "(",
             ...this.elements.toArray().map((el: BrsValue) => `    ${el.toString(this)}`),
             ")",
@@ -73,7 +73,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    set(index: BrsType, value: BrsType) {
+    set(index: BrsType, value: RoXMLElement) {
         if (index.kind !== ValueKind.Int32) {
             throw new Error("Array indexes must be 32-bit integers");
         }
@@ -88,13 +88,114 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
-    add(element: BrsType) {
+    add(element: RoXMLElement) {
         this.elements.append(element);
     }
 
     length() {
         return this.elements.length;
     }
+
+    //--------------------------------- ifXMLList ---------------------------------
+
+    /** If list contains only one item, returns the attributes of that item. Otherwise returns invalid */
+    private getAttributes = new Callable("getAttributes", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            if (this.elements.length === 1) {
+                let xmlElm = this.elements.head;
+                if (xmlElm instanceof RoXMLElement) {
+                    return xmlElm.attributes();
+                }
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** If list contains only one item, returns the text of that item. Otherwise, returns an empty string */
+    private getText = new Callable("getText", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            if (this.elements.length === 1) {
+                let xmlElm = this.elements.head;
+                if (xmlElm instanceof RoXMLElement) {
+                    return xmlElm.text();
+                }
+            }
+            return new BrsString("");
+        },
+    });
+
+    /** If the list contains exactly one item, returns the child elements of that item. */
+    private getChildElements = new Callable("getChildElements", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            if (this.elements.length === 1) {
+                let xmlElm = this.elements.head;
+                if (xmlElm instanceof RoXMLElement) {
+                    return xmlElm.childElements();
+                }
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns a new XMLList that contains all roXMLElements that matched the passed in name. */
+    private getNamedElements = new Callable("getNamedElements", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            let elements = new RoXMLList();
+            for (let element of this.elements) {
+                if (element.name().value === name.value) {
+                    elements.add(element);
+                }
+            }
+            return elements;
+        },
+    });
+
+    /** Same as GetNamedElements except the name matching is case-insensitive. */
+    private getNamedElementsCi = new Callable("getNamedElementsCi", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            let elements = new RoXMLList();
+            for (let element of this.elements) {
+                if (element.name().value.toLocaleLowerCase() === name.value.toLocaleLowerCase()) {
+                    elements.add(element);
+                }
+            }
+            return elements;
+        },
+    });
+
+    /** If the list contains exactly one item, Simplify() returns that item. Otherwise, it returns itself */
+    private simplify = new Callable("simplify", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            if (this.elements.length === 1) {
+                return this.elements.head;
+            }
+            return this;
+        },
+    });
 
     //--------------------------------- ifList ---------------------------------
 
@@ -104,7 +205,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
+        impl: (interpreter: Interpreter, tvalue: RoXMLElement) => {
             this.elements.prepend(tvalue);
             return BrsInvalid.Instance;
         },
@@ -116,7 +217,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("talue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
+        impl: (interpreter: Interpreter, tvalue: RoXMLElement) => {
             this.elements.append(tvalue);
             return BrsInvalid.Instance;
         },
@@ -184,7 +285,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter) => {
-            this.elements = new LinkedList<BrsType>();
+            this.elements = new LinkedList<RoXMLElement>();
             return BrsInvalid.Instance;
         },
     });
@@ -199,108 +300,6 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter) => {
             return BrsBoolean.from(this.elements.length === 0);
-        },
-    });
-
-    //--------------------------------- ifArray ---------------------------------
-
-    /** Returns the last (highest index) array entry without removing it. If the array is empty, returns invalid */
-    private peek = new Callable("peek", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (interpreter: Interpreter) => {
-            return this.elements.tail || BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns the last (highest index) array entry and removes it from the array. If the array is empty, returns invalid */
-    private pop = new Callable("pop", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (interpreter: Interpreter) => {
-            return this.elements.removeTail() || BrsInvalid.Instance;
-        },
-    });
-
-    /** Adds tvalue as the new highest index entry in the array (adds to the end of the array) */
-    private push = new Callable("push", {
-        signature: {
-            args: [new StdlibArgument("talue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            this.elements.append(tvalue);
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Removes the index zero entry from the array and shifts every other entry down one to fill the hole */
-    private shift = new Callable("shift", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (interpreter: Interpreter) => {
-            return this.elements.removeHead() || BrsInvalid.Instance;
-        },
-    });
-
-    /** Adds a new index zero to the array and shifts every other entry up one to accommodate */
-    private unshift = new Callable("unshift", {
-        signature: {
-            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            this.elements.prepend(tvalue);
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Deletes the entry and shifts down all entries above to fill the hole. If it was successfully deleted, returns true. */
-    private delete = new Callable("delete", {
-        signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter, index: Int32) => {
-            if (index.lessThan(new Int32(0)).toBoolean()) {
-                return BrsBoolean.False;
-            }
-            let current = 0;
-            for (let item of this.elements) {
-                if (index.getValue() === current) {
-                    this.elements.remove(item);
-                    return BrsBoolean.True;
-                }
-                current++;
-            }
-            return BrsBoolean.False;
-        },
-    });
-
-    /** Appends each entry of one roArray to another. If the passed Array contains "holes", they are not appended */
-    private append = new Callable("append", {
-        signature: {
-            args: [new StdlibArgument("array", ValueKind.Object)],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, array: BrsComponent) => {
-            if (!(array instanceof RoArray)) {
-                // TODO: validate against RBI
-                return BrsInvalid.Instance;
-            }
-            array.getElements().forEach(element => {
-                if (element) {
-                    // don't copy "holes" where no value exists
-                    this.elements.append(element);
-                }
-            });
-            return BrsInvalid.Instance;
         },
     });
 
