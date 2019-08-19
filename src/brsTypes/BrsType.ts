@@ -164,7 +164,7 @@ export class BrsString implements BrsValue, Comparable, Boxable {
     }
 
     toString(parent?: BrsType) {
-        return this.value;
+        return '"' + this.value + '"';
     }
 
     concat(other: BrsString) {
