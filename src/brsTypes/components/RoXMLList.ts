@@ -62,24 +62,26 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
 
     get(index: BrsType) {
         switch (index.kind) {
+            case ValueKind.Float:
+                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
             case ValueKind.Int32:
                 return this.getElements()[index.getValue()] || BrsInvalid.Instance;
             case ValueKind.String:
                 return this.getMethod(index.value) || BrsInvalid.Instance;
             default:
                 throw new Error(
-                    "Array indexes must be 32-bit integers, or method names must be strings"
+                    "List indexes must be 32-bit integers, or method names must be strings"
                 );
         }
     }
 
     set(index: BrsType, value: RoXMLElement) {
-        if (index.kind !== ValueKind.Int32) {
-            throw new Error("Array indexes must be 32-bit integers");
+        if (index.kind !== ValueKind.Int32 && index.kind != ValueKind.Float) {
+            throw new Error("List indexes must be 32-bit integers");
         }
         let current = 0;
         for (let item of this.elements) {
-            if (index.getValue() === current) {
+            if (Math.trunc(index.getValue()) === current) {
                 item = value;
                 break;
             }
