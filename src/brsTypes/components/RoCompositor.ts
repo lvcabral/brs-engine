@@ -83,6 +83,32 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         }
     }
 
+    checkCollision(id: number, x: number, y: number, width: number, height: number): BrsType {
+        let collide: BrsType;
+        collide = BrsInvalid.Instance;
+        for (let [z, layer] of this.sprites) {
+            layer.some(function(sprite, index, object) {
+                if (sprite.getId() !== id) {
+                    let rect = sprite.getRect();
+                    if (
+                        x < rect.x + rect.width &&
+                        x + width > rect.x &&
+                        y < rect.y + rect.height &&
+                        y + height > rect.y
+                    ) {
+                        collide = sprite;
+                        return true; // break
+                    }
+                }
+                return false;
+            });
+            if (collide) {
+                break;
+            }
+        }
+        return collide;
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roCompositor>";
     }
