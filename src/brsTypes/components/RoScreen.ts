@@ -22,22 +22,25 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private context: OffscreenCanvasRenderingContext2D;
     private port?: RoMessagePort;
 
-    // TODO: Only allow the screensizes below, return invalid if bad resolution is passed
-    // HD mode screensizes
-    // 1280x720PAR=1:1 (default for HD)
-    // 854x480 PAR=1:1 useful for higher performance HD games, also for 640x480 games
-    // 940x480 PAR=1.1:1 used for displaying a RokuSD (720x480) games
-
-    // SD mode screensizes
-    // 720x480 PAR=1.1:1 (default for SD)
-    // 640x480 PAR=1:1 (used for 640x480 games)
-    // 854x626 PAR=1:1 (used for 854x480 HD games)
+    // TODO: Correctly adjust aspect ratio for non 16:9 resolutions
     constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen", ["ifScreen", "ifDraw2D"]);
-        //this.display = document.getElementById("display") as HTMLCanvasElement; //TODO: Create an empty canvas and use the browser one as TV Display
-        this.width = (width instanceof Int32 && width.getValue()) || 854; //this.display.width;
-        this.height = (height instanceof Int32 && height.getValue()) || 480; //this.display.height;
-
+        const resolutions = {
+            "1280x720": "HD",
+            "854x480": "HD",
+            "940x480": "HD",
+            "720x480": "SD",
+            "640x480": "SD",
+            "854x626": "SD",
+        };
+        const validSizes = new Map(Object.entries(resolutions));
+        this.width = (width instanceof Int32 && width.getValue()) || 1280;
+        this.height = (height instanceof Int32 && height.getValue()) || 720;
+        if (!validSizes.has(`${this.width}x${this.height}`)) {
+            console.error("Invalid Screen resolution, reverting to default display size 1280x720.");
+            this.width = 1280;
+            this.height = 720;
+        }
         let canvas = new OffscreenCanvas(this.width, this.height);
         this.context = canvas.getContext("2d", {
             alpha: false,
