@@ -19,7 +19,7 @@ sub main()
     font = fontRegistry.GetFont("Arial", 40, false, false)
     screen.DrawText("brsLib", 230, 30, &HFFFFFFFF, font)
     bmp = CreateObject("roBitmap", "pkg:/images/roku-logo.png")
-    rgn = CreateObject("roRegion", bmp, 100, 100, 100, 100)
+    rgn = CreateObject("roRegion", bmp, 100.99, 100, 100.99, 100)
     bmp.DrawLine(0,0,200,300,&HFFFFFFFF)
     screen.DrawObject(450, 50, bmp)
     screen.DrawScaledObject(0,300,0.3,0.3,bmp)
@@ -48,6 +48,10 @@ sub main()
     print a[1]
     b = "4"
     print b
+    print a[1.3]
+    print a[1.6]
+    rgn.setTime(100.99)
+    print rgn.getTime()
     msg = port.WaitMessage(0) 'Not working yet on brsLib
 end sub
 
