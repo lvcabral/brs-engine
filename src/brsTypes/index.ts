@@ -19,6 +19,7 @@ import { RoString } from "./components/RoString";
 import { RoBoolean } from "./components/RoBoolean";
 import { RoDouble } from "./components/RoDouble";
 import { RoFloat } from "./components/RoFloat";
+import { RoInt } from "./components/RoInt";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -35,6 +36,7 @@ export * from "./components/RoString";
 export * from "./components/RoBoolean";
 export * from "./components/RoDouble";
 export * from "./components/RoFloat";
+export * from "./components/RoInt";
 export * from "./Callable";
 
 /**

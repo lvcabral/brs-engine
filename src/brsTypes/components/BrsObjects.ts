@@ -8,8 +8,10 @@ import { RoString } from "./RoString";
 import { RoBoolean } from "./RoBoolean";
 import { RoDouble } from "./RoDouble";
 import { RoFloat } from "./RoFloat";
+import { RoInt } from "./RoInt";
 import { Double } from "../Double";
 import { Float } from "../Float";
+import { Int32 } from "../Int32";
 
 /** Map containing a list of brightscript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
@@ -22,4 +24,5 @@ export const BrsObjects = new Map<string, Function>([
     ["roBoolean", (literal: BrsBoolean) => new RoBoolean(literal)],
     ["roDouble", (literal: Double) => new RoDouble(literal)],
     ["roFloat", (literal: Float) => new RoFloat(literal)],
+    ["roInt", (literal: Int32) => new RoInt(literal)],
 ]);
