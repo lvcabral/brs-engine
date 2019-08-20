@@ -57,6 +57,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
 
     get(index: BrsType) {
         switch (index.kind) {
+            case ValueKind.Float:
+                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
             case ValueKind.Int32:
                 return this.getElements()[index.getValue()] || BrsInvalid.Instance;
             case ValueKind.String:
@@ -69,11 +71,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32) {
+        if (index.kind !== ValueKind.Int32 && index.kind != ValueKind.Float) {
             throw new Error("Array indexes must be 32-bit integers");
         }
 
-        this.elements[index.getValue()] = value;
+        this.elements[Math.trunc(index.getValue())] = value;
 
         return BrsInvalid.Instance;
     }
