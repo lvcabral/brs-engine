@@ -12,6 +12,7 @@ import { RoArray } from "./RoArray";
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly sprites = new Map<number, RoSprite[]>();
+    readonly animations = new Array<RoSprite>();
     private canvas: OffscreenCanvas;
     private context: OffscreenCanvasRenderingContext2D;
     private destBitmap?: RoBitmap;
@@ -61,7 +62,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         }
     }
 
-    removeSprite(id: number) {
+    removeSprite(id: number, animation: boolean) {
         this.sprites.forEach(function(layer) {
             layer.some(function(sprite, index, object) {
                 if (sprite.getId() === id) {
@@ -71,6 +72,15 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 return false;
             });
         });
+        if (animation) {
+            this.animations.some(function(sprite, index, object) {
+                if (sprite.getId() === id) {
+                    object.splice(index, 1);
+                    return true; // break
+                }
+                return false;
+            });
+        }
     }
 
     toString(parent?: BrsType): string {
@@ -106,7 +116,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("region", ValueKind.Object),
-                new StdlibArgument("z", ValueKind.Int32),
+                new StdlibArgument("z", ValueKind.Int32, new Int32(0)),
             ],
             returns: ValueKind.Object,
         },
@@ -135,6 +145,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, regions: RoArray, z: Int32) => {
+            // TODO: Verify if there is at least one RoRegion in the regions array
             let sprite = new RoSprite(x, y, regions, z, this.spriteId++, this);
             if (this.sprites.has(z.getValue())) {
                 let layer = this.sprites.get(z.getValue());
@@ -143,6 +154,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             } else {
                 this.sprites.set(z.getValue(), [sprite]);
             }
+            this.animations.push(sprite);
             return sprite;
         },
     });
@@ -154,6 +166,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, duration: Int32) => {
+            this.animations.forEach(sprite => {
+                sprite.nextFrame(duration.getValue());
+            });
             return BrsInvalid.Instance;
         },
     });
@@ -168,15 +183,24 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             let ctx = this.context;
             let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
             ctx.fillStyle = rgbaIntToHex(rgba);
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            if (this.destBitmap) {
+                this.destBitmap.drawImage(this.canvas, 0, 0);
+            }
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
             layers.forEach(z => {
                 const layer = this.sprites.get(z);
                 if (layer) {
                     layer.forEach(sprite => {
-                        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                        ctx.putImageData(sprite.getImageData(), sprite.getPosX(), sprite.getPosY());
-                        if (this.destBitmap) {
-                            this.destBitmap.drawImage(this.canvas, 0, 0);
+                        if (sprite.visible()) {
+                            ctx.putImageData(
+                                sprite.getImageData(),
+                                sprite.getPosX(),
+                                sprite.getPosY()
+                            );
+                            if (this.destBitmap) {
+                                this.destBitmap.drawImage(this.canvas, 0, 0);
+                            }
                         }
                     });
                 }
