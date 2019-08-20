@@ -53,7 +53,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         this.dirty = true;
 
         this.registerMethods([
-            //this.checkCollision,
+            this.checkCollision,
             //this.checkMultipleCollisions,
             this.getRegion,
             this.getCollidableFlags,
@@ -99,6 +99,20 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return this.y;
     }
 
+    getRect() {
+        let w = 0;
+        let h = 0;
+        if (this.region) {
+            w = this.region.getImageWidth();
+            h = this.region.getImageWidth();
+        } else if (this.regions) {
+            let region = this.regions.getElements()[this.frame] as RoRegion;
+            w = region.getImageWidth();
+            h = region.getImageWidth();
+        }
+        return { x: this.x, y: this.y, width: w, height: h };
+    }
+
     visible(): boolean {
         return this.drawable;
     }
@@ -135,6 +149,18 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 : this.regions
                 ? this.regions.getElements()[this.frame]
                 : BrsInvalid.Instance;
+        },
+    });
+
+    /**  */
+    private checkCollision = new Callable("checkCollision", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            let rect = this.getRect();
+            return this.compositor.checkCollision(this.id, rect.x, rect.y, rect.width, rect.height);
         },
     });
 
