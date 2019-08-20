@@ -104,6 +104,10 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.context.getImageData(this.x, this.y, this.width, this.height);
     }
 
+    getAnimaTime(): number {
+        return this.time;
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roRegion>";
     }

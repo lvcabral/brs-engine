@@ -16,6 +16,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     private x: number;
     private y: number;
     private z: number;
+    private frame: number;
     private drawable: boolean;
     private memberFlags: number;
     private collidableFlags: number;
@@ -43,6 +44,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         this.x = x.getValue();
         this.y = y.getValue();
         this.z = z.getValue();
+        this.frame = 0;
         this.collidableFlags = 1;
         this.drawable = true;
         this.memberFlags = 1;
@@ -75,7 +77,14 @@ export class RoSprite extends BrsComponent implements BrsValue {
     }
 
     getImageData(): ImageData {
-        return this.region ? this.region.getImageData() : new ImageData(1, 1);
+        let image = new ImageData(1, 1);
+        if (this.region) {
+            image = this.region.getImageData();
+        } else if (this.regions) {
+            let region = this.regions.getElements()[this.frame] as RoRegion;
+            image = region.getImageData();
+        }
+        return image;
     }
 
     getId(): number {
@@ -88,6 +97,22 @@ export class RoSprite extends BrsComponent implements BrsValue {
 
     getPosY(): number {
         return this.y;
+    }
+
+    visible(): boolean {
+        return this.drawable;
+    }
+
+    nextFrame(tick: number) {
+        if (this.regions) {
+            let region = this.regions.getElements()[this.frame] as RoRegion;
+            if (tick >= region.getAnimaTime()) {
+                this.frame++;
+                if (this.frame >= this.regions.getElements().length) {
+                    this.frame = 0;
+                }
+            }
+        }
     }
 
     toString(parent?: BrsType): string {
@@ -105,7 +130,11 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return this.region ? this.region : this.regions ? this.regions : BrsInvalid.Instance;
+            return this.region
+                ? this.region
+                : this.regions
+                ? this.regions.getElements()[this.frame]
+                : BrsInvalid.Instance;
         },
     });
 
@@ -116,7 +145,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.collidableFlags);
+            return new Int32(this.collidableFlags); //TODO: Use these flags on collision routine
         },
     });
 
@@ -341,7 +370,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, z: Int32) => {
-            this.compositor.removeSprite(this.id);
+            this.compositor.removeSprite(this.id, this.regions !== null);
             this.dirty = true;
             return BrsInvalid.Instance;
         },
