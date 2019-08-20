@@ -1,5 +1,5 @@
 const brs = require("brs");
-const { RoFloat, Float, BrsBoolean, Callable } = brs.types;
+const { RoFloat, Float, BrsBoolean, BrsString, Callable } = brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoFloat", () => {
@@ -45,6 +45,40 @@ describe("RoFloat", () => {
 
             expect(a.equalTo(new RoFloat(new Float(someNumberA)))).toBe(BrsBoolean.True);
             expect(b.equalTo(new RoFloat(new Float(someNumberB)))).toBe(BrsBoolean.True);
+        });
+
+        it("getFloat", () => {
+            a = new RoFloat(new Float(someNumberA));
+            b = new RoFloat(new Float(someNumberB));
+
+            getFloatA = a.getMethod("getFloat");
+            getFloatB = b.getMethod("getFloat");
+
+            expect(getFloatA).toBeInstanceOf(Callable);
+            expect(getFloatB).toBeInstanceOf(Callable);
+
+            let resultA = getFloatA.call(interpreter);
+            let resultB = getFloatB.call(interpreter);
+
+            expect(resultA).toEqual(new Float(someNumberA));
+            expect(resultB).toEqual(new Float(someNumberB));
+        });
+
+        it("toStr", () => {
+            a = new RoFloat(new Float(someNumberA));
+            b = new RoFloat(new Float(someNumberB));
+
+            toStrA = a.getMethod("toStr");
+            toStrB = b.getMethod("toStr");
+
+            let expectedA = parseFloat(Math.fround(someNumberA).toPrecision(7));
+            let expectedB = parseFloat(Math.fround(someNumberB).toPrecision(7));
+
+            let resultA = toStrA.call(interpreter);
+            let resultB = toStrB.call(interpreter);
+
+            expect(resultA).toEqual(new BrsString(String(expectedA)));
+            expect(resultB).toEqual(new BrsString(String(expectedB)));
         });
     });
 });

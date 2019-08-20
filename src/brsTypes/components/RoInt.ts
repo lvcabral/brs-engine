@@ -27,10 +27,14 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
 
     equalTo(other: BrsType): BrsBoolean {
         if (other instanceof RoInt) {
-            return BrsBoolean.from(other.getValue() === this.intrinsic);
+            return BrsBoolean.from(other.intrinsic.getValue() === this.intrinsic.getValue());
         }
 
         return BrsBoolean.False;
+    }
+
+    toString(_parent?: BrsType): string {
+        return this.intrinsic.toString();
     }
 
     // ---------- ifInt ----------
