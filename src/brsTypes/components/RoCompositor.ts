@@ -29,7 +29,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         this.spriteId = 0;
         this.registerMethods([
             this.setDrawTo,
-            // this.draw,
+            this.draw,
             this.drawAll,
             this.newSprite,
             this.newAnimatedSprite,
@@ -89,8 +89,10 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         for (let [z, layer] of this.sprites) {
             layer.some(function(sprite, index, object) {
                 if (sprite.getId() !== id) {
+                    let flags = sprite.getFlags();
                     let rect = sprite.getRect();
                     if (
+                        flags.memberFlags > 0 && // TODO: Correctly check the flags using bitwise operation
                         x < rect.x + rect.width &&
                         x + width > rect.x &&
                         y < rect.y + rect.height &&
@@ -109,6 +111,30 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return collide;
     }
 
+    drawSprites() {
+        let ctx = this.context;
+        let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
+        ctx.fillStyle = rgbaIntToHex(rgba);
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.destBitmap) {
+            this.destBitmap.drawImage(this.canvas, 0, 0);
+        }
+        let layers = [...this.sprites.keys()].sort((a, b) => a - b);
+        layers.forEach(z => {
+            const layer = this.sprites.get(z);
+            if (layer) {
+                layer.forEach(sprite => {
+                    if (sprite.visible()) {
+                        ctx.putImageData(sprite.getImageData(), sprite.getPosX(), sprite.getPosY());
+                        if (this.destBitmap) {
+                            this.destBitmap.drawImage(this.canvas, 0, 0);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roCompositor>";
     }
@@ -117,7 +143,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    /**  */
+    /** Set the destBitmap (roBitmap or roScreen) and the background color */
     private setDrawTo = new Callable("setDrawTo", {
         signature: {
             args: [
@@ -135,7 +161,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Create a new sprite, using an roRegion to define the sprite's bitmap. */
     private newSprite = new Callable("newSprite", {
         signature: {
             args: [
@@ -159,7 +185,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Create a new sprite that consists of a sequence of frames to be animated.
+     *  The frames are defined by the regionArray which is an roArray of roRegions. */
     private newAnimatedSprite = new Callable("newAnimatedSprite", {
         signature: {
             args: [
@@ -185,7 +212,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Duration is the number of ms since the last call. Moves all animated sprites.
+     *  Sprites will not animate unless you call this function regularly  */
     private animationTick = new Callable("animationTick", {
         signature: {
             args: [new StdlibArgument("duration", ValueKind.Int32)],
@@ -199,38 +227,26 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Draw the source object, at position x,y, scaled horizotally by scaleX and vertically by scaleY. */
+    /** Draw any dirty sprites (that is, whatever is new or has changed since the last Draw). */
+    private draw = new Callable("draw", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            this.drawSprites();
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Redraw all sprites even if not dirty. */
     private drawAll = new Callable("drawAll", {
         signature: {
             args: [],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            let ctx = this.context;
-            let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
-            ctx.fillStyle = rgbaIntToHex(rgba);
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            if (this.destBitmap) {
-                this.destBitmap.drawImage(this.canvas, 0, 0);
-            }
-            let layers = [...this.sprites.keys()].sort((a, b) => a - b);
-            layers.forEach(z => {
-                const layer = this.sprites.get(z);
-                if (layer) {
-                    layer.forEach(sprite => {
-                        if (sprite.visible()) {
-                            ctx.putImageData(
-                                sprite.getImageData(),
-                                sprite.getPosX(),
-                                sprite.getPosY()
-                            );
-                            if (this.destBitmap) {
-                                this.destBitmap.drawImage(this.canvas, 0, 0);
-                            }
-                        }
-                    });
-                }
-            });
+            this.drawSprites();
             return BrsInvalid.Instance;
         },
     });

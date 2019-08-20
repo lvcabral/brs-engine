@@ -181,7 +181,6 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                     console.error("Error parsing XML:" + err.message);
                 } else if (parsed) {
                     parsedXML = parsed;
-                    console.log(parsed);
                     result = true;
                 } else {
                     console.error("Error parsing XML: Empty input");

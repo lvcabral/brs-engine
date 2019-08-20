@@ -43,7 +43,11 @@ sub main()
     print bitmap_set.getChildElements()
     print bitmap_set.getNamedElements("extrainfo")
     print bitmap_set.genXML(true)
-
+    a =  [1, "2", 3]
+    print a
+    print a[1]
+    b = "4"
+    print b
     msg = port.WaitMessage(0) 'Not working yet on brsLib
 end sub
 

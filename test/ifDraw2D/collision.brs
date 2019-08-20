@@ -37,7 +37,7 @@ Function Main() as void
         deltatime = timestamp.totalmilliseconds() - start
         if (type(event) = "roUniversalControlEvent" or deltatime > 5000)
             id = 0 'event.GetInt()
-            if spriteCount < 2 'Add a sprite
+            if spriteCount < 3 'Add a sprite
                 spriteCount = spriteCount + 1
                 sprites[spriteCount] = compositor.NewAnimatedSprite(Rnd(screenWidth-ballSize), Rnd(screenHeight-ballSize), balls[spriteCount])
                 sprites[spriteCount].SetData( {dx: Rnd(20)+10, dy: Rnd(20)+10, index: spriteCount} )
@@ -53,7 +53,7 @@ Function Main() as void
                 for each sprite in sprites
                     dx = sprite.GetData().dx
                     dy = sprite.GetData().dy
-                    sprite.MoveTo( ntoi(sprite.GetX() + dx), ntoi(sprite.GetY() + dy) )
+                    sprite.MoveTo( (sprite.GetX() + dx), (sprite.GetY() + dy) )
                     collidingSprite = sprite.CheckCollision()
                     if (collidingSprite <> invalid)
                         doCollision(sprite, collidingSprite, sprites)
@@ -112,7 +112,7 @@ Function checkEdgeCollisions(sprites as object, screenWidth as integer, screenHe
             'deltaY = -deltaY
             sprite.SetData( {dx: deltaX, dy: deltaY, index: i} )
         endif
-        sprite.MoveOffset(ntoi(deltaX), ntoi(deltaY))
+        sprite.MoveOffset(deltaX, deltaY)
     end for
     return sprites
 End Function
@@ -133,10 +133,10 @@ Function doCollision(sprite0 as object, sprite1 as object, sprites as object) as
     pos0 = {}
     pos0.x = 0
     pos0.y = 0
-    pos1 = rotate(dx * 1.0, dy * 1.0, fSin, fCos, true)
+    pos1 = rotate(dx, dy, fSin, fCos, true)
     
-    vel0 = rotate(sprite0.GetData().dx * 1.0, sprite0.GetData().dy * 1.0, fSin, fCos, true)
-    vel1 = rotate(sprite1.GetData().dx * 1.0, sprite1.GetData().dy * 1.0, fSin, fCos, true)
+    vel0 = rotate(sprite0.GetData().dx, sprite0.GetData().dy, fSin, fCos, true)
+    vel1 = rotate(sprite1.GetData().dx, sprite1.GetData().dy, fSin, fCos, true)
     
     'collision reaction
     vxTotal = vel0.x - vel1.x
@@ -148,17 +148,17 @@ Function doCollision(sprite0 as object, sprite1 as object, sprites as object) as
     pos1.x = pos1.x + vel1.x
 
     'rotate positions back
-    pos0F = rotate(pos0.x * 1.0, pos0.y * 1.0, fSin, fCos, false)
-    pos1F = rotate(pos1.x * 1.0, pos1.y * 1.0, fSin, fCos, false)
+    pos0F = rotate(pos0.x, pos0.y, fSin, fCos, false)
+    pos1F = rotate(pos1.x, pos1.y, fSin, fCos, false)
 
     'adjust positions to actual screen positions
     'sprite1.MoveOffset(pos1F.x, pos1F.y)
     'sprite0.MoveOffset(pos0F.x, pos0F.y)
-    sprites[index0].MoveOffset(ntoi(pos0F.x), ntoi(pos0F.y))    
-    sprites[index1].MoveOffset(ntoi(pos1F.x), ntoi(pos1F.y))
+    sprites[index0].MoveOffset(pos0F.x, pos0F.y)    
+    sprites[index1].MoveOffset(pos1F.x, pos1F.y)
     'rotate velocities back
-    vel0F = rotate(vel0.x * 1.0, vel0.y * 1.0, fSin, fCos, false)
-    vel1F = rotate(vel1.x * 1.0, vel1.y * 1.0, fSin, fCos, false)
+    vel0F = rotate(vel0.x, vel0.y, fSin, fCos, false)
+    vel1F = rotate(vel1.x, vel1.y, fSin, fCos, false)
     sprites[index0].SetData( {dx: vel0F.x, dy: vel0F.y, index: index0} )
     sprites[index1].SetData( {dx: vel1F.x, dy: vel1F.y, index: index1} )
     sprites[index0].SetMemberFlags(0)
@@ -178,8 +178,3 @@ Function rotate(x as float, y as float, fSin as float, fCos as float, reverse as
     endif
     return res
 End Function
-
-function ntoi(value) as integer
-    if type(value) = "Integer" then return value
-    return int(value)
-end function
