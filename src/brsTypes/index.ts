@@ -16,6 +16,9 @@ import { Double } from "./Double";
 import { Callable } from "./Callable";
 import { BrsComponent } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
+import { RoBoolean } from "./components/RoBoolean";
+import { RoDouble } from "./components/RoDouble";
+import { RoFloat } from "./components/RoFloat";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -29,6 +32,9 @@ export * from "./components/RoSGNode";
 export * from "./components/BrsObjects";
 export * from "./components/RoRegex";
 export * from "./components/RoString";
+export * from "./components/RoBoolean";
+export * from "./components/RoDouble";
+export * from "./components/RoFloat";
 export * from "./Callable";
 
 /**
