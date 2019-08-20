@@ -113,6 +113,10 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return { x: this.x, y: this.y, width: w, height: h };
     }
 
+    getFlags() {
+        return { collidableFlags: this.collidableFlags, memberFlags: this.memberFlags };
+    }
+
     visible(): boolean {
         return this.drawable;
     }

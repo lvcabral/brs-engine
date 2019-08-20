@@ -39,7 +39,7 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
         scalex = scaley*par
 
         ballbitmap = createobject("robitmap",{width:ballsizex,height:ballsizey,alphaenable:true})
-        ballbitmap.drawscaledobject(0,0,scalex*1.0,scaley*1.0,tmpballbitmap)
+        ballbitmap.drawscaledobject(0,0,scalex,scaley,tmpballbitmap)
 
         ballregion = createobject("roregion",ballbitmap,0,0,ballsizex,ballsizey)
         ballcenterX = int(ballsizex/2)
@@ -84,11 +84,11 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
                 screen.SetAlphaEnable(true)
                 scalex = x/rightedge
                 scaley = y/bottomedge
-                screen.drawscaledobject(ntoi(x+shadow_dx),ntoi(y+shadow_dy),scalex*1.0,scaley*1.0,shadowregion)
+                screen.drawscaledobject((x+shadow_dx),(y+shadow_dy),scalex,scaley,shadowregion)
 
-                screen.drawscaledobject(ntoi(x),ntoi(y),scalex*1.0,scaley*1.0,ballregion)
+                screen.drawscaledobject(x,y,scalex,scaley,ballregion)
                 screen.SetAlphaEnable(false)
-                screen.drawrect(ntoi(x-2),ntoi(y-2),5,5,green)        ' show where the (x,y) is
+                screen.drawrect((x-2),(y-2),5,5,green)        ' show where the (x,y) is
                 
                 swapbuff_timestamp.mark()
                 screenFull.SwapBuffers()
@@ -147,7 +147,7 @@ End Sub
 sub drawline(screen, x0,y0,x1,y1,width,color)
 
     if (width = 1) and (y0 <> y1) and (x0 <> x1)
-        screen.drawline(x0, y0, ntoi(x1), y1, color)
+        screen.drawline(x0, y0, x1, y1, color)
         return
     end if
 
@@ -158,14 +158,14 @@ sub drawline(screen, x0,y0,x1,y1,width,color)
             y0=y1
             h = -h
         endif            
-        screen.drawrect(ntoi(x0),y0,ntoi(width),h+1,color)
+        screen.drawrect(x0,y0,width,h+1,color)
     else if (y0=y1)
         w = x1-x0
         if w<0
             x0=x1
             w = -w
         endif
-        screen.drawrect(ntoi(x0),y0,ntoi(w+1),width,color)
+        screen.drawrect(x0,y0,w+1,width,color)
     end if
 end sub
 
@@ -208,8 +208,3 @@ sub regiondrawgrid(screen, background)
     ' draw floor
     drawline(screen, left-bottomXdeltainit, bottom+deltay_over_2,right-bottomXdelta-deltax_over_20 , bottom+deltay_over_2, 1, color)
 end sub
-
-function ntoi(value) as integer
-    if type(value) = "Integer" then return value
-    return int(value)
-end function

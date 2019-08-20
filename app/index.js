@@ -1,6 +1,9 @@
 var display = document.getElementById("display");
+var screenSize = { width: 854, height: 480 };
 var ctx = display.getContext("2d", { alpha: false });
-var buffer = new ImageData(854, 480);
+var bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
+var bufferCtx = bufferCanvas.getContext("2d");
+var buffer = new ImageData(screenSize.width, screenSize.height);
 var dirty = false;
 var brsWorker;
 var source = [];
@@ -16,7 +19,10 @@ assets.push({ path: "assets/5ballset.png", type: "image/png" });
 assets.push({ path: "assets/6ballset.png", type: "image/png" });
 assets.push({ path: "assets/8ballset.png", type: "image/png" });
 assets.push({ path: "assets/bitmapset.xml", type: "text/xml" });
-
+assets.push({ path: "assets/anims/kid-sequence.json", type: "text/json" });
+assets.push({ path: "assets/sprites/kid.json", type: "text/json" });
+assets.push({ path: "assets/sprites/kid-l.png", type: "image/png" });
+assets.push({ path: "assets/sprites/kid-r.png", type: "image/png" });
 var fileSelector = document.getElementById("file");
 fileSelector.onclick = function() {
     this.value = null;
@@ -67,7 +73,10 @@ function saveBuffer(event) {
 }
 function drawCanvas() {
     if (dirty) {
-        ctx.putImageData(buffer, 0, 0);
+        bufferCanvas.width = buffer.width;
+        bufferCanvas.height = buffer.height;
+        bufferCtx.putImageData(buffer, 0, 0);
+        ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
         dirty = false;
     }
     requestAnimationFrame(drawCanvas);
