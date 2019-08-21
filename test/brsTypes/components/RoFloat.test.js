@@ -1,14 +1,14 @@
 const brs = require("brs");
-const { RoFloat, Float, BrsBoolean, BrsString, Callable } = brs.types;
+const { roFloat, Float, BrsBoolean, BrsString, Callable } = brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
-describe("RoFloat", () => {
+describe("roFloat", () => {
     describe("equality", () => {
         it("compares to intrinsic Float", () => {
-            let a = new RoFloat(new Float(10.0));
-            let b = new RoFloat(new Float(5.5));
-            let c = new RoFloat(new Float(123.99));
-            let d = new RoFloat(new Float(10.0));
+            let a = new roFloat(new Float(10.0));
+            let b = new roFloat(new Float(5.5));
+            let c = new roFloat(new Float(123.99));
+            let d = new roFloat(new Float(10.0));
 
             expect(a.equalTo(b)).toBe(BrsBoolean.False);
             expect(a.equalTo(c)).toBe(BrsBoolean.False);
@@ -19,7 +19,7 @@ describe("RoFloat", () => {
     });
 
     test("toString", () => {
-        expect(new RoFloat(new Float(22.456)).toString()).toBe("22.456");
+        expect(new roFloat(new Float(22.456)).toString()).toBe("22.456");
     });
 
     describe("ifFloat, ifToStr", () => {
@@ -28,8 +28,8 @@ describe("RoFloat", () => {
         beforeEach(() => {
             someNumberA = (Math.random() * 4 + 7) * (Math.random() * 100 + 3);
             someNumberB = (Math.random() * 4 + 7) * (Math.random() * 100 + 3);
-            a = new RoFloat(new Float(0));
-            b = new RoFloat(new Float(0));
+            a = new roFloat(new Float(0));
+            b = new roFloat(new Float(0));
             interpreter = new Interpreter();
         });
 
@@ -43,13 +43,13 @@ describe("RoFloat", () => {
             setFloatA.call(interpreter, new Float(someNumberA));
             setFloatB.call(interpreter, new Float(someNumberB));
 
-            expect(a.equalTo(new RoFloat(new Float(someNumberA)))).toBe(BrsBoolean.True);
-            expect(b.equalTo(new RoFloat(new Float(someNumberB)))).toBe(BrsBoolean.True);
+            expect(a.equalTo(new roFloat(new Float(someNumberA)))).toBe(BrsBoolean.True);
+            expect(b.equalTo(new roFloat(new Float(someNumberB)))).toBe(BrsBoolean.True);
         });
 
         it("getFloat", () => {
-            a = new RoFloat(new Float(someNumberA));
-            b = new RoFloat(new Float(someNumberB));
+            a = new roFloat(new Float(someNumberA));
+            b = new roFloat(new Float(someNumberB));
 
             getFloatA = a.getMethod("getFloat");
             getFloatB = b.getMethod("getFloat");
@@ -65,8 +65,8 @@ describe("RoFloat", () => {
         });
 
         it("toStr", () => {
-            a = new RoFloat(new Float(someNumberA));
-            b = new RoFloat(new Float(someNumberB));
+            a = new roFloat(new Float(someNumberA));
+            b = new roFloat(new Float(someNumberB));
 
             toStrA = a.getMethod("toStr");
             toStrB = b.getMethod("toStr");

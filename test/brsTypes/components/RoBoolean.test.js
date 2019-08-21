@@ -1,13 +1,13 @@
 const brs = require("brs");
-const { RoBoolean, BrsString, BrsBoolean, Callable } = brs.types;
+const { roBoolean, BrsString, BrsBoolean, Callable } = brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoBoolean", () => {
     describe("equality", () => {
         it("compares to intrinsic BrsBoolean", () => {
-            let a = new RoBoolean(new BrsBoolean(true));
-            let b = new RoBoolean(new BrsBoolean(false));
-            let c = new RoBoolean(new BrsBoolean(true));
+            let a = new roBoolean(new BrsBoolean(true));
+            let b = new roBoolean(new BrsBoolean(false));
+            let c = new roBoolean(new BrsBoolean(true));
 
             expect(a.equalTo(b)).toBe(BrsBoolean.False);
             expect(a.equalTo(c)).toBe(BrsBoolean.True);
@@ -15,7 +15,7 @@ describe("RoBoolean", () => {
     });
 
     test("toString", () => {
-        expect(new RoBoolean(new BrsBoolean(true)).toString()).toBe("true");
+        expect(new roBoolean(new BrsBoolean(true)).toString()).toBe("true");
     });
 
     describe("ifBoolean", () => {
@@ -23,8 +23,8 @@ describe("RoBoolean", () => {
             let a, b, interpreter;
 
             beforeEach(() => {
-                a = new RoBoolean(new BrsBoolean(true));
-                b = new RoBoolean(new BrsBoolean(false));
+                a = new roBoolean(new BrsBoolean(true));
+                b = new roBoolean(new BrsBoolean(false));
                 interpreter = new Interpreter();
             });
 
@@ -59,8 +59,8 @@ describe("RoBoolean", () => {
         describe("toStr", () => {
             it("Returns the value as a string", () => {
                 let interpreter = new Interpreter();
-                let a = new RoBoolean(new BrsBoolean(true));
-                let b = new RoBoolean(new BrsBoolean(false));
+                let a = new roBoolean(new BrsBoolean(true));
+                let b = new roBoolean(new BrsBoolean(false));
                 let strA = a.getMethod("toStr");
                 let strB = b.getMethod("toStr");
                 expect(strA).toBeInstanceOf(Callable);
