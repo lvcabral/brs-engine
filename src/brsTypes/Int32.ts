@@ -130,9 +130,9 @@ export class Int32 implements Numeric, Comparable {
             case ValueKind.Int32:
             case ValueKind.Float:
             case ValueKind.Double:
-                return new Int32(this.getValue() >> Math.trunc(rhs.getValue()));
+                return new Int32(this.getValue() >>> Math.trunc(rhs.getValue()));
             case ValueKind.Int64:
-                return new Int32(this.getValue() >> rhs.getValue().toNumber());
+                return new Int32(this.getValue() >>> rhs.getValue().toNumber());
         }
     }
 
