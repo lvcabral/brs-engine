@@ -129,6 +129,38 @@ describe("Callable", () => {
             });
         });
 
+        it("allows float to be passed to an integer argument", () => {
+            const hasArgs = new BrsTypes.Callable("acceptsAnything", {
+                signature: {
+                    args: [new BrsTypes.StdlibArgument("intArg", BrsTypes.ValueKind.Int32)],
+                    returns: BrsTypes.String,
+                },
+                impl: () => {},
+            });
+
+            expect(
+                hasArgs
+                    .getAllSignatureMismatches([new BrsTypes.Float(1.5)])
+                    .map(mm => mm.mismatches)[0]
+            ).toEqual([]);
+        });
+
+        it("allows integer to be passed to a float argument", () => {
+            const hasArgs = new BrsTypes.Callable("acceptsAnything", {
+                signature: {
+                    args: [new BrsTypes.StdlibArgument("floatArg", BrsTypes.ValueKind.Float)],
+                    returns: BrsTypes.String,
+                },
+                impl: () => {},
+            });
+
+            expect(
+                hasArgs
+                    .getAllSignatureMismatches([new BrsTypes.Int32(4)])
+                    .map(mm => mm.mismatches)[0]
+            ).toEqual([]);
+        });
+
         it("allows any type for dynamic and object", () => {
             const hasArgs = new BrsTypes.Callable("acceptsAnything", {
                 signature: {

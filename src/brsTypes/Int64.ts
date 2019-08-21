@@ -21,7 +21,7 @@ export class Int64 implements Numeric, Comparable {
         if (value instanceof Long) {
             this.value = value;
         } else {
-            this.value = Long.fromNumber(Math.round(value));
+            this.value = Long.fromNumber(Math.trunc(value));
         }
     }
 
@@ -41,14 +41,6 @@ export class Int64 implements Numeric, Comparable {
         }
 
         let i64 = new Int64(Long.fromString(asString, undefined, radix));
-        const decimalLocation = asString.indexOf(".");
-        if (decimalLocation > -1 && decimalLocation + 1 < asString.length) {
-            // Long.fromString truncates to integers instead of rounding, so manually add one to
-            // compensate if necessary
-            if (asString[decimalLocation + 1] >= "5" && asString[decimalLocation + 1] <= "9") {
-                i64 = new Int64(i64.getValue().add(Long.ONE));
-            }
-        }
         return i64;
     }
 
