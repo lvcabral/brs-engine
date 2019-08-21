@@ -1,5 +1,5 @@
 import { BrsComponent } from "./BrsComponent";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType } from "..";
@@ -14,7 +14,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
     }
 
     constructor(initialValue: BrsBoolean) {
-        super("roBoolean", ["ifBoolean", "ifToStr"]);
+        super("roBoolean");
 
         this.intrinsic = initialValue;
         this.registerMethods([this.getBoolean, this.setBoolean, this.toStr]);
