@@ -354,13 +354,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         switch (lexeme) {
             case Lexeme.LeftShift:
             case Lexeme.LeftShiftEqual:
-                if (isBrsNumber(left) && isBrsNumber(right) && right.lessThan(new Int32(32))) {
+                if (
+                    isBrsNumber(left) &&
+                    isBrsNumber(right) &&
+                    right.getValue() >= 0 &&
+                    right.getValue() < 32
+                ) {
                     return left.leftShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
                     return this.addError(
                         new TypeMismatch({
                             message:
-                                "In a bitshift expression the right value shall be lower than 32.",
+                                "In a bitshift expression the right value must be >= 0 and < 32.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -388,13 +393,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             case Lexeme.RightShift:
             case Lexeme.RightShiftEqual:
-                if (isBrsNumber(left) && isBrsNumber(right) && right.lessThan(new Int32(32))) {
+                if (
+                    isBrsNumber(left) &&
+                    isBrsNumber(right) &&
+                    right.getValue() >= 0 &&
+                    right.getValue() < 32
+                ) {
                     return left.rightShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
                     return this.addError(
                         new TypeMismatch({
                             message:
-                                "In a bitshift expression the right value shall be lower than 32.",
+                                "In a bitshift expression the right value must be >= 0 and < 32.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
