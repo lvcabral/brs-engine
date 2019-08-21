@@ -271,7 +271,7 @@ export class Callable implements Brs.BrsValue {
                 received.kind === Brs.ValueKind.Float
             ) {
                 let old = args[index] as Float;
-                args[index] = new Int32(Math.trunc(old.getValue()));
+                args[index] = new Int32(old.getValue());
                 return;
             }
 

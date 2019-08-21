@@ -11,18 +11,18 @@ const {
 const Long = require("long");
 
 describe("Int64", () => {
-    it("rounds initial values to integers", () => {
+    it("truncates initial values to integers", () => {
         let three = new Int64(3.4);
         let four = new Int64(3.5);
         expect(three.getValue().toNumber()).toBe(3);
-        expect(four.getValue().toNumber()).toBe(4);
+        expect(four.getValue().toNumber()).toBe(3);
     });
 
     it("creates base-10 integers from strings", () => {
         let three = Int64.fromString("3.4");
         let four = Int64.fromString("3.5");
         expect(three.getValue().toNumber()).toBe(3);
-        expect(four.getValue().toNumber()).toBe(4);
+        expect(four.getValue().toNumber()).toBe(3);
     });
 
     it("creates base-16 integers from strings", () => {
