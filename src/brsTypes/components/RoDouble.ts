@@ -6,7 +6,7 @@ import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 import { Double } from "../Double";
 
-export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
+export class roDouble extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Double;
 
@@ -26,7 +26,7 @@ export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other instanceof RoDouble) {
+        if (other instanceof roDouble) {
             return BrsBoolean.from(other.intrinsic.getValue() === this.intrinsic.getValue());
         }
 

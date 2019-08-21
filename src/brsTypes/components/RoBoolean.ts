@@ -5,7 +5,7 @@ import { Interpreter } from "../../interpreter";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 
-export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
+export class roBoolean extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: BrsBoolean;
 
@@ -25,7 +25,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other instanceof RoBoolean) {
+        if (other instanceof roBoolean) {
             return BrsBoolean.from(other.getValue().toBoolean() === this.intrinsic.toBoolean());
         }
 

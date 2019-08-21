@@ -16,10 +16,10 @@ import { Double } from "./Double";
 import { Callable } from "./Callable";
 import { BrsComponent } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
-import { RoBoolean } from "./components/RoBoolean";
-import { RoDouble } from "./components/RoDouble";
-import { RoFloat } from "./components/RoFloat";
-import { RoInt } from "./components/RoInt";
+import { roBoolean } from "./components/RoBoolean";
+import { roDouble } from "./components/RoDouble";
+import { roFloat } from "./components/RoFloat";
+import { roInt } from "./components/RoInt";
 
 export * from "./BrsType";
 export * from "./Int32";

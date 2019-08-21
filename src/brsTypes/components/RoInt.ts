@@ -6,7 +6,7 @@ import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 
-export class RoInt extends BrsComponent implements BrsValue, Unboxable {
+export class roInt extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Int32;
 
@@ -26,7 +26,7 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other instanceof RoInt) {
+        if (other instanceof roInt) {
             return BrsBoolean.from(other.intrinsic.getValue() === this.intrinsic.getValue());
         }
 
