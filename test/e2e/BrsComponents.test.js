@@ -196,4 +196,30 @@ describe("end to end brightscript functions", () => {
             "🐶", // uri-encoded dog emoji, decoded
         ]);
     });
+
+    test("components/roIntrinsics.brs", async () => {
+        await execute([resourceFile("components", "roIntrinsics.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "Boolean object A ",
+            "true",
+            "Boolean object B ",
+            "false",
+            "Comparing true = false should be false ",
+            "false",
+            "Double value ",
+            "123.456",
+            "Double value * 2 ",
+            "246.912",
+            "Float object ",
+            "789.012",
+            "Float object * 10 ",
+            "7890.12",
+            "Integer object ",
+            "23",
+            "Integer object times itself ",
+            "529",
+        ]);
+    });
 });
