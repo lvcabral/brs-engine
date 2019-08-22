@@ -14,7 +14,7 @@ export class roBoolean extends BrsComponent implements BrsValue, Unboxable {
     }
 
     constructor(initialValue: BrsBoolean) {
-        super("roBoolean");
+        super("roBoolean", ["ifBoolean", "ifToStr"]);
 
         this.intrinsic = initialValue;
         this.registerMethods([this.getBoolean, this.setBoolean, this.toStr]);

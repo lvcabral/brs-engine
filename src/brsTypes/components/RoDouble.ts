@@ -15,7 +15,7 @@ export class roDouble extends BrsComponent implements BrsValue, Unboxable {
     }
 
     constructor(initialValue: Double) {
-        super("roDouble");
+        super("roDouble", ["ifDouble", "ifToStr"]);
 
         this.intrinsic = initialValue;
         this.registerMethods([this.getDouble, this.setDouble, this.toStr]);

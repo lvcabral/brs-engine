@@ -15,7 +15,7 @@ export class roInt extends BrsComponent implements BrsValue, Unboxable {
     }
 
     constructor(initialValue: Int32) {
-        super("roInt");
+        super("roInt", ["ifInt", "ifIntOps", "ifToStr"]);
 
         this.intrinsic = initialValue;
         this.registerMethods([this.getInt, this.setInt, this.toStr]);
