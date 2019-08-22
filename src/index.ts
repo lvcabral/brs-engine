@@ -23,6 +23,7 @@ export { _parser as parser };
 export const images = new Map<string, ImageBitmap>();
 export const texts = new Map<string, string>();
 export const frame = { flag: true };
+export const control = new Map<string, Int32Array>();
 
 onmessage = function(event) {
     if (event.data.brs) {
@@ -37,8 +38,8 @@ onmessage = function(event) {
             }
         }
         run(event.data.brs, defaultExecutionOptions, replInterpreter);
-    } else if (event.data.frame) {
-        frame.flag = true;
+    } else {
+        control.set("keys", new Int32Array(event.data));
     }
 };
 
