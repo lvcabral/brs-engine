@@ -15,7 +15,7 @@ export class roFloat extends BrsComponent implements BrsValue, Unboxable {
     }
 
     constructor(initialValue: Float) {
-        super("roFloat");
+        super("roFloat", ["ifFloat", "ifToStr"]);
 
         this.intrinsic = initialValue;
         this.registerMethods([this.getFloat, this.setFloat, this.toStr]);
