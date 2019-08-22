@@ -36,8 +36,8 @@ Function Main() as void
         event = port.GetMessage()
         deltatime = timestamp.totalmilliseconds() - start
         if (type(event) = "roUniversalControlEvent" or deltatime > 5000)
-            id = 0 'event.GetInt()
-            if spriteCount < 3 'Add a sprite
+            id = 0 'event.GetInt() '
+            if spriteCount < 3 'Add a sprite '
                 spriteCount = spriteCount + 1
                 sprites[spriteCount] = compositor.NewAnimatedSprite(Rnd(screenWidth-ballSize), Rnd(screenHeight-ballSize), balls[spriteCount])
                 sprites[spriteCount].SetData( {dx: Rnd(20)+10, dy: Rnd(20)+10, index: spriteCount} )
@@ -87,7 +87,6 @@ Function checkEdgeCollisions(sprites as object, screenWidth as integer, screenHe
         endif
 
         if (x < 0)
-            'x = -x
             x = 0
             if (deltaX < 0)
                 deltaX = -deltaX
@@ -104,12 +103,10 @@ Function checkEdgeCollisions(sprites as object, screenWidth as integer, screenHe
         endif
 
         if (y < 0)
-            'y = -y
             y = 0
             if (deltaY < 0)
                 deltaY = -deltaY
             endif
-            'deltaY = -deltaY
             sprite.SetData( {dx: deltaX, dy: deltaY, index: i} )
         endif
         sprite.MoveOffset(deltaX, deltaY)
@@ -138,25 +135,23 @@ Function doCollision(sprite0 as object, sprite1 as object, sprites as object) as
     vel0 = rotate(sprite0.GetData().dx, sprite0.GetData().dy, fSin, fCos, true)
     vel1 = rotate(sprite1.GetData().dx, sprite1.GetData().dy, fSin, fCos, true)
     
-    'collision reaction
+    'collision reaction'
     vxTotal = vel0.x - vel1.x
     vel0.x = vel1.x
     vel1.x = vxTotal + vel0.x
 
-    'update position
+    'update position'
     pos0.x = pos0.x + vel0.x
     pos1.x = pos1.x + vel1.x
 
-    'rotate positions back
+    'rotate positions back'
     pos0F = rotate(pos0.x, pos0.y, fSin, fCos, false)
     pos1F = rotate(pos1.x, pos1.y, fSin, fCos, false)
 
-    'adjust positions to actual screen positions
-    'sprite1.MoveOffset(pos1F.x, pos1F.y)
-    'sprite0.MoveOffset(pos0F.x, pos0F.y)
+    'adjust positions to actual screen positions'
     sprites[index0].MoveOffset(pos0F.x, pos0F.y)    
     sprites[index1].MoveOffset(pos1F.x, pos1F.y)
-    'rotate velocities back
+    'rotate velocities back'
     vel0F = rotate(vel0.x, vel0.y, fSin, fCos, false)
     vel1F = rotate(vel1.x, vel1.y, fSin, fCos, false)
     sprites[index0].SetData( {dx: vel0F.x, dy: vel0F.y, index: index0} )
