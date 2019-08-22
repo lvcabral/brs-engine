@@ -4,14 +4,24 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { control } from "../..";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private messageQueue: BrsType[];
+    private keys: Int32Array;
+    private lastKey: number;
     constructor() {
         super("roMessagePort");
         this.registerMethods([this.waitMessage, this.getMessage, this.peekMessage]);
         this.messageQueue = [];
+        this.lastKey = 0;
+        let keys = control.get("keys");
+        if (keys) {
+            this.keys = keys;
+        } else {
+            this.keys = new Int32Array([]);
+        }
     }
 
     pushMessage(object: BrsType) {
@@ -44,10 +54,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            // if (this.messageQueue.length > 0)
-            // {
-            //     return this.messageQueue.shift();
-            // }
+            if (this.keys[0] !== this.lastKey) {
+                this.lastKey = this.keys[0];
+                console.log("new key=" + this.lastKey);
+            }
             return BrsInvalid.Instance;
         },
     });

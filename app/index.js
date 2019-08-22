@@ -8,6 +8,17 @@ var dirty = false;
 var brsWorker;
 var source = [];
 var assets = [];
+
+// SharedArrayBuffer
+const length = 10;
+const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+const sharedArray = new Int32Array(sharedBuffer);
+for (let i = 0; i < length; i++) sharedArray[i] = i && sharedArray[i - 1] + 2;
+
+// Keyboard handlers
+document.addEventListener("keydown", keyDownHandler, false);
+document.addEventListener("keyup", keyUpHandler, false);
+
 assets.push({ path: "images/sprite.png", type: "image/png" });
 assets.push({ path: "images/roku-logo.png", type: "image/png" });
 assets.push({ path: "images/AmigaBoingBall.png", type: "image/png" });
@@ -62,6 +73,7 @@ function loadAssets() {
         brsWorker = new Worker("./lib/brsLib.js");
         brsWorker.addEventListener("message", saveBuffer);
         var payload = { brs: source[0], paths: paths, texts: txts, images: imgs };
+        brsWorker.postMessage(sharedBuffer);
         brsWorker.postMessage(payload, imgs);
     };
     loader.postMessage({ assets: assets });
@@ -82,3 +94,30 @@ function drawCanvas() {
     requestAnimationFrame(drawCanvas);
 }
 requestAnimationFrame(drawCanvas);
+
+function keyDownHandler(event) {
+    if (event.keyCode == 39) {
+        console.log("rightPressed = true");
+    } else if (event.keyCode == 37) {
+        console.log("leftPressed = true");
+    }
+    if (event.keyCode == 40) {
+        console.log("downPressed = true");
+    } else if (event.keyCode == 38) {
+        console.log("upPressed = true");
+    }
+}
+
+function keyUpHandler(event) {
+    sharedArray[0] = event.keyCode;
+    if (event.keyCode == 39) {
+        console.log("rightPressed = false");
+    } else if (event.keyCode == 37) {
+        console.log("leftPressed = false");
+    }
+    if (event.keyCode == 40) {
+        console.log("downPressed = false");
+    } else if (event.keyCode == 38) {
+        console.log("upPressed = false");
+    }
+}
