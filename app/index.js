@@ -236,6 +236,20 @@ function keyDownHandler(event) {
         sharedArray[0] = 2; // BUTTON_UP_PRESSED
     } else if (event.keyCode == 40) {
         sharedArray[0] = 3; // BUTTON_DOWN_PRESSED
+    } else if (event.keyCode == 111) {
+        sharedArray[0] = 7; // BUTTON_INSTANT_REPLAY_PRESSED
+    } else if (event.keyCode == 106) {
+        sharedArray[0] = 10; // BUTTON_INFO_PRESSED
+    } else if (event.keyCode == 188) {
+        sharedArray[0] = 8; // BUTTON_REWIND_PRESSED
+    } else if (event.keyCode == 32) {
+        sharedArray[0] = 13; // BUTTON_PLAY_PRESSED
+    } else if (event.keyCode == 190) {
+        sharedArray[0] = 9; // BUTTON_FAST_FORWARD_PRESSED
+    } else if (event.keyCode == 65) {
+        sharedArray[0] = 17; // BUTTON_A_PRESSED
+    } else if (event.keyCode == 90) {
+        sharedArray[0] = 18; // BUTTON_B_PRESSED
     } else if (event.keyCode == 27) {
         if (brsWorker != undefined) {
             // HOME BUTTON (ESC)
@@ -259,5 +273,19 @@ function keyUpHandler(event) {
         sharedArray[0] = 102; // BUTTON_UP_RELEASED
     } else if (event.keyCode == 40) {
         sharedArray[0] = 103; // BUTTON_DOWN_RELEASED
+    } else if (event.keyCode == 111) {
+        sharedArray[0] = 107; // BUTTON_INSTANT_REPLAY_RELEASED
+    } else if (event.keyCode == 106) {
+        sharedArray[0] = 110; // BUTTON_INFO_RELEASED
+    } else if (event.keyCode == 188) {
+        sharedArray[0] = 108; // BUTTON_REWIND_RELEASED
+    } else if (event.keyCode == 32) {
+        sharedArray[0] = 113; // BUTTON_PLAY_RELEASED
+    } else if (event.keyCode == 190) {
+        sharedArray[0] = 109; // BUTTON_FAST_FORWARD_RELEASED
+    } else if (event.keyCode == 65) {
+        sharedArray[0] = 117; // BUTTON_A_RELEASED
+    } else if (event.keyCode == 90) {
+        sharedArray[0] = 118; // BUTTON_B_RELEASED
     }
 }
