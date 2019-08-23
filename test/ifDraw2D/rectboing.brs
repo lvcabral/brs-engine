@@ -1,3 +1,5 @@
+Library "v30/bslCore.brs"
+
 sub main()
     screen=CreateObject("roScreen", true, 854, 480)
     screen.SetAlphaEnable(true)
@@ -55,7 +57,7 @@ sub rectboing(screenFull as object, msgport as object, topx, topy, w, h, par)
         w_over_10 = w/10
         w_times9_over10 = (w*9)/10
         h_times9_over10 = (h*9)/10
-        'codes = bslUniversalControlEventCodes()
+        codes = bslUniversalControlEventCodes()
         grid = createobject("robitmap", {width:screen.getWidth(),height:screen.getheight(),alphaenable:false})
         regiondrawgrid(grid, background)
         grid.finish()
@@ -79,9 +81,9 @@ sub rectboing(screenFull as object, msgport as object, topx, topy, w, h, par)
                         if type(msg) = "roUniversalControlEvent"
                             button = msg.getint()
                             print "button=";button
-                        '     if button=codes.BUTTON_BACK_PRESSED   
-                        '         return
-                        '     endif
+                             if button=codes.BUTTON_BACK_PRESSED   
+                                 return
+                             endif
                         endif
                     endif
                 end while

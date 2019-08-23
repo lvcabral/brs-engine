@@ -1,3 +1,5 @@
+Library "v30/bslCore.brs"
+
 sub main()
     screen=CreateObject("roScreen", true, 854, 480)
     screen.SetAlphaEnable(true)
@@ -40,7 +42,7 @@ sub rectbounce(screenFull as object, msgport as object, topx, topy, w, h, par)
         preoldx = oldx
         preoldy = oldy
         flipoldy = y
-        'codes = bslUniversalControlEventCodes()
+        codes = bslUniversalControlEventCodes()
         timestamp = createobject("rotimespan")
         start = timestamp.totalmilliseconds()
         while true
@@ -63,9 +65,9 @@ sub rectbounce(screenFull as object, msgport as object, topx, topy, w, h, par)
                         if type(msg) = "roUniversalControlEvent"
                             button = msg.getint()
                             print "button=";button
-                            'if button=codes.BUTTON_BACK_PRESSED   
+                            if button=codes.BUTTON_BACK_PRESSED   
                                 return
-                            'endif
+                            endif
                         endif
                     endif
                 end while
