@@ -1,5 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
+import { RoUniversalControlEvent } from "./RoUniversalControlEvent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -56,7 +57,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             if (this.keys[0] !== this.lastKey) {
                 this.lastKey = this.keys[0];
-                console.log("new key=" + this.lastKey);
+                return new RoUniversalControlEvent(this.lastKey);
             }
             return BrsInvalid.Instance;
         },
