@@ -31,14 +31,11 @@ Function Main() as void
     pressed = false
     stopped = true
 
-    timestamp = createobject("rotimespan")
-    start = timestamp.totalmilliseconds()
     button = m.code.BUTTON_RIGHT_PRESSED
     while true
         event = m.port.GetMessage()
-        deltatime = timestamp.totalmilliseconds() - start
-        if (type(event) = "roUniversalControlEvent" or deltatime > 3000)
-            id = button 'event.GetInt()            
+        if (type(event) = "roUniversalControlEvent")
+            id = event.GetInt()            
             if (m.kid.face = m.const.FACE_LEFT and id = m.code.BUTTON_LEFT_PRESSED) or (m.kid.face = m.const.FACE_RIGHT and id = m.code.BUTTON_RIGHT_PRESSED) 
                 'print "counter=",counter
                 if stopped
@@ -168,15 +165,6 @@ Function Main() as void
                 end if
             endif
         endif
-        if deltatime > 3000
-            timestamp.mark()
-            start = timestamp.totalmilliseconds()
-            if button = m.code.BUTTON_RIGHT_PRESSED
-                button = m.code.BUTTON_LEFT_PRESSED
-            else
-                button = m.code.BUTTON_RIGHT_PRESSED
-            end if
-        end if
     end while
 End Function
 

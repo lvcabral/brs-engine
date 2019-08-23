@@ -1,6 +1,14 @@
 import { BrsComponent } from "./BrsComponent";
 import { RoArray } from "./RoArray";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
+import {
+    BrsValue,
+    ValueKind,
+    BrsString,
+    BrsBoolean,
+    BrsInvalid,
+    Comparable,
+    Uninitialized,
+} from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType } from "..";
@@ -94,12 +102,16 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         signature: {
             args: [
                 new StdlibArgument("s", ValueKind.String),
-                new StdlibArgument("len", ValueKind.Int32),
+                new StdlibArgument("len", ValueKind.Int32, BrsInvalid.Instance),
             ],
             returns: ValueKind.Void,
         },
         impl: (_interpreter, s: BrsString, len: Int32) => {
-            this.intrinsic = new BrsString(s.value.substr(0, len.getValue()));
+            if (len instanceof Int32) {
+                this.intrinsic = new BrsString(s.value.substr(0, len.getValue()));
+            } else {
+                this.intrinsic = s;
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -307,7 +319,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             returns: ValueKind.Object,
         },
         impl: _interpreter => {
-            _interpreter.stderr.write(
+            console.error(
                 "WARNING: tokenize not yet implemented, because it returns an RoList.  Returning `invalid`."
             );
             return BrsInvalid.Instance;
