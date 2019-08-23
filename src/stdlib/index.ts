@@ -21,7 +21,6 @@ export * from "./CreateObject";
 export * from "./File";
 export * from "./Json";
 export * from "./Math";
-export * from "./Print";
 export * from "./Run";
 export * from "./String";
 export * from "./Type";
