@@ -96,28 +96,33 @@ function drawCanvas() {
 requestAnimationFrame(drawCanvas);
 
 function keyDownHandler(event) {
-    if (event.keyCode == 39) {
-        console.log("rightPressed = true");
-    } else if (event.keyCode == 37) {
-        console.log("leftPressed = true");
-    }
-    if (event.keyCode == 40) {
-        console.log("downPressed = true");
+    if (event.keyCode == 37) {
+        // BUTTON_LEFT_PRESSED
+        sharedArray[0] = 4;
+    } else if (event.keyCode == 39) {
+        // BUTTON_RIGHT_PRESSED
+        sharedArray[0] = 5;
     } else if (event.keyCode == 38) {
-        console.log("upPressed = true");
+        // BUTTON_UP_PRESSED
+        sharedArray[0] = 2;
+    } else if (event.keyCode == 40) {
+        // BUTTON_DOWN_PRESSED
+        sharedArray[0] = 3;
     }
 }
 
 function keyUpHandler(event) {
-    sharedArray[0] = event.keyCode;
-    if (event.keyCode == 39) {
-        console.log("rightPressed = false");
-    } else if (event.keyCode == 37) {
-        console.log("leftPressed = false");
-    }
-    if (event.keyCode == 40) {
-        console.log("downPressed = false");
+    if (event.keyCode == 37) {
+        // BUTTON_LEFT_PRESSED
+        sharedArray[0] = 104;
+    } else if (event.keyCode == 39) {
+        // BUTTON_RIGHT_PRESSED
+        sharedArray[0] = 105;
     } else if (event.keyCode == 38) {
-        console.log("upPressed = false");
+        // BUTTON_UP_PRESSED
+        sharedArray[0] = 102;
+    } else if (event.keyCode == 40) {
+        // BUTTON_DOWN_PRESSED
+        sharedArray[0] = 103;
     }
 }
