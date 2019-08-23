@@ -8,7 +8,6 @@ var dirty = false;
 var splashTimeout = 1600;
 var brsWorker;
 var source = [];
-var assets = [];
 var paths = [];
 var txts = [];
 var imgs = [];
@@ -35,7 +34,7 @@ fileSelector.onchange = function() {
     var reader = new FileReader();
     reader.onload = function(progressEvent) {
         source.push(this.result);
-        loadAssets();
+        loadAssets(file.name);
     };
     source = [];
     if (brsWorker != undefined) {
@@ -131,13 +130,12 @@ function openChannelZip(f) {
                     imgs = [];
                     var bmpEvents = [];
                     for (var index = 0; index < assets.length; index++) {
+                        paths.push(assetPaths[index]);
                         if (assets[index] instanceof Blob) {
-                            paths.push(assetPaths[index]);
                             bmpEvents.push(createImageBitmap(assets[index]));
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
                         } else {
-                            paths.push(assetPaths[index]);
                             txts.push(assets[index]);
                         }
                     }
@@ -166,12 +164,19 @@ function openChannelZip(f) {
     );
 }
 
-function loadAssets() {
+function loadAssets(fileName) {
     var loader = new Worker("app/loader.js");
-    assets.push({ path: "images/sprite.png", type: "image/png" });
-    assets.push({ path: "images/roku-logo.png", type: "image/png" });
-    assets.push({ path: "images/AmigaBoingBall.png", type: "image/png" });
-    assets.push({ path: "images/BallShadow.png", type: "image/png" });
+    var files = [];
+    files.push({ path: "images/sprite.png", type: "image/png" });
+    files.push({ path: "images/roku-logo.png", type: "image/png" });
+    files.push({ path: "images/AmigaBoingBall.png", type: "image/png" });
+    files.push({ path: "images/BallShadow.png", type: "image/png" });
+    files.push({ path: "assets/3ballset.png", type: "image/png" });
+    files.push({ path: "assets/4ballset.png", type: "image/png" });
+    files.push({ path: "assets/5ballset.png", type: "image/png" });
+    files.push({ path: "assets/6ballset.png", type: "image/png" });
+    files.push({ path: "assets/8ballset.png", type: "image/png" });
+    files.push({ path: "assets/bitmapset.xml", type: "text/xml" });
     loader.onmessage = function(e) {
         paths = [];
         imgs = [];
@@ -185,17 +190,19 @@ function loadAssets() {
             }
         });
         loader.terminate();
+        paths.push({ url: fileName, id: 0, type: "source" });
         runChannel();
     };
-    loader.postMessage({ assets: assets });
+    loader.postMessage({ assets: files });
 }
+
 function runChannel() {
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, display.width, display.height);
     display.style.display = "initial";
     brsWorker = new Worker("./lib/brsLib.js");
     brsWorker.addEventListener("message", saveBuffer);
-    var payload = { brs: source, paths: paths, texts: txts, images: imgs };
+    var payload = { paths: paths, brs: source, texts: txts, images: imgs };
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, imgs);
 }
