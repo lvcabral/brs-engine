@@ -21,12 +21,10 @@ Function Main() as void
     balls[2] = bitmapset.animations.animated_5ball
     balls[3] = bitmapset.animations.animated_6ball
     balls[4] = bitmapset.animations.animated_8ball
+    
     spriteCount = 0
     sprites[0] = compositor.NewAnimatedSprite(Rnd(screenWidth-ballSize), Rnd(screenHeight-ballSize), balls[0])    
     sprites[0].SetData( {dx: Rnd(20)+10, dy: Rnd(20)+10, index: spriteCount} )
-
-    timestamp = createobject("rotimespan")
-    start = timestamp.totalmilliseconds()
 
     speed = 100
     while true
@@ -34,18 +32,15 @@ Function Main() as void
             sprite.SetMemberFlags(1)
         end for
         event = port.GetMessage()
-        deltatime = timestamp.totalmilliseconds() - start
-        if (type(event) = "roUniversalControlEvent" or deltatime > 5000)
-            id = 0 'event.GetInt()
-            if spriteCount < 3 'Add a sprite
+        if (type(event) = "roUniversalControlEvent") 'Press the right remote key to speed up, left remote key to slow down
+            id = event.GetInt()
+            if ((id = codes.BUTTON_RIGHT_PRESSED) AND (spriteCount <= 5)) 'Add a sprite
                 spriteCount = spriteCount + 1
-                sprites[spriteCount] = compositor.NewAnimatedSprite(Rnd(screenWidth-ballSize), Rnd(screenHeight-ballSize), balls[spriteCount])
+                sprites[spriteCount] = compositor.NewAnimatedSprite(Rnd(screenWidth-ballSize), Rnd(screenHeight-ballSize), balls[spriteCount])                
                 sprites[spriteCount].SetData( {dx: Rnd(20)+10, dy: Rnd(20)+10, index: spriteCount} )
             else if (id = codes.BUTTON_LEFT_PRESSED)
                 wait(0, port)
             endif
-            timestamp.mark()
-            start = timestamp.totalmilliseconds()
             
         else if (event = invalid)
                 ticks = clock.TotalMilliseconds()
