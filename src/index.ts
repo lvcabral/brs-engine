@@ -23,6 +23,7 @@ export { _parser as parser };
 export const images = new Map<string, ImageBitmap>();
 export const texts = new Map<string, string>();
 export const frame = { flag: true };
+export const control = new Map<string, Int32Array>();
 
 onmessage = function(event) {
     if (event.data.brs) {
@@ -30,15 +31,15 @@ onmessage = function(event) {
         replInterpreter.onError(logError);
         for (let index = 0; index < event.data.paths.length; index++) {
             let path = event.data.paths[index];
-            if (path.binary) {
+            if (path.type === "image") {
                 images.set(path.url, event.data.images[path.id]);
             } else {
                 texts.set(path.url, event.data.texts[path.id]);
             }
         }
         run(event.data.brs, defaultExecutionOptions, replInterpreter);
-    } else if (event.data.frame) {
-        frame.flag = true;
+    } else {
+        control.set("keys", new Int32Array(event.data));
     }
 };
 
@@ -54,45 +55,44 @@ onmessage = function(event) {
  *          `interpreter` threw an Error.
  */
 function run(
-    contents: string,
+    source: string[],
     options: ExecutionOptions = defaultExecutionOptions,
     interpreter: Interpreter
 ) {
     const lexer = new Lexer();
     const parser = new Parser();
-
+    const allStatements = new Array<_parser.Stmt.Statement>();
     lexer.onError(logError);
     parser.onError(logError);
+    source.forEach(content => {
+        const scanResults = lexer.scan(content, "ZIP");
+        if (scanResults.errors.length > 0) {
+            return;
+        }
+        const parseResults = parser.parse(scanResults.tokens);
+        if (parseResults.errors.length > 0) {
+            return;
+        }
+        if (parseResults.statements.length === 0) {
+            return;
+        }
+        if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
+            const libScan = lexer.scan(bslDefender.default, "v30/bslDefender.brs");
+            const libParse = parser.parse(libScan.tokens);
+            parseResults.libraries.set("v30/bslCore.brs", true);
+            parseResults.statements = parseResults.statements.concat(libParse.statements);
+        }
 
-    const scanResults = lexer.scan(contents, "REPL");
-    if (scanResults.errors.length > 0) {
-        return;
-    }
-
-    const parseResults = parser.parse(scanResults.tokens);
-    if (parseResults.errors.length > 0) {
-        return;
-    }
-
-    if (parseResults.statements.length === 0) {
-        return;
-    }
-
-    if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-        const libScan = lexer.scan(bslDefender.default, "REPL");
-        const libParse = parser.parse(libScan.tokens);
-        parseResults.libraries.set("v30/bslCore.brs", true);
-        parseResults.statements = parseResults.statements.concat(libParse.statements);
-    }
-
-    if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-        const libScan = lexer.scan(bslCore.default, "REPL");
-        const libParse = parser.parse(libScan.tokens);
-        parseResults.statements = parseResults.statements.concat(libParse.statements);
-    }
+        if (parseResults.libraries.get("v30/bslCore.brs") === true) {
+            const libScan = lexer.scan(bslCore.default, "v30/bslCore.brs");
+            const libParse = parser.parse(libScan.tokens);
+            parseResults.statements = parseResults.statements.concat(libParse.statements);
+        }
+        allStatements.push(...parseResults.statements);
+    });
 
     try {
-        return interpreter.exec(parseResults.statements);
+        return interpreter.exec(allStatements);
     } catch (e) {
         console.error(e.message);
         return;

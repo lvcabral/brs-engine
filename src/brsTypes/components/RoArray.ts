@@ -199,7 +199,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                     return !(element instanceof BrsString);
                 })
             ) {
-                interpreter.stderr.write("roArray.Join: Array contains non-string value(s).\n");
+                console.error("roArray.Join: Array contains non-string value(s).\n");
                 return new BrsString("");
             }
             return new BrsString(this.elements.join(separator.value));
@@ -213,7 +213,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                interpreter.stderr.write("roArray.Sort: Flags contains invalid option(s).\n");
+                console.error("roArray.Sort: Flags contains invalid option(s).\n");
             } else {
                 this.elements = this.elements.sort(function(a, b) {
                     var compare = 0;
@@ -265,7 +265,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                interpreter.stderr.write("roArray.SortBy: Flags contains invalid option(s).\n");
+                console.error("roArray.SortBy: Flags contains invalid option(s).\n");
             } else {
                 this.elements = this.elements.sort(function(a, b) {
                     var compare = 0;
