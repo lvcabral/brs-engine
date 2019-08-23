@@ -172,7 +172,6 @@ function loadAssets() {
     assets.push({ path: "images/roku-logo.png", type: "image/png" });
     assets.push({ path: "images/AmigaBoingBall.png", type: "image/png" });
     assets.push({ path: "images/BallShadow.png", type: "image/png" });
-    assets.push({ path: "images/earth.png", type: "image/png" });
     loader.onmessage = function(e) {
         paths = [];
         imgs = [];
