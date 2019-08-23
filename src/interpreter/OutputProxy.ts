@@ -35,11 +35,11 @@ export class OutputProxy {
      * @returns the zero-indexed position at which the next written character
      *          will be placed in the proxied output stream.
      */
-    position() {
-        if (!this.outputStream.isTTY || !this.outputStream.columns) {
-            return this.currentLineLength;
-        }
+    // position() {
+    //     if (!this.outputStream.isTTY || !this.outputStream.columns) {
+    //         return this.currentLineLength;
+    //     }
 
-        return this.currentLineLength % this.outputStream.columns;
-    }
+    //     return this.currentLineLength % this.outputStream.columns;
+    // }
 }

@@ -39,11 +39,11 @@ async function packImages(files) {
     txts = 0;
     files.forEach(file => {
         if (file.blob) {
-            paths.push({ url: file.path, id: bmps, binary: true });
+            paths.push({ url: file.path, id: bmps, type: "image" });
             events.push(createImageBitmap(file.blob));
             bmps++;
         } else {
-            paths.push({ url: file.path, id: txts, binary: false });
+            paths.push({ url: file.path, id: txts, type: "text" });
             events.push(Promise.resolve(file.text));
             txts++;
         }
