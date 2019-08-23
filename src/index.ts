@@ -37,7 +37,7 @@ onmessage = function(event) {
                 texts.set(path.url, event.data.texts[path.id]);
             }
         }
-        run(event.data.brs, defaultExecutionOptions, replInterpreter);
+        run(event.data.brs, replInterpreter);
     } else {
         control.set("keys", new Int32Array(event.data));
     }
@@ -45,20 +45,14 @@ onmessage = function(event) {
 
 /**
  * Runs an arbitrary string of BrightScript code.
- * @param contents the BrightScript code to lex, parse, and interpret.
- * @param options the streams to use for `stdout` and `stderr`. Mostly used for
- *                testing.
+ * @param source array of BrightScript code to lex, parse, and interpret.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  * @returns an array of statement execution results, indicating why each
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(
-    source: string[],
-    options: ExecutionOptions = defaultExecutionOptions,
-    interpreter: Interpreter
-) {
+function run(source: string[], interpreter: Interpreter) {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
@@ -100,42 +94,8 @@ function run(
 }
 
 /**
- * A synchronous version of `execute`. Executes a BrightScript file by path and writes its output to the streams
- * provided in `options`.
- *
- * @param filename the paths to BrightScript files to execute synchronously
- * @param options configuration for the execution, including the streams to use for `stdout` and
- *                `stderr` and the base directory for path resolution
- * @param args the set of arguments to pass to the `main` function declared in one of the provided filenames
- *
- * @returns the value returned by the executed file(s)
- */
-export function executeSync(
-    filenames: string[],
-    options: Partial<ExecutionOptions>,
-    args: BrsTypes.BrsType[]
-) {
-    const executionOptions = Object.assign(defaultExecutionOptions, options);
-    const interpreter = new Interpreter(executionOptions); // shared between files
-
-    let manifest = PP.getManifestSync(executionOptions.root);
-
-    let allStatements = filenames
-        .map(filename => {
-            let contents = fs.readFileSync(filename, "utf8");
-            let scanResults = Lexer.scan(contents, filename);
-            let preprocessor = new PP.Preprocessor();
-            let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
-            return Parser.parse(preprocessorResults.processedTokens).statements;
-        })
-        .reduce((allStatements, statements) => [...allStatements, ...statements], []);
-
-    return interpreter.exec(allStatements, ...args);
-}
-
-/**
- * Logs a detected BRS error to stderr.
- * @param err the error to log to `stderr`
+ * Logs a detected BRS error to console.
+ * @param err the error to log to `console`
  */
 function logError(err: BrsError.BrsError) {
     console.error(err.format());

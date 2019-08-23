@@ -29,7 +29,6 @@ import { BrsError, TypeMismatch } from "../Error";
 import * as StdLib from "../stdlib";
 
 import { Scope, Environment, NotFound } from "./Environment";
-//import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
 import { Runtime } from "../parser/Statement";
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
@@ -42,23 +41,17 @@ import { DottedGet } from "../parser/Expression";
 export interface ExecutionOptions {
     /** The base path for  */
     root: string;
-    // stdout: NodeJS.WriteStream;
-    // stderr: NodeJS.WriteStream;
 }
 
-/** The default set of execution options.  Includes the `stdout`/`stderr` pair from the process that invoked `brs`. */
+/** The default set of execution options.  */
 export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
-    // stdout: process.stdout,
-    // stderr: process.stderr,
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
 
     readonly options: ExecutionOptions;
-    // readonly stdout: OutputProxy;
-    // readonly stderr: OutputProxy;
     readonly temporaryVolume: MemoryFileSystem = new MemoryFileSystem();
 
     /** Allows consumers to observe errors as they're detected. */
@@ -95,12 +88,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Creates a new Interpreter, including any global properties and functions.
-     * @param options configuration for the execution, including the streams to use for `stdout` and
-     *                `stderr` and the base directory for path resolution
+     * @param options configuration for the execution
      */
     constructor(options: ExecutionOptions = defaultExecutionOptions) {
-        // this.stdout = new OutputProxy(options.stdout);
-        // this.stderr = new OutputProxy(options.stderr);
         this.options = options;
 
         Object.keys(StdLib)
@@ -237,8 +227,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        printStream += " "; //.repeat(16 - (this.stdout.position() % 16));
-                        //this.stdout.write(" ".repeat(16 - (this.stdout.position() % 16)));
+                        printStream += " ";
                         break;
                     case Lexeme.Semicolon:
                         if (index === statement.expressions.length - 1) {
@@ -247,7 +236,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             break;
                         }
                         printStream += " ";
-                        //this.stdout.write(" ");
                         break;
                     default:
                         this.addError(
@@ -258,19 +246,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                 }
             } else {
-                //this.stdout.write(this.evaluate(printable).toString());
                 printStream += this.evaluate(printable).toString();
             }
         });
         console.log(printStream);
-        // let lastExpression = statement.expressions[statement.expressions.length - 1];
-        // if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
-        //     this.stdout.write("\n");
-        // }
-
-        // `tab` is only in-scope when executing print statements, so remove it before we leave
-        //this.environment.remove("Tab");
-
         return BrsInvalid.Instance;
     }
 
