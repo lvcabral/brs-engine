@@ -26,6 +26,7 @@ export const frame = { flag: true };
 export const control = new Map<string, Int32Array>();
 
 onmessage = function(event) {
+    const source = new Map<string, string>();
     if (event.data.brs) {
         const replInterpreter = new Interpreter();
         replInterpreter.onError(logError);
@@ -33,11 +34,13 @@ onmessage = function(event) {
             let path = event.data.paths[index];
             if (path.type === "image") {
                 images.set(path.url, event.data.images[path.id]);
-            } else {
+            } else if (path.type === "text") {
                 texts.set(path.url, event.data.texts[path.id]);
+            } else {
+                source.set(path.url, event.data.brs[path.id]);
             }
         }
-        run(event.data.brs, replInterpreter);
+        run(source, replInterpreter);
     } else {
         control.set("keys", new Int32Array(event.data));
     }
@@ -52,14 +55,14 @@ onmessage = function(event) {
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(source: string[], interpreter: Interpreter) {
+function run(source: Map<string, string>, interpreter: Interpreter) {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
     lexer.onError(logError);
     parser.onError(logError);
-    source.forEach(content => {
-        const scanResults = lexer.scan(content, "ZIP");
+    source.forEach(function(code, path) {
+        const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
             return;
         }
@@ -99,12 +102,4 @@ function run(source: string[], interpreter: Interpreter) {
  */
 function logError(err: BrsError.BrsError) {
     console.error(err.format());
-}
-
-function makeRequest(url: string): ArrayBuffer {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", url, false); // Note: synchronous
-    xhr.responseType = "arraybuffer";
-    xhr.send();
-    return xhr.response;
 }
