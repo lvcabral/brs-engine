@@ -9,7 +9,7 @@ var brsWorker;
 var source = [];
 var assets = [];
 
-// SharedArrayBuffer
+// Control buffer
 const length = 10;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 const sharedArray = new Int32Array(sharedBuffer);
@@ -34,6 +34,8 @@ assets.push({ path: "assets/anims/kid-sequence.json", type: "text/json" });
 assets.push({ path: "assets/sprites/kid.json", type: "text/json" });
 assets.push({ path: "assets/sprites/kid-l.png", type: "image/png" });
 assets.push({ path: "assets/sprites/kid-r.png", type: "image/png" });
+
+// File selector
 var fileSelector = document.getElementById("file");
 fileSelector.onclick = function() {
     this.value = null;
@@ -96,33 +98,40 @@ function drawCanvas() {
 requestAnimationFrame(drawCanvas);
 
 function keyDownHandler(event) {
-    if (event.keyCode == 37) {
-        // BUTTON_LEFT_PRESSED
-        sharedArray[0] = 4;
+    if (event.keyCode == 8) {
+        sharedArray[0] = 0; // BUTTON_BACK_PRESSED
+    } else if (event.keyCode == 13) {
+        sharedArray[0] = 6; // BUTTON_SELECT_PRESSED
+    } else if (event.keyCode == 37) {
+        sharedArray[0] = 4; // BUTTON_LEFT_PRESSED
     } else if (event.keyCode == 39) {
-        // BUTTON_RIGHT_PRESSED
-        sharedArray[0] = 5;
+        sharedArray[0] = 5; // BUTTON_RIGHT_PRESSED
     } else if (event.keyCode == 38) {
-        // BUTTON_UP_PRESSED
-        sharedArray[0] = 2;
+        sharedArray[0] = 2; // BUTTON_UP_PRESSED
     } else if (event.keyCode == 40) {
-        // BUTTON_DOWN_PRESSED
-        sharedArray[0] = 3;
+        sharedArray[0] = 3; // BUTTON_DOWN_PRESSED
+    } else if (event.keyCode == 27) {
+        if (brsWorker != undefined) {
+            // HOME BUTTON (ESC)
+            display.style.display = "none";
+            fileSelector.value = null;
+            brsWorker.terminate();
+        }
     }
 }
 
 function keyUpHandler(event) {
-    if (event.keyCode == 37) {
-        // BUTTON_LEFT_PRESSED
-        sharedArray[0] = 104;
+    if (event.keyCode == 8) {
+        sharedArray[0] = 100; // BUTTON_BACK_RELEASED
+    } else if (event.keyCode == 13) {
+        sharedArray[0] = 106; // BUTTON_SELECT_RELEASED
+    } else if (event.keyCode == 37) {
+        sharedArray[0] = 104; // BUTTON_LEFT_RELEASED
     } else if (event.keyCode == 39) {
-        // BUTTON_RIGHT_PRESSED
-        sharedArray[0] = 105;
+        sharedArray[0] = 105; // BUTTON_RIGHT_RELEASED
     } else if (event.keyCode == 38) {
-        // BUTTON_UP_PRESSED
-        sharedArray[0] = 102;
+        sharedArray[0] = 102; // BUTTON_UP_RELEASED
     } else if (event.keyCode == 40) {
-        // BUTTON_DOWN_PRESSED
-        sharedArray[0] = 103;
+        sharedArray[0] = 103; // BUTTON_DOWN_RELEASED
     }
 }

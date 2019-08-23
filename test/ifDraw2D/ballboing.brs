@@ -106,9 +106,9 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
                         if type(msg) = "roUniversalControlEvent"
                             button = msg.getint()
                             print "button=";button
-                            'if button=codes.BUTTON_BACK_PRESSED   
+                            if button=codes.BUTTON_BACK_PRESSED   
                                 return
-                            'endif
+                            endif
                         endif
                     endif
                 end while
