@@ -1,4 +1,5 @@
-import { Callable, ValueKind, BrsInvalid } from "../brsTypes";
+import { Callable, ValueKind, BrsInvalid, RoAssociativeArray } from "../brsTypes";
+import { Interpreter } from "../interpreter";
 
 let warningShown = false;
 
@@ -14,6 +15,19 @@ export const RebootSystem = new Callable("RebootSystem", {
         }
 
         return BrsInvalid.Instance;
+    },
+});
+
+/**
+ * Returns global M pointer (the m from the root Environment).
+ */
+export const GetGlobalAA = new Callable("GetGlobalAA", {
+    signature: {
+        args: [],
+        returns: ValueKind.Dynamic,
+    },
+    impl: (interpreter: Interpreter): RoAssociativeArray => {
+        return interpreter.environment.getRootM();
     },
 });
 

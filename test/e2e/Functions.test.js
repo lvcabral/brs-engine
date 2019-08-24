@@ -76,6 +76,25 @@ describe("end to end functions", () => {
         ]);
     });
 
+    test("function/m-pointer-global.brs", async () => {
+        await execute([resourceFile("function", "m-pointer-global.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "old: ",
+            "value 1",
+            "new: ",
+            "value 2",
+            "glb: ",
+            "value 2",
+            "old: ",
+            "invalid",
+            "new: ",
+            "value 4",
+            "glb: ",
+            "value 3",
+        ]);
+    });
+
     test("function/scoping.brs", async () => {
         await execute([resourceFile("function", "scoping.brs")], outputStreams);
 
