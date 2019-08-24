@@ -37,14 +37,35 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    wait(ms: number) {
+        if (ms === 0) {
+            while (true) {
+                if (this.keys[0] !== this.lastKey) {
+                    this.lastKey = this.keys[0];
+                    return new RoUniversalControlEvent(this.lastKey);
+                }
+            }
+        } else {
+            let sec = Math.trunc(ms / 1000);
+            ms += new Date().getTime();
+            while (new Date().getTime() < ms) {
+                if (this.keys[0] !== this.lastKey) {
+                    this.lastKey = this.keys[0];
+                    return new RoUniversalControlEvent(this.lastKey);
+                }
+            }
+        }
+        return BrsInvalid.Instance;
+    }
+
     /** Waits until an event object is available or timeout milliseconds have passed. */
     private waitMessage = new Callable("waitMessage", {
         signature: {
             args: [new StdlibArgument("timeout", ValueKind.Int32)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, numSeconds: Int32) => {
-            return BrsInvalid.Instance;
+        impl: (_: Interpreter, timeout: Int32) => {
+            return this.wait(timeout.getValue());
         },
     });
 
