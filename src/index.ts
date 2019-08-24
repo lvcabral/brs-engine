@@ -59,6 +59,9 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
+    const bsl = new Map<string, boolean>();
+    bsl.set("v30/bslDefender.brs", false);
+    bsl.set("v30/bslCore.brs", false);
     lexer.onError(logError);
     parser.onError(logError);
     source.forEach(function(code, path) {
@@ -74,20 +77,24 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
             return;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-            const libScan = lexer.scan(bslDefender.default, "v30/bslDefender.brs");
-            const libParse = parser.parse(libScan.tokens);
-            parseResults.libraries.set("v30/bslCore.brs", true);
-            parseResults.statements = parseResults.statements.concat(libParse.statements);
+            bsl.set("v30/bslDefender.brs", true);
+            bsl.set("v30/bslCore.brs", true);
         }
-
         if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-            const libScan = lexer.scan(bslCore.default, "v30/bslCore.brs");
-            const libParse = parser.parse(libScan.tokens);
-            parseResults.statements = parseResults.statements.concat(libParse.statements);
+            bsl.set("v30/bslCore.brs", true);
         }
         allStatements.push(...parseResults.statements);
     });
-
+    if (bsl.get("v30/bslDefender.brs") === true) {
+        const libScan = lexer.scan(bslDefender.default, "v30/bslDefender.brs");
+        const libParse = parser.parse(libScan.tokens);
+        allStatements.push(...libParse.statements);
+    }
+    if (bsl.get("v30/bslCore.brs") === true) {
+        const libScan = lexer.scan(bslCore.default, "v30/bslCore.brs");
+        const libParse = parser.parse(libScan.tokens);
+        allStatements.push(...libParse.statements);
+    }
     try {
         return interpreter.exec(allStatements);
     } catch (e) {
