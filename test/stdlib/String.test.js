@@ -13,6 +13,8 @@ const {
     Substitute,
     Val,
     StrToI,
+    STRING,
+    StringI,
 } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const { BrsString, BrsBoolean, Int32, Float } = require("../../lib/brsTypes");
@@ -191,6 +193,40 @@ describe("global string functions", () => {
         it("returns a string formatted by a radix", () => {
             expect(StrI.call(interpreter, new Int32(255), new Int32(16))).toEqual(
                 new BrsString("ff")
+            );
+        });
+    });
+
+    describe("String", () => {
+        it("returns a string composed of n copies of a character.", () => {
+            expect(STRING.call(interpreter, new Int32(5), new BrsString("*"))).toEqual(
+                new BrsString("*****")
+            );
+        });
+
+        it("returns a string composed of n copies of a string.", () => {
+            expect(STRING.call(interpreter, new Int32(3), new BrsString("brs"))).toEqual(
+                new BrsString("brsbrsbrs")
+            );
+        });
+
+        it("returns a string composed of n copies of an empty string.", () => {
+            expect(STRING.call(interpreter, new Int32(1000), new BrsString(""))).toEqual(
+                new BrsString("")
+            );
+        });
+    });
+
+    describe("StringI", () => {
+        it("returns a string composed of n copies of a character from an ASCII char code.", () => {
+            expect(StringI.call(interpreter, new Int32(7), new Int32(48))).toEqual(
+                new BrsString("0000000")
+            );
+        });
+
+        it("returns a string composed of n copies of a character from a UNICODE char code.", () => {
+            expect(StringI.call(interpreter, new Int32(3), new Int32(936))).toEqual(
+                new BrsString("ΨΨΨ")
             );
         });
     });
