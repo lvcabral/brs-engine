@@ -107,7 +107,8 @@ function openChannelZip(f) {
                     srcId++;
                 } else if (
                     !zipEntry.dir &&
-                    (relativePath.split(".").pop() === "xml" ||
+                    (relativePath === "manifest" ||
+                        relativePath.split(".").pop() === "xml" ||
                         relativePath.split(".").pop() === "json")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
