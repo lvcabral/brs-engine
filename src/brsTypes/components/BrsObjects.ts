@@ -15,8 +15,10 @@ import { RoString } from "./RoString";
 import { RoBitmap } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
+import { RoAudioPlayer } from "./RoAudioPlayer";
 import { Int32 } from "../Int32";
 import { RoXMLElement } from "./RoXMLElement";
+import { RoAudioResource } from "./RoAudioResource";
 
 /** Map containing a list of brightscript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
@@ -31,6 +33,8 @@ export const BrsObjects = new Map<string, Function>([
     ["robitmap", (param: BrsComponent) => new RoBitmap(param)],
     ["romessageport", () => new RoMessagePort()],
     ["rofontregistry", () => new RoFontRegistry()],
+    ["roaudioplayer", () => new RoAudioPlayer()],
+    ["roaudioresource", (name: BrsString) => new RoAudioResource(name)],
     ["rocompositor", () => new RoCompositor()],
     [
         "rofont",
