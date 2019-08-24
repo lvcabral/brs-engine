@@ -16,7 +16,6 @@ var imgs = [];
 const length = 10;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 const sharedArray = new Int32Array(sharedBuffer);
-for (let i = 0; i < length; i++) sharedArray[i] = i && sharedArray[i - 1] + 2;
 
 // Keyboard handlers
 document.addEventListener("keydown", keyDownHandler, false);
@@ -45,6 +44,7 @@ fileSelector.onchange = function() {
     } else {
         reader.readAsText(file);
     }
+    display.focus();
 };
 
 function openChannelZip(f) {
@@ -201,6 +201,7 @@ function runChannel() {
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, display.width, display.height);
     display.style.display = "initial";
+    display.focus();
     brsWorker = new Worker("./lib/brsLib.js");
     brsWorker.addEventListener("message", saveBuffer);
     var payload = { paths: paths, brs: source, texts: txts, images: imgs };
@@ -257,8 +258,10 @@ function keyDownHandler(event) {
             display.style.display = "none";
             fileSelector.value = null;
             brsWorker.terminate();
+            sharedArray[0] = 0;
         }
     }
+    event.preventDefault();
 }
 
 function keyUpHandler(event) {
