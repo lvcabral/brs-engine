@@ -230,6 +230,7 @@ function keyDownHandler(event) {
         sharedArray[0] = 0; // BUTTON_BACK_PRESSED
     } else if (event.keyCode == 13) {
         sharedArray[0] = 6; // BUTTON_SELECT_PRESSED
+        event.preventDefault();
     } else if (event.keyCode == 37) {
         sharedArray[0] = 4; // BUTTON_LEFT_PRESSED
     } else if (event.keyCode == 39) {
@@ -246,6 +247,7 @@ function keyDownHandler(event) {
         sharedArray[0] = 8; // BUTTON_REWIND_PRESSED
     } else if (event.keyCode == 32) {
         sharedArray[0] = 13; // BUTTON_PLAY_PRESSED
+        event.preventDefault();
     } else if (event.keyCode == 190) {
         sharedArray[0] = 9; // BUTTON_FAST_FORWARD_PRESSED
     } else if (event.keyCode == 65) {
@@ -261,7 +263,6 @@ function keyDownHandler(event) {
             sharedArray[0] = 0;
         }
     }
-    event.preventDefault();
 }
 
 function keyUpHandler(event) {
