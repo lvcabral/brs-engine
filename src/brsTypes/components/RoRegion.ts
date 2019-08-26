@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoBitmap } from "./RoBitmap";
+import { RoScreen } from "./RoScreen";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -62,6 +63,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.setScaleMode,
             this.setTime,
             this.setWrap,
+            this.clear,
+            this.setAlphaEnable,
+            this.drawObject,
         ]);
     }
     applyOffset(x: number, y: number, width: number, height: number) {
@@ -70,6 +74,20 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.width += width;
         this.height += height;
         // TODO: Check what is the effect on collision parameters
+    }
+
+    drawImage(image: OffscreenCanvas, x: number, y: number) {
+        this.context.drawImage(
+            image,
+            0,
+            0,
+            image.width,
+            image.height,
+            x + this.translationX,
+            y + this.translationY,
+            image.width,
+            image.height
+        );
     }
 
     getCanvas(): OffscreenCanvas {
@@ -399,6 +417,52 @@ export class RoRegion extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, wrap: BrsBoolean) => {
             this.wrap = wrap.toBoolean();
             return BrsInvalid.Instance;
+        },
+    });
+
+    // ifDraw2D  -----------------------------------------------------------------------------------
+
+    /** Clear the bitmap, and fill with the specified RGBA color */
+    private clear = new Callable("clear", {
+        signature: {
+            args: [new StdlibArgument("rgba", ValueKind.Int32)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, rgba: Int32) => {
+            return this.bitmap.clearCanvas(rgba.getValue());
+        },
+    });
+
+    /** Draw the source object, where src is an roBitmap or an roRegion object, at position x,y */
+    private drawObject = new Callable("drawObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("object", ValueKind.Object),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent) => {
+            let ctx = this.context;
+            let result = BrsBoolean.True;
+            if (object instanceof RoBitmap || object instanceof RoScreen) {
+                this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+            } else {
+                result = BrsBoolean.False;
+            }
+            return result;
+        },
+    });
+
+    /** If enable is true, do alpha blending when this bitmap is the destination */
+    private setAlphaEnable = new Callable("setAlphaEnable", {
+        signature: {
+            args: [new StdlibArgument("alphaEnabled", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
+            return this.bitmap.setCanvasAlpha(alphaEnabled.toBoolean());
         },
     });
 }
