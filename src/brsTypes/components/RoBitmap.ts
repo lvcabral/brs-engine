@@ -76,6 +76,14 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             this.getHeight,
         ]);
     }
+
+    clearCanvas(rgba: number) {
+        let ctx = this.context;
+        ctx.fillStyle = rgbaIntToHex(rgba);
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        return BrsInvalid.Instance;
+    }
+
     drawImage(image: OffscreenCanvas, x: number, y: number) {
         this.context.drawImage(image, x, y);
     }
@@ -86,6 +94,15 @@ export class RoBitmap extends BrsComponent implements BrsValue {
 
     getContext(): OffscreenCanvasRenderingContext2D {
         return this.context;
+    }
+
+    setCanvasAlpha(enable: boolean) {
+        this.alphaEnable = enable;
+        let context = this.canvas.getContext("2d", {
+            alpha: this.alphaEnable,
+        }) as OffscreenCanvasRenderingContext2D;
+        this.context = context;
+        return BrsInvalid.Instance;
     }
 
     toString(parent?: BrsType): string {
@@ -105,10 +122,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, rgba: Int32) => {
-            let ctx = this.context;
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            return BrsInvalid.Instance;
+            return this.clearCanvas(rgba.getValue());
         },
     });
 
@@ -126,9 +140,19 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             let ctx = this.context;
             let result = BrsBoolean.True;
             if (object instanceof RoBitmap) {
-                ctx.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+                this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
-                ctx.putImageData(object.getImageData(), x.getValue(), y.getValue());
+                ctx.drawImage(
+                    object.getCanvas(),
+                    object.getPosX(),
+                    object.getPosY(),
+                    object.getImageWidth(),
+                    object.getImageHeight(),
+                    x.getValue() + object.getTransX(),
+                    y.getValue() + object.getTransY(),
+                    object.getImageWidth(),
+                    object.getImageHeight()
+                );
             } else {
                 result = BrsBoolean.False;
             }
@@ -174,7 +198,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("scaleX", ValueKind.Float),
                 new StdlibArgument("scaleY", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
+                new StdlibArgument("object", ValueKind.Object),
             ],
             returns: ValueKind.Boolean,
         },
@@ -184,18 +208,39 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             y: Int32,
             scaleX: Float,
             scaleY: Float,
-            object: RoBitmap
+            object: BrsComponent
         ) => {
+            let result = BrsBoolean.True;
             let ctx = this.context;
-            let obj = object.getCanvas();
-            ctx.drawImage(
-                obj,
-                x.getValue(),
-                y.getValue(),
-                obj.width * scaleX.getValue(),
-                obj.height * scaleY.getValue()
-            );
-            return BrsBoolean.True;
+            ctx.imageSmoothingEnabled = false;
+            if (object instanceof RoBitmap) {
+                let cvs = object.getCanvas();
+                ctx.drawImage(
+                    cvs,
+                    x.getValue(),
+                    y.getValue(),
+                    cvs.width * scaleX.getValue(),
+                    cvs.height * scaleY.getValue()
+                );
+            } else if (object instanceof RoRegion) {
+                let cvs = object.getCanvas();
+                let tx = object.getTransX() * scaleX.getValue();
+                let ty = object.getTransY() * scaleY.getValue();
+                ctx.drawImage(
+                    cvs,
+                    object.getPosX(),
+                    object.getPosY(),
+                    object.getImageWidth(),
+                    object.getImageHeight(),
+                    x.getValue() + tx,
+                    y.getValue() + ty,
+                    cvs.width * scaleX.getValue(),
+                    cvs.height * scaleY.getValue()
+                );
+            } else {
+                result = BrsBoolean.False;
+            }
+            return result;
         },
     });
 
@@ -318,12 +363,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
-            this.alphaEnable = alphaEnabled.toBoolean();
-            let context = this.canvas.getContext("2d", {
-                alpha: this.alphaEnable,
-            }) as OffscreenCanvasRenderingContext2D;
-            this.context = context;
-            return BrsInvalid.Instance;
+            return this.setCanvasAlpha(alphaEnabled.toBoolean());
         },
     });
 
