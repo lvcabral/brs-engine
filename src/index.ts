@@ -5,6 +5,7 @@ import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interp
 import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!../bsl/v30/bslCore.brs";
 import * as bslDefender from "raw-loader!../bsl/v30/bslDefender.brs";
+import * as models from "raw-loader!../bsl/models.csv";
 
 import * as _lexer from "./lexer";
 export { _lexer as lexer };
@@ -31,7 +32,8 @@ onmessage = function(event) {
         deviceInfo.set("timeZone", event.data.device.timeZone);
         deviceInfo.set("locale", event.data.device.locale);
         deviceInfo.set("clockFormat", event.data.device.clockFormat);
-        deviceInfo.set("videoMode", event.data.device.videoMode);
+        deviceInfo.set("displayMode", event.data.device.displayMode);
+        deviceInfo.set("models", parseCSV(models.default));
         const replInterpreter = new Interpreter();
         replInterpreter.onError(logError);
         for (let index = 0; index < event.data.paths.length; index++) {
@@ -113,4 +115,16 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
  */
 function logError(err: BrsError.BrsError) {
     console.error(err.format());
+}
+
+function parseCSV(csv: string): Map<string, string[]> {
+    let result = new Map<string, string[]>();
+    let lines = csv.match(/[^\r\n]+/g);
+    if (lines) {
+        lines.forEach(line => {
+            let fields = line.split(",");
+            result.set(fields[0], [fields[1], fields[2], fields[3], fields[4]]);
+        });
+    }
+    return result;
 }
