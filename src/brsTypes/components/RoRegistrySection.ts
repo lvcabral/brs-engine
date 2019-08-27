@@ -4,7 +4,8 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoArray } from "./RoArray";
-import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
+import { RoList } from "./RoList";
+import { RoAssociativeArray } from "./RoAssociativeArray";
 import { deviceInfo, registry } from "../..";
 
 export class RoRegistrySection extends BrsComponent implements BrsValue {
@@ -137,7 +138,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter) => {
-            //TODO: Post message with registry data back to browser
+            postMessage(registry);
             return BrsBoolean.True;
         },
     });
@@ -156,7 +157,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
                     keys.push(new BrsString(key.substr(regSection.length + 1)));
                 }
             });
-            return new RoArray(keys);
+            return new RoList(keys);
         },
     });
 }

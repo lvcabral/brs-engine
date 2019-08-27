@@ -21,29 +21,28 @@ const sharedArray = new Int32Array(sharedBuffer);
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
-// Load Registry
-const developerId = "UniqueStringToSegregateRegistry";
-const registry = new Map();
-const storage = window.localStorage;
-for (let index = 0; index < storage.length; index++) {
-    const key = storage.key(index);
-    if (key.substr(0, developerId.length) === developerId) {
-        registry.set(key, storage.getItem(key));
-    }
-}
-
 // Device Data
+const developerId = "UniqueDeveloperId";
 const deviceData = {
     developerId: developerId,
-    registry: registry,
+    registry: new Map(),
     deviceModel: "5000X",
-    clientId: "UniqueStringToIdentifyDevice",
+    clientId: "UniqueClientId",
     countryCode: "US",
     timeZone: "US/Arizona",
     locale: "en_US",
     clockFormat: 0,
     videoMode: "720p", // Only this mode is supported for now
 };
+
+// Load Registry
+const storage = window.localStorage;
+for (let index = 0; index < storage.length; index++) {
+    const key = storage.key(index);
+    if (key.substr(0, developerId.length) === developerId) {
+        deviceData.registry.set(key, storage.getItem(key));
+    }
+}
 
 // File selector
 var fileSelector = document.getElementById("file");
@@ -234,9 +233,16 @@ function runChannel() {
 }
 
 function saveBuffer(event) {
-    buffer = event.data;
-    dirty = true;
-    drawCanvas();
+    if (event.data instanceof ImageData) {
+        buffer = event.data;
+        dirty = true;
+        drawCanvas();
+    } else if (event.data instanceof Map) {
+        deviceData.registry = event.data;
+        deviceData.registry.forEach(function(value, key) {
+            storage.setItem(key, value);
+        });
+    }
 }
 function drawCanvas() {
     if (dirty) {
