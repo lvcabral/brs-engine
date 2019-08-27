@@ -1,5 +1,5 @@
 sub main()
-    rs = CreateObject("roRegistrySection", "Emulator")
+    rs = CreateObject("roRegistrySection", "MySection")
     opt = rs.read("option1")
     print opt
     print rs.write("option1",opt + ".value")
@@ -10,4 +10,7 @@ sub main()
     print rs.exists("option2")
     print rs.exists("option3")
     print rs.readMulti(["option1", "option2", "option3"])
+    rs.flush()
+    reg = CreateObject("roRegistry")
+    print reg.getSectionList()
 end sub
