@@ -26,13 +26,13 @@ const developerId = "UniqueDeveloperId";
 const deviceData = {
     developerId: developerId,
     registry: new Map(),
-    deviceModel: "5000X",
-    clientId: "UniqueClientId",
+    deviceModel: "8000X",
+    clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     countryCode: "US",
     timeZone: "US/Arizona",
     locale: "en_US",
-    clockFormat: 0,
-    videoMode: "720p", // Only this mode is supported for now
+    clockFormat: "12h",
+    displayMode: "720p", // Only this mode is supported for now
 };
 
 // Load Registry
