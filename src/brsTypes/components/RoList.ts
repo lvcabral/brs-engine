@@ -11,9 +11,13 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private elements: LinkedList<BrsType>;
 
-    constructor() {
+    constructor(elements?: BrsType[]) {
         super("roList");
-        this.elements = new LinkedList<BrsType>();
+        if (elements) {
+            this.elements = new LinkedList<BrsType>(...elements);
+        } else {
+            this.elements = new LinkedList<BrsType>();
+        }
         this.registerMethods([
             this.addHead,
             this.addTail,
