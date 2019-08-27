@@ -20,7 +20,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     constructor(elements: AAMember[]) {
         super("roAssociativeArray");
-        elements.forEach(member => this.elements.set(member.name.value, member.value));
+        elements.forEach(member =>
+            this.elements.set(member.name.value.toLowerCase(), member.value)
+        );
 
         this.registerMethods([
             this.clear,
