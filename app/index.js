@@ -21,6 +21,30 @@ const sharedArray = new Int32Array(sharedBuffer);
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
+// Load Registry
+const developerId = "UniqueStringToSegregateRegistry";
+const registry = new Map();
+const storage = window.localStorage;
+for (let index = 0; index < storage.length; index++) {
+    const key = storage.key(index);
+    if (key.substr(0, developerId.length) === developerId) {
+        registry.set(key, storage.getItem(key));
+    }
+}
+
+// Device Data
+const deviceData = {
+    developerId: developerId,
+    registry: registry,
+    deviceModel: "5000X",
+    clientId: "UniqueStringToIdentifyDevice",
+    countryCode: "US",
+    timeZone: "US/Arizona",
+    locale: "en_US",
+    clockFormat: 0,
+    videoMode: "720p", // Only this mode is supported for now
+};
+
 // File selector
 var fileSelector = document.getElementById("file");
 var zip = new JSZip();
@@ -204,7 +228,7 @@ function runChannel() {
     display.focus();
     brsWorker = new Worker("./lib/brsLib.js");
     brsWorker.addEventListener("message", saveBuffer);
-    var payload = { paths: paths, brs: source, texts: txts, images: imgs };
+    var payload = { device: deviceData, paths: paths, brs: source, texts: txts, images: imgs };
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, imgs);
 }
@@ -212,6 +236,7 @@ function runChannel() {
 function saveBuffer(event) {
     buffer = event.data;
     dirty = true;
+    drawCanvas();
 }
 function drawCanvas() {
     if (dirty) {
@@ -221,9 +246,9 @@ function drawCanvas() {
         ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
         dirty = false;
     }
-    requestAnimationFrame(drawCanvas);
+    //requestAnimationFrame(drawCanvas);
 }
-requestAnimationFrame(drawCanvas);
+//requestAnimationFrame(drawCanvas);
 
 function keyDownHandler(event) {
     if (event.keyCode == 8) {
@@ -261,6 +286,7 @@ function keyDownHandler(event) {
             fileSelector.value = null;
             brsWorker.terminate();
             sharedArray[0] = 0;
+            // TODO: Send TimeSinceLastKeypress()
         }
     }
 }

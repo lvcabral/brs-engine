@@ -1,9 +1,3 @@
-import * as fs from "fs";
-//import * as readline from "readline";
-//import { promisify } from "util";
-//import pSettle from "p-settle";
-//const readFile = promisify(fs.readFile);
-
 import { Lexer } from "./lexer";
 import * as PP from "./preprocessor";
 import { Parser } from "./parser";
@@ -20,14 +14,24 @@ export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
 
+export const deviceInfo = new Map<string, any>();
 export const images = new Map<string, ImageBitmap>();
 export const texts = new Map<string, string>();
-export const frame = { flag: true };
 export const control = new Map<string, Int32Array>();
+export let registry = new Map<string, string>();
 
 onmessage = function(event) {
     const source = new Map<string, string>();
-    if (event.data.brs) {
+    if (event.data.device) {
+        registry = event.data.device.registry;
+        deviceInfo.set("developerId", event.data.device.developerId);
+        deviceInfo.set("deviceModel", event.data.device.deviceModel);
+        deviceInfo.set("clientId", event.data.device.clientId);
+        deviceInfo.set("countryCode", event.data.device.countryCode);
+        deviceInfo.set("timeZone", event.data.device.timeZone);
+        deviceInfo.set("locale", event.data.device.locale);
+        deviceInfo.set("clockFormat", event.data.device.clockFormat);
+        deviceInfo.set("videoMode", event.data.device.videoMode);
         const replInterpreter = new Interpreter();
         replInterpreter.onError(logError);
         for (let index = 0; index < event.data.paths.length; index++) {
