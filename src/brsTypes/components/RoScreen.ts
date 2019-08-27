@@ -9,7 +9,6 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
-import { frame } from "../..";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -116,7 +115,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (this.dblBuffer && frame.flag) {
+            if (this.dblBuffer) {
                 postMessage(this.context.getImageData(0, 0, this.width, this.height));
             }
             return BrsInvalid.Instance;
@@ -351,7 +350,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (!this.dblBuffer && frame.flag) {
+            if (!this.dblBuffer) {
                 postMessage(this.context.getImageData(0, 0, this.width, this.height));
             }
             return BrsInvalid.Instance;
