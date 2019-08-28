@@ -22,6 +22,7 @@ import { RoAudioResource } from "./RoAudioResource";
 import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
 import { RoDeviceInfo } from "./RoDeviceInfo";
+import { RoFileSystem } from "./RoFileSystem";
 
 /** Map containing a list of brightscript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
@@ -35,6 +36,7 @@ export const BrsObjects = new Map<string, Function>([
     ["rostring", (literal: BrsString) => new RoString(literal)],
     ["robitmap", (param: BrsComponent) => new RoBitmap(param)],
     ["romessageport", () => new RoMessagePort()],
+    ["rofilesystem", () => new RoFileSystem()],
     ["rofontregistry", () => new RoFontRegistry()],
     ["roregistry", () => new RoRegistry()],
     ["roregistrysection", (section: BrsString) => new RoRegistrySection(section)],

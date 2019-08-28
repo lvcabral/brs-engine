@@ -52,7 +52,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _environment = new Environment();
 
     readonly options: ExecutionOptions;
-    readonly temporaryVolume: MemoryFileSystem = new MemoryFileSystem();
+    readonly fileSystem: Map<string, MemoryFileSystem> = new Map<string, MemoryFileSystem>();
+    readonly deviceInfo: Map<string, any> = new Map<string, any>();
+    readonly registry: Map<string, string> = new Map<string, string>();
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -92,7 +94,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     constructor(options: ExecutionOptions = defaultExecutionOptions) {
         this.options = options;
-
+        this.fileSystem.set("common:", new MemoryFileSystem());
+        this.fileSystem.set("pkg:", new MemoryFileSystem());
+        this.fileSystem.set("tmp:", new MemoryFileSystem());
         Object.keys(StdLib)
             .map(name => (StdLib as any)[name])
             .filter(func => func instanceof Callable)

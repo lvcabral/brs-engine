@@ -6,7 +6,6 @@ import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!../bsl/v30/bslCore.brs";
 import * as bslDefender from "raw-loader!../bsl/v30/bslDefender.brs";
 import * as models from "raw-loader!../bsl/models.csv";
-
 import * as _lexer from "./lexer";
 export { _lexer as lexer };
 import * as BrsTypes from "./brsTypes";
@@ -14,43 +13,58 @@ export { BrsTypes as types };
 export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
+import { createDir, writeFile } from "./stdlib/File";
 
-export const deviceInfo = new Map<string, any>();
 export const fileSystem = new Map<string, any>();
-// export const images = new Map<string, ImageBitmap>();
-// export const texts = new Map<string, string>();
 export const control = new Map<string, Int32Array>();
-export let registry = new Map<string, string>();
 
 onmessage = function(event) {
     if (event.data.device) {
+        const interpreter = new Interpreter();
+        interpreter.onError(logError);
         // Registry
-        registry = event.data.device.registry;
+        let registry = event.data.device.registry;
+        registry.forEach(function(value: string, key: string) {
+            interpreter.registry.set(key, value);
+        });
         // DeviceInfo
-        deviceInfo.set("developerId", event.data.device.developerId);
-        deviceInfo.set("deviceModel", event.data.device.deviceModel);
-        deviceInfo.set("clientId", event.data.device.clientId);
-        deviceInfo.set("countryCode", event.data.device.countryCode);
-        deviceInfo.set("timeZone", event.data.device.timeZone);
-        deviceInfo.set("locale", event.data.device.locale);
-        deviceInfo.set("clockFormat", event.data.device.clockFormat);
-        deviceInfo.set("displayMode", event.data.device.displayMode);
-        deviceInfo.set("models", parseCSV(models.default));
+        interpreter.deviceInfo.set("developerId", event.data.device.developerId);
+        interpreter.deviceInfo.set("deviceModel", event.data.device.deviceModel);
+        interpreter.deviceInfo.set("clientId", event.data.device.clientId);
+        interpreter.deviceInfo.set("countryCode", event.data.device.countryCode);
+        interpreter.deviceInfo.set("timeZone", event.data.device.timeZone);
+        interpreter.deviceInfo.set("locale", event.data.device.locale);
+        interpreter.deviceInfo.set("clockFormat", event.data.device.clockFormat);
+        interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
+        interpreter.deviceInfo.set("models", parseCSV(models.default));
         // File System
-        const source = new Map<string, string>();
+        const bslFiles = new Map<string, string>();
         const pkgFiles = new Map<string, any>();
+        const tmpFiles = new Map<string, any>();
+        const source = new Map<string, string>();
+        bslFiles.set("LibCore/v30/bslCore.brs", bslCore.default);
+        bslFiles.set("LibCore/v30/bslDefender.brs", bslDefender.default);
+        createDir(interpreter, "pkg:/source");
+        createDir(interpreter, "pkg:/images");
         for (let index = 0; index < event.data.paths.length; index++) {
             let path = event.data.paths[index];
-            if (path.type !== "source") {
+            if (path.type === "image") {
                 pkgFiles.set(path.url, event.data.images[path.id]);
+                if (path.url.substr(0, 6) === "images" && event.data.texts[path.id]) {
+                    writeFile(interpreter, "pkg:/" + path.url, event.data.texts[path.id]);
+                }
+            } else if (path.type === "text") {
+                pkgFiles.set(path.url, event.data.texts[path.id]);
             } else {
                 source.set(path.url, event.data.brs[path.id]);
+                writeFile(interpreter, "pkg:/" + path.url, event.data.texts[path.id]);
             }
         }
+        fileSystem.set("common:", bslFiles);
+        fileSystem.set("pkg:", pkgFiles);
+        fileSystem.set("tmp:", tmpFiles);
         // Run Channel
-        const replInterpreter = new Interpreter();
-        replInterpreter.onError(logError);
-        run(source, replInterpreter);
+        run(source, interpreter);
     } else {
         // Setup Control Shared Array
         control.set("keys", new Int32Array(event.data));

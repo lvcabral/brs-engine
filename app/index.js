@@ -214,7 +214,7 @@ function loadAssets(fileName) {
             }
         });
         loader.terminate();
-        paths.push({ url: fileName, id: 0, type: "source" });
+        paths.push({ url: "source/" + fileName, id: 0, type: "source" });
         runChannel();
     };
     loader.postMessage({ assets: files });

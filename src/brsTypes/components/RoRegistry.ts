@@ -4,16 +4,12 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoList } from "./RoList";
-import { deviceInfo, registry } from "../..";
 
 export class RoRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private devId: string;
 
     constructor() {
         super("roRegistry");
-        this.devId = deviceInfo.get("developerId");
-
         this.registerMethods([this.delete, this.flush, this.getSectionList]);
     }
 
@@ -25,10 +21,6 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    getValue() {
-        return registry;
-    }
-
     /** Deletes the specified section. */
     private delete = new Callable("delete", {
         signature: {
@@ -36,10 +28,11 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, section: BrsString) => {
-            [...registry.keys()].forEach(key => {
-                let regSection = this.devId + "." + section;
+            let devId = interpreter.deviceInfo.get("developerId");
+            [...interpreter.registry.keys()].forEach(key => {
+                let regSection = devId + "." + section;
                 if (key.substr(0, regSection.length) === regSection) {
-                    registry.delete(key);
+                    interpreter.registry.delete(key);
                 }
             });
             return BrsBoolean.True;
@@ -53,7 +46,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter) => {
-            postMessage(registry);
+            postMessage(interpreter.registry);
             return BrsBoolean.True;
         },
     });
@@ -66,7 +59,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             let sections = new Set<string>();
-            [...registry.keys()].forEach(key => {
+            [...interpreter.registry.keys()].forEach(key => {
                 sections.add(key.split(".")[1]);
             });
             return new RoList(
