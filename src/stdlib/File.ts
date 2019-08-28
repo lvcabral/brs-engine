@@ -1,7 +1,7 @@
 import { Callable, ValueKind, BrsString, BrsBoolean, RoArray, StdlibArgument } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { URL } from "url";
-import { texts } from "..";
+import { fileSystem } from "..";
 import MemoryFileSystem from "memory-fs";
 import * as nanomatch from "nanomatch";
 
@@ -216,11 +216,12 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
     impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
         const volume = getVolumeByPath(interpreter, filepath.value);
         if (volume === null) {
-            if (filepath.value.substr(0, 4) === "pkg:") {
-                let path = filepath.value.substr(5);
-                let ascii = texts.get(path);
-                if (ascii) {
-                    return new BrsString(ascii);
+            let url = new URL(filepath.value);
+            let volume = fileSystem.get(url.protocol);
+            if (volume) {
+                let file = volume.get(url.pathname);
+                if (file) {
+                    return new BrsString(file);
                 }
             }
             return new BrsString("");
