@@ -16,15 +16,17 @@ import * as _parser from "./parser";
 export { _parser as parser };
 
 export const deviceInfo = new Map<string, any>();
-export const images = new Map<string, ImageBitmap>();
-export const texts = new Map<string, string>();
+export const fileSystem = new Map<string, any>();
+// export const images = new Map<string, ImageBitmap>();
+// export const texts = new Map<string, string>();
 export const control = new Map<string, Int32Array>();
 export let registry = new Map<string, string>();
 
 onmessage = function(event) {
-    const source = new Map<string, string>();
     if (event.data.device) {
+        // Registry
         registry = event.data.device.registry;
+        // DeviceInfo
         deviceInfo.set("developerId", event.data.device.developerId);
         deviceInfo.set("deviceModel", event.data.device.deviceModel);
         deviceInfo.set("clientId", event.data.device.clientId);
@@ -34,20 +36,23 @@ onmessage = function(event) {
         deviceInfo.set("clockFormat", event.data.device.clockFormat);
         deviceInfo.set("displayMode", event.data.device.displayMode);
         deviceInfo.set("models", parseCSV(models.default));
-        const replInterpreter = new Interpreter();
-        replInterpreter.onError(logError);
+        // File System
+        const source = new Map<string, string>();
+        const pkgFiles = new Map<string, any>();
         for (let index = 0; index < event.data.paths.length; index++) {
             let path = event.data.paths[index];
-            if (path.type === "image") {
-                images.set(path.url, event.data.images[path.id]);
-            } else if (path.type === "text") {
-                texts.set(path.url, event.data.texts[path.id]);
+            if (path.type !== "source") {
+                pkgFiles.set(path.url, event.data.images[path.id]);
             } else {
                 source.set(path.url, event.data.brs[path.id]);
             }
         }
+        // Run Channel
+        const replInterpreter = new Interpreter();
+        replInterpreter.onError(logError);
         run(source, replInterpreter);
     } else {
+        // Setup Control Shared Array
         control.set("keys", new Int32Array(event.data));
     }
 };
