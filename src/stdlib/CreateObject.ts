@@ -18,6 +18,6 @@ export const CreateObject = new Callable("CreateObject", {
     },
     impl: (interpreter: Interpreter, objName: BrsString, ...additionalArgs: BrsType[]) => {
         let ctor = BrsObjects.get(objName.value.toLowerCase());
-        return ctor ? ctor(...additionalArgs) : BrsInvalid.Instance;
+        return ctor ? ctor(interpreter, ...additionalArgs) : BrsInvalid.Instance;
     },
 });
