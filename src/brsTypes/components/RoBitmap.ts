@@ -9,6 +9,7 @@ import { RoRegion } from "./RoRegion";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { fileSystem } from "../..";
+import URL from "url-parse";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -26,7 +27,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             let url = new URL(param.value);
             let volume = fileSystem.get(url.protocol);
             if (volume) {
-                let file = volume.get(url.pathname);
+                let file = volume.get(url.pathname.substr(1));
                 if (file instanceof ImageBitmap) {
                     image = file;
                     this.alphaEnable = true;

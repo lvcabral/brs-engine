@@ -3,17 +3,15 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+//import { DeleteFile } from "../../stdlib/File";
 import { RoList } from "./RoList";
-import { deviceInfo, registry } from "../..";
-import { URL } from "url";
+import URL from "url-parse";
 
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private devId: string;
 
     constructor() {
         super("roFileSystem");
-        this.devId = deviceInfo.get("developerId");
 
         this.registerMethods([
             this.getVolumeList,
@@ -39,10 +37,6 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    getValue() {
-        return registry;
-    }
-
     /**  */
     private getVolumeList = new Callable("getVolumeList", {
         signature: {
@@ -50,10 +44,10 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            let volumes = [];
-            volumes.push(new BrsString("common:"));
-            volumes.push(new BrsString("pkg:"));
-            volumes.push(new BrsString("tmp:"));
+            let volumes = new Array<BrsString>();
+            [...interpreter.fileSystem.keys()].forEach(key => {
+                volumes.push(new BrsString(key));
+            });
             return new RoList(volumes);
         },
     });
@@ -65,6 +59,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, path: BrsString) => {
+            // DeleteFile.call(interpreter,path);
             return BrsBoolean.True;
         },
     });
