@@ -23,41 +23,63 @@ import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
 import { RoDeviceInfo } from "./RoDeviceInfo";
 import { RoFileSystem } from "./RoFileSystem";
+import { Interpreter } from "../../interpreter";
 
 /** Map containing a list of brightscript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
-    ["roassociativearray", () => new RoAssociativeArray([])],
-    ["roarray", () => new RoArray([])],
-    ["rodatetime", () => new RoDateTime()],
-    ["rolist", () => new RoList()],
-    ["rotimespan", () => new Timespan()],
-    ["rosgnode", (nodeType: BrsString) => createNodeByType(nodeType)],
-    ["roregex", (expression: BrsString, flags: BrsString) => new RoRegex(expression, flags)],
-    ["rostring", (literal: BrsString) => new RoString(literal)],
-    ["robitmap", (param: BrsComponent) => new RoBitmap(param)],
-    ["romessageport", () => new RoMessagePort()],
-    ["rofilesystem", () => new RoFileSystem()],
-    ["rofontregistry", () => new RoFontRegistry()],
-    ["roregistry", () => new RoRegistry()],
-    ["roregistrysection", (section: BrsString) => new RoRegistrySection(section)],
-    ["rodeviceinfo", () => new RoDeviceInfo()],
-    ["roaudioplayer", () => new RoAudioPlayer()],
-    ["roaudioresource", (name: BrsString) => new RoAudioResource(name)],
-    ["rocompositor", () => new RoCompositor()],
+    ["roassociativearray", (interpreter: Interpreter) => new RoAssociativeArray([])],
+    ["roarray", (interpreter: Interpreter) => new RoArray([])],
+    ["rodatetime", (interpreter: Interpreter) => new RoDateTime()],
+    ["rolist", (interpreter: Interpreter) => new RoList()],
+    ["rotimespan", (interpreter: Interpreter) => new Timespan()],
+    ["rosgnode", (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType)],
+    [
+        "roregex",
+        (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
+            new RoRegex(expression, flags),
+    ],
+    ["rostring", (interpreter: Interpreter, literal: BrsString) => new RoString(literal)],
+    [
+        "robitmap",
+        (interpreter: Interpreter, param: BrsComponent) => new RoBitmap(interpreter, param),
+    ],
+    ["romessageport", (interpreter: Interpreter) => new RoMessagePort()],
+    ["rofilesystem", (interpreter: Interpreter) => new RoFileSystem()],
+    ["rofontregistry", (interpreter: Interpreter) => new RoFontRegistry()],
+    ["roregistry", (interpreter: Interpreter) => new RoRegistry()],
+    [
+        "roregistrysection",
+        (interpreter: Interpreter, section: BrsString) => new RoRegistrySection(section),
+    ],
+    ["rodeviceinfo", (interpreter: Interpreter) => new RoDeviceInfo()],
+    ["roaudioplayer", (interpreter: Interpreter) => new RoAudioPlayer()],
+    ["roaudioresource", (interpreter: Interpreter, name: BrsString) => new RoAudioResource(name)],
+    ["rocompositor", (interpreter: Interpreter) => new RoCompositor()],
     [
         "rofont",
-        (family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean) =>
-            new RoFont(family, size, bold, italic),
+        (
+            interpreter: Interpreter,
+            family: BrsString,
+            size: Int32,
+            bold: BrsBoolean,
+            italic: BrsBoolean
+        ) => new RoFont(family, size, bold, italic),
     ],
     [
         "roregion",
-        (bitmap: RoBitmap, x: Int32, y: Int32, width: Int32, height: Int32) =>
-            new RoRegion(bitmap, x, y, width, height),
+        (
+            interpreter: Interpreter,
+            bitmap: RoBitmap,
+            x: Int32,
+            y: Int32,
+            width: Int32,
+            height: Int32
+        ) => new RoRegion(bitmap, x, y, width, height),
     ],
     [
         "roscreen",
-        (dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
+        (interpreter: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
             new RoScreen(dblbuffer, width, height),
     ],
-    ["roxmlelement", () => new RoXMLElement()],
+    ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
 ]);
