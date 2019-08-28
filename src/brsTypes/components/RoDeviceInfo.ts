@@ -3,17 +3,14 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoMessagePort, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { deviceInfo } from "../..";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private port?: RoMessagePort;
-    private model: Array<string>;
 
     constructor() {
         super("roDeviceInfo");
-        this.model = deviceInfo.get("models").get(deviceInfo.get("deviceModel"));
         this.registerMethods([
             this.getModel,
             this.getModelDisplayName,
@@ -53,10 +50,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    getValue() {
-        return deviceInfo;
-    }
-
     /** Returns the model name for the Roku Streaming Player device running the script. */
     private getModel = new Callable("getModel", {
         signature: {
@@ -64,7 +57,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("deviceModel"));
+            return new BrsString(interpreter.deviceInfo.get("deviceModel"));
         },
     });
 
@@ -75,7 +68,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(this.model[0]);
+            let name = interpreter.deviceInfo
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"))[0];
+            return new BrsString(name);
         },
     });
 
@@ -86,7 +82,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(this.model[1]);
+            let type = interpreter.deviceInfo
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"))[1];
+            return new BrsString(type);
         },
     });
 
@@ -101,7 +100,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             result.push({ name: new BrsString("VendorName"), value: new BrsString("Roku") });
             result.push({
                 name: new BrsString("ModelNumber"),
-                value: new BrsString(deviceInfo.get("deviceModel")),
+                value: new BrsString(interpreter.deviceInfo.get("deviceModel")),
             });
             return new RoAssociativeArray(result);
         },
@@ -136,7 +135,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("clientId"));
+            return new BrsString(interpreter.deviceInfo.get("clientId"));
         },
     });
 
@@ -147,7 +146,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("countryCode"));
+            return new BrsString(interpreter.deviceInfo.get("countryCode"));
         },
     });
 
@@ -158,7 +157,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("countryCode"));
+            return new BrsString(interpreter.deviceInfo.get("countryCode"));
         },
     });
 
@@ -169,7 +168,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("timeZone"));
+            return new BrsString(interpreter.deviceInfo.get("timeZone"));
         },
     });
 
@@ -180,7 +179,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("locale"));
+            return new BrsString(interpreter.deviceInfo.get("locale"));
         },
     });
 
@@ -191,7 +190,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("clockFormat"));
+            return new BrsString(interpreter.deviceInfo.get("clockFormat"));
         },
     });
 
@@ -202,7 +201,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            let display = deviceInfo.get("displayMode");
+            let display = interpreter.deviceInfo.get("displayMode");
             let result = "HDTV";
             if (display.substr(0, 3) === "480") {
                 result = "4:3 standard";
@@ -218,7 +217,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(deviceInfo.get("displayMode"));
+            return new BrsString(interpreter.deviceInfo.get("displayMode"));
         },
     });
 
@@ -229,7 +228,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            let display = deviceInfo.get("displayMode");
+            let display = interpreter.deviceInfo.get("displayMode");
             let result = "16x9";
             if (display.substr(0, 3) === "480") {
                 result = "4x3";
@@ -246,7 +245,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             let result = new Array<AAMember>();
-            let display = deviceInfo.get("displayMode");
+            let display = interpreter.deviceInfo.get("displayMode");
             if (display.substr(0, 3) === "480") {
                 result.push({ name: new BrsString("h"), value: new Int32(480) });
                 result.push({ name: new BrsString("w"), value: new Int32(720) });
@@ -269,7 +268,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             let result = new Array<AAMember>();
-            let display = deviceInfo.get("displayMode");
+            let display = interpreter.deviceInfo.get("displayMode");
             if (display.substr(0, 3) === "480") {
                 result.push({ name: new BrsString("height"), value: new Int32(480) });
                 result.push({ name: new BrsString("width"), value: new Int32(720) });
@@ -280,9 +279,12 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 result.push({ name: new BrsString("height"), value: new Int32(1080) });
                 result.push({ name: new BrsString("width"), value: new Int32(1920) });
             }
+            let model = interpreter.deviceInfo
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"))[3];
             result.push({
                 name: new BrsString("name"),
-                value: new BrsString(this.model[3].toUpperCase()),
+                value: new BrsString(model.toUpperCase()),
             });
             return new RoAssociativeArray(result);
         },
@@ -295,7 +297,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(this.model[2]);
+            let platform = interpreter.deviceInfo
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"))[2];
+            return new BrsString(platform);
         },
     });
 

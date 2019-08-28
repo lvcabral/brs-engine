@@ -32,6 +32,7 @@
     "nanomatch": "^1.2.13",
     "p-settle": "^2.1.0",
     "ts-loader": "^6.0.4",
+    "url-parse": "^1.4.7",
     "webpack": "^4.39.0",
     "xml2js": "^0.4.19"
   },
@@ -43,6 +44,7 @@
     "@types/memory-fs": "^0.3.2",
     "@types/node": "^8.10.52",
     "@types/p-settle": "^2.0.1",
+    "@types/url-parse": "^1.4.3",
     "@types/xml2js": "^0.4.4",
     "husky": ">=1",
     "jest": "^24.0.0",
