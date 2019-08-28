@@ -5,11 +5,10 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoString } from "./RoString";
 import { RoRegion } from "./RoRegion";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { images } from "../..";
+import { fileSystem } from "../..";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -19,24 +18,29 @@ export class RoBitmap extends BrsComponent implements BrsValue {
 
     constructor(param: BrsComponent) {
         super("roBitmap", ["ifDraw2D"]);
-        let filePath = "";
         let width = 300;
         let height = 150;
+        let image;
         this.alphaEnable = false;
         if (param instanceof BrsString) {
-            filePath = param.value;
-            if (filePath.substr(0, 4) === "pkg:") {
-                //let filePath = path.join(interpreter.options.root, url.pathname);
-                filePath = filePath.substr(5); // TODO: Use options configuration that defines root
+            let url = new URL(param.value);
+            let volume = fileSystem.get(url.protocol);
+            if (volume) {
+                let file = volume.get(url.pathname);
+                if (file instanceof ImageBitmap) {
+                    image = file;
+                    this.alphaEnable = true;
+                } else {
+                    // TODO: Check how device handle invalid files
+                }
             }
-            this.alphaEnable = true;
         } else if (param instanceof RoAssociativeArray) {
             let paramWidth = param.get(new BrsString("width"));
-            if (paramWidth instanceof Int32) {
+            if (paramWidth instanceof Int32 || paramWidth instanceof Float) {
                 width = paramWidth.getValue();
             }
             let paramHeight = param.get(new BrsString("height"));
-            if (paramHeight instanceof Int32) {
+            if (paramHeight instanceof Int32 || paramHeight instanceof Float) {
                 height = paramHeight.getValue();
             }
             let alphaEnable = param.get(new BrsString("alphaEnable"));
@@ -49,13 +53,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.context = this.canvas.getContext("2d", {
             alpha: this.alphaEnable,
         }) as OffscreenCanvasRenderingContext2D;
-        if (filePath !== "") {
-            let image = images.get(filePath);
-            if (image) {
-                this.canvas.width = image.width;
-                this.canvas.height = image.height;
-                this.context.drawImage(image, 0, 0);
-            }
+        if (image) {
+            this.canvas.width = image.width;
+            this.canvas.height = image.height;
+            this.context.drawImage(image, 0, 0);
         }
 
         this.registerMethods([
