@@ -58,9 +58,12 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
+            let devId = interpreter.deviceInfo.get("developerId");
             let sections = new Set<string>();
             [...interpreter.registry.keys()].forEach(key => {
-                sections.add(key.split(".")[1]);
+                if (key.split(".")[0] === devId) {
+                    sections.add(key.split(".")[1]);
+                }
             });
             return new RoList(
                 [...sections].map(function(value: string) {
