@@ -49,7 +49,8 @@ export const BrsObjects = new Map<string, Function>([
     ["roregistry", (interpreter: Interpreter) => new RoRegistry()],
     [
         "roregistrysection",
-        (interpreter: Interpreter, section: BrsString) => new RoRegistrySection(section),
+        (interpreter: Interpreter, section: BrsString) =>
+            new RoRegistrySection(interpreter, section),
     ],
     ["rodeviceinfo", (interpreter: Interpreter) => new RoDeviceInfo()],
     ["roaudioplayer", (interpreter: Interpreter) => new RoAudioPlayer()],

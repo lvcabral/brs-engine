@@ -52,7 +52,8 @@ sub main()
     print a[1.6]
     rgn.setTime(100.99)
     print rgn.getTime()
-    msg = port.WaitMessage(0) 'Not working yet on brsLib
+    msg = port.WaitMessage(0)
+    print "closing the channel"
 end sub
 
 sub DrawBall(screen as object)

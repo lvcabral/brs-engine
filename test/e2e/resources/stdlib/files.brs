@@ -9,9 +9,5 @@ print DeleteDirectory("tmp:///test_dir") ' good delete
 print FormatDrive("does not matter", "will always fail") ' always fail
 print ListDir("tmp:///") 'what's left?
 print ReadAsciiFile("tmp:///test_backup.txt")
-fs = CreateObject("roFileSystem")
-print fs.GetVolumeList()
-print fs.Delete("tmp:///test_backup.txt")
-print ListDir("tmp:///") 'what's left?
 stdlibTestFiles = MatchFiles("pkg:/test/e2e/resources/stdlib/", "*.brs")
 print stdlibTestFiles.count() > 0
