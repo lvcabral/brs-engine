@@ -1,7 +1,7 @@
 import { Lexer } from "./lexer";
 import * as PP from "./preprocessor";
 import { Parser } from "./parser";
-import { Interpreter, ExecutionOptions, defaultExecutionOptions } from "./interpreter";
+import { Interpreter } from "./interpreter";
 import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!../bsl/v30/bslCore.brs";
 import * as bslDefender from "raw-loader!../bsl/v30/bslDefender.brs";
@@ -13,9 +13,9 @@ export { BrsTypes as types };
 export { PP as preprocessor };
 import * as _parser from "./parser";
 export { _parser as parser };
-import { createDir, writeFile } from "./stdlib/File";
+import * as path from "path";
+import MemoryFileSystem from "memory-fs";
 
-export const fileSystem = new Map<string, any>();
 export const control = new Map<string, Int32Array>();
 
 onmessage = function(event) {
@@ -38,31 +38,44 @@ onmessage = function(event) {
         interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
         interpreter.deviceInfo.set("models", parseCSV(models.default));
         // File System
-        const bslFiles = new Map<string, string>();
-        const pkgFiles = new Map<string, any>();
-        const tmpFiles = new Map<string, any>();
+        let volume = interpreter.fileSystem.get("common:");
+        if (volume) {
+            volume.mkdirSync("/LibCore");
+            volume.mkdirSync("/LibCore/v30");
+            volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore.default);
+            volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender.default);
+        }
         const source = new Map<string, string>();
-        bslFiles.set("LibCore/v30/bslCore.brs", bslCore.default);
-        bslFiles.set("LibCore/v30/bslDefender.brs", bslDefender.default);
-        createDir(interpreter, "pkg:/source");
-        createDir(interpreter, "pkg:/images");
-        for (let index = 0; index < event.data.paths.length; index++) {
-            let path = event.data.paths[index];
-            if (path.type === "image") {
-                pkgFiles.set(path.url, event.data.images[path.id]);
-                if (path.url.substr(0, 6) === "images" && event.data.texts[path.id]) {
-                    writeFile(interpreter, "pkg:/" + path.url, event.data.texts[path.id]);
+        volume = interpreter.fileSystem.get("pkg:");
+        if (volume) {
+            for (let index = 0; index < event.data.paths.length; index++) {
+                let filePath = event.data.paths[index];
+                if (!volume.existsSync(path.dirname("/" + filePath.url))) {
+                    try {
+                        mkdirTreeSync(volume, path.dirname("/" + filePath.url));
+                    } catch (err) {
+                        console.error(
+                            "Error creating directory " +
+                                path.dirname("/" + filePath.url) +
+                                " - " +
+                                err.message
+                        );
+                    }
                 }
-            } else if (path.type === "text") {
-                pkgFiles.set(path.url, event.data.texts[path.id]);
-            } else {
-                source.set(path.url, event.data.brs[path.id]);
-                writeFile(interpreter, "pkg:/" + path.url, event.data.texts[path.id]);
+                try {
+                    if (filePath.type === "image") {
+                        volume.writeFileSync("/" + filePath.url, event.data.images[filePath.id]);
+                    } else if (filePath.type === "text") {
+                        volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
+                    } else {
+                        source.set(filePath.url, event.data.brs[filePath.id]);
+                        volume.writeFileSync("/" + filePath.url, event.data.brs[filePath.id]);
+                    }
+                } catch (err) {
+                    console.error("Error writing file " + filePath.url + " - " + err.message);
+                }
             }
         }
-        fileSystem.set("common:", bslFiles);
-        fileSystem.set("pkg:", pkgFiles);
-        fileSystem.set("tmp:", tmpFiles);
         // Run Channel
         run(source, interpreter);
     } else {
@@ -136,6 +149,9 @@ function logError(err: BrsError.BrsError) {
     console.error(err.format());
 }
 
+/** Parse CSV string into a Map with first column as the key and the value contains the other columns into an array
+ * @param csv the string containing the comma-separated values
+ */
 function parseCSV(csv: string): Map<string, string[]> {
     let result = new Map<string, string[]>();
     let lines = csv.match(/[^\r\n]+/g);
@@ -146,4 +162,18 @@ function parseCSV(csv: string): Map<string, string[]> {
         });
     }
     return result;
+}
+
+/**
+ * Splits the provided path into folders and recreates directory tree from the root.
+ * @param directory the path to be created
+ */
+function mkdirTreeSync(fs: MemoryFileSystem, directory: string) {
+    var pathArray = directory.replace(/\/$/, "").split("/");
+    for (var i = 1; i <= pathArray.length; i++) {
+        var segment = pathArray.slice(0, i).join("/");
+        if (fs.normalize(segment) !== "" && !fs.existsSync(segment)) {
+            fs.mkdirSync(segment);
+        }
+    }
 }

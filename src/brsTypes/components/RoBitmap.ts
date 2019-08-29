@@ -8,7 +8,6 @@ import { Float } from "../Float";
 import { RoRegion } from "./RoRegion";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { fileSystem } from "../..";
 import URL from "url-parse";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
@@ -17,7 +16,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private canvas: OffscreenCanvas;
     private context: OffscreenCanvasRenderingContext2D;
 
-    constructor(param: BrsComponent) {
+    constructor(interpreter: Interpreter, param: BrsComponent) {
         super("roBitmap", ["ifDraw2D"]);
         let width = 300;
         let height = 150;
@@ -25,15 +24,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.alphaEnable = false;
         if (param instanceof BrsString) {
             let url = new URL(param.value);
-            let volume = fileSystem.get(url.protocol);
+            const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
-                let file = volume.get(url.pathname.substr(1));
-                if (file instanceof ImageBitmap) {
-                    image = file;
-                    this.alphaEnable = true;
-                } else {
-                    // TODO: Check how device handle invalid files
-                }
+                image = volume.readFileSync(url.pathname) as ImageBitmap;
+                this.alphaEnable = true;
             }
         } else if (param instanceof RoAssociativeArray) {
             let paramWidth = param.get(new BrsString("width"));

@@ -1,6 +1,5 @@
-import { Callable, ValueKind, BrsString, BrsBoolean, RoArray, StdlibArgument } from "../brsTypes";
+import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { fileSystem } from "..";
 import MemoryFileSystem from "memory-fs";
 import URL from "url-parse";
 import * as nanomatch from "nanomatch";
@@ -48,14 +47,19 @@ export function createDir(interpreter: Interpreter, dir: string) {
         return BrsBoolean.False;
     }
 }
+
 export function writeFile(interpreter: Interpreter, filePath: string, content: any) {
     const volume = getVolumeByPath(interpreter, filePath);
     if (volume === null) {
         return BrsBoolean.False;
     }
     const memfsPath = getPath(filePath);
-    volume.writeFileSync(memfsPath, content);
-    return BrsBoolean.True;
+    try {
+        volume.writeFileSync(memfsPath, content);
+        return BrsBoolean.True;
+    } catch (err) {
+        return BrsBoolean.False;
+    }
 }
 
 /** Copies a file from src to dst, return true if successful */
@@ -202,15 +206,15 @@ export const ListDir = new Callable("ListDir", {
     impl: (interpreter: Interpreter, path: BrsString) => {
         const volume = getVolumeByPath(interpreter, path.value);
         if (volume === null) {
-            return new RoArray([]);
+            return new RoList([]);
         }
 
         const memfsPath = getPath(path.value);
         try {
             let subPaths = volume.readdirSync(memfsPath).map(s => new BrsString(s));
-            return new RoArray(subPaths);
+            return new RoList(subPaths);
         } catch (err) {
-            return new RoArray([]);
+            return new RoList([]);
         }
     },
 });
@@ -222,21 +226,10 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
-        const url = new URL(filepath.value);
-        if (url.protocol === "pkg:") {
-            let volume = fileSystem.get(url.protocol);
-            if (volume) {
-                let file = volume.get(url.pathname.substr(1));
-                if (file) {
-                    return new BrsString(file);
-                }
-            }
-        } else {
-            const volume = getVolumeByPath(interpreter, filepath.value);
-            if (volume) {
-                const memfsPath = getPath(filepath.value);
-                return new BrsString(volume.readFileSync(memfsPath).toString());
-            }
+        const volume = getVolumeByPath(interpreter, filepath.value);
+        if (volume) {
+            const memfsPath = getPath(filepath.value);
+            return new BrsString(volume.readFileSync(memfsPath).toString());
         }
         return new BrsString("");
     },
@@ -268,8 +261,7 @@ export const MatchFiles = new Callable("MatchFiles", {
     impl: (interpreter: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
         let volume = getVolumeByPath(interpreter, pathArg.value);
         if (volume == null) {
-            // TODO: replace with RoList when that's implemented
-            return new RoArray([]);
+            return new RoList([]);
         }
 
         let localPath = path.join(interpreter.options.root, getPath(pathArg.value));
@@ -284,11 +276,9 @@ export const MatchFiles = new Callable("MatchFiles", {
 
             matchedFiles = (matchedFiles || []).map((match: string) => new BrsString(match));
 
-            // TODO: replace with RoList when that's implemented
-            return new RoArray(matchedFiles);
+            return new RoList(matchedFiles);
         } catch (err) {
-            // TODO: replace with RoList when that's implemented
-            return new RoArray([]);
+            return new RoList([]);
         }
     },
 });
