@@ -26,8 +26,12 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             let url = new URL(param.value);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
-                image = volume.readFileSync(url.pathname) as ImageBitmap;
-                this.alphaEnable = true;
+                try {
+                    image = volume.readFileSync(url.pathname) as ImageBitmap;
+                    this.alphaEnable = true;
+                } catch (err) {
+                    console.error("Error loading bitmap:" + url.pathname + " - " + err.message);
+                }
             }
         } else if (param instanceof RoAssociativeArray) {
             let paramWidth = param.get(new BrsString("width"));
