@@ -4,8 +4,9 @@ import { BrsType, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoList } from "./RoList";
-import URL from "url-parse";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import URL from "url-parse";
+import * as nanomatch from "nanomatch";
 
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -19,13 +20,13 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             this.getDirectoryListing,
             this.createDirectory,
             this.delete,
-            // this.copyFile,
-            // this.rename,
+            this.copyFile,
+            this.rename,
             // this.find,
             // this.findRecurse,
-            // this.match,
-            // this.exists,
-            // this.stats,
+            this.match,
+            this.exists,
+            this.stat,
         ]);
     }
 
@@ -121,6 +122,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, path: BrsString) => {
+            // TODO: Delete directory+contents
             const url = new URL(path.value);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
@@ -132,6 +134,165 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
             }
             return BrsBoolean.False;
+        },
+    });
+
+    /** Copies the file from origin path to destiny path. */
+    private copyFile = new Callable("copyFile", {
+        signature: {
+            args: [
+                new StdlibArgument("fromPath", ValueKind.String),
+                new StdlibArgument("toPath", ValueKind.String),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, fromPath: BrsString, toPath: BrsString) => {
+            const srcUrl = new URL(fromPath.value);
+            const srcVolume = interpreter.fileSystem.get(srcUrl.protocol);
+            if (!srcVolume) {
+                return BrsBoolean.False;
+            }
+            const dstUrl = new URL(toPath.value);
+            const dstVolume = interpreter.fileSystem.get(dstUrl.protocol);
+            if (!dstVolume) {
+                return BrsBoolean.False;
+            }
+            try {
+                let contents = srcVolume.readFileSync(srcUrl.pathname);
+                dstVolume.writeFileSync(dstUrl.pathname, contents);
+                return BrsBoolean.True;
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+        },
+    });
+
+    /** Copies the file from origin path to destiny path. */
+    private rename = new Callable("rename", {
+        signature: {
+            args: [
+                new StdlibArgument("fromPath", ValueKind.String),
+                new StdlibArgument("toPath", ValueKind.String),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, fromPath: BrsString, toPath: BrsString) => {
+            // TODO: Add support to rename directories
+            const srcUrl = new URL(fromPath.value);
+            const srcVolume = interpreter.fileSystem.get(srcUrl.protocol);
+            if (!srcVolume) {
+                return BrsBoolean.False;
+            }
+            const dstUrl = new URL(toPath.value);
+            const dstVolume = interpreter.fileSystem.get(srcUrl.protocol);
+            if (!dstVolume) {
+                return BrsBoolean.False;
+            }
+            try {
+                if (dstVolume.existsSync(dstUrl.pathname)) {
+                    return BrsBoolean.False;
+                }
+                let contents = srcVolume.readFileSync(srcUrl.pathname);
+                dstVolume.writeFileSync(dstUrl.pathname, contents);
+                srcVolume.unlinkSync(srcUrl.pathname);
+                return BrsBoolean.True;
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+        },
+    });
+
+    /** Checks if the path exists. */
+    private exists = new Callable("exists", {
+        signature: {
+            args: [new StdlibArgument("path", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, path: BrsString) => {
+            const url = new URL(path.value);
+            const volume = interpreter.fileSystem.get(url.protocol);
+            if (volume) {
+                try {
+                    return BrsBoolean.from(volume.existsSync(url.pathname));
+                } catch (err) {
+                    return BrsBoolean.False;
+                }
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Checks if the path exists. */
+    private match = new Callable("match", {
+        signature: {
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("pattern", ValueKind.String),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, pathArg: BrsString, pattern: BrsString) => {
+            const url = new URL(pathArg.value);
+            const volume = interpreter.fileSystem.get(url.protocol);
+            if (volume) {
+                try {
+                    let knownFiles = volume.readdirSync(url.pathname);
+                    let matchedFiles = nanomatch.match(knownFiles, pattern.value, {
+                        nocase: true,
+                        nodupes: true,
+                        noglobstar: true,
+                        nonegate: true,
+                    });
+
+                    matchedFiles = (matchedFiles || []).map(
+                        (match: string) => new BrsString(match)
+                    );
+
+                    return new RoList(matchedFiles);
+                } catch (err) {
+                    return new RoList([]);
+                }
+            }
+            return new RoList([]);
+        },
+    });
+
+    /** Checks if the path exists. */
+    private stat = new Callable("stat", {
+        signature: {
+            args: [new StdlibArgument("path", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, path: BrsString) => {
+            const url = new URL(path.value);
+            const result = new RoAssociativeArray([]);
+            const volume = interpreter.fileSystem.get(url.protocol);
+            if (volume) {
+                try {
+                    const stat = volume.statSync(url.pathname);
+                    result.set(new BrsString("hidden"), BrsBoolean.False);
+                    if (stat.isFile()) {
+                        const content = volume.readFileSync(url.pathname);
+                        if (typeof content.length === "number") {
+                            result.set(new BrsString("size"), new Int32(content.length));
+                        } else {
+                            result.set(new BrsString("size"), new Int32(0)); // TODO: Find a way to get ImageBitmap byte length
+                        }
+                    }
+                    result.set(
+                        new BrsString("permissions"),
+                        new BrsString(url.protocol === "tmp:" ? "rw" : "r")
+                    );
+                    result.set(
+                        new BrsString("type"),
+                        new BrsString(stat.isFile() ? "file" : "directory")
+                    );
+                    // TODO: other fields: ctime, mtime, sizeex
+                } catch (err) {
+                    return result;
+                }
+            }
+            return result;
         },
     });
 }

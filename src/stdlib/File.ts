@@ -3,7 +3,6 @@ import { Interpreter } from "../interpreter";
 import MemoryFileSystem from "memory-fs";
 import URL from "url-parse";
 import * as nanomatch from "nanomatch";
-import * as path from "path";
 
 type Volume = MemoryFileSystem;
 
@@ -42,20 +41,6 @@ export function createDir(interpreter: Interpreter, dir: string) {
     const memfsPath = getPath(dir);
     try {
         volume.mkdirSync(memfsPath);
-        return BrsBoolean.True;
-    } catch (err) {
-        return BrsBoolean.False;
-    }
-}
-
-export function writeFile(interpreter: Interpreter, filePath: string, content: any) {
-    const volume = getVolumeByPath(interpreter, filePath);
-    if (volume === null) {
-        return BrsBoolean.False;
-    }
-    const memfsPath = getPath(filePath);
-    try {
-        volume.writeFileSync(memfsPath, content);
         return BrsBoolean.True;
     } catch (err) {
         return BrsBoolean.False;
@@ -244,8 +229,18 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         ],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
-        return writeFile(interpreter, filepath.value, text);
+    impl: (interpreter: Interpreter, filePath: BrsString, text: BrsString) => {
+        const volume = getVolumeByPath(interpreter, filePath.value);
+        if (volume === null) {
+            return BrsBoolean.False;
+        }
+        const memfsPath = getPath(filePath.value);
+        try {
+            volume.writeFileSync(memfsPath, text.value, "utf-8");
+            return BrsBoolean.True;
+        } catch (err) {
+            return BrsBoolean.False;
+        }
     },
 });
 
@@ -263,8 +258,7 @@ export const MatchFiles = new Callable("MatchFiles", {
         if (volume == null) {
             return new RoList([]);
         }
-
-        let localPath = path.join(interpreter.options.root, getPath(pathArg.value));
+        let localPath = getPath(pathArg.value);
         try {
             let knownFiles = volume.readdirSync(localPath);
             let matchedFiles = nanomatch.match(knownFiles, patternIn.value, {
