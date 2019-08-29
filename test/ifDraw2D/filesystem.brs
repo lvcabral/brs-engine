@@ -8,8 +8,15 @@ sub main()
     print fs.GetVolumeList()
     print fs.CreateDirectory("tmp:/source")
     print WriteAsciiFile("tmp:/test.txt", "some test contents") ' write good path
-    print CopyFile("tmp:/test.txt", "tmp:/source/test_backup.txt") ' copy good path
+    print fs.copyFile("tmp:/test.txt", "tmp:/source/test_backup.txt")
     print fs.GetDirectoryListing("tmp:/source")
+    print fs.GetDirectoryListing("tmp:/")
+    print fs.rename("tmp:/test.txt", "tmp:/source/test_original.txt")
     print fs.Delete("tmp:/source/test_backup.txt")
     print fs.GetDirectoryListing("tmp:/source/")
+    print fs.GetDirectoryListing("tmp:/")
+    print fs.stat("pkg:/images/sprite.png")
+    print fs.stat("pkg:/assets/")
+    print fs.stat("tmp:/source/test_original.txt")
+    print fs.match("pkg:/assets/", "*.png")
 end sub
