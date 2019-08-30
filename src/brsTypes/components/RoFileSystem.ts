@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -6,7 +6,11 @@ import { Interpreter } from "../../interpreter";
 import { RoList } from "./RoList";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import URL from "url-parse";
+import MemoryFileSystem from "memory-fs";
 import * as nanomatch from "nanomatch";
+import * as path from "path";
+
+type Volume = MemoryFileSystem;
 
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -22,11 +26,13 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             this.delete,
             this.copyFile,
             this.rename,
-            // this.find,
-            // this.findRecurse,
+            this.find,
+            this.findRecurse,
             this.match,
             this.exists,
             this.stat,
+            this.getMessagePort,
+            this.setMessagePort,
         ]);
     }
 
@@ -37,6 +43,29 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     equalTo(other: BrsType) {
         return BrsBoolean.False;
     }
+
+    findOnTree(volume: Volume, jsRegex: RegExp, pathName: string): BrsString[] {
+        try {
+            let knownFiles = volume.readdirSync(pathName);
+            let matchedFiles: BrsString[] = [];
+            knownFiles.forEach(fileName => {
+                if (jsRegex.test(fileName)) {
+                    matchedFiles.push(new BrsString(fileName));
+                    let fullPath = path.join(pathName, fileName);
+                    if (volume.statSync(fullPath).isDirectory()) {
+                        matchedFiles = matchedFiles.concat(
+                            this.findOnTree(volume, jsRegex, fullPath)
+                        );
+                    }
+                }
+            });
+            return matchedFiles;
+        } catch (err) {
+            return [];
+        }
+    }
+
+    // ifFileSystem ----------------------------------------------------------------------------------
 
     /** Returns an `roList` containing Strings representing the available volumes. */
     private getVolumeList = new Callable("getVolumeList", {
@@ -59,8 +88,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, path: BrsString) => {
-            const url = new URL(path.value);
+        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+            const url = new URL(pathArg.value);
             const result = new RoAssociativeArray([]);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
@@ -79,8 +108,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, path: BrsString) => {
-            const url = new URL(path.value);
+        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+            const url = new URL(pathArg.value);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
                 try {
@@ -100,8 +129,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, path: BrsString) => {
-            const url = new URL(path.value);
+        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+            const url = new URL(pathArg.value);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
                 try {
@@ -121,13 +150,16 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, path: BrsString) => {
-            // TODO: Delete directory+contents
-            const url = new URL(path.value);
+        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+            const url = new URL(pathArg.value);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
                 try {
-                    volume.unlinkSync(url.pathname);
+                    if (volume.statSync(url.pathname).isDirectory()) {
+                        volume.rmdirSync(url.pathname);
+                    } else {
+                        volume.unlinkSync(url.pathname);
+                    }
                     return BrsBoolean.True;
                 } catch (err) {
                     return BrsBoolean.False;
@@ -167,7 +199,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Copies the file from origin path to destiny path. */
+    /** Renames or moves the file or directory. */
     private rename = new Callable("rename", {
         signature: {
             args: [
@@ -208,8 +240,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, path: BrsString) => {
-            const url = new URL(path.value);
+        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+            const url = new URL(pathArg.value);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
                 try {
@@ -222,7 +254,58 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Checks if the path exists. */
+    /** Returns an roList of Strings representing the directory listing of names in dirPath which match the regEx regular expression. */
+    private find = new Callable("find", {
+        signature: {
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("regEx", ValueKind.String),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, pathArg: BrsString, regEx: BrsString) => {
+            const jsRegex = new RegExp(regEx.value);
+            const url = new URL(pathArg.value);
+            const volume = interpreter.fileSystem.get(url.protocol);
+            if (volume) {
+                try {
+                    let knownFiles = volume.readdirSync(url.pathname);
+                    let matchedFiles: BrsString[] = [];
+                    knownFiles.forEach(fileName => {
+                        if (jsRegex.test(fileName)) {
+                            matchedFiles.push(new BrsString(fileName));
+                        }
+                    });
+                    return new RoList(matchedFiles);
+                } catch (err) {
+                    return new RoList([]);
+                }
+            }
+            return new RoList([]);
+        },
+    });
+
+    /** Returns an roList of Strings representing the recursive directory listing of names in dirPath which match the regEx regular expression. */
+    private findRecurse = new Callable("findRecurse", {
+        signature: {
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("regEx", ValueKind.String),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, pathArg: BrsString, regEx: BrsString) => {
+            const jsRegex = new RegExp(regEx.value);
+            const url = new URL(pathArg.value);
+            const volume = interpreter.fileSystem.get(url.protocol);
+            if (volume) {
+                return new RoList(this.findOnTree(volume, jsRegex, url.pathname));
+            }
+            return new RoList([]);
+        },
+    });
+
+    /** Returns an roList of Strings representing the directory listing of names in dirPath which match the shell-like pattern. */
     private match = new Callable("match", {
         signature: {
             args: [
@@ -257,14 +340,14 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Checks if the path exists. */
+    /** Returns an roAssociativeArray containing the keys for the passed in path. */
     private stat = new Callable("stat", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, path: BrsString) => {
-            const url = new URL(path.value);
+        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+            const url = new URL(pathArg.value);
             const result = new RoAssociativeArray([]);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
@@ -287,12 +370,38 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                         new BrsString("type"),
                         new BrsString(stat.isFile() ? "file" : "directory")
                     );
-                    // TODO: other fields: ctime, mtime, sizeex
                 } catch (err) {
                     return result;
                 }
             }
             return result;
+        },
+    });
+    // ifGetMessagePort ----------------------------------------------------------------------------------
+
+    /** Returns the message port (if any) currently associated with the object */
+    private getMessagePort = new Callable("getMessagePort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            // Not supported, always return invalid
+            return BrsInvalid.Instance;
+        },
+    });
+
+    // ifSetMessagePort ----------------------------------------------------------------------------------
+
+    /** Sets the roMessagePort to be used for all events from the screen */
+    private setMessagePort = new Callable("setMessagePort", {
+        signature: {
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, port: BrsComponent) => {
+            // Not supported, ignore any parameter
+            return BrsInvalid.Instance;
         },
     });
 }
