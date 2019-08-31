@@ -97,6 +97,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.fileSystem.set("common:", new MemoryFileSystem());
         this.fileSystem.set("pkg:", new MemoryFileSystem());
         this.fileSystem.set("tmp:", new MemoryFileSystem());
+        this.fileSystem.set("cachefs:", new MemoryFileSystem());
         Object.keys(StdLib)
             .map(name => (StdLib as any)[name])
             .filter(func => func instanceof Callable)
