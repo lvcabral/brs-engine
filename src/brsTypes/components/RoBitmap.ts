@@ -10,6 +10,7 @@ import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import URL from "url-parse";
 import { RoByteArray } from "./RoByteArray";
+import * as PNG from "fast-png";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -72,7 +73,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             this.getAlphaEnable,
             this.setAlphaEnable,
             this.getByteArray,
-            //this.getPng,
+            this.getPng,
             this.getWidth,
             this.getHeight,
         ]);
@@ -413,23 +414,34 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
-    // private getPng = new Callable("getPng", {
-    //     signature: {
-    //         args: [
-    //             new StdlibArgument("x", ValueKind.Int32),
-    //             new StdlibArgument("y", ValueKind.Int32),
-    //             new StdlibArgument("width", ValueKind.Int32),
-    //             new StdlibArgument("height", ValueKind.Int32),
-    //         ],
-    //         returns: ValueKind.Int32,
-    //     },
-    //     impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-    //         let blob = this.canvas.convertToBlob;
-    //         let byteArray = new Uint8Array(blob);
-    //         return new RoByteArray(byteArray);
-    //     },
-    // });
+    /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
+    private getPng = new Callable("getPng", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            let imgData = this.context.getImageData(
+                x.getValue(),
+                y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
+            let idata: PNG.IImageData = {
+                width: imgData.width,
+                height: imgData.height,
+                data: new Uint8Array(imgData.data.buffer),
+                depth: 8,
+                channels: 4,
+            };
+            return new RoByteArray(PNG.encode(idata));
+        },
+    });
 }
 
 export function rgbaIntToHex(rgba: number): string {
