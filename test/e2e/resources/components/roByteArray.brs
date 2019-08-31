@@ -1,7 +1,9 @@
 sub main()
     ba=CreateObject("roByteArray")
     ba.FromAsciiString("leasure.")
-    ' print ba.ToBase64String()<>"bGVhc3VyZS4="
+    print ba.ToBase64String()="bGVhc3VyZS4="
+    ba.FromAsciiString("coração❤")
+    print ba.toAsciiString()="coração❤"
 
     ba=CreateObject("roByteArray")
     ba.fromhexstring("00FF1001")
