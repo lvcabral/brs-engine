@@ -25,6 +25,7 @@
     "types/"
   ],
   "dependencies": {
+    "fast-png": "^4.0.1",
     "linked-list-typescript": "^1.0.15",
     "long": "^3.2.0",
     "luxon": "^1.8.3",
