@@ -39,6 +39,6 @@ sub main()
     bmpw.Clear(white)
     screen.DrawObject(824,450, bmpw)
     screen.SwapBuffers()
-    print logo.getByteArray(0, 0, logo.getWidth(), logo.getHeight())
+    print logo.getPng(0, 0, logo.getWidth(), logo.getHeight())
     msg = port.WaitMessage(0) 'Not working yet on brsLib
 end sub
