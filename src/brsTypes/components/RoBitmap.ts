@@ -29,7 +29,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
                 try {
-                    image = volume.readFileSync(url.pathname) as ImageBitmap;
+                    image = volume.readFileSync(url.pathname);
                     this.alphaEnable = true;
                 } catch (err) {
                     console.error("Error loading bitmap:" + url.pathname + " - " + err.message);
@@ -55,9 +55,24 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             alpha: this.alphaEnable,
         }) as OffscreenCanvasRenderingContext2D;
         if (image) {
-            this.canvas.width = image.width;
-            this.canvas.height = image.height;
-            this.context.drawImage(image, 0, 0);
+            try {
+                if (image instanceof Uint8Array) {
+                    let png = PNG.decode(image);
+                    let imageData = this.context.createImageData(png.width, png.height);
+                    this.canvas.width = png.width;
+                    this.canvas.height = png.height;
+                    imageData.data.set(png.data);
+                    this.context.putImageData(imageData, 0, 0);
+                } else if (image instanceof ImageBitmap) {
+                    this.canvas.width = image.width;
+                    this.canvas.height = image.height;
+                    this.context.drawImage(image, 0, 0);
+                } else {
+                    console.error("Invalid file format!", image);
+                }
+            } catch (err) {
+                console.error("Error drawing image on canvas! " + err.message);
+            }
         }
 
         this.registerMethods([
