@@ -18,7 +18,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         this.elements = elementsParam ? elementsParam : new Uint8Array();
         this.registerMethods([
             this.readFile,
-            // this.writeFile,
+            this.writeFile,
             // this.appendFile,
             this.setResize,
             // this.fromHexString,
@@ -110,6 +110,26 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 const volume = interpreter.fileSystem.get(url.protocol);
                 if (volume) {
                     this.elements = volume.readFileSync(url.pathname) as Uint8Array;
+                    return BrsBoolean.True;
+                }
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    private writeFile = new Callable("writeFile", {
+        signature: {
+            args: [new StdlibArgument("path", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, filepath: BrsString) => {
+            try {
+                const url = new URL(filepath.value);
+                const volume = interpreter.fileSystem.get(url.protocol);
+                if (volume) {
+                    volume.writeFileSync(url.pathname, new Buffer(this.elements));
                     return BrsBoolean.True;
                 }
             } catch (err) {
