@@ -11,6 +11,12 @@ sub main()
     print ba.getSignedByte(1)=-1
     print ba.getSignedLong(0)=17891072
 
+    ba = CreateObject("roByteArray") 
+    ba.FromAsciiString("Hello world!")
+    n = ba.GetCrc32()
+    print n, "0x" ; StrI(n, 16)
+    print "461707669", "0x1b851995"
+
     ba=CreateObject("roByteArray")
     ba.fromHexString("0#FFD801..FF")
     print ba.toHexString() = "00FFD80100FF"

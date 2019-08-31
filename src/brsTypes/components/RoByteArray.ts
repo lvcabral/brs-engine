@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import MemoryFileSystem from "memory-fs";
+import { crc32 } from "crc";
 import * as fs from "fs";
 
 type Volume = MemoryFileSystem | typeof fs;
@@ -32,7 +33,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             this.toAsciiString,
             this.getSignedByte,
             this.getSignedLong,
-            // this.getCRC32,
+            this.getCRC32,
             this.isLittleEndianCPU,
             this.peek,
             this.pop,
@@ -240,6 +241,24 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             var dataView = new DataView(this.elements.buffer, index.getValue(), 4);
             var long = dataView.getInt32(0, true);
             return new Int32(long);
+        },
+    });
+
+    private getCRC32 = new Callable("getCRC32", {
+        signature: {
+            args: [
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter, index: Int32, length: Int32) => {
+            if (index.getValue() > 0 || length.getValue() > 0) {
+                let start = index.getValue();
+                let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                return new Int32(crc32(Buffer.from(this.elements.slice(start, end))));
+            }
+            return new Int32(crc32(Buffer.from(this.elements)));
         },
     });
 
