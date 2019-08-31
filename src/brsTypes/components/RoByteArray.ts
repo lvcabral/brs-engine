@@ -6,7 +6,6 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import MemoryFileSystem from "memory-fs";
 import * as fs from "fs";
-import * as util from "util";
 
 type Volume = MemoryFileSystem | typeof fs;
 
@@ -27,8 +26,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             this.setResize,
             this.fromHexString,
             this.toHexString,
-            // this.fromBase64String,
-            // this.toBase64String,
+            this.fromBase64String,
+            this.toBase64String,
             this.fromAsciiString,
             this.toAsciiString,
             // this.getSignedByte,
@@ -159,8 +158,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, asciiStr: BrsString) => {
-            let encoder = new util.TextEncoder();
-            this.elements = encoder.encode(asciiStr.value);
+            this.elements = new Uint8Array(Buffer.from(asciiStr.value, "utf8"));
             return BrsInvalid.Instance;
         },
     });
@@ -171,8 +169,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            let decoder = new util.TextDecoder();
-            return new BrsString(decoder.decode(this.elements));
+            return new BrsString(Buffer.from(this.elements).toString("utf8"));
         },
     });
 
@@ -199,6 +196,27 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter) => {
             const hex = Buffer.from(this.elements).toString("hex");
             return new BrsString(hex.toUpperCase());
+        },
+    });
+
+    private fromBase64String = new Callable("fromBase64String", {
+        signature: {
+            args: [new StdlibArgument("hexStr", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, hexStr: BrsString) => {
+            this.elements = new Uint8Array(Buffer.from(hexStr.value, "base64"));
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private toBase64String = new Callable("toBase64String", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(Buffer.from(this.elements).toString("base64"));
         },
     });
 
