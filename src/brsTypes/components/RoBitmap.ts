@@ -9,6 +9,7 @@ import { RoRegion } from "./RoRegion";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import URL from "url-parse";
+import { RoByteArray } from "./RoByteArray";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -70,8 +71,8 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             this.finish,
             this.getAlphaEnable,
             this.setAlphaEnable,
-            // this.getByteArray,
-            // this.getPng,
+            this.getByteArray,
+            //this.getPng,
             this.getWidth,
             this.getHeight,
         ]);
@@ -388,6 +389,47 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             return new Int32(this.canvas.height);
         },
     });
+
+    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
+    private getByteArray = new Callable("getByteArray", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            let imgData = this.context.getImageData(
+                x.getValue(),
+                y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
+            let byteArray = new Uint8Array(imgData.data.buffer);
+            return new RoByteArray(byteArray);
+        },
+    });
+
+    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
+    // private getPng = new Callable("getPng", {
+    //     signature: {
+    //         args: [
+    //             new StdlibArgument("x", ValueKind.Int32),
+    //             new StdlibArgument("y", ValueKind.Int32),
+    //             new StdlibArgument("width", ValueKind.Int32),
+    //             new StdlibArgument("height", ValueKind.Int32),
+    //         ],
+    //         returns: ValueKind.Int32,
+    //     },
+    //     impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+    //         let blob = this.canvas.convertToBlob;
+    //         let byteArray = new Uint8Array(blob);
+    //         return new RoByteArray(byteArray);
+    //     },
+    // });
 }
 
 export function rgbaIntToHex(rgba: number): string {
