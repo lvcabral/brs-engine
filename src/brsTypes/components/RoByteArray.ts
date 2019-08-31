@@ -4,11 +4,7 @@ import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import MemoryFileSystem from "memory-fs";
-import * as fs from "fs";
 import * as util from "util";
-
-type Volume = MemoryFileSystem | typeof fs;
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -16,6 +12,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private resize = true;
 
     constructor();
+    constructor(elementsParam: Uint8Array);
     constructor(elementsParam?: Uint8Array) {
         super("roByteArray");
         this.elements = elementsParam ? elementsParam : new Uint8Array();
@@ -110,20 +107,15 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, filepath: BrsString) => {
             try {
                 const url = new URL(filepath.value);
-                let volume: Volume;
-                const protocol = url.protocol;
-                if (protocol === "tmp:") {
-                    volume = interpreter.temporaryVolume;
-                } else if (protocol === "pkg:") {
-                    volume = fs;
-                } else {
-                    return BrsBoolean.False;
+                const volume = interpreter.fileSystem.get(url.protocol);
+                if (volume) {
+                    this.elements = volume.readFileSync(url.pathname) as Uint8Array;
+                    return BrsBoolean.True;
                 }
-                this.elements = volume.readFileSync(url.pathname) as Uint8Array;
             } catch (err) {
                 return BrsBoolean.False;
             }
-            return BrsBoolean.True;
+            return BrsBoolean.False;
         },
     });
 
