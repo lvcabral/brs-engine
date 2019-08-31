@@ -105,10 +105,14 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     private readFile = new Callable("readFile", {
         signature: {
-            args: [new StdlibArgument("path", ValueKind.String)],
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, filepath: BrsString) => {
+        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
                 let volume: Volume;
@@ -120,7 +124,14 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 } else {
                     return BrsBoolean.False;
                 }
-                this.elements = volume.readFileSync(url.pathname) as Uint8Array;
+                let array: Uint8Array = volume.readFileSync(url.pathname);
+                if (index.getValue() > 0 || length.getValue() > 0) {
+                    let start = index.getValue();
+                    let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                    this.elements = array.slice(start, end);
+                } else {
+                    this.elements = array;
+                }
             } catch (err) {
                 return BrsBoolean.False;
             }
@@ -130,22 +141,33 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     private writeFile = new Callable("writeFile", {
         signature: {
-            args: [new StdlibArgument("path", ValueKind.String)],
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, filepath: BrsString) => {
+        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
                 let volume: Volume;
                 const protocol = url.protocol;
                 if (protocol === "tmp:") {
                     volume = interpreter.temporaryVolume;
-                } else if (protocol === "pkg:") {
-                    volume = fs;
                 } else {
                     return BrsBoolean.False;
                 }
-                volume.writeFileSync(url.pathname, Buffer.from(this.elements));
+                if (index.getValue() > 0 || length.getValue() > 0) {
+                    let start = index.getValue();
+                    let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                    volume.writeFileSync(
+                        url.pathname,
+                        Buffer.from(this.elements.slice(start, end))
+                    );
+                } else {
+                    volume.writeFileSync(url.pathname, Buffer.from(this.elements));
+                }
             } catch (err) {
                 return BrsBoolean.False;
             }
@@ -316,8 +338,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("byte", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            // TODO: Add item to the end of byte array (check how to behave with resize=true)
+        impl: (interpreter: Interpreter, byte: Int32) => {
+            let array = new Uint8Array(this.elements.length + 1);
+            array.set(this.elements, 0);
+            array[this.elements.length] = byte.getValue();
+            this.elements = array;
             return BrsInvalid.Instance;
         },
     });
@@ -339,8 +364,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            // TODO: Add index zero item on byte array (check how to behave with resize=true)
+        impl: (interpreter: Interpreter, byte: Int32) => {
+            let array = new Uint8Array(this.elements.length + 1);
+            array[0] = byte.getValue();
+            array.set(this.elements, 1);
+            this.elements = array;
             return BrsInvalid.Instance;
         },
     });
