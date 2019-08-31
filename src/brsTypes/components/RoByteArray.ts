@@ -30,8 +30,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             this.toBase64String,
             this.fromAsciiString,
             this.toAsciiString,
-            // this.getSignedByte,
-            // this.getSignedLong,
+            this.getSignedByte,
+            this.getSignedLong,
             // this.getCRC32,
             this.isLittleEndianCPU,
             this.peek,
@@ -217,6 +217,29 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(Buffer.from(this.elements).toString("base64"));
+        },
+    });
+
+    private getSignedByte = new Callable("getSignedByte", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Int32)],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter, index: Int32) => {
+            let byte = (this.elements[index.getValue()] << 24) >> 24;
+            return new Int32(byte);
+        },
+    });
+
+    private getSignedLong = new Callable("getSignedLong", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Int32)],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter, index: Int32) => {
+            var dataView = new DataView(this.elements.buffer, index.getValue(), 4);
+            var long = dataView.getInt32(0, true);
+            return new Int32(long);
         },
     });
 

@@ -8,6 +8,9 @@ sub main()
     ba=CreateObject("roByteArray")
     ba.fromhexstring("00FF1001")
     print ba[0]=0 and ba[1]=255 and ba[2]=16 and ba[3]=1
+    print ba.getSignedByte(1)=-1
+    print ba.getSignedLong(0)=17891072
+
     ba=CreateObject("roByteArray")
     ba.fromHexString("0#FFD801..FF")
     print ba.toHexString() = "00FFD80100FF"
