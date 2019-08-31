@@ -87,9 +87,15 @@ function openChannelZip(f) {
                         if (splashMinTime && !isNaN(splashMinTime)) {
                             splashTimeout = parseInt(splashMinTime);
                         }
-                        var splashHD = manifestMap.get("splash_screen_hd");
-                        if (splashHD && splashHD.substr(0, 5) === "pkg:/") {
-                            splashFile = zip.file(splashHD.substr(5));
+                        var splash = manifestMap.get("splash_screen_hd");
+                        if (!splash) {
+                            splash = manifestMap.get("splash_screen_fhd");
+                            if (!splash) {
+                                splash = manifestMap.get("splash_screen_shd");
+                            }
+                        }
+                        if (splash && splash.substr(0, 5) === "pkg:/") {
+                            splashFile = zip.file(splash.substr(5));
                             if (splashFile) {
                                 splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(imgData => {
