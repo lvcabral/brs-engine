@@ -21,8 +21,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             this.writeFile,
             // this.appendFile,
             this.setResize,
-            // this.fromHexString,
-            // this.toHexString,
+            this.fromHexString,
+            this.toHexString,
             // this.fromBase64String,
             // this.toBase64String,
             this.fromAsciiString,
@@ -129,7 +129,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 const url = new URL(filepath.value);
                 const volume = interpreter.fileSystem.get(url.protocol);
                 if (volume) {
-                    volume.writeFileSync(url.pathname, new Buffer(this.elements));
+                    volume.writeFileSync(url.pathname, Buffer.from(this.elements));
                     return BrsBoolean.True;
                 }
             } catch (err) {
@@ -159,6 +159,32 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter) => {
             let decoder = new util.TextDecoder();
             return new BrsString(decoder.decode(this.elements));
+        },
+    });
+
+    private fromHexString = new Callable("fromHexString", {
+        signature: {
+            args: [new StdlibArgument("hexStr", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, hexStr: BrsString) => {
+            const regex = new RegExp("[^a-fA-F0-9]", "gi");
+            const value = hexStr.value.replace(regex, "0");
+            if (value.length % 2 === 0) {
+                this.elements = new Uint8Array(Buffer.from(value, "hex"));
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private toHexString = new Callable("toHexString", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            const hex = Buffer.from(this.elements).toString("hex");
+            return new BrsString(hex.toUpperCase());
         },
     });
 
