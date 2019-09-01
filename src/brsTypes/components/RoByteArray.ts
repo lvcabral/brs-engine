@@ -4,7 +4,7 @@ import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import * as util from "util";
+import { crc32 } from "crc";
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -19,17 +19,17 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         this.registerMethods([
             this.readFile,
             this.writeFile,
-            // this.appendFile,
+            this.appendFile,
             this.setResize,
             this.fromHexString,
             this.toHexString,
-            // this.fromBase64String,
-            // this.toBase64String,
+            this.fromBase64String,
+            this.toBase64String,
             this.fromAsciiString,
             this.toAsciiString,
-            // this.getSignedByte,
-            // this.getSignedLong,
-            // this.getCRC32,
+            this.getSignedByte,
+            this.getSignedLong,
+            this.getCRC32,
             this.isLittleEndianCPU,
             this.peek,
             this.pop,
@@ -101,15 +101,26 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     private readFile = new Callable("readFile", {
         signature: {
-            args: [new StdlibArgument("path", ValueKind.String)],
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, filepath: BrsString) => {
+        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
                 const volume = interpreter.fileSystem.get(url.protocol);
                 if (volume) {
-                    this.elements = volume.readFileSync(url.pathname) as Uint8Array;
+                    let array: Uint8Array = volume.readFileSync(url.pathname);
+                    if (index.getValue() > 0 || length.getValue() > 0) {
+                        let start = index.getValue();
+                        let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                        this.elements = array.slice(start, end);
+                    } else {
+                        this.elements = array;
+                    }
                     return BrsBoolean.True;
                 }
             } catch (err) {
@@ -121,16 +132,71 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     private writeFile = new Callable("writeFile", {
         signature: {
-            args: [new StdlibArgument("path", ValueKind.String)],
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, filepath: BrsString) => {
+        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
-                const volume = interpreter.fileSystem.get(url.protocol);
-                if (volume) {
-                    volume.writeFileSync(url.pathname, Buffer.from(this.elements));
-                    return BrsBoolean.True;
+                if (url.protocol === "tmp:" || url.protocol == "cachefs:") {
+                    const volume = interpreter.fileSystem.get(url.protocol);
+                    if (volume) {
+                        if (index.getValue() > 0 || length.getValue() > 0) {
+                            let start = index.getValue();
+                            let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                            volume.writeFileSync(
+                                url.pathname,
+                                Buffer.from(this.elements.slice(start, end))
+                            );
+                        } else {
+                            volume.writeFileSync(url.pathname, Buffer.from(this.elements));
+                        }
+                        return BrsBoolean.True;
+                    }
+                }
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    private appendFile = new Callable("appendFile", {
+        signature: {
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
+            try {
+                const url = new URL(filepath.value);
+                if (url.protocol === "tmp:" || url.protocol == "cachefs:") {
+                    const volume = interpreter.fileSystem.get(url.protocol);
+                    if (volume) {
+                        let file: Uint8Array = volume.readFileSync(url.pathname);
+                        let array: Uint8Array;
+                        if (index.getValue() > 0 || length.getValue() > 0) {
+                            let start = index.getValue();
+                            let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                            let elements = this.elements.slice(start, end);
+                            array = new Uint8Array(file.length + elements.length);
+                            array.set(file, 0);
+                            array.set(elements, file.length);
+                        } else {
+                            array = new Uint8Array(file.length + this.elements.length);
+                            array.set(file, 0);
+                            array.set(this.elements, file.length);
+                        }
+                        volume.writeFileSync(url.pathname, Buffer.from(array));
+                        return BrsBoolean.True;
+                    }
                 }
             } catch (err) {
                 return BrsBoolean.False;
@@ -145,8 +211,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, asciiStr: BrsString) => {
-            let encoder = new util.TextEncoder();
-            this.elements = encoder.encode(asciiStr.value);
+            this.elements = new Uint8Array(Buffer.from(asciiStr.value, "utf8"));
             return BrsInvalid.Instance;
         },
     });
@@ -157,8 +222,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            let decoder = new util.TextDecoder();
-            return new BrsString(decoder.decode(this.elements));
+            return new BrsString(Buffer.from(this.elements).toString("utf8"));
         },
     });
 
@@ -185,6 +249,68 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter) => {
             const hex = Buffer.from(this.elements).toString("hex");
             return new BrsString(hex.toUpperCase());
+        },
+    });
+
+    private fromBase64String = new Callable("fromBase64String", {
+        signature: {
+            args: [new StdlibArgument("hexStr", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, hexStr: BrsString) => {
+            this.elements = new Uint8Array(Buffer.from(hexStr.value, "base64"));
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private toBase64String = new Callable("toBase64String", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(Buffer.from(this.elements).toString("base64"));
+        },
+    });
+
+    private getSignedByte = new Callable("getSignedByte", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Int32)],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter, index: Int32) => {
+            let byte = (this.elements[index.getValue()] << 24) >> 24;
+            return new Int32(byte);
+        },
+    });
+
+    private getSignedLong = new Callable("getSignedLong", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Int32)],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter, index: Int32) => {
+            var dataView = new DataView(this.elements.buffer, index.getValue(), 4);
+            var long = dataView.getInt32(0, true);
+            return new Int32(long);
+        },
+    });
+
+    private getCRC32 = new Callable("getCRC32", {
+        signature: {
+            args: [
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter, index: Int32, length: Int32) => {
+            if (index.getValue() > 0 || length.getValue() > 0) {
+                let start = index.getValue();
+                let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                return new Int32(crc32(Buffer.from(this.elements.slice(start, end))));
+            }
+            return new Int32(crc32(Buffer.from(this.elements)));
         },
     });
 
@@ -242,8 +368,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("byte", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            // TODO: Add item to the end of byte array (check how to behave with resize=true)
+        impl: (interpreter: Interpreter, byte: Int32) => {
+            let array = new Uint8Array(this.elements.length + 1);
+            array.set(this.elements, 0);
+            array[this.elements.length] = byte.getValue();
+            this.elements = array;
             return BrsInvalid.Instance;
         },
     });
@@ -265,8 +394,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            // TODO: Add index zero item on byte array (check how to behave with resize=true)
+        impl: (interpreter: Interpreter, byte: Int32) => {
+            let array = new Uint8Array(this.elements.length + 1);
+            array[0] = byte.getValue();
+            array.set(this.elements, 1);
+            this.elements = array;
             return BrsInvalid.Instance;
         },
     });
