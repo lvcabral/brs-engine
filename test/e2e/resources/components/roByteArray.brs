@@ -1,9 +1,9 @@
 sub main()
-    ba=CreateObject("roByteArray")
-    ba.FromAsciiString("leasure.")
-    print ba.ToBase64String()="bGVhc3VyZS4="
-    ba.FromAsciiString("coração❤")
-    print ba.toAsciiString()="coração❤"
+    ba1=CreateObject("roByteArray")
+    ba1.FromAsciiString("leasure.")
+    print ba1.ToBase64String()="bGVhc3VyZS4="
+    ba1.FromAsciiString("coração❤")
+    print ba1.toAsciiString()="coração❤"
 
     ba=CreateObject("roByteArray")
     ba.fromhexstring("00FF1001")
@@ -55,6 +55,7 @@ sub main()
         end if
     end for
     print result
+    ? ba1.appendFile("tmp:/ByteArrayTestFileSmall",9,3)
     ba3=CreateObject("roByteArray")
     print ba3.readFile("tmp:/ByteArrayTestFileSmall")
     print ba3.toAsciiString()

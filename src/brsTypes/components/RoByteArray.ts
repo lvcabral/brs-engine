@@ -23,7 +23,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         this.registerMethods([
             this.readFile,
             this.writeFile,
-            // this.appendFile,
+            this.appendFile,
             this.setResize,
             this.fromHexString,
             this.toHexString,
@@ -168,6 +168,47 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 } else {
                     volume.writeFileSync(url.pathname, Buffer.from(this.elements));
                 }
+            } catch (err) {
+                return BrsBoolean.False;
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    private appendFile = new Callable("appendFile", {
+        signature: {
+            args: [
+                new StdlibArgument("path", ValueKind.String),
+                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
+            try {
+                const url = new URL(filepath.value);
+                let volume: Volume;
+                const protocol = url.protocol;
+                if (protocol === "tmp:") {
+                    volume = interpreter.temporaryVolume;
+                } else {
+                    return BrsBoolean.False;
+                }
+                let file: Uint8Array = volume.readFileSync(url.pathname);
+                let array: Uint8Array;
+                if (index.getValue() > 0 || length.getValue() > 0) {
+                    let start = index.getValue();
+                    let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                    let elements = this.elements.slice(start, end);
+                    array = new Uint8Array(file.length + elements.length);
+                    array.set(file, 0);
+                    array.set(elements, file.length);
+                } else {
+                    array = new Uint8Array(file.length + this.elements.length);
+                    array.set(file, 0);
+                    array.set(this.elements, file.length);
+                }
+                volume.writeFileSync(url.pathname, Buffer.from(array));
             } catch (err) {
                 return BrsBoolean.False;
             }
