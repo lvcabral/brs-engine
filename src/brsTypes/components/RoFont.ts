@@ -65,8 +65,16 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, text: BrsString, maxWidth: Int32) => {
-            let length = Math.min(text.value.length, maxWidth.getValue());
-            return new Int32(this.size * length); // TODO: Use https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/measureText
+            let canvas = new OffscreenCanvas(1280, 720);
+            let ctx = canvas.getContext("2d", {
+                alpha: false,
+            }) as OffscreenCanvasRenderingContext2D;
+            ctx.font = this.toFontString();
+            console.log(this.toFontString());
+            ctx.textBaseline = "top";
+            let measure = ctx.measureText(text.value);
+            let length = Math.min(measure.width, maxWidth.getValue());
+            return new Int32(Math.round(length));
         },
     });
 
