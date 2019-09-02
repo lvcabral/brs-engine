@@ -282,6 +282,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32
         ) => {
             let ctx = this.context;
+            ctx.beginPath();
             ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
             ctx.moveTo(xStart.getValue(), yStart.getValue());
             ctx.lineTo(xEnd.getValue(), yEnd.getValue());
