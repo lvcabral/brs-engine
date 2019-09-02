@@ -1,10 +1,9 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, RoScreen, RoRegion } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoRegion } from "./RoRegion";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
@@ -15,7 +14,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     readonly animations = new Array<RoSprite>();
     private canvas: OffscreenCanvas;
     private context: OffscreenCanvasRenderingContext2D;
-    private destBitmap?: RoBitmap;
+    private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
 
@@ -83,8 +82,16 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         }
     }
 
-    checkCollision(id: number, x: number, y: number, width: number, height: number): BrsType {
+    checkCollision(
+        id: number,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        multiple: boolean
+    ): BrsType {
         let collide: BrsType;
+        let array: RoSprite[] = [];
         collide = BrsInvalid.Instance;
         for (let [z, layer] of this.sprites) {
             layer.some(function(sprite, index, object) {
@@ -98,15 +105,22 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                         y < rect.y + rect.height &&
                         y + height > rect.y
                     ) {
-                        collide = sprite;
-                        return true; // break
+                        if (multiple) {
+                            array.push(sprite);
+                        } else {
+                            collide = sprite;
+                            return true; // break
+                        }
                     }
                 }
                 return false;
             });
-            if (collide) {
+            if (collide instanceof RoSprite) {
                 break;
             }
+        }
+        if (multiple && array.length > 0) {
+            return new RoArray(array);
         }
         return collide;
     }
@@ -152,7 +166,11 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, destBitmap: RoBitmap, rgbaBackground: Int32) => {
+        impl: (
+            _: Interpreter,
+            destBitmap: RoBitmap | RoScreen | RoRegion,
+            rgbaBackground: Int32
+        ) => {
             this.destBitmap = destBitmap;
             this.canvas.width = destBitmap.getCanvas().width;
             this.canvas.height = destBitmap.getCanvas().height;
