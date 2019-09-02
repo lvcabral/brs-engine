@@ -54,7 +54,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
 
         this.registerMethods([
             this.checkCollision,
-            //this.checkMultipleCollisions,
+            this.checkMultipleCollisions,
             this.getRegion,
             this.getCollidableFlags,
             this.getDrawableFlag,
@@ -141,7 +141,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    /**  */
+    /** Returns an roRegion object that specifies the region of a bitmap that is the sprite's display graphic */
     private getRegion = new Callable("getRegion", {
         signature: {
             args: [],
@@ -156,7 +156,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Returns the first roSprite that this sprite collides with. */
     private checkCollision = new Callable("checkCollision", {
         signature: {
             args: [],
@@ -164,11 +164,37 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             let rect = this.getRect();
-            return this.compositor.checkCollision(this.id, rect.x, rect.y, rect.width, rect.height);
+            return this.compositor.checkCollision(
+                this.id,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                false
+            );
         },
     });
 
-    /**  */
+    /** Returns an array of all colliding sprites. If there are no collisions return invalid. */
+    private checkMultipleCollisions = new Callable("checkMultipleCollisions", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            let rect = this.getRect();
+            return this.compositor.checkCollision(
+                this.id,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                true
+            );
+        },
+    });
+
+    /** Returns the value of collidable flags variable. */
     private getCollidableFlags = new Callable("getCollidableFlags", {
         signature: {
             args: [],
@@ -179,7 +205,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Returns the value of the Drawable Flag. */
     private getDrawableFlag = new Callable("getDrawableFlag", {
         signature: {
             args: [],
@@ -190,7 +216,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Returns the value of member flags variable. */
     private getMemberFlags = new Callable("getMemberFlags", {
         signature: {
             args: [],
@@ -201,7 +227,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Returns any user data associated with the sprite previously set via SetData(). */
     private getData = new Callable("getData", {
         signature: {
             args: [],
@@ -212,7 +238,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Returns the x coordinate of the sprite. */
     private getX = new Callable("getX", {
         signature: {
             args: [],
@@ -223,7 +249,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Returns the y coordinate of the sprite */
     private getY = new Callable("getY", {
         signature: {
             args: [],
@@ -234,7 +260,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Returns the z (layer) of the sprite */
     private getZ = new Callable("getZ", {
         signature: {
             args: [],
@@ -245,7 +271,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Move the sprite to coordinate x,y. */
     private moveTo = new Callable("moveTo", {
         signature: {
             args: [
@@ -262,7 +288,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Move the sprite to coordinate x,y. */
     private moveOffset = new Callable("moveOffset", {
         signature: {
             args: [
@@ -279,7 +305,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Adjusts the part of an roRegion's bitmap that is being displayed as the sprite. */
     private offsetRegion = new Callable("offsetRegion", {
         signature: {
             args: [
@@ -315,7 +341,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Sets bits to determine what sprites will be checked for collisions. */
     private setCollidableFlags = new Callable("setCollidableFlags", {
         signature: {
             args: [new StdlibArgument("collidableFlags", ValueKind.Int32)],
@@ -327,7 +353,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Associate user defined data with the sprite. The data can be any type including intrinsic types or objects. */
     private setData = new Callable("setData", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Object)],
@@ -339,7 +365,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Sets whether this sprite is drawable or just used for collision tests. */
     private setDrawableFlag = new Callable("setDrawableFlag", {
         signature: {
             args: [new StdlibArgument("drawable", ValueKind.Boolean)],
@@ -352,7 +378,8 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Sets flags to define the sprite membership. These flags are used with
+     * CollidableFlags to define what sprites are allowed to collide. */
     private setMemberFlags = new Callable("setMemberFlags", {
         signature: {
             args: [new StdlibArgument("memberFlags", ValueKind.Int32)],
@@ -364,7 +391,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Set the region of the sprite to the passed roRegion object. */
     private setRegion = new Callable("setRegion", {
         signature: {
             args: [new StdlibArgument("reion", ValueKind.Object)],
@@ -393,7 +420,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Sets the z value of the sprite. The z value defines the order in which sprites are drawn. */
     private remove = new Callable("remove", {
         signature: {
             args: [],

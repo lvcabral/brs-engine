@@ -70,7 +70,6 @@ export class RoFont extends BrsComponent implements BrsValue {
                 alpha: false,
             }) as OffscreenCanvasRenderingContext2D;
             ctx.font = this.toFontString();
-            console.log(this.toFontString());
             ctx.textBaseline = "top";
             let measure = ctx.measureText(text.value);
             let length = Math.min(measure.width, maxWidth.getValue());
