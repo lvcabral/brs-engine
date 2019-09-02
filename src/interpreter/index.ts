@@ -19,6 +19,7 @@ import {
     Callable,
     BrsNumber,
     Comparable,
+    Float,
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
@@ -984,9 +985,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
         this.execute(statement.counterDeclaration);
-        const finalValue = this.evaluate(statement.finalValue);
-        const increment = this.evaluate(statement.increment);
-
+        const startValue = this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
+        const finalValue = this.evaluate(statement.finalValue) as Int32 | Float;
+        const increment = this.evaluate(statement.increment) as Int32 | Float;
+        if (
+            (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
+            (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
+        ) {
+            // Shortcut, do not process anything
+            return BrsInvalid.Instance;
+        }
         const counterName = statement.counterDeclaration.name;
         const step = new Stmt.Assignment(
             { equals: statement.tokens.for },

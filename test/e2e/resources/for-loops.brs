@@ -30,3 +30,15 @@ print e
 for a = 0 to 0
     print "initial = final"
 end for
+
+'ensure do not loop if final is lower than initial and step > 0
+for a = 0 to -1
+    print "this should not be printed"
+    exit for
+next
+
+'ensure do not loop if final is higher than initial and step < 0
+for a = 1.9 to 10.2 step -1.1
+    print "this should not be printed"
+    exit for
+next
