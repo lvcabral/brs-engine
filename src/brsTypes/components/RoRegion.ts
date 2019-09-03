@@ -4,12 +4,12 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoBitmap } from "./RoBitmap";
+import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private bitmap: RoBitmap;
+    private bitmap: RoBitmap | RoScreen;
     private context: OffscreenCanvasRenderingContext2D;
     private x: number;
     private y: number;
@@ -24,7 +24,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private collisionCircle: object;
     private collisionRect: object;
 
-    constructor(bitmap: RoBitmap, x: Int32, y: Int32, width: Int32, height: Int32) {
+    constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
         this.bitmap = bitmap;
         this.context = bitmap.getContext();
@@ -66,6 +66,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.clear,
             this.setAlphaEnable,
             this.drawObject,
+            this.drawLine,
         ]);
     }
     applyOffset(x: number, y: number, width: number, height: number) {
@@ -76,6 +77,12 @@ export class RoRegion extends BrsComponent implements BrsValue {
         // TODO: Check what is the effect on collision parameters
     }
 
+    clearCanvas(rgba: number) {
+        let ctx = this.context;
+        ctx.fillStyle = rgbaIntToHex(rgba);
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+
     drawImage(image: OffscreenCanvas, x: number, y: number) {
         this.context.drawImage(
             image,
@@ -83,8 +90,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
             0,
             image.width,
             image.height,
-            x + this.translationX,
-            y + this.translationY,
+            this.x + x,
+            this.y + y,
             image.width,
             image.height
         );
@@ -429,7 +436,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, rgba: Int32) => {
-            return this.bitmap.clearCanvas(rgba.getValue());
+            this.clearCanvas(rgba.getValue());
+            return BrsInvalid.Instance;
         },
     });
 
@@ -443,15 +451,57 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent) => {
-            let ctx = this.context;
+        impl: (_: Interpreter, x: Int32, y: Int32, object: RoBitmap | RoRegion) => {
             let result = BrsBoolean.True;
-            if (object instanceof RoBitmap || object instanceof RoScreen) {
+            if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+            } else if (object instanceof RoRegion) {
+                let ctx = this.context;
+                ctx.drawImage(
+                    object.getCanvas(),
+                    object.getPosX(),
+                    object.getPosY(),
+                    object.getImageWidth(),
+                    object.getImageHeight(),
+                    this.x + x.getValue() + object.getTransX(),
+                    this.y + y.getValue() + object.getTransY(),
+                    object.getImageWidth(),
+                    object.getImageHeight()
+                );
             } else {
                 result = BrsBoolean.False;
             }
             return result;
+        },
+    });
+
+    /** Draw a line from (xStart, yStart) to (xEnd, yEnd) with RGBA color */
+    private drawLine = new Callable("drawLine", {
+        signature: {
+            args: [
+                new StdlibArgument("xStart", ValueKind.Int32),
+                new StdlibArgument("yStart", ValueKind.Int32),
+                new StdlibArgument("xEnd", ValueKind.Int32),
+                new StdlibArgument("yEnd", ValueKind.Int32),
+                new StdlibArgument("rgba", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            xStart: Int32,
+            yStart: Int32,
+            xEnd: Int32,
+            yEnd: Int32,
+            rgba: Int32
+        ) => {
+            let ctx = this.context;
+            ctx.beginPath();
+            ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
+            ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
+            ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
+            ctx.stroke();
+            return BrsBoolean.True;
         },
     });
 
