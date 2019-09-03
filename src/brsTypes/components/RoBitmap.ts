@@ -154,11 +154,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent) => {
-            let ctx = this.context;
             let result = BrsBoolean.True;
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
+                let ctx = this.context;
                 ctx.drawImage(
                     object.getCanvas(),
                     object.getPosX(),
@@ -347,7 +347,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
-            ctx.fillText(text.toString(), x.getValue(), y.getValue());
+            ctx.fillText(text.toString(), x.getValue(), y.getValue() + 3);
             return BrsBoolean.True;
         },
     });
