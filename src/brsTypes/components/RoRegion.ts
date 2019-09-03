@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, Float } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -67,6 +67,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.setAlphaEnable,
             this.drawObject,
             this.drawLine,
+            this.drawPoint,
+            this.drawRect,
         ]);
     }
     applyOffset(x: number, y: number, width: number, height: number) {
@@ -501,6 +503,55 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
             ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
             ctx.stroke();
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Draws a point at (x,y) with the given size and RGBA color */
+    private drawPoint = new Callable("drawPoint", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("size", ValueKind.Float),
+                new StdlibArgument("rgba", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
+            let ctx = this.context;
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillRect(
+                this.x + x.getValue(),
+                this.y + y.getValue(),
+                size.getValue(),
+                size.getValue()
+            );
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Fill the specified rectangle from left (x), top (y) to right (x + width), bottom (y + height) with the RGBA color */
+    private drawRect = new Callable("drawRect", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+                new StdlibArgument("rgba", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
+            let ctx = this.context;
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillRect(
+                this.x + x.getValue(),
+                this.y + y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
             return BrsBoolean.True;
         },
     });
