@@ -213,8 +213,12 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
     impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
         const volume = getVolumeByPath(interpreter, filepath.value);
         if (volume) {
-            const memfsPath = getPath(filepath.value);
-            return new BrsString(volume.readFileSync(memfsPath).toString());
+            try {
+                const memfsPath = getPath(filepath.value);
+                return new BrsString(volume.readFileSync(memfsPath).toString());
+            } catch (err) {
+                return new BrsString("");
+            }
         }
         return new BrsString("");
     },
