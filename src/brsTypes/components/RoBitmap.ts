@@ -17,6 +17,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private alphaEnable: boolean;
     private canvas: OffscreenCanvas;
     private context: OffscreenCanvasRenderingContext2D;
+    private valid: boolean;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
         super("roBitmap", ["ifDraw2D"]);
@@ -24,6 +25,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         let height = 150;
         let image;
         this.alphaEnable = false;
+        this.valid = true;
         if (param instanceof BrsString) {
             let url = new URL(param.value);
             const volume = interpreter.fileSystem.get(url.protocol);
@@ -33,6 +35,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     this.alphaEnable = true;
                 } catch (err) {
                     console.error("Error loading bitmap:" + url.pathname + " - " + err.message);
+                    this.valid = false;
                 }
             }
         } else if (param instanceof RoAssociativeArray) {
@@ -48,6 +51,8 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             if (alphaEnable instanceof BrsBoolean) {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
+        } else {
+            this.valid = false;
         }
         this.canvas = new OffscreenCanvas(width, height);
         //TODO: Review alpha enable, it should only affect bitmap as destination.
@@ -69,9 +74,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     this.context.drawImage(image, 0, 0);
                 } else {
                     console.error("Invalid file format!", image);
+                    this.valid = false;
                 }
             } catch (err) {
                 console.error("Error drawing image on canvas! " + err.message);
+                this.valid = false;
             }
         }
 
@@ -128,6 +135,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
 
     equalTo(other: BrsType) {
         return BrsBoolean.False;
+    }
+
+    isValid() {
+        return this.valid;
     }
 
     // ifDraw2D  -----------------------------------------------------------------------------------
@@ -458,6 +469,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             return new RoByteArray(PNG.encode(idata));
         },
     });
+}
+
+export function createBitmap(interpreter: Interpreter, param: BrsComponent) {
+    const bmp = new RoBitmap(interpreter, param);
+    return bmp.isValid() ? bmp : BrsInvalid.Instance;
 }
 
 export function rgbaIntToHex(rgba: number): string {
