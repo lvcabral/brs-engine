@@ -13,6 +13,7 @@ import { RoFontRegistry } from "./RoFontRegistry";
 import { RoFont } from "./RoFont";
 import { RoCompositor } from "./RoCompositor";
 import { RoString } from "./RoString";
+import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
@@ -41,6 +42,7 @@ export const BrsObjects = new Map<string, Function>([
             new RoRegex(expression, flags),
     ],
     ["rostring", (interpreter: Interpreter, literal: BrsString) => new RoString(literal)],
+    ["ropath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
     [
         "robitmap",
         (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
