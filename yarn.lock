@@ -411,6 +411,13 @@
   resolved "https://registry.yarnpkg.com/@types/pako/-/pako-1.0.1.tgz#33b237f3c9aff44d0f82fe63acffa4a365ef4a61"
   integrity sha512-GdZbRSJ3Cv5fiwT6I0SQ3ckeN2PWNqxd26W9Z2fCK1tGrrasGy4puvNFtnddqH9UJFMQYXxEuuB7B8UK+LLwSg==
 
+"@types/path-parse@^1.0.19":
+  version "1.0.19"
+  resolved "https://registry.yarnpkg.com/@types/path-parse/-/path-parse-1.0.19.tgz#8c8e4829a56c6fba498745079b7c3fc9c040647c"
+  integrity sha1-jI5IKaVsb7pJh0UHm3w/ycBAZHw=
+  dependencies:
+    "@types/node" "*"
+
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-1.0.1.tgz#0a851d3bd96498fa25c33ab7278ed3bd65f06c3e"

@@ -37,6 +37,7 @@ import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { DottedGet } from "../parser/Expression";
+import { RoPath } from "../brsTypes/components/RoPath";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -532,6 +533,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.add(right);
                 } else if (isBrsString(left) && isBrsString(right)) {
                     return left.concat(right);
+                } else if (isBrsString(left) && right instanceof RoPath) {
+                    return left.concat(new BrsString(right.toString()));
                 } else {
                     return this.addError(
                         new TypeMismatch({
