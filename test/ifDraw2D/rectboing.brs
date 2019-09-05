@@ -111,7 +111,7 @@ sub rectboing(screenFull as object, msgport as object, topx, topy, w, h, par)
                 endif
 
                 framecount = framecount + 1
-                if framecount >= 100
+                if framecount >= 30
                       deltatime = timestamp.totalmilliseconds() - start
                       print "frames per second = "; (framecount*1000)/deltatime
                       'print " average swapbuff time = "; swapbuff_time/framecount; " milliseconds"

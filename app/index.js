@@ -63,6 +63,7 @@ fileSelector.onchange = function() {
         brsWorker.terminate();
     }
     if (file.name.split(".").pop() === "zip") {
+        console.log("Loading " + file.name + "...");
         openChannelZip(file);
     } else {
         reader.readAsText(file);
@@ -70,8 +71,25 @@ fileSelector.onchange = function() {
     display.focus();
 };
 
+function loadZip(zip) {
+    display.style.opacity = 0;
+    fileSelector.value = null;
+    source = [];
+    if (brsWorker != undefined) {
+        brsWorker.terminate();
+    }
+    fetch(zip).then(function(response) {
+        if (response.status === 200 || response.status === 0) {
+            console.log("Loading " + zip + "...");
+            openChannelZip(response.blob());
+            display.focus();
+        } else {
+            return Promise.reject(new Error(response.statusText));
+        }
+    });
+}
+
 function openChannelZip(f) {
-    console.log("Loading " + f.name + "...");
     JSZip.loadAsync(f).then(
         function(zip) {
             var manifest = zip.file("manifest");
@@ -99,7 +117,7 @@ function openChannelZip(f) {
                             if (splashFile) {
                                 splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(imgData => {
-                                        display.style.display = "initial";
+                                        display.style.opacity = 1;
                                         ctx.drawImage(
                                             imgData,
                                             0,
@@ -229,7 +247,7 @@ function loadAssets(fileName) {
 function runChannel() {
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, display.width, display.height);
-    display.style.display = "initial";
+    display.style.opacity = 1;
     display.focus();
     brsWorker = new Worker("./lib/brsLib.js");
     brsWorker.addEventListener("message", saveBuffer);
@@ -294,7 +312,7 @@ function keyDownHandler(event) {
     } else if (event.keyCode == 27) {
         if (brsWorker != undefined) {
             // HOME BUTTON (ESC)
-            display.style.display = "none";
+            display.style.opacity = 0;
             fileSelector.value = null;
             brsWorker.terminate();
             sharedArray[0] = 0;

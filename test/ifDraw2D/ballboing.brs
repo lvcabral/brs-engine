@@ -48,7 +48,7 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
         ballregion.setscalemode(0)
         
         ' construct ball shadow
-        tmpballbitmap = createobject("robitmap","pkg:/img/BallShadow.png")
+        tmpballbitmap = createobject("robitmap","pkg:/images/BallShadow.png")
         ballshadow = createobject("robitmap",{width:ballsizex,height:ballsizey,alphaenable:true})
         ballshadow.drawscaledobject(0,0,ballsizex/tmpballbitmap.getwidth(),ballsizey/tmpballbitmap.getheight(),tmpballbitmap)
         
