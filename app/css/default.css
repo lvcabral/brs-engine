@@ -5,7 +5,9 @@ body {
 	color: #000000;
 }
 .img{position:absolute;z-index:1;}
-
+/* * {
+	border: 1px solid #f00 !important;
+  } */
 #container {
 	margin: 0 auto;
 	background: whiteSmoke;
@@ -25,6 +27,27 @@ body {
 	background-color: black;
 	opacity: 0;
     z-index:20;
+}
+
+#channel1{
+    position: absolute;
+    left: 398px; 
+    top: 135px;
+    z-index:30;
+}
+
+#channel2{
+    position: absolute;
+    left: 541px; 
+    top: 135px;
+    z-index:30;
+}
+
+#channel3{
+    position: absolute;
+    left: 683px; 
+    top: 135px;
+    z-index:30;
 }
 
 h1 {
@@ -85,7 +108,7 @@ hr {
 .footer {
 	text-align: center;
 	padding-top: 30px;
-	font-style: italic;
+	font-style: normal;
 }
 
 li {
@@ -114,4 +137,31 @@ code.prettyprint {
 
 p {
 	text-align: justify;
+}
+
+.fileButton {
+	-moz-box-shadow:inset 0px 1px 0px 0px #c123de;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #c123de;
+	box-shadow:inset 0px 1px 0px 0px #c123de;
+	background-color:#6C3B97;
+	-moz-border-radius:6px;
+	-webkit-border-radius:6px;
+	border-radius:6px;
+	border:1px solid #a511c0;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	padding:10px 24px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #9b14b3;
+}
+.fileButton:hover {
+	background-color:#a20dbd;
+}
+.fileButton:active {
+	position:relative;
+	top:1px;
 }
