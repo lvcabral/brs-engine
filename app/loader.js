@@ -20,7 +20,7 @@ onmessage = function(e) {
                 files.push({ path: asset.path, text: xml });
             }
         });
-        packImages(files).then(function() {
+        packAssets(files).then(function() {
             postMessage(message);
         });
     } catch (e) {
@@ -32,7 +32,7 @@ function onError(e) {
     throw e;
 }
 
-async function packImages(files) {
+async function packAssets(files) {
     events = [];
     paths = [];
     bmps = 0;
