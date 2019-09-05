@@ -21,26 +21,24 @@
         <div style="position: relative; left: 0px; top: 0px">
             <img class="img" src="app/images/roku-tv.png" width="1252" height="600"/>
             <canvas id="display" width="854px" height="480px"></canvas>
+            <a href="#" onclick="loadZip('channels/prince-of-persia.zip')">
+                <img id="channel1" src="channels/prince-of-persia-icon.png" title="Open Prince of Persia game channel"/>
+            </a>
+            <a href="#" onclick="loadZip('channels/Lode-Runner-Roku-017.zip')">
+                <img id="channel2" src="channels/lode-runner-icon.png" title="Open Lode Runner game channel"/>
+            </a>
+            <a href="#" onclick="loadZip('channels/Collisions.zip')">
+                <img id="channel3" src="channels/collisions-icon.png" title="Open Sprite Collisions demo channel" />
+            </a>
         </div>
-        <div style="position: relative; left: 400px; top: 50px;">
-            <input type="file" id="file" accept=".brs,.zip">
-        </div>
-        <div style="display: block; position: relative; left: 110px; top: 100px;">
-            <div style="display:inline-block;position: relative; left: 10px; top: 10px;">
-                <a href="#" onclick="loadZip('channels/Lode-Runner-Roku-017.zip')">
-                    <img src="http://lvcabral.com/wp-content/uploads/2016/09/splash_sd-332x205.jpg"/>
-                </a>
-            </div>
-            <div style="display:inline-block;position: relative; left: 20px; top: 10px;">
-                <a href="#" onclick="loadZip('channels/Collisions.zip')">
-                    <img src="https://image.roku.com/blog/developer/files/2012/09/collisionScreenShot-1024x576.png" height="205"/>
-                </a>
-            </div>
-        </div>
+        <input type="file" id="file" accept=".brs,.zip" style="display: none;" />
+        <input type="button" class="fileButton" value="Open Channel ZIP or BRS file..." onclick="document.getElementById('file').click();"
+                style="position: relative; left: 340px; top: 70px; z-index: 30;" />
         <br/><br/><br/><br/><br/>
 		<div class="footer">
-                <hr>Get the source code on GitHub : <a href="https://github.com/lvcabral/brs/tree/brsLib">lvcabral/brs</a>
-                - contact: <a href="https://twitter.com/lvcabral">@lvcabral</a>
+            <hr>Copyright © 2019 by <a href="https://lvcabral.com">Marcelo Lv Cabral</a>
+             - GitHub Repository: <a href="https://github.com/lvcabral/brs/tree/brsLib">https://github.com/lvcabral/brs/</a>
+             - Contact: <a href="https://twitter.com/lvcabral">@lvcabral</a>
         </div>
     </div>
     <script type="text/javascript" src="app/jszip.js"></script>

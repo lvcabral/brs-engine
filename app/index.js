@@ -1,6 +1,9 @@
 var display = document.getElementById("display");
 var screenSize = { width: 854, height: 480 };
 var ctx = display.getContext("2d", { alpha: false });
+var channel1 = document.getElementById("channel1");
+var channel2 = document.getElementById("channel2");
+var channel3 = document.getElementById("channel3");
 var bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
 var bufferCtx = bufferCanvas.getContext("2d");
 var buffer = new ImageData(screenSize.width, screenSize.height);
@@ -73,6 +76,9 @@ fileSelector.onchange = function() {
 
 function loadZip(zip) {
     display.style.opacity = 0;
+    channel1.style.visibility = "visible";
+    channel2.style.visibility = "visible";
+    channel3.style.visibility = "visible";
     fileSelector.value = null;
     source = [];
     if (brsWorker != undefined) {
@@ -117,6 +123,9 @@ function openChannelZip(f) {
                             if (splashFile) {
                                 splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(imgData => {
+                                        channel1.style.visibility = "hidden";
+                                        channel2.style.visibility = "hidden";
+                                        channel3.style.visibility = "hidden";
                                         display.style.opacity = 1;
                                         ctx.drawImage(
                                             imgData,
@@ -247,6 +256,9 @@ function loadAssets(fileName) {
 function runChannel() {
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, display.width, display.height);
+    channel1.style.visibility = "hidden";
+    channel2.style.visibility = "hidden";
+    channel3.style.visibility = "hidden";
     display.style.opacity = 1;
     display.focus();
     brsWorker = new Worker("./lib/brsLib.js");
@@ -292,8 +304,10 @@ function keyDownHandler(event) {
         sharedArray[0] = 5; // BUTTON_RIGHT_PRESSED
     } else if (event.keyCode == 38) {
         sharedArray[0] = 2; // BUTTON_UP_PRESSED
+        event.preventDefault();
     } else if (event.keyCode == 40) {
         sharedArray[0] = 3; // BUTTON_DOWN_PRESSED
+        event.preventDefault();
     } else if (event.keyCode == 111) {
         sharedArray[0] = 7; // BUTTON_INSTANT_REPLAY_PRESSED
     } else if (event.keyCode == 106) {
@@ -313,6 +327,9 @@ function keyDownHandler(event) {
         if (brsWorker != undefined) {
             // HOME BUTTON (ESC)
             display.style.opacity = 0;
+            channel1.style.visibility = "visible";
+            channel2.style.visibility = "visible";
+            channel3.style.visibility = "visible";
             fileSelector.value = null;
             brsWorker.terminate();
             sharedArray[0] = 0;
