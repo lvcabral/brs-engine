@@ -5,27 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>BrightScript Draw 2D Emulator</title>
+    <link href="app/css/default.css" rel="stylesheet" type="text/css"/>
+    <link href="app/css/prettify.css" rel="stylesheet" type="text/css"/>
+    <link href='https://fonts.googleapis.com/css?family=Maven+Pro|Muli|Istok+Web' rel='stylesheet' type='text/css'/>
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
 </head>
 <body>
-    <div style="padding-left: 37px; padding-top: 22px;">
-        <canvas id="display" width="854px" height="480px" style="background-color: black; display: none"></canvas>
+    <a href="https://github.com/lvcabral/brs/tree/brsLib"><img style="position: absolute; top: 0; right: 0; border: 0;"
+        src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+    <div id="container">
+        <h2
+            >BrightScript Draw 2D Emulator
+            <hr>
+        </h2>
+        <div style="position: relative; left: 0px; top: 0px">
+            <img class="img" src="app/images/roku-tv.png" width="1252" height="600"/>
+            <canvas id="display" width="854px" height="480px"></canvas>
+        </div>
+        <div style="position: relative; left: 400px; top: 50px;">
+            <input type="file" id="file" accept=".brs,.zip">
+        </div>
+        <div style="display: block; position: relative; left: 110px; top: 100px;">
+            <div style="display:inline-block;position: relative; left: 10px; top: 10px;">
+                <a href="#" onclick="loadZip('channels/Lode-Runner-Roku-017.zip')">
+                    <img src="http://lvcabral.com/wp-content/uploads/2016/09/splash_sd-332x205.jpg"/>
+                </a>
+            </div>
+            <div style="display:inline-block;position: relative; left: 20px; top: 10px;">
+                <a href="#" onclick="loadZip('channels/Collisions.zip')">
+                    <img src="https://image.roku.com/blog/developer/files/2012/09/collisionScreenShot-1024x576.png" height="205"/>
+                </a>
+            </div>
+        </div>
+        <br/><br/><br/><br/><br/>
+		<div class="footer">
+                <hr>Get the source code on GitHub : <a href="https://github.com/lvcabral/brs/tree/brsLib">lvcabral/brs</a>
+                - contact: <a href="https://twitter.com/lvcabral">@lvcabral</a>
+        </div>
     </div>
-    <div style="position: absolute; left: 400px; top: 546px;">
-        <input type="file" id="file" accept=".brs,.zip">
-    </div>    
-    <style>
-        body {
-            background-image: url(app/images/roku-tv.png);
-            background-repeat: no-repeat;
-        }
-        @media screen and (min-width: 1000px) {
-            body {
-                background-image: url(app/images/roku-tv.png);
-            }
-        }
-    </style>    
     <script type="text/javascript" src="app/jszip.js"></script>
     <script type="text/javascript" src="app/index.js"></script>
+	<script type="text/javascript" src="app/prettify.js"></script>
+	<script type="text/javascript">
+		prettyPrint();
+	</script>
 </body>
 </html>
