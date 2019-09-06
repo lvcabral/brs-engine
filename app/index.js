@@ -300,8 +300,10 @@ function keyDownHandler(event) {
         event.preventDefault();
     } else if (event.keyCode == 37) {
         sharedArray[0] = 4; // BUTTON_LEFT_PRESSED
+        event.preventDefault();
     } else if (event.keyCode == 39) {
         sharedArray[0] = 5; // BUTTON_RIGHT_PRESSED
+        event.preventDefault();
     } else if (event.keyCode == 38) {
         sharedArray[0] = 2; // BUTTON_UP_PRESSED
         event.preventDefault();
