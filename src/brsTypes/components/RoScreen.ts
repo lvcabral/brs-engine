@@ -243,8 +243,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     object.getImageHeight(),
                     x.getValue() + tx,
                     y.getValue() + ty,
-                    cvs.width * scaleX.getValue(),
-                    cvs.height * scaleY.getValue()
+                    object.getImageWidth() * scaleX.getValue(),
+                    object.getImageHeight() * scaleY.getValue()
                 );
             } else {
                 result = BrsBoolean.False;

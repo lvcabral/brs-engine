@@ -37,6 +37,9 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     console.error("Error loading bitmap:" + url.pathname + " - " + err.message);
                     this.valid = false;
                 }
+            } else {
+                console.error("Invalid volume:" + url.pathname);
+                this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
             let paramWidth = param.get(new BrsString("width"));
@@ -52,6 +55,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
         } else {
+            console.error("Invalid roBitmap param:", param);
             this.valid = false;
         }
         this.canvas = new OffscreenCanvas(width, height);
@@ -262,8 +266,8 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     object.getImageHeight(),
                     x.getValue() + tx,
                     y.getValue() + ty,
-                    cvs.width * scaleX.getValue(),
-                    cvs.height * scaleY.getValue()
+                    object.getImageWidth() * scaleX.getValue(),
+                    object.getImageHeight() * scaleY.getValue()
                 );
             } else {
                 result = BrsBoolean.False;
