@@ -47,9 +47,9 @@
             <em>Brain Dump Trello board</em>, until recently, when I learned about the <a href="https://github.com/sjbarag/brs"><strong>brs</strong></a> open source project,
             created by <a href="https://github.com/sjbarag/">Sean Barag</a>, that consists of a <em>command line interpreter</em> for <strong>BrightScript</strong>.<p/>
         <p>I could immediatly see, that this project would be the piece that was missing to turn my emulator project a reality! 
-            I forked <code>brs</code> and started sending <em>pull requests</em> to the project, so the interpreter could have the minimum set of components that would make 
-            possible for me to create a quick POC. After a month of nights and weekends studying TypeScript/Javascript, and exploring all sort of options to overcome different challenges, 
-            I finally came up with this prototype that is available here. </p>
+            I forked <strong>brs</strong> and started sending <em>pull requests</em> to the project, so the interpreter could have the minimum set of components that would make 
+            possible for me to work upon it. In the same weekend I could develop a working proof-of-concept using HTML5 <code>Canvas</code> and after a month of nights and weekends 
+            studying TypeScript/Javascript, and exploring all sort of options to overcome different challenges, I finally came up with this prototype that is available here. </p>
 
         <h2>Games and Demos</h2>
         You can try the emulator by loading one of the games or demonstration channels, using the <em>clickable icons</em> above or loading your own code, either as a single <strong>.brs</strong>
@@ -95,6 +95,7 @@
             <li>The <code>ToStr()</code> method is not supported.</li>
             <li>Return <code>Invalid</code> from a function explicitly declared as <code>Object</code> doesn't work, use <code>Dynamic</code> or remove type declaration.</li>
             <li>Send <code>Invalid</code> on a function parameter when it explicitly defines the type, generates an error. If <code>Invalid</code> is possible remove type declaration.</li>
+            <li>Custom .ttf fonts are only displayed correctly if installed on the client operational system.</li>
             <li>Audio playback is not supported yet, for now <code>roAudioPlayer</code> and <code>roAudioResource</code> are mocked.</li>
         </ul>
         <h3>In Scope (to be mocked)</h3>
@@ -103,10 +104,14 @@
         </ul>
         <h3>Out of Scope</h3>
         <ul>
-            <li>RSG (Roku Scene Graph) SDK support.</li>
+            <li>RSG (Roku SceneGraph) SDK support.</li>
             <li>Video playback or streaming.</li>
             <li>SDK 1.0 deprecated components.</li>
         </ul>
+        <h3>Note for Developers</h3>
+        You can see the debug messages from <code>print</code> statements in your code using the <em>browser console</em>, just right click anywhere in the page and select 
+        <em>Inspect (Ctrl+Shift+i)</em>. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the limitations
+        above, feel free to <a href="https://github.com/lvcabral/brs/issues">open an issue</a> at the project's GitHub repository.
 		<h2>Download</h2>
 		<p>You can download this project in either <a href="https://github.com/lvcabral/brs/zipball/brsLib">zip</a> or <a
 			href="https://github.com/lvcabral/brs/tarball/brsLib">tar</a> formats.
