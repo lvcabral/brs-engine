@@ -50,13 +50,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 return false;
             });
             if (sprite) {
-                if (this.sprites.has(newZ)) {
-                    let newLayer = this.sprites.get(newZ);
-                    newLayer ? newLayer.push(sprite) : (newLayer = [sprite]);
-                    this.sprites.set(newZ, layer);
-                } else {
-                    this.sprites.set(newZ, [sprite]);
-                }
+                let newLayer = this.sprites.get(newZ);
+                newLayer ? newLayer.push(sprite) : (newLayer = [sprite]);
+                this.sprites.set(newZ, newLayer);
             }
         }
     }
@@ -192,13 +188,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
             let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
-            if (this.sprites.has(z.getValue())) {
-                let layer = this.sprites.get(z.getValue());
-                layer ? layer.push(sprite) : (layer = []);
-                this.sprites.set(z.getValue(), layer);
-            } else {
-                this.sprites.set(z.getValue(), [sprite]);
-            }
+            let layer = this.sprites.get(z.getValue());
+            layer ? layer.push(sprite) : (layer = [sprite]);
+            this.sprites.set(z.getValue(), layer);
             return sprite;
         },
     });
@@ -218,13 +210,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, x: Int32, y: Int32, regions: RoArray, z: Int32) => {
             // TODO: Verify if there is at least one RoRegion in the regions array
             let sprite = new RoSprite(x, y, regions, z, this.spriteId++, this);
-            if (this.sprites.has(z.getValue())) {
-                let layer = this.sprites.get(z.getValue());
-                layer ? layer.push(sprite) : (layer = []);
-                this.sprites.set(z.getValue(), layer);
-            } else {
-                this.sprites.set(z.getValue(), [sprite]);
-            }
+            let layer = this.sprites.get(z.getValue());
+            layer ? layer.push(sprite) : (layer = [sprite]);
+            this.sprites.set(z.getValue(), layer);
             this.animations.push(sprite);
             return sprite;
         },

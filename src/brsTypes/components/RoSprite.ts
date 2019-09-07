@@ -404,7 +404,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /**  */
+    /** Sets the z value of the sprite. The z value defines the order in which sprites are drawn. */
     private setZ = new Callable("setZ", {
         signature: {
             args: [new StdlibArgument("z", ValueKind.Int32)],
@@ -420,7 +420,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Sets the z value of the sprite. The z value defines the order in which sprites are drawn. */
+    /** Removes the sprite from the managing roComposite object and deletes the sprite. */
     private remove = new Callable("remove", {
         signature: {
             args: [],
