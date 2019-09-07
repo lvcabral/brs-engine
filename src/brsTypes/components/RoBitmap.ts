@@ -481,7 +481,7 @@ export function createBitmap(interpreter: Interpreter, param: BrsComponent) {
 }
 
 export function rgbaIntToHex(rgba: number): string {
-    var hex = rgba.toString(16);
+    var hex = (rgba >>> 0).toString(16);
     while (hex.length < 8) {
         hex = "0" + hex;
     }
