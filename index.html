@@ -11,7 +11,7 @@
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
 </head>
 <body>
-    <a href="https://github.com/lvcabral/brs/tree/brsLib"><img style="position: absolute; top: 0; right: 0; border: 0;"
+    <a href="https://github.com/lvcabral/brs-emu/"><img style="position: absolute; top: 0; right: 0; border: 0;"
         src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
     <div id="container">
         <h2
@@ -19,9 +19,9 @@
             <hr>
         </h2>
         <div style="position: relative; left: 0px; top: 0px">
-            <img class="img" src="app/images/roku-tv.png" width="1252" height="600"/>
+            <img class="img" src="app/images/roku-tv.png" width="1252" height="650"/>
             <canvas id="display" width="854px" height="480px"></canvas>
-            <a href="#" onclick="loadZip('channels/prince-of-persia.zip')">
+            <a href="#" onclick="loadZip('channels/Prince-of-Persia-Roku-015.zip')">
                 <img id="channel1" src="app/images/prince-of-persia-icon.png" title="Open Prince of Persia game channel"/>
             </a>
             <a href="#" onclick="loadZip('channels/Lode-Runner-Roku-017.zip')">
@@ -30,11 +30,11 @@
             <a href="#" onclick="loadZip('channels/Collisions.zip')">
                 <img id="channel3" src="app/images/collisions-icon.png" title="Open Sprite Collisions demo channel" />
             </a>
+            <span id="channelInfo"></span>
+            <input type="file" id="file" accept=".brs,.zip" style="display: none;" />
+            <input type="button" id="fileButton" class="fileButton" value="Open Channel ZIP or BRS file..." onclick="document.getElementById('file').click();" />
         </div>
-        <input type="file" id="file" accept=".brs,.zip" style="display: none;" />
-        <input type="button" class="fileButton" value="Open Channel ZIP or BRS file..." onclick="document.getElementById('file').click();"
-                style="position: relative; left: 340px; top: 70px; z-index: 30;" />
-        <br/><br/><br/><br/>
+        <br/><br/><br/><br/><br/><br/>
         <h2>About the Project</h2>
         <p>As a <strong>BrightScript</strong> developer since 2012, I always wanted a way to test my code without the need of a Roku device, in situations like 
         a long flight or a place without any wireless network available. Then in 2016 I decided to learn about the 
@@ -113,11 +113,11 @@
         <em>Inspect (Ctrl+Shift+i)</em>. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the limitations
         above, feel free to <a href="https://github.com/lvcabral/brs/issues">open an issue</a> at the project's GitHub repository.
 		<h2>Download</h2>
-		<p>You can download this project in either <a href="https://github.com/lvcabral/brs/zipball/brsLib">zip</a> or <a
-			href="https://github.com/lvcabral/brs/tarball/brsLib">tar</a> formats.
+		<p>You can download this project in either <a href="https://github.com/lvcabral/brs-emu/zipball/master">zip</a> or <a
+			href="https://github.com/lvcabral/brs-emu/tarball/master">tar</a> formats.
 		</p>
 		<p>You can also clone the project with <a href="http://git-scm.com">Git</a> by running:
-            <pre>$ git clone -b brsLib --single-branch git://github.com/lvcabral/brs.git</pre>
+            <pre>$ git clone git://github.com/lvcabral/brs-emu.git</pre>
         </p>
         <div class="footer">
             <hr>Copyright © 2019 by <a href="https://lvcabral.com">Marcelo Lv Cabral</a>
