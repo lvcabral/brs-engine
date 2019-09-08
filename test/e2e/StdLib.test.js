@@ -54,6 +54,8 @@ describe("end to end standard libary", () => {
             "12.34",
             "Mary and Bob",
             "252",
+            "abababab",
+            "!!!!!!!!",
         ]);
     });
 

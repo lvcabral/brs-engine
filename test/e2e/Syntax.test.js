@@ -62,6 +62,12 @@ describe("end to end syntax", () => {
             "8",
             "8",
             "8", // exponentiation
+            "64",
+            "128",
+            "256",
+            "16",
+            "8",
+            "4",
         ]);
     });
 

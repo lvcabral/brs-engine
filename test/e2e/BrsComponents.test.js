@@ -64,6 +64,41 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
+    test("components/roDateTime.brs", async () => {
+        await execute([resourceFile("components", "roDateTime.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "Full Date: ",
+            "Friday November 12, 2010",
+            "No Week Day: ",
+            "November 12, 2010",
+            "Short Date: ",
+            "11/12/10",
+            "Weekday: ",
+            "Friday",
+            "Day of Week: ",
+            "5",
+            "Day of Month: ",
+            "12",
+            "Month: ",
+            "11",
+            "Year: ",
+            "2010",
+            "Hours: ",
+            "13",
+            "Minutes: ",
+            "14",
+            "Seconds: ",
+            "15",
+            "Last Day of Month: ",
+            "30",
+            "Milliseconds: ",
+            "160",
+            "ISO String UTC: ",
+            "2010-11-12T13:14:15Z",
+        ]);
+    });
+
     test("components/roTimespan.brs", async () => {
         await execute([resourceFile("components", "roTimespan.brs")], outputStreams);
 

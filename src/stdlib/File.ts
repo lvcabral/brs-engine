@@ -1,13 +1,10 @@
-import { Callable, ValueKind, BrsString, BrsBoolean, RoArray, StdlibArgument } from "../brsTypes";
+import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { URL } from "url";
 import MemoryFileSystem from "memory-fs";
+import URL from "url-parse";
 import * as nanomatch from "nanomatch";
 
-import * as fs from "fs";
-import * as path from "path";
-
-type Volume = MemoryFileSystem | typeof fs;
+type Volume = MemoryFileSystem;
 
 /*
  * Returns a memfs volume based on the brs path uri.  For example, passing in
@@ -18,11 +15,9 @@ type Volume = MemoryFileSystem | typeof fs;
 export function getVolumeByPath(interpreter: Interpreter, path: string): Volume | null {
     try {
         const protocol = new URL(path).protocol;
-        if (protocol === "tmp:") {
-            return interpreter.temporaryVolume;
-        }
-        if (protocol === "pkg:") {
-            return fs;
+        const volume = interpreter.fileSystem.get(protocol);
+        if (volume) {
+            return volume;
         }
     } catch (err) {
         return null;
@@ -36,6 +31,20 @@ export function getVolumeByPath(interpreter: Interpreter, path: string): Volume 
  */
 export function getPath(fileUri: string) {
     return new URL(fileUri).pathname;
+}
+
+export function createDir(interpreter: Interpreter, dir: string) {
+    const volume = getVolumeByPath(interpreter, dir);
+    if (volume === null) {
+        return BrsBoolean.False;
+    }
+    const memfsPath = getPath(dir);
+    try {
+        volume.mkdirSync(memfsPath);
+        return BrsBoolean.True;
+    } catch (err) {
+        return BrsBoolean.False;
+    }
 }
 
 /** Copies a file from src to dst, return true if successful */
@@ -152,18 +161,7 @@ export const CreateDirectory = new Callable("CreateDirectory", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
-        const volume = getVolumeByPath(interpreter, dir.value);
-        if (volume === null) {
-            return BrsBoolean.False;
-        }
-
-        const memfsPath = getPath(dir.value);
-        try {
-            volume.mkdirSync(memfsPath);
-            return BrsBoolean.True;
-        } catch (err) {
-            return BrsBoolean.False;
-        }
+        return createDir(interpreter, dir.value);
     },
 });
 
@@ -193,15 +191,15 @@ export const ListDir = new Callable("ListDir", {
     impl: (interpreter: Interpreter, path: BrsString) => {
         const volume = getVolumeByPath(interpreter, path.value);
         if (volume === null) {
-            return new RoArray([]);
+            return new RoList([]);
         }
 
         const memfsPath = getPath(path.value);
         try {
             let subPaths = volume.readdirSync(memfsPath).map(s => new BrsString(s));
-            return new RoArray(subPaths);
+            return new RoList(subPaths);
         } catch (err) {
-            return new RoArray([]);
+            return new RoList([]);
         }
     },
 });
@@ -214,12 +212,15 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
     },
     impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
         const volume = getVolumeByPath(interpreter, filepath.value);
-        if (volume === null) {
-            return new BrsString("");
+        if (volume) {
+            try {
+                const memfsPath = getPath(filepath.value);
+                return new BrsString(volume.readFileSync(memfsPath).toString());
+            } catch (err) {
+                return new BrsString("");
+            }
         }
-
-        const memfsPath = getPath(filepath.value);
-        return new BrsString(volume.readFileSync(memfsPath).toString());
+        return new BrsString("");
     },
 });
 
@@ -232,15 +233,18 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         ],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
-        const volume = getVolumeByPath(interpreter, filepath.value);
+    impl: (interpreter: Interpreter, filePath: BrsString, text: BrsString) => {
+        const volume = getVolumeByPath(interpreter, filePath.value);
         if (volume === null) {
             return BrsBoolean.False;
         }
-
-        const memfsPath = getPath(filepath.value);
-        volume.writeFileSync(memfsPath, text.value);
-        return BrsBoolean.True;
+        const memfsPath = getPath(filePath.value);
+        try {
+            volume.writeFileSync(memfsPath, text.value, "utf-8");
+            return BrsBoolean.True;
+        } catch (err) {
+            return BrsBoolean.False;
+        }
     },
 });
 
@@ -256,13 +260,11 @@ export const MatchFiles = new Callable("MatchFiles", {
     impl: (interpreter: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
         let volume = getVolumeByPath(interpreter, pathArg.value);
         if (volume == null) {
-            // TODO: replace with RoList when that's implemented
-            return new RoArray([]);
+            return new RoList([]);
         }
-
-        let localPath = path.join(interpreter.options.root, getPath(pathArg.value));
+        let localPath = getPath(pathArg.value);
         try {
-            let knownFiles = fs.readdirSync(localPath, "utf8");
+            let knownFiles = volume.readdirSync(localPath);
             let matchedFiles = nanomatch.match(knownFiles, patternIn.value, {
                 nocase: true,
                 nodupes: true,
@@ -272,11 +274,9 @@ export const MatchFiles = new Callable("MatchFiles", {
 
             matchedFiles = (matchedFiles || []).map((match: string) => new BrsString(match));
 
-            // TODO: replace with RoList when that's implemented
-            return new RoArray(matchedFiles);
+            return new RoList(matchedFiles);
         } catch (err) {
-            // TODO: replace with RoList when that's implemented
-            return new RoArray([]);
+            return new RoList([]);
         }
     },
 });

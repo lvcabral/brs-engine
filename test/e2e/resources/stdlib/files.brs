@@ -8,6 +8,6 @@ print DeleteDirectory("tmp:///test_dir/some_no_exist_sub") ' bad delete
 print DeleteDirectory("tmp:///test_dir") ' good delete
 print FormatDrive("does not matter", "will always fail") ' always fail
 print ListDir("tmp:///") 'what's left?
-
-stdlibTestFiles = MatchFiles("pkg:/test/e2e/resources/stdlib/", "*.brs")
+print ReadAsciiFile("tmp:///test_backup.txt")
+stdlibTestFiles = MatchFiles("pkg:/source/", "*.brs")
 print stdlibTestFiles.count() > 0

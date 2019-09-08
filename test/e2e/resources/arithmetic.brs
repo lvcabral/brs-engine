@@ -27,3 +27,16 @@ print 2 ^ 3
 print 2& ^ 3&
 print 2! ^ 3!
 print 2d0 ^ 3d0
+
+' bitshift operations
+print 32 << 1
+print 32 << 2
+print 32 << 3
+print 32 >> 1
+print 32 >> 2
+print 32 >> 3
+
+' 32 bit overflow
+print 2147483647 + 1
+print -2147483648 - 1
+print 214748364 * 20
