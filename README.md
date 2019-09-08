@@ -1,5 +1,5 @@
-# BRS-Emulator: BrightScript Draw 2D API Emulator
-An emulator for the BrightScript Draw 2D API that runs on Chromium based browsers.
+# BRS-Emulator: BrightScript 2D API Emulator
+An emulator for the BrightScript 2D API that runs on Chromium based browsers.
 
 ## About the Project
 
@@ -11,7 +11,7 @@ This repository is a fork from **BRS** and I keep sending _pull requests_ to the
 
 ### So can I use this to watch TV without a Roku?
 
-Nope! Both projects, BRS and BRS-EMU, currently has no intention of emulating the Roku OS user interface, integrating with the Roku store, or emulating media content playback.  Although the BRS-EMU project runs channels with user interface, but it will only support Draw 2D API components, see limitations section below for full details on what is out of scope.
+Nope! Both projects, BRS and BRS-EMU, currently has no intention of emulating the Roku OS user interface, integrating with the Roku store, or emulating media content playback.  Although the BRS-EMU project runs channels with user interface, but it will only support 2D API components, see limitations section below for full details on what is out of scope.
 
 ## Technology and Compatibility
 
@@ -66,9 +66,17 @@ available on the root of the application folder.
 
 Then you can now open your browser at the page `http://localhost:8888/index.html`
 
+### Games and Demos
+
+You can try the emulator by running one of the games or demonstration channels listed below, these are pre-configured as _clickable icons_ on `index.html`, all these channels are tested on the emulator and are publicly available with source code, download the `.zip` release files (links below) and copy to the `channels` folder under the application root. You can also run your own code, either as a single **.brs** file or a channel **.zip package**.
+
+*   [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.15.3700/Prince-of-Persia-Roku-015.zip)
+*   [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.17.700/Lode-Runner-Roku-017.zip)
+*   [Colliding Sprites](https://blog.roku.com/developer/2012/09/15/colliding-sprites) demonstration by Robert Burdick - Download [zip file](https://github.com/rokudev/samples/blob/master/ux%20components/control/Collisions.zip)
+
 ### Note for BrightScript Developers
 
-You can see the debug messages from `print` statements in your code using the _browser console_, just right click anywhere in the page and select _Inspect (Ctrl+Shift+i)_. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the limitations above, feel free to [open an issue](https://github.com/lvcabral/brs/issues) at the project's GitHub repository.
+You can see the debug messages from `print` statements in your code using the _browser console_, just right click anywhere in the page and select _Inspect (Ctrl+Shift+i)_. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the limitations above, feel free to [open an issue](https://github.com/lvcabral/brs-emu/issues) at the project's GitHub repository.
 
 ## Building from source
 The BRS project follows pretty standard `node` development patterns, with the caveat that it uses `yarn` for dependency management.
@@ -142,11 +150,3 @@ Thanks to the [npm-run-all](https://www.npmjs.com/package/npm-run-all) package, 
 ```shell
 $ yarn run-s clean build test
 ```
-
-## Games and Demos
-
-You can try the emulator by loading one of the games or demonstration channels, using the _clickable icons_ above or loading your own code, either as a single **.brs** file or a channel **.zip package**. All of these channels are publicly available with source code, below you have links for their original repository/websites.
-
-*   [Prince of Persia](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral.
-*   [Lode Runner](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral.
-*   [Colliding Sprites](https://blog.roku.com/developer/2012/09/15/colliding-sprites) demonstration by Robert Burdick.
