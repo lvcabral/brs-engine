@@ -62,8 +62,12 @@ fileSelector.onchange = function() {
     var file = this.files[0];
     var reader = new FileReader();
     reader.onload = function(progressEvent) {
+        paths = [];
+        imgs = [];
+        txts = [];
         source.push(this.result);
-        loadAssets(file.name);
+        paths.push({ url: "source/" + file.name, id: 0, type: "source" });
+        runChannel();
     };
     source = [];
     if (brsWorker != undefined) {
@@ -259,38 +263,6 @@ function openChannelZip(f) {
     );
 }
 
-function loadAssets(fileName) {
-    var loader = new Worker("app/loader.js");
-    var files = [];
-    files.push({ path: "images/sprite.png", type: "image/png" });
-    files.push({ path: "images/roku-logo.png", type: "image/png" });
-    files.push({ path: "images/AmigaBoingBall.png", type: "image/png" });
-    files.push({ path: "images/BallShadow.png", type: "image/png" });
-    files.push({ path: "assets/3ballset.png", type: "image/png" });
-    files.push({ path: "assets/4ballset.png", type: "image/png" });
-    files.push({ path: "assets/5ballset.png", type: "image/png" });
-    files.push({ path: "assets/6ballset.png", type: "image/png" });
-    files.push({ path: "assets/8ballset.png", type: "image/png" });
-    files.push({ path: "assets/bitmapset.xml", type: "text/xml" });
-    loader.onmessage = function(e) {
-        paths = [];
-        imgs = [];
-        txts = [];
-        e.data.forEach(file => {
-            paths.push(file.path);
-            if (file.bmp) {
-                imgs.push(file.bmp);
-            } else {
-                txts.push(file.txt);
-            }
-        });
-        loader.terminate();
-        paths.push({ url: "source/" + fileName, id: 0, type: "source" });
-        runChannel();
-    };
-    loader.postMessage({ assets: files });
-}
-
 function runChannel() {
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, display.width, display.height);
@@ -326,9 +298,7 @@ function drawCanvas() {
         ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
         dirty = false;
     }
-    //requestAnimationFrame(drawCanvas);
 }
-//requestAnimationFrame(drawCanvas);
 
 function keyDownHandler(event) {
     if (event.keyCode == 8) {
