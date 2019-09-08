@@ -51,17 +51,17 @@ This emulator is still a **prototype**, this way, there are several features fro
 ## Usage
 This repo provides a webpage with a set of JavaScript libraries, download the zip file from the Release page and unzip to a folder.
 Althought the emulator is a client application it cannot run as pure HTML page, as some browser functionalities have security restrictions, 
-so you will need a simple web server to use the application. If your have [Python](https://www.python.org/) installed, just run the batch files
-available on the root of the application folder.
+so you will need a simple web server to use the application. If your have [Python](https://www.python.org/) installed, just run the commands 
+below on the root folder of the emulator.
 
 * Linux
     ```
-    $ sudo sh ./server.sh
+    $ python -m SimpleHTTPServer 8888
     ```
 
 * Windows
     ```
-    c:\github\brs-emu> ./server.bat
+    c:\github\brs-emu> python -m http.server 8888
     ```
 
 Then you can now open your browser at the page `http://localhost:8888/index.html`
