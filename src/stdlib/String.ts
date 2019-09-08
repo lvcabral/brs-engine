@@ -183,6 +183,36 @@ export const StrI = new Callable("StrI", {
 });
 
 /**
+ * Returns a string composed of n copies of the second argument concatenated together.
+ */
+export const STRING = new Callable("String", {
+    //Defined in uppercase to avoid conflict with javascript String class
+    signature: {
+        args: [
+            new StdlibArgument("n", ValueKind.Int32),
+            new StdlibArgument("str", ValueKind.String),
+        ],
+        returns: ValueKind.String,
+    },
+    impl: (interpreter: Interpreter, n: Int32, str: BrsString): BrsString => {
+        return new BrsString(str.value.repeat(n.getValue()));
+    },
+});
+
+/**
+ * Returns a string composed of n copies of the character whose Unicode value is the second argument.
+ */
+export const StringI = new Callable("StringI", {
+    signature: {
+        args: [new StdlibArgument("n", ValueKind.Int32), new StdlibArgument("ch", ValueKind.Int32)],
+        returns: ValueKind.String,
+    },
+    impl: (interpreter: Interpreter, n: Int32, ch: Int32): BrsString => {
+        return new BrsString(String.fromCharCode(ch.getValue()).repeat(n.getValue()));
+    },
+});
+
+/**
  * Return a string from another string replacing instances of {index} with the
  * respective parameter.
  */

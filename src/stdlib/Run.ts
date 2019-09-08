@@ -38,8 +38,9 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
     }
 
     try {
-        let results = brs.executeSync(pathsToFiles, interpreter.options, args);
-        return results[0] || BrsInvalid.Instance;
+        //let results = brs.executeSync(pathsToFiles, interpreter.options, args);
+        //return results[0] || BrsInvalid.Instance;
+        return BrsInvalid.Instance;
     } catch (err) {
         // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
         // syntax errors, etc.
