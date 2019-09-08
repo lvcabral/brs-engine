@@ -3,7 +3,7 @@ const path = require("path");
 module.exports = env => {
     const isProduction = env.NODE_ENV === "production";
     let outputFile, mode;
-    let libraryName = "brsLib";
+    let libraryName = "brsEmu";
     if (isProduction) {
         mode = "production";
         outputFile = libraryName + ".min.js";

@@ -1,13 +1,16 @@
 {
-  "name": "brs",
-  "version": "0.14.0",
-  "description": "An interpreter for the BrightScript language that runs on non-Roku platforms.",
-  "author": "Sean Barag <sean@barag.org>",
+  "name": "brs-emu",
+  "version": "0.1.0",
+  "description": "An emulator for the BrightScript 2D API that runs on Chromium based browsers.",
+  "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
+  "contributors": [
+    "Sean Barag <sean@barag.org>"
+  ],
   "license": "MIT",
-  "main": "lib/index.js",
+  "main": "lib/brsEmu.js",
   "typings": "./types/index.d.ts",
   "bin": {
-    "brs": "./bin/cli.js"
+    "brs-lib": "./index.html"
   },
   "scripts": {
     "build": "webpack --env.NODE_ENV=development",
@@ -65,7 +68,7 @@
     "typescript": "3",
     "webpack-cli": "^3.3.6"
   },
-  "repository": "https://github.com/sjbarag/brs",
+  "repository": "https://github.com/lvcabral/brs-emu",
   "jest": {
     "testEnvironment": "node"
   },
