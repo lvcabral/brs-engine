@@ -1,6 +1,9 @@
 var display = document.getElementById("display");
 var screenSize = { width: 854, height: 480 };
 var ctx = display.getContext("2d", { alpha: false });
+var fileButton = document.getElementById("fileButton");
+var channelInfo = document.getElementById("channelInfo");
+channelInfo.innerHTML = "<br/>";
 var channel1 = document.getElementById("channel1");
 var channel2 = document.getElementById("channel2");
 var channel3 = document.getElementById("channel3");
@@ -14,6 +17,7 @@ var source = [];
 var paths = [];
 var txts = [];
 var imgs = [];
+var running = false;
 
 // Control buffer
 const length = 10;
@@ -67,14 +71,20 @@ fileSelector.onchange = function() {
     }
     if (file.name.split(".").pop() === "zip") {
         console.log("Loading " + file.name + "...");
+        running = true;
         openChannelZip(file);
     } else {
+        running = true;
         reader.readAsText(file);
     }
     display.focus();
 };
 
 function loadZip(zip) {
+    if (running) {
+        return;
+    }
+    running = true;
     display.style.opacity = 0;
     channel1.style.visibility = "visible";
     channel2.style.visibility = "visible";
@@ -90,6 +100,7 @@ function loadZip(zip) {
             openChannelZip(response.blob());
             display.focus();
         } else {
+            running = false;
             return Promise.reject(new Error(response.statusText));
         }
     });
@@ -105,7 +116,7 @@ function openChannelZip(f) {
                         var manifestMap = new Map();
                         content.match(/[^\r\n]+/g).map(function(ln) {
                             line = ln.split("=");
-                            manifestMap.set(line[0], line[1]);
+                            manifestMap.set(line[0].toLowerCase(), line[1]);
                         });
                         splashMinTime = manifestMap.get("splash_min_time");
                         if (splashMinTime && !isNaN(splashMinTime)) {
@@ -138,6 +149,29 @@ function openChannelZip(f) {
                                 });
                             }
                         }
+                        fileButton.style.visibility = "hidden";
+                        var infoHtml = "";
+                        var title = manifestMap.get("title");
+                        if (title) {
+                            infoHtml += title + "<br/>";
+                        }
+                        var subtitle = manifestMap.get("subtitle");
+                        if (subtitle) {
+                            infoHtml += subtitle + "<br/>";
+                        }
+                        var majorVersion = manifestMap.get("major_version");
+                        if (majorVersion) {
+                            infoHtml += "v" + majorVersion;
+                        }
+                        var minorVersion = manifestMap.get("minor_version");
+                        if (minorVersion) {
+                            infoHtml += "." + minorVersion;
+                        }
+                        var buildVersion = manifestMap.get("build_version");
+                        if (buildVersion) {
+                            infoHtml += "." + buildVersion;
+                        }
+                        channelInfo.innerHTML = infoHtml;
                     },
                     function error(e) {
                         console.error("Error uncompressing manifest:" + e.message);
@@ -145,6 +179,7 @@ function openChannelZip(f) {
                 );
             } else {
                 console.error("Invalid Roku package: missing manifest.");
+                running = false;
                 return;
             }
             var assetPaths = [];
@@ -207,16 +242,19 @@ function openChannelZip(f) {
                         },
                         function error(e) {
                             console.error("Error converting image " + e.message);
+                            running = false;
                         }
                     );
                 },
                 function error(e) {
                     console.error("Error uncompressing file " + e.message);
+                    running = false;
                 }
             );
         },
         function(e) {
             console.error("Error reading " + f.name + ": " + e.message);
+            running = false;
         }
     );
 }
@@ -261,7 +299,7 @@ function runChannel() {
     channel3.style.visibility = "hidden";
     display.style.opacity = 1;
     display.focus();
-    brsWorker = new Worker("./lib/brsLib.js");
+    brsWorker = new Worker("./lib/brsEmu.js");
     brsWorker.addEventListener("message", saveBuffer);
     var payload = { device: deviceData, paths: paths, brs: source, texts: txts, images: imgs };
     brsWorker.postMessage(sharedBuffer);
@@ -329,15 +367,18 @@ function keyDownHandler(event) {
         if (brsWorker != undefined) {
             // HOME BUTTON (ESC)
             display.style.opacity = 0;
+            channelInfo.innerHTML = "<br/>";
+            fileButton.style.visibility = "visible";
             channel1.style.visibility = "visible";
             channel2.style.visibility = "visible";
             channel3.style.visibility = "visible";
             fileSelector.value = null;
             brsWorker.terminate();
             sharedArray[0] = 0;
-            // TODO: Send TimeSinceLastKeypress()
+            running = false;
         }
     }
+    // TODO: Send TimeSinceLastKeypress()
 }
 
 function keyUpHandler(event) {
