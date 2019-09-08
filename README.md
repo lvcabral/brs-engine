@@ -3,7 +3,7 @@ An emulator for the BrightScript 2D API that runs on Chromium based browsers.
 
 ## About the Project
 
-As a **BrightScript** developer since 2012, I always wanted a way to test my code without the need of a Roku device, in situations like a long flight or a place without any wireless network available. Then in 2016 I decided to learn about the **[ifDraw2D API](https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md)** in order to develop games for the platform, so I created a few open source remakes of classic games (click on the icons in emulator above to try those). These projects were very challenging and exciting to develop, but it brought some frustration with it, as very few people outside the USA has access to the Roku platform, so a lot of people could only see [videos of my games](https://www.youtube.com/watch?v=NA59qZk7fQU&list=PLnKUeRkfD6f2JwNfJFiGfUrrg4YVKdcRQ), but never play it.
+As a **BrightScript** developer since 2012, I always wanted a way to test my code without the need of a Roku device, in situations like a long flight or a place without any wireless network available. Then in 2016 I decided to learn about the **[ifDraw2D API](https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md)** in order to develop games for the platform, so I created a few open source remakes of classic games (see links below at section Games and Demos). These projects were very challenging and exciting to develop, but brought me some frustration with it, as very few people outside the USA has access to the Roku platform, so a lot of people could only see [videos of my games](https://www.youtube.com/watch?v=NA59qZk7fQU&list=PLnKUeRkfD6f2JwNfJFiGfUrrg4YVKdcRQ), but never play it.
 
 The development of an emulator for the platform was, to me, a very complex endeavor to start as a _side project_, so I shelved the idea in my _Brain Dump Trello board_, until recently, when I learned about the [**BRS**](https://github.com/sjbarag/brs) open source project, created by [Sean Barag](https://github.com/sjbarag/), that consists of a _command line interpreter_ for **BrightScript**.
 
@@ -112,11 +112,21 @@ This project is written in TypeScript, so it needs to be compiled before it can 
 $ yarn build
 
 $ ls lib/
-index.js (and friends)
+brsEmu.js
 
 $ ls types/
 index.d.ts (and friends)
 ```
+#### Release
+To release a smaller library Webpack can create a *minified* version by running `yarn release`.
+
+```shell
+$ yarn release
+
+$ ls lib/
+brsEmu.min.js
+```
+If you want to use this release version, remember to update `app/index.js` to use `brsEmu.min.js` instead of `brsEmu.js`.
 
 #### Testing
 Tests are written in plain-old JavaScript with [Facebook's Jest](http://facebook.github.io/jest/), and can be run with the `test` target:
