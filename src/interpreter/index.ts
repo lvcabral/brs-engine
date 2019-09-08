@@ -19,6 +19,7 @@ import {
     Callable,
     BrsNumber,
     Comparable,
+    Float,
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
@@ -29,7 +30,6 @@ import { BrsError, TypeMismatch } from "../Error";
 import * as StdLib from "../stdlib";
 
 import { Scope, Environment, NotFound } from "./Environment";
-import { OutputProxy } from "./OutputProxy";
 import { toCallable } from "./BrsFunction";
 import { Runtime } from "../parser/Statement";
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
@@ -37,29 +37,26 @@ import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { DottedGet } from "../parser/Expression";
+import { RoPath } from "../brsTypes/components/RoPath";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
     /** The base path for  */
     root: string;
-    stdout: NodeJS.WriteStream;
-    stderr: NodeJS.WriteStream;
 }
 
-/** The default set of execution options.  Includes the `stdout`/`stderr` pair from the process that invoked `brs`. */
+/** The default set of execution options.  */
 export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
-    stdout: process.stdout,
-    stderr: process.stderr,
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
 
     readonly options: ExecutionOptions;
-    readonly stdout: OutputProxy;
-    readonly stderr: OutputProxy;
-    readonly temporaryVolume: MemoryFileSystem = new MemoryFileSystem();
+    readonly fileSystem: Map<string, MemoryFileSystem> = new Map<string, MemoryFileSystem>();
+    readonly deviceInfo: Map<string, any> = new Map<string, any>();
+    readonly registry: Map<string, string> = new Map<string, string>();
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -95,14 +92,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Creates a new Interpreter, including any global properties and functions.
-     * @param options configuration for the execution, including the streams to use for `stdout` and
-     *                `stderr` and the base directory for path resolution
+     * @param options configuration for the execution
      */
     constructor(options: ExecutionOptions = defaultExecutionOptions) {
-        this.stdout = new OutputProxy(options.stdout);
-        this.stderr = new OutputProxy(options.stderr);
         this.options = options;
-
+        this.fileSystem.set("common:", new MemoryFileSystem());
+        this.fileSystem.set("pkg:", new MemoryFileSystem());
+        this.fileSystem.set("tmp:", new MemoryFileSystem());
+        this.fileSystem.set("cachefs:", new MemoryFileSystem());
         Object.keys(StdLib)
             .map(name => (StdLib as any)[name])
             .filter(func => func instanceof Callable)
@@ -230,13 +227,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitPrint(statement: Stmt.Print): BrsType {
         // the `tab` function is only in-scope while executing print statements
-        this.environment.define(Scope.Function, "Tab", StdLib.Tab);
+        //this.environment.define(Scope.Function, "Tab", StdLib.Tab);
 
+        let printStream = "";
         statement.expressions.forEach((printable, index) => {
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        this.stdout.write(" ".repeat(16 - (this.stdout.position() % 16)));
+                        printStream += " ";
                         break;
                     case Lexeme.Semicolon:
                         if (index === statement.expressions.length - 1) {
@@ -244,8 +242,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             // They're used to suppress trailing newlines in `print` statements
                             break;
                         }
-
-                        this.stdout.write(" ");
+                        printStream += " ";
                         break;
                     default:
                         this.addError(
@@ -256,18 +253,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                 }
             } else {
-                this.stdout.write(this.evaluate(printable).toString());
+                printStream += this.evaluate(printable).toString();
             }
         });
-
-        let lastExpression = statement.expressions[statement.expressions.length - 1];
-        if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
-            this.stdout.write("\n");
-        }
-
-        // `tab` is only in-scope when executing print statements, so remove it before we leave
-        this.environment.remove("Tab");
-
+        console.log(printStream);
         return BrsInvalid.Instance;
     }
 
@@ -349,6 +338,84 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         switch (lexeme) {
+            case Lexeme.LeftShift:
+            case Lexeme.LeftShiftEqual:
+                if (
+                    isBrsNumber(left) &&
+                    isBrsNumber(right) &&
+                    right.getValue() >= 0 &&
+                    right.getValue() < 32
+                ) {
+                    return left.leftShift(right);
+                } else if (isBrsNumber(left) && isBrsNumber(right)) {
+                    return this.addError(
+                        new TypeMismatch({
+                            message:
+                                "In a bitshift expression the right value must be >= 0 and < 32.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                } else {
+                    return this.addError(
+                        new TypeMismatch({
+                            message: "Attempting to bitshift non-numeric values.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                }
+            case Lexeme.RightShift:
+            case Lexeme.RightShiftEqual:
+                if (
+                    isBrsNumber(left) &&
+                    isBrsNumber(right) &&
+                    right.getValue() >= 0 &&
+                    right.getValue() < 32
+                ) {
+                    return left.rightShift(right);
+                } else if (isBrsNumber(left) && isBrsNumber(right)) {
+                    return this.addError(
+                        new TypeMismatch({
+                            message:
+                                "In a bitshift expression the right value must be >= 0 and < 32.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                } else {
+                    return this.addError(
+                        new TypeMismatch({
+                            message: "Attempting to bitshift non-numeric values.",
+                            left: {
+                                type: left,
+                                location: expression.left.location,
+                            },
+                            right: {
+                                type: right,
+                                location: expression.right.location,
+                            },
+                        })
+                    );
+                }
             case Lexeme.Minus:
             case Lexeme.MinusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
@@ -466,6 +533,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.add(right);
                 } else if (isBrsString(left) && isBrsString(right)) {
                     return left.concat(right);
+                } else if (isBrsString(left) && right instanceof RoPath) {
+                    return left.concat(new BrsString(right.toString()));
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -984,9 +1053,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
         this.execute(statement.counterDeclaration);
-        const finalValue = this.evaluate(statement.finalValue);
-        const increment = this.evaluate(statement.increment);
-
+        const startValue = this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
+        const finalValue = this.evaluate(statement.finalValue) as Int32 | Float;
+        const increment = this.evaluate(statement.increment) as Int32 | Float;
+        if (
+            (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
+            (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
+        ) {
+            // Shortcut, do not process anything
+            return BrsInvalid.Instance;
+        }
         const counterName = statement.counterDeclaration.name;
         const step = new Stmt.Assignment(
             { equals: statement.tokens.for },
@@ -1314,6 +1390,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             throw err;
         }
+    }
+
+    visitLibrary(statement: Stmt.Library) {
+        // ignore during run time, already handled by lexer/parser
+        return BrsInvalid.Instance;
     }
 
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {

@@ -10,18 +10,18 @@ const {
 } = require("../../lib/brsTypes");
 
 describe("Int32", () => {
-    it("rounds initial values to integers", () => {
+    it("truncates initial values to integers", () => {
         let three = new Int32(3.4);
         let four = new Int32(3.5);
         expect(three.getValue()).toBe(3);
-        expect(four.getValue()).toBe(4);
+        expect(four.getValue()).toBe(3);
     });
 
     it("creates base-10 integers from strings", () => {
         let three = Int32.fromString("3.4");
         let four = Int32.fromString("3.5");
         expect(three.getValue()).toBe(3);
-        expect(four.getValue()).toBe(4);
+        expect(four.getValue()).toBe(3);
     });
 
     it("creates base-16 integers from strings", () => {

@@ -21,6 +21,7 @@ export interface Visitor<T> {
     visitDottedSet(statement: DottedSet): BrsType;
     visitIndexedSet(statement: IndexedSet): BrsType;
     visitIncrement(expression: Increment): BrsInvalid;
+    visitLibrary(expression: Library): BrsInvalid;
 }
 
 /** A BrightScript statement */
@@ -481,7 +482,7 @@ export class Library implements Statement {
         }
     ) {}
     accept<R>(visitor: Visitor<R>): BrsType {
-        throw new Error("Library is not implemented");
+        return visitor.visitLibrary(this);
     }
 
     get location() {

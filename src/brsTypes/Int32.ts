@@ -15,18 +15,18 @@ export class Int32 implements Numeric, Comparable {
 
     /**
      * Creates a new BrightScript 32-bit integer value representing the provided `value`.
-     * @param value the value to store in the BrightScript number, rounded to the nearest 32-bit
+     * @param value the value to store in the BrightScript number, truncated to a 32-bit
      *              integer.
      */
     constructor(initialValue: number) {
-        this.value = Math.round(initialValue);
+        this.value = Math.trunc(initialValue);
     }
 
     /**
      * Creates a new BrightScript 32-bit integer value representing the integer contained in
      * `asString`.
      * @param asString the string representation of the value to store in the BrightScript 32-bit
-     *                 int. Will be rounded to the nearest 32-bit integer.
+     *                 int. Will be truncated to a 32-bit integer.
      * @returns a BrightScript 32-bit integer value representing `asString`.
      */
     static fromString(asString: string): Int32 {
@@ -40,7 +40,7 @@ export class Int32 implements Numeric, Comparable {
     add(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
             case ValueKind.Int32:
-                return new Int32(this.getValue() + rhs.getValue());
+                return new Int32((this.getValue() + rhs.getValue()) | 0);
             case ValueKind.Int64:
                 return new Int64(rhs.getValue().add(this.getValue()));
             case ValueKind.Float:
@@ -53,7 +53,7 @@ export class Int32 implements Numeric, Comparable {
     subtract(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
             case ValueKind.Int32:
-                return new Int32(this.getValue() - rhs.getValue());
+                return new Int32((this.getValue() - rhs.getValue()) | 0);
             case ValueKind.Int64:
                 return new Int64(this.getValue()).subtract(rhs);
             case ValueKind.Float:
@@ -66,7 +66,7 @@ export class Int32 implements Numeric, Comparable {
     multiply(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
             case ValueKind.Int32:
-                return new Int32(this.getValue() * rhs.getValue());
+                return new Int32((this.getValue() * rhs.getValue()) | 0);
             case ValueKind.Int64:
                 return new Int64(rhs.getValue().multiply(this.getValue()));
             case ValueKind.Float:
@@ -111,6 +111,28 @@ export class Int32 implements Numeric, Comparable {
                 return new Int32(Math.trunc(this.getValue() / rhs.getValue()));
             case ValueKind.Int64:
                 return new Int64(Math.trunc(this.getValue() / rhs.getValue().toNumber()));
+        }
+    }
+
+    leftShift(rhs: BrsNumber): Int32 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int32(this.getValue() << Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int32(this.getValue() << rhs.getValue().toNumber());
+        }
+    }
+
+    rightShift(rhs: BrsNumber): Int32 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int32(this.getValue() >>> Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int32(this.getValue() >>> rhs.getValue().toNumber());
         }
     }
 

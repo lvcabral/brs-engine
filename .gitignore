@@ -1,5 +1,8 @@
+.vscode/
 .idea/
 lib/
 types/
 node_modules/
-.vscode/
+dist/
+out/
+channels/

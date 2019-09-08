@@ -138,18 +138,26 @@ const disallowedIdentifiers = new Set(
     ].map(x => Lexeme[x].toLowerCase())
 );
 
+const bsLibraries = new Map<string, boolean>();
+
 /** The results of a Parser's parsing pass. */
 interface ParseResults {
     /** The statements produced by the parser. */
     statements: Stmt.Statement[];
     /** The errors encountered by the Parser. */
     errors: ParseError[];
+    /** Libraries ussage encountered by the Parser */
+    libraries: Map<string, boolean>;
 }
 
 export class Parser {
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
+    constructor() {
+        bsLibraries.set("v30/bslCore.brs", false);
+        bsLibraries.set("v30/bslDefender.brs", false);
+    }
     /**
      * A convenience function, equivalent to `new Parser().parse(toParse)`, that parses an array of
      * `Token`s into an abstract syntax tree that can be executed with the `Interpreter`.
@@ -230,6 +238,7 @@ export class Parser {
             return {
                 statements: [],
                 errors: [],
+                libraries: bsLibraries,
             };
         }
 
@@ -241,11 +250,12 @@ export class Parser {
                 }
             }
 
-            return { statements, errors };
+            return { statements, errors, libraries: bsLibraries };
         } catch (parseError) {
             return {
                 statements: [],
                 errors: errors,
+                libraries: bsLibraries,
             };
         }
 
@@ -759,6 +769,20 @@ export class Parser {
             }
             //consume to the next newline, eof, or colon
             while (match(Lexeme.Newline, Lexeme.Eof, Lexeme.Colon));
+
+            //flag library usage
+            let path = libraryStatement.tokens.filePath;
+            if (path) {
+                let key = path.text.slice(1, path.text.length - 1);
+                if (bsLibraries.has(key)) {
+                    bsLibraries.set(key, true);
+                } else {
+                    addErrorAtLocation(
+                        libraryStatement.location,
+                        'Invalid library! Valid options are "v30/bslCore.brs" or "v30/bslDefender.brs"'
+                    );
+                }
+            }
             return libraryStatement;
         }
 
@@ -1226,7 +1250,7 @@ export class Parser {
         }
 
         function relational(): Expression {
-            let expr = additive();
+            let expr = bitshift();
 
             while (
                 match(
@@ -1239,14 +1263,24 @@ export class Parser {
                 )
             ) {
                 let operator = previous();
-                let right = additive();
+                let right = bitshift();
                 expr = new Expr.Binary(expr, operator, right);
             }
 
             return expr;
         }
 
-        // TODO: bitshift
+        function bitshift(): Expression {
+            let expr = additive();
+
+            while (match(Lexeme.LeftShift, Lexeme.RightShift)) {
+                let operator = previous();
+                let right = additive();
+                expr = new Expr.Binary(expr, operator, right);
+            }
+
+            return expr;
+        }
 
         function additive(): Expression {
             let expr = multiplicative();
