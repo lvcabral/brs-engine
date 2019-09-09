@@ -10,7 +10,6 @@ import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFontRegistry } from "./RoFontRegistry";
-import { RoFont } from "./RoFont";
 import { RoCompositor } from "./RoCompositor";
 import { RoString } from "./RoString";
 import { RoPath } from "./RoPath";
@@ -49,7 +48,7 @@ export const BrsObjects = new Map<string, Function>([
     ],
     ["romessageport", (interpreter: Interpreter) => new RoMessagePort()],
     ["rofilesystem", (interpreter: Interpreter) => new RoFileSystem()],
-    ["rofontregistry", (interpreter: Interpreter) => new RoFontRegistry()],
+    ["rofontregistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
     ["roregistry", (interpreter: Interpreter) => new RoRegistry()],
     [
         "roregistrysection",
@@ -60,16 +59,6 @@ export const BrsObjects = new Map<string, Function>([
     ["roaudioplayer", (interpreter: Interpreter) => new RoAudioPlayer()],
     ["roaudioresource", (interpreter: Interpreter, name: BrsString) => new RoAudioResource(name)],
     ["rocompositor", (interpreter: Interpreter) => new RoCompositor()],
-    [
-        "rofont",
-        (
-            interpreter: Interpreter,
-            family: BrsString,
-            size: Int32,
-            bold: BrsBoolean,
-            italic: BrsBoolean
-        ) => new RoFont(family, size, bold, italic),
-    ],
     [
         "roregion",
         (

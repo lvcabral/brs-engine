@@ -1,3 +1,10 @@
+/*---------------------------------------------------------------------------------------------
+ *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
+ *
+ *  Copyright (c) 2019 Marcelo Lv Cabral. All Rights Reserved.
+ *
+ *  Licensed under the MIT License. See LICENSE in the repository root for license information.
+ *--------------------------------------------------------------------------------------------*/
 import { Lexer } from "./lexer";
 import * as PP from "./preprocessor";
 import { Parser } from "./parser";
@@ -44,6 +51,23 @@ onmessage = function(event) {
             volume.mkdirSync("/LibCore/v30");
             volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore.default);
             volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender.default);
+            volume.mkdirSync("/Fonts");
+            let fontRegular = download("/app/fonts/OpenSans-Regular.ttf", "arraybuffer");
+            if (fontRegular) {
+                volume.writeFileSync("/Fonts/OpenSans-Regular.ttf", fontRegular);
+            }
+            let fontBold = download("/app/fonts/OpenSans-Bold.ttf", "arraybuffer");
+            if (fontBold) {
+                volume.writeFileSync("/Fonts/OpenSans-Bold.ttf", fontBold);
+            }
+            let fontItalic = download("/app/fonts/OpenSans-Italic.ttf", "arraybuffer");
+            if (fontBold) {
+                volume.writeFileSync("/Fonts/OpenSans-Italic.ttf", fontItalic);
+            }
+            let fontBoldIt = download("/app/fonts/OpenSans-BoldItalic.ttf", "arraybuffer");
+            if (fontBold) {
+                volume.writeFileSync("/Fonts/OpenSans-BoldItalic.ttf", fontBoldIt);
+            }
         }
         const source = new Map<string, string>();
         volume = interpreter.fileSystem.get("pkg:");
@@ -65,6 +89,8 @@ onmessage = function(event) {
                 try {
                     if (filePath.type === "image") {
                         volume.writeFileSync("/" + filePath.url, event.data.images[filePath.id]);
+                    } else if (filePath.type === "font") {
+                        volume.writeFileSync("/" + filePath.url, event.data.fonts[filePath.id]);
                     } else if (filePath.type === "text") {
                         volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
                     } else {
@@ -175,5 +201,26 @@ function mkdirTreeSync(fs: MemoryFileSystem, directory: string) {
         if (fs.normalize(segment) !== "" && !fs.existsSync(segment)) {
             fs.mkdirSync(segment);
         }
+    }
+}
+
+/**
+ * Dowload helper funcion
+ * @param url url of the file to be downloaded
+ * @param type return type (eg. arraybuffer)
+ */
+function download(url: string, type: XMLHttpRequestResponseType) {
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, false); // Note: synchronous
+        xhr.responseType = type;
+        xhr.send();
+        if (xhr.status !== 200) {
+            console.error(xhr.statusText);
+            return undefined;
+        }
+        return xhr.response;
+    } catch (e) {
+        console.error(e.message);
     }
 }
