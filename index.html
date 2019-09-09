@@ -6,7 +6,6 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>BrightScript 2D API Emulator</title>
     <link href="app/css/default.css" rel="stylesheet" type="text/css"/>
-    <link href="app/css/prettify.css" rel="stylesheet" type="text/css"/>
     <link href='https://fonts.googleapis.com/css?family=Maven+Pro|Muli|Istok+Web' rel='stylesheet' type='text/css'/>
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
 </head>
@@ -95,7 +94,6 @@
             <li>The <code>ToStr()</code> method is not supported.</li>
             <li>Return <code>Invalid</code> from a function explicitly declared as <code>Object</code> doesn't work, use <code>Dynamic</code> or remove type declaration.</li>
             <li>Send <code>Invalid</code> on a function parameter when it explicitly defines the type, generates an error. If <code>Invalid</code> is possible remove type declaration.</li>
-            <li>Custom .ttf fonts are only displayed correctly if installed on the client operational system.</li>
             <li>Audio playback is not supported yet, for now <code>roAudioPlayer</code> and <code>roAudioResource</code> are mocked.</li>
         </ul>
         <h3>In Scope (to be mocked)</h3>
@@ -126,9 +124,5 @@
     </div>
     <script type="text/javascript" src="app/jszip.js"></script>
     <script type="text/javascript" src="app/index.js"></script>
-	<script type="text/javascript" src="app/prettify.js"></script>
-	<script type="text/javascript">
-		prettyPrint();
-	</script>
 </body>
 </html>

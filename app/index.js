@@ -1,3 +1,10 @@
+/*---------------------------------------------------------------------------------------------
+ *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
+ *
+ *  Copyright (c) 2019 Marcelo Lv Cabral. All Rights Reserved.
+ *
+ *  Licensed under the MIT License. See LICENSE in the repository root for license information.
+ *--------------------------------------------------------------------------------------------*/
 var display = document.getElementById("display");
 var screenSize = { width: 854, height: 480 };
 var ctx = display.getContext("2d", { alpha: false });
@@ -17,6 +24,7 @@ var source = [];
 var paths = [];
 var txts = [];
 var imgs = [];
+var fonts = [];
 var running = false;
 
 // Control buffer
@@ -65,6 +73,7 @@ fileSelector.onchange = function() {
         paths = [];
         imgs = [];
         txts = [];
+        fonts = [];
         source.push(this.result);
         paths.push({ url: "source/" + file.name, id: 0, type: "source" });
         runChannel();
@@ -84,6 +93,7 @@ fileSelector.onchange = function() {
     display.focus();
 };
 
+// Download Zip
 function loadZip(zip) {
     if (running) {
         return;
@@ -110,6 +120,7 @@ function loadZip(zip) {
     });
 }
 
+// Uncompress Zip and execute
 function openChannelZip(f) {
     JSZip.loadAsync(f).then(
         function(zip) {
@@ -178,11 +189,13 @@ function openChannelZip(f) {
                         channelInfo.innerHTML = infoHtml;
                     },
                     function error(e) {
-                        console.error("Error uncompressing manifest:" + e.message);
+                        clientException("Error uncompressing manifest:" + e.message, true);
+                        running = false;
+                        return;
                     }
                 );
             } else {
-                console.error("Invalid Roku package: missing manifest.");
+                clientException("Invalid Roku package: missing manifest.", true);
                 running = false;
                 return;
             }
@@ -191,6 +204,7 @@ function openChannelZip(f) {
             var bmpId = 0;
             var txtId = 0;
             var srcId = 0;
+            var fntId = 0;
             zip.forEach(function(relativePath, zipEntry) {
                 if (
                     !zipEntry.dir &&
@@ -217,6 +231,14 @@ function openChannelZip(f) {
                     assetPaths.push({ url: relativePath, id: bmpId, type: "image" });
                     assetsEvents.push(zipEntry.async("blob"));
                     bmpId++;
+                } else if (
+                    !zipEntry.dir &&
+                    (relativePath.split(".").pop() === "ttf" ||
+                        relativePath.split(".").pop() === "otf")
+                ) {
+                    assetPaths.push({ url: relativePath, id: fntId, type: "font" });
+                    assetsEvents.push(zipEntry.async("arraybuffer"));
+                    fntId++;
                 }
             });
             Promise.all(assetsEvents).then(
@@ -224,11 +246,14 @@ function openChannelZip(f) {
                     paths = [];
                     txts = [];
                     imgs = [];
+                    fonts = [];
                     var bmpEvents = [];
                     for (var index = 0; index < assets.length; index++) {
                         paths.push(assetPaths[index]);
-                        if (assets[index] instanceof Blob) {
+                        if (assetPaths[index].type === "image") {
                             bmpEvents.push(createImageBitmap(assets[index]));
+                        } else if (assetPaths[index].type === "font") {
+                            fonts.push(assets[index]);
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
                         } else {
@@ -245,24 +270,23 @@ function openChannelZip(f) {
                             }, splashTimeout);
                         },
                         function error(e) {
-                            console.error("Error converting image " + e.message);
-                            running = false;
+                            clientException("Error converting image " + e.message);
                         }
                     );
                 },
                 function error(e) {
-                    console.error("Error uncompressing file " + e.message);
-                    running = false;
+                    clientException("Error uncompressing file " + e.message);
                 }
             );
         },
         function(e) {
-            console.error("Error reading " + f.name + ": " + e.message);
+            clientException("Error reading " + f.name + ": " + e.message, true);
             running = false;
         }
     );
 }
 
+// Execute Emulator Web Worker
 function runChannel() {
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, display.width, display.height);
@@ -273,11 +297,19 @@ function runChannel() {
     display.focus();
     brsWorker = new Worker("./lib/brsEmu.js");
     brsWorker.addEventListener("message", saveBuffer);
-    var payload = { device: deviceData, paths: paths, brs: source, texts: txts, images: imgs };
+    var payload = {
+        device: deviceData,
+        paths: paths,
+        brs: source,
+        texts: txts,
+        fonts: fonts,
+        images: imgs,
+    };
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, imgs);
 }
 
+// Receive Screen and Registry data from Web Worker
 function saveBuffer(event) {
     if (event.data instanceof ImageData) {
         buffer = event.data;
@@ -290,6 +322,8 @@ function saveBuffer(event) {
         });
     }
 }
+
+// Display screen buffer
 function drawCanvas() {
     if (dirty) {
         bufferCanvas.width = buffer.width;
@@ -300,6 +334,7 @@ function drawCanvas() {
     }
 }
 
+// Remote control emulator
 function keyDownHandler(event) {
     if (event.keyCode == 8) {
         sharedArray[0] = 0; // BUTTON_BACK_PRESSED
@@ -378,5 +413,13 @@ function keyUpHandler(event) {
         sharedArray[0] = 117; // BUTTON_A_RELEASED
     } else if (event.keyCode == 90) {
         sharedArray[0] = 118; // BUTTON_B_RELEASED
+    }
+}
+
+// Exception Handler
+function clientException(msg, msgbox = false) {
+    console.error(msg);
+    if (msgbox) {
+        window.alert(msg);
     }
 }
