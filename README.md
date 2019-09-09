@@ -35,7 +35,6 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   The `ToStr()` method is not supported.
 *   Return `Invalid` from a function explicitly declared as `Object` doesn't work, use `Dynamic` or remove type declaration.
 *   Send `Invalid` on a function parameter when it explicitly defines the type, generates an error. If `Invalid` is possible remove type declaration.
-*   Custom .ttf fonts are only displayed correctly if installed on the client operational system.
 *   Audio playback is not supported yet, for now `roAudioPlayer` and `roAudioResource` are mocked.
 
 ### In Scope (to be mocked)

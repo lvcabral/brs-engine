@@ -4,6 +4,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { FontMetrics } from "./RoFontRegistry";
 
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -11,13 +12,22 @@ export class RoFont extends BrsComponent implements BrsValue {
     private size: number;
     private bold: boolean;
     private italic: boolean;
+    private metrics: FontMetrics;
 
-    constructor(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean) {
+    // Constructor can only be used by RoFontRegistry()
+    constructor(
+        family: BrsString,
+        size: Int32,
+        bold: BrsBoolean,
+        italic: BrsBoolean,
+        metrics: FontMetrics
+    ) {
         super("roFont");
         this.family = family.value;
         this.size = size.getValue();
         this.bold = bold.toBoolean();
         this.italic = italic.toBoolean();
+        this.metrics = metrics;
 
         this.registerMethods([
             this.getOneLineHeight,
@@ -51,7 +61,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.size + 7); // TODO: Use https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/measureText
+            return new Int32(Math.round(this.metrics.lineHeight * this.size));
         },
     });
 
@@ -84,7 +94,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.size - 3); // TODO: Use https://github.com/soulwire/FontMetrics
+            return new Int32(Math.round(this.metrics.ascent * this.size));
         },
     });
 
@@ -95,7 +105,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(9); // TODO: Use https://github.com/soulwire/FontMetrics
+            return new Int32(Math.round(this.metrics.descent * this.size));
         },
     });
 
@@ -106,7 +116,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.size + 8); // TODO: Use https://github.com/soulwire/FontMetrics
+            return new Int32(Math.round(this.metrics.maxAdvance * this.size));
         },
     });
 }
