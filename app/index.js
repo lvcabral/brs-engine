@@ -76,6 +76,8 @@ fileSelector.onchange = function() {
         fonts = [];
         source.push(this.result);
         paths.push({ url: "source/" + file.name, id: 0, type: "source" });
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        ctx.fillRect(0, 0, display.width, display.height);
         runChannel();
     };
     source = [];
@@ -144,6 +146,8 @@ function openChannelZip(f) {
                                 splash = manifestMap.get("splash_screen_shd");
                             }
                         }
+                        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+                        ctx.fillRect(0, 0, display.width, display.height);
                         if (splash && splash.substr(0, 5) === "pkg:/") {
                             splashFile = zip.file(splash.substr(5));
                             if (splashFile) {
@@ -288,8 +292,6 @@ function openChannelZip(f) {
 
 // Execute Emulator Web Worker
 function runChannel() {
-    ctx.fillStyle = "rgba(0, 0, 0, 1)";
-    ctx.fillRect(0, 0, display.width, display.height);
     channel1.style.visibility = "hidden";
     channel2.style.visibility = "hidden";
     channel3.style.visibility = "hidden";
