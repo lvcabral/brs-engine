@@ -230,7 +230,9 @@ function openChannelZip(f) {
                 } else if (
                     !zipEntry.dir &&
                     (relativePath.split(".").pop() === "png" ||
-                        relativePath.split(".").pop() === "jpg")
+                        relativePath.split(".").pop() === "gif" ||
+                        relativePath.split(".").pop() === "jpg" ||
+                        relativePath.split(".").pop() === "jpeg")
                 ) {
                     assetPaths.push({ url: relativePath, id: bmpId, type: "image" });
                     assetsEvents.push(zipEntry.async("blob"));
