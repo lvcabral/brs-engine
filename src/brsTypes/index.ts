@@ -16,6 +16,10 @@ import { Double } from "./Double";
 import { Callable } from "./Callable";
 import { BrsComponent } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
+import { roBoolean } from "./components/RoBoolean";
+import { roDouble } from "./components/RoDouble";
+import { roFloat } from "./components/RoFloat";
+import { roInt } from "./components/RoInt";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -37,6 +41,10 @@ export * from "./components/RoMessagePort";
 export * from "./components/RoFontRegistry";
 export * from "./components/RoFont";
 export * from "./components/RoXMLElement";
+export * from "./components/RoBoolean";
+export * from "./components/RoDouble";
+export * from "./components/RoFloat";
+export * from "./components/RoInt";
 export * from "./Callable";
 
 /**
