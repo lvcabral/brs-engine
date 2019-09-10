@@ -5,7 +5,6 @@ import { RoByteArray } from "./RoByteArray";
 import { RoDateTime } from "./RoDateTime";
 import { Timespan } from "./RoTimespan";
 import { RoList } from "./RoList";
-import { RoSGNode, createNodeByType } from "./RoSGNode";
 import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
@@ -34,7 +33,6 @@ export const BrsObjects = new Map<string, Function>([
     ["rodatetime", (interpreter: Interpreter) => new RoDateTime()],
     ["rolist", (interpreter: Interpreter) => new RoList()],
     ["rotimespan", (interpreter: Interpreter) => new Timespan()],
-    ["rosgnode", (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType)],
     [
         "roregex",
         (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
