@@ -134,7 +134,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             throw err;
         } finally {
             this._environment = originalEnvironment;
-            this._environment.setFocusedNode(newEnv.getFocusedNode());
         }
     }
 
