@@ -4,8 +4,10 @@ import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
+import { roDouble } from "./components/RoDouble";
+import { Boxable } from "./Boxing";
 
-export class Double implements Numeric, Comparable {
+export class Double implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Double;
     private readonly value: number;
 
@@ -179,5 +181,9 @@ export class Double implements Numeric, Comparable {
 
     toString(parent?: BrsType): string {
         return this.value.toString();
+    }
+
+    box() {
+        return new roDouble(this);
     }
 }
