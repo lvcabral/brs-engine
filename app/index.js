@@ -210,38 +210,38 @@ function openChannelZip(f) {
             var srcId = 0;
             var fntId = 0;
             zip.forEach(function(relativePath, zipEntry) {
+                var lcasePath = relativePath.toLowerCase();
                 if (
                     !zipEntry.dir &&
-                    relativePath.toLowerCase().substr(0, 6) === "source" &&
-                    relativePath.split(".").pop() === "brs"
+                    lcasePath.substr(0, 6) === "source" &&
+                    lcasePath.split(".").pop() === "brs"
                 ) {
                     assetPaths.push({ url: relativePath, id: srcId, type: "source" });
                     assetsEvents.push(zipEntry.async("string"));
                     srcId++;
                 } else if (
                     !zipEntry.dir &&
-                    (relativePath === "manifest" ||
-                        relativePath.split(".").pop() === "csv" ||
-                        relativePath.split(".").pop() === "xml" ||
-                        relativePath.split(".").pop() === "json")
+                    (lcasePath === "manifest" ||
+                        lcasePath.split(".").pop() === "csv" ||
+                        lcasePath.split(".").pop() === "xml" ||
+                        lcasePath.split(".").pop() === "json")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
                     assetsEvents.push(zipEntry.async("string"));
                     txtId++;
                 } else if (
                     !zipEntry.dir &&
-                    (relativePath.split(".").pop() === "png" ||
-                        relativePath.split(".").pop() === "gif" ||
-                        relativePath.split(".").pop() === "jpg" ||
-                        relativePath.split(".").pop() === "jpeg")
+                    (lcasePath.split(".").pop() === "png" ||
+                        lcasePath.split(".").pop() === "gif" ||
+                        lcasePath.split(".").pop() === "jpg" ||
+                        lcasePath.split(".").pop() === "jpeg")
                 ) {
                     assetPaths.push({ url: relativePath, id: bmpId, type: "image" });
                     assetsEvents.push(zipEntry.async("blob"));
                     bmpId++;
                 } else if (
                     !zipEntry.dir &&
-                    (relativePath.split(".").pop() === "ttf" ||
-                        relativePath.split(".").pop() === "otf")
+                    (lcasePath.split(".").pop() === "ttf" || lcasePath.split(".").pop() === "otf")
                 ) {
                     assetPaths.push({ url: relativePath, id: fntId, type: "font" });
                     assetsEvents.push(zipEntry.async("arraybuffer"));
