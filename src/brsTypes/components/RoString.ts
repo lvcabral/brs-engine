@@ -1,5 +1,6 @@
 import { BrsComponent } from "./BrsComponent";
 import { RoArray } from "./RoArray";
+import { RoList } from "./RoList";
 import {
     BrsValue,
     ValueKind,
@@ -318,11 +319,16 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("delim", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: _interpreter => {
-            console.error(
-                "WARNING: tokenize not yet implemented, because it returns an RoList.  Returning `invalid`."
-            );
-            return BrsInvalid.Instance;
+        impl: (_interpreter, separator: BrsString) => {
+            let parts;
+            if (separator.value === "") {
+                // split characters apart, preserving multi-character unicode structures
+                parts = Array.from(this.intrinsic.value);
+            } else {
+                parts = this.intrinsic.value.split(separator.value);
+            }
+
+            return new RoList(parts.map(part => new BrsString(part)));
         },
     });
 
