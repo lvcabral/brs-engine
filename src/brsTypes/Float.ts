@@ -4,6 +4,8 @@ import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
+import { roFloat } from "./components/RoFloat";
+import { Boxable } from "./Boxing";
 
 /**
  * Number of significant digits represented in an IEEE 32-bit floating point number.
@@ -11,7 +13,7 @@ import { Int64 } from "./Int64";
  */
 const IEEE_FLOAT_SIGFIGS = 7;
 
-export class Float implements Numeric, Comparable {
+export class Float implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Float;
     private readonly value: number;
 
@@ -193,5 +195,9 @@ export class Float implements Numeric, Comparable {
 
     toString(parent?: BrsType): string {
         return this.value.toString();
+    }
+
+    box() {
+        return new roFloat(this);
     }
 }
