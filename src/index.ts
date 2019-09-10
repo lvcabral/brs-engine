@@ -52,19 +52,19 @@ onmessage = function(event) {
             volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore.default);
             volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender.default);
             volume.mkdirSync("/Fonts");
-            let fontRegular = download("/app/fonts/OpenSans-Regular.ttf", "arraybuffer");
+            let fontRegular = download("../app/fonts/OpenSans-Regular.ttf", "arraybuffer");
             if (fontRegular) {
                 volume.writeFileSync("/Fonts/OpenSans-Regular.ttf", fontRegular);
             }
-            let fontBold = download("/app/fonts/OpenSans-Bold.ttf", "arraybuffer");
+            let fontBold = download("../app/fonts/OpenSans-Bold.ttf", "arraybuffer");
             if (fontBold) {
                 volume.writeFileSync("/Fonts/OpenSans-Bold.ttf", fontBold);
             }
-            let fontItalic = download("/app/fonts/OpenSans-Italic.ttf", "arraybuffer");
+            let fontItalic = download("../app/fonts/OpenSans-Italic.ttf", "arraybuffer");
             if (fontBold) {
                 volume.writeFileSync("/Fonts/OpenSans-Italic.ttf", fontItalic);
             }
-            let fontBoldIt = download("/app/fonts/OpenSans-BoldItalic.ttf", "arraybuffer");
+            let fontBoldIt = download("../app/fonts/OpenSans-BoldItalic.ttf", "arraybuffer");
             if (fontBold) {
                 volume.writeFileSync("/Fonts/OpenSans-BoldItalic.ttf", fontBoldIt);
             }
