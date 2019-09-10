@@ -221,6 +221,7 @@ function openChannelZip(f) {
                 } else if (
                     !zipEntry.dir &&
                     (relativePath === "manifest" ||
+                        relativePath.split(".").pop() === "csv" ||
                         relativePath.split(".").pop() === "xml" ||
                         relativePath.split(".").pop() === "json")
                 ) {
