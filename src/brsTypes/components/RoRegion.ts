@@ -451,10 +451,17 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance),
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, object: RoBitmap | RoRegion) => {
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            object: RoBitmap | RoRegion,
+            rgba: Int32 | BrsInvalid
+        ) => {
             let result = BrsBoolean.True;
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
