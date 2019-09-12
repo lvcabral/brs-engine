@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Float } from "..";
+import { BrsType, Float, RoFont } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -69,6 +69,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.drawLine,
             this.drawPoint,
             this.drawRect,
+            this.drawText,
         ]);
     }
     applyOffset(x: number, y: number, width: number, height: number) {
@@ -552,6 +553,28 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 width.getValue(),
                 height.getValue()
             );
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Draws the text at position (x,y) using the specified RGBA color and roFont font object. */
+    private drawText = new Callable("drawText", {
+        signature: {
+            args: [
+                new StdlibArgument("text", ValueKind.String),
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("rgba", ValueKind.Int32),
+                new StdlibArgument("font", ValueKind.Object),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
+            let ctx = this.context;
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.font = font.toFontString();
+            ctx.textBaseline = "top";
+            ctx.fillText(text.toString(), this.x + x.getValue(), this.y + y.getValue());
             return BrsBoolean.True;
         },
     });
