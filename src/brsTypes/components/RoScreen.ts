@@ -13,12 +13,13 @@ import { RoFont } from "./RoFont";
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private alphaEnable: boolean;
-    private dblBuffer: boolean;
+    private doubleBuffer: boolean;
+    private currentBuffer: number;
     private width: number;
     private height: number;
     //private display: HTMLCanvasElement;
-    private canvas: OffscreenCanvas;
-    private context: OffscreenCanvasRenderingContext2D;
+    private canvas: OffscreenCanvas[];
+    private context: OffscreenCanvasRenderingContext2D[];
     private port?: RoMessagePort;
 
     // TODO: Correctly adjust aspect ratio for non 16:9 resolutions
@@ -40,15 +41,20 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.width = 1280;
             this.height = 720;
         }
-        let canvas = new OffscreenCanvas(this.width, this.height);
-        this.context = canvas.getContext("2d", {
-            alpha: false,
-        }) as OffscreenCanvasRenderingContext2D;
+        this.doubleBuffer =
+            (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
+        this.currentBuffer = 0;
+        this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 3 : 1);
+        this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 3 : 1);
+        for (let index = 0; index < this.canvas.length; index++) {
+            this.canvas[index] = new OffscreenCanvas(this.width, this.height);
+            this.context[index] = this.canvas[index].getContext("2d", {
+                alpha: false,
+            }) as OffscreenCanvasRenderingContext2D;
+            this.canvas[index].width = this.width;
+            this.canvas[index].height = this.height;
+        }
         this.alphaEnable = false;
-        this.dblBuffer = (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
-        this.canvas = canvas;
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
         this.registerMethods([
             this.swapBuffers,
             this.clear,
@@ -71,30 +77,31 @@ export class RoScreen extends BrsComponent implements BrsValue {
         ]);
     }
     getCanvas(): OffscreenCanvas {
-        return this.canvas;
+        return this.canvas[this.currentBuffer];
     }
 
     getContext(): OffscreenCanvasRenderingContext2D {
-        return this.context;
+        return this.context[this.currentBuffer];
     }
 
     clearCanvas(rgba: number) {
-        let ctx = this.context;
+        let ctx = this.context[this.currentBuffer];
         ctx.fillStyle = rgbaIntToHex(rgba);
         ctx.fillRect(0, 0, this.width, this.height);
         return BrsInvalid.Instance;
     }
 
     drawImage(image: OffscreenCanvas, x: number, y: number) {
-        this.context.drawImage(image, x, y);
+        this.context[this.currentBuffer].drawImage(image, x, y);
     }
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
-        let context = this.canvas.getContext("2d", {
-            alpha: this.alphaEnable,
-        }) as OffscreenCanvasRenderingContext2D;
-        this.context = context;
+        for (let index = 0; index < this.canvas.length; index++) {
+            this.context[index] = this.canvas[index].getContext("2d", {
+                alpha: this.alphaEnable,
+            }) as OffscreenCanvasRenderingContext2D;
+        }
         return BrsInvalid.Instance;
     }
 
@@ -115,8 +122,14 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (this.dblBuffer) {
-                postMessage(this.context.getImageData(0, 0, this.width, this.height));
+            postMessage(
+                this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
+            );
+            if (this.doubleBuffer) {
+                this.currentBuffer++;
+                if (this.currentBuffer === this.canvas.length) {
+                    this.currentBuffer = 0;
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -153,7 +166,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            let ctx = this.context;
+            let ctx = this.context[this.currentBuffer];
             let result = BrsBoolean.True;
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
@@ -188,7 +201,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, theta: Float, object: RoBitmap) => {
-            let ctx = this.context;
+            let ctx = this.context[this.currentBuffer];
             let obj = object.getCanvas();
             let positionX = x.getValue();
             let positionY = y.getValue();
@@ -227,7 +240,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             object: BrsComponent
         ) => {
             let result = BrsBoolean.True;
-            let ctx = this.context;
+            let ctx = this.context[this.currentBuffer];
             ctx.imageSmoothingEnabled = false;
             if (object instanceof RoBitmap) {
                 let cvs = object.getCanvas();
@@ -280,7 +293,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             yEnd: Int32,
             rgba: Int32
         ) => {
-            let ctx = this.context;
+            let ctx = this.context[this.currentBuffer];
             ctx.beginPath();
             ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
             ctx.moveTo(xStart.getValue(), yStart.getValue());
@@ -302,7 +315,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
-            let ctx = this.context;
+            let ctx = this.context[this.currentBuffer];
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
             return BrsBoolean.True;
@@ -322,7 +335,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            let ctx = this.context;
+            let ctx = this.context[this.currentBuffer];
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
             return BrsBoolean.True;
@@ -342,7 +355,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            let ctx = this.context;
+            let ctx = this.context[this.currentBuffer];
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
@@ -358,8 +371,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (!this.dblBuffer) {
-                postMessage(this.context.getImageData(0, 0, this.width, this.height));
+            if (!this.doubleBuffer) {
+                postMessage(this.context[0].getImageData(0, 0, this.width, this.height));
             }
             return BrsInvalid.Instance;
         },

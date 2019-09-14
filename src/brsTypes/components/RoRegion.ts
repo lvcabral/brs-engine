@@ -10,7 +10,6 @@ import { RoScreen } from "./RoScreen";
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private bitmap: RoBitmap | RoScreen;
-    private context: OffscreenCanvasRenderingContext2D;
     private x: number;
     private y: number;
     private width: number;
@@ -27,7 +26,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
         this.bitmap = bitmap;
-        this.context = bitmap.getContext();
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
         this.x = x.getValue();
         this.y = y.getValue();
@@ -81,13 +79,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     clearCanvas(rgba: number) {
-        let ctx = this.context;
+        const ctx = this.bitmap.getContext();
         ctx.fillStyle = rgbaIntToHex(rgba);
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 
     drawImage(image: OffscreenCanvas, x: number, y: number) {
-        this.context.drawImage(
+        const ctx = this.bitmap.getContext();
+        ctx.drawImage(
             image,
             0,
             0,
@@ -129,7 +128,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     getImageData(): ImageData {
-        return this.context.getImageData(this.x, this.y, this.width, this.height);
+        const ctx = this.bitmap.getContext();
+        return ctx.getImageData(this.x, this.y, this.width, this.height);
     }
 
     getAnimaTime(): number {
@@ -466,7 +466,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
-                let ctx = this.context;
+                let ctx = this.bitmap.getContext();
                 ctx.drawImage(
                     object.getCanvas(),
                     object.getPosX(),
@@ -505,7 +505,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             yEnd: Int32,
             rgba: Int32
         ) => {
-            let ctx = this.context;
+            let ctx = this.bitmap.getContext();
             ctx.beginPath();
             ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
             ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
@@ -527,7 +527,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
-            let ctx = this.context;
+            let ctx = this.bitmap.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.fillRect(
                 this.x + x.getValue(),
@@ -552,7 +552,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            let ctx = this.context;
+            let ctx = this.bitmap.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.fillRect(
                 this.x + x.getValue(),
@@ -577,7 +577,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            let ctx = this.context;
+            let ctx = this.bitmap.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
