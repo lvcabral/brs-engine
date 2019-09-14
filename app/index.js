@@ -326,7 +326,23 @@ function receiveMessage(event) {
         deviceData.registry.forEach(function(value, key) {
             storage.setItem(key, value);
         });
+    } else if (event.data == "end") {
+        closeChannel();
     }
+}
+
+// Restore emulator menu and terminate Worker
+function closeChannel() {
+    display.style.opacity = 0;
+    channelInfo.innerHTML = "<br/>";
+    fileButton.style.visibility = "visible";
+    channel1.style.visibility = "visible";
+    channel2.style.visibility = "visible";
+    channel3.style.visibility = "visible";
+    fileSelector.value = null;
+    brsWorker.terminate();
+    sharedArray[0] = 0;
+    running = false;
 }
 
 // Remote control emulator
@@ -366,16 +382,7 @@ function keyDownHandler(event) {
     } else if (event.keyCode == 27) {
         if (brsWorker != undefined) {
             // HOME BUTTON (ESC)
-            display.style.opacity = 0;
-            channelInfo.innerHTML = "<br/>";
-            fileButton.style.visibility = "visible";
-            channel1.style.visibility = "visible";
-            channel2.style.visibility = "visible";
-            channel3.style.visibility = "visible";
-            fileSelector.value = null;
-            brsWorker.terminate();
-            sharedArray[0] = 0;
-            running = false;
+            closeChannel();
         }
     }
     // TODO: Send TimeSinceLastKeypress()
