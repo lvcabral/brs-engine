@@ -17,7 +17,6 @@ var channel3 = document.getElementById("channel3");
 var bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
 var bufferCtx = bufferCanvas.getContext("2d");
 var buffer = new ImageData(screenSize.width, screenSize.height);
-var dirty = false;
 var splashTimeout = 1600;
 var brsWorker;
 var source = [];
@@ -301,7 +300,7 @@ function runChannel() {
     display.style.opacity = 1;
     display.focus();
     brsWorker = new Worker("./lib/brsEmu.js");
-    brsWorker.addEventListener("message", saveBuffer);
+    brsWorker.addEventListener("message", receiveMessage);
     var payload = {
         device: deviceData,
         paths: paths,
@@ -315,27 +314,18 @@ function runChannel() {
 }
 
 // Receive Screen and Registry data from Web Worker
-function saveBuffer(event) {
+function receiveMessage(event) {
     if (event.data instanceof ImageData) {
         buffer = event.data;
-        dirty = true;
-        drawCanvas();
+        bufferCanvas.width = buffer.width;
+        bufferCanvas.height = buffer.height;
+        bufferCtx.putImageData(buffer, 0, 0);
+        ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
         deviceData.registry.forEach(function(value, key) {
             storage.setItem(key, value);
         });
-    }
-}
-
-// Display screen buffer
-function drawCanvas() {
-    if (dirty) {
-        bufferCanvas.width = buffer.width;
-        bufferCanvas.height = buffer.height;
-        bufferCtx.putImageData(buffer, 0, 0);
-        ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
-        dirty = false;
     }
 }
 
