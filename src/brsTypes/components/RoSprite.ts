@@ -22,7 +22,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     private collidableFlags: number;
     private data: BrsType;
     private compositor: RoCompositor;
-    private dirty: boolean;
+    private tickSum: number;
 
     constructor(
         x: Int32,
@@ -50,7 +50,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         this.memberFlags = 1;
         this.data = BrsInvalid.Instance;
         this.compositor = compositor;
-        this.dirty = true;
+        this.tickSum = 0;
 
         this.registerMethods([
             this.checkCollision,
@@ -123,9 +123,11 @@ export class RoSprite extends BrsComponent implements BrsValue {
 
     nextFrame(tick: number) {
         if (this.regions) {
+            this.tickSum += tick;
             let region = this.regions.getElements()[this.frame] as RoRegion;
-            if (tick >= region.getAnimaTime()) {
+            if (this.tickSum >= region.getAnimaTime()) {
                 this.frame++;
+                this.tickSum = 0;
                 if (this.frame >= this.regions.getElements().length) {
                     this.frame = 0;
                 }
@@ -283,7 +285,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, x: Int32, y: Int32) => {
             this.x = x.getValue();
             this.y = y.getValue();
-            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
@@ -300,7 +301,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, xOffset: Int32, yOffset: Int32) => {
             this.x += xOffset.getValue();
             this.y += yOffset.getValue();
-            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
@@ -336,7 +336,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
                     }
                 });
             }
-            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
@@ -373,7 +372,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, drawable: BrsBoolean) => {
             this.drawable = drawable.toBoolean();
-            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
@@ -399,7 +397,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, region: RoRegion) => {
             this.region = region;
-            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
@@ -415,7 +412,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 this.compositor.setSpriteZ(this.id, this.z, z.getValue());
                 this.z = z.getValue();
             }
-            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
@@ -428,7 +424,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, z: Int32) => {
             this.compositor.removeSprite(this.id, this.regions !== null);
-            this.dirty = true;
             return BrsInvalid.Instance;
         },
     });
