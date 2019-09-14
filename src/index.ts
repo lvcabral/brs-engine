@@ -104,6 +104,7 @@ onmessage = function(event) {
         }
         // Run Channel
         run(source, interpreter);
+        postMessage("end");
     } else {
         // Setup Control Shared Array
         control.set("keys", new Int32Array(event.data));
