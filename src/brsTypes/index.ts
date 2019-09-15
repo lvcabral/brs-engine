@@ -23,6 +23,7 @@ export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
 export * from "./components/RoArray";
+export * from "./components/RoDateTime";
 export * from "./components/RoAssociativeArray";
 export * from "./components/Timespan";
 export * from "./components/RoSGNode";
