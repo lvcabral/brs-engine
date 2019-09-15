@@ -167,7 +167,12 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             let ctx = this.context[this.currentBuffer];
-            let result = BrsBoolean.True;
+            if (!(rgba instanceof BrsInvalid)) {
+                const alpha = rgba.getValue() & 255;
+                if (alpha < 255) {
+                    ctx.globalAlpha = alpha / 255;
+                }
+            }
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
@@ -183,9 +188,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     object.getImageHeight()
                 );
             } else {
-                result = BrsBoolean.False;
+                return BrsBoolean.False;
             }
-            return result;
+            ctx.globalAlpha = 1.0;
+            return BrsBoolean.True;
         },
     });
 
