@@ -125,6 +125,8 @@ describe("end to end syntax", () => {
             "2",
             "1",
             "0", // count down
+            "128", // step non multiple of final
+            "85", // step non multiple of final
             "for loop exit", // exit early
             "0", // e after loop
             "initial = final", // loop where initial equals final
