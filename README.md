@@ -3,7 +3,7 @@ An emulator for the BrightScript 2D API that runs on Chromium based browsers.
 
 ## About the Project
 
-As a **BrightScript** developer since 2012, I always wanted a way to test my code without the need of a Roku device, in situations like a long flight or a place without any wireless network available. Then in 2016 I decided to learn about the **[ifDraw2D API](https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md)** in order to develop games for the platform, so I created a few open source remakes of classic games (see links below at section Games and Demos). These projects were very challenging and exciting to develop, but brought me some frustration with it, as very few people outside the USA has access to the Roku platform, so a lot of people could only see [videos of my games](https://www.youtube.com/watch?v=NA59qZk7fQU&list=PLnKUeRkfD6f2JwNfJFiGfUrrg4YVKdcRQ), but never play it.
+As a **BrightScript** developer since 2012, I always wanted a way to test my code without the need of a Roku device, in situations like a long flight or a place without any wireless network available. Then in 2016 I decided to learn about the **[ifDraw2D API](https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md)** in order to develop games for the platform, so I created a few open source remakes of classic games (see links below at section **Games and Demos**). These projects were very challenging and exciting to develop, but brought me some frustration with it, as very few people outside the USA has access to the Roku platform, so a lot of people could only see [videos of my games](https://www.youtube.com/watch?v=NA59qZk7fQU&list=PLnKUeRkfD6f2JwNfJFiGfUrrg4YVKdcRQ), but never play it.
 
 The development of an emulator for the platform was, to me, a very complex endeavor to start as a _side project_, so I shelved the idea in my _Brain Dump Trello board_, until recently, when I learned about the [**BRS**](https://github.com/sjbarag/brs) open source project, created by [Sean Barag](https://github.com/sjbarag/), that consists of a _command line interpreter_ for **BrightScript**.
 
@@ -28,11 +28,9 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   Single line `if..then..[else]` cannot be nested inside another `if` clause.
 *   The global AA (root `m` object) is not accessible from a function called inside a method.
 *   The component `roUrlTransfer` is not implemented.
-*   The `String` method `Tokenize()` is not implemented, for now replace it with `Split()`.
-*   Optional parameter `rgba` in `DrawObject()` method not supported.
+*   Optional parameter `rgba` in `DrawObject()` method partially supported (only alpha opacity).
 *   Reserved words like `Mod` cannot be used as variables (Roku does allow that).
 *   The `Dim` statement cannot create multi-dimensional arrays.
-*   The `ToStr()` method is not supported.
 *   Return `Invalid` from a function explicitly declared as `Object` doesn't work, use `Dynamic` or remove type declaration.
 *   Send `Invalid` on a function parameter when it explicitly defines the type, generates an error. If `Invalid` is possible remove type declaration.
 *   Audio playback is not supported yet, for now `roAudioPlayer` and `roAudioResource` are mocked.
@@ -67,11 +65,10 @@ Then you can now open your browser at the page `http://localhost:8888/index.html
 
 ### Games and Demos
 
-You can try the emulator by running one of the games or demonstration channels listed below, these are pre-configured as _clickable icons_ on `index.html`, all these channels are tested on the emulator and are publicly available with source code, download the `.zip` release files (links below) and copy to the `channels` folder under the application root. You can also run your own code, either as a single **.brs** file or a channel **.zip package**.
+You can try the emulator by running one of the demonstration channels included in the repository, these are pre-configured as _clickable icons_ on `index.html`. In addition to the icons, the emulator has a button where you can load your own code, either as a single **.brs** file or a channel **.zip package**. You can also load the `.zip` release files of some games, all the files linked below are tested on the emulator and are publicly available with source code.
 
 *   [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.15.3700/Prince-of-Persia-Roku-015.zip)
 *   [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.17.700/Lode-Runner-Roku-017.zip)
-*   [Colliding Sprites](https://blog.roku.com/developer/2012/09/15/colliding-sprites) demonstration by Robert Burdick - Download [zip file](https://github.com/rokudev/samples/blob/master/ux%20components/control/Collisions.zip)
 
 ### Note for BrightScript Developers
 

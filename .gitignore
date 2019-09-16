@@ -5,4 +5,4 @@ types/
 node_modules/
 dist/
 out/
-channels/
+/channels/
