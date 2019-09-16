@@ -101,9 +101,7 @@ function loadZip(zip) {
     }
     running = true;
     display.style.opacity = 0;
-    channel1.style.visibility = "visible";
-    channel2.style.visibility = "visible";
-    channel3.style.visibility = "visible";
+    channelIcons("visible");
     fileSelector.value = null;
     source = [];
     if (brsWorker != undefined) {
@@ -152,9 +150,7 @@ function openChannelZip(f) {
                             if (splashFile) {
                                 splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(imgData => {
-                                        channel1.style.visibility = "hidden";
-                                        channel2.style.visibility = "hidden";
-                                        channel3.style.visibility = "hidden";
+                                        channelIcons("hidden");
                                         display.style.opacity = 1;
                                         ctx.drawImage(
                                             imgData,
@@ -294,9 +290,7 @@ function openChannelZip(f) {
 
 // Execute Emulator Web Worker
 function runChannel() {
-    channel1.style.visibility = "hidden";
-    channel2.style.visibility = "hidden";
-    channel3.style.visibility = "hidden";
+    channelIcons("hidden");
     display.style.opacity = 1;
     display.focus();
     brsWorker = new Worker("./lib/brsEmu.js");
@@ -336,9 +330,7 @@ function closeChannel() {
     display.style.opacity = 0;
     channelInfo.innerHTML = "<br/>";
     fileButton.style.visibility = "visible";
-    channel1.style.visibility = "visible";
-    channel2.style.visibility = "visible";
-    channel3.style.visibility = "visible";
+    channelIcons("visible");
     fileSelector.value = null;
     brsWorker.terminate();
     sharedArray[0] = 0;
@@ -416,6 +408,13 @@ function keyUpHandler(event) {
     } else if (event.keyCode == 90) {
         sharedArray[0] = 118; // BUTTON_B_RELEASED
     }
+}
+
+// Channel icons Visibility
+function channelIcons(visibility) {
+    channel1.style.visibility = visibility;
+    channel2.style.visibility = visibility;
+    channel3.style.visibility = visibility;
 }
 
 // Exception Handler
