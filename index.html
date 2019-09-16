@@ -14,20 +14,20 @@
         src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
     <div id="container">
         <h2
-            >BrightScript 2D API Emulator :: v0.2 Alpha
+            >BrightScript 2D API Emulator :: v0.3 Alpha
             <hr>
         </h2>
         <div style="position: relative; left: 0px; top: 0px">
             <img class="img" src="app/images/brightscript-tv.png" width="1252" height="650"/>
             <canvas id="display" width="854px" height="480px"></canvas>
-            <a href="#" onclick="loadZip('channels/Prince-of-Persia-Roku-015.zip')">
-                <img id="channel1" src="app/images/prince-of-persia-icon.png" title="Open Prince of Persia game channel"/>
-            </a>
-            <a href="#" onclick="loadZip('channels/Lode-Runner-Roku-017.zip')">
-                <img id="channel2" src="app/images/lode-runner-icon.png" title="Open Lode Runner game channel"/>
-            </a>
-            <a href="#" onclick="loadZip('channels/Collisions.zip')">
+            <a href="#" onclick="loadZip('app/channels/Collisions.zip')">
                 <img id="channel3" src="app/images/collisions-icon.png" title="Open Sprite Collisions demo channel" />
+            </a>
+            <a href="#" onclick="loadZip('app/channels/Rect-Bounce.zip')">
+                <img id="channel1" src="app/images/rect-bounce-icon.png" title="Open Rectangle Bounce demo channel"/>
+            </a>
+            <a href="#" onclick="loadZip('app/channels/Ball-Boing.zip')">
+                <img id="channel2" src="app/images/ball-boing-icon.png" title="Open Ball Boing demo channel"/>
             </a>
             <span id="channelInfo"></span>
             <input type="file" id="file" accept=".brs,.zip" style="display: none;" />
@@ -38,9 +38,10 @@
         <p>As a <strong>BrightScript</strong> developer since 2012, I always wanted a way to test my code without the need of a Roku device, in situations like 
         a long flight or a place without any wireless network available. Then in 2016 I decided to learn about the 
         <strong><a href="https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md">ifDraw2D API</a></strong> in order 
-        to develop games for the platform, so I created a few open source remakes of classic games (click on the icons in emulator above to try those).
-        These projects were very challenging and exciting to develop, but brought me some frustration with it, as very few people outside the USA has access to the Roku platform, 
-        so a lot of people could only see <a href="https://www.youtube.com/watch?v=NA59qZk7fQU&list=PLnKUeRkfD6f2JwNfJFiGfUrrg4YVKdcRQ">videos of my games</a>, but never play it.</p>
+        to develop games for the platform, so I created a few open source remakes of classic games (see links below on <strong>Games and Demos</strong>).
+        These projects were very challenging and exciting to develop, but brought me some frustration with it, as very few people outside the USA has access 
+        to the Roku platform, so a lot of people could only see <a href="https://www.youtube.com/watch?v=NA59qZk7fQU&list=PLnKUeRkfD6f2JwNfJFiGfUrrg4YVKdcRQ">videos of my games</a>,
+        but never play it.</p>
     
         <p>The development of an emulator for the platform was, to me, a very complex endeavor to start as a <em>side project</em>, so I shelved the idea in my 
             <em>Brain Dump Trello board</em>, until recently, when I learned about the <a href="https://github.com/sjbarag/brs"><strong>brs</strong></a> open source project,
@@ -51,8 +52,8 @@
             studying TypeScript/Javascript, and exploring all sort of options to overcome different challenges, I finally came up with this prototype that is available here. </p>
 
         <h2>Games and Demos</h2>
-        You can try the emulator by loading one of the games or demonstration channels, using the <em>clickable icons</em> above or loading your own code, either as a single <strong>.brs</strong>
-        file or a channel <strong>.zip package</strong>. All of these channels are publicly available with source code, below you have links for their original repository/websites.
+        You can try the emulator by loading one of the demonstration channels, using the <em>clickable icons</em> above or loading your own code, either as a single <strong>.brs</strong>
+        file or a channel <strong>.zip package</strong>. You can also play some games downloading the release <strong>.zip</strong> files from the repositories linked below.
         <ul>
             <li>
                 <a href="https://github.com/lvcabral/Prince-of-Persia-Roku">Prince of Persia</a> port by Marcelo Lv Cabral.
@@ -60,11 +61,7 @@
             <li>
                 <a href="https://github.com/lvcabral/Lode-Runner-Roku">Lode Runner</a> remake by Marcelo Lv Cabral.
             </li>
-            <li>
-                <a href="https://blog.roku.com/developer/2012/09/15/colliding-sprites">Colliding Sprites</a> demonstration by Robert Burdick.
-            </li>
         </ul>
-
     
         <h2>Compatibility</h2>
         <p>This emulator is bundled as a <strong><a href="https://webpack.js.org/">Webpack</a></strong> Javascript library that runs as a 
@@ -87,11 +84,9 @@
             <li>Single line <code>if..then..[else]</code> cannot be nested inside another <code>if</code> clause.</li>
             <li>The global AA (root <code>m</code> object) is not accessible from a function called inside a method.</li>
             <li>The component <code>roUrlTransfer</code> is not implemented.</li>
-            <li>The <code>String</code> method <code>Tokenize()</code> is not implemented, for now replace it with <code>Split()</code>.</li>
-            <li>Optional parameter <code>rgba</code> in <code>DrawObject()</code> method not supported.</li>
+            <li>Optional parameter <code>rgba</code> in <code>DrawObject()</code> method partially supported (only alpha opacity).</li>
             <li>Reserved words like <code>Mod</code> cannot be used as variables (Roku does allow that).</li>
             <li>The <code>Dim</code> statement cannot create multi-dimensional arrays.</li>
-            <li>The <code>ToStr()</code> method is not supported.</li>
             <li>Return <code>Invalid</code> from a function explicitly declared as <code>Object</code> doesn't work, use <code>Dynamic</code> or remove type declaration.</li>
             <li>Send <code>Invalid</code> on a function parameter when it explicitly defines the type, generates an error. If <code>Invalid</code> is possible remove type declaration.</li>
             <li>Audio playback is not supported yet, for now <code>roAudioPlayer</code> and <code>roAudioResource</code> are mocked.</li>
