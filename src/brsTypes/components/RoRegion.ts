@@ -10,6 +10,8 @@ import { RoScreen } from "./RoScreen";
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private bitmap: RoBitmap | RoScreen;
+    private canvas?: OffscreenCanvas;
+    private context?: OffscreenCanvasRenderingContext2D;
     private x: number;
     private y: number;
     private width: number;
@@ -75,6 +77,20 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.y += y;
         this.width += width;
         this.height += height;
+        while (Math.abs(this.x) > this.width) {
+            if (this.x > 0) {
+                this.x -= this.width;
+            } else {
+                this.x += this.width;
+            }
+        }
+        while (Math.abs(this.y) > this.height) {
+            if (this.y > 0) {
+                this.y -= this.height;
+            } else {
+                this.y += this.height;
+            }
+        }
         // TODO: Check what is the effect on collision parameters
     }
 
@@ -128,8 +144,61 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     getImageData(): ImageData {
-        const ctx = this.bitmap.getContext();
-        return ctx.getImageData(this.x, this.y, this.width, this.height);
+        // TODO: Check the impact of translate on this method
+        const bmp = this.bitmap.getCanvas();
+        let ctx: OffscreenCanvasRenderingContext2D;
+        if (
+            this.wrap &&
+            (this.x + this.width > bmp.width || this.y + this.height > bmp.height || this.y < 0)
+        ) {
+            if (this.canvas) {
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+                ctx = this.context as OffscreenCanvasRenderingContext2D;
+            } else {
+                this.canvas = new OffscreenCanvas(this.width, this.height);
+                ctx = this.canvas.getContext("2d", {
+                    alpha: true,
+                }) as OffscreenCanvasRenderingContext2D;
+                this.context = ctx;
+            }
+            if (this.y >= 0) {
+                ctx.drawImage(
+                    bmp,
+                    this.x,
+                    this.y,
+                    this.width - this.x,
+                    this.height - this.y,
+                    0,
+                    0,
+                    this.width - this.x,
+                    this.height - this.y
+                );
+                if (this.y + this.height > bmp.height) {
+                    ctx.drawImage(
+                        bmp,
+                        this.x,
+                        0,
+                        this.width - this.x,
+                        this.y,
+                        0,
+                        this.height,
+                        this.width - this.x,
+                        this.y
+                    );
+                }
+            } else {
+                let yr = Math.abs(this.y);
+                let h1 = this.height - yr;
+                let h2 = bmp.height - h1;
+                ctx.drawImage(bmp, 0, h1, this.width, h2, 0, 0, this.width, h2);
+                ctx.drawImage(bmp, 0, h2, this.width, bmp.height);
+            }
+            return ctx.getImageData(0, 0, this.width, this.height);
+        } else {
+            ctx = this.bitmap.getContext();
+            return ctx.getImageData(this.x, this.y, this.width, this.height);
+        }
     }
 
     getAnimaTime(): number {
