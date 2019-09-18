@@ -9,6 +9,8 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
+import * as PNG from "fast-png";
+import { RoByteArray } from "./RoByteArray";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -68,12 +70,13 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.finish,
             this.getAlphaEnable,
             this.setAlphaEnable,
-            // this.getByteArray,
-            // this.getPng,
+            this.getByteArray,
+            this.getPng,
             this.getWidth,
             this.getHeight,
             this.getMessagePort,
             this.setMessagePort,
+            this.setPort,
         ]);
     }
     getCanvas(): OffscreenCanvas {
@@ -234,6 +237,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("scaleX", ValueKind.Float),
                 new StdlibArgument("scaleY", ValueKind.Float),
                 new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance),
             ],
             returns: ValueKind.Boolean,
         },
@@ -428,6 +432,58 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
+    private getByteArray = new Callable("getByteArray", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            let imgData = this.context[this.currentBuffer].getImageData(
+                x.getValue(),
+                y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
+            let byteArray = new Uint8Array(imgData.data.buffer);
+            return new RoByteArray(byteArray);
+        },
+    });
+
+    /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
+    private getPng = new Callable("getPng", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            let imgData = this.context[this.currentBuffer].getImageData(
+                x.getValue(),
+                y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
+            let idata: PNG.IImageData = {
+                width: imgData.width,
+                height: imgData.height,
+                data: new Uint8Array(imgData.data.buffer),
+                depth: 8,
+                channels: 4,
+            };
+            return new RoByteArray(PNG.encode(idata));
+        },
+    });
+
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
@@ -445,6 +501,18 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     /** Sets the roMessagePort to be used for all events from the screen */
     private setMessagePort = new Callable("setMessagePort", {
+        signature: {
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, port: RoMessagePort) => {
+            this.port = port;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Sets the roMessagePort to be used for all events from the screen */
+    private setPort = new Callable("setPort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
