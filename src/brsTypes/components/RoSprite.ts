@@ -172,6 +172,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 rect.y,
                 rect.width,
                 rect.height,
+                this.memberFlags,
                 false
             );
         },
@@ -191,6 +192,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 rect.y,
                 rect.width,
                 rect.height,
+                this.memberFlags,
                 true
             );
         },

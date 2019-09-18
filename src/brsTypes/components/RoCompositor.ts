@@ -84,6 +84,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         y: number,
         width: number,
         height: number,
+        memberFlags: number,
         multiple: boolean
     ): BrsType {
         let collide: BrsType;
@@ -95,7 +96,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                     let flags = sprite.getFlags();
                     let rect = sprite.getRect();
                     if (
-                        flags.memberFlags > 0 && // TODO: Correctly check the flags using bitwise operation
+                        memberFlags === flags.memberFlags && // TODO: Correctly check the flags using bitwise operation
                         x < rect.x + rect.width &&
                         x + width > rect.x &&
                         y < rect.y + rect.height &&
