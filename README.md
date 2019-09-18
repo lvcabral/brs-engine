@@ -24,6 +24,7 @@ This emulator is still a **prototype**, this way, there are several features fro
 ### In Scope (to be developed/fixed)
 
 *   Usage of **@** to access attributes from `roXMLElements` is not supported.
+*   `Goto` statements are not supported.
 *   It's not possible to compare `roUniversalControlEvent` to an integer.
 *   Single line `if..then..[else]` cannot be nested inside another `if` clause.
 *   The global AA (root `m` object) is not accessible from a function called inside a method.
