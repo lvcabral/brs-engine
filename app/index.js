@@ -412,9 +412,11 @@ function keyUpHandler(event) {
 
 // Channel icons Visibility
 function channelIcons(visibility) {
-    channel1.style.visibility = visibility;
-    channel2.style.visibility = visibility;
-    channel3.style.visibility = visibility;
+    if (channel3) {
+        channel1.style.visibility = visibility;
+        channel2.style.visibility = visibility;
+        channel3.style.visibility = visibility;
+    }
 }
 
 // Exception Handler
