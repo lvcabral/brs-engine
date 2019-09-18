@@ -1,9 +1,10 @@
-import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType } from "..";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsType, isBrsString, isBrsNumber } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { RoAssociativeArray } from "./RoAssociativeArray";
 
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -22,6 +23,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             this.count,
             this.clear,
             this.append,
+            this.join,
+            this.sort,
+            this.sortBy,
+            this.reverse,
         ]);
     }
 
@@ -177,6 +182,149 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 ...array.elements.filter(element => !!element), // don't copy "holes" where no value exists
             ];
 
+            return BrsInvalid.Instance;
+        },
+    });
+    // ifArrayJoin
+    private join = new Callable("join", {
+        signature: {
+            args: [new StdlibArgument("separator", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter, separator: BrsString) => {
+            if (
+                this.elements.some(function(element) {
+                    return !(element instanceof BrsString);
+                })
+            ) {
+                interpreter.stderr.write("roArray.Join: Array contains non-string value(s).\n");
+                return new BrsString("");
+            }
+            return new BrsString(this.elements.join(separator.value));
+        },
+    });
+    // ifArraySort
+    private sort = new Callable("sort", {
+        signature: {
+            args: [new StdlibArgument("flags", ValueKind.String, new BrsString(""))],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, flags: BrsString) => {
+            if (flags.toString().match(/([^ir])/g) != null) {
+                interpreter.stderr.write("roArray.Sort: Flags contains invalid option(s).\n");
+            } else {
+                this.elements = this.elements.sort(function(a, b) {
+                    var compare = 0;
+                    if (a !== undefined && b !== undefined) {
+                        if (a instanceof RoArray && b instanceof RoAssociativeArray) {
+                            compare = 1;
+                        } else if (a instanceof RoAssociativeArray && b instanceof RoArray) {
+                            compare = -1;
+                        } else if (
+                            !(isBrsString(a) || isBrsNumber(a)) &&
+                            (isBrsString(b) || isBrsNumber(b))
+                        ) {
+                            compare = 1;
+                        } else if (
+                            (isBrsString(a) || isBrsNumber(a)) &&
+                            !(isBrsString(b) || isBrsNumber(b))
+                        ) {
+                            compare = -1;
+                        } else if (
+                            flags.toString().indexOf("i") > -1 &&
+                            isBrsString(a) &&
+                            isBrsString(b)
+                        ) {
+                            compare = a
+                                .toString()
+                                .toLowerCase()
+                                .localeCompare(b.toString().toLowerCase());
+                        } else {
+                            compare = a > b ? 1 : -1;
+                        }
+                    }
+                    if (flags.toString().indexOf("r") > -1) {
+                        compare = -compare;
+                    }
+                    return compare;
+                });
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private sortBy = new Callable("sortBy", {
+        signature: {
+            args: [
+                new StdlibArgument("fieldName", ValueKind.String),
+                new StdlibArgument("flags", ValueKind.String, new BrsString("")),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, fieldName: BrsString, flags: BrsString) => {
+            if (flags.toString().match(/([^ir])/g) != null) {
+                interpreter.stderr.write("roArray.SortBy: Flags contains invalid option(s).\n");
+            } else {
+                this.elements = this.elements.sort(function(a, b) {
+                    var compare = 0;
+                    if (a instanceof RoAssociativeArray && b instanceof RoAssociativeArray) {
+                        if (
+                            a.elements.has(fieldName.toString().toLowerCase()) &&
+                            b.elements.has(fieldName.toString().toLowerCase())
+                        ) {
+                            var valueA = a.get(fieldName);
+                            var valueB = b.get(fieldName);
+                            if (
+                                flags.toString().indexOf("i") > -1 &&
+                                isBrsString(valueA) &&
+                                isBrsString(valueB)
+                            ) {
+                                compare = valueA
+                                    .toString()
+                                    .toLowerCase()
+                                    .localeCompare(valueB.toString().toLowerCase());
+                            } else if (valueA !== undefined && valueB !== undefined) {
+                                compare = valueA > valueB ? 1 : -1;
+                            }
+                        }
+                    } else if (a !== undefined && b !== undefined) {
+                        if (a instanceof RoArray && b instanceof RoAssociativeArray) {
+                            compare = 1;
+                        } else if (a instanceof RoAssociativeArray && b instanceof RoArray) {
+                            compare = -1;
+                        } else if (isBrsString(a) && isBrsNumber(b)) {
+                            compare = 1;
+                        } else if (isBrsNumber(a) && isBrsString(b)) {
+                            compare = -1;
+                        } else if (
+                            !(isBrsString(a) || isBrsNumber(a)) &&
+                            (isBrsString(b) || isBrsNumber(b))
+                        ) {
+                            compare = 1;
+                        } else if (
+                            (isBrsString(a) || isBrsNumber(a)) &&
+                            !(isBrsString(b) || isBrsNumber(b))
+                        ) {
+                            compare = -1;
+                        }
+                    }
+                    return compare;
+                });
+                if (flags.toString().indexOf("r") > -1) {
+                    this.elements = this.elements.reverse();
+                }
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private reverse = new Callable("reverse", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, separator: BrsString) => {
+            this.elements = this.elements.reverse();
             return BrsInvalid.Instance;
         },
     });

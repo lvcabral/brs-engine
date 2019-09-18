@@ -19,6 +19,7 @@ import {
     Callable,
     BrsNumber,
     Comparable,
+    Float,
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
@@ -984,9 +985,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
         this.execute(statement.counterDeclaration);
-        const finalValue = this.evaluate(statement.finalValue);
-        const increment = this.evaluate(statement.increment);
-
+        const startValue = this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
+        const finalValue = this.evaluate(statement.finalValue) as Int32 | Float;
+        let increment = this.evaluate(statement.increment) as Int32 | Float;
+        if (increment instanceof Float) {
+            increment = new Int32(Math.trunc(increment.getValue()));
+        }
+        if (
+            (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
+            (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
+        ) {
+            // Shortcut, do not process anything
+            return BrsInvalid.Instance;
+        }
         const counterName = statement.counterDeclaration.name;
         const step = new Stmt.Assignment(
             { equals: statement.tokens.for },
@@ -1015,34 +1026,52 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         let loopExitReason: Stmt.BlockEnd | undefined;
 
-        while (
-            this.evaluate(new Expr.Variable(counterName))
-                .equalTo(finalValue)
-                .not()
-                .toBoolean()
-        ) {
-            // execute the block
-            try {
-                this.execute(statement.body);
-            } catch (reason) {
-                if (reason instanceof Stmt.ExitForReason) {
-                    loopExitReason = reason;
-                    break;
-                } else {
-                    // re-throw returns, runtime errors, etc.
-                    throw reason;
+        if (increment.getValue() > 0) {
+            while (
+                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
+                    .greaterThan(finalValue)
+                    .not()
+                    .toBoolean()
+            ) {
+                // execute the block
+                try {
+                    this.execute(statement.body);
+                } catch (reason) {
+                    if (reason instanceof Stmt.ExitForReason) {
+                        loopExitReason = reason;
+                        break;
+                    } else {
+                        // re-throw returns, runtime errors, etc.
+                        throw reason;
+                    }
                 }
+
+                // then increment the counter
+                this.execute(step);
             }
+        } else {
+            while (
+                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
+                    .lessThan(finalValue)
+                    .not()
+                    .toBoolean()
+            ) {
+                // execute the block
+                try {
+                    this.execute(statement.body);
+                } catch (reason) {
+                    if (reason instanceof Stmt.ExitForReason) {
+                        loopExitReason = reason;
+                        break;
+                    } else {
+                        // re-throw returns, runtime errors, etc.
+                        throw reason;
+                    }
+                }
 
-            // then increment the counter
-            this.execute(step);
-        }
-
-        // BrightScript for/to loops execute the body one more time when initial === final
-        if (loopExitReason === undefined) {
-            this.execute(statement.body);
-            // they also increments the counter once more
-            this.execute(step);
+                // then increment the counter
+                this.execute(step);
+            }
         }
 
         return BrsInvalid.Instance;
