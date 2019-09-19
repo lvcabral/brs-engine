@@ -77,18 +77,20 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.y += y;
         this.width += width;
         this.height += height;
-        while (Math.abs(this.x) > this.width) {
-            if (this.x > 0) {
-                this.x -= this.width;
-            } else {
-                this.x += this.width;
+        if (this.wrap) {
+            while (Math.abs(this.x) > this.width) {
+                if (this.x > 0) {
+                    this.x -= this.width;
+                } else {
+                    this.x += this.width;
+                }
             }
-        }
-        while (Math.abs(this.y) > this.height) {
-            if (this.y > 0) {
-                this.y -= this.height;
-            } else {
-                this.y += this.height;
+            while (Math.abs(this.y) > this.height) {
+                if (this.y > 0) {
+                    this.y -= this.height;
+                } else {
+                    this.y += this.height;
+                }
             }
         }
         // TODO: Check what is the effect on collision parameters
@@ -149,7 +151,10 @@ export class RoRegion extends BrsComponent implements BrsValue {
         let ctx: OffscreenCanvasRenderingContext2D;
         if (
             this.wrap &&
-            (this.x + this.width > bmp.width || this.y + this.height > bmp.height || this.y < 0)
+            (this.x + this.width > bmp.width ||
+                this.y + this.height > bmp.height ||
+                this.x < 0 ||
+                this.y < 0)
         ) {
             if (this.canvas) {
                 this.canvas.width = this.width;
@@ -162,32 +167,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 }) as OffscreenCanvasRenderingContext2D;
                 this.context = ctx;
             }
-            if (this.y >= 0) {
-                ctx.drawImage(
-                    bmp,
-                    this.x,
-                    this.y,
-                    this.width - this.x,
-                    this.height - this.y,
-                    0,
-                    0,
-                    this.width - this.x,
-                    this.height - this.y
-                );
-                if (this.y + this.height > bmp.height) {
-                    ctx.drawImage(
-                        bmp,
-                        this.x,
-                        0,
-                        this.width - this.x,
-                        this.y,
-                        0,
-                        this.height,
-                        this.width - this.x,
-                        this.y
-                    );
-                }
-            } else {
+            if (this.x === 0) {
                 let yr = Math.abs(this.y);
                 let h1 = this.height - yr;
                 let h2 = bmp.height - h1;
