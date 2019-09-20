@@ -5,12 +5,12 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoRegion } from "./RoRegion";
-import { RoCompositor } from "./RoCompositor";
+import { RoCompositor, Rect, Circle } from "./RoCompositor";
 import { RoArray } from "./RoArray";
 
 export class RoSprite extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private region?: RoRegion;
+    private region: RoRegion;
     private regions?: RoArray;
     private id: number;
     private x: number;
@@ -27,19 +27,12 @@ export class RoSprite extends BrsComponent implements BrsValue {
     constructor(
         x: Int32,
         y: Int32,
-        region: BrsComponent,
+        region: RoRegion | RoArray,
         z: Int32,
         id: number,
         compositor: RoCompositor
     ) {
         super("roSprite");
-        if (region instanceof RoRegion) {
-            this.region = region;
-        } else if (region instanceof RoArray) {
-            this.regions = region;
-        } else {
-            //TODO: Raise an exception
-        }
         this.id = id;
         this.x = x.getValue();
         this.y = y.getValue();
@@ -51,6 +44,12 @@ export class RoSprite extends BrsComponent implements BrsValue {
         this.data = BrsInvalid.Instance;
         this.compositor = compositor;
         this.tickSum = 0;
+        if (region instanceof RoArray) {
+            this.regions = region;
+            this.region = region.getElements()[this.frame] as RoRegion;
+        } else {
+            this.region = region;
+        }
 
         this.registerMethods([
             this.checkCollision,
@@ -77,14 +76,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     }
 
     getImageData(): ImageData {
-        let image = new ImageData(1, 1);
-        if (this.region) {
-            image = this.region.getImageData();
-        } else if (this.regions) {
-            let region = this.regions.getElements()[this.frame] as RoRegion;
-            image = region.getImageData();
-        }
-        return image;
+        return this.region.getImageData();
     }
 
     getId(): number {
@@ -99,22 +91,31 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return this.y;
     }
 
-    getRect() {
-        let w = 0;
-        let h = 0;
-        if (this.region) {
-            w = this.region.getImageWidth();
-            h = this.region.getImageWidth();
-        } else if (this.regions) {
-            let region = this.regions.getElements()[this.frame] as RoRegion;
-            w = region.getImageWidth();
-            h = region.getImageWidth();
-        }
-        return { x: this.x, y: this.y, width: w, height: h };
+    getCircle(): Circle {
+        const collCircle = this.region.getCollCircle();
+        return {
+            x: this.x + collCircle.x,
+            y: this.y + collCircle.y,
+            r: collCircle.r,
+        };
+    }
+
+    getRect(): Rect {
+        const collRect = this.region.getCollRect();
+        return {
+            x: this.x + collRect.x,
+            y: this.y + collRect.y,
+            w: collRect.w,
+            h: collRect.h,
+        };
     }
 
     getFlags() {
         return { collidableFlags: this.collidableFlags, memberFlags: this.memberFlags };
+    }
+
+    getType() {
+        return this.region.getCollType();
     }
 
     visible(): boolean {
@@ -131,6 +132,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 if (this.frame >= this.regions.getElements().length) {
                     this.frame = 0;
                 }
+                this.region = this.regions.getElements()[this.frame] as RoRegion;
             }
         }
     }
@@ -150,11 +152,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return this.region
-                ? this.region
-                : this.regions
-                ? this.regions.getElements()[this.frame]
-                : BrsInvalid.Instance;
+            return this.region;
         },
     });
 
@@ -165,16 +163,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let rect = this.getRect();
-            return this.compositor.checkCollision(
-                this.id,
-                rect.x,
-                rect.y,
-                rect.width,
-                rect.height,
-                this.memberFlags,
-                false
-            );
+            return this.compositor.checkCollision(this, false);
         },
     });
 
@@ -185,16 +174,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let rect = this.getRect();
-            return this.compositor.checkCollision(
-                this.id,
-                rect.x,
-                rect.y,
-                rect.width,
-                rect.height,
-                this.memberFlags,
-                true
-            );
+            return this.compositor.checkCollision(this, true);
         },
     });
 
@@ -319,14 +299,8 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            if (this.region) {
-                this.region.applyOffset(
-                    x.getValue(),
-                    y.getValue(),
-                    width.getValue(),
-                    height.getValue()
-                );
-            } else if (this.regions) {
+            if (this.regions) {
+                // TODO: Double check if Roku does apply offset to all regions
                 this.regions.getElements().forEach(element => {
                     if (element instanceof RoRegion) {
                         element.applyOffset(
@@ -337,6 +311,13 @@ export class RoSprite extends BrsComponent implements BrsValue {
                         );
                     }
                 });
+            } else if (this.region) {
+                this.region.applyOffset(
+                    x.getValue(),
+                    y.getValue(),
+                    width.getValue(),
+                    height.getValue()
+                );
             }
             return BrsInvalid.Instance;
         },
