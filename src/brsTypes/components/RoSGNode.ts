@@ -745,7 +745,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, child_nodes: BrsType) => {
             if (child_nodes instanceof RoArray) {
                 let childNodesElements = child_nodes.getElements();
-                if (childNodesElements.length != 0) {
+                if (childNodesElements.length !== 0) {
                     childNodesElements.forEach(childNode => {
                         this.removeChildByReference(childNode);
                     });
@@ -814,7 +814,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, child_nodes: BrsType) => {
             if (child_nodes instanceof RoArray) {
                 let childNodesElements = child_nodes.getElements();
-                if (childNodesElements.length != 0) {
+                if (childNodesElements.length !== 0) {
                     childNodesElements.forEach(childNode => {
                         if (childNode instanceof RoSGNode) {
                             // Remove if it exists to reappend
@@ -870,7 +870,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 let childNodesElements = child_nodes.getElements();
-                if (childNodesElements.length != 0) {
+                if (childNodesElements.length !== 0) {
                     childNodesElements.forEach(childNode => {
                         if (!this.replaceChildAtIndex(childNode, new Int32(indexValue))) {
                             this.removeChildByReference(childNode);
@@ -900,7 +900,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 let childNodesElements = child_nodes.getElements();
-                if (childNodesElements.length != 0) {
+                if (childNodesElements.length !== 0) {
                     childNodesElements.forEach(childNode => {
                         this.insertChildAtIndex(childNode, new Int32(indexValue));
                         indexValue += 1;
