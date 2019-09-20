@@ -6,6 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
+import { Rect, Circle } from "./RoCompositor";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -22,8 +23,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private scaleMode: number;
     private time: number;
     private wrap: boolean;
-    private collisionCircle: object;
-    private collisionRect: object;
+    private collisionCircle: Circle;
+    private collisionRect: Rect;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
@@ -38,8 +39,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         this.time = 0;
         this.wrap = false;
-        this.collisionCircle = { xOffset: 0, yOffset: 0, radius: width > height ? width : height }; // TODO: double check Roku default
-        this.collisionRect = { xOffSet: 0, yOffset: 0, width: width, height: height }; // TODO: double check Roku default
+        this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
+        this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
 
         this.registerMethods([
             this.copy,
@@ -143,6 +144,22 @@ export class RoRegion extends BrsComponent implements BrsValue {
 
     getImageHeight(): number {
         return this.height;
+    }
+
+    getCollCircle(): Circle {
+        return this.collisionCircle;
+    }
+
+    getCollRect(): Rect {
+        if (this.collisionType === 1) {
+            return this.collisionRect;
+        } else {
+            return { x: 0, y: 0, w: this.width, h: this.height };
+        }
+    }
+
+    getCollType(): number {
+        return this.collisionType;
     }
 
     getImageData(): ImageData {
@@ -397,9 +414,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, xOffset: Int32, yOffset: Int32, radius: Int32) => {
             this.collisionCircle = {
-                xOffset: xOffset.getValue(),
-                yOffset: yOffset.getValue(),
-                radius: radius.getValue(),
+                x: xOffset.getValue(),
+                y: yOffset.getValue(),
+                r: radius.getValue(),
             };
             return BrsInvalid.Instance;
         },
@@ -418,10 +435,10 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, xOffset: Int32, yOffset: Int32, width: Int32, height: Int32) => {
             this.collisionRect = {
-                xOffset: xOffset.getValue(),
-                yOffset: yOffset.getValue(),
-                width: width.getValue(),
-                height: height.getValue(),
+                x: xOffset.getValue(),
+                y: yOffset.getValue(),
+                w: width.getValue(),
+                h: height.getValue(),
             };
             return BrsInvalid.Instance;
         },

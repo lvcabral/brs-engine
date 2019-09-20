@@ -78,48 +78,51 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         }
     }
 
-    checkCollision(
-        id: number,
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        memberFlags: number,
-        multiple: boolean
-    ): BrsType {
-        let collide: BrsType;
-        let array: RoSprite[] = [];
-        collide = BrsInvalid.Instance;
+    checkCollision(source: RoSprite, multiple: boolean): BrsType {
+        const sourceFlags = source.getFlags();
+        const sourceCircle = source.getCircle();
+        const sourceRect = source.getRect();
+        const sourceType = source.getType();
+        let collision: BrsType;
+        let collisions: RoSprite[] = [];
+        collision = BrsInvalid.Instance;
         for (let [z, layer] of this.sprites) {
-            layer.some(function(sprite, index, object) {
-                if (sprite.getId() !== id) {
-                    let flags = sprite.getFlags();
-                    let rect = sprite.getRect();
-                    if (
-                        memberFlags === flags.memberFlags && // TODO: Correctly check the flags using bitwise operation
-                        x < rect.x + rect.width &&
-                        x + width > rect.x &&
-                        y < rect.y + rect.height &&
-                        y + height > rect.y
-                    ) {
-                        if (multiple) {
-                            array.push(sprite);
+            layer.some(function(target, index, object) {
+                if (source.getId() !== target.getId()) {
+                    let targetFlags = target.getFlags();
+                    let targetType = target.getType();
+                    if (sourceFlags.memberFlags === targetFlags.memberFlags) {
+                        // TODO: Correctly check the flags using bitwise operation
+                        let collided = false;
+                        if (sourceType < 2 && targetType < 2) {
+                            collided = RectRect(sourceRect, target.getRect());
+                        } else if (sourceType === 2 && targetType === 2) {
+                            collided = CircleCircle(sourceCircle, target.getCircle());
+                        } else if (sourceType === 2) {
+                            collided = RectCircle(target.getRect(), sourceCircle);
                         } else {
-                            collide = sprite;
-                            return true; // break
+                            collided = RectCircle(sourceRect, target.getCircle());
+                        }
+                        if (collided) {
+                            if (multiple) {
+                                collisions.push(target);
+                            } else {
+                                collision = target;
+                                return true; // break
+                            }
                         }
                     }
                 }
                 return false;
             });
-            if (collide instanceof RoSprite) {
+            if (collision instanceof RoSprite) {
                 break;
             }
         }
-        if (multiple && array.length > 0) {
-            return new RoArray(array);
+        if (multiple && collisions.length > 0) {
+            return new RoArray(collisions);
         }
-        return collide;
+        return collision;
     }
 
     drawSprites() {
@@ -258,4 +261,59 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             return BrsInvalid.Instance;
         },
     });
+}
+
+export interface Circle {
+    x: number;
+    y: number;
+    r: number;
+}
+
+export interface Rect {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+}
+
+function RectRect(rect1: Rect, rect2: Rect): boolean {
+    return (
+        rect1.x < rect2.x + rect2.w &&
+        rect1.x + rect1.w > rect2.x &&
+        rect1.y < rect2.y + rect2.h &&
+        rect1.y + rect1.h > rect2.y
+    );
+}
+
+// return true if the rectangle and circle are colliding
+// from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
+function RectCircle(rect: Rect, circle: Circle): boolean {
+    var distX = Math.abs(circle.x - rect.x - rect.w / 2);
+    var distY = Math.abs(circle.y - rect.y - rect.h / 2);
+
+    if (distX > rect.w / 2 + circle.r) {
+        return false;
+    }
+    if (distY > rect.h / 2 + circle.r) {
+        return false;
+    }
+
+    if (distX <= rect.w / 2) {
+        return true;
+    }
+    if (distY <= rect.h / 2) {
+        return true;
+    }
+
+    var dx = distX - rect.w / 2;
+    var dy = distY - rect.h / 2;
+    return dx * dx + dy * dy <= circle.r * circle.r;
+}
+
+// ported from: https://github.com/Romans-I-XVI/monoEngine/blob/master/MonoEngine/CollisionChecking.cs
+function CircleCircle(circle1: Circle, circle2: Circle): boolean {
+    let distanceX = circle1.x - circle2.x;
+    let distanceY = circle1.y - circle2.y;
+    var dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    return dist <= circle1.r + circle2.r;
 }
