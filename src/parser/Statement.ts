@@ -60,25 +60,10 @@ export class Assignment implements Statement {
 }
 
 export class Block implements Statement {
-    constructor(
-        readonly statements: ReadonlyArray<Statement>,
-        readonly startingLocation: Location
-    ) {}
+    constructor(readonly statements: ReadonlyArray<Statement>, readonly location: Location) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitBlock(this);
-    }
-
-    get location() {
-        let end = this.statements.length
-            ? this.statements[this.statements.length - 1].location.end
-            : this.startingLocation.start;
-
-        return {
-            file: this.startingLocation.file,
-            start: this.startingLocation.start,
-            end: end,
-        };
     }
 }
 

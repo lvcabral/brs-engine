@@ -1198,7 +1198,18 @@ export class Parser {
                 // TODO: Figure out how to handle unterminated blocks well
             }
 
-            return new Stmt.Block(statements, startingToken.location);
+            //the block's location starts at the end of the preceeding token, and stops at the beginning of the `end` token
+            const preceedingToken = tokens[tokens.indexOf(startingToken) - 1];
+            const postceedingToken = tokens[current];
+            const location: Location = {
+                file: startingToken.location.file,
+                start: {
+                    line: preceedingToken.location.end.line,
+                    column: preceedingToken.location.end.column,
+                },
+                end: postceedingToken.location.start,
+            };
+            return new Stmt.Block(statements, location);
         }
 
         function expression(): Expression {

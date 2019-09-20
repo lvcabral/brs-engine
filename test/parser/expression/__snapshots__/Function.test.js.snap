@@ -39,11 +39,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -168,11 +169,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -472,11 +474,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -651,11 +654,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -871,11 +875,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1114,11 +1119,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1204,11 +1210,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1333,11 +1340,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1423,11 +1431,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1513,11 +1522,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1642,11 +1652,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1946,11 +1957,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2125,11 +2137,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2345,11 +2358,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2588,11 +2602,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2685,11 +2700,12 @@ Array [
       "args": Array [
         Function {
           "body": Block {
-            "startingLocation": Object {
+            "location": Object {
               "end": Object {
                 "column": -9,
                 "line": -9,
               },
+              "file": undefined,
               "start": Object {
                 "column": -9,
                 "line": -9,
