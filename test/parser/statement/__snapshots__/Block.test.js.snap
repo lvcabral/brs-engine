@@ -1,0 +1,766 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`block statements includes surrounding whitespace for a for-loop body 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "location": Object {
+          "end": Object {
+            "column": 12,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 23,
+            "line": 2,
+          },
+        },
+        "statements": Array [
+          For {
+            "body": Block {
+              "location": Object {
+                "end": Object {
+                  "column": 16,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 39,
+                  "line": 3,
+                },
+              },
+              "statements": Array [
+                Print {
+                  "expressions": Array [
+                    Variable {
+                      "name": Object {
+                        "isReserved": false,
+                        "kind": "Identifier",
+                        "literal": undefined,
+                        "location": Object {
+                          "end": Object {
+                            "column": 27,
+                            "line": 4,
+                          },
+                          "file": "",
+                          "start": Object {
+                            "column": 26,
+                            "line": 4,
+                          },
+                        },
+                        "text": "i",
+                      },
+                    },
+                  ],
+                  "tokens": Object {
+                    "print": Object {
+                      "isReserved": true,
+                      "kind": "Print",
+                      "literal": undefined,
+                      "location": Object {
+                        "end": Object {
+                          "column": 25,
+                          "line": 4,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 20,
+                          "line": 4,
+                        },
+                      },
+                      "text": "print",
+                    },
+                  },
+                },
+              ],
+            },
+            "counterDeclaration": Assignment {
+              "name": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 21,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 20,
+                    "line": 3,
+                  },
+                },
+                "text": "i",
+              },
+              "tokens": Object {
+                "equals": Object {
+                  "isReserved": false,
+                  "kind": "Equal",
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 23,
+                      "line": 3,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 22,
+                      "line": 3,
+                    },
+                  },
+                  "text": "=",
+                },
+              },
+              "value": Literal {
+                "_location": Object {
+                  "end": Object {
+                    "column": 25,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 24,
+                    "line": 3,
+                  },
+                },
+                "value": Int32 {
+                  "kind": 3,
+                  "value": 0,
+                },
+              },
+            },
+            "finalValue": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 31,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 3,
+                },
+              },
+              "value": Int32 {
+                "kind": 3,
+                "value": 10,
+              },
+            },
+            "increment": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 38,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 37,
+                  "line": 3,
+                },
+              },
+              "value": Int32 {
+                "kind": 3,
+                "value": 1,
+              },
+            },
+            "tokens": Object {
+              "endFor": Object {
+                "isReserved": false,
+                "kind": "EndFor",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 23,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 5,
+                  },
+                },
+                "text": "End For",
+              },
+              "for": Object {
+                "isReserved": true,
+                "kind": "For",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 19,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 3,
+                  },
+                },
+                "text": "For",
+              },
+              "step": Object {
+                "isReserved": true,
+                "kind": "Step",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 36,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 32,
+                    "line": 3,
+                  },
+                },
+                "text": "Step",
+              },
+              "to": Object {
+                "isReserved": true,
+                "kind": "To",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 28,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 26,
+                    "line": 3,
+                  },
+                },
+                "text": "To",
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 6,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 20,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`block statements includes surrounding whitespace for function body 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "location": Object {
+          "end": Object {
+            "column": 12,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 23,
+            "line": 2,
+          },
+        },
+        "statements": Array [
+          Assignment {
+            "name": Object {
+              "isReserved": false,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 19,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 16,
+                  "line": 3,
+                },
+              },
+              "text": "age",
+            },
+            "tokens": Object {
+              "equals": Object {
+                "isReserved": false,
+                "kind": "Equal",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 21,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 20,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 23,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 22,
+                  "line": 3,
+                },
+              },
+              "value": Int32 {
+                "kind": 3,
+                "value": 1,
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 4,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 20,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`block statements includes surrounding whitespace for if-elseif-else statements 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "location": Object {
+          "end": Object {
+            "column": 12,
+            "line": 10,
+          },
+          "file": "",
+          "start": Object {
+            "column": 23,
+            "line": 2,
+          },
+        },
+        "statements": Array [
+          If {
+            "condition": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 23,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 19,
+                  "line": 3,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+            "elseBranch": Block {
+              "location": Object {
+                "end": Object {
+                  "column": 16,
+                  "line": 9,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 21,
+                  "line": 7,
+                },
+              },
+              "statements": Array [
+                Print {
+                  "expressions": Array [
+                    Literal {
+                      "_location": Object {
+                        "end": Object {
+                          "column": 32,
+                          "line": 8,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 26,
+                          "line": 8,
+                        },
+                      },
+                      "value": BrsString {
+                        "kind": 2,
+                        "value": "true",
+                      },
+                    },
+                  ],
+                  "tokens": Object {
+                    "print": Object {
+                      "isReserved": true,
+                      "kind": "Print",
+                      "literal": undefined,
+                      "location": Object {
+                        "end": Object {
+                          "column": 25,
+                          "line": 8,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 20,
+                          "line": 8,
+                        },
+                      },
+                      "text": "print",
+                    },
+                  },
+                },
+              ],
+            },
+            "elseIfs": Array [
+              Object {
+                "condition": Literal {
+                  "_location": Object {
+                    "end": Object {
+                      "column": 28,
+                      "line": 5,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 24,
+                      "line": 5,
+                    },
+                  },
+                  "value": BrsBoolean {
+                    "kind": 1,
+                    "value": true,
+                  },
+                },
+                "thenBranch": Block {
+                  "location": Object {
+                    "end": Object {
+                      "column": 16,
+                      "line": 7,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 34,
+                      "line": 5,
+                    },
+                  },
+                  "statements": Array [
+                    Print {
+                      "expressions": Array [
+                        Literal {
+                          "_location": Object {
+                            "end": Object {
+                              "column": 32,
+                              "line": 6,
+                            },
+                            "file": "",
+                            "start": Object {
+                              "column": 26,
+                              "line": 6,
+                            },
+                          },
+                          "value": BrsString {
+                            "kind": 2,
+                            "value": "true",
+                          },
+                        },
+                      ],
+                      "tokens": Object {
+                        "print": Object {
+                          "isReserved": true,
+                          "kind": "Print",
+                          "literal": undefined,
+                          "location": Object {
+                            "end": Object {
+                              "column": 25,
+                              "line": 6,
+                            },
+                            "file": "",
+                            "start": Object {
+                              "column": 20,
+                              "line": 6,
+                            },
+                          },
+                          "text": "print",
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            "thenBranch": Block {
+              "location": Object {
+                "end": Object {
+                  "column": 16,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 3,
+                },
+              },
+              "statements": Array [
+                Print {
+                  "expressions": Array [
+                    Literal {
+                      "_location": Object {
+                        "end": Object {
+                          "column": 32,
+                          "line": 4,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 26,
+                          "line": 4,
+                        },
+                      },
+                      "value": BrsString {
+                        "kind": 2,
+                        "value": "true",
+                      },
+                    },
+                  ],
+                  "tokens": Object {
+                    "print": Object {
+                      "isReserved": true,
+                      "kind": "Print",
+                      "literal": undefined,
+                      "location": Object {
+                        "end": Object {
+                          "column": 25,
+                          "line": 4,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 20,
+                          "line": 4,
+                        },
+                      },
+                      "text": "print",
+                    },
+                  },
+                },
+              ],
+            },
+            "tokens": Object {
+              "elseIfs": Array [
+                Object {
+                  "isReserved": false,
+                  "kind": "ElseIf",
+                  "literal": undefined,
+                  "location": Object {
+                    "end": Object {
+                      "column": 23,
+                      "line": 5,
+                    },
+                    "file": "",
+                    "start": Object {
+                      "column": 16,
+                      "line": 5,
+                    },
+                  },
+                  "text": "else if",
+                },
+              ],
+              "endIf": undefined,
+              "if": Object {
+                "isReserved": true,
+                "kind": "If",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 18,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 3,
+                  },
+                },
+                "text": "if",
+              },
+              "then": Object {
+                "isReserved": true,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 28,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 24,
+                    "line": 3,
+                  },
+                },
+                "text": "then",
+              },
+            },
+          },
+        ],
+      },
+      "end": Object {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 19,
+            "line": 10,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 10,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 15,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 12,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 10,
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 20,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 16,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
