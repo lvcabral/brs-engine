@@ -4,11 +4,12 @@ exports[`parser foreach loops allows 'next' to terminate loop 1`] = `
 Array [
   ForEach {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
@@ -108,11 +109,12 @@ exports[`parser foreach loops requires a name and target 1`] = `
 Array [
   ForEach {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
