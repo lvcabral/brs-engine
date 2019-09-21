@@ -57,15 +57,15 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 23,
-          "line": 8,
+          "column": 16,
+          "line": 9,
         },
         "file": "",
         "start": Object {
-          "column": 20,
-          "line": 8,
+          "column": 21,
+          "line": 7,
         },
       },
       "statements": Array [
@@ -182,15 +182,15 @@ Array [
           },
         },
         "thenBranch": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 5,
+              "column": 16,
+              "line": 7,
             },
             "file": "",
             "start": Object {
-              "column": 20,
-              "line": 5,
+              "column": 30,
+              "line": 4,
             },
           },
           "statements": Array [
@@ -309,15 +309,15 @@ Array [
       },
     ],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 23,
-          "line": 3,
+          "column": 16,
+          "line": 4,
         },
         "file": "",
         "start": Object {
-          "column": 20,
-          "line": 3,
+          "column": 25,
+          "line": 2,
         },
       },
       "statements": Array [
@@ -481,15 +481,15 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 23,
-          "line": 3,
+          "column": 16,
+          "line": 5,
         },
         "file": "",
         "start": Object {
-          "column": 20,
-          "line": 3,
+          "column": 30,
+          "line": 2,
         },
       },
       "statements": Array [
@@ -720,15 +720,15 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 23,
-          "line": 5,
+          "column": 16,
+          "line": 7,
         },
         "file": "",
         "start": Object {
-          "column": 20,
-          "line": 5,
+          "column": 21,
+          "line": 4,
         },
       },
       "statements": Array [
@@ -846,15 +846,15 @@ Array [
     },
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 23,
-          "line": 3,
+          "column": 16,
+          "line": 4,
         },
         "file": "",
         "start": Object {
-          "column": 20,
-          "line": 3,
+          "column": 30,
+          "line": 2,
         },
       },
       "statements": Array [
@@ -1014,15 +1014,15 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 23,
-          "line": 8,
+          "column": 16,
+          "line": 9,
         },
         "file": "",
         "start": Object {
-          "column": 20,
-          "line": 8,
+          "column": 21,
+          "line": 7,
         },
       },
       "statements": Array [
@@ -1139,15 +1139,15 @@ Array [
           },
         },
         "thenBranch": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 5,
+              "column": 16,
+              "line": 7,
             },
             "file": "",
             "start": Object {
-              "column": 20,
-              "line": 5,
+              "column": 35,
+              "line": 4,
             },
           },
           "statements": Array [
@@ -1266,15 +1266,15 @@ Array [
       },
     ],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 23,
-          "line": 3,
+          "column": 16,
+          "line": 4,
         },
         "file": "",
         "start": Object {
-          "column": 20,
-          "line": 3,
+          "column": 30,
+          "line": 2,
         },
       },
       "statements": Array [
@@ -1454,7 +1454,7 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": 41,
           "line": 2,
@@ -1591,14 +1591,14 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 29,
+          "column": 35,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 23,
+          "column": 22,
           "line": 2,
         },
       },
@@ -1692,15 +1692,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 18,
-            "line": 3,
+            "column": 12,
+            "line": 4,
           },
           "file": "",
           "start": Object {
-            "column": 16,
-            "line": 3,
+            "column": 36,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -1859,14 +1859,14 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 47,
+          "column": 54,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 41,
+          "column": 40,
           "line": 2,
         },
       },
@@ -1913,14 +1913,14 @@ Array [
     },
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 29,
+          "column": 36,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 23,
+          "column": 22,
           "line": 2,
         },
       },
@@ -2045,7 +2045,7 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
@@ -2163,7 +2163,7 @@ Array [
           },
         },
         "thenBranch": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
               "column": -9,
               "line": -9,
@@ -2231,7 +2231,7 @@ Array [
       },
     ],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
@@ -2377,7 +2377,7 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
@@ -2536,7 +2536,7 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
@@ -2603,7 +2603,7 @@ Array [
     },
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
@@ -2762,7 +2762,7 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
@@ -2880,7 +2880,7 @@ Array [
           },
         },
         "thenBranch": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
               "column": -9,
               "line": -9,
@@ -2948,7 +2948,7 @@ Array [
       },
     ],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
@@ -3076,14 +3076,14 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 28,
+          "column": 38,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 23,
+          "column": 22,
           "line": 2,
         },
       },
@@ -3193,14 +3193,14 @@ Array [
       },
     },
     "elseBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 81,
+          "column": 93,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 76,
+          "column": 75,
           "line": 2,
         },
       },
@@ -3267,14 +3267,14 @@ Array [
           },
         },
         "thenBranch": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 58,
+              "column": 70,
               "line": 2,
             },
             "file": "",
             "start": Object {
-              "column": 53,
+              "column": 52,
               "line": 2,
             },
           },
@@ -3324,14 +3324,14 @@ Array [
       },
     ],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 26,
+          "column": 39,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 21,
+          "column": 20,
           "line": 2,
         },
       },
@@ -3481,14 +3481,14 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 28,
-          "line": 2,
+          "column": 12,
+          "line": 3,
         },
         "file": "",
         "start": Object {
-          "column": 22,
+          "column": 21,
           "line": 2,
         },
       },
@@ -3598,14 +3598,14 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 31,
+          "column": 66,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 27,
+          "column": 26,
           "line": 2,
         },
       },
@@ -3649,14 +3649,14 @@ Array [
           },
           "value": Function {
             "body": Block {
-              "startingLocation": Object {
+              "location": Object {
                 "end": Object {
-                  "column": 47,
+                  "column": 56,
                   "line": 2,
                 },
                 "file": "",
                 "start": Object {
-                  "column": 42,
+                  "column": 41,
                   "line": 2,
                 },
               },
@@ -3806,15 +3806,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 18,
-            "line": 3,
+            "column": 12,
+            "line": 10,
           },
           "file": "",
           "start": Object {
-            "column": 16,
-            "line": 3,
+            "column": 23,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -3873,15 +3873,15 @@ Array [
               },
             },
             "elseBranch": Block {
-              "startingLocation": Object {
+              "location": Object {
                 "end": Object {
-                  "column": 25,
-                  "line": 8,
+                  "column": 16,
+                  "line": 9,
                 },
                 "file": "",
                 "start": Object {
-                  "column": 20,
-                  "line": 8,
+                  "column": 22,
+                  "line": 7,
                 },
               },
               "statements": Array [
@@ -3983,15 +3983,15 @@ Array [
                   },
                 },
                 "thenBranch": Block {
-                  "startingLocation": Object {
+                  "location": Object {
                     "end": Object {
-                      "column": 25,
-                      "line": 6,
+                      "column": 16,
+                      "line": 7,
                     },
                     "file": "",
                     "start": Object {
-                      "column": 20,
-                      "line": 6,
+                      "column": 31,
+                      "line": 5,
                     },
                   },
                   "statements": Array [
@@ -4040,15 +4040,15 @@ Array [
               },
             ],
             "thenBranch": Block {
-              "startingLocation": Object {
+              "location": Object {
                 "end": Object {
-                  "column": 25,
-                  "line": 4,
+                  "column": 16,
+                  "line": 5,
                 },
                 "file": "",
                 "start": Object {
-                  "column": 20,
-                  "line": 4,
+                  "column": 26,
+                  "line": 3,
                 },
               },
               "statements": Array [
@@ -4254,14 +4254,14 @@ Array [
     "elseBranch": undefined,
     "elseIfs": Array [],
     "thenBranch": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
-          "column": 28,
+          "column": 35,
           "line": 2,
         },
         "file": "",
         "start": Object {
-          "column": 22,
+          "column": 21,
           "line": 2,
         },
       },
