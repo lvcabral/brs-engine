@@ -369,7 +369,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
-            ctx.fillText(text.toString(), x.getValue(), y.getValue() + 3);
+            ctx.fillText(text.value, x.getValue(), y.getValue() + 3);
             return BrsBoolean.True;
         },
     });
