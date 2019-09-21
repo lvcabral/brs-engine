@@ -647,7 +647,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
-            ctx.fillText(text.toString(), this.x + x.getValue(), this.y + y.getValue());
+            ctx.fillText(text.value, this.x + x.getValue(), this.y + y.getValue());
             return BrsBoolean.True;
         },
     });
