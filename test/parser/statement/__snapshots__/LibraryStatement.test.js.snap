@@ -9,15 +9,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 3,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [],
@@ -131,15 +131,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 3,
+              "column": 12,
+              "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [
@@ -252,15 +252,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 25,
-              "line": 3,
+              "column": 12,
+              "line": 6,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [
@@ -431,15 +431,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 3,
+              "column": 12,
+              "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [
@@ -590,15 +590,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 4,
+              "column": 12,
+              "line": 5,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [
@@ -751,15 +751,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [],
@@ -871,15 +871,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [],
@@ -1032,15 +1032,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [],
