@@ -206,10 +206,18 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("y", ValueKind.Int32),
                 new StdlibArgument("theta", ValueKind.Float),
                 new StdlibArgument("object", ValueKind.Object), // TODO: Add support to roRegion
+                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance), // TODO: add support to rgba
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, theta: Float, object: RoBitmap) => {
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            theta: Float,
+            object: RoBitmap,
+            rgba: Int32 | BrsInvalid
+        ) => {
             let ctx = this.context[this.currentBuffer];
             let obj = object.getCanvas();
             let positionX = x.getValue();
@@ -237,7 +245,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("scaleX", ValueKind.Float),
                 new StdlibArgument("scaleY", ValueKind.Float),
                 new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance),
+                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance), // TODO: add support to rgba
             ],
             returns: ValueKind.Boolean,
         },
@@ -247,7 +255,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             y: Int32,
             scaleX: Float,
             scaleY: Float,
-            object: BrsComponent
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
         ) => {
             let result = BrsBoolean.True;
             let ctx = this.context[this.currentBuffer];
