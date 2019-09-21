@@ -4,11 +4,12 @@ exports[`parser while statements while with exit 1`] = `
 Array [
   While {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
@@ -133,11 +134,12 @@ exports[`parser while statements while without exit 1`] = `
 Array [
   While {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
