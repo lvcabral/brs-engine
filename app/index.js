@@ -47,6 +47,7 @@ const deviceData = {
     locale: "en_US",
     clockFormat: "12h",
     displayMode: "720p", // Only this mode is supported for now
+    defaultFont: "Roboto", // Options: Roboto or Open Sans
 };
 
 // Load Registry
