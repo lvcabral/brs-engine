@@ -38,6 +38,12 @@ export class RoFont extends BrsComponent implements BrsValue {
         ]);
     }
 
+    getTopAdjust(): number {
+        const height = this.metrics.lineHeight * this.size;
+        const ascent = Math.max(this.metrics.ascent * this.size, this.size);
+        return (height - ascent) / 2;
+    }
+
     toFontString(): string {
         let si = this.italic ? "italic" : "";
         let sb = this.bold ? "bold" : "";

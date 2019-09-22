@@ -19,9 +19,9 @@ export interface FontMetrics {
 
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly defaultFontFamily = "Open Sans";
-    readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     readonly defaultFontSize = 40;
+    readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
+    private defaultFontFamily: string;
     private fontRegistry: Map<string, FontMetrics[]>;
 
     constructor(interpreter: Interpreter) {
@@ -35,10 +35,11 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             // this.get, ---> Deprecated as only needed to roImageCanvas
         ]);
         this.fontRegistry = new Map();
-        this.registerFont(interpreter, "common:/Fonts/OpenSans-Regular.ttf");
-        this.registerFont(interpreter, "common:/Fonts/OpenSans-Bold.ttf");
-        this.registerFont(interpreter, "common:/Fonts/OpenSans-Italic.ttf");
-        this.registerFont(interpreter, "common:/Fonts/OpenSans-BoldItalic.ttf");
+        this.defaultFontFamily = interpreter.deviceInfo.get("defaultFont");
+        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
+        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
+        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
+        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
     }
 
     toString(parent?: BrsType): string {

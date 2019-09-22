@@ -374,11 +374,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            let ctx = this.context[this.currentBuffer];
+            const ctx = this.context[this.currentBuffer];
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
-            ctx.fillText(text.value, x.getValue(), y.getValue() + 3);
+            ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
             return BrsBoolean.True;
         },
     });
