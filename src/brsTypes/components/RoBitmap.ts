@@ -375,11 +375,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            let ctx = this.context;
+            const ctx = this.context;
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
-            ctx.fillText(text.value, x.getValue(), y.getValue() + 3);
+            ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
             return BrsBoolean.True;
         },
     });

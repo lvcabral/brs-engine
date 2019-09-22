@@ -645,11 +645,15 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            let ctx = this.bitmap.getContext();
+            const ctx = this.bitmap.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
-            ctx.fillText(text.value, this.x + x.getValue(), this.y + y.getValue());
+            ctx.fillText(
+                text.value,
+                this.x + x.getValue(),
+                this.y + y.getValue() + font.getTopAdjust()
+            );
             return BrsBoolean.True;
         },
     });

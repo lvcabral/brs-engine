@@ -44,7 +44,9 @@ onmessage = function(event) {
         interpreter.deviceInfo.set("clockFormat", event.data.device.clockFormat);
         interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
         interpreter.deviceInfo.set("models", parseCSV(models.default));
+        interpreter.deviceInfo.set("defaultFont", event.data.device.defaultFont);
         // File System
+        let fontFamily = event.data.device.defaultFont;
         let volume = interpreter.fileSystem.get("common:");
         if (volume) {
             volume.mkdirSync("/LibCore");
@@ -52,21 +54,21 @@ onmessage = function(event) {
             volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore.default);
             volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender.default);
             volume.mkdirSync("/Fonts");
-            let fontRegular = download("../app/fonts/OpenSans-Regular.ttf", "arraybuffer");
+            let fontRegular = download(`../app/fonts/${fontFamily}-Regular.ttf`, "arraybuffer");
             if (fontRegular) {
-                volume.writeFileSync("/Fonts/OpenSans-Regular.ttf", fontRegular);
+                volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
             }
-            let fontBold = download("../app/fonts/OpenSans-Bold.ttf", "arraybuffer");
+            let fontBold = download(`../app/fonts/${fontFamily}-Bold.ttf`, "arraybuffer");
             if (fontBold) {
-                volume.writeFileSync("/Fonts/OpenSans-Bold.ttf", fontBold);
+                volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
             }
-            let fontItalic = download("../app/fonts/OpenSans-Italic.ttf", "arraybuffer");
+            let fontItalic = download(`../app/fonts/${fontFamily}-Italic.ttf`, "arraybuffer");
             if (fontBold) {
-                volume.writeFileSync("/Fonts/OpenSans-Italic.ttf", fontItalic);
+                volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
             }
-            let fontBoldIt = download("../app/fonts/OpenSans-BoldItalic.ttf", "arraybuffer");
+            let fontBoldIt = download(`../app/fonts/${fontFamily}-BoldItalic.ttf`, "arraybuffer");
             if (fontBold) {
-                volume.writeFileSync("/Fonts/OpenSans-BoldItalic.ttf", fontBoldIt);
+                volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
             }
         }
         const source = new Map<string, string>();
