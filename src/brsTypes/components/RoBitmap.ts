@@ -177,8 +177,25 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             let result = BrsBoolean.True;
+            const ctx = this.context;
+            if (!(rgba instanceof BrsInvalid)) {
+                const alpha = rgba.getValue() & 255;
+                if (alpha < 255) {
+                    ctx.globalAlpha = alpha / 255;
+                }
+            }
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+                if (rgba instanceof Int32) {
+                    applyRgba(
+                        ctx,
+                        x.getValue(),
+                        y.getValue(),
+                        object.getCanvas().width,
+                        object.getCanvas().height,
+                        rgba.getValue()
+                    );
+                }
             } else if (object instanceof RoRegion) {
                 let ctx = this.context;
                 ctx.drawImage(
@@ -195,6 +212,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             } else {
                 result = BrsBoolean.False;
             }
+            ctx.globalAlpha = 1.0;
             return result;
         },
     });
@@ -262,6 +280,12 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             let result = BrsBoolean.True;
             let ctx = this.context;
             ctx.imageSmoothingEnabled = false;
+            if (!(rgba instanceof BrsInvalid)) {
+                const alpha = rgba.getValue() & 255;
+                if (alpha < 255) {
+                    ctx.globalAlpha = alpha / 255;
+                }
+            }
             if (object instanceof RoBitmap) {
                 let cvs = object.getCanvas();
                 ctx.drawImage(
@@ -271,6 +295,16 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     cvs.width * scaleX.getValue(),
                     cvs.height * scaleY.getValue()
                 );
+                if (rgba instanceof Int32) {
+                    applyRgba(
+                        ctx,
+                        x.getValue(),
+                        y.getValue(),
+                        cvs.width * scaleX.getValue(),
+                        cvs.height * scaleY.getValue(),
+                        rgba.getValue()
+                    );
+                }
             } else if (object instanceof RoRegion) {
                 let cvs = object.getCanvas();
                 let tx = object.getTransX() * scaleX.getValue();
@@ -289,6 +323,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             } else {
                 result = BrsBoolean.False;
             }
+            ctx.globalAlpha = 1.0;
             return result;
         },
     });
@@ -495,6 +530,23 @@ export class RoBitmap extends BrsComponent implements BrsValue {
 export function createBitmap(interpreter: Interpreter, param: BrsComponent) {
     const bmp = new RoBitmap(interpreter, param);
     return bmp.isValid() ? bmp : BrsInvalid.Instance;
+}
+
+export function applyRgba(
+    ctx: OffscreenCanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    rgba: number
+) {
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+    // draw color
+    ctx.fillStyle = rgbaIntToHex(rgba);
+    ctx.fillRect(x, y, width, height);
+    // reset comp. mode
+    ctx.restore();
 }
 
 export function rgbaIntToHex(rgba: number): string {

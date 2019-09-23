@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
+import { RoBitmap, rgbaIntToHex, applyRgba } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
@@ -169,7 +169,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            let ctx = this.context[this.currentBuffer];
+            const ctx = this.context[this.currentBuffer];
             if (!(rgba instanceof BrsInvalid)) {
                 const alpha = rgba.getValue() & 255;
                 if (alpha < 255) {
@@ -178,6 +178,16 @@ export class RoScreen extends BrsComponent implements BrsValue {
             }
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+                if (rgba instanceof Int32) {
+                    applyRgba(
+                        ctx,
+                        x.getValue(),
+                        y.getValue(),
+                        object.getCanvas().width,
+                        object.getCanvas().height,
+                        rgba.getValue()
+                    );
+                }
             } else if (object instanceof RoRegion) {
                 ctx.drawImage(
                     object.getCanvas(),
@@ -261,6 +271,12 @@ export class RoScreen extends BrsComponent implements BrsValue {
             let result = BrsBoolean.True;
             let ctx = this.context[this.currentBuffer];
             ctx.imageSmoothingEnabled = false;
+            if (!(rgba instanceof BrsInvalid)) {
+                const alpha = rgba.getValue() & 255;
+                if (alpha < 255) {
+                    ctx.globalAlpha = alpha / 255;
+                }
+            }
             if (object instanceof RoBitmap) {
                 let cvs = object.getCanvas();
                 ctx.drawImage(
@@ -270,6 +286,16 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     cvs.width * scaleX.getValue(),
                     cvs.height * scaleY.getValue()
                 );
+                if (rgba instanceof Int32) {
+                    applyRgba(
+                        ctx,
+                        x.getValue(),
+                        y.getValue(),
+                        cvs.width * scaleX.getValue(),
+                        cvs.height * scaleY.getValue(),
+                        rgba.getValue()
+                    );
+                }
             } else if (object instanceof RoRegion) {
                 let cvs = object.getCanvas();
                 let tx = object.getTransX() * scaleX.getValue();
@@ -288,6 +314,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             } else {
                 result = BrsBoolean.False;
             }
+            ctx.globalAlpha = 1.0;
             return result;
         },
     });
