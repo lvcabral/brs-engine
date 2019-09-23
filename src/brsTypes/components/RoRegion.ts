@@ -4,7 +4,7 @@ import { BrsType, Float, RoFont } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
+import { RoBitmap, rgbaIntToHex, applyRgba } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 
@@ -531,8 +531,25 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             let result = BrsBoolean.True;
+            const ctx = this.context;
+            if (!(rgba instanceof BrsInvalid)) {
+                const alpha = rgba.getValue() & 255;
+                if (alpha < 255 && ctx) {
+                    ctx.globalAlpha = alpha / 255;
+                }
+            }
             if (object instanceof RoBitmap) {
                 this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
+                if (rgba instanceof Int32 && ctx) {
+                    applyRgba(
+                        ctx,
+                        x.getValue(),
+                        y.getValue(),
+                        object.getCanvas().width,
+                        object.getCanvas().height,
+                        rgba.getValue()
+                    );
+                }
             } else if (object instanceof RoRegion) {
                 let ctx = this.bitmap.getContext();
                 ctx.drawImage(
@@ -548,6 +565,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 );
             } else {
                 result = BrsBoolean.False;
+            }
+            if (ctx) {
+                ctx.globalAlpha = 1.0;
             }
             return result;
         },
