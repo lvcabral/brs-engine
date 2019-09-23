@@ -145,13 +145,18 @@ export function repl() {
         output: process.stdout,
     });
     rl.setPrompt("brs> ");
-
     rl.on("line", line => {
+        if (line.toLowerCase() === "quit" || line.toLowerCase() === "exit") {
+            process.exit();
+        }
         let results = run(line, defaultExecutionOptions, replInterpreter);
         if (results) {
-            results.map(result => console.log(result.toString()));
+            results.map(result => {
+                if (result !== BrsTypes.BrsInvalid.Instance) {
+                    console.log(result.toString());
+                }
+            });
         }
-
         rl.prompt();
     });
 
