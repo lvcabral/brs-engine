@@ -9,14 +9,14 @@ function Roku_Ads() as object
     this.getAds = function(msg=invalid) as object
         return {}
     end function
-    this.showAds = function(ads,ctx,view) as boolean
+    this.showAds = function(ads,ctx=invalid,view=invalid) as boolean
         return true
     end function
     this.setContentId = sub(id="")
     end sub
     this.setContentLength = sub(length = 0)
     end sub
-    this.setContentGenre = sub(genres,kids)
+    this.setContentGenre = sub(genres=invalid,kids=false)
     end sub
     this.setAdExit = sub(allow)
     end sub
@@ -25,4 +25,8 @@ function Roku_Ads() as object
     this.enableAdMeasurements = sub(enable)
     end sub
     return this
+    this.setAdBufferScreenLayer = sub(zOrder,content)
+    end sub
+    this.enableAdBufferMessaging = sub(enableMsg, enablePB)
+    end sub
 end function
