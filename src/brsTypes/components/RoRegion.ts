@@ -537,7 +537,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.context as OffscreenCanvasRenderingContext2D;
+            const ctx = this.bitmap.getContext();
             let cvs: OffscreenCanvas;
             if (object instanceof RoBitmap || object instanceof RoRegion) {
                 if (rgba instanceof Int32) {
@@ -553,7 +553,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 return BrsBoolean.False;
             }
             if (object instanceof RoBitmap) {
-                ctx.drawImage(cvs, x.getValue(), y.getValue());
+                this.drawImage(cvs, x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
                 ctx.drawImage(
                     cvs,
