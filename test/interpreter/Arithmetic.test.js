@@ -146,4 +146,167 @@ describe("interpreter arithmetic", () => {
         let [result] = interpreter.exec([ast]);
         expect(result.getValue()).toBe(7);
     });
+
+    it("bitwise left shift with integers", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(10)),
+                token(Lexeme.LeftShift),
+                new Expr.Literal(new brs.types.Int32(2))
+            )
+        );
+
+        let [result] = interpreter.exec([ast]);
+        expect(result.getValue()).toBe(40);
+    });
+
+    it("bitwise left shift with floats (truncate)", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Float(10.7)),
+                token(Lexeme.LeftShift),
+                new Expr.Literal(new brs.types.Float(2.9))
+            )
+        );
+
+        let [result] = interpreter.exec([ast]);
+        expect(result.getValue()).toBe(40);
+    });
+
+    it("bitwise left shift with left negative", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(-100)),
+                token(Lexeme.LeftShift),
+                new Expr.Literal(new brs.types.Int32(2))
+            )
+        );
+
+        let [result] = interpreter.exec([ast]);
+        expect(result.getValue()).toBe(-400);
+    });
+
+    it("bitwise left shift with right negative", () => {
+        //
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(1)),
+                token(Lexeme.LeftShift),
+                new Expr.Literal(new brs.types.Int32(-1))
+            )
+        );
+
+        expect(() => interpreter.exec([ast])).toThrow(
+            /In a bitshift expression the right value must be >= 0 and < 32/
+        );
+    });
+
+    it("bitwise left shift with right == 32", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(1)),
+                token(Lexeme.LeftShift),
+                new Expr.Literal(new brs.types.Int32(32))
+            )
+        );
+
+        expect(() => interpreter.exec([ast])).toThrow(
+            /In a bitshift expression the right value must be >= 0 and < 32/
+        );
+    });
+
+    it("bitwise left shift with right > 32", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(1)),
+                token(Lexeme.LeftShift),
+                new Expr.Literal(new brs.types.Int32(77))
+            )
+        );
+
+        expect(() => interpreter.exec([ast])).toThrow(
+            /In a bitshift expression the right value must be >= 0 and < 32/
+        );
+    });
+
+    it("bitwise right shift with integers", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(2147483647)),
+                token(Lexeme.RightShift),
+                new Expr.Literal(new brs.types.Int32(1))
+            )
+        );
+
+        let [result] = interpreter.exec([ast]);
+        expect(result.getValue()).toBe(1073741823);
+    });
+
+    it("bitwise right shift with floats (truncate)", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Float(10.7)),
+                token(Lexeme.RightShift),
+                new Expr.Literal(new brs.types.Float(2.9))
+            )
+        );
+
+        let [result] = interpreter.exec([ast]);
+        expect(result.getValue()).toBe(2);
+    });
+
+    it("bitwise right shift with left negative", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(-1)),
+                token(Lexeme.RightShift),
+                new Expr.Literal(new brs.types.Int32(1))
+            )
+        );
+
+        let [result] = interpreter.exec([ast]);
+        expect(result.getValue()).toBe(2147483647);
+    });
+
+    it("bitwise right shift with right negative", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(1)),
+                token(Lexeme.RightShift),
+                new Expr.Literal(new brs.types.Int32(-1))
+            )
+        );
+
+        expect(() => interpreter.exec([ast])).toThrow(
+            /In a bitshift expression the right value must be >= 0 and < 32/
+        );
+    });
+
+    it("bitwise right shift with right == 32", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(1)),
+                token(Lexeme.RightShift),
+                new Expr.Literal(new brs.types.Int32(32))
+            )
+        );
+
+        expect(() => interpreter.exec([ast])).toThrow(
+            /In a bitshift expression the right value must be >= 0 and < 32/
+        );
+    });
+
+    it("bitwise right shift with right > 32", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Binary(
+                new Expr.Literal(new brs.types.Int32(1)),
+                token(Lexeme.LeftShift),
+                new Expr.Literal(new brs.types.Int32(77))
+            )
+        );
+
+        expect(() => interpreter.exec([ast])).toThrow(
+            /In a bitshift expression the right value must be >= 0 and < 32/
+        );
+    });
 });

@@ -1237,7 +1237,7 @@ export class Parser {
         }
 
         function relational(): Expression {
-            let expr = additive();
+            let expr = bitshift();
 
             while (
                 match(
@@ -1250,14 +1250,24 @@ export class Parser {
                 )
             ) {
                 let operator = previous();
-                let right = additive();
+                let right = bitshift();
                 expr = new Expr.Binary(expr, operator, right);
             }
 
             return expr;
         }
 
-        // TODO: bitshift
+        function bitshift(): Expression {
+            let expr = additive();
+
+            while (match(Lexeme.LeftShift, Lexeme.RightShift)) {
+                let operator = previous();
+                let right = additive();
+                expr = new Expr.Binary(expr, operator, right);
+            }
+
+            return expr;
+        }
 
         function additive(): Expression {
             let expr = multiplicative();
