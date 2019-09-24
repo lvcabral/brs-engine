@@ -100,12 +100,25 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.removechild,
             this.getparent,
             this.createchild,
+            this.replacechild,
+            this.removechildren,
+            this.appendchildren,
+            this.getchild,
+            this.insertchild,
+            this.removechildrenindex,
+            this.removechildindex,
+            this.reparent,
+            this.createchildren,
+            this.replacechildren,
+            this.insertchildren,
             // ifSGNodeFocus methods
             this.hasfocus,
             this.setfocus,
             this.isinfocuschain,
             //ifSGNodeDict
             this.findnode,
+            this.issamenode,
+            this.subtype,
         ]);
     }
 
@@ -263,6 +276,65 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
         // name was not found anywhere in tree
         return BrsInvalid.Instance;
+    }
+
+    private removeChildByReference(child: BrsType): boolean {
+        if (child instanceof RoSGNode) {
+            let spliceIndex = this.children.indexOf(child);
+            if (spliceIndex >= 0) {
+                child.removeParent();
+                this.children.splice(spliceIndex, 1);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private appendChildToParent(child: BrsType): boolean {
+        if (child instanceof RoSGNode) {
+            if (this.children.includes(child)) {
+                return true;
+            }
+            this.children.push(child);
+            child.setParent(this);
+            return true;
+        }
+        return false;
+    }
+
+    private replaceChildAtIndex(newchild: BrsType, index: Int32): boolean {
+        let childrenSize = this.children.length;
+        let indexValue = index.getValue();
+        if (newchild instanceof RoSGNode && indexValue < childrenSize) {
+            // If newchild is already a child, remove it first.
+            this.removeChildByReference(newchild);
+            if (indexValue >= 0) {
+                // The check is done to see if indexValue is inside the
+                // new length of this.children (in case newchild was
+                // removed above)
+                if (indexValue < this.children.length) {
+                    // Remove the parent of the child at indexValue
+                    this.children[indexValue].removeParent();
+                }
+                newchild.setParent(this);
+                this.children.splice(indexValue, 1, newchild);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private insertChildAtIndex(child: BrsType, index: Int32): boolean {
+        if (child instanceof RoSGNode) {
+            let childrenSize = this.children.length;
+            let indexValue = index.getValue() < 0 ? childrenSize : index.getValue();
+            // Remove node if it already exists
+            this.removeChildByReference(child);
+            child.setParent(this);
+            this.children.splice(indexValue, 0, child);
+            return true;
+        }
+        return false;
     }
 
     /** Removes all fields from the node */
@@ -565,15 +637,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, child: BrsType) => {
-            if (child instanceof RoSGNode) {
-                if (this.children.includes(child)) {
-                    return BrsBoolean.True;
-                }
-                this.children.push(child);
-                child.setParent(this);
-                return BrsBoolean.True;
-            }
-            return BrsBoolean.False;
+            return BrsBoolean.from(this.appendChildToParent(child));
         },
     });
 
@@ -617,15 +681,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, child: BrsType) => {
-            if (child instanceof RoSGNode) {
-                let spliceIndex = this.children.indexOf(child);
-                if (spliceIndex >= 0) {
-                    child.removeParent();
-                    this.children.splice(spliceIndex, 1);
-                }
-                return BrsBoolean.True;
-            }
-            return BrsBoolean.False;
+            return BrsBoolean.from(this.removeChildByReference(child));
         },
     });
     /* If the subject node has been added to a parent node list of children,
@@ -656,6 +712,278 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 child.setParent(this);
             }
             return child;
+        },
+    });
+
+    /**
+     * If the subject node has a child node in the index position, replace that child
+     * node with the newChild node in the subject node list of children, otherwise do nothing.
+     */
+
+    private replacechild = new Callable("replacechild", {
+        signature: {
+            args: [
+                new StdlibArgument("newchild", ValueKind.Dynamic),
+                new StdlibArgument("index", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, newchild: BrsType, index: Int32) => {
+            return BrsBoolean.from(this.replaceChildAtIndex(newchild, index));
+        },
+    });
+
+    /**
+     * Removes the child nodes specified by child_nodes from the subject node. Returns
+     * true if the child nodes were successfully removed.
+     */
+    private removechildren = new Callable("removechildren", {
+        signature: {
+            args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+            if (child_nodes instanceof RoArray) {
+                let childNodesElements = child_nodes.getElements();
+                if (childNodesElements.length !== 0) {
+                    childNodesElements.forEach(childNode => {
+                        this.removeChildByReference(childNode);
+                    });
+                    return BrsBoolean.True;
+                }
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /**
+     * Removes the number of child nodes specified by num_children from the subject node
+     * starting at the position specified by index.
+     */
+    private removechildrenindex = new Callable("removechildrenindex", {
+        signature: {
+            args: [
+                new StdlibArgument("num_children", ValueKind.Int32),
+                new StdlibArgument("index", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+            let numChildrenValue = num_children.getValue();
+            let indexValue = index.getValue();
+
+            if (numChildrenValue > 0) {
+                let removedChildren = this.children.splice(indexValue, numChildrenValue);
+                removedChildren.forEach(node => {
+                    node.removeParent();
+                });
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /**
+     * If the subject node has a child node at the index position, return it, otherwise
+     * return invalid.
+     */
+    private getchild = new Callable("getchild", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Int32)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (interpreter: Interpreter, index: Int32) => {
+            let indexValue = index.getValue();
+            let childrenSize = this.children.length;
+
+            if (indexValue >= 0 && indexValue < childrenSize) {
+                return this.children[indexValue];
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /**
+     * Appends the nodes specified by child_nodes to the subject node.
+     */
+    private appendchildren = new Callable("appendchildren", {
+        signature: {
+            args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+            if (child_nodes instanceof RoArray) {
+                let childNodesElements = child_nodes.getElements();
+                if (childNodesElements.length !== 0) {
+                    childNodesElements.forEach(childNode => {
+                        if (childNode instanceof RoSGNode) {
+                            // Remove if it exists to reappend
+                            this.removeChildByReference(childNode);
+                            this.appendChildToParent(childNode);
+                        }
+                    });
+                    return BrsBoolean.True;
+                }
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Creates the number of children specified by num_children for the subject node,
+     *  of the type or extended type specified by subtype.
+     */
+    private createchildren = new Callable("createchildren", {
+        signature: {
+            args: [
+                new StdlibArgument("num_children", ValueKind.Int32),
+                new StdlibArgument("subtype", ValueKind.String),
+            ],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
+            let numChildrenValue = num_children.getValue();
+            let addedChildren: RoSGNode[] = [];
+            for (let i = 0; i < numChildrenValue; i++) {
+                let child = createNodeByType(subtype);
+                if (child instanceof RoSGNode) {
+                    this.children.push(child);
+                    addedChildren.push(child);
+                    child.setParent(this);
+                }
+            }
+            return new RoArray(addedChildren);
+        },
+    });
+
+    /** Replaces the child nodes in the subject node, starting at the position specified
+     *  by index, with new child nodes specified by child_nodes.
+     */
+    private replacechildren = new Callable("replacechildren", {
+        signature: {
+            args: [
+                new StdlibArgument("child_nodes", ValueKind.Dynamic),
+                new StdlibArgument("index", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+            if (child_nodes instanceof RoArray) {
+                let indexValue = index.getValue();
+                let childNodesElements = child_nodes.getElements();
+                if (childNodesElements.length !== 0) {
+                    childNodesElements.forEach(childNode => {
+                        if (!this.replaceChildAtIndex(childNode, new Int32(indexValue))) {
+                            this.removeChildByReference(childNode);
+                        }
+                        indexValue += 1;
+                    });
+                    return BrsBoolean.True;
+                }
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /**
+     * Inserts the child nodes specified by child_nodes to the subject node starting
+     * at the position specified by index.
+     */
+    private insertchildren = new Callable("insertchildren", {
+        signature: {
+            args: [
+                new StdlibArgument("child_nodes", ValueKind.Dynamic),
+                new StdlibArgument("index", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+            if (child_nodes instanceof RoArray) {
+                let indexValue = index.getValue();
+                let childNodesElements = child_nodes.getElements();
+                if (childNodesElements.length !== 0) {
+                    childNodesElements.forEach(childNode => {
+                        this.insertChildAtIndex(childNode, new Int32(indexValue));
+                        indexValue += 1;
+                    });
+                    return BrsBoolean.True;
+                }
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /**
+     * Inserts a previously-created child node at the position index in the subject
+     * node list of children, so that this is the position that the new child node
+     * is traversed during render.
+     */
+    private insertchild = new Callable("insertchild", {
+        signature: {
+            args: [
+                new StdlibArgument("child", ValueKind.Dynamic),
+                new StdlibArgument("index", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, child: BrsType, index: Int32) => {
+            return BrsBoolean.from(this.insertChildAtIndex(child, index));
+        },
+    });
+
+    /**
+     * If the subject node has a child node in the index position, remove that child
+     * node from the subject node list of children.
+     */
+    private removechildindex = new Callable("removechildindex", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Int32)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, index: Int32) => {
+            let indexValue = index.getValue();
+            let childrenSize = this.children.length;
+
+            if (indexValue < childrenSize) {
+                if (indexValue >= 0) {
+                    this.removeChildByReference(this.children[indexValue]);
+                }
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /**
+     * Moves the subject node to another node.
+     * If adjustTransform is true, the subject node transformation factor fields (translation/rotation/scale)
+     * are adjusted so that the node has the same transformation factors relative to the screen as it previously did.
+     * If adjustTransform is false, the subject node is simply parented to the new node without adjusting its
+     * transformation factor fields, in which case, the reparenting operation could cause the node to jump to a
+     * new position on the screen.
+     */
+    private reparent = new Callable("reparent", {
+        signature: {
+            args: [
+                new StdlibArgument("newParent", ValueKind.Dynamic),
+                new StdlibArgument("adjustTransform", ValueKind.Boolean),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, newParent: BrsType, adjustTransform: BrsBoolean) => {
+            if (newParent instanceof RoSGNode && newParent !== this) {
+                // TODO: adjustTransform has to be implemented probably by traversing the
+                // entire parent tree to get to the top, calculate the absolute transform
+                // parameters and then use that to adjust the new transform properties.
+                // Until that is implemented, the parameter does nothing.
+
+                // Remove parents child reference
+                if (this.parent instanceof RoSGNode) {
+                    this.parent.removeChildByReference(this);
+                }
+                this.setParent(newParent);
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
         },
     });
 
@@ -722,6 +1050,29 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             // perform search
             return this.findNodeById(root, name);
+        },
+    });
+
+    /* Returns a Boolean value indicating whether the roSGNode parameter
+            refers to the same node object as this node */
+    private issamenode = new Callable("issamenode", {
+        signature: {
+            args: [new StdlibArgument("roSGNode", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, roSGNode: RoSGNode) => {
+            return BrsBoolean.from(this === roSGNode);
+        },
+    });
+
+    /* Returns the subtype of this node as specified when it was created */
+    private subtype = new Callable("subtype", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(this.type);
         },
     });
 }

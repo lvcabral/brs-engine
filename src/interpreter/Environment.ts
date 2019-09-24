@@ -35,6 +35,10 @@ export class Environment {
      * @see Scope.Function
      */
     private function = new Map<string, BrsType>();
+    /**
+     * Mocked objects
+     */
+    private mockObjects = new Map<string, RoAssociativeArray>();
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer = new RoAssociativeArray([]);
     /**
@@ -174,9 +178,27 @@ export class Environment {
         newEnvironment.global = this.global;
         newEnvironment.module = this.module;
         newEnvironment.mPointer = this.mPointer;
+        newEnvironment.mockObjects = this.mockObjects;
         newEnvironment.focusedNode = this.focusedNode;
 
         return newEnvironment;
+    }
+
+    /**
+     * retrieves mocked object if it exists
+     * @param objName the object to mock
+     */
+    public getMock(objName: string): BrsType {
+        return this.mockObjects.get(objName) || BrsInvalid.Instance;
+    }
+
+    /**
+     * places the mockValue object into list of mocks
+     * @param objName the object we are mocking
+     * @param mockValue the mock to return
+     */
+    public setMock(objName: string, mockValue: RoAssociativeArray): void {
+        this.mockObjects.set(objName.toLowerCase(), mockValue);
     }
 
     /**

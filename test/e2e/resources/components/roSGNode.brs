@@ -22,7 +22,7 @@ sub main()
     node1.addFields({ field2: 0, field3: false})
 
     print "node size: " node1.count()                              ' => 3
-    
+
     node1.removeField("field2")
     print "node size: " node1.count()                              ' => 2
 
@@ -55,6 +55,42 @@ sub main()
     print "parent child count: " parentNode.getChildCount()        ' => 2
     children = parentNode.getChildren(-1, 0)
     print "children size: " children.count()                       ' => 2
+    childNode4 = createObject("roSGNode", "Node")
+    childNode4.id = "new node"
+    parentNode.replaceChild(childNode4, 0)
+    print "first child id after replacing: " parentNode.getChild(0).id ' => new node
+    print "parent child count: " parentNode.getChildCount()     ' => 2
+    parentNode.removeChildren([childNode, childNode2])
+    print "parent child count: " parentNode.getChildCount()         ' => 2
+    parentNode.removeChildren([childNode3, childNode4])
+    print "parent child count: " parentNode.getChildCount()         ' => 0
+    parentNode.appendChild(childNode)
+    parentNode.appendChild(childNode2)
+    parentNode.appendChild(childNode3)
+    parentNode.removeChildrenIndex(2, 7)
+    print "parent child count: " parentNode.getChildCount()         ' => 3
+    parentNode.removeChildrenIndex(3, 0)
+    print "parent child count: " parentNode.getChildCount()         ' => 0
+    parentNode.appendChildren([childNode, childNode2])
+    print "parent child count: " parentNode.getChildCount()         ' => 2
+    parentNode.appendChildren([childNode, childNode3])
+    print "parent child count: " parentNode.getChildCount()         ' => 3
+    parentNode.insertChild(childNode4, 0)
+    print "parent child count: " parentNode.getChildCount()         ' => 4
+    parentNode.insertChild(childNode3, 0)
+    print "parent child count: " parentNode.getChildCount()         ' => 4
+    parentNode.createChildren(2, "Node")
+    print "parent child count: " parentNode.getChildCount()         ' => 6
+    parentNode.removeChildren([childNode, childNode2])
+    parentNode.replaceChildren([childNode, childNode2], 1)
+    print "parent child count: " parentNode.getChildCount()         ' => 4
+    parentNode.removeChildren([childNode3, childNode4])
+    parentNode.insertChildren([childNode3, childNode4], 0)
+    print "inserted child id: " parentNode.getChild(1).id         ' => new node
+    parentNode.removeChildIndex(0)
+    print "parent child count: " parentNode.getChildCount()         ' => 4
+    childNode3.reparent(childNode4, false)
+    print "new parent id: " childNode3.getParent().id         ' => new node
 
     ' ifSGNodeFocus tests
     ' assume parent node will be attached to the rootscene node tree, otherwise
@@ -130,6 +166,17 @@ sub main()
     ' finds its grandparent
     result = cousin2.findNode("root")
     print "node finds its grandparent: " result.name                ' => root-node
+
+    ' returns true if both nodes are the same
+    n = createObject("roSGNode", "Node")
+    c = n.createChild("Node")
+    print "is same node returns true:" c.isSameNode(n.getChildren(-1, 0)[0])    ' => true
+
+    ' returns false if two different nodes are used
+    print "is same node returns false:" c.isSameNode(n)                ' => false
+
+    ' returns the node subtype
+    print "Node subtype is returned:" n.subtype()                       ' => Node
 end sub
 
 sub onSomethingChanged()
