@@ -10,9 +10,10 @@ import * as PP from "./preprocessor";
 import { Parser } from "./parser";
 import { Interpreter } from "./interpreter";
 import * as BrsError from "./Error";
-import * as bslCore from "raw-loader!../bsl/v30/bslCore.brs";
-import * as bslDefender from "raw-loader!../bsl/v30/bslDefender.brs";
-import * as models from "raw-loader!../bsl/models.csv";
+import * as bslCore from "raw-loader!../common/v30/bslCore.brs";
+import * as bslDefender from "raw-loader!../common/v30/bslDefender.brs";
+import * as Roku_Ads from "raw-loader!../common/Roku_Ads.brs";
+import * as models from "raw-loader!../common/models.csv";
 import * as _lexer from "./lexer";
 export { _lexer as lexer };
 import * as BrsTypes from "./brsTypes";
@@ -126,9 +127,10 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
-    const bsl = new Map<string, boolean>();
-    bsl.set("v30/bslDefender.brs", false);
-    bsl.set("v30/bslCore.brs", false);
+    const lib = new Map<string, boolean>();
+    lib.set("v30/bslDefender.brs", false);
+    lib.set("v30/bslCore.brs", false);
+    lib.set("Roku_Ads.brs", false);
     lexer.onError(logError);
     parser.onError(logError);
     source.forEach(function(code, path) {
@@ -144,21 +146,29 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
             return;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-            bsl.set("v30/bslDefender.brs", true);
-            bsl.set("v30/bslCore.brs", true);
+            lib.set("v30/bslDefender.brs", true);
+            lib.set("v30/bslCore.brs", true);
         }
         if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-            bsl.set("v30/bslCore.brs", true);
+            lib.set("v30/bslCore.brs", true);
+        }
+        if (parseResults.libraries.get("Roku_Ads.brs") === true) {
+            lib.set("Roku_Ads.brs", true);
         }
         allStatements.push(...parseResults.statements);
     });
-    if (bsl.get("v30/bslDefender.brs") === true) {
+    if (lib.get("v30/bslDefender.brs") === true) {
         const libScan = lexer.scan(bslDefender.default, "v30/bslDefender.brs");
         const libParse = parser.parse(libScan.tokens);
         allStatements.push(...libParse.statements);
     }
-    if (bsl.get("v30/bslCore.brs") === true) {
+    if (lib.get("v30/bslCore.brs") === true) {
         const libScan = lexer.scan(bslCore.default, "v30/bslCore.brs");
+        const libParse = parser.parse(libScan.tokens);
+        allStatements.push(...libParse.statements);
+    }
+    if (lib.get("Roku_Ads.brs") === true) {
+        const libScan = lexer.scan(Roku_Ads.default, "Roku_Ads.brs");
         const libParse = parser.parse(libScan.tokens);
         allStatements.push(...libParse.statements);
     }
