@@ -34,6 +34,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             this.keys,
             this.items,
             this.lookup,
+            this.isEmpty,
         ]);
     }
 
@@ -215,6 +216,19 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         impl: (interpreter: Interpreter, key: BrsString) => {
             let lKey = key.value.toLowerCase();
             return this.get(new BrsString(lKey));
+        },
+    });
+
+    //--------------------------------- ifEnum ---------------------------------
+
+    /** Returns true if enumeration contains no elements, false otherwise	 */
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(this.elements.size === 0);
         },
     });
 }
