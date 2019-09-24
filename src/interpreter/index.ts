@@ -118,7 +118,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this._environment.define(Scope.Global, func.name || "", func)
             );
 
-        this._environment.define(Scope.Mock, "_brs_", _brs_);
+        this._environment.define(Scope.Global, "_brs_", _brs_);
     }
 
     /**
