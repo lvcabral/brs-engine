@@ -162,7 +162,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, str: BrsString) => {
-            return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
+            return this.elements.has(str.value.toLowerCase()) ? BrsBoolean.True : BrsBoolean.False;
         },
     });
 
