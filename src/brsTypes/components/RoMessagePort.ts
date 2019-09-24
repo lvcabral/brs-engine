@@ -12,17 +12,23 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private messageQueue: BrsType[];
     private keys: Int32Array;
     private lastKey: number;
+    private screen: boolean;
     constructor() {
         super("roMessagePort");
         this.registerMethods([this.waitMessage, this.getMessage, this.peekMessage]);
         this.messageQueue = [];
         this.lastKey = 0;
+        this.screen = false;
         let keys = control.get("keys");
         if (keys) {
             this.keys = keys;
         } else {
             this.keys = new Int32Array([]);
         }
+    }
+
+    enableKeys(enable: boolean) {
+        this.screen = enable;
     }
 
     pushMessage(object: BrsType) {
@@ -38,21 +44,28 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     wait(ms: number) {
-        if (ms === 0) {
-            while (true) {
-                if (this.keys[0] !== this.lastKey) {
-                    this.lastKey = this.keys[0];
-                    return new RoUniversalControlEvent(this.lastKey);
+        if (this.screen) {
+            if (ms === 0) {
+                while (true) {
+                    if (this.keys[0] !== this.lastKey) {
+                        this.lastKey = this.keys[0];
+                        return new RoUniversalControlEvent(this.lastKey);
+                    }
+                }
+            } else {
+                let sec = Math.trunc(ms / 1000);
+                ms += new Date().getTime();
+                while (new Date().getTime() < ms) {
+                    if (this.keys[0] !== this.lastKey) {
+                        this.lastKey = this.keys[0];
+                        return new RoUniversalControlEvent(this.lastKey);
+                    }
                 }
             }
-        } else {
-            let sec = Math.trunc(ms / 1000);
-            ms += new Date().getTime();
-            while (new Date().getTime() < ms) {
-                if (this.keys[0] !== this.lastKey) {
-                    this.lastKey = this.keys[0];
-                    return new RoUniversalControlEvent(this.lastKey);
-                }
+        } else if (this.messageQueue.length > 0) {
+            let message = this.messageQueue.shift();
+            if (message) {
+                return message;
             }
         }
         return BrsInvalid.Instance;
@@ -76,9 +89,16 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            if (this.keys[0] !== this.lastKey) {
-                this.lastKey = this.keys[0];
-                return new RoUniversalControlEvent(this.lastKey);
+            if (this.screen) {
+                if (this.keys[0] !== this.lastKey) {
+                    this.lastKey = this.keys[0];
+                    return new RoUniversalControlEvent(this.lastKey);
+                }
+            } else if (this.messageQueue.length > 0) {
+                let message = this.messageQueue.shift();
+                if (message) {
+                    return message;
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -91,10 +111,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            // if (this.messageQueue.length > 0)
-            // {
-            //     return this.messageQueue[0];
-            // }
+            if (this.messageQueue.length > 0) {
+                let message = this.messageQueue[0];
+                if (message) {
+                    return message;
+                }
+            }
             return BrsInvalid.Instance;
         },
     });

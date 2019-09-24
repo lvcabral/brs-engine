@@ -555,6 +555,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.enableKeys(true);
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -567,6 +568,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.enableKeys(true);
             this.port = port;
             return BrsInvalid.Instance;
         },
