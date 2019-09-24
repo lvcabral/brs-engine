@@ -4,7 +4,7 @@ import { BrsType, Float, RoFont } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoBitmap, rgbaIntToHex, applyRgba } from "./RoBitmap";
+import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 
@@ -121,6 +121,13 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     getCanvas(): OffscreenCanvas {
+        return this.bitmap.getCanvas();
+    }
+
+    getRgbaCanvas(rgba: number): OffscreenCanvas {
+        if (this.bitmap instanceof RoBitmap) {
+            return this.bitmap.getRgbaCanvas(rgba);
+        }
         return this.bitmap.getCanvas();
     }
 
@@ -527,33 +534,29 @@ export class RoRegion extends BrsComponent implements BrsValue {
             _: Interpreter,
             x: Int32,
             y: Int32,
-            object: RoBitmap | RoRegion,
+            object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            let result = BrsBoolean.True;
-            const ctx = this.context;
-            if (!(rgba instanceof BrsInvalid)) {
-                const alpha = rgba.getValue() & 255;
-                if (alpha < 255 && ctx) {
-                    ctx.globalAlpha = alpha / 255;
+            const ctx = this.context as OffscreenCanvasRenderingContext2D;
+            let cvs: OffscreenCanvas;
+            if (object instanceof RoBitmap || object instanceof RoRegion) {
+                if (rgba instanceof Int32) {
+                    const alpha = rgba.getValue() & 255;
+                    if (alpha < 255) {
+                        ctx.globalAlpha = alpha / 255;
+                    }
+                    cvs = object.getRgbaCanvas(rgba.getValue());
+                } else {
+                    cvs = object.getCanvas();
                 }
+            } else {
+                return BrsBoolean.False;
             }
             if (object instanceof RoBitmap) {
-                this.drawImage(object.getCanvas(), x.getValue(), y.getValue());
-                if (rgba instanceof Int32 && ctx) {
-                    applyRgba(
-                        ctx,
-                        x.getValue(),
-                        y.getValue(),
-                        object.getCanvas().width,
-                        object.getCanvas().height,
-                        rgba.getValue()
-                    );
-                }
+                ctx.drawImage(cvs, x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
-                let ctx = this.bitmap.getContext();
                 ctx.drawImage(
-                    object.getCanvas(),
+                    cvs,
                     object.getPosX(),
                     object.getPosY(),
                     object.getImageWidth(),
@@ -563,13 +566,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
                     object.getImageWidth(),
                     object.getImageHeight()
                 );
-            } else {
-                result = BrsBoolean.False;
             }
-            if (ctx) {
-                ctx.globalAlpha = 1.0;
-            }
-            return result;
+            ctx.globalAlpha = 1.0;
+            return BrsBoolean.True;
         },
     });
 
