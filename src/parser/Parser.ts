@@ -157,6 +157,7 @@ export class Parser {
     constructor() {
         bsLibraries.set("v30/bslCore.brs", false);
         bsLibraries.set("v30/bslDefender.brs", false);
+        bsLibraries.set("Roku_Ads.brs", false);
     }
     /**
      * A convenience function, equivalent to `new Parser().parse(toParse)`, that parses an array of
