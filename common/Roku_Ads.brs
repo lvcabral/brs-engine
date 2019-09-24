@@ -1,10 +1,10 @@
 function Roku_Ads() as object
-    this = {url:""}
+    this = {adurl:""}
     this.setAdUrl = sub(url="")
-        m.url = url
+        m.adurl = url
     end sub
     this.getAdUrl = function() as string
-        return m.url
+        return m.adurl
     end function
     this.getAds = function(msg=invalid) as object
         return {}
