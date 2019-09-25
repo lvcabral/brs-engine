@@ -44,6 +44,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             this.count,
             this.clear,
             this.append,
+            this.isEmpty,
         ]);
     }
 
@@ -53,7 +54,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         }
 
         return [
-            "<Component: roArray> =",
+            "<Component: roByteArray> =",
             "[",
             ...this.getElements()
                 .slice(0, 100)
@@ -468,6 +469,18 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             // ];
 
             return BrsInvalid.Instance;
+        },
+    });
+
+    // ifEnum -------------------------------------------------------------------------
+
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(this.elements.length === 0);
         },
     });
 }
