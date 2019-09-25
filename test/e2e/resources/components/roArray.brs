@@ -12,5 +12,5 @@ sub Main()
     print "first element: " arr.shift()         ' => lorem
     print "can delete elements: " arr.delete(1) ' => true
     arr.clear()
-    print "can empty itself: " arr.count() = 0  ' => true
+    print "can empty itself: " arr.isEmpty()    ' => true
 end sub
