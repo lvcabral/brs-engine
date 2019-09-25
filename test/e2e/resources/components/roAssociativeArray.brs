@@ -14,5 +14,5 @@ sub main()
     print "can check for existence: " aa.doesExist("bar")       ' => true
 
     aa.clear()
-    print "can empty itself: " aa.count() = 0                   ' => true
+    print "can empty itself: " aa.isEmpty()                     ' => true
 end sub
