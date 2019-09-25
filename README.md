@@ -24,21 +24,24 @@ This emulator is still a **prototype**, this way, there are several features fro
 ### In Scope (to be developed/fixed)
 
 *   Usage of **@** to access attributes from `roXMLElements` is not supported.
-*   `Goto` statements are not supported.
+*   `Goto` statement is not supported.
+*   `GetInterface(obj, interface)` function is not supported, use `Type(obj)` for now.
+*   Usage of **colon** to do a loop in one line is not working. e.g. `while r.IsMatch(s): s = r.Replace(s, "\1,\2"): end while` 
 *   It's not possible to compare `roUniversalControlEvent` to an integer.
 *   Single line `if..then..[else]` cannot be nested inside another `if` clause.
 *   The global AA (root `m` object) is not accessible from a function called inside a method.
 *   The component `roUrlTransfer` is not implemented.
-*   Optional parameter `rgba` in `DrawObject()` method partially supported (only alpha opacity).
 *   Reserved words like `Mod` cannot be used as variables (Roku does allow that).
 *   The `Dim` statement cannot create multi-dimensional arrays.
 *   Return `Invalid` from a function explicitly declared as `Object` doesn't work, use `Dynamic` or remove type declaration.
 *   Send `Invalid` on a function parameter when it explicitly defines the type, generates an error. If `Invalid` is possible remove type declaration.
+*   Unlike in **Roku** the emulator file system is case sensitive, so for now make sure your code use the correct case when dealing with files.
+
+### In Scope (mocked)
+
 *   Audio playback is not supported yet, for now `roAudioPlayer` and `roAudioResource` are mocked.
-
-### In Scope (to be mocked)
-
-*   RAF (Roku Ads Framework) components.
+*   RAF (Roku Ads Framework) object `Roku_Ads()` is mocked with the most common methods available.
+*   Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked.
 
 ### Out of Scope
 

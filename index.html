@@ -14,7 +14,7 @@
         src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
     <div id="container">
         <h2
-            >BrightScript 2D API Emulator :: v0.3 Alpha
+            >BrightScript 2D API Emulator :: v0.4 Alpha
             <hr>
         </h2>
         <div style="position: relative; left: 0px; top: 0px">
@@ -63,7 +63,7 @@
             </li>
         </ul>
     
-        <h2>Compatibility</h2>
+        <h2>Technology and Compatibility</h2>
         <p>This emulator is bundled as a <strong><a href="https://webpack.js.org/">Webpack</a></strong> Javascript library that runs as a 
            <strong><a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers">Web Worker</a></strong> in the browser, and it uses features like 
             <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer">SharedArrayBuffer</a> and 
@@ -81,20 +81,23 @@
         <ul>
             <li>Usage of <strong>@</strong> to access attributes from <code>roXMLElements</code> is not supported.</li>
             <li><code>Goto</code> statement is not supported</li>
+            <li>Function <code>GetInterface(obj, interface)</code> is not supported, use <code>Type(obj)</code> for now./li>
+            <li>Usage of <strong>colon</strong> to do a loop in one line is not working. e.g. <code>while r.IsMatch(s): s = r.Replace(s, "\1,\2"): end while</code></li>
             <li>It's not possible to compare <code>roUniversalControlEvent</code> to an integer.</li>
             <li>Single line <code>if..then..[else]</code> cannot be nested inside another <code>if</code> clause.</li>
             <li>The global AA (root <code>m</code> object) is not accessible from a function called inside a method.</li>
             <li>The component <code>roUrlTransfer</code> is not implemented.</li>
-            <li>Optional parameter <code>rgba</code> in <code>DrawObject()</code> method partially supported (only alpha opacity).</li>
             <li>Reserved words like <code>Mod</code> cannot be used as variables (Roku does allow that).</li>
             <li>The <code>Dim</code> statement cannot create multi-dimensional arrays.</li>
             <li>Return <code>Invalid</code> from a function explicitly declared as <code>Object</code> doesn't work, use <code>Dynamic</code> or remove type declaration.</li>
             <li>Send <code>Invalid</code> on a function parameter when it explicitly defines the type, generates an error. If <code>Invalid</code> is possible remove type declaration.</li>
-            <li>Audio playback is not supported yet, for now <code>roAudioPlayer</code> and <code>roAudioResource</code> are mocked.</li>
+            <li>Unlike in <strong>Roku</strong> the emulator file system is case sensitive, so for now make sure your code use the correct case when dealing with files.</li>
         </ul>
-        <h3>In Scope (to be mocked)</h3>
+        <h3>In Scope (mocked)</h3>
         <ul>          
-            <li>RAF (Roku Ads Framework) components.</li>
+            <li>Audio playback is not supported yet, for now <code>roAudioPlayer</code> and <code>roAudioResource</code> are mocked.</li>
+            <li>RAF (Roku Ads Framework) object <code>Roku_Ads()</code> is mocked.</li>
+            <li>Channel Store components (<code>roChannelStore</code> and <code>roChannelStoreEvent</code>) are mocked.</li>
         </ul>
         <h3>Out of Scope</h3>
         <ul>
