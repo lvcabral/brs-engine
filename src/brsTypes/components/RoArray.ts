@@ -27,6 +27,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             this.sort,
             this.sortBy,
             this.reverse,
+            this.isEmpty,
         ]);
     }
 
@@ -328,6 +329,16 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, separator: BrsString) => {
             this.elements = this.elements.reverse();
             return BrsInvalid.Instance;
+        },
+    });
+    // ifEnum
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(this.elements.length === 0);
         },
     });
 }

@@ -15,7 +15,6 @@ describe("block statements", () => {
         expect(errors.length).toEqual(0);
 
         let blockLocation = statements[0].func.body.location;
-        console.log(blockLocation);
         //the block location should begin immediately following `sub Main()`, and end immediately preceeding the first character of `end sub`
         expect(blockLocation).toEqual({
             file: "",
