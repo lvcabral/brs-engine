@@ -1,7 +1,7 @@
 const brs = require("brs");
 const { ValueKind, Callable, BrsString, RoAssociativeArray } = brs.types;
 const { Interpreter } = require("../../lib/interpreter");
-const { MockNode } = require("../../lib/mocks/MockNode");
+const { MockNode } = require("../../lib/extensions/MockNode");
 
 describe("MockNode", () => {
     describe("methods", () => {
