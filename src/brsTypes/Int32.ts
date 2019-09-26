@@ -15,18 +15,18 @@ export class Int32 implements Numeric, Comparable {
 
     /**
      * Creates a new BrightScript 32-bit integer value representing the provided `value`.
-     * @param value the value to store in the BrightScript number, rounded to the nearest 32-bit
+     * @param value the value to store in the BrightScript number, truncated to a 32-bit
      *              integer.
      */
     constructor(initialValue: number) {
-        this.value = Math.round(initialValue);
+        this.value = Math.trunc(initialValue);
     }
 
     /**
      * Creates a new BrightScript 32-bit integer value representing the integer contained in
      * `asString`.
      * @param asString the string representation of the value to store in the BrightScript 32-bit
-     *                 int. Will be rounded to the nearest 32-bit integer.
+     *                 int. Will be truncated to a 32-bit integer.
      * @returns a BrightScript 32-bit integer value representing `asString`.
      */
     static fromString(asString: string): Int32 {

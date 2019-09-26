@@ -64,7 +64,7 @@ export class Timespan extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32((Date.now() - this.markTime) / 1000);
+            return new Int32(Math.round((Date.now() - this.markTime) / 1000));
         },
     });
 
@@ -82,7 +82,7 @@ export class Timespan extends BrsComponent implements BrsValue {
             let dateToParse = luxon.DateTime.fromISO(date.value, { zone: "utc" });
 
             if (dateToParse.isValid) {
-                dateAsSeconds = (Date.parse(dateToParse.toISO()) - now) / 1000;
+                dateAsSeconds = Math.round((Date.parse(dateToParse.toISO()) - now) / 1000);
             } else {
                 dateAsSeconds = 2077252342;
             }

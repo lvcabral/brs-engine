@@ -3,6 +3,8 @@ import * as Brs from ".";
 import * as Expr from "../parser/Expression";
 import { Scope } from "../interpreter/Environment";
 import { Location } from "../lexer";
+import { Int32 } from "./Int32";
+import { Float } from "./Float";
 
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
@@ -252,6 +254,22 @@ export class Callable implements Brs.BrsValue {
                 expected.type.kind === Brs.ValueKind.Dynamic ||
                 expected.type.kind === Brs.ValueKind.Object
             ) {
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Float &&
+                received.kind === Brs.ValueKind.Int32
+            ) {
+                args[index] = new Float(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int32 &&
+                received.kind === Brs.ValueKind.Float
+            ) {
+                args[index] = new Int32(received.getValue());
                 return;
             }
 
