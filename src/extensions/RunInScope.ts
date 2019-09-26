@@ -1,23 +1,24 @@
 import * as path from "path";
-
 import * as brs from "../";
+
 import {
-    BrsType,
-    ValueKind,
     Callable,
+    StdlibArgument,
+    ValueKind,
     BrsString,
     BrsInvalid,
-    StdlibArgument,
+    BrsType,
     RoArray,
     isBrsString,
 } from "../brsTypes";
-import { Interpreter } from "../interpreter";
-import { getVolumeByPath, getPath } from "./File";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
+import { Interpreter } from "../interpreter";
+import { getVolumeByPath, getPath } from "../stdlib/File";
+import { Scope } from "../interpreter/Environment";
 
 /**
- * Runs a file (or set of files) with the provided arguments, returning either the value returned by those files'
- * `main` function or `invalid` if an error occurs.
+ * Runs a file (or set of files) **in the current global + module scope** with the provided arguments, returning either
+ * the value returned by those files' `main` function or `invalid` if an error occurs.
  *
  * @param interpreter the interpreter hosting this call to `Run`
  * @param filenames a list of files to lex, parse, and run
@@ -25,7 +26,7 @@ import { BrsComponent } from "../brsTypes/components/BrsComponent";
  *
  * @returns the value returned by the executed file(s) if no errors are detected, otherwise `invalid`
  */
-function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
+function runFilesInScope(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
     let volumes = filenames.map(filename => getVolumeByPath(interpreter, filename.value));
     let pathsToFiles = filenames.map(filename =>
         path.join(interpreter.options.root, getPath(filename.value))
@@ -38,9 +39,11 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
 
     try {
         let ast = brs.lexParseSync(pathsToFiles, interpreter.options);
-        // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
-        let sandbox = new Interpreter(interpreter.options);
-        return sandbox.exec(ast, ...args)[0] || BrsInvalid.Instance;
+        return interpreter.inSubEnv(subInterpreter => {
+            // remove the original `main` function so we can execute the new file
+            subInterpreter.environment.remove("main", Scope.Module);
+            return subInterpreter.exec(ast, ...args)[0] || BrsInvalid.Instance;
+        });
     } catch (err) {
         // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
         // syntax errors, etc.
@@ -48,15 +51,15 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
     }
 }
 
-export const Run = new Callable(
-    "Run",
+export const RunInScope = new Callable(
+    "RunInScope",
     ...Callable.variadic({
         signature: {
             args: [new StdlibArgument("filename", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, filename: BrsString, ...args: BrsType[]) => {
-            return runFiles(interpreter, [filename], args);
+            return runFilesInScope(interpreter, [filename], args);
         },
     }),
     ...Callable.variadic({
@@ -69,7 +72,11 @@ export const Run = new Callable(
                 filenamearray instanceof RoArray &&
                 filenamearray.getElements().every(isBrsString)
             ) {
-                return runFiles(interpreter, filenamearray.getElements() as BrsString[], args);
+                return runFilesInScope(
+                    interpreter,
+                    filenamearray.getElements() as BrsString[],
+                    args
+                );
             }
 
             // RBI seems to hard-reboot when passed a non-empty associative array, but returns invalid for empty

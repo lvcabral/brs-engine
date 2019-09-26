@@ -28,7 +28,7 @@ import { Expr, Stmt } from "../parser";
 import { BrsError, TypeMismatch } from "../Error";
 
 import * as StdLib from "../stdlib";
-import { _brs_ } from "../extensions/mockComponent";
+import { _brs_ } from "../extensions";
 
 import { Scope, Environment, NotFound } from "./Environment";
 import { OutputProxy } from "./OutputProxy";

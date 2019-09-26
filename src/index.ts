@@ -97,27 +97,20 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
 }
 
 /**
- * A synchronous version of `execute`. Executes a BrightScript file by path and writes its output to the streams
- * provided in `options`.
+ * A synchronous version of the lexer-parser flow.
  *
- * @param filename the paths to BrightScript files to execute synchronously
+ * @param filename the paths to BrightScript files to lex and parse synchronously
  * @param options configuration for the execution, including the streams to use for `stdout` and
  *                `stderr` and the base directory for path resolution
- * @param args the set of arguments to pass to the `main` function declared in one of the provided filenames
  *
- * @returns the value returned by the executed file(s)
+ * @returns the AST produced from lexing and parsing the provided files
  */
-export function executeSync(
-    filenames: string[],
-    options: Partial<ExecutionOptions>,
-    args: BrsTypes.BrsType[]
-) {
+export function lexParseSync(filenames: string[], options: Partial<ExecutionOptions>) {
     const executionOptions = Object.assign(defaultExecutionOptions, options);
-    const interpreter = new Interpreter(executionOptions); // shared between files
 
     let manifest = PP.getManifestSync(executionOptions.root);
 
-    let allStatements = filenames
+    return filenames
         .map(filename => {
             let contents = fs.readFileSync(filename, "utf8");
             let scanResults = Lexer.scan(contents, filename);
@@ -126,8 +119,6 @@ export function executeSync(
             return Parser.parse(preprocessorResults.processedTokens).statements;
         })
         .reduce((allStatements, statements) => [...allStatements, ...statements], []);
-
-    return interpreter.exec(allStatements, ...args);
 }
 
 /**

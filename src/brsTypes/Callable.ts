@@ -267,4 +267,35 @@ export class Callable implements Brs.BrsValue {
 
         return reasons;
     }
+
+    /**
+     * Creates several copies of the provided signature and implementation pair, simulating variadic types by creating a
+     * function that accepts zero args, one that accepts one arg, one that accepts two args, (…).
+     *
+     * @param signatureAndImpl the base signature and implementation to make variadic
+     *
+     * @returns an array containing psuedo-variadic versions of the provided signature and implementation
+     */
+    static variadic(signatureAndImpl: SignatureAndImplementation): SignatureAndImplementation[] {
+        let { signature, impl } = signatureAndImpl;
+        return [
+            signatureAndImpl,
+            ...new Array(10).fill(0).map((_, numArgs) => {
+                return {
+                    signature: {
+                        args: [
+                            ...signature.args,
+                            ...new Array(numArgs)
+                                .fill(0)
+                                .map(
+                                    (_, i) => new StdlibArgument(`arg${i}`, Brs.ValueKind.Dynamic)
+                                ),
+                        ],
+                        returns: signature.returns,
+                    },
+                    impl: impl,
+                };
+            }),
+        ];
+    }
 }
