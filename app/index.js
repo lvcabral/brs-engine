@@ -5,17 +5,33 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-var display = document.getElementById("display");
-var screenSize = { width: 854, height: 480 };
-var ctx = display.getContext("2d", { alpha: false });
+
+var info = bowser.parse(window.navigator.userAgent);
+var supportedBrowser =
+    info.platform.type == "desktop" && info.engine.name == "Blink" && info.browser.version > "68";
 var fileButton = document.getElementById("fileButton");
 var channelInfo = document.getElementById("channelInfo");
 channelInfo.innerHTML = "<br/>";
+var display = document.getElementById("display");
+var screenSize = { width: 854, height: 480 };
+var ctx = display.getContext("2d", { alpha: false });
 var channel1 = document.getElementById("channel1");
 var channel2 = document.getElementById("channel2");
 var channel3 = document.getElementById("channel3");
-var bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
-var bufferCtx = bufferCanvas.getContext("2d");
+
+if (!supportedBrowser) {
+    channelIcons("hidden");
+    fileButton.style.visibility = "hidden";
+    var infoHtml = "";
+    infoHtml += "<br/>";
+    infoHtml += "Your browser is not supported!";
+    channelInfo.innerHTML = infoHtml;
+}
+
+var bufferCanvas = supportedBrowser
+    ? new OffscreenCanvas(screenSize.width, screenSize.height)
+    : undefined;
+var bufferCtx = supportedBrowser ? bufferCanvas.getContext("2d") : undefined;
 var buffer = new ImageData(screenSize.width, screenSize.height);
 var splashTimeout = 1600;
 var brsWorker;
@@ -28,8 +44,10 @@ var running = false;
 
 // Control buffer
 const length = 10;
-const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-const sharedArray = new Int32Array(sharedBuffer);
+const sharedBuffer = supportedBrowser
+    ? new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length)
+    : undefined;
+const sharedArray = sharedBuffer ? new Int32Array(sharedBuffer) : undefined;
 
 // Keyboard handlers
 document.addEventListener("keydown", keyDownHandler, false);
