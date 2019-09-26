@@ -194,6 +194,16 @@ describe("RoAssociativeArray", () => {
                 expect(result.kind).toBe(ValueKind.Boolean);
                 expect(result).toBe(BrsBoolean.False);
             });
+            it("returns true even when the value of an item contains invalid in the array", () => {
+                let aa = new RoAssociativeArray([
+                    { name: new BrsString("letter1"), value: BrsInvalid.Instance },
+                ]);
+
+                let doesexist = aa.getMethod("doesexist");
+                let result = doesexist.call(interpreter, new BrsString("letter1"));
+                expect(result.kind).toBe(ValueKind.Boolean);
+                expect(result).toBe(BrsBoolean.True);
+            });
         });
 
         describe("append", () => {
