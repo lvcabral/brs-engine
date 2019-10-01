@@ -8,7 +8,7 @@
 import { Lexer } from "./lexer";
 import * as PP from "./preprocessor";
 import { Parser } from "./parser";
-import { Interpreter } from "./interpreter";
+import { Interpreter, defaultExecutionOptions } from "./interpreter";
 import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!../common/v30/bslCore.brs";
 import * as bslDefender from "raw-loader!../common/v30/bslDefender.brs";
@@ -113,6 +113,32 @@ onmessage = function(event) {
         control.set("keys", new Int32Array(event.data));
     }
 };
+
+/**
+ * A synchronous version of the lexer-parser flow.
+ *
+ * @param filename the paths to BrightScript files to lex and parse synchronously
+ * @param options configuration for the execution, including the streams to use for `stdout` and
+ *                `stderr` and the base directory for path resolution
+ *
+ * @returns the AST produced from lexing and parsing the provided files
+ */
+export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
+    const executionOptions = Object.assign(defaultExecutionOptions, interpreter.options);
+
+    let manifest = PP.getManifestSync(executionOptions.root);
+    let volume = interpreter.fileSystem.get("pkg:") as MemoryFileSystem;
+
+    return filenames
+        .map(filename => {
+            let contents = volume.readFileSync(filename, "utf8");
+            let scanResults = Lexer.scan(contents, filename);
+            let preprocessor = new PP.Preprocessor();
+            let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
+            return Parser.parse(preprocessorResults.processedTokens).statements;
+        })
+        .reduce((allStatements, statements) => [...allStatements, ...statements], []);
+}
 
 /**
  * Runs an arbitrary string of BrightScript code.
