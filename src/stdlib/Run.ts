@@ -36,16 +36,16 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         return BrsInvalid.Instance;
     }
 
-    // try {
-    //     let ast = brs.lexParseSync(pathsToFiles, interpreter.options);
-    //     // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
-    //     let sandbox = new Interpreter(interpreter.options);
-    //     return sandbox.exec(ast, ...args)[0] || BrsInvalid.Instance;
-    // } catch (err) {
-    //     // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
-    //     // syntax errors, etc.
-    return BrsInvalid.Instance;
-    // }
+    try {
+        let ast = brs.lexParseSync(interpreter, pathsToFiles);
+        // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
+        let sandbox = new Interpreter(interpreter.options);
+        return sandbox.exec(ast, ...args)[0] || BrsInvalid.Instance;
+    } catch (err) {
+        // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
+        // syntax errors, etc.
+        return BrsInvalid.Instance;
+    }
 }
 
 export const Run = new Callable(
