@@ -1,5 +1,5 @@
 ' bslDefender
-' BrighScript 2D graphics library
+' BrightScript 2D graphics library
 ' Aug 23, 2010
 ' ajw
 '
