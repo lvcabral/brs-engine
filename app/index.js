@@ -62,6 +62,9 @@ for (let index = 0; index < storage.length; index++) {
 // File selector
 var fileSelector = document.getElementById("file");
 var zip = new JSZip();
+fileButton.onclick = function() {
+    fileSelector.click();
+};
 
 fileSelector.onclick = function() {
     this.value = null;
@@ -130,10 +133,10 @@ function openChannelZip(f) {
                     function success(content) {
                         var manifestMap = new Map();
                         content.match(/[^\r\n]+/g).map(function(ln) {
-                            line = ln.split("=");
+                            var line = ln.split("=");
                             manifestMap.set(line[0].toLowerCase(), line[1]);
                         });
-                        splashMinTime = manifestMap.get("splash_min_time");
+                        var splashMinTime = manifestMap.get("splash_min_time");
                         if (splashMinTime && !isNaN(splashMinTime)) {
                             splashTimeout = parseInt(splashMinTime);
                         }
@@ -147,7 +150,7 @@ function openChannelZip(f) {
                         ctx.fillStyle = "rgba(0, 0, 0, 1)";
                         ctx.fillRect(0, 0, display.width, display.height);
                         if (splash && splash.substr(0, 5) === "pkg:/") {
-                            splashFile = zip.file(splash.substr(5));
+                            var splashFile = zip.file(splash.substr(5));
                             if (splashFile) {
                                 splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(imgData => {
