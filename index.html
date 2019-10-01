@@ -34,82 +34,11 @@
             <input type="button" id="fileButton" class="fileButton" value="Open Channel ZIP or BRS file..." />
         </div>
         <br/><br/><br/><br/><br/><br/>
-        <h2>About the Project</h2>
-        <p>As a <strong>BrightScript</strong> developer since 2012, I always wanted a way to test my code without the need of a Roku device, in situations like 
-        a long flight or a place without any wireless network available. Then in 2016 I decided to learn about the 
-        <strong><a href="https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md">ifDraw2D API</a></strong> in order 
-        to develop games for the platform, so I created a few open source remakes of classic games (see links below on <strong>Games and Demos</strong>).
-        These projects were very challenging and exciting to develop, but brought me some frustration with it, as very few people outside the USA has access 
-        to the Roku platform, so a lot of people could only see <a href="https://www.youtube.com/watch?v=NA59qZk7fQU&list=PLnKUeRkfD6f2JwNfJFiGfUrrg4YVKdcRQ">videos of my games</a>,
-        but never play it.</p>
-    
-        <p>The development of an emulator for the platform was, to me, a very complex endeavor to start as a <em>side project</em>, so I shelved the idea in my 
-            <em>Brain Dump Trello board</em>, until recently, when I learned about the <a href="https://github.com/sjbarag/brs"><strong>brs</strong></a> open source project,
-            created by <a href="https://github.com/sjbarag/">Sean Barag</a>, that consists of a <em>command line interpreter</em> for <strong>BrightScript</strong>.<p/>
-        <p>I could immediatly see, that this project would be the piece that was missing to turn my emulator project a reality! 
-            I forked <strong>brs</strong> and started sending <em>pull requests</em> to the project, so the interpreter could have the minimum set of components that would make 
-            possible for me to work upon it. In the same weekend I could develop a working proof-of-concept using HTML5 <code>Canvas</code> and after a month of nights and weekends 
-            studying TypeScript/Javascript, and exploring all sort of options to overcome different challenges, I finally came up with this prototype that is available here. </p>
-
-        <h2>Games and Demos</h2>
-        You can try the emulator by loading one of the demonstration channels, using the <em>clickable icons</em> above or loading your own code, either as a single <strong>.brs</strong>
-        file or a channel <strong>.zip package</strong>. You can also play some games downloading the release <strong>.zip</strong> files from the repositories linked below.
-        <ul>
-            <li>
-                <a href="https://github.com/lvcabral/Prince-of-Persia-Roku">Prince of Persia</a> port by Marcelo Lv Cabral.
-            </li>
-            <li>
-                <a href="https://github.com/lvcabral/Lode-Runner-Roku">Lode Runner</a> remake by Marcelo Lv Cabral.
-            </li>
-        </ul>
-    
-        <h2>Technology and Compatibility</h2>
-        <p>This emulator is bundled as a <strong><a href="https://webpack.js.org/">Webpack</a></strong> Javascript library that runs as a 
-           <strong><a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers">Web Worker</a></strong> in the browser, and it uses features like 
-            <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer">SharedArrayBuffer</a> and 
-            <a href="https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas">OffScreenCanvas</a>, that are <em>bleeding edge</em> in the browser engines implementation, 
-              because of that, at this moment, it can only be executed in <a href="https://www.chromium.org/Home">Chromium</a> based browsers,
-             like <a href="https://www.google.com/chrome/">Chrome</a>, <a href="https://brave.com/download/">Brave</a>, 
-             <a href="https://www.opera.com/">Opera</a> and the new <a href="https://www.microsoftedgeinsider.com/en-us/download/">Edge Insider</a>. 
-             The <strong>BrightScript 2D API Emulator</strong> is a full client-side application, nothing is sent or processed in the server side.
-        </p>
-        <h2>Current Limitations</h2>
-        As mentioned above, this emulator is a <strong>prototype</strong>, this way, there are several features from the <strong>BrightScript</strong> language and components that are still not supported,
-        some are planned to be implemented, others will stay as mock objects (for compatibility), and some are considered out of scope of this project.
-        Below is the current list of those limitations:
-        <h3>In Scope (to be developed/fixed)</h3>
-        <ul>
-            <li>Usage of <strong>@</strong> to access attributes from <code>roXMLElements</code> is not supported.</li>
-            <li><code>Goto</code> statement is not supported</li>
-            <li>Function <code>GetInterface(obj, interface)</code> is not supported, use <code>Type(obj)</code> for now./li>
-            <li>Usage of <strong>colon</strong> to do a loop in one line is not working. e.g. <code>while r.IsMatch(s): s = r.Replace(s, "\1,\2"): end while</code></li>
-            <li>It's not possible to compare <code>roUniversalControlEvent</code> to an integer.</li>
-            <li>Single line <code>if..then..[else]</code> cannot be nested inside another <code>if</code> clause.</li>
-            <li>The global AA (root <code>m</code> object) is not accessible from a function called inside a method.</li>
-            <li>The component <code>roUrlTransfer</code> is not implemented.</li>
-            <li>Reserved words like <code>Mod</code> cannot be used as variables (Roku does allow that).</li>
-            <li>The <code>Dim</code> statement cannot create multi-dimensional arrays.</li>
-            <li>Return <code>Invalid</code> from a function explicitly declared as <code>Object</code> doesn't work, use <code>Dynamic</code> or remove type declaration.</li>
-            <li>Send <code>Invalid</code> on a function parameter when it explicitly defines the type, generates an error. If <code>Invalid</code> is possible remove type declaration.</li>
-            <li>Unlike in <strong>Roku</strong> the emulator file system is case sensitive, so for now make sure your code use the correct case when dealing with files.</li>
-        </ul>
-        <h3>In Scope (mocked)</h3>
-        <ul>          
-            <li>Audio playback is not supported yet, for now <code>roAudioPlayer</code> and <code>roAudioResource</code> are mocked.</li>
-            <li>RAF (Roku Ads Framework) object <code>Roku_Ads()</code> is mocked.</li>
-            <li>Channel Store components (<code>roChannelStore</code> and <code>roChannelStoreEvent</code>) are mocked.</li>
-        </ul>
-        <h3>Out of Scope</h3>
-        <ul>
-            <li>RSG (Roku SceneGraph) SDK support.</li>
-            <li>Video playback or streaming.</li>
-            <li>SDK 1.0 deprecated components.</li>
-        </ul>
         <h3>Note for Developers</h3>
         You can see the debug messages from <code>print</code> statements in your code using the <em>browser console</em>, just right click anywhere in the page and select 
-        <em>Inspect (Ctrl+Shift+i)</em>. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the limitations
-        above, feel free to <a href="https://github.com/lvcabral/brs/issues">open an issue</a> at the project's GitHub repository.
-		<h2>Download</h2>
+        <em>Inspect (Ctrl+Shift+i)</em>. Exceptions from the emulator will be shown there too. 
+        <h3>Documentation and Download</h3>
+        <p>To learn more about the project visit the repository at: <a href="https://github.com/lvcabral/brs-emu/">https://github.com/lvcabral/brs-emu/</a></p>
 		<p>You can download this project in either <a href="https://github.com/lvcabral/brs-emu/zipball/master">zip</a> or <a
 			href="https://github.com/lvcabral/brs-emu/tarball/master">tar</a> formats.
 		</p>
