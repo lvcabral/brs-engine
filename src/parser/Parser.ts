@@ -911,7 +911,7 @@ export class Parser {
                 }
                 thenBranch = new Stmt.Block([thenStatement], peek().location);
 
-                while (match(Lexeme.ElseIf)) {
+                while (previous().kind !== Lexeme.Newline && match(Lexeme.ElseIf)) {
                     let elseIf = previous();
                     let elseIfCondition = expression();
                     if (checkThen()) {
@@ -933,7 +933,8 @@ export class Parser {
                     });
                 }
 
-                if (match(Lexeme.Else)) {
+                if (previous().kind !== Lexeme.Newline && match(Lexeme.Else)) {
+                    console.log("Else 2");
                     let elseStatement = declaration();
                     if (!elseStatement) {
                         throw addError(peek(), `Expected a statement to follow 'else'`);
@@ -1018,6 +1019,8 @@ export class Parser {
                     consume(
                         "Expected newline or ':' after indexed 'set' statement",
                         Lexeme.Newline,
+                        Lexeme.Else,
+                        Lexeme.ElseIf,
                         Lexeme.Colon,
                         Lexeme.Eof
                     );
@@ -1034,6 +1037,8 @@ export class Parser {
                     consume(
                         "Expected newline or ':' after dotted 'set' statement",
                         Lexeme.Newline,
+                        Lexeme.Else,
+                        Lexeme.ElseIf,
                         Lexeme.Colon,
                         Lexeme.Eof
                     );
