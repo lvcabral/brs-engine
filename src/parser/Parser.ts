@@ -959,7 +959,6 @@ export class Parser {
                 }
 
                 if (previous().kind !== Lexeme.Newline && match(Lexeme.Else)) {
-                    console.log("Else 2");
                     let elseStatement = declaration();
                     if (!elseStatement) {
                         throw addError(peek(), `Expected a statement to follow 'else'`);
