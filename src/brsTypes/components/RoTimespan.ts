@@ -11,7 +11,7 @@ export class Timespan extends BrsComponent implements BrsValue {
     private markTime = Date.now();
 
     constructor() {
-        super("roTimespan");
+        super("roTimespan", ["ifTimespan"]);
         this.registerMethods([
             this.mark,
             this.totalmilliseconds,

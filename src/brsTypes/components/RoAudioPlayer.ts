@@ -14,7 +14,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     private loopMode: boolean;
 
     constructor() {
-        super("roAudioPlayer");
+        super("roAudioPlayer", ["ifAudioPlayer", "ifGetMessagePort", "ifSetMessagePort"]);
         this.contentList = new RoArray([]);
         this.contentIndex = 0;
         this.contentOffset = 0;

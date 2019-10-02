@@ -13,7 +13,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     private elements: LinkedList<RoXMLElement>;
 
     constructor() {
-        super("roXMLList");
+        super("roXMLList", ["ifXMLList", "ifList", "ifListToArray", "ifEnum"]);
         this.elements = new LinkedList<RoXMLElement>();
         this.registerMethods([
             this.getAttributes,

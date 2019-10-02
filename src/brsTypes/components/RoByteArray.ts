@@ -14,7 +14,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     constructor();
     constructor(elementsParam: Uint8Array);
     constructor(elementsParam?: Uint8Array) {
-        super("roByteArray");
+        super("roByteArray", ["ifByteArray", "ifArray"]);
         this.elements = elementsParam ? elementsParam : new Uint8Array();
         this.registerMethods([
             this.readFile,

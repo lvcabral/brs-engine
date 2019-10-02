@@ -16,7 +16,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     constructor() {
-        super("roFileSystem");
+        super("roFileSystem", ["ifFileSystem"]);
 
         this.registerMethods([
             this.getVolumeList,

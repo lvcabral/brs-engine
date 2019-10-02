@@ -26,7 +26,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     }
 
     constructor(initialValue: BrsString) {
-        super("roString", ["ifStringOps"]);
+        super("roString", ["ifString", "ifStringOps", "ifToStr"]);
 
         this.intrinsic = initialValue;
         this.registerMethods([

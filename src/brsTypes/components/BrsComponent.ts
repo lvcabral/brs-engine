@@ -10,7 +10,7 @@ export class BrsComponent {
 
     constructor(name: string, interfaces: string[] = []) {
         this.componentName = name;
-        this.interfaces = new Set(interfaces);
+        this.interfaces = new Set(interfaces.map(i => i.toLowerCase()));
     }
 
     /**
