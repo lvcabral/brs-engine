@@ -11,7 +11,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     private playing: boolean;
 
     constructor(name: BrsString) {
-        super("roAudioResource");
+        super("roAudioResource", ["ifAudioResource"]);
         this.audioName = name.value;
         this.playing = false;
         this.registerMethods([

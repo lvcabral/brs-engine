@@ -15,7 +15,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     constructor() {
-        super("roChannelStore");
+        super("roChannelStore", ["ifChannelStore"]);
         this.id = Math.floor(Math.random() * 100) + 1;
         this.order = [];
         this.credData = "";

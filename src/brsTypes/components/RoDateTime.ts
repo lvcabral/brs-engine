@@ -11,7 +11,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     private markTime = Date.now();
 
     constructor() {
-        super("roDateTime");
+        super("roDateTime", ["ifDateTime"]);
         this.registerMethods([
             this.mark,
             this.asDateString,

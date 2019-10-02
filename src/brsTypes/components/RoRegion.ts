@@ -27,7 +27,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private collisionRect: Rect;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
-        super("roRegion");
+        super("roRegion", ["ifRegion"]);
         this.bitmap = bitmap;
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
         this.x = x.getValue();

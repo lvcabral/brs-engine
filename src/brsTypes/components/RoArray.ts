@@ -11,7 +11,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     private elements: BrsType[];
 
     constructor(elements: BrsType[]) {
-        super("roArray");
+        super("roArray", ["ifArray", "ifArrayJoin", "ifArraySort", "ifEnum"]);
         this.elements = elements;
         this.registerMethods([
             this.peek,

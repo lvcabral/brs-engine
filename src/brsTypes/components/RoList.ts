@@ -12,7 +12,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     private elements: LinkedList<BrsType>;
 
     constructor(elements?: BrsType[]) {
-        super("roList");
+        super("roList", ["ifList", "ifArray", "ifEnum", "ifListToArray"]);
         if (elements) {
             this.elements = new LinkedList<BrsType>(...elements);
         } else {

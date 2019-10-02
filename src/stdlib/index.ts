@@ -7,8 +7,11 @@ import {
     Int32,
     BrsValue,
     RoMessagePort,
+    BrsString,
+    BrsType,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
+import { BrsComponent } from "../brsTypes/components/BrsComponent";
 
 let warningShown = false;
 
@@ -67,6 +70,26 @@ export const Wait = new Callable("Wait", {
     },
     impl: (_: Interpreter, timeout: Int32, port: RoMessagePort) => {
         return port.wait(timeout.getValue());
+    },
+});
+
+export const GetInterface = new Callable("GetInterface", {
+    signature: {
+        args: [
+            new StdlibArgument("object", ValueKind.Dynamic),
+            new StdlibArgument("ifname", ValueKind.String),
+        ],
+        returns: ValueKind.Dynamic,
+    },
+    impl: (interpreter: Interpreter, object: BrsType, ifname: BrsString) => {
+        if (object instanceof BrsComponent) {
+            if (object.interfaces.has(ifname.toString().toLowerCase())) {
+                return object;
+            } else {
+                return BrsInvalid.Instance;
+            }
+        }
+        return BrsInvalid.Instance;
     },
 });
 

@@ -14,7 +14,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private lastKey: number;
     private screen: boolean;
     constructor() {
-        super("roMessagePort");
+        super("roMessagePort", ["ifMessagePort"]);
         this.registerMethods([this.waitMessage, this.getMessage, this.peekMessage]);
         this.messageQueue = [];
         this.lastKey = 0;
