@@ -354,7 +354,6 @@ function closeChannel() {
     fileButton.style.visibility = "visible";
     channelIcons("visible");
     fileSelector.value = null;
-    brsWorker.terminate();
     sharedArray[0] = 0;
     running = false;
 }
