@@ -19,7 +19,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     private spriteId: number;
 
     constructor() {
-        super("roCompositor");
+        super("roCompositor", ["ifCompositor"]);
         this.canvas = new OffscreenCanvas(10, 10);
         let context = this.canvas.getContext("2d", {
             alpha: true,

@@ -10,7 +10,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private port?: RoMessagePort;
 
     constructor() {
-        super("roDeviceInfo");
+        super("roDeviceInfo", ["ifDeviceInfo"]);
         this.registerMethods([
             this.getModel,
             this.getModelDisplayName,

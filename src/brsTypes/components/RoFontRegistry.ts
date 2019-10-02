@@ -25,7 +25,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     private fontRegistry: Map<string, FontMetrics[]>;
 
     constructor(interpreter: Interpreter) {
-        super("roFontRegistry");
+        super("roFontRegistry", ["ifFontRegistry"]);
         this.registerMethods([
             this.register,
             this.getFamilies,

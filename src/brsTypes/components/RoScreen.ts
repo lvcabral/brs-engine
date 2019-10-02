@@ -26,7 +26,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     // TODO: Correctly adjust aspect ratio for non 16:9 resolutions
     constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
-        super("roScreen", ["ifScreen", "ifDraw2D"]);
+        super("roScreen", ["ifScreen", "ifDraw2D", "ifGetMessagePort", "ifSetMessagePort"]);
         const resolutions = {
             "1280x720": "HD",
             "854x480": "HD",
