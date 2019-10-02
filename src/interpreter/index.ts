@@ -31,7 +31,7 @@ import * as StdLib from "../stdlib";
 
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
-import { Runtime } from "../parser/Statement";
+import { Runtime, BlockEnd } from "../parser/Statement";
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
@@ -130,6 +130,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } catch (err) {
             if (!(err instanceof BrsError)) {
                 console.error("Runtime error encountered in BRS implementation: ", err);
+            } else if (!(err instanceof BlockEnd)) {
+                console.error("Runtime error encountered in BRS implementation: ", err.format());
             }
             throw err;
         } finally {
