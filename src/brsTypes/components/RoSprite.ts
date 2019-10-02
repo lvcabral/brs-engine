@@ -32,7 +32,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         id: number,
         compositor: RoCompositor
     ) {
-        super("roSprite");
+        super("roSprite", ["ifSprite"]);
         this.id = id;
         this.x = x.getValue();
         this.y = y.getValue();

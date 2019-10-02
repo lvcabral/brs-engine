@@ -11,7 +11,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     private jsRegex: RegExp;
 
     constructor(expression: BrsString, flags = new BrsString("")) {
-        super("roRegex");
+        super("roRegex", ["ifRegex"]);
         this.jsRegex = new RegExp(expression.value, this.parseFlags(flags.value));
 
         this.registerMethods([

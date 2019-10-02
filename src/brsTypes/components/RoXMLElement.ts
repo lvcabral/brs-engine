@@ -13,7 +13,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     readonly kind = ValueKind.Object;
     parsedXML: any;
     constructor() {
-        super("roXMLElement");
+        super("roXMLElement", ["ifXMLElement"]);
         this.parsedXML = {};
         this.registerMethods([
             this.parse,
