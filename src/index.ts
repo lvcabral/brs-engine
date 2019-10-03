@@ -9,6 +9,7 @@ import { Lexer } from "./lexer";
 import * as PP from "./preprocessor";
 import { Parser } from "./parser";
 import { Interpreter, defaultExecutionOptions } from "./interpreter";
+import { RoAssociativeArray, AAMember, BrsString } from "./brsTypes";
 import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!../common/v30/bslCore.brs";
 import * as bslDefender from "raw-loader!../common/v30/bslDefender.brs";
@@ -199,7 +200,13 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
         allStatements.push(...libParse.statements);
     }
     try {
-        return interpreter.exec(allStatements);
+        let aa = new Array<AAMember>();
+        aa.push({
+            name: new BrsString("lastExitOrTerminationReason"),
+            value: new BrsString("EXIT_UNKNOWN"),
+        });
+        aa.push({ name: new BrsString("source"), value: new BrsString("auto-run-dev") });
+        return interpreter.exec(allStatements, new RoAssociativeArray(aa));
     } catch (e) {
         console.error(e.message);
         return;

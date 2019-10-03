@@ -161,7 +161,30 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             let maybeMain = this.visitVariable(mainVariable);
 
+            if (maybeMain.kind !== ValueKind.Callable) {
+                mainVariable = new Expr.Variable({
+                    kind: Lexeme.Identifier,
+                    text: "runuserinterface",
+                    isReserved: false,
+                    location: {
+                        start: {
+                            line: -1,
+                            column: -1,
+                        },
+                        end: {
+                            line: -1,
+                            column: -1,
+                        },
+                        file: "(internal)",
+                    },
+                });
+                maybeMain = this.visitVariable(mainVariable);
+            }
+
             if (maybeMain.kind === ValueKind.Callable) {
+                if (maybeMain.signatures[0].signature.args.length === 0) {
+                    args = [];
+                }
                 results = [
                     this.visitCall(
                         new Expr.Call(
@@ -171,6 +194,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     ),
                 ];
+            } else {
+                console.error(
+                    "No entry point found! You must define a function Main() or RunUserInterface()"
+                );
             }
         } catch (err) {
             if (err instanceof Stmt.ReturnValue) {
