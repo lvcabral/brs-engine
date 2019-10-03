@@ -14,12 +14,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         super("roAudioResource", ["ifAudioResource"]);
         this.audioName = name.value;
         this.playing = false;
-        this.registerMethods([
-            this.trigger,
-            this.isPlaying,
-            this.stop,
-            //this.maxSimulStreams,
-        ]);
+        this.registerMethods([this.trigger, this.isPlaying, this.stop, this.maxSimulStreams]);
     }
 
     toString(parent?: BrsType): string {
@@ -64,6 +59,17 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns the maximum number of simultaneous wav playback. */
+    private maxSimulStreams = new Callable("maxSimulStreams", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(2);
         },
     });
 }
