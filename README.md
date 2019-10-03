@@ -39,7 +39,6 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   Unlike in **Roku** the emulator file system is case sensitive, so for now make sure your code use the correct case when dealing with files.
 *   Positive literal number cannot be represented with plus sign. For example `a = [-1, +1]`
 *   The component `roInput` (for ECP support) is not implemented yet.
-*   The signature of `Sub Main()` does not support the optional AA parameter.
 
 ### In Scope (mocked)
 
