@@ -1,4 +1,4 @@
 types
-lib
+app/lib
 package.json
 **/*.js.snap
