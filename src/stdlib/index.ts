@@ -5,10 +5,17 @@ import {
     RoAssociativeArray,
     StdlibArgument,
     Int32,
-    BrsValue,
     RoMessagePort,
     BrsString,
     BrsType,
+    RoString,
+    roInt,
+    Float,
+    roFloat,
+    BrsBoolean,
+    roBoolean,
+    Double,
+    roDouble,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
@@ -73,6 +80,10 @@ export const Wait = new Callable("Wait", {
     },
 });
 
+/** This is a draft inplementation of GetInterface() as BRS still do not expose
+ *  intefaces as components, so it returns the original object if it implements
+ *  the specified interface.
+ */
 export const GetInterface = new Callable("GetInterface", {
     signature: {
         args: [
@@ -83,10 +94,20 @@ export const GetInterface = new Callable("GetInterface", {
     },
     impl: (interpreter: Interpreter, object: BrsType, ifname: BrsString) => {
         if (object instanceof BrsComponent) {
-            if (object.interfaces.has(ifname.toString().toLowerCase())) {
+            if (object.interfaces.has(ifname.value.toLowerCase())) {
                 return object;
-            } else {
-                return BrsInvalid.Instance;
+            }
+        } else {
+            if (ifname.value.toLowerCase() === "ifstring" && object instanceof BrsString) {
+                return new RoString(object);
+            } else if (ifname.value.toLowerCase() === "ifboolean" && object instanceof BrsBoolean) {
+                return new roBoolean(object);
+            } else if (ifname.value.toLowerCase() === "ifint" && object instanceof Int32) {
+                return new roInt(object);
+            } else if (ifname.value.toLowerCase() === "iffloat" && object instanceof Float) {
+                return new roFloat(object);
+            } else if (ifname.value.toLowerCase() === "ifdouble" && object instanceof Double) {
+                return new roDouble(object);
             }
         }
         return BrsInvalid.Instance;
