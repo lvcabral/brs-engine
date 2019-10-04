@@ -32,7 +32,7 @@ module.exports = env => {
             },
             node: { fs: "empty", readline: "empty" },
             output: {
-                path: path.join(__dirname, "lib"),
+                path: path.join(__dirname, "app/lib"),
                 filename: outputFile,
                 library: libraryName,
                 libraryTarget: "umd",
