@@ -27,19 +27,22 @@ There are many ways in which you can participate in the project, read documents 
 
 ## Usage
 
-This repo provides a sample web appplication with a set of JavaScript libraries, download the `zip` file from the [latest release](https://github.com/lvcabral/brs-emu/releases) and unzip to a folder.
-Althought the emulator is a client application it cannot run as pure HTML page, as some browser functionalities have security restrictions, 
-so you will need a simple web server to start the application. If your have [Python](https://www.python.org/) installed, just run the commands 
-below on the `app` folder. As a shortcut you can also use two available batch files named `server.sh` and `server.bat` on the same folder.
+If just want to try the emulator, not downloading or installing anything you can access the demo website at: https://lvcabral.com/brs
+
+As mentioned above, this repo provides a sample web appplication, to use it, download the `zip` file from the [latest release](https://github.com/lvcabral/brs-emu/releases) and unzip to a folder. Althought the emulator is a client application it cannot run as pure HTML page, as some browser functionalities have security restrictions, so you will need a simple web server to use the emulator. For that you can use `Apache` or `IIS` but there is a simpler option if your have [Python](https://www.python.org/) installed. If that's the case, just run the commands below on the `app` folder. As a shortcut you can also use two available batch files named `server.sh` and `server.bat` on the same folder.
 
 * Linux
     ```
     $ python -m SimpleHTTPServer 8888
+    or
+    $ sh ./server.sh
     ```
 
 * Windows
     ```
     c:\github\brs-emu\app> python -m http.server 8888
+    or 
+    c:\github\brs-emu\app> ./server.bat
     ```
 
 With the webserver running you can now open your Chromium based browser at the page `http://localhost:8888/index.html`
@@ -52,7 +55,7 @@ You can try the emulator by running one of the demonstration channels included i
 *   [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.17.700/Lode-Runner-Roku-017.zip)
 *   [Retaliate](https://github.com/lvcabral/retaliate-roku) game by Romans I XVI - Download [zip file](https://github.com/lvcabral/retaliate-roku/releases/download/v1.6.0-emu/retaliate-brs-emu.zip)
 
-If just want to try the emulator, not downloading anything you can access the demo website at: https://lvcabral.com/brs
+
 
 ### Note for BrightScript Developers
 
