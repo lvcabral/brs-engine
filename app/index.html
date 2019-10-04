@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>BrightScript 2D API Emulator</title>
-    <link href="app/css/default.css" rel="stylesheet" type="text/css"/>
+    <link href="css/default.css" rel="stylesheet" type="text/css"/>
     <link href='https://fonts.googleapis.com/css?family=Maven+Pro|Muli|Istok+Web' rel='stylesheet' type='text/css'/>
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
 </head>
@@ -14,20 +14,20 @@
         src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
     <div id="container">
         <h2
-            >BrightScript 2D API Emulator :: v0.4 Alpha
+            >BrightScript 2D API Emulator :: v0.5 Alpha
             <hr>
         </h2>
         <div style="position: relative; left: 0px; top: 0px">
-            <img class="img" src="app/images/brightscript-tv.png" width="1252" height="650"/>
+            <img class="img" src="images/brightscript-tv.png" width="1252" height="650"/>
             <canvas id="display" width="854px" height="480px"></canvas>
-            <a href="#" onclick="loadZip('app/channels/Collisions.zip')">
-                <img id="channel3" src="app/images/collisions-icon.png" title="Open Sprite Collisions demo channel" />
+            <a href="#" onclick="loadZip('channels/Collisions.zip')">
+                <img id="channel3" src="images/collisions-icon.png" title="Open Sprite Collisions demo channel" />
             </a>
-            <a href="#" onclick="loadZip('app/channels/Rect-Bounce.zip')">
-                <img id="channel1" src="app/images/rect-bounce-icon.png" title="Open Rectangle Bounce demo channel"/>
+            <a href="#" onclick="loadZip('channels/Rect-Bounce.zip')">
+                <img id="channel1" src="images/rect-bounce-icon.png" title="Open Rectangle Bounce demo channel"/>
             </a>
-            <a href="#" onclick="loadZip('app/channels/Ball-Boing.zip')">
-                <img id="channel2" src="app/images/ball-boing-icon.png" title="Open Ball Boing demo channel"/>
+            <a href="#" onclick="loadZip('channels/Ball-Boing.zip')">
+                <img id="channel2" src="images/ball-boing-icon.png" title="Open Ball Boing demo channel"/>
             </a>
             <span id="channelInfo"></span>
             <input type="file" id="file" accept=".brs,.zip" style="display: none;" />
@@ -50,8 +50,8 @@
              - contact: <a href="https://twitter.com/lvcabral">@lvcabral</a>
         </div>
     </div>
-    <script type="text/javascript" src="app/es5.js"></script>
-    <script type="text/javascript" src="app/jszip.js"></script>
-    <script type="text/javascript" src="app/index.js"></script>
+    <script type="text/javascript" src="lib/bowser.es5.js"></script>
+    <script type="text/javascript" src="lib/jszip.js"></script>
+    <script type="text/javascript" src="index.js"></script>
 </body>
 </html>
