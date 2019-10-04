@@ -9,7 +9,7 @@ This repository is a fork from [**BRS**](https://github.com/sjbarag/brs) project
 Nope! Both projects, **BRS** and **BRS-EMU**, currently has no intention of emulating the Roku OS user interface, integrating with the Roku store, or emulating media content playback.  Although the **BRS-EMU** project runs channels with user interface, it does only support 2D API components, mostly for game development, see [Current Limitations](https://github.com/lvcabral/brs-emu/blob/master/docs/limitations.md) page for full details on what is out of scope.
 
 <p align="center">
-<img alt="Emulator Web and Desktop" src="/../master/docs/images/screnshots.png?raw=true"/>
+<img alt="Emulator Web and Desktop" src="/../master/docs/images/screenshots.png?raw=true"/>
 </p>
 
 ## Technology and Compatibility
