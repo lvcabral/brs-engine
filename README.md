@@ -64,7 +64,7 @@ You can try the emulator by running one of the demonstration channels included i
 
 ### Note for BrightScript Developers
 
-You can see the debug messages from `print` statements in your code using the _browser console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before your load your channel code. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the [limitations documentation](https://github.com/lvcabral/brs-emu/blob/master/docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-emu/issues).
+You can see the debug messages from `print` statements in your code using the _browser console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your channel package or brs file. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the [limitations documentation](https://github.com/lvcabral/brs-emu/blob/master/docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-emu/issues).
 
 ## License
 
