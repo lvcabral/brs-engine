@@ -29,26 +29,34 @@ There are many ways in which you can participate in the project, read documents 
 
 If you just want to try the emulator, not downloading or installing anything, then go to the demo website at: https://lvcabral.com/brs
 
-As mentioned above, this repo provides a sample web appplication, to use it, download the `zip` file from the [latest release](https://github.com/lvcabral/brs-emu/releases) and unzip to a folder. Althought the emulator is a client application it cannot run as pure HTML page, as some browser functionalities have security restrictions, so you will need a simple web server to use the emulator. For that you can use `Apache` or `IIS` but there is a simpler option if your have [Python](https://www.python.org/) installed. If that's the case, just run the commands below on the `app` folder. As a shortcut you can also use two available batch files named `server.sh` and `server.bat` on the same folder.
+### Web Application
+As mentioned above, this repo provides a sample web appplication for testing the emulator. The application cannot be run as pure HTML page, because some functionalities used by the emulator have security restrictions on the browser engine, so you will need a web server to run the application. For that you can use `Apache` or `IIS` but there is a simpler option if your have [Python](https://www.python.org/) installed. The steps below consider that option:
 
+* Download the `zip` file from the [latest release](https://github.com/lvcabral/brs-emu/releases)
+* Unzip the package to a folder. 
+* Using your OS `terminal` run the commands below inside the `app` directory. 
+* As a shortcut you can also use two batch files named `server.sh` and `server.bat` available on `app` folder.
 * Linux
     ```
     $ python -m SimpleHTTPServer 8888
     or
     $ sh ./server.sh
     ```
-
 * Windows
     ```
     c:\github\brs-emu\app> python -m http.server 8888
     or 
     c:\github\brs-emu\app> ./server.bat
     ```
-With the webserver running you can now open your Chromium based browser at the page `http://localhost:8888/index.html`
+* With the webserver running you can now open your Chromium based browser at the page `http://localhost:8888/`
+
+### Desktop Application
+
+You can also run the emulator as a desktop application, download and install the specific OS package from the [latest release](https://github.com/lvcabral/brs-emu/releases).
 
 ### Games and Demos
 
-You can try the emulator by running one of the demonstration channels included in the repository, these are pre-configured as _clickable icons_ on `index.html`. In addition to the icons, the emulator has a button where you can load your own code, either as a single **.brs** file or a channel **.zip package**. You can also load the `.zip` release files of some games, all the files linked below are tested on the emulator and are publicly available with source code.
+You can try the emulator by running one of the demonstration channels included in the repository, these are pre-configured as _clickable icons_ on `index.html`. In addition to those, you can load your own code, either as a single **.brs** file or a channel **.zip package**. Below there is a list of tested games that are publicly available with source code, download the `zip` files and have fun!
 
 *   [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.15.3700/Prince-of-Persia-Roku-015.zip)
 *   [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.17.700/Lode-Runner-Roku-017.zip)
