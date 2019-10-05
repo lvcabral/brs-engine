@@ -56,19 +56,19 @@ onmessage = function(event) {
             volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore.default);
             volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender.default);
             volume.mkdirSync("/Fonts");
-            let fontRegular = download(`../app/fonts/${fontFamily}-Regular.ttf`, "arraybuffer");
+            let fontRegular = download(`../fonts/${fontFamily}-Regular.ttf`, "arraybuffer");
             if (fontRegular) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
             }
-            let fontBold = download(`../app/fonts/${fontFamily}-Bold.ttf`, "arraybuffer");
+            let fontBold = download(`../fonts/${fontFamily}-Bold.ttf`, "arraybuffer");
             if (fontBold) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
             }
-            let fontItalic = download(`../app/fonts/${fontFamily}-Italic.ttf`, "arraybuffer");
+            let fontItalic = download(`../fonts/${fontFamily}-Italic.ttf`, "arraybuffer");
             if (fontBold) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
             }
-            let fontBoldIt = download(`../app/fonts/${fontFamily}-BoldItalic.ttf`, "arraybuffer");
+            let fontBoldIt = download(`../fonts/${fontFamily}-BoldItalic.ttf`, "arraybuffer");
             if (fontBold) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
             }
@@ -262,11 +262,11 @@ function download(url: string, type: XMLHttpRequestResponseType) {
         xhr.responseType = type;
         xhr.send();
         if (xhr.status !== 200) {
-            console.error(xhr.statusText);
+            console.error(xhr.statusText, url);
             return undefined;
         }
         return xhr.response;
     } catch (e) {
-        console.error(e.message);
+        console.error(e.message, url);
     }
 }
