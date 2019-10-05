@@ -66,6 +66,12 @@ You can try the emulator by running one of the demonstration channels included i
 
 You can see the debug messages from `print` statements in your code using the _browser console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your channel package or brs file. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the [limitations documentation](https://github.com/lvcabral/brs-emu/blob/master/docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-emu/issues).
 
+## Author Links
+- My website is [https://lvcabral.com](https://lvcabral.com)
+- My twitter is [@lvcabral](https://twitter.com/lvcabral)
+- My podcast is [PODebug Podcast](http://podebug.com)
+- Check my other [GitHub repositories ](https://github.com/lvcabral)
+
 ## License
 
 Copyright © Marcelo Lv Cabral. All rights reserved.
