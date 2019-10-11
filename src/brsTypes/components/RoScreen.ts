@@ -24,21 +24,22 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private context: OffscreenCanvasRenderingContext2D[];
     private port?: RoMessagePort;
 
-    // TODO: Correctly adjust aspect ratio for non 16:9 resolutions
+    // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen", ["ifScreen", "ifDraw2D", "ifGetMessagePort", "ifSetMessagePort"]);
-        const resolutions = {
-            "1280x720": "HD",
-            "854x480": "HD",
-            "940x480": "HD",
-            "720x480": "SD",
-            "640x480": "SD",
-            "854x626": "SD",
-        };
-        const validSizes = new Map(Object.entries(resolutions));
+        const validSizes = new Set([
+            "1920x1080",
+            "1280x720",
+            "854x480",
+            "940x480",
+            "720x480",
+            "640x480",
+            "854x626",
+        ]);
         this.width = (width instanceof Int32 && width.getValue()) || 1280;
         this.height = (height instanceof Int32 && height.getValue()) || 720;
         if (!validSizes.has(`${this.width}x${this.height}`)) {
+            // TODO: Check what happens when try to create higher resolution than max
             console.error("Invalid Screen resolution, reverting to default display size 1280x720.");
             this.width = 1280;
             this.height = 720;
