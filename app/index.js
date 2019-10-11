@@ -64,7 +64,7 @@ const deviceData = {
     timeZone: "US/Arizona",
     locale: "en_US",
     clockFormat: "12h",
-    displayMode: "720p", // Only this mode is supported for now
+    displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
 };
 
@@ -158,11 +158,22 @@ function openChannelZip(f) {
                         if (splashMinTime && !isNaN(splashMinTime)) {
                             splashTimeout = parseInt(splashMinTime);
                         }
-                        var splash = manifestMap.get("splash_screen_hd");
-                        if (!splash) {
-                            splash = manifestMap.get("splash_screen_fhd");
+                        var splash;
+                        if (deviceData.displayMode === "480p") {
+                            splash = manifestMap.get("splash_screen_sd");
                             if (!splash) {
-                                splash = manifestMap.get("splash_screen_shd");
+                                splash = manifestMap.get("splash_screen_hd");
+                                if (!splash) {
+                                    splash = manifestMap.get("splash_screen_fhd");
+                                }
+                            }
+                        } else {
+                            splash = manifestMap.get("splash_screen_hd");
+                            if (!splash) {
+                                splash = manifestMap.get("splash_screen_fhd");
+                                if (!splash) {
+                                    splash = manifestMap.get("splash_screen_sd");
+                                }
                             }
                         }
                         ctx.fillStyle = "rgba(0, 0, 0, 1)";
