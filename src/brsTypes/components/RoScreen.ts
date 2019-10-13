@@ -25,24 +25,32 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private port?: RoMessagePort;
 
     // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
-    constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
+    constructor(
+        interpreter: Interpreter,
+        doubleBuffer?: BrsBoolean,
+        width?: Int32,
+        height?: Int32
+    ) {
         super("roScreen", ["ifScreen", "ifDraw2D", "ifGetMessagePort", "ifSetMessagePort"]);
-        const validSizes = new Set([
-            "1920x1080",
-            "1280x720",
-            "854x480",
-            "940x480",
-            "720x480",
-            "640x480",
-            "854x626",
-        ]);
-        this.width = (width instanceof Int32 && width.getValue()) || 1280;
-        this.height = (height instanceof Int32 && height.getValue()) || 720;
-        if (!validSizes.has(`${this.width}x${this.height}`)) {
-            // TODO: Check what happens when try to create higher resolution than max
-            console.error("Invalid Screen resolution, reverting to default display size 1280x720.");
-            this.width = 1280;
-            this.height = 720;
+        let defaultWidth, defaultHeight;
+        if (interpreter.deviceInfo.get("displayMode") === "1080p") {
+            defaultWidth = 1920;
+            defaultHeight = 1080;
+        } else if (interpreter.deviceInfo.get("displayMode") === "720p") {
+            defaultWidth = 1280;
+            defaultHeight = 720;
+        } else {
+            defaultWidth = 720;
+            defaultHeight = 480;
+        }
+        this.width =
+            (width instanceof Int32 && width.getValue() && width.getValue()) || defaultWidth;
+        this.height = (height instanceof Int32 && height.getValue()) || defaultHeight;
+        if (this.width <= 0) {
+            this.width = defaultWidth;
+        }
+        if (this.height <= 0) {
+            this.height = defaultHeight;
         }
         this.doubleBuffer =
             (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
