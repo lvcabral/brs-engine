@@ -83,7 +83,7 @@ export const BrsObjects = new Map<string, Function>([
     [
         "roscreen",
         (interpreter: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
-            new RoScreen(dblbuffer, width, height),
+            new RoScreen(interpreter, dblbuffer, width, height),
     ],
     ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
 ]);
