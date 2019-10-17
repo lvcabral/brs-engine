@@ -152,7 +152,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Set what the next item to be played within the Content List should be */
+    /** Set the start point of playback for the current item to offsetMs milliseconds. */
     private seek = new Callable("seek", {
         signature: {
             args: [new StdlibArgument("offsetMs", ValueKind.Int32)],
