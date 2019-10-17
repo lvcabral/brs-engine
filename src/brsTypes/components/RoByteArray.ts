@@ -142,7 +142,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
-                if (url.protocol === "tmp:" || url.protocol == "cachefs:") {
+                if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
                     const volume = interpreter.fileSystem.get(url.protocol);
                     if (volume) {
                         if (index.getValue() > 0 || length.getValue() > 0) {
@@ -177,7 +177,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
-                if (url.protocol === "tmp:" || url.protocol == "cachefs:") {
+                if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
                     const volume = interpreter.fileSystem.get(url.protocol);
                     if (volume) {
                         let file: Uint8Array = volume.readFileSync(url.pathname);

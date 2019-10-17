@@ -27,9 +27,11 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             console.error("Invalid volume:" + url.pathname);
             this.valid = false;
         }
+        // if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
+        //     // TODO: Send data back to rendering process.
+        // }
         this.audioName = name.value.toLowerCase();
         this.playing = false;
-        // TODO: If file is on tmp: or cachefs: volumes, send data back to rendering process.
         this.registerMethods([this.trigger, this.isPlaying, this.stop, this.maxSimulStreams]);
     }
 
