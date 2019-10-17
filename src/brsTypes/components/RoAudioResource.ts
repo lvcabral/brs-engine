@@ -9,11 +9,27 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private audioName: string;
     private playing: boolean;
+    private valid: boolean;
 
-    constructor(name: BrsString) {
+    constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource", ["ifAudioResource"]);
-        this.audioName = name.value;
+        this.valid = true;
+        let url = new URL(name.value);
+        const volume = interpreter.fileSystem.get(url.protocol);
+        if (volume) {
+            try {
+                this.valid = volume.existsSync(url.pathname);
+            } catch (err) {
+                console.error("Invalid audio resource:" + url.pathname + " - " + err.message);
+                this.valid = false;
+            }
+        } else {
+            console.error("Invalid volume:" + url.pathname);
+            this.valid = false;
+        }
+        this.audioName = name.value.toLowerCase();
         this.playing = false;
+        // TODO: If file is on tmp: or cachefs: volumes, send data back to rendering process.
         this.registerMethods([this.trigger, this.isPlaying, this.stop, this.maxSimulStreams]);
     }
 
@@ -23,6 +39,10 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
 
     equalTo(other: BrsType) {
         return BrsBoolean.False;
+    }
+
+    isValid() {
+        return this.valid;
     }
 
     /** Triggers the start of the audio resource sound playback. */
@@ -35,7 +55,8 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, volume: Int32, index: Int32) => {
-            // TODO: Play sound
+            postMessage(`trigger,${this.audioName},${volume.toString()}`);
+            this.playing = true;
             return BrsInvalid.Instance;
         },
     });
@@ -58,6 +79,8 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            postMessage(`stop,${this.audioName}`);
+            this.playing = false;
             return BrsInvalid.Instance;
         },
     });
@@ -72,4 +95,9 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             return new Int32(2);
         },
     });
+}
+
+export function createAudioResource(interpreter: Interpreter, name: BrsString) {
+    const audio = new RoAudioResource(interpreter, name);
+    return audio.isValid() ? audio : BrsInvalid.Instance;
 }

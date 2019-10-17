@@ -19,6 +19,12 @@ var channel1 = document.getElementById("channel1");
 var channel2 = document.getElementById("channel2");
 var channel3 = document.getElementById("channel3");
 
+var sounds = new Map();
+sounds.set("select", new Howl({ src: ["./audio/select.wav"] }));
+sounds.set("navsingle", new Howl({ src: ["./audio/navsingle.wav"] }));
+sounds.set("navmulti", new Howl({ src: ["./audio/navmulti.wav"] }));
+sounds.set("deadend", new Howl({ src: ["./audio/deadend.wav"] }));
+
 if (!supportedBrowser) {
     channelIcons("hidden");
     fileButton.style.visibility = "hidden";
@@ -237,6 +243,7 @@ function openChannelZip(f) {
             var txtId = 0;
             var srcId = 0;
             var fntId = 0;
+            var wavId = 0;
             zip.forEach(function(relativePath, zipEntry) {
                 var lcasePath = relativePath.toLowerCase();
                 if (
@@ -274,6 +281,10 @@ function openChannelZip(f) {
                     assetPaths.push({ url: relativePath, id: fntId, type: "font" });
                     assetsEvents.push(zipEntry.async("arraybuffer"));
                     fntId++;
+                } else if (!zipEntry.dir && lcasePath.split(".").pop() === "wav") {
+                    assetPaths.push({ url: relativePath, id: wavId, type: "wav" });
+                    assetsEvents.push(zipEntry.async("blob"));
+                    wavId++;
                 }
             });
             Promise.all(assetsEvents).then(
@@ -291,7 +302,15 @@ function openChannelZip(f) {
                             fonts.push(assets[index]);
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
-                        } else {
+                        } else if (assetPaths[index].type === "wav") {
+                            sounds.set(
+                                `pkg:/${assetPaths[index].url.toLowerCase()}`,
+                                new Howl({
+                                    src: [URL.createObjectURL(assets[index])],
+                                    format: "wav",
+                                })
+                            );
+                        } else if (assetPaths[index].type === "text") {
                             txts.push(assets[index]);
                         }
                     }
@@ -340,7 +359,7 @@ function runChannel() {
     brsWorker.postMessage(payload, imgs);
 }
 
-// Receive Screen and Registry data from Web Worker
+// Receive Messages from the Web Worker
 function receiveMessage(event) {
     if (event.data instanceof ImageData) {
         buffer = event.data;
@@ -353,7 +372,26 @@ function receiveMessage(event) {
         deviceData.registry.forEach(function(value, key) {
             storage.setItem(key, value);
         });
-    } else if (event.data == "end") {
+    } else if (event.data.substr(0, 7) === "trigger") {
+        const wav = event.data.split(",")[1];
+        if (wav && sounds.has(wav)) {
+            const volume = parseInt(event.data.split(",")[2]) / 100;
+            const sound = sounds.get(wav);
+            if (volume && !isNaN(volume)) {
+                sound.volume(volume);
+            }
+            sound.play();
+        } else {
+            console.log("Can't find wav sound:", wav);
+        }
+    } else if (event.data.substr(0, 4) === "stop") {
+        const wav = event.data.split(",")[1];
+        if (wav && sounds.has(wav)) {
+            sounds.get(wav).stop();
+        } else {
+            console.log("Can't find wav sound:", wav);
+        }
+    } else if (event.data === "end") {
         closeChannel();
     }
 }
