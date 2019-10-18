@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoMessagePort, RoAssociativeArray, RoArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -8,17 +8,11 @@ import { Int32 } from "../Int32";
 export class RoAudioPlayer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private port?: RoMessagePort;
-    private contentList: RoArray;
-    private contentIndex: number;
-    private contentOffset: number;
-    private loopMode: boolean;
+    private contentList: RoAssociativeArray[];
 
     constructor() {
         super("roAudioPlayer", ["ifAudioPlayer", "ifGetMessagePort", "ifSetMessagePort"]);
-        this.contentList = new RoArray([]);
-        this.contentIndex = 0;
-        this.contentOffset = 0;
-        this.loopMode = false;
+        this.contentList = new Array();
         this.registerMethods([
             this.setContentList,
             this.addContent,
@@ -51,7 +45,15 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentList: RoArray) => {
-            this.contentList = contentList;
+            const contents = new Array<string>();
+            this.contentList = contentList.getElements() as RoAssociativeArray[];
+            this.contentList.forEach((value, index, array) => {
+                let url = value.get(new BrsString("url"));
+                if (url instanceof BrsString) {
+                    contents.push(url.value);
+                }
+            });
+            postMessage(contents);
             return BrsInvalid.Instance;
         },
     });
@@ -63,7 +65,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentItem: RoAssociativeArray) => {
-            this.contentList.getElements().push(contentItem);
+            this.contentList.push(contentItem);
             return BrsInvalid.Instance;
         },
     });
@@ -75,7 +77,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.contentList = new RoArray([]);
+            postMessage(new Array<string>());
             return BrsInvalid.Instance;
         },
     });
@@ -87,7 +89,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            //TODO: Implement method
+            postMessage("play");
             return BrsBoolean.True;
         },
     });
@@ -99,7 +101,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            //TODO: Implement method
+            postMessage("stop");
             return BrsBoolean.True;
         },
     });
@@ -111,7 +113,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            //TODO: Implement method
+            postMessage("pause");
             return BrsBoolean.True;
         },
     });
@@ -123,7 +125,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            //TODO: Implement method
+            postMessage("resume");
             return BrsBoolean.True;
         },
     });
@@ -135,7 +137,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
-            this.loopMode = enable.toBoolean();
+            postMessage(`loop,${enable.toString()}`);
             return BrsInvalid.Instance;
         },
     });
@@ -147,7 +149,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, item: Int32) => {
-            this.contentIndex = item.getValue();
+            postMessage(`next,${item.toString()}`);
             return BrsInvalid.Instance;
         },
     });
@@ -159,8 +161,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, offsetMs: Int32) => {
-            this.contentOffset = offsetMs.getValue();
-            //TODO: Interrupt playback and restart (if playing)
+            postMessage(`seek,${offsetMs.toString()}`);
             return BrsInvalid.Instance;
         },
     });
