@@ -98,7 +98,8 @@ onmessage = function(event) {
                     } else if (filePath.type === "wav") {
                         // Save mock file to allow file exist checking,
                         // but audio data remains on rendering thread
-                        volume.writeFileSync("/" + filePath.url, filePath.type);
+                        // Converting to lower case because file system still case sensitive
+                        volume.writeFileSync("/" + filePath.url.toLowerCase(), filePath.type);
                     } else if (filePath.type === "text") {
                         volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
                     } else if (filePath.type === "source") {

@@ -374,9 +374,9 @@ function receiveMessage(event) {
         });
     } else if (event.data.substr(0, 7) === "trigger") {
         const wav = event.data.split(",")[1];
-        if (wav && sounds.has(wav)) {
+        if (wav && sounds.has(wav.toLowerCase())) {
             const volume = parseInt(event.data.split(",")[2]) / 100;
-            const sound = sounds.get(wav);
+            const sound = sounds.get(wav.toLowerCase());
             if (volume && !isNaN(volume)) {
                 sound.volume(volume);
             }

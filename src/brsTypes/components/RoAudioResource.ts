@@ -1,9 +1,10 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoAssociativeArray } from "..";
+import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import URL from "url-parse";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -14,23 +15,24 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource", ["ifAudioResource"]);
         this.valid = true;
-        let url = new URL(name.value);
-        const volume = interpreter.fileSystem.get(url.protocol);
-        if (volume) {
-            try {
+        const systemwav = new Set(["select", "navsingle", "navmulti", "deadend"]);
+        if (!systemwav.has(name.value.toLowerCase())) {
+            const url = new URL(name.value);
+            const volume = interpreter.fileSystem.get(url.protocol);
+            if (volume) {
                 this.valid = volume.existsSync(url.pathname);
-            } catch (err) {
-                console.error("Invalid audio resource:" + url.pathname + " - " + err.message);
+                if (!this.valid) {
+                    console.error("File not found!", url.pathname);
+                }
+            } else {
+                console.error("Invalid volume:", name);
                 this.valid = false;
             }
-        } else {
-            console.error("Invalid volume:" + url.pathname);
-            this.valid = false;
+            // if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
+            //     // TODO: Send data back to rendering process.
+            // }
         }
-        // if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
-        //     // TODO: Send data back to rendering process.
-        // }
-        this.audioName = name.value.toLowerCase();
+        this.audioName = name.value;
         this.playing = false;
         this.registerMethods([this.trigger, this.isPlaying, this.stop, this.maxSimulStreams]);
     }
@@ -100,6 +102,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
 }
 
 export function createAudioResource(interpreter: Interpreter, name: BrsString) {
+    console.log(name);
     const audio = new RoAudioResource(interpreter, name);
     return audio.isValid() ? audio : BrsInvalid.Instance;
 }
