@@ -8,3 +8,4 @@ out/
 /channels/
 *.pkg
 desktop.ini
+.DS_Store
