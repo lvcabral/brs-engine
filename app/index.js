@@ -6,20 +6,20 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-var info = bowser.parse(window.navigator.userAgent);
-var supportedBrowser =
+const info = bowser.parse(window.navigator.userAgent);
+const supportedBrowser =
     info.platform.type == "desktop" && info.engine.name == "Blink" && info.browser.version > "68";
-var fileButton = document.getElementById("fileButton");
-var channelInfo = document.getElementById("channelInfo");
+const fileButton = document.getElementById("fileButton");
+const channelInfo = document.getElementById("channelInfo");
 channelInfo.innerHTML = "<br/>";
-var display = document.getElementById("display");
-var screenSize = { width: 854, height: 480 };
-var ctx = display.getContext("2d", { alpha: false });
-var channel1 = document.getElementById("channel1");
-var channel2 = document.getElementById("channel2");
-var channel3 = document.getElementById("channel3");
+const display = document.getElementById("display");
+const screenSize = { width: 854, height: 480 };
+const ctx = display.getContext("2d", { alpha: false });
+const channel1 = document.getElementById("channel1");
+const channel2 = document.getElementById("channel2");
+const channel3 = document.getElementById("channel3");
 
-var sounds = new Map();
+const sounds = new Map();
 sounds.set("select", new Howl({ src: ["./audio/select.wav"] }));
 sounds.set("navsingle", new Howl({ src: ["./audio/navsingle.wav"] }));
 sounds.set("navmulti", new Howl({ src: ["./audio/navmulti.wav"] }));
@@ -28,25 +28,25 @@ sounds.set("deadend", new Howl({ src: ["./audio/deadend.wav"] }));
 if (!supportedBrowser) {
     channelIcons("hidden");
     fileButton.style.visibility = "hidden";
-    var infoHtml = "";
+    let infoHtml = "";
     infoHtml += "<br/>";
     infoHtml += "Your browser is not supported!";
     channelInfo.innerHTML = infoHtml;
 }
 
-var bufferCanvas = supportedBrowser
+const bufferCanvas = supportedBrowser
     ? new OffscreenCanvas(screenSize.width, screenSize.height)
     : undefined;
-var bufferCtx = supportedBrowser ? bufferCanvas.getContext("2d") : undefined;
-var buffer = new ImageData(screenSize.width, screenSize.height);
-var splashTimeout = 1600;
-var brsWorker;
-var source = [];
-var paths = [];
-var txts = [];
-var imgs = [];
-var fonts = [];
-var running = false;
+const bufferCtx = supportedBrowser ? bufferCanvas.getContext("2d") : undefined;
+let buffer = new ImageData(screenSize.width, screenSize.height);
+let splashTimeout = 1600;
+let brsWorker;
+let source = [];
+let paths = [];
+let txts = [];
+let imgs = [];
+let fonts = [];
+let running = false;
 
 // Control buffer
 const length = 10;
@@ -84,8 +84,8 @@ for (let index = 0; index < storage.length; index++) {
 }
 
 // File selector
-var fileSelector = document.getElementById("file");
-var zip = new JSZip();
+const fileSelector = document.getElementById("file");
+const zip = new JSZip();
 fileButton.onclick = function() {
     fileSelector.click();
 };
@@ -94,8 +94,8 @@ fileSelector.onclick = function() {
     this.value = null;
 };
 fileSelector.onchange = function() {
-    var file = this.files[0];
-    var reader = new FileReader();
+    const file = this.files[0];
+    const reader = new FileReader();
     reader.onload = function(progressEvent) {
         paths = [];
         imgs = [];
@@ -151,20 +151,20 @@ function loadZip(zip) {
 function openChannelZip(f) {
     JSZip.loadAsync(f).then(
         function(zip) {
-            var manifest = zip.file("manifest");
+            const manifest = zip.file("manifest");
             if (manifest) {
                 manifest.async("string").then(
                     function success(content) {
-                        var manifestMap = new Map();
+                        const manifestMap = new Map();
                         content.match(/[^\r\n]+/g).map(function(ln) {
-                            var line = ln.split("=");
+                            const line = ln.split("=");
                             manifestMap.set(line[0].toLowerCase(), line[1]);
                         });
-                        var splashMinTime = manifestMap.get("splash_min_time");
+                        const splashMinTime = manifestMap.get("splash_min_time");
                         if (splashMinTime && !isNaN(splashMinTime)) {
                             splashTimeout = parseInt(splashMinTime);
                         }
-                        var splash;
+                        let splash;
                         if (deviceData.displayMode === "480p") {
                             splash = manifestMap.get("splash_screen_sd");
                             if (!splash) {
@@ -185,7 +185,7 @@ function openChannelZip(f) {
                         ctx.fillStyle = "rgba(0, 0, 0, 1)";
                         ctx.fillRect(0, 0, display.width, display.height);
                         if (splash && splash.substr(0, 5) === "pkg:/") {
-                            var splashFile = zip.file(splash.substr(5));
+                            const splashFile = zip.file(splash.substr(5));
                             if (splashFile) {
                                 splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(imgData => {
@@ -203,24 +203,24 @@ function openChannelZip(f) {
                             }
                         }
                         fileButton.style.visibility = "hidden";
-                        var infoHtml = "";
-                        var title = manifestMap.get("title");
+                        let infoHtml = "";
+                        const title = manifestMap.get("title");
                         if (title) {
                             infoHtml += title + "<br/>";
                         }
-                        var subtitle = manifestMap.get("subtitle");
+                        const subtitle = manifestMap.get("subtitle");
                         if (subtitle) {
                             infoHtml += subtitle + "<br/>";
                         }
-                        var majorVersion = manifestMap.get("major_version");
+                        const majorVersion = manifestMap.get("major_version");
                         if (majorVersion) {
                             infoHtml += "v" + majorVersion;
                         }
-                        var minorVersion = manifestMap.get("minor_version");
+                        const minorVersion = manifestMap.get("minor_version");
                         if (minorVersion) {
                             infoHtml += "." + minorVersion;
                         }
-                        var buildVersion = manifestMap.get("build_version");
+                        const buildVersion = manifestMap.get("build_version");
                         if (buildVersion) {
                             infoHtml += "." + buildVersion;
                         }
@@ -237,15 +237,15 @@ function openChannelZip(f) {
                 running = false;
                 return;
             }
-            var assetPaths = [];
-            var assetsEvents = [];
-            var bmpId = 0;
-            var txtId = 0;
-            var srcId = 0;
-            var fntId = 0;
-            var wavId = 0;
+            const assetPaths = [];
+            const assetsEvents = [];
+            let bmpId = 0;
+            let txtId = 0;
+            let srcId = 0;
+            let fntId = 0;
+            let wavId = 0;
             zip.forEach(function(relativePath, zipEntry) {
-                var lcasePath = relativePath.toLowerCase();
+                const lcasePath = relativePath.toLowerCase();
                 if (
                     !zipEntry.dir &&
                     lcasePath.substr(0, 6) === "source" &&
@@ -293,8 +293,8 @@ function openChannelZip(f) {
                     txts = [];
                     imgs = [];
                     fonts = [];
-                    var bmpEvents = [];
-                    for (var index = 0; index < assets.length; index++) {
+                    const bmpEvents = [];
+                    for (let index = 0; index < assets.length; index++) {
                         paths.push(assetPaths[index]);
                         if (assetPaths[index].type === "image") {
                             bmpEvents.push(createImageBitmap(assets[index]));
@@ -347,7 +347,7 @@ function runChannel() {
     display.focus();
     brsWorker = new Worker("./lib/brsEmu.js");
     brsWorker.addEventListener("message", receiveMessage);
-    var payload = {
+    const payload = {
         device: deviceData,
         paths: paths,
         brs: source,
