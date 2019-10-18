@@ -95,7 +95,7 @@ onmessage = function(event) {
                         volume.writeFileSync("/" + filePath.url, event.data.images[filePath.id]);
                     } else if (filePath.type === "font") {
                         volume.writeFileSync("/" + filePath.url, event.data.fonts[filePath.id]);
-                    } else if (filePath.type === "wav") {
+                    } else if (filePath.type === "audio") {
                         // Save mock file to allow file exist checking,
                         // but audio data remains on rendering thread
                         // Converting to lower case because file system still case sensitive

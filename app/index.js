@@ -11,7 +11,6 @@ const supportedBrowser =
     info.platform.type == "desktop" && info.engine.name == "Blink" && info.browser.version > "68";
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
-channelInfo.innerHTML = "<br/>";
 const display = document.getElementById("display");
 const screenSize = { width: 854, height: 480 };
 const ctx = display.getContext("2d", { alpha: false });
@@ -24,6 +23,8 @@ sounds.set("select", new Howl({ src: ["./audio/select.wav"] }));
 sounds.set("navsingle", new Howl({ src: ["./audio/navsingle.wav"] }));
 sounds.set("navmulti", new Howl({ src: ["./audio/navmulti.wav"] }));
 sounds.set("deadend", new Howl({ src: ["./audio/deadend.wav"] }));
+let playList = new Array();
+let playIndex = 0;
 
 if (!supportedBrowser) {
     channelIcons("hidden");
@@ -32,6 +33,8 @@ if (!supportedBrowser) {
     infoHtml += "<br/>";
     infoHtml += "Your browser is not supported!";
     channelInfo.innerHTML = infoHtml;
+} else {
+    channelInfo.innerHTML = "<br/>";
 }
 
 const bufferCanvas = supportedBrowser
@@ -243,48 +246,43 @@ function openChannelZip(f) {
             let txtId = 0;
             let srcId = 0;
             let fntId = 0;
-            let wavId = 0;
+            let audId = 0;
             zip.forEach(function(relativePath, zipEntry) {
                 const lcasePath = relativePath.toLowerCase();
-                if (
-                    !zipEntry.dir &&
-                    lcasePath.substr(0, 6) === "source" &&
-                    lcasePath.split(".").pop() === "brs"
-                ) {
+                const ext = lcasePath.split(".").pop();
+                if (!zipEntry.dir && lcasePath.substr(0, 6) === "source" && ext === "brs") {
                     assetPaths.push({ url: relativePath, id: srcId, type: "source" });
                     assetsEvents.push(zipEntry.async("string"));
                     srcId++;
                 } else if (
                     !zipEntry.dir &&
-                    (lcasePath === "manifest" ||
-                        lcasePath.split(".").pop() === "csv" ||
-                        lcasePath.split(".").pop() === "xml" ||
-                        lcasePath.split(".").pop() === "json")
+                    (lcasePath === "manifest" || ext === "csv" || ext === "xml" || ext === "json")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
                     assetsEvents.push(zipEntry.async("string"));
                     txtId++;
                 } else if (
                     !zipEntry.dir &&
-                    (lcasePath.split(".").pop() === "png" ||
-                        lcasePath.split(".").pop() === "gif" ||
-                        lcasePath.split(".").pop() === "jpg" ||
-                        lcasePath.split(".").pop() === "jpeg")
+                    (ext === "png" || ext === "gif" || ext === "jpg" || ext === "jpeg")
                 ) {
                     assetPaths.push({ url: relativePath, id: bmpId, type: "image" });
                     assetsEvents.push(zipEntry.async("blob"));
                     bmpId++;
-                } else if (
-                    !zipEntry.dir &&
-                    (lcasePath.split(".").pop() === "ttf" || lcasePath.split(".").pop() === "otf")
-                ) {
+                } else if (!zipEntry.dir && (ext === "ttf" || ext === "otf")) {
                     assetPaths.push({ url: relativePath, id: fntId, type: "font" });
                     assetsEvents.push(zipEntry.async("arraybuffer"));
                     fntId++;
-                } else if (!zipEntry.dir && lcasePath.split(".").pop() === "wav") {
-                    assetPaths.push({ url: relativePath, id: wavId, type: "wav" });
+                } else if (
+                    !zipEntry.dir &&
+                    (ext === "wav" ||
+                        ext === "mp3" ||
+                        ext === "m4a" ||
+                        ext === "wma" ||
+                        ext === "flac")
+                ) {
+                    assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
                     assetsEvents.push(zipEntry.async("blob"));
-                    wavId++;
+                    audId++;
                 }
             });
             Promise.all(assetsEvents).then(
@@ -302,12 +300,12 @@ function openChannelZip(f) {
                             fonts.push(assets[index]);
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
-                        } else if (assetPaths[index].type === "wav") {
+                        } else if (assetPaths[index].type === "audio") {
                             sounds.set(
                                 `pkg:/${assetPaths[index].url.toLowerCase()}`,
                                 new Howl({
                                     src: [URL.createObjectURL(assets[index])],
-                                    format: "wav",
+                                    format: assetPaths[index].format,
                                 })
                             );
                         } else if (assetPaths[index].type === "text") {
@@ -372,6 +370,66 @@ function receiveMessage(event) {
         deviceData.registry.forEach(function(value, key) {
             storage.setItem(key, value);
         });
+    } else if (event.data instanceof Array) {
+        playList = event.data;
+        // TODO: Stop playback if playing, check if should restart
+    } else if (event.data === "play") {
+        const audio = playList[0]; // TODO: Get current index of playlist
+        if (audio && sounds.has(audio.toLowerCase())) {
+            const sound = sounds.get(audio.toLowerCase());
+            sound.volume(1);
+            sound.seek(0);
+            sound.play();
+        } else {
+            console.log("Can't find audio data:", audio);
+        }
+    } else if (event.data === "stop") {
+        const audio = playList[0]; // TODO: Get current index of playlist
+        if (audio && sounds.has(audio.toLowerCase())) {
+            sounds.get(audio.toLowerCase()).stop();
+        } else {
+            console.log("Can't find audio data:", audio);
+        }
+    } else if (event.data === "pause") {
+        const audio = playList[0]; // TODO: Get current index of playlist
+        if (audio && sounds.has(audio.toLowerCase())) {
+            sounds.get(audio.toLowerCase()).pause();
+        } else {
+            console.log("Can't find audio data:", audio);
+        }
+    } else if (event.data === "resume") {
+        const audio = playList[0]; // TODO: Get current index of playlist
+        if (audio && sounds.has(audio.toLowerCase())) {
+            sounds.get(audio.toLowerCase()).play();
+        } else {
+            console.log("Can't find audio data:", audio);
+        }
+    } else if (event.data.substr(0, 7) === "loop") {
+        const audio = playList[0]; // TODO: Get current index of playlist
+        const loop = event.data.split(",")[1];
+        if (loop) {
+            if (audio && sounds.has(audio.toLowerCase())) {
+                const sound = sounds.get(audio.toLowerCase());
+                sound.loop(loop === "true");
+            } else {
+                console.log("Can't find audio data:", audio);
+            }
+        } else {
+            console.log("Invalid seek position:", event.data);
+        }
+    } else if (event.data.substr(0, 4) === "seek") {
+        const audio = playList[0]; // TODO: Get current index of playlist
+        const position = event.data.split(",")[1];
+        if (position && !isNaN(parseInt(position))) {
+            if (audio && sounds.has(audio.toLowerCase())) {
+                const sound = sounds.get(audio.toLowerCase());
+                sound.seek(parseInt(position));
+            } else {
+                console.log("Can't find audio data:", audio);
+            }
+        } else {
+            console.log("Invalid seek position:", event.data);
+        }
     } else if (event.data.substr(0, 7) === "trigger") {
         const wav = event.data.split(",")[1];
         if (wav && sounds.has(wav.toLowerCase())) {
@@ -381,10 +439,8 @@ function receiveMessage(event) {
                 sound.volume(volume);
             }
             sound.play();
-        } else {
-            console.log("Can't find wav sound:", wav);
         }
-    } else if (event.data.substr(0, 4) === "stop") {
+    } else if (event.data.substr(0, 5) === "stop,") {
         const wav = event.data.split(",")[1];
         if (wav && sounds.has(wav)) {
             sounds.get(wav).stop();
@@ -403,7 +459,10 @@ function closeChannel() {
     fileButton.style.visibility = "visible";
     channelIcons("visible");
     fileSelector.value = null;
+    brsWorker.terminate();
     sharedArray[0] = 0;
+    playList = new Array();
+    playIndex = 0;
     running = false;
 }
 
