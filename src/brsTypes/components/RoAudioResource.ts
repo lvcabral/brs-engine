@@ -102,7 +102,6 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
 }
 
 export function createAudioResource(interpreter: Interpreter, name: BrsString) {
-    console.log(name);
     const audio = new RoAudioResource(interpreter, name);
     return audio.isValid() ? audio : BrsInvalid.Instance;
 }
