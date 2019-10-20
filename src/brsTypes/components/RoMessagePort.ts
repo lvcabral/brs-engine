@@ -5,7 +5,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { control } from "../..";
+import { shared } from "../..";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -19,7 +19,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.messageQueue = [];
         this.lastKey = 0;
         this.screen = false;
-        let keys = control.get("keys");
+        let keys = shared.get("buffer");
         if (keys) {
             this.keys = keys;
         } else {

@@ -25,7 +25,7 @@ export { _parser as parser };
 import * as path from "path";
 import MemoryFileSystem from "memory-fs";
 
-export const control = new Map<string, Int32Array>();
+export const shared = new Map<string, Int32Array>();
 
 onmessage = function(event) {
     if (event.data.device) {
@@ -116,7 +116,7 @@ onmessage = function(event) {
         postMessage("end");
     } else {
         // Setup Control Shared Array
-        control.set("keys", new Int32Array(event.data));
+        shared.set("buffer", new Int32Array(event.data));
     }
 };
 
