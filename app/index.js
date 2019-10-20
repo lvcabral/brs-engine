@@ -18,13 +18,10 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
-const sounds = new Map();
-sounds.set("select", new Howl({ src: ["./audio/select.wav"] }));
-sounds.set("navsingle", new Howl({ src: ["./audio/navsingle.wav"] }));
-sounds.set("navmulti", new Howl({ src: ["./audio/navmulti.wav"] }));
-sounds.set("deadend", new Howl({ src: ["./audio/deadend.wav"] }));
+let sounds = new Map();
 let playList = new Array();
 let playIndex = 0;
+resetSounds();
 
 if (!supportedBrowser) {
     channelIcons("hidden");
@@ -51,12 +48,15 @@ let imgs = [];
 let fonts = [];
 let running = false;
 
-// Control buffer
+// Shared buffers
+const KEY1 = 0;
+const WAV1 = 2;
+const WAV2 = 3;
 const length = 10;
 const sharedBuffer = supportedBrowser
     ? new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length)
-    : undefined;
-const sharedArray = sharedBuffer ? new Int32Array(sharedBuffer) : undefined;
+    : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const sharedArray = new Int32Array(sharedBuffer);
 
 // Keyboard handlers
 document.addEventListener("keydown", keyDownHandler, false);
@@ -404,7 +404,7 @@ function receiveMessage(event) {
         } else {
             console.log("Can't find audio data:", audio);
         }
-    } else if (event.data.substr(0, 7) === "loop") {
+    } else if (event.data.substr(0, 4) === "loop") {
         const audio = playList[0]; // TODO: Get current index of playlist
         const loop = event.data.split(",")[1];
         if (loop) {
@@ -452,6 +452,22 @@ function receiveMessage(event) {
     }
 }
 
+// (Re)Initializes Sounds Engine
+function resetSounds() {
+    if (sounds.size > 0) {
+        [...sounds.keys()].forEach(key => {
+            sounds.get(key).unload();
+        });
+    }
+    sounds = new Map();
+    sounds.set("select", new Howl({ src: ["./audio/select.wav"] }));
+    sounds.set("navsingle", new Howl({ src: ["./audio/navsingle.wav"] }));
+    sounds.set("navmulti", new Howl({ src: ["./audio/navmulti.wav"] }));
+    sounds.set("deadend", new Howl({ src: ["./audio/deadend.wav"] }));
+    playList = new Array();
+    playIndex = 0;
+}
+
 // Restore emulator menu and terminate Worker
 function closeChannel() {
     display.style.opacity = 0;
@@ -460,46 +476,45 @@ function closeChannel() {
     channelIcons("visible");
     fileSelector.value = null;
     brsWorker.terminate();
-    sharedArray[0] = 0;
-    playList = new Array();
-    playIndex = 0;
+    sharedArray[KEY1] = 0;
+    resetSounds();
     running = false;
 }
 
 // Remote control emulator
 function keyDownHandler(event) {
     if (event.keyCode == 8) {
-        sharedArray[0] = 0; // BUTTON_BACK_PRESSED
+        sharedArray[KEY1] = 0; // BUTTON_BACK_PRESSED
     } else if (event.keyCode == 13) {
-        sharedArray[0] = 6; // BUTTON_SELECT_PRESSED
+        sharedArray[KEY1] = 6; // BUTTON_SELECT_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 37) {
-        sharedArray[0] = 4; // BUTTON_LEFT_PRESSED
+        sharedArray[KEY1] = 4; // BUTTON_LEFT_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 39) {
-        sharedArray[0] = 5; // BUTTON_RIGHT_PRESSED
+        sharedArray[KEY1] = 5; // BUTTON_RIGHT_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 38) {
-        sharedArray[0] = 2; // BUTTON_UP_PRESSED
+        sharedArray[KEY1] = 2; // BUTTON_UP_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 40) {
-        sharedArray[0] = 3; // BUTTON_DOWN_PRESSED
+        sharedArray[KEY1] = 3; // BUTTON_DOWN_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 111) {
-        sharedArray[0] = 7; // BUTTON_INSTANT_REPLAY_PRESSED
+        sharedArray[KEY1] = 7; // BUTTON_INSTANT_REPLAY_PRESSED
     } else if (event.keyCode == 106) {
-        sharedArray[0] = 10; // BUTTON_INFO_PRESSED
+        sharedArray[KEY1] = 10; // BUTTON_INFO_PRESSED
     } else if (event.keyCode == 188) {
-        sharedArray[0] = 8; // BUTTON_REWIND_PRESSED
+        sharedArray[KEY1] = 8; // BUTTON_REWIND_PRESSED
     } else if (event.keyCode == 32) {
-        sharedArray[0] = 13; // BUTTON_PLAY_PRESSED
+        sharedArray[KEY1] = 13; // BUTTON_PLAY_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 190) {
-        sharedArray[0] = 9; // BUTTON_FAST_FORWARD_PRESSED
+        sharedArray[KEY1] = 9; // BUTTON_FAST_FORWARD_PRESSED
     } else if (event.keyCode == 65) {
-        sharedArray[0] = 17; // BUTTON_A_PRESSED
+        sharedArray[KEY1] = 17; // BUTTON_A_PRESSED
     } else if (event.keyCode == 90) {
-        sharedArray[0] = 18; // BUTTON_B_PRESSED
+        sharedArray[KEY1] = 18; // BUTTON_B_PRESSED
     } else if (event.keyCode == 27) {
         if (brsWorker != undefined) {
             // HOME BUTTON (ESC)
@@ -511,31 +526,31 @@ function keyDownHandler(event) {
 
 function keyUpHandler(event) {
     if (event.keyCode == 8) {
-        sharedArray[0] = 100; // BUTTON_BACK_RELEASED
+        sharedArray[KEY1] = 100; // BUTTON_BACK_RELEASED
     } else if (event.keyCode == 13) {
-        sharedArray[0] = 106; // BUTTON_SELECT_RELEASED
+        sharedArray[KEY1] = 106; // BUTTON_SELECT_RELEASED
     } else if (event.keyCode == 37) {
-        sharedArray[0] = 104; // BUTTON_LEFT_RELEASED
+        sharedArray[KEY1] = 104; // BUTTON_LEFT_RELEASED
     } else if (event.keyCode == 39) {
-        sharedArray[0] = 105; // BUTTON_RIGHT_RELEASED
+        sharedArray[KEY1] = 105; // BUTTON_RIGHT_RELEASED
     } else if (event.keyCode == 38) {
-        sharedArray[0] = 102; // BUTTON_UP_RELEASED
+        sharedArray[KEY1] = 102; // BUTTON_UP_RELEASED
     } else if (event.keyCode == 40) {
-        sharedArray[0] = 103; // BUTTON_DOWN_RELEASED
+        sharedArray[KEY1] = 103; // BUTTON_DOWN_RELEASED
     } else if (event.keyCode == 111) {
-        sharedArray[0] = 107; // BUTTON_INSTANT_REPLAY_RELEASED
+        sharedArray[KEY1] = 107; // BUTTON_INSTANT_REPLAY_RELEASED
     } else if (event.keyCode == 106) {
-        sharedArray[0] = 110; // BUTTON_INFO_RELEASED
+        sharedArray[KEY1] = 110; // BUTTON_INFO_RELEASED
     } else if (event.keyCode == 188) {
-        sharedArray[0] = 108; // BUTTON_REWIND_RELEASED
+        sharedArray[KEY1] = 108; // BUTTON_REWIND_RELEASED
     } else if (event.keyCode == 32) {
-        sharedArray[0] = 113; // BUTTON_PLAY_RELEASED
+        sharedArray[KEY1] = 113; // BUTTON_PLAY_RELEASED
     } else if (event.keyCode == 190) {
-        sharedArray[0] = 109; // BUTTON_FAST_FORWARD_RELEASED
+        sharedArray[KEY1] = 109; // BUTTON_FAST_FORWARD_RELEASED
     } else if (event.keyCode == 65) {
-        sharedArray[0] = 117; // BUTTON_A_RELEASED
+        sharedArray[KEY1] = 117; // BUTTON_A_RELEASED
     } else if (event.keyCode == 90) {
-        sharedArray[0] = 118; // BUTTON_B_RELEASED
+        sharedArray[KEY1] = 118; // BUTTON_B_RELEASED
     }
 }
 
