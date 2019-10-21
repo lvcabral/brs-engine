@@ -18,11 +18,6 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
-let sounds = new Map();
-let playList = new Array();
-let playIndex = 0;
-resetSounds();
-
 if (!supportedBrowser) {
     channelIcons("hidden");
     fileButton.style.visibility = "hidden";
@@ -48,20 +43,6 @@ let imgs = [];
 let fonts = [];
 let running = false;
 
-// Shared buffers
-const KEY1 = 0;
-const WAV1 = 2;
-const WAV2 = 3;
-const length = 10;
-const sharedBuffer = supportedBrowser
-    ? new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length)
-    : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-const sharedArray = new Int32Array(sharedBuffer);
-
-// Keyboard handlers
-document.addEventListener("keydown", keyDownHandler, false);
-document.addEventListener("keyup", keyUpHandler, false);
-
 // Device Data
 const developerId = "UniqueDeveloperId";
 const deviceData = {
@@ -75,7 +56,29 @@ const deviceData = {
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
+    maxSimulStreams: 2, // Max number of audio resource streams
 };
+
+// Sound Objects
+let soundsIdx = new Map();
+let soundsDat = new Array();
+let wavStreams = new Array(deviceData.maxSimulStreams);
+let playList = new Array();
+let playIndex = 0;
+resetSounds();
+
+// Shared buffers
+const KEY = 0;
+const WAV = 2;
+const length = 10;
+const sharedBuffer = supportedBrowser
+    ? new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length)
+    : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+const sharedArray = new Int32Array(sharedBuffer);
+
+// Keyboard handlers
+document.addEventListener("keydown", keyDownHandler, false);
+document.addEventListener("keyup", keyUpHandler, false);
 
 // Load Registry
 const storage = window.localStorage;
@@ -274,11 +277,7 @@ function openChannelZip(f) {
                     fntId++;
                 } else if (
                     !zipEntry.dir &&
-                    (ext === "wav" ||
-                        ext === "mp3" ||
-                        ext === "m4a" ||
-                        ext === "wma" ||
-                        ext === "flac")
+                    (ext === "wav" || ext === "mp3" || ext === "m4a" || ext === "flac")
                 ) {
                     assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
                     assetsEvents.push(zipEntry.async("blob"));
@@ -301,8 +300,11 @@ function openChannelZip(f) {
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
                         } else if (assetPaths[index].type === "audio") {
-                            sounds.set(
+                            soundsIdx.set(
                                 `pkg:/${assetPaths[index].url.toLowerCase()}`,
+                                soundsDat.length
+                            );
+                            soundsDat.push(
                                 new Howl({
                                     src: [URL.createObjectURL(assets[index])],
                                     format: assetPaths[index].format,
@@ -375,8 +377,8 @@ function receiveMessage(event) {
         // TODO: Stop playback if playing, check if should restart
     } else if (event.data === "play") {
         const audio = playList[0]; // TODO: Get current index of playlist
-        if (audio && sounds.has(audio.toLowerCase())) {
-            const sound = sounds.get(audio.toLowerCase());
+        if (audio && soundsIdx.has(audio.toLowerCase())) {
+            const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
             sound.volume(1);
             sound.seek(0);
             sound.play();
@@ -385,22 +387,25 @@ function receiveMessage(event) {
         }
     } else if (event.data === "stop") {
         const audio = playList[0]; // TODO: Get current index of playlist
-        if (audio && sounds.has(audio.toLowerCase())) {
-            sounds.get(audio.toLowerCase()).stop();
+        if (audio && soundsIdx.has(audio.toLowerCase())) {
+            const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
+            sound.stop();
         } else {
             console.log("Can't find audio data:", audio);
         }
     } else if (event.data === "pause") {
         const audio = playList[0]; // TODO: Get current index of playlist
-        if (audio && sounds.has(audio.toLowerCase())) {
-            sounds.get(audio.toLowerCase()).pause();
+        if (audio && soundsIdx.has(audio.toLowerCase())) {
+            const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
+            sound.pause();
         } else {
             console.log("Can't find audio data:", audio);
         }
     } else if (event.data === "resume") {
         const audio = playList[0]; // TODO: Get current index of playlist
-        if (audio && sounds.has(audio.toLowerCase())) {
-            sounds.get(audio.toLowerCase()).play();
+        if (audio && soundsIdx.has(audio.toLowerCase())) {
+            const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
+            sound.play();
         } else {
             console.log("Can't find audio data:", audio);
         }
@@ -408,8 +413,8 @@ function receiveMessage(event) {
         const audio = playList[0]; // TODO: Get current index of playlist
         const loop = event.data.split(",")[1];
         if (loop) {
-            if (audio && sounds.has(audio.toLowerCase())) {
-                const sound = sounds.get(audio.toLowerCase());
+            if (audio && soundsIdx.has(audio.toLowerCase())) {
+                const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
                 sound.loop(loop === "true");
             } else {
                 console.log("Can't find audio data:", audio);
@@ -421,8 +426,8 @@ function receiveMessage(event) {
         const audio = playList[0]; // TODO: Get current index of playlist
         const position = event.data.split(",")[1];
         if (position && !isNaN(parseInt(position))) {
-            if (audio && sounds.has(audio.toLowerCase())) {
-                const sound = sounds.get(audio.toLowerCase());
+            if (audio && soundsIdx.has(audio.toLowerCase())) {
+                const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
                 sound.seek(parseInt(position));
             } else {
                 console.log("Can't find audio data:", audio);
@@ -432,18 +437,38 @@ function receiveMessage(event) {
         }
     } else if (event.data.substr(0, 7) === "trigger") {
         const wav = event.data.split(",")[1];
-        if (wav && sounds.has(wav.toLowerCase())) {
+        if (wav && soundsIdx.has(wav.toLowerCase())) {
+            const soundId = soundsIdx.get(wav.toLowerCase());
+            const sound = soundsDat[soundId];
             const volume = parseInt(event.data.split(",")[2]) / 100;
-            const sound = sounds.get(wav.toLowerCase());
+            const index = parseInt(event.data.split(",")[3]);
             if (volume && !isNaN(volume)) {
                 sound.volume(volume);
             }
-            sound.play();
+            if (index && index < deviceData.maxSimulStreams) {
+                if (wavStreams[index] && wavStreams[index].playing()) {
+                    wavStreams[index].stop();
+                }
+                wavStreams[index] = sound;
+                sound.on("end", function() {
+                    sharedArray[WAV + index] = -1;
+                });
+                sound.play();
+                sharedArray[WAV + index] = soundId;
+            }
         }
     } else if (event.data.substr(0, 5) === "stop,") {
         const wav = event.data.split(",")[1];
-        if (wav && sounds.has(wav)) {
-            sounds.get(wav).stop();
+        if (wav && soundsIdx.has(wav.toLowerCase())) {
+            const soundId = soundsIdx.get(wav.toLowerCase());
+            const sound = soundsDat[soundId];
+            for (let index = 0; index < deviceData.maxSimulStreams; index++) {
+                if (sharedArray[WAV + index] === soundId) {
+                    sharedArray[WAV + index] = -1;
+                    break;
+                }
+            }
+            sound.stop();
         } else {
             console.log("Can't find wav sound:", wav);
         }
@@ -454,16 +479,22 @@ function receiveMessage(event) {
 
 // (Re)Initializes Sounds Engine
 function resetSounds() {
-    if (sounds.size > 0) {
-        [...sounds.keys()].forEach(key => {
-            sounds.get(key).unload();
+    if (soundsDat.length > 0) {
+        soundsDat.forEach(sound => {
+            sound.unload();
         });
     }
-    sounds = new Map();
-    sounds.set("select", new Howl({ src: ["./audio/select.wav"] }));
-    sounds.set("navsingle", new Howl({ src: ["./audio/navsingle.wav"] }));
-    sounds.set("navmulti", new Howl({ src: ["./audio/navmulti.wav"] }));
-    sounds.set("deadend", new Howl({ src: ["./audio/deadend.wav"] }));
+    soundsIdx = new Map();
+    soundsDat = new Array();
+    wavStreams = new Array(deviceData.maxSimulStreams);
+    soundsIdx.set("select", 0);
+    soundsDat.push(new Howl({ src: ["./audio/select.wav"] }));
+    soundsIdx.set("navsingle", 1);
+    soundsDat.push(new Howl({ src: ["./audio/navsingle.wav"] }));
+    soundsIdx.set("navmulti", 2);
+    soundsDat.push(new Howl({ src: ["./audio/navmulti.wav"] }));
+    soundsIdx.set("deadend", 3);
+    soundsDat.push(new Howl({ src: ["./audio/deadend.wav"] }));
     playList = new Array();
     playIndex = 0;
 }
@@ -476,7 +507,7 @@ function closeChannel() {
     channelIcons("visible");
     fileSelector.value = null;
     brsWorker.terminate();
-    sharedArray[KEY1] = 0;
+    sharedArray[KEY] = 0;
     resetSounds();
     running = false;
 }
@@ -484,37 +515,37 @@ function closeChannel() {
 // Remote control emulator
 function keyDownHandler(event) {
     if (event.keyCode == 8) {
-        sharedArray[KEY1] = 0; // BUTTON_BACK_PRESSED
+        sharedArray[KEY] = 0; // BUTTON_BACK_PRESSED
     } else if (event.keyCode == 13) {
-        sharedArray[KEY1] = 6; // BUTTON_SELECT_PRESSED
+        sharedArray[KEY] = 6; // BUTTON_SELECT_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 37) {
-        sharedArray[KEY1] = 4; // BUTTON_LEFT_PRESSED
+        sharedArray[KEY] = 4; // BUTTON_LEFT_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 39) {
-        sharedArray[KEY1] = 5; // BUTTON_RIGHT_PRESSED
+        sharedArray[KEY] = 5; // BUTTON_RIGHT_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 38) {
-        sharedArray[KEY1] = 2; // BUTTON_UP_PRESSED
+        sharedArray[KEY] = 2; // BUTTON_UP_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 40) {
-        sharedArray[KEY1] = 3; // BUTTON_DOWN_PRESSED
+        sharedArray[KEY] = 3; // BUTTON_DOWN_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 111) {
-        sharedArray[KEY1] = 7; // BUTTON_INSTANT_REPLAY_PRESSED
+        sharedArray[KEY] = 7; // BUTTON_INSTANT_REPLAY_PRESSED
     } else if (event.keyCode == 106) {
-        sharedArray[KEY1] = 10; // BUTTON_INFO_PRESSED
+        sharedArray[KEY] = 10; // BUTTON_INFO_PRESSED
     } else if (event.keyCode == 188) {
-        sharedArray[KEY1] = 8; // BUTTON_REWIND_PRESSED
+        sharedArray[KEY] = 8; // BUTTON_REWIND_PRESSED
     } else if (event.keyCode == 32) {
-        sharedArray[KEY1] = 13; // BUTTON_PLAY_PRESSED
+        sharedArray[KEY] = 13; // BUTTON_PLAY_PRESSED
         event.preventDefault();
     } else if (event.keyCode == 190) {
-        sharedArray[KEY1] = 9; // BUTTON_FAST_FORWARD_PRESSED
+        sharedArray[KEY] = 9; // BUTTON_FAST_FORWARD_PRESSED
     } else if (event.keyCode == 65) {
-        sharedArray[KEY1] = 17; // BUTTON_A_PRESSED
+        sharedArray[KEY] = 17; // BUTTON_A_PRESSED
     } else if (event.keyCode == 90) {
-        sharedArray[KEY1] = 18; // BUTTON_B_PRESSED
+        sharedArray[KEY] = 18; // BUTTON_B_PRESSED
     } else if (event.keyCode == 27) {
         if (brsWorker != undefined) {
             // HOME BUTTON (ESC)
@@ -526,31 +557,31 @@ function keyDownHandler(event) {
 
 function keyUpHandler(event) {
     if (event.keyCode == 8) {
-        sharedArray[KEY1] = 100; // BUTTON_BACK_RELEASED
+        sharedArray[KEY] = 100; // BUTTON_BACK_RELEASED
     } else if (event.keyCode == 13) {
-        sharedArray[KEY1] = 106; // BUTTON_SELECT_RELEASED
+        sharedArray[KEY] = 106; // BUTTON_SELECT_RELEASED
     } else if (event.keyCode == 37) {
-        sharedArray[KEY1] = 104; // BUTTON_LEFT_RELEASED
+        sharedArray[KEY] = 104; // BUTTON_LEFT_RELEASED
     } else if (event.keyCode == 39) {
-        sharedArray[KEY1] = 105; // BUTTON_RIGHT_RELEASED
+        sharedArray[KEY] = 105; // BUTTON_RIGHT_RELEASED
     } else if (event.keyCode == 38) {
-        sharedArray[KEY1] = 102; // BUTTON_UP_RELEASED
+        sharedArray[KEY] = 102; // BUTTON_UP_RELEASED
     } else if (event.keyCode == 40) {
-        sharedArray[KEY1] = 103; // BUTTON_DOWN_RELEASED
+        sharedArray[KEY] = 103; // BUTTON_DOWN_RELEASED
     } else if (event.keyCode == 111) {
-        sharedArray[KEY1] = 107; // BUTTON_INSTANT_REPLAY_RELEASED
+        sharedArray[KEY] = 107; // BUTTON_INSTANT_REPLAY_RELEASED
     } else if (event.keyCode == 106) {
-        sharedArray[KEY1] = 110; // BUTTON_INFO_RELEASED
+        sharedArray[KEY] = 110; // BUTTON_INFO_RELEASED
     } else if (event.keyCode == 188) {
-        sharedArray[KEY1] = 108; // BUTTON_REWIND_RELEASED
+        sharedArray[KEY] = 108; // BUTTON_REWIND_RELEASED
     } else if (event.keyCode == 32) {
-        sharedArray[KEY1] = 113; // BUTTON_PLAY_RELEASED
+        sharedArray[KEY] = 113; // BUTTON_PLAY_RELEASED
     } else if (event.keyCode == 190) {
-        sharedArray[KEY1] = 109; // BUTTON_FAST_FORWARD_RELEASED
+        sharedArray[KEY] = 109; // BUTTON_FAST_FORWARD_RELEASED
     } else if (event.keyCode == 65) {
-        sharedArray[KEY1] = 117; // BUTTON_A_RELEASED
+        sharedArray[KEY] = 117; // BUTTON_A_RELEASED
     } else if (event.keyCode == 90) {
-        sharedArray[KEY1] = 118; // BUTTON_B_RELEASED
+        sharedArray[KEY] = 118; // BUTTON_B_RELEASED
     }
 }
 

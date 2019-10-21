@@ -4,25 +4,41 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { shared } from "../..";
 import URL from "url-parse";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    readonly WAV = 2;
+    private buffer: Int32Array;
     private audioName: string;
+    private audioId?: number;
+    private currentIndex: number;
     private playing: boolean;
+    private maxStreams: number;
     private valid: boolean;
 
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource", ["ifAudioResource"]);
+        this.maxStreams = interpreter.deviceInfo.get("maxSimulStreams");
         this.valid = true;
-        const systemwav = new Set(["select", "navsingle", "navmulti", "deadend"]);
-        if (!systemwav.has(name.value.toLowerCase())) {
+        this.buffer = shared.get("buffer") || new Int32Array([]);
+        const systemwav = ["select", "navsingle", "navmulti", "deadend"];
+        const sysIndex = systemwav.findIndex(wav => wav === name.value.toLowerCase());
+        if (sysIndex > -1) {
+            this.audioId = sysIndex;
+        } else {
             const url = new URL(name.value);
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
-                this.valid = volume.existsSync(url.pathname);
-                if (!this.valid) {
-                    console.error("File not found!", url.pathname);
+                try {
+                    const id = parseInt(volume.readFileSync(url.pathname));
+                    if (id && id >= 0) {
+                        this.audioId = id + systemwav.length;
+                    }
+                } catch (err) {
+                    console.error(`Error loading audio file: ${url.pathname} - ${err.message}`);
+                    this.valid = false;
                 }
             } else {
                 console.error("Invalid volume:", name);
@@ -33,6 +49,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             // }
         }
         this.audioName = name.value;
+        this.currentIndex = 0;
         this.playing = false;
         this.registerMethods([this.trigger, this.isPlaying, this.stop, this.maxSimulStreams]);
     }
@@ -59,7 +76,9 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, volume: Int32, index: Int32) => {
-            postMessage(`trigger,${this.audioName},${volume.toString()}`);
+            // TODO: Check behavior when index > maxSimulStreams
+            postMessage(`trigger,${this.audioName},${volume.toString()},${index.toString()}`);
+            this.currentIndex = index.getValue();
             this.playing = true;
             return BrsInvalid.Instance;
         },
@@ -72,6 +91,9 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
+            if (this.audioId) {
+                this.playing = this.buffer[this.WAV + this.currentIndex] === this.audioId;
+            }
             return BrsBoolean.from(this.playing);
         },
     });
@@ -96,7 +118,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(2);
+            return new Int32(this.maxStreams);
         },
     });
 }
