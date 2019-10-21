@@ -47,6 +47,7 @@ onmessage = function(event) {
         interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
         interpreter.deviceInfo.set("models", parseCSV(models.default));
         interpreter.deviceInfo.set("defaultFont", event.data.device.defaultFont);
+        interpreter.deviceInfo.set("maxSimulStreams", event.data.maxSimulStreams);
         // File System
         let fontFamily = event.data.device.defaultFont;
         let volume = interpreter.fileSystem.get("common:");
@@ -99,7 +100,10 @@ onmessage = function(event) {
                         // Save mock file to allow file exist checking,
                         // but audio data remains on rendering thread
                         // Converting to lower case because file system still case sensitive
-                        volume.writeFileSync("/" + filePath.url.toLowerCase(), filePath.type);
+                        volume.writeFileSync(
+                            "/" + filePath.url.toLowerCase(),
+                            filePath.id.toString()
+                        );
                     } else if (filePath.type === "text") {
                         volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
                     } else if (filePath.type === "source") {
