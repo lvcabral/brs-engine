@@ -12,7 +12,6 @@ const supportedBrowser =
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const display = document.getElementById("display");
-const screenSize = { width: 854, height: 480 };
 const ctx = display.getContext("2d", { alpha: false });
 const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
@@ -29,20 +28,6 @@ if (!supportedBrowser) {
     channelInfo.innerHTML = "<br/>";
 }
 
-const bufferCanvas = supportedBrowser
-    ? new OffscreenCanvas(screenSize.width, screenSize.height)
-    : undefined;
-const bufferCtx = supportedBrowser ? bufferCanvas.getContext("2d") : undefined;
-let buffer = new ImageData(screenSize.width, screenSize.height);
-let splashTimeout = 1600;
-let brsWorker;
-let source = [];
-let paths = [];
-let txts = [];
-let imgs = [];
-let fonts = [];
-let running = false;
-
 // Device Data
 const developerId = "UniqueDeveloperId";
 const deviceData = {
@@ -58,6 +43,26 @@ const deviceData = {
     defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
     maxSimulStreams: 2, // Max number of audio resource streams
 };
+
+// Display Aspect Ratio
+const isSD = deviceData.displayMode === "480p";
+const aspectRatio = isSD ? 4 / 3 : 16 / 9;
+const screenSize = { width: isSD ? 640 : 854, height: 480 };
+
+// Display Objects
+const bufferCanvas = supportedBrowser
+    ? new OffscreenCanvas(screenSize.width, screenSize.height)
+    : undefined;
+const bufferCtx = supportedBrowser ? bufferCanvas.getContext("2d") : undefined;
+let buffer = new ImageData(screenSize.width, screenSize.height);
+let splashTimeout = 1600;
+let brsWorker;
+let source = [];
+let paths = [];
+let txts = [];
+let imgs = [];
+let fonts = [];
+let running = false;
 
 // Sound Objects
 let soundsIdx = new Map();
@@ -199,7 +204,7 @@ function openChannelZip(f) {
                                         display.style.opacity = 1;
                                         ctx.drawImage(
                                             imgData,
-                                            0,
+                                            isSD ? 107 : 0,
                                             0,
                                             screenSize.width,
                                             screenSize.height
@@ -366,7 +371,7 @@ function receiveMessage(event) {
         bufferCanvas.width = buffer.width;
         bufferCanvas.height = buffer.height;
         bufferCtx.putImageData(buffer, 0, 0);
-        ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
+        ctx.drawImage(bufferCanvas, isSD ? 107 : 0, 0, screenSize.width, screenSize.height);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
         deviceData.registry.forEach(function(value, key) {
