@@ -373,28 +373,17 @@ function receiveMessage(event) {
             storage.setItem(key, value);
         });
     } else if (event.data instanceof Array) {
+        if (playList.length > 0) {
+            stopSound();
+        }
         playList = event.data;
-        // TODO: Stop playback if playing, check if should restart
+        playIndex = 0;
     } else if (event.data === "play") {
-        const audio = playList[0]; // TODO: Get current index of playlist
-        if (audio && soundsIdx.has(audio.toLowerCase())) {
-            const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-            sound.volume(1);
-            sound.seek(0);
-            sound.play();
-        } else {
-            console.log("Can't find audio data:", audio);
-        }
+        playSound();
     } else if (event.data === "stop") {
-        const audio = playList[0]; // TODO: Get current index of playlist
-        if (audio && soundsIdx.has(audio.toLowerCase())) {
-            const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-            sound.stop();
-        } else {
-            console.log("Can't find audio data:", audio);
-        }
+        stopSound();
     } else if (event.data === "pause") {
-        const audio = playList[0]; // TODO: Get current index of playlist
+        const audio = playList[playIndex];
         if (audio && soundsIdx.has(audio.toLowerCase())) {
             const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
             sound.pause();
@@ -402,7 +391,7 @@ function receiveMessage(event) {
             console.log("Can't find audio data:", audio);
         }
     } else if (event.data === "resume") {
-        const audio = playList[0]; // TODO: Get current index of playlist
+        const audio = playList[playIndex];
         if (audio && soundsIdx.has(audio.toLowerCase())) {
             const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
             sound.play();
@@ -410,12 +399,12 @@ function receiveMessage(event) {
             console.log("Can't find audio data:", audio);
         }
     } else if (event.data.substr(0, 4) === "loop") {
-        const audio = playList[0]; // TODO: Get current index of playlist
+        const audio = playList[playIndex];
         const loop = event.data.split(",")[1];
         if (loop) {
             if (audio && soundsIdx.has(audio.toLowerCase())) {
                 const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-                sound.loop(loop === "true");
+                sound.loop(loop === "true"); // TODO: Handle playlist scenario
             } else {
                 console.log("Can't find audio data:", audio);
             }
@@ -423,7 +412,7 @@ function receiveMessage(event) {
             console.log("Invalid seek position:", event.data);
         }
     } else if (event.data.substr(0, 4) === "seek") {
-        const audio = playList[0]; // TODO: Get current index of playlist
+        const audio = playList[playIndex];
         const position = event.data.split(",")[1];
         if (position && !isNaN(parseInt(position))) {
             if (audio && soundsIdx.has(audio.toLowerCase())) {
@@ -445,7 +434,7 @@ function receiveMessage(event) {
             if (volume && !isNaN(volume)) {
                 sound.volume(volume);
             }
-            if (index && index < deviceData.maxSimulStreams) {
+            if (index >= 0 && index < deviceData.maxSimulStreams) {
                 if (wavStreams[index] && wavStreams[index].playing()) {
                     wavStreams[index].stop();
                 }
@@ -477,6 +466,39 @@ function receiveMessage(event) {
     }
 }
 
+function playSound() {
+    const audio = playList[playIndex];
+    if (audio && soundsIdx.has(audio.toLowerCase())) {
+        const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
+        sound.volume(1);
+        sound.seek(0);
+        sound.on("end", nextSound());
+        sound.play();
+    } else {
+        console.log("Can't find audio data:", audio);
+    }
+}
+
+function nextSound() {
+    playIndex++;
+    if (playIndex < playList.length) {
+        playSound();
+    } else {
+        // TODO: Check what actually happens to playIndex if loop is disabled
+        // TODO: Handle loop
+        playIndex = 0;
+    }
+}
+
+function stopSound() {
+    const audio = playList[playIndex];
+    if (audio && soundsIdx.has(audio.toLowerCase())) {
+        const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
+        sound.stop();
+    } else {
+        console.log("Can't find audio data:", audio);
+    }
+}
 // (Re)Initializes Sounds Engine
 function resetSounds() {
     if (soundsDat.length > 0) {
