@@ -66,6 +66,14 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, contentItem: RoAssociativeArray) => {
             this.contentList.push(contentItem);
+            const contents = new Array<string>();
+            this.contentList.forEach((value, index, array) => {
+                let url = value.get(new BrsString("url"));
+                if (url instanceof BrsString) {
+                    contents.push(url.value);
+                }
+            });
+            postMessage(contents);
             return BrsInvalid.Instance;
         },
     });
