@@ -23,10 +23,14 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   Positive literal number cannot be represented with plus sign. For example `a = [-1, +1]`
 *   An `if` statement with `not` before a logic comparison expression shows an error. For example `if not foo = 1`, to avoid use `if not (foo = 1)` instead.
 *   Usage of `next <variable>` is not supported.
+*   Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
+    - Audio format `wma` is not supported.
+    - Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
+    - if the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
+    - No `Timed Metadata` support.
 
 ## In Scope (mocked)
 
-*   Audio playback is not supported yet, for now `roAudioPlayer` and `roAudioResource` are mocked.
 *   RAF (Roku Ads Framework) object `Roku_Ads()` is mocked with the most common methods available.
 *   Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked.
 

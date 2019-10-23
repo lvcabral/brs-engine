@@ -72,6 +72,8 @@ let soundsDat = new Array();
 let wavStreams = new Array(deviceData.maxSimulStreams);
 let playList = new Array();
 let playIndex = 0;
+let playLoop = false;
+let playNext = -1;
 resetSounds();
 
 // Shared buffers
@@ -115,7 +117,7 @@ fileSelector.onchange = function() {
         txts = [];
         fonts = [];
         source.push(this.result);
-        paths.push({ url: "source/" + file.name, id: 0, type: "source" });
+        paths.push({ url: `source/${file.name}`, id: 0, type: "source" });
         ctx.fillStyle = "rgba(0, 0, 0, 1)";
         ctx.fillRect(0, 0, display.width, display.height);
         runChannel();
@@ -125,7 +127,7 @@ fileSelector.onchange = function() {
         brsWorker.terminate();
     }
     if (file.name.split(".").pop() === "zip") {
-        console.log("Loading " + file.name + "...");
+        console.log(`Loading ${file.name}...`);
         running = true;
         openChannelZip(file);
     } else {
@@ -150,7 +152,7 @@ function loadZip(zip) {
     }
     fetch(zip).then(function(response) {
         if (response.status === 200 || response.status === 0) {
-            console.log("Loading " + zip + "...");
+            console.log(`Loading ${zip}...`);
             openChannelZip(response.blob());
             display.focus();
         } else {
@@ -240,7 +242,7 @@ function openChannelZip(f) {
                         channelInfo.innerHTML = infoHtml;
                     },
                     function error(e) {
-                        clientException("Error uncompressing manifest:" + e.message, true);
+                        clientException(`Error uncompressing manifest: ${e.message}`, true);
                         running = false;
                         return;
                     }
@@ -284,7 +286,16 @@ function openChannelZip(f) {
                     fntId++;
                 } else if (
                     !zipEntry.dir &&
-                    (ext === "wav" || ext === "mp3" || ext === "m4a" || ext === "flac")
+                    (ext === "wav" ||
+                        ext === "mp2" ||
+                        ext === "mp3" ||
+                        ext === "mp4" ||
+                        ext === "m4a" ||
+                        ext === "aac" ||
+                        ext === "ogg" ||
+                        ext === "oga" ||
+                        ext === "ac3" ||
+                        ext === "flac")
                 ) {
                     assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
                     assetsEvents.push(zipEntry.async("blob"));
@@ -315,6 +326,17 @@ function openChannelZip(f) {
                                 new Howl({
                                     src: [URL.createObjectURL(assets[index])],
                                     format: assetPaths[index].format,
+                                    preload: assetPaths[index].format === "wav",
+                                    onloaderror: function(id, message) {
+                                        clientException(
+                                            `Error loading ${assetPaths[index].url}: ${message}`
+                                        );
+                                    },
+                                    onplayerror: function(id, message) {
+                                        clientException(
+                                            `Error playing ${assetPaths[index].url}: ${message}`
+                                        );
+                                    },
                                 })
                             );
                         } else if (assetPaths[index].type === "text") {
@@ -331,17 +353,17 @@ function openChannelZip(f) {
                             }, splashTimeout);
                         },
                         function error(e) {
-                            clientException("Error converting image " + e.message);
+                            clientException(`Error converting image: ${e.message}`);
                         }
                     );
                 },
                 function error(e) {
-                    clientException("Error uncompressing file " + e.message);
+                    clientException(`Error uncompressing file ${e.message}`);
                 }
             );
         },
         function(e) {
-            clientException("Error reading " + f.name + ": " + e.message, true);
+            clientException(`Error reading ${f.name}: ${e.message}`, true);
             running = false;
         }
     );
@@ -385,6 +407,9 @@ function receiveMessage(event) {
         }
         playList = event.data;
         playIndex = 0;
+        if (playNext >= playList.length) {
+            playNext = -1;
+        }
     } else if (event.data === "play") {
         playSound();
     } else if (event.data === "stop") {
@@ -396,7 +421,7 @@ function receiveMessage(event) {
             sound.pause();
             sharedArray[dataType.SND] = audioEvent.PAUSED;
         } else {
-            console.log("Can't find audio data:", audio);
+            clientException(`Can't find audio data: ${audio}`);
         }
     } else if (event.data === "resume") {
         const audio = playList[playIndex];
@@ -405,20 +430,25 @@ function receiveMessage(event) {
             sound.play();
             sharedArray[dataType.SND] = audioEvent.RESUMED;
         } else {
-            console.log("Can't find audio data:", audio);
+            clientException(`Can't find audio data: ${audio}`);
         }
     } else if (event.data.substr(0, 4) === "loop") {
-        const audio = playList[playIndex];
         const loop = event.data.split(",")[1];
         if (loop) {
-            if (audio && soundsIdx.has(audio.toLowerCase())) {
-                const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-                sound.loop(loop === "true"); // TODO: Handle playlist scenario
-            } else {
-                console.log("Can't find audio data:", audio);
+            playLoop = loop === "true";
+        } else {
+            clientException(`Missing loop parameter: ${event.data}`);
+        }
+    } else if (event.data.substr(0, 4) === "next") {
+        const newIndex = event.data.split(",")[1];
+        if (newIndex && !isNaN(parseInt(newIndex))) {
+            playNext = parseInt(newIndex);
+            if (playNext >= playList.length) {
+                playNext = -1;
+                clientException(`Next index out of range: ${newIndex}`);
             }
         } else {
-            console.log("Invalid seek position:", event.data);
+            clientException(`Invalid index: ${event.data}`);
         }
     } else if (event.data.substr(0, 4) === "seek") {
         const audio = playList[playIndex];
@@ -428,10 +458,10 @@ function receiveMessage(event) {
                 const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
                 sound.seek(parseInt(position));
             } else {
-                console.log("Can't find audio data:", audio);
+                clientException(`Can't find audio data: ${audio}`);
             }
         } else {
-            console.log("Invalid seek position:", event.data);
+            clientException(`Invalid seek position: ${event.data}`);
         }
     } else if (event.data.substr(0, 7) === "trigger") {
         const wav = event.data.split(",")[1];
@@ -468,7 +498,7 @@ function receiveMessage(event) {
             }
             sound.stop();
         } else {
-            console.log("Can't find wav sound:", wav);
+            clientException(`Can't find wav sound: ${wav}`);
         }
     } else if (event.data === "end") {
         closeChannel();
@@ -481,23 +511,36 @@ function playSound() {
         const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
         sound.seek(0);
         sound.once("end", nextSound);
-        sound.play();
+        if (sound.state() === "unloaded") {
+            sound.once("load", function() {
+                sound.play();
+            });
+            sound.load();
+        } else {
+            sound.play();
+        }
         sharedArray[dataType.IDX] = playIndex;
         sharedArray[dataType.SND] = audioEvent.SELECTED;
     } else {
-        console.log("Can't find audio data:", audio);
+        clientException(`Can't find audio data: ${audio}`);
     }
 }
 
 function nextSound() {
-    playIndex++;
+    if (playNext >= 0 && playNext < playList.length) {
+        playIndex = playNext;
+    } else {
+        playIndex++;
+    }
+    playNext = -1;
     if (playIndex < playList.length) {
         playSound();
-    } else {
-        // TODO: Handle playlist loop
-        sharedArray[dataType.SND] = audioEvent.FULL;
-        // TODO: Check what actually happens to playIndex if loop is disabled
+    } else if (playLoop) {
         playIndex = 0;
+        playSound();
+    } else {
+        playIndex = 0;
+        sharedArray[dataType.SND] = audioEvent.FULL;
     }
 }
 
@@ -508,7 +551,7 @@ function stopSound() {
         sound.stop();
         sharedArray[dataType.SND] = audioEvent.PARTIAL;
     } else {
-        console.log("Can't find audio data:", audio);
+        clientException(`Can't find audio data: ${audio}`);
     }
 }
 // (Re)Initializes Sounds Engine
@@ -531,6 +574,7 @@ function resetSounds() {
     soundsDat.push(new Howl({ src: ["./audio/deadend.wav"] }));
     playList = new Array();
     playIndex = 0;
+    playLoop = false;
 }
 
 // Restore emulator menu and terminate Worker
