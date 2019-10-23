@@ -26,6 +26,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             this.seek,
             //this.setTimedMetadataForKeys,
             this.setMessagePort,
+            this.setPort,
             this.getMessagePort,
         ]);
     }
@@ -189,13 +190,27 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
 
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
-    /** Sets the roMessagePort to be used for all events from the screen */
+    /** Sets the roMessagePort to be used for all events from the audio player */
     private setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.enableAudio(true);
+            this.port = port;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Sets the roMessagePort to be used for all events from the audio player */
+    private setPort = new Callable("setPort", {
+        signature: {
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, port: RoMessagePort) => {
+            port.enableAudio(true);
             this.port = port;
             return BrsInvalid.Instance;
         },
