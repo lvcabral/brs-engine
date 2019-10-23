@@ -407,9 +407,7 @@ function receiveMessage(event) {
         }
         playList = event.data;
         playIndex = 0;
-        if (playNext >= playList.length) {
-            playNext = -1;
-        }
+        playNext = -1;
     } else if (event.data === "play") {
         playSound();
     } else if (event.data === "stop") {
@@ -575,6 +573,7 @@ function resetSounds() {
     playList = new Array();
     playIndex = 0;
     playLoop = false;
+    playNext = -1;
 }
 
 // Restore emulator menu and terminate Worker
