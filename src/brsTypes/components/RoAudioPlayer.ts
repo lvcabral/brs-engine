@@ -13,6 +13,9 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     constructor() {
         super("roAudioPlayer", ["ifAudioPlayer", "ifGetMessagePort", "ifSetMessagePort"]);
         this.contentList = new Array();
+        postMessage(new Array<string>());
+        postMessage("loop,false");
+        postMessage("next,-1");
         this.registerMethods([
             this.setContentList,
             this.addContent,
@@ -86,6 +89,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            this.contentList = new Array();
             postMessage(new Array<string>());
             return BrsInvalid.Instance;
         },
