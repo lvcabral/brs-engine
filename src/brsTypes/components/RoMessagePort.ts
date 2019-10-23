@@ -77,7 +77,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 while (true) {
                     if (this.buffer[this.type.SND] !== this.lastFlags) {
                         this.lastFlags = this.buffer[this.type.SND];
-                        return new RoAudioPlayerEvent(this.lastFlags, this.buffer[this.type.IDX]);
+                        if (this.lastFlags >= 0) {
+                            return new RoAudioPlayerEvent(
+                                this.lastFlags,
+                                this.buffer[this.type.IDX]
+                            );
+                        }
                     }
                 }
             } else {
@@ -85,7 +90,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 while (new Date().getTime() < ms) {
                     if (this.buffer[this.type.SND] !== this.lastFlags) {
                         this.lastFlags = this.buffer[this.type.SND];
-                        return new RoAudioPlayerEvent(this.lastFlags, this.buffer[this.type.IDX]);
+                        if (this.lastFlags >= 0) {
+                            return new RoAudioPlayerEvent(
+                                this.lastFlags,
+                                this.buffer[this.type.IDX]
+                            );
+                        }
                     }
                 }
             }
@@ -124,7 +134,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             } else if (this.audio) {
                 if (this.buffer[this.type.SND] !== this.lastFlags) {
                     this.lastFlags = this.buffer[this.type.SND];
-                    return new RoAudioPlayerEvent(this.lastFlags, this.buffer[this.type.IDX]);
+                    if (this.lastFlags >= 0) {
+                        return new RoAudioPlayerEvent(this.lastFlags, this.buffer[this.type.IDX]);
+                    }
                 }
             } else if (this.messageQueue.length > 0) {
                 let message = this.messageQueue.shift();
@@ -149,10 +161,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 }
             } else if (this.audio) {
                 if (this.buffer[this.type.SND] !== this.lastFlags) {
-                    return new RoAudioPlayerEvent(
-                        this.buffer[this.type.SND],
-                        this.buffer[this.type.IDX]
-                    );
+                    if (this.buffer[this.type.SND] >= 0) {
+                        return new RoAudioPlayerEvent(
+                            this.buffer[this.type.SND],
+                            this.buffer[this.type.IDX]
+                        );
+                    }
                 }
             } else if (this.messageQueue.length > 0) {
                 let message = this.messageQueue[0];

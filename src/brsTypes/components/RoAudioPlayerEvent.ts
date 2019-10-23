@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable } from "../Callable";
@@ -7,34 +7,46 @@ import { Int32 } from "../Int32";
 
 export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly event = { SELECTED: 0, FULL: 1, PARTIAL: 2, PAUSED: 3, RESUMED: 4 };
+    readonly event = { SELECTED: 0, FULL: 1, PARTIAL: 2, PAUSED: 3, RESUMED: 4, FAILED: 5 };
     private flags: number;
     private index: number;
+    private message: string;
 
     constructor(flags: number, index: number) {
         super("roAudioPlayerEvent");
         Object.freeze(this.event);
         this.flags = flags;
         this.index = index;
-
+        switch (this.flags) {
+            case this.event.SELECTED:
+                this.message = "start of play";
+                break;
+            case this.event.FULL:
+                this.message = "end of playlist";
+                break;
+            default:
+                this.message = "";
+                break;
+        }
         this.registerMethods([
             this.getIndex,
+            this.getMessage,
+            this.getInfo,
+            this.getData,
             this.isListItemSelected,
             this.isFullResult,
             this.isPartialResult,
+            this.isRequestSucceeded,
+            this.isRequestFailed,
             this.isPaused,
             this.isResumed,
-            // this.isRequestFailed,
-            // this.isRequestSucceeded,
-            // this.isStatusMessage,
-            // this.isTimedMetadata,
-            // this.getMessage,
-            // this.getInfo,
+            this.isStatusMessage,
+            this.isTimedMetadata,
         ]);
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roAudioPlayerEvent>"; //TODO: Check if Roku returns "Component" or "Event"
+        return "<Component: roAudioPlayerEvent>";
     }
 
     equalTo(other: BrsType) {
@@ -52,6 +64,39 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns info in some events (not implemented just a placeholder). */
+    private getInfo = new Callable("getInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns error code when isRequestFailed() is true. */
+    private getData = new Callable("getData", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(0); //TODO: Get error code from rendered thread
+        },
+    });
+
+    /** Returns the current status message. */
+    private getMessage = new Callable("getMessage", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return new BrsString(this.message);
+        },
+    });
+
     /** Returns true if a stream has been selected to start playing. */
     private isListItemSelected = new Callable("isListItemSelected", {
         signature: {
@@ -63,7 +108,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback completed at end of content. */
+    /** Returns true if audio is loaded and will start to play. */
     private isFullResult = new Callable("isFullResult", {
         signature: {
             args: [],
@@ -71,6 +116,28 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.flags === this.event.FULL);
+        },
+    });
+
+    /** Returns true if audio playback completed at end of content. */
+    private isRequestSucceeded = new Callable("isRequestSucceeded", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.flags === this.event.FULL);
+        },
+    });
+
+    /** Returns true if audio playback fails. */
+    private isRequestFailed = new Callable("isRequestFailed", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.flags === this.event.FAILED);
         },
     });
 
@@ -104,6 +171,28 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.flags === this.event.RESUMED);
+        },
+    });
+
+    /** Returns true if there is a status message. */
+    private isStatusMessage = new Callable("isStatusMessage", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.message !== "");
+        },
+    });
+
+    /** Not Implemented just a placeholder. */
+    private isTimedMetadata = new Callable("isTimedMetadata", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.False;
         },
     });
 }

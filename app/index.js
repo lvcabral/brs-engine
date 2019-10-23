@@ -65,7 +65,7 @@ let fonts = [];
 let running = false;
 
 // Sound Objects
-const audioEvent = { SELECTED: 0, FULL: 1, PARTIAL: 2, PAUSED: 3, RESUMED: 4 };
+const audioEvent = { SELECTED: 0, FULL: 1, PARTIAL: 2, PAUSED: 3, RESUMED: 4, FAILED: 5 };
 Object.freeze(audioEvent);
 let soundsIdx = new Map();
 let soundsDat = new Array();
@@ -479,9 +479,8 @@ function playSound() {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-        sound.volume(1);
         sound.seek(0);
-        sound.on("end", nextSound());
+        sound.once("end", nextSound);
         sound.play();
         sharedArray[dataType.IDX] = playIndex;
         sharedArray[dataType.SND] = audioEvent.SELECTED;
