@@ -9,7 +9,7 @@ import URL from "url-parse";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly WAV = 2;
+    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
     private buffer: Int32Array;
     private audioName: string;
     private audioId?: number;
@@ -20,6 +20,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
 
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource", ["ifAudioResource"]);
+        Object.freeze(this.type);
         this.maxStreams = interpreter.deviceInfo.get("maxSimulStreams");
         this.valid = true;
         this.buffer = shared.get("buffer") || new Int32Array([]);
@@ -92,7 +93,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.audioId) {
-                this.playing = this.buffer[this.WAV + this.currentIndex] === this.audioId;
+                this.playing = this.buffer[this.type.WAV + this.currentIndex] === this.audioId;
             }
             return BrsBoolean.from(this.playing);
         },
