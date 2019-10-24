@@ -1,34 +1,45 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { RoUniversalControlEvent } from "./RoUniversalControlEvent";
+import { RoAudioPlayerEvent } from "./RoAudioPlayerEvent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { control } from "../..";
+import { shared } from "../..";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
     private messageQueue: BrsType[];
-    private keys: Int32Array;
+    private buffer: Int32Array;
     private lastKey: number;
     private screen: boolean;
+    private lastFlags: number;
+    private audio: boolean;
     constructor() {
         super("roMessagePort", ["ifMessagePort"]);
+        Object.freeze(this.type);
         this.registerMethods([this.waitMessage, this.getMessage, this.peekMessage]);
         this.messageQueue = [];
         this.lastKey = 0;
         this.screen = false;
-        let keys = control.get("keys");
-        if (keys) {
-            this.keys = keys;
+        this.lastFlags = -1;
+        this.audio = false;
+        let buffer = shared.get("buffer");
+        if (buffer) {
+            this.buffer = buffer;
         } else {
-            this.keys = new Int32Array([]);
+            this.buffer = new Int32Array([]);
         }
     }
 
     enableKeys(enable: boolean) {
         this.screen = enable;
+    }
+
+    enableAudio(enable: boolean) {
+        this.audio = enable;
     }
 
     pushMessage(object: BrsType) {
@@ -47,18 +58,44 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         if (this.screen) {
             if (ms === 0) {
                 while (true) {
-                    if (this.keys[0] !== this.lastKey) {
-                        this.lastKey = this.keys[0];
+                    if (this.buffer[0] !== this.lastKey) {
+                        this.lastKey = this.buffer[this.type.KEY];
                         return new RoUniversalControlEvent(this.lastKey);
                     }
                 }
             } else {
-                let sec = Math.trunc(ms / 1000);
                 ms += new Date().getTime();
                 while (new Date().getTime() < ms) {
-                    if (this.keys[0] !== this.lastKey) {
-                        this.lastKey = this.keys[0];
+                    if (this.buffer[this.type.KEY] !== this.lastKey) {
+                        this.lastKey = this.buffer[this.type.KEY];
                         return new RoUniversalControlEvent(this.lastKey);
+                    }
+                }
+            }
+        } else if (this.audio) {
+            if (ms === 0) {
+                while (true) {
+                    if (this.buffer[this.type.SND] !== this.lastFlags) {
+                        this.lastFlags = this.buffer[this.type.SND];
+                        if (this.lastFlags >= 0) {
+                            return new RoAudioPlayerEvent(
+                                this.lastFlags,
+                                this.buffer[this.type.IDX]
+                            );
+                        }
+                    }
+                }
+            } else {
+                ms += new Date().getTime();
+                while (new Date().getTime() < ms) {
+                    if (this.buffer[this.type.SND] !== this.lastFlags) {
+                        this.lastFlags = this.buffer[this.type.SND];
+                        if (this.lastFlags >= 0) {
+                            return new RoAudioPlayerEvent(
+                                this.lastFlags,
+                                this.buffer[this.type.IDX]
+                            );
+                        }
                     }
                 }
             }
@@ -90,9 +127,16 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.screen) {
-                if (this.keys[0] !== this.lastKey) {
-                    this.lastKey = this.keys[0];
+                if (this.buffer[this.type.KEY] !== this.lastKey) {
+                    this.lastKey = this.buffer[this.type.KEY];
                     return new RoUniversalControlEvent(this.lastKey);
+                }
+            } else if (this.audio) {
+                if (this.buffer[this.type.SND] !== this.lastFlags) {
+                    this.lastFlags = this.buffer[this.type.SND];
+                    if (this.lastFlags >= 0) {
+                        return new RoAudioPlayerEvent(this.lastFlags, this.buffer[this.type.IDX]);
+                    }
                 }
             } else if (this.messageQueue.length > 0) {
                 let message = this.messageQueue.shift();
@@ -111,7 +155,20 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            if (this.messageQueue.length > 0) {
+            if (this.screen) {
+                if (this.buffer[this.type.KEY] !== this.lastKey) {
+                    return new RoUniversalControlEvent(this.buffer[this.type.KEY]);
+                }
+            } else if (this.audio) {
+                if (this.buffer[this.type.SND] !== this.lastFlags) {
+                    if (this.buffer[this.type.SND] >= 0) {
+                        return new RoAudioPlayerEvent(
+                            this.buffer[this.type.SND],
+                            this.buffer[this.type.IDX]
+                        );
+                    }
+                }
+            } else if (this.messageQueue.length > 0) {
                 let message = this.messageQueue[0];
                 if (message) {
                     return message;

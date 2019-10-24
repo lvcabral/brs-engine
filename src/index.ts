@@ -25,7 +25,7 @@ export { _parser as parser };
 import * as path from "path";
 import MemoryFileSystem from "memory-fs";
 
-export const control = new Map<string, Int32Array>();
+export const shared = new Map<string, Int32Array>();
 
 onmessage = function(event) {
     if (event.data.device) {
@@ -47,6 +47,7 @@ onmessage = function(event) {
         interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
         interpreter.deviceInfo.set("models", parseCSV(models.default));
         interpreter.deviceInfo.set("defaultFont", event.data.device.defaultFont);
+        interpreter.deviceInfo.set("maxSimulStreams", event.data.maxSimulStreams);
         // File System
         let fontFamily = event.data.device.defaultFont;
         let volume = interpreter.fileSystem.get("common:");
@@ -95,9 +96,17 @@ onmessage = function(event) {
                         volume.writeFileSync("/" + filePath.url, event.data.images[filePath.id]);
                     } else if (filePath.type === "font") {
                         volume.writeFileSync("/" + filePath.url, event.data.fonts[filePath.id]);
+                    } else if (filePath.type === "audio") {
+                        // Save mock file to allow file exist checking,
+                        // but audio data remains on rendering thread
+                        // Converting to lower case because file system still case sensitive
+                        volume.writeFileSync(
+                            "/" + filePath.url.toLowerCase(),
+                            filePath.id.toString()
+                        );
                     } else if (filePath.type === "text") {
                         volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
-                    } else {
+                    } else if (filePath.type === "source") {
                         source.set(filePath.url, event.data.brs[filePath.id]);
                         volume.writeFileSync("/" + filePath.url, event.data.brs[filePath.id]);
                     }
@@ -111,7 +120,7 @@ onmessage = function(event) {
         postMessage("end");
     } else {
         // Setup Control Shared Array
-        control.set("keys", new Int32Array(event.data));
+        shared.set("buffer", new Int32Array(event.data));
     }
 };
 
