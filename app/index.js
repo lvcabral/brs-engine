@@ -295,6 +295,7 @@ function openChannelZip(f) {
                         ext === "ogg" ||
                         ext === "oga" ||
                         ext === "ac3" ||
+                        ext === "wma" ||
                         ext === "flac")
                 ) {
                     assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
