@@ -5,26 +5,27 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Lexer } from "./lexer";
-import * as PP from "./preprocessor";
-import { Parser } from "./parser";
 import { Interpreter, defaultExecutionOptions } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString } from "./brsTypes";
+import { Lexer } from "./lexer";
+import { Parser } from "./parser";
+import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!./common/v30/bslCore.brs";
 import * as bslDefender from "raw-loader!./common/v30/bslDefender.brs";
 import * as Roku_Ads from "raw-loader!./common/Roku_Ads.brs";
 import * as models from "raw-loader!./common/models.csv";
 import * as _lexer from "./lexer";
-export { _lexer as lexer };
 import * as BrsTypes from "./brsTypes";
-export { BrsTypes as types };
-export { PP as preprocessor };
 import * as _parser from "./parser";
-export { _parser as parser };
 import * as path from "path";
 import MemoryFileSystem from "memory-fs";
+import { FileSystem } from "./interpreter/FileSystem";
 
+export { _lexer as lexer };
+export { BrsTypes as types };
+export { PP as preprocessor };
+export { _parser as parser };
 export const shared = new Map<string, Int32Array>();
 
 onmessage = function(event) {
@@ -97,13 +98,8 @@ onmessage = function(event) {
                     } else if (filePath.type === "font") {
                         volume.writeFileSync("/" + filePath.url, event.data.fonts[filePath.id]);
                     } else if (filePath.type === "audio") {
-                        // Save mock file to allow file exist checking,
-                        // but audio data remains on rendering thread
-                        // Converting to lower case because file system still case sensitive
-                        volume.writeFileSync(
-                            "/" + filePath.url.toLowerCase(),
-                            filePath.id.toString()
-                        );
+                        // Save mock file to allow file exist checking, and content contains index
+                        volume.writeFileSync("/" + filePath.url, filePath.id.toString());
                     } else if (filePath.type === "text") {
                         volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
                     } else if (filePath.type === "source") {
@@ -137,7 +133,7 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
     const executionOptions = Object.assign(defaultExecutionOptions, interpreter.options);
 
     let manifest = PP.getManifestSync(executionOptions.root);
-    let volume = interpreter.fileSystem.get("pkg:") as MemoryFileSystem;
+    let volume = interpreter.fileSystem.get("pkg:") as FileSystem;
 
     return filenames
         .map(filename => {
@@ -249,7 +245,7 @@ function parseCSV(csv: string): Map<string, string[]> {
  * Splits the provided path into folders and recreates directory tree from the root.
  * @param directory the path to be created
  */
-function mkdirTreeSync(fs: MemoryFileSystem, directory: string) {
+function mkdirTreeSync(fs: FileSystem, directory: string) {
     var pathArray = directory.replace(/\/$/, "").split("/");
     for (var i = 1; i <= pathArray.length; i++) {
         var segment = pathArray.slice(0, i).join("/");

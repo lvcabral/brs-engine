@@ -33,10 +33,9 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { Runtime, BlockEnd } from "../parser/Statement";
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
-import MemoryFileSystem from "memory-fs";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
-import { DottedGet } from "../parser/Expression";
+import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 
 /** The set of options used to configure an interpreter's execution. */
@@ -54,7 +53,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _environment = new Environment();
 
     readonly options: ExecutionOptions;
-    readonly fileSystem: Map<string, MemoryFileSystem> = new Map<string, MemoryFileSystem>();
+    readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
 
@@ -96,10 +95,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     constructor(options: ExecutionOptions = defaultExecutionOptions) {
         this.options = options;
-        this.fileSystem.set("common:", new MemoryFileSystem());
-        this.fileSystem.set("pkg:", new MemoryFileSystem());
-        this.fileSystem.set("tmp:", new MemoryFileSystem());
-        this.fileSystem.set("cachefs:", new MemoryFileSystem());
+        this.fileSystem.set("common:", new FileSystem());
+        this.fileSystem.set("pkg:", new FileSystem());
+        this.fileSystem.set("tmp:", new FileSystem());
+        this.fileSystem.set("cachefs:", new FileSystem());
         Object.keys(StdLib)
             .map(name => (StdLib as any)[name])
             .filter(func => func instanceof Callable)

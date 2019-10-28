@@ -1,10 +1,10 @@
 import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import MemoryFileSystem from "memory-fs";
+import { FileSystem } from "../interpreter/FileSystem";
 import URL from "url-parse";
 import * as nanomatch from "nanomatch";
 
-type Volume = MemoryFileSystem;
+type Volume = FileSystem;
 
 /*
  * Returns a memfs volume based on the brs path uri.  For example, passing in
@@ -102,7 +102,7 @@ export const MoveFile = new Callable("MoveFile", {
         try {
             let contents = srcVolume.readFileSync(srcMemfsPath);
             dstVolume.writeFileSync(dstMemfsPath, contents);
-            srcVolume.unlinkSync(srcMemfsPath);
+            srcVolume.rmfileSync(srcMemfsPath);
             return BrsBoolean.True;
         } catch (err) {
             return BrsBoolean.False;
@@ -124,7 +124,7 @@ export const DeleteFile = new Callable("DeleteFile", {
 
         const memfsPath = getPath(file.value);
         try {
-            volume.unlinkSync(memfsPath);
+            volume.rmfileSync(memfsPath);
             return BrsBoolean.True;
         } catch (err) {
             return BrsBoolean.False;
