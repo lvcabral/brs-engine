@@ -3,14 +3,14 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { FileSystem } from "../../interpreter/FileSystem";
 import { RoList } from "./RoList";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import URL from "url-parse";
-import MemoryFileSystem from "memory-fs";
 import * as nanomatch from "nanomatch";
 import * as path from "path";
 
-type Volume = MemoryFileSystem;
+type Volume = FileSystem;
 
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -158,7 +158,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                     if (volume.statSync(url.pathname).isDirectory()) {
                         volume.rmdirSync(url.pathname);
                     } else {
-                        volume.unlinkSync(url.pathname);
+                        volume.rmfileSync(url.pathname);
                     }
                     return BrsBoolean.True;
                 } catch (err) {
@@ -226,7 +226,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
                 let contents = srcVolume.readFileSync(srcUrl.pathname);
                 dstVolume.writeFileSync(dstUrl.pathname, contents);
-                srcVolume.unlinkSync(srcUrl.pathname);
+                srcVolume.rmfileSync(srcUrl.pathname);
                 return BrsBoolean.True;
             } catch (err) {
                 return BrsBoolean.False;
