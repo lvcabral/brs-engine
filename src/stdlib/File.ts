@@ -210,7 +210,7 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
         args: [new StdlibArgument("filepath", ValueKind.String)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, filepath: BrsString, text: BrsString) => {
+    impl: (interpreter: Interpreter, filepath: BrsString) => {
         const volume = getVolumeByPath(interpreter, filepath.value);
         if (volume) {
             try {

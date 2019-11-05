@@ -17,6 +17,7 @@ import { RoRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
 import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoXMLElement } from "./RoXMLElement";
+import { RoURLTransfer } from "./RoURLTransfer";
 import { createAudioResource } from "./RoAudioResource";
 import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
@@ -89,4 +90,5 @@ export const BrsObjects = new Map<string, Function>([
             new RoScreen(interpreter, dblbuffer, width, height),
     ],
     ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
+    ["rourltransfer", (interpreter: Interpreter) => new RoURLTransfer()],
 ]);

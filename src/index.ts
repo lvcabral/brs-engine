@@ -70,11 +70,11 @@ onmessage = function(event) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
             }
             let fontItalic = download(`../fonts/${fontFamily}-Italic.ttf`, "arraybuffer");
-            if (fontBold) {
+            if (fontItalic) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
             }
             let fontBoldIt = download(`../fonts/${fontFamily}-BoldItalic.ttf`, "arraybuffer");
-            if (fontBold) {
+            if (fontBoldIt) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
             }
         }

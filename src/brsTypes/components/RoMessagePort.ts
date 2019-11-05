@@ -17,6 +17,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private screen: boolean;
     private lastFlags: number;
     private audio: boolean;
+    private transfer: boolean;
     constructor() {
         super("roMessagePort", ["ifMessagePort"]);
         Object.freeze(this.type);
@@ -26,6 +27,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.screen = false;
         this.lastFlags = -1;
         this.audio = false;
+        this.transfer = false;
         let buffer = shared.get("buffer");
         if (buffer) {
             this.buffer = buffer;
@@ -40,6 +42,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     enableAudio(enable: boolean) {
         this.audio = enable;
+    }
+
+    enableUrlTransfer(enable: boolean) {
+        this.transfer = enable;
     }
 
     pushMessage(object: BrsType) {
