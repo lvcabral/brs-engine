@@ -27,6 +27,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             this.getUIResolution,
             this.getGraphicsPlatform,
             this.getChannelClientId,
+            this.getRIDA,
+            this.IsRIDADisabled,
             this.getCountryCode,
             this.getUserCountryCode,
             this.getTimeZone,
@@ -36,7 +38,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             // this.hasFeature,
             this.getRandomUUID,
             // this.getGeneralMemoryLevel,
-            // this.getIPAddrs,
+            this.getIPAddrs,
             this.getMessagePort,
             this.setMessagePort,
         ]);
@@ -113,7 +115,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString("Roku Draw2D Emulator");
+            return new BrsString(interpreter.deviceInfo.get("friendlyName"));
         },
     });
 
@@ -124,7 +126,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString("049.00E00000E");
+            return new BrsString(interpreter.deviceInfo.get("firmwareVersion"));
         },
     });
 
@@ -136,6 +138,28 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(interpreter.deviceInfo.get("clientId"));
+        },
+    });
+
+    /** Returns a unique identifier for Advertisement tracking. */
+    private getRIDA = new Callable("getRIDA", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.deviceInfo.get("RIDA"));
+        },
+    });
+
+    /** Returns true if the user has disabled RIDA tracking. */
+    private IsRIDADisabled = new Callable("getRIDA", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.False;
         },
     });
 
@@ -315,6 +339,24 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns an AA that each key is the name of a network interface and the value is the IP-address of the interface. */
+    private getIPAddrs = new Callable("getIPAddrs", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            const ips = interpreter.deviceInfo.get("localIps") as Array<string>;
+            const result = new Array<AAMember>();
+            ips.forEach(function(iface: string) {
+                let name: string = iface.split(",")[0];
+                let ip: string = iface.split(",")[1];
+                result.push({ name: new BrsString(name), value: new BrsString(ip) });
+            });
+            return new RoAssociativeArray(result);
+        },
+    });
+
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
@@ -342,7 +384,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 }
-
+// Helper Functions
 function generateUUID(): string {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
         var r = (Math.random() * 16) | 0,

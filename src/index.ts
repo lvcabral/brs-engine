@@ -7,6 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { Interpreter, defaultExecutionOptions } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString } from "./brsTypes";
+import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer } from "./lexer";
 import { Parser } from "./parser";
 import * as PP from "./preprocessor";
@@ -19,8 +20,6 @@ import * as _lexer from "./lexer";
 import * as BrsTypes from "./brsTypes";
 import * as _parser from "./parser";
 import * as path from "path";
-import MemoryFileSystem from "memory-fs";
-import { FileSystem } from "./interpreter/FileSystem";
 
 export { _lexer as lexer };
 export { BrsTypes as types };
@@ -39,8 +38,11 @@ onmessage = function(event) {
         });
         // DeviceInfo
         interpreter.deviceInfo.set("developerId", event.data.device.developerId);
+        interpreter.deviceInfo.set("friendlyName", event.data.device.friendlyName);
         interpreter.deviceInfo.set("deviceModel", event.data.device.deviceModel);
+        interpreter.deviceInfo.set("firmwareVersion", event.data.device.firmwareVersion);
         interpreter.deviceInfo.set("clientId", event.data.device.clientId);
+        interpreter.deviceInfo.set("RIDA", event.data.device.RIDA);
         interpreter.deviceInfo.set("countryCode", event.data.device.countryCode);
         interpreter.deviceInfo.set("timeZone", event.data.device.timeZone);
         interpreter.deviceInfo.set("locale", event.data.device.locale);
@@ -48,7 +50,8 @@ onmessage = function(event) {
         interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
         interpreter.deviceInfo.set("models", parseCSV(models.default));
         interpreter.deviceInfo.set("defaultFont", event.data.device.defaultFont);
-        interpreter.deviceInfo.set("maxSimulStreams", event.data.maxSimulStreams);
+        interpreter.deviceInfo.set("maxSimulStreams", event.data.device.maxSimulStreams);
+        interpreter.deviceInfo.set("localIps", event.data.device.localIps);
         // File System
         let fontFamily = event.data.device.defaultFont;
         let volume = interpreter.fileSystem.get("common:");

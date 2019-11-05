@@ -32,9 +32,13 @@ if (!supportedBrowser) {
 const developerId = "UniqueDeveloperId";
 const deviceData = {
     developerId: developerId,
+    friendlyName: "BrightScript Emulator",
+    serialNumber: "BRSEMUAPP070",
     registry: new Map(),
     deviceModel: "8000X",
+    firmwareVersion: "049.10E04111A",
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
+    RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US",
     timeZone: "US/Arizona",
     locale: "en_US",
@@ -42,6 +46,7 @@ const deviceData = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
     maxSimulStreams: 2, // Max number of audio resource streams
+    localIps: ["Ethernet,127.0.0.1"], // Running on the Browser is not possible to get a real IP
 };
 
 // Display Aspect Ratio
