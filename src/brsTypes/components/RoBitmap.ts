@@ -70,12 +70,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         }) as OffscreenCanvasRenderingContext2D;
         if (image) {
             try {
-                if (image instanceof Uint8Array) {
+                if (image instanceof Uint8Array || image instanceof ArrayBuffer) {
                     let png = PNG.decode(image);
                     let imageData = this.context.createImageData(png.width, png.height);
                     this.canvas.width = png.width;
                     this.canvas.height = png.height;
                     imageData.data.set(png.data);
+                    console.log("roBitmap", png.width, png.height, png.channels, param);
                     this.context.putImageData(imageData, 0, 0);
                 } else if (image instanceof ImageBitmap) {
                     this.canvas.width = image.width;
