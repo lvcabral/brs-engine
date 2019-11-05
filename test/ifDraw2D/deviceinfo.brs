@@ -19,4 +19,5 @@ sub main()
     print di.getDisplaySize()
     print di.getUIResolution()
     print di.getGraphicsPlatform()
+    print di.getIPAddrs()
 end sub
