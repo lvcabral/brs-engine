@@ -10,7 +10,7 @@ import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import URL from "url-parse";
 import { RoByteArray } from "./RoByteArray";
-import * as PNG from "fast-png";
+import UPNG from "upng-js";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -71,12 +71,12 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         if (image) {
             try {
                 if (image instanceof Uint8Array || image instanceof ArrayBuffer) {
-                    let png = PNG.decode(image);
+                    let png = UPNG.decode(image);
+                    let data = UPNG.toRGBA8(png)[0];
                     let imageData = this.context.createImageData(png.width, png.height);
                     this.canvas.width = png.width;
                     this.canvas.height = png.height;
-                    imageData.data.set(png.data);
-                    console.log("roBitmap", png.width, png.height, png.channels, param);
+                    imageData.data.set(new Uint8Array(data));
                     this.context.putImageData(imageData, 0, 0);
                 } else if (image instanceof ImageBitmap) {
                     this.canvas.width = image.width;
@@ -566,14 +566,9 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 width.getValue(),
                 height.getValue()
             );
-            let idata: PNG.IImageData = {
-                width: imgData.width,
-                height: imgData.height,
-                data: new Uint8Array(imgData.data.buffer),
-                depth: 8,
-                channels: 4,
-            };
-            return new RoByteArray(PNG.encode(idata));
+            return new RoByteArray(
+                new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
+            );
         },
     });
 }

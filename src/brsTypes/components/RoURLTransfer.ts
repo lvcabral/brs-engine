@@ -5,7 +5,6 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import * as PNG from "fast-png";
 
 export class RoURLTransfer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -151,19 +150,14 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = new XMLHttpRequest();
             try {
                 const ext = path.pathname.split(".").pop();
-                xhr.open("GET", this.url, false); // Note: synchronous
+                xhr.open("GET", this.url, false);
                 if (ext === "png") {
+                    // TODO: Support other binary formats
                     xhr.responseType = "arraybuffer";
                 }
                 xhr.send();
                 if (xhr.status === 200 && volume) {
-                    if (ext === "png") {
-                        let png = PNG.decode(xhr.response);
-                        console.log("roUrlTransfer", png.width, png.height, png.channels);
-                        volume.writeFileSync(path.pathname, xhr.response);
-                    } else {
-                        volume.writeFileSync(path.pathname, xhr.response);
-                    }
+                    volume.writeFileSync(path.pathname, xhr.response);
                 }
             } catch (e) {
                 console.error(e);

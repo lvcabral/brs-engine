@@ -28,7 +28,6 @@
   ],
   "dependencies": {
     "crc": "^3.8.0",
-    "fast-png": "^4.0.1",
     "linked-list-typescript": "^1.0.15",
     "long": "^3.2.0",
     "luxon": "^1.8.3",
@@ -38,6 +37,7 @@
     "p-settle": "^2.1.0",
     "path-parse": "^1.0.6",
     "ts-loader": "^6.0.4",
+    "upng-js": "^2.1.0",
     "url-parse": "^1.4.7",
     "xml2js": "^0.4.19"
   },
@@ -53,6 +53,7 @@
     "@types/opentype.js": "^0.7.2",
     "@types/p-settle": "^2.0.1",
     "@types/path-parse": "^1.0.19",
+    "@types/upng-js": "^2.1.1",
     "@types/url-parse": "^1.4.3",
     "@types/xml2js": "^0.4.4",
     "husky": ">=1",
