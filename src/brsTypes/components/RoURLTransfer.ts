@@ -149,12 +149,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const volume = interpreter.fileSystem.get(path.protocol);
             const xhr = new XMLHttpRequest();
             try {
-                const ext = path.pathname.split(".").pop();
                 xhr.open("GET", this.url, false);
-                if (ext === "png") {
-                    // TODO: Support other binary formats
-                    xhr.responseType = "arraybuffer";
-                }
+                xhr.responseType = "arraybuffer";
                 xhr.send();
                 if (xhr.status === 200 && volume) {
                     volume.writeFileSync(path.pathname, xhr.response);

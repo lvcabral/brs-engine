@@ -10,6 +10,7 @@ import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import URL from "url-parse";
 import { RoByteArray } from "./RoByteArray";
+import fileType from "file-type";
 import UPNG from "upng-js";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
@@ -71,13 +72,24 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         if (image) {
             try {
                 if (image instanceof Uint8Array || image instanceof ArrayBuffer) {
-                    let png = UPNG.decode(image);
-                    let data = UPNG.toRGBA8(png)[0];
-                    let imageData = this.context.createImageData(png.width, png.height);
-                    this.canvas.width = png.width;
-                    this.canvas.height = png.height;
-                    imageData.data.set(new Uint8Array(data));
-                    this.context.putImageData(imageData, 0, 0);
+                    let data, width, height;
+                    const type = fileType(image);
+                    if (type && type.ext === "png") {
+                        let png = UPNG.decode(image);
+                        data = UPNG.toRGBA8(png)[0];
+                        width = png.width;
+                        height = png.height;
+                    }
+                    if (data && width && height) {
+                        let imageData = this.context.createImageData(width, height);
+                        this.canvas.width = width;
+                        this.canvas.height = height;
+                        imageData.data.set(new Uint8Array(data));
+                        this.context.putImageData(imageData, 0, 0);
+                    } else {
+                        console.error("Invalid image format!", type);
+                        this.valid = false;
+                    }
                 } else if (image instanceof ImageBitmap) {
                     this.canvas.width = image.width;
                     this.canvas.height = image.height;
