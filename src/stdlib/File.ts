@@ -215,7 +215,8 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
         if (volume) {
             try {
                 const memfsPath = getPath(filepath.value);
-                return new BrsString(volume.readFileSync(memfsPath).toString());
+                const textDecoder = new TextDecoder();
+                return new BrsString(textDecoder.decode(volume.readFileSync(memfsPath)));
             } catch (err) {
                 return new BrsString("");
             }
