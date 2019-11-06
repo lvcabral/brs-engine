@@ -9,8 +9,8 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
-import * as PNG from "fast-png";
 import { RoByteArray } from "./RoByteArray";
+import UPNG from "upng-js";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -531,14 +531,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 width.getValue(),
                 height.getValue()
             );
-            let idata: PNG.IImageData = {
-                width: imgData.width,
-                height: imgData.height,
-                data: new Uint8Array(imgData.data.buffer),
-                depth: 8,
-                channels: 4,
-            };
-            return new RoByteArray(PNG.encode(idata));
+            return new RoByteArray(
+                new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
+            );
         },
     });
 
