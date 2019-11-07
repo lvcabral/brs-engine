@@ -7,11 +7,13 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { shared } from "../..";
+import { RoURLEvent } from "./RoURLEvent";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
     private messageQueue: BrsType[];
+    private callbackQueue: Function[]; // TODO: consider having the id of the connected objects
     private buffer: Int32Array;
     private lastKey: number;
     private screen: boolean;
@@ -23,6 +25,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         Object.freeze(this.type);
         this.registerMethods([this.waitMessage, this.getMessage, this.peekMessage]);
         this.messageQueue = [];
+        this.callbackQueue = [];
         this.lastKey = 0;
         this.screen = false;
         this.lastFlags = -1;
@@ -50,6 +53,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     pushMessage(object: BrsType) {
         this.messageQueue.push(object);
+    }
+
+    registerCallback(callback: Function) {
+        this.callbackQueue.push(callback);
+    }
+
+    asyncCancel() {
+        this.callbackQueue = [];
     }
 
     toString(parent?: BrsType): string {
@@ -105,10 +116,31 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     }
                 }
             }
-        } else if (this.messageQueue.length > 0) {
-            let message = this.messageQueue.shift();
-            if (message) {
-                return message;
+        } else {
+            if (this.messageQueue.length > 0) {
+                let message = this.messageQueue.shift();
+                if (message) {
+                    return message;
+                }
+            } else if (this.callbackQueue.length > 0) {
+                let callback = this.callbackQueue.shift();
+                if (callback) {
+                    return callback();
+                }
+            }
+            if (ms === 0) {
+                console.log(
+                    "Warning: [roMessagePort] No message in the queue, emulator will loop forever! "
+                );
+                while (true) {
+                    // Loop forever
+                }
+            } else {
+                console.log("Warning: [roMessagePort] No message in the queue! ");
+                ms += new Date().getTime();
+                while (new Date().getTime() < ms) {
+                    //wait the timeout time
+                }
             }
         }
         return BrsInvalid.Instance;
@@ -118,7 +150,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private waitMessage = new Callable("waitMessage", {
         signature: {
             args: [new StdlibArgument("timeout", ValueKind.Int32)],
-            returns: ValueKind.Dynamic,
+            returns: ValueKind.Object,
         },
         impl: (_: Interpreter, timeout: Int32) => {
             return this.wait(timeout.getValue());
@@ -149,6 +181,11 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 if (message) {
                     return message;
                 }
+            } else if (this.callbackQueue.length > 0) {
+                let callback = this.callbackQueue.shift();
+                if (callback) {
+                    return callback();
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -178,6 +215,11 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 let message = this.messageQueue[0];
                 if (message) {
                     return message;
+                }
+            } else if (this.callbackQueue.length > 0) {
+                let callback = this.callbackQueue[0];
+                if (callback) {
+                    return callback();
                 }
             }
             return BrsInvalid.Instance;

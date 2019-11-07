@@ -7,8 +7,9 @@ Sub Main()
     Print ReadAsciiFile("tmp:/feed.xml")
     CacheFile("https://diariodebordo.blog.br/wp-content/uploads/sites/5/2015/12/IMG_6489-1024x768.jpg", "image.jpg")
     CacheFile("https://raw.githubusercontent.com/lvcabral/brs-emu/master/docs/images/screenshots.png", "image.png")
-    CacheFile("https://diariodebordo.blog.br/marcelo/images/star.gif", "image.gif")    
-    bmp = CreateObject("roBitmap", "tmp:/image.png")
+    CacheFile("https://diariodebordo.blog.br/marcelo/images/star.gif", "image.gif")
+    print GetString("https://raw.githubusercontent.com/lvcabral/brs-emu-app/master/.gitignore")
+    bmp = CreateObject("roBitmap", "tmp:/image.gif")
     screen.DrawObject(0,0, bmp)
     screen.finish()
     screen.swapbuffers()
@@ -29,4 +30,11 @@ Function CacheFile(url as string, file as string, overwrite = false as boolean) 
         end if
     end if
     return tmpFile
+End Function
+
+Function GetString(url as string) as string
+    http = CreateObject("roUrlTransfer")
+    http.SetUrl(url)
+    ret = http.GetToString()
+    return ret
 End Function

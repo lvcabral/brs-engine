@@ -90,5 +90,5 @@ export const BrsObjects = new Map<string, Function>([
             new RoScreen(interpreter, dblbuffer, width, height),
     ],
     ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
-    ["rourltransfer", (interpreter: Interpreter) => new RoURLTransfer()],
+    ["rourltransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
 ]);

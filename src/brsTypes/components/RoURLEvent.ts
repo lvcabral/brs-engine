@@ -8,21 +8,37 @@ import { Int32 } from "../Int32";
 export class RoURLEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private id: number;
-    private response?: BrsType[];
+    private responseCode: number;
+    private responseString: string;
+    private failureReason: string;
+    private headers: string;
+    private targetIp: string;
 
-    constructor(id: number, response?: BrsType[]) {
+    constructor(id: number, response: string, status: number, statusText: string, headers: string) {
         super("roUrlEvent");
         this.id = id;
-        this.response = response;
+        this.responseCode = status;
+        this.failureReason = statusText;
+        this.responseString = response;
+        this.headers = headers;
+        this.targetIp = "";
+        console.log(status, statusText);
+        console.log(headers);
+
         this.registerMethods([
-            this.isRequestSucceeded,
-            this.isRequestFailed,
+            this.getInt,
+            this.getResponseCode,
+            this.getFailureReason,
+            this.getString,
             this.getSourceIdentity,
-            this.getResponse,
-            this.getStatus,
-            this.getStatusMessage,
-            this.isRequestInterrupted,
+            this.getResponseHeaders,
+            this.getResponseHeadersArray,
+            this.getTargetIpAddress,
         ]);
+    }
+
+    messageBuilder(): BrsBoolean {
+        throw new Error("Method not implemented.");
     }
 
     toString(parent?: BrsType): string {
@@ -33,29 +49,52 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    /** Returns if the previous Get request has completed successfully. */
-    private isRequestSucceeded = new Callable("isRequestSucceeded", {
+    /** Returns the type of event. */
+    private getInt = new Callable("getInt", {
         signature: {
             args: [],
-            returns: ValueKind.Boolean,
+            returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.response !== undefined);
+            return new Int32(1); // Transfer Complete
         },
     });
 
-    /** Returns true if the Get request fail. */
-    private isRequestFailed = new Callable("isRequestFailed", {
+    /** Returns response code from the request. */
+    private getResponseCode = new Callable("getResponseCode", {
         signature: {
             args: [],
-            returns: ValueKind.Boolean,
+            returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.response === undefined);
+            return new Int32(this.responseCode);
         },
     });
 
-    /** Returns a unique number that can be matched with the value returned by ifChannelStore.GetIdentity(). */
+    /** Returns a description of the failure that occurred. */
+    private getFailureReason = new Callable("getFailureReason", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return new BrsString(this.failureReason);
+        },
+    });
+
+    /** For transfer complete AsyncGetToString, AsyncPostFromString and AsnycPostFromFile requests
+     *  this will be the actual response body from the server. */
+    private getString = new Callable("getString", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return new BrsString(this.responseString);
+        },
+    });
+
+    /** Returns a unique number that can be matched with the value returned by roUrlTransfer.GetIdentity(). */
     private getSourceIdentity = new Callable("getSourceIdentity", {
         signature: {
             args: [],
@@ -66,50 +105,39 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns an array of roAssociativeArray items for the previous Get* method invocation. */
-    private getResponse = new Callable("getResponse", {
+    /** Returns an roAssociativeArray containing all the headers returned by the server for appropriate protocols (such as HTTP). */
+    private getResponseHeaders = new Callable("getResponseHeaders", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            if (this.response) {
-                return new RoArray(this.response);
-            }
+            // TODO: Get Headers and convert to AA
             return BrsInvalid.Instance;
         },
     });
 
-    /** Returns an Integer code that indicates the reason for failure. */
-    private getStatus = new Callable("getStatus", {
+    /** Returns an array of roAssociativeArray, each AA contains a single header name/value pair. Use this function if you
+     *  need access to duplicate headers, since GetResponseHeaders() returns only the last name/value pair for a given name. */
+    private getResponseHeadersArray = new Callable("getResponseHeadersArray", {
         signature: {
             args: [],
-            returns: ValueKind.Int32,
+            returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.response === undefined ? -4 : 1);
+            // TODO: Get Headers and convert to Array of AA's
+            return new RoArray([]);
         },
     });
 
-    /** Returns a human-readable string describing the status of the completed request	. */
-    private getStatusMessage = new Callable("getStatusMessage", {
+    /** Returns the IP address of the destination. */
+    private getTargetIpAddress = new Callable("getTargetIpAddress", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.response === undefined ? "Empty List" : "Items Received");
-        },
-    });
-
-    /** Returns true if the request was not complete. */
-    private isRequestInterrupted = new Callable("isRequestInterrupted", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.False;
+            return new BrsString(this.targetIp);
         },
     });
 }
