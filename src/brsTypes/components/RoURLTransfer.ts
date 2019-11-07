@@ -18,6 +18,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private customHeaders: Map<string, string>;
     private port?: RoMessagePort;
     private outFile: Array<string>;
+    private postBody: Array<string>;
     private interpreter: Interpreter;
 
     // Constructor can only be used by RoFontRegistry()
@@ -35,6 +36,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.encodings = false;
         this.customHeaders = new Map<string, string>();
         this.outFile = new Array<string>();
+        this.postBody = new Array<string>();
         this.interpreter = interpreter;
         this.registerMethods([
             this.getIdentity,
@@ -49,9 +51,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.asyncCancel,
             this.head,
             this.asyncHead,
-            // this.postFromString,
+            this.postFromString,
             // this.postFromFile,
-            // this.asyncPostFromString,
+            this.asyncPostFromString,
             // this.asyncPostFromFile,
             // this.asyncPostFromFileToFile,
             // this.retainBodyOnError,
@@ -86,7 +88,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     getToStringAsync(): BrsType {
         const xhr = new XMLHttpRequest();
         try {
-            xhr.open("GET", this.url, false);
+            let method = this.reqMethod === "" ? "GET" : this.reqMethod;
+            xhr.open(method, this.url, false);
             xhr.responseType = "text";
             this.customHeaders.forEach((value: string, key: string) => {
                 xhr.setRequestHeader(key, value);
@@ -115,7 +118,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         const volume = this.interpreter.fileSystem.get(path.protocol);
         const xhr = new XMLHttpRequest();
         try {
-            xhr.open("GET", this.url, false);
+            let method = this.reqMethod === "" ? "GET" : this.reqMethod;
+            xhr.open(method, this.url, false);
             this.customHeaders.forEach((value: string, key: string) => {
                 xhr.setRequestHeader(key, value);
             });
@@ -138,10 +142,38 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         }
     }
 
+    postFromStringAsync(): BrsType {
+        const request = this.postBody.shift();
+        if (!request) {
+            return BrsInvalid.Instance;
+        }
+        const xhr = new XMLHttpRequest();
+        try {
+            let method = this.reqMethod === "" ? "POST" : this.reqMethod;
+            xhr.open(method, this.url, false);
+            this.customHeaders.forEach((value: string, key: string) => {
+                xhr.setRequestHeader(key, value);
+            });
+            xhr.send(request);
+            this.failureReason = xhr.statusText;
+            return new RoURLEvent(
+                this.identity,
+                xhr.responseText || "",
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
+        } catch (e) {
+            console.error(e);
+            return BrsInvalid.Instance;
+        }
+    }
+
     requestHead(): BrsType {
         const xhr = new XMLHttpRequest();
         try {
-            xhr.open("HEAD", this.url, false);
+            let method = this.reqMethod === "" ? "HEAD" : this.reqMethod;
+            xhr.open(method, this.url, false);
             this.customHeaders.forEach((value: string, key: string) => {
                 xhr.setRequestHeader(key, value);
             });
@@ -236,7 +268,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const xhr = new XMLHttpRequest();
             try {
-                xhr.open("GET", this.url, false);
+                let method = this.reqMethod === "" ? "GET" : this.reqMethod;
+                xhr.open(method, this.url, false);
                 xhr.responseType = "text";
                 this.customHeaders.forEach((value: string, key: string) => {
                     xhr.setRequestHeader(key, value);
@@ -262,7 +295,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const volume = interpreter.fileSystem.get(path.protocol);
             const xhr = new XMLHttpRequest();
             try {
-                xhr.open("GET", this.url, false);
+                let method = this.reqMethod === "" ? "GET" : this.reqMethod;
+                xhr.open(method, this.url, false);
                 this.customHeaders.forEach((value: string, key: string) => {
                     xhr.setRequestHeader(key, value);
                 });
@@ -327,6 +361,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.outFile = [];
+                this.postBody = [];
                 this.port.asyncCancel();
             }
             return BrsBoolean.True;
@@ -354,6 +389,50 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.port.registerCallback(this.requestHead.bind(this));
+            } else {
+                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Use the HTTP POST method to send the supplied string to the current URL. */
+    private postFromString = new Callable("postFromString", {
+        signature: {
+            args: [new StdlibArgument("request", ValueKind.String)],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, request: BrsString) => {
+            const xhr = new XMLHttpRequest();
+            try {
+                let method = this.reqMethod === "" ? "POST" : this.reqMethod;
+                xhr.open(method, this.url, false);
+                xhr.responseType = "text";
+                this.customHeaders.forEach((value: string, key: string) => {
+                    xhr.setRequestHeader(key, value);
+                });
+                xhr.send(request.value);
+                this.failureReason = xhr.statusText;
+                return new Int32(xhr.status);
+            } catch (e) {
+                console.error(e);
+                return new Int32(400); // Bad Request
+            }
+        },
+    });
+
+    /** Use the HTTP POST method to send the supplied string to the current URL. When the POST completes,
+     *  an roUrlEvent will be sent to the message port associated with the object. */
+    private asyncPostFromString = new Callable("asyncPostFromString", {
+        signature: {
+            args: [new StdlibArgument("request", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, request: BrsString) => {
+            if (this.port) {
+                this.failureReason = "";
+                this.postBody.push(request.value);
+                this.port.registerCallback(this.postFromStringAsync.bind(this));
             } else {
                 console.log("Warning: No message port assigned to this roUrlTransfer instance");
             }
