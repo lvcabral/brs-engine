@@ -12,6 +12,9 @@ import URL from "url-parse";
 import { RoByteArray } from "./RoByteArray";
 import fileType from "file-type";
 import UPNG from "upng-js";
+import * as JPEG from "jpeg-js";
+import { GifReader } from "omggif";
+import BMP from "decode-bmp";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -74,11 +77,27 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 if (image instanceof Uint8Array || image instanceof ArrayBuffer) {
                     let data, width, height;
                     const type = fileType(image);
-                    if (type && type.ext === "png") {
+                    if (type && type.mime === "image/png") {
                         let png = UPNG.decode(image);
                         data = UPNG.toRGBA8(png)[0];
                         width = png.width;
                         height = png.height;
+                    } else if (type && type.mime === "image/jpeg") {
+                        let jpg = JPEG.decode(image);
+                        data = jpg.data;
+                        width = jpg.width;
+                        height = jpg.height;
+                    } else if (type && type.mime === "image/gif") {
+                        let gif = new GifReader(Buffer.from(image));
+                        data = new Uint8Array(gif.width * gif.height * 4);
+                        gif.decodeAndBlitFrameRGBA(0, data);
+                        width = gif.width;
+                        height = gif.height;
+                    } else if (type && type.mime === "image/bmp") {
+                        let bmp = BMP(image);
+                        data = bmp.data;
+                        width = bmp.width;
+                        height = bmp.height;
                     }
                     if (data && width && height) {
                         let imageData = this.context.createImageData(width, height);

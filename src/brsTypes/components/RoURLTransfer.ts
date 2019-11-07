@@ -5,16 +5,23 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { RoURLEvent } from "./RoURLEvent";
+import { RoAssociativeArray } from "./RoAssociativeArray";
 
 export class RoURLTransfer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private identity: number;
     private url: string;
     private reqMethod: string;
+    private failureReason: string;
+    private encodings: boolean;
+    private customHeaders: Map<string, string>;
     private port?: RoMessagePort;
+    private outFile: Array<string>;
+    private interpreter: Interpreter;
 
     // Constructor can only be used by RoFontRegistry()
-    constructor() {
+    constructor(interpreter: Interpreter) {
         super("roUrlTransfer", [
             "ifUrlTransfer",
             "ifHttpAgent",
@@ -24,39 +31,44 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
         this.reqMethod = "";
+        this.failureReason = "";
+        this.encodings = false;
+        this.customHeaders = new Map<string, string>();
+        this.outFile = new Array<string>();
+        this.interpreter = interpreter;
         this.registerMethods([
             this.getIdentity,
             this.setUrl,
             this.getUrl,
             this.setRequest,
             this.getRequest,
-            //this.getToString,
+            this.getToString,
             this.getToFile,
-            // this.asyncGetToString,
-            // this.asyncGetToFile,
-            // this.head,
-            // this.asyncHead,
+            this.asyncGetToString,
+            this.asyncGetToFile,
+            this.asyncCancel,
+            this.head,
+            this.asyncHead,
             // this.postFromString,
             // this.postFromFile,
             // this.asyncPostFromString,
             // this.asyncPostFromFile,
             // this.asyncPostFromFileToFile,
-            // this.asyncCancel,
             // this.retainBodyOnError,
             // this.setUserAndPassword,
             // this.setMinimumTransferRate,
-            // this.getFailureReason,
-            // this.enableEncodings,
-            // this.escape,
-            // this.unescape,
-            // this.urlEncode,
+            this.getFailureReason,
+            this.escape,
+            this.unescape,
+            this.urlEncode,
+            this.enableEncodings,
             // this.enableResume,
             // this.enablePeerVerification,
             // this.enableHostVerification,
-            // this.enableFreshConnection,
+            this.enableFreshConnection,
             // this.setHttpVersion,
-            // this.addHeader,
-            // this.setHeaders,
+            this.addHeader,
+            this.setHeaders,
             // this.initClientCertificates,
             // this.setCertificatesFile,
             // this.setCertificatesDepth,
@@ -69,6 +81,83 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.setMessagePort,
             this.setPort,
         ]);
+    }
+
+    getToStringAsync(): BrsType {
+        const xhr = new XMLHttpRequest();
+        try {
+            xhr.open("GET", this.url, false);
+            xhr.responseType = "text";
+            this.customHeaders.forEach((value: string, key: string) => {
+                xhr.setRequestHeader(key, value);
+            });
+            xhr.send();
+            this.failureReason = xhr.statusText;
+            return new RoURLEvent(
+                this.identity,
+                xhr.responseText,
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
+        } catch (e) {
+            console.error(e);
+            return BrsInvalid.Instance;
+        }
+    }
+
+    getToFileAsync(): BrsType {
+        const filePath = this.outFile.shift();
+        if (!filePath) {
+            return BrsInvalid.Instance;
+        }
+        const path = new URL(filePath);
+        const volume = this.interpreter.fileSystem.get(path.protocol);
+        const xhr = new XMLHttpRequest();
+        try {
+            xhr.open("GET", this.url, false);
+            this.customHeaders.forEach((value: string, key: string) => {
+                xhr.setRequestHeader(key, value);
+            });
+            xhr.responseType = "arraybuffer";
+            xhr.send();
+            this.failureReason = xhr.statusText;
+            if (xhr.status === 200 && volume) {
+                volume.writeFileSync(path.pathname, xhr.response);
+            }
+            return new RoURLEvent(
+                this.identity,
+                "",
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
+        } catch (e) {
+            console.error(e);
+            return BrsInvalid.Instance;
+        }
+    }
+
+    requestHead(): BrsType {
+        const xhr = new XMLHttpRequest();
+        try {
+            xhr.open("HEAD", this.url, false);
+            this.customHeaders.forEach((value: string, key: string) => {
+                xhr.setRequestHeader(key, value);
+            });
+            xhr.send();
+            this.failureReason = xhr.statusText;
+            return new RoURLEvent(
+                this.identity,
+                xhr.responseText,
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
+        } catch (e) {
+            console.error(e);
+            return BrsInvalid.Instance;
+        }
     }
 
     toString(parent?: BrsType): string {
@@ -138,6 +227,30 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Connect to the remote service as specified in the URL and return the response body as a string. */
+    private getToString = new Callable("getToString", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            const xhr = new XMLHttpRequest();
+            try {
+                xhr.open("GET", this.url, false);
+                xhr.responseType = "text";
+                this.customHeaders.forEach((value: string, key: string) => {
+                    xhr.setRequestHeader(key, value);
+                });
+                xhr.send();
+                this.failureReason = xhr.statusText;
+                return new BrsString(xhr.response);
+            } catch (e) {
+                console.error(e);
+                return new BrsString("");
+            }
+        },
+    });
+
     /** Connect to the remote URL and write the response body to a file on the filesystem. */
     private getToFile = new Callable("getToFile", {
         signature: {
@@ -150,7 +263,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = new XMLHttpRequest();
             try {
                 xhr.open("GET", this.url, false);
+                this.customHeaders.forEach((value: string, key: string) => {
+                    xhr.setRequestHeader(key, value);
+                });
                 xhr.responseType = "arraybuffer";
+                this.failureReason = xhr.statusText;
                 xhr.send();
                 if (xhr.status === 200 && volume) {
                     volume.writeFileSync(path.pathname, xhr.response);
@@ -160,6 +277,192 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 return new Int32(400); // Bad Request
             }
             return new Int32(xhr.status);
+        },
+    });
+
+    /** Starts a GET request to a server, but does not wait for the transfer to complete. */
+    private asyncGetToString = new Callable("asyncGetToString", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            if (this.port) {
+                this.failureReason = "";
+                this.port.registerCallback(this.getToStringAsync.bind(this));
+            } else {
+                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Like AsyncGetToString, this starts a transfer without waiting for it to complete.
+     *  However, the response body will be written to a file on the device's filesystem
+     *  instead of being returned in a String object. */
+    private asyncGetToFile = new Callable("asyncGetToFile", {
+        signature: {
+            args: [new StdlibArgument("filePath", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, filePath: BrsString) => {
+            if (this.port) {
+                this.failureReason = "";
+                this.outFile.push(filePath.value);
+                this.port.registerCallback(this.getToFileAsync.bind(this));
+            } else {
+                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Cancel any outstanding async requests on the roUrlEvent object. */
+    private asyncCancel = new Callable("asyncCancel", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            if (this.port) {
+                this.failureReason = "";
+                this.outFile = [];
+                this.port.asyncCancel();
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Synchronously perform an HTTP HEAD request and return an roUrlEvent object. */
+    private head = new Callable("head", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.requestHead();
+        },
+    });
+
+    /** Begin an HTTP HEAD request without waiting for it to complete.. */
+    private asyncHead = new Callable("asyncHead", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            if (this.port) {
+                this.failureReason = "";
+                this.port.registerCallback(this.requestHead.bind(this));
+            } else {
+                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Returns a description of the failure that occurred. */
+    private getFailureReason = new Callable("getFailureReason", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return new BrsString(this.failureReason);
+        },
+    });
+
+    /** URL encode the specified string per RFC 3986 and return the encoded string. */
+    private escape = new Callable("escape", {
+        signature: {
+            args: [new StdlibArgument("text", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, text: BrsString) => {
+            return new BrsString(encodeURI(text.value));
+        },
+    });
+
+    /** URL encode the specified string per RFC 3986 and return the encoded string. */
+    private urlEncode = new Callable("urlEncode", {
+        signature: {
+            args: [new StdlibArgument("text", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, text: BrsString) => {
+            return new BrsString(encodeURI(text.value));
+        },
+    });
+
+    /** Decode the specified string per RFC 3986 and return the unencoded string. */
+    private unescape = new Callable("unescape", {
+        signature: {
+            args: [new StdlibArgument("text", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, text: BrsString) => {
+            return new BrsString(decodeURI(text.value));
+        },
+    });
+
+    /** Specify whether to enable gzip encoding of transfers. */
+    private enableEncodings = new Callable("enableEncodings", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            this.encodings = enable.toBoolean();
+            // TODO: Reflect this config on gzip encoding usage
+            return enable;
+        },
+    });
+
+    /** Specify whether to enable fresh connections. */
+    private enableFreshConnection = new Callable("enableFreshConnection", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            return enable;
+        },
+    });
+
+    // ifHttpAgent ---------------------------------------------------------------------------------------
+
+    /** Add the specified HTTP header to the list of headers that will be sent in the HTTP request.
+     *  If "x-roku-reserved-dev-id" is passed as a name, the value parameter is ignored and in its place,
+     *  the devid of the currently running channel is used as the value.
+     */
+    private addHeader = new Callable("addHeader", {
+        signature: {
+            args: [
+                new StdlibArgument("name", ValueKind.String),
+                new StdlibArgument("value", ValueKind.String),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, name: BrsString, value: BrsString) => {
+            this.customHeaders.set(name.value, value.value);
+            // TODO: Replace value with dev-id when name = "x-roku-reserved-dev-id"
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Each name/value in the passed AA is added as an HTTP header. */
+    private setHeaders = new Callable("setHeaders", {
+        signature: {
+            args: [new StdlibArgument("headers", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, headers: RoAssociativeArray) => {
+            this.customHeaders = new Map<string, string>();
+            headers.elements.forEach((value: BrsType, key: string) => {
+                this.customHeaders.set(key, (value as BrsString).value);
+                // TODO: Replace value with dev-id when name = "x-roku-reserved-dev-id"
+            });
+            return BrsBoolean.True;
         },
     });
 

@@ -14,7 +14,6 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   Do not use the same `roMessagePort` instance with different objects (`roScreen`, `roAudioPlayer` etc.) create one per object type.
 *   The global AA (root `m` object) is not accessible from a global function called inside an `AA` method.
 *   The component `roAppManager` is not implemented yet.
-*   The component `roUrlTransfer` is not implemented yet.
 *   The component `roInput` (for ECP support) is not implemented yet.
 *   Reserved words like `Mod` cannot be used as function parameters (Roku does allow that).
 *   The `Dim` statement cannot create multi-dimensional arrays.
@@ -29,6 +28,12 @@ This emulator is still a **prototype**, this way, there are several features fro
     - Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
     - if the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
     - No `Timed Metadata` support.
+*   The component `roUrlTransfer` is implemented with basic functionality but has some limitations:
+    - The **web app** can only access urls from the same domain it is hosted, due to security restrictions, the **desktop app** do not have this limitation.
+    - The _async_ methods are actually synchronous and evaluated when `Wait()` or `GetMessage()` are called.
+    - If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
+    - HTTP Digest authentication and custom TSL/SSL certificates are not supported but are on the backlog to be done in the future.
+    - Download audio and video files are supported but is still not possible to playback those downloaded files.
 
 ## In Scope (mocked)
 
