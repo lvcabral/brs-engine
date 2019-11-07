@@ -359,7 +359,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                         if (typeof content.length === "number") {
                             result.set(new BrsString("size"), new Int32(content.length));
                         } else {
-                            result.set(new BrsString("size"), new Int32(0)); // TODO: Find a way to get ImageBitmap byte length
+                            result.set(new BrsString("size"), new Int32(0));
                         }
                     }
                     result.set(

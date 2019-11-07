@@ -109,10 +109,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         console.error("Invalid image format!", type);
                         this.valid = false;
                     }
-                } else if (image instanceof ImageBitmap) {
-                    this.canvas.width = image.width;
-                    this.canvas.height = image.height;
-                    this.context.drawImage(image, 0, 0);
                 } else {
                     console.error("Invalid file format!", image);
                     this.valid = false;
