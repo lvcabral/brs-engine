@@ -578,7 +578,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableUrlTransfer(true);
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -591,7 +590,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableUrlTransfer(true);
             this.port = port;
             return BrsInvalid.Instance;
         },

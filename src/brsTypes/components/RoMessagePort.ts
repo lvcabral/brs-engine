@@ -7,7 +7,6 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { shared } from "../..";
-import { RoURLEvent } from "./RoURLEvent";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -19,7 +18,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private screen: boolean;
     private lastFlags: number;
     private audio: boolean;
-    private transfer: boolean;
     constructor() {
         super("roMessagePort", ["ifMessagePort"]);
         Object.freeze(this.type);
@@ -30,13 +28,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.screen = false;
         this.lastFlags = -1;
         this.audio = false;
-        this.transfer = false;
-        let buffer = shared.get("buffer");
-        if (buffer) {
-            this.buffer = buffer;
-        } else {
-            this.buffer = new Int32Array([]);
-        }
+        this.buffer = shared.get("buffer") || new Int32Array([]);
     }
 
     enableKeys(enable: boolean) {
@@ -45,10 +37,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     enableAudio(enable: boolean) {
         this.audio = enable;
-    }
-
-    enableUrlTransfer(enable: boolean) {
-        this.transfer = enable;
     }
 
     pushMessage(object: BrsType) {
