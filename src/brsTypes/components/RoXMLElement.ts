@@ -1,20 +1,19 @@
-import * as xml2js from "xml2js";
-
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent, BrsIterable } from "./BrsComponent";
+import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoList } from "./RoList";
 import { RoXMLList } from "./RoXMLList";
+import * as xml2js from "xml2js";
 
-export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable {
+export class RoXMLElement extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    parsedXML: any;
+    private parsedXML: any;
     constructor() {
         super("roXMLElement", ["ifXMLElement"]);
-        this.parsedXML = {};
+        this.parsedXML = { root: {} };
         this.registerMethods([
             this.parse,
             this.getBody,
@@ -26,16 +25,16 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             this.getNamedElements,
             this.getNamedElementsCi,
             this.genXML,
-            // this.genXMLHdr,
-            // this.isName,
-            // this.hasAttribute,
-            // this.setBody,
-            // this.addBodyElement,
-            // this.addElement,
-            // this.addElementWithBody,
-            // this.addText,
-            // this.addAttribute,
-            // this.setName,
+            this.genXMLHdr,
+            this.isName,
+            this.hasAttribute,
+            this.setBody,
+            this.addBodyElement,
+            this.addElement,
+            this.addElementWithBody,
+            this.addText,
+            this.addAttribute,
+            this.setName,
             this.clear,
         ]);
     }
@@ -46,26 +45,6 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     equalTo(other: BrsType) {
         return BrsBoolean.False;
-    }
-
-    getElements() {
-        return Array.from([]);
-    }
-
-    get(index: BrsType) {
-        if (index.kind !== ValueKind.String) {
-            throw new Error("XML Element indexes must be strings");
-        }
-
-        return this.getMethod(index.value) || this.namedElements(index.value, true);
-    }
-
-    set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.String) {
-            throw new Error("Associative array indexes must be strings");
-        }
-        //this.elements.set(index.value.toLowerCase(), value);
-        return BrsInvalid.Instance;
     }
 
     attributes() {
@@ -296,6 +275,185 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         },
     });
 
+    /** Returns true if the element has the specified name. */
+    private isName = new Callable("isName", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            return BrsBoolean.from(this.name().value === name.value);
+        },
+    });
+
+    /** Returns true if the element has the specified attribute. */
+    private hasAttribute = new Callable("hasAttribute", {
+        signature: {
+            args: [new StdlibArgument("attr", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, attr: BrsString) => {
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                if (this.parsedXML[root].$) {
+                    const attrs = this.parsedXML[root].$;
+                    return BrsBoolean.from(attr.value in attrs);
+                }
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Sets the element text from the specified string. */
+    private setBody = new Callable("setBody", {
+        signature: {
+            args: [new StdlibArgument("body", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, body: BrsString) => {
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                if (this.parsedXML[root]["_"]) {
+                    this.parsedXML[root]["_"] = body.value;
+                } else {
+                    Object.assign(this.parsedXML[root], { _: body.value });
+                }
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Adds text to the element body. */
+    private addText = new Callable("addText", {
+        signature: {
+            args: [new StdlibArgument("text", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, text: BrsString) => {
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                if (this.parsedXML[root]["_"]) {
+                    this.parsedXML[root]["_"] += text.value;
+                } else {
+                    Object.assign(this.parsedXML[root], { _: text.value });
+                }
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Adds an new empty child element and returns it. */
+    private addBodyElement = new Callable("addBodyElement", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let element = new RoXMLElement();
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                const newObj = { child: {} };
+                Object.assign(this.parsedXML[root], newObj);
+                element.parsedXML = newObj;
+            }
+            return element;
+        },
+    });
+
+    /** Adds a new child element with the specified name and returns the new element. */
+    private addElement = new Callable("addElement", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            let element = new RoXMLElement();
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                const newObj = { [name.value]: {} };
+                Object.assign(this.parsedXML[root], newObj);
+                element.parsedXML = newObj;
+            }
+            return element;
+        },
+    });
+
+    /** Adds a new child element with the specified name and text from the specified body string, and returns the new element. */
+    private addElementWithBody = new Callable("addElementWithBody", {
+        signature: {
+            args: [
+                new StdlibArgument("name", ValueKind.String),
+                new StdlibArgument("body", ValueKind.String),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, name: BrsString, body: BrsString) => {
+            let element = new RoXMLElement();
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                const newObj = { [name.value]: { _: body.value } };
+                Object.assign(this.parsedXML[root], newObj);
+                element.parsedXML = newObj;
+            }
+            return element;
+        },
+    });
+
+    /** Adds an attribute value to the element. */
+    private addAttribute = new Callable("addAttribute", {
+        signature: {
+            args: [
+                new StdlibArgument("attr", ValueKind.String),
+                new StdlibArgument("value", ValueKind.String),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, attr: BrsString, value: BrsString) => {
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                if (this.parsedXML[root]["$"]) {
+                    Object.assign(this.parsedXML[root]["$"], { [attr.value]: value.value });
+                } else {
+                    Object.assign(this.parsedXML[root], { $: { [attr.value]: value.value } });
+                }
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Sets the name of the element. */
+    private setName = new Callable("setName", {
+        signature: {
+            args: [new StdlibArgument("name", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            if (Object.keys(this.parsedXML).length > 0) {
+                const root = Object.keys(this.parsedXML)[0];
+                delete Object.assign(this.parsedXML, { [name.value]: this.parsedXML[root] })[root];
+            } else {
+                this.parsedXML = { [name.value]: {} };
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Serializes the element to XML document text. */
+    private genXMLHdr = new Callable("genXMLHdr", {
+        signature: {
+            args: [new StdlibArgument("header", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter, header: BrsString) => {
+            let options = {
+                headless: true,
+                renderOpts: { pretty: false },
+            };
+            let builder = new xml2js.Builder(options);
+            return new BrsString(header.value + builder.buildObject(this.parsedXML));
+        },
+    });
+
     /** Serializes the element to XML document text. */
     private genXML = new Callable("genXML", {
         signature: {
@@ -323,7 +481,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter) => {
-            this.parsedXML = {};
+            this.parsedXML = { root: {} };
             return BrsInvalid.Instance;
         },
     });
