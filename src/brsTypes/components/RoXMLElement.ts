@@ -1,5 +1,5 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -8,7 +8,7 @@ import { RoList } from "./RoList";
 import { RoXMLList } from "./RoXMLList";
 import * as xml2js from "xml2js";
 
-export class RoXMLElement extends BrsComponent implements BrsValue {
+export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private parsedXML: any;
     constructor() {
@@ -45,6 +45,25 @@ export class RoXMLElement extends BrsComponent implements BrsValue {
 
     equalTo(other: BrsType) {
         return BrsBoolean.False;
+    }
+
+    getElements() {
+        return this.childElements().getElements();
+    }
+
+    get(index: BrsType) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("XML Element indexes must be strings");
+        }
+        return this.getMethod(index.value) || this.namedElements(index.value, true);
+    }
+
+    set(index: BrsType, value: BrsType) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("XML Element indexes must be strings");
+        }
+        // TODO: Replicate Roku behavior
+        return BrsInvalid.Instance;
     }
 
     attributes() {
