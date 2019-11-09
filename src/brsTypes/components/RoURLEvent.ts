@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray } from "..";
+import { BrsType, RoArray, RoAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -109,11 +109,32 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
     private getResponseHeaders = new Callable("getResponseHeaders", {
         signature: {
             args: [],
-            returns: ValueKind.Object,
+            returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            // TODO: Get Headers and convert to AA
-            return BrsInvalid.Instance;
+            let headers = new RoAssociativeArray([]);
+            this.headers
+                // for each line
+                .split("\n")
+                // remove leading/trailing whitespace
+                .map(line => line.trim())
+                // separate keys and values
+                .map((line, index) => {
+                    // skip empty and invalid headers
+                    let equals = line.indexOf(":");
+                    if (line === "" || equals === -1) {
+                        return ["", ""];
+                    }
+                    return [line.slice(0, equals), line.slice(equals + 1)];
+                })
+                // keep only non-empty keys and values
+                .filter(([key, value]) => key && value)
+                // remove leading/trailing whitespace from keys and values
+                .map(([key, value]) => [key.trim(), value.trim()])
+                .map(([key, value]) => {
+                    headers.set(new BrsString(key), new BrsString(value));
+                });
+            return headers;
         },
     });
 
@@ -125,8 +146,31 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            // TODO: Get Headers and convert to Array of AA's
-            return new RoArray([]);
+            let headers = new Array<RoAssociativeArray>();
+            this.headers
+                // for each line
+                .split("\n")
+                // remove leading/trailing whitespace
+                .map(line => line.trim())
+                // separate keys and values
+                .map((line, index) => {
+                    // skip empty and invalid headers
+                    let equals = line.indexOf(":");
+                    if (line === "" || equals === -1) {
+                        return ["", ""];
+                    }
+                    return [line.slice(0, equals), line.slice(equals + 1)];
+                })
+                // keep only non-empty keys and values
+                .filter(([key, value]) => key && value)
+                // remove leading/trailing whitespace from keys and values
+                .map(([key, value]) => [key.trim(), value.trim()])
+                .map(([key, value]) => {
+                    let header = new RoAssociativeArray([]);
+                    header.set(new BrsString(key), new BrsString(value));
+                    headers.push(header);
+                });
+            return new RoArray(headers);
         },
     });
 
