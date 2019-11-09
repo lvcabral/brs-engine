@@ -30,8 +30,11 @@ This emulator is still a **prototype**, this way, there are several features fro
     - The **web app** can only access urls from the same domain it is hosted, due to security restrictions, the **desktop app** do not have this limitation.
     - The _async_ methods are actually synchronous and evaluated when `WaitMessage()` or `GetMessage()` are called.
     - If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
-    - HTTP Digest authentication and custom TSL/SSL certificates are not supported but are on the backlog to be done in the future.
-    - Download audio files is supported but for now is not possible to playback those downloaded files.
+    - Custom/Self-Signed SSL certificates are not supported, the emulator will use default browser client certificate.
+    - As custom certificates are not supported these methods are not available: `enablePeerVerification`, `enableHostVerification`, `setCertificatesDepth`.
+    - The following features/methods are also not supported: `EnableResume()`, `SetHttpVersion()` and `setMinimumTransferRate`.
+    - Download audio files is supported but for now is not possible to playback those downloaded files.    
+    - The method `GetTargetIpAddress()` from `roUrlEvent` always returns an empty string.
 
 ## In Scope (mocked)
 

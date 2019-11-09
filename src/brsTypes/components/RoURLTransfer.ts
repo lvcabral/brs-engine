@@ -17,9 +17,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private encodings: boolean;
     private customHeaders: Map<string, string>;
     private port?: RoMessagePort;
+    private inFile: Array<string>;
     private outFile: Array<string>;
     private postBody: Array<string>;
     private interpreter: Interpreter;
+    private user?: string;
+    private password?: string;
 
     // Constructor can only be used by RoFontRegistry()
     constructor(interpreter: Interpreter) {
@@ -35,6 +38,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.failureReason = "";
         this.encodings = false;
         this.customHeaders = new Map<string, string>();
+        this.inFile = new Array<string>();
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
         this.interpreter = interpreter;
@@ -52,12 +56,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.head,
             this.asyncHead,
             this.postFromString,
-            // this.postFromFile,
+            this.postFromFile,
             this.asyncPostFromString,
-            // this.asyncPostFromFile,
+            this.asyncPostFromFile,
             // this.asyncPostFromFileToFile,
             // this.retainBodyOnError,
-            // this.setUserAndPassword,
+            this.setUserAndPassword,
             // this.setMinimumTransferRate,
             this.getFailureReason,
             this.escape,
@@ -71,8 +75,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             // this.setHttpVersion,
             this.addHeader,
             this.setHeaders,
-            // this.initClientCertificates,
-            // this.setCertificatesFile,
+            this.initClientCertificates,
+            this.setCertificatesFile,
             // this.setCertificatesDepth,
             // this.enableCookies,
             // this.getCookies,
@@ -89,7 +93,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         const xhr = new XMLHttpRequest();
         try {
             let method = this.reqMethod === "" ? "GET" : this.reqMethod;
-            xhr.open(method, this.url, false);
+            xhr.open(method, this.url, false, this.user, this.password);
             xhr.responseType = "text";
             this.customHeaders.forEach((value: string, key: string) => {
                 xhr.setRequestHeader(key, value);
@@ -119,7 +123,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         const xhr = new XMLHttpRequest();
         try {
             let method = this.reqMethod === "" ? "GET" : this.reqMethod;
-            xhr.open(method, this.url, false);
+            xhr.open(method, this.url, false, this.user, this.password);
             this.customHeaders.forEach((value: string, key: string) => {
                 xhr.setRequestHeader(key, value);
             });
@@ -150,7 +154,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         const xhr = new XMLHttpRequest();
         try {
             let method = this.reqMethod === "" ? "POST" : this.reqMethod;
-            xhr.open(method, this.url, false);
+            xhr.open(method, this.url, false, this.user, this.password);
             this.customHeaders.forEach((value: string, key: string) => {
                 xhr.setRequestHeader(key, value);
             });
@@ -169,11 +173,46 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         }
     }
 
+    postFromFileAsync(): BrsType {
+        const filePath = this.inFile.shift();
+        if (!filePath) {
+            return BrsInvalid.Instance;
+        }
+        const xhr = new XMLHttpRequest();
+        try {
+            let method = this.reqMethod === "" ? "POST" : this.reqMethod;
+            const path = new URL(filePath);
+            const volume = this.interpreter.fileSystem.get(path.protocol);
+            xhr.open(method, this.url, false, this.user, this.password);
+            this.customHeaders.forEach((value: string, key: string) => {
+                xhr.setRequestHeader(key, value);
+            });
+            if (volume) {
+                let body = volume.readFileSync(path.pathname, xhr.response);
+                xhr.send(body);
+                this.failureReason = xhr.statusText;
+                return new RoURLEvent(
+                    this.identity,
+                    xhr.responseText || "",
+                    xhr.status,
+                    xhr.statusText,
+                    xhr.getAllResponseHeaders()
+                );
+            } else {
+                console.error("invalid file:", filePath);
+                return BrsInvalid.Instance;
+            }
+        } catch (e) {
+            console.error(e);
+            return BrsInvalid.Instance;
+        }
+    }
+
     requestHead(): BrsType {
         const xhr = new XMLHttpRequest();
         try {
             let method = this.reqMethod === "" ? "HEAD" : this.reqMethod;
-            xhr.open(method, this.url, false);
+            xhr.open(method, this.url, false, this.user, this.password);
             this.customHeaders.forEach((value: string, key: string) => {
                 xhr.setRequestHeader(key, value);
             });
@@ -269,7 +308,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = new XMLHttpRequest();
             try {
                 let method = this.reqMethod === "" ? "GET" : this.reqMethod;
-                xhr.open(method, this.url, false);
+                xhr.open(method, this.url, false, this.user, this.password);
                 xhr.responseType = "text";
                 this.customHeaders.forEach((value: string, key: string) => {
                     xhr.setRequestHeader(key, value);
@@ -296,7 +335,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = new XMLHttpRequest();
             try {
                 let method = this.reqMethod === "" ? "GET" : this.reqMethod;
-                xhr.open(method, this.url, false);
+                xhr.open(method, this.url, false, this.user, this.password);
                 this.customHeaders.forEach((value: string, key: string) => {
                     xhr.setRequestHeader(key, value);
                 });
@@ -406,7 +445,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = new XMLHttpRequest();
             try {
                 let method = this.reqMethod === "" ? "POST" : this.reqMethod;
-                xhr.open(method, this.url, false);
+                xhr.open(method, this.url, false, this.user, this.password);
                 xhr.responseType = "text";
                 this.customHeaders.forEach((value: string, key: string) => {
                     xhr.setRequestHeader(key, value);
@@ -436,6 +475,72 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             } else {
                 console.log("Warning: No message port assigned to this roUrlTransfer instance");
             }
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Use the HTTP POST method to send the contents of the specified file to the current URL.
+     *  The HTTP response code is returned. */
+    private postFromFile = new Callable("postFromFile", {
+        signature: {
+            args: [new StdlibArgument("filePath", ValueKind.String)],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, filePath: BrsString) => {
+            const xhr = new XMLHttpRequest();
+            try {
+                let method = this.reqMethod === "" ? "POST" : this.reqMethod;
+                const path = new URL(filePath.value);
+                const volume = this.interpreter.fileSystem.get(path.protocol);
+                xhr.open(method, this.url, false, this.user, this.password);
+                this.customHeaders.forEach((value: string, key: string) => {
+                    xhr.setRequestHeader(key, value);
+                });
+                if (volume) {
+                    let body = volume.readFileSync(path.pathname, xhr.response);
+                    xhr.send(body);
+                    this.failureReason = xhr.statusText;
+                } else {
+                    console.error("Invalid file path:", filePath.value);
+                    return new Int32(400); // Bad Request
+                }
+                return new Int32(xhr.status);
+            } catch (e) {
+                console.error(e);
+                return new Int32(400); // Bad Request
+            }
+        },
+    });
+
+    /** Use the HTTP POST method to send the contents of the specified file to the current URL. */
+    private asyncPostFromFile = new Callable("asyncPostFromFile", {
+        signature: {
+            args: [new StdlibArgument("filePath", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, filePath: BrsString) => {
+            if (this.port) {
+                this.failureReason = "";
+                this.inFile.push(filePath.value);
+                this.port.registerCallback(this.postFromFileAsync.bind(this));
+            } else {
+                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+            }
+            return BrsBoolean.True;
+        },
+    });
+
+    private setUserAndPassword = new Callable("setUserAndPassword", {
+        signature: {
+            args: [
+                new StdlibArgument("user", ValueKind.String),
+                new StdlibArgument("password", ValueKind.String),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, user: BrsString, password: BrsString) => {
+            this.user = user.value;
+            this.password = password.value;
             return BrsBoolean.True;
         },
     });
@@ -522,9 +627,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, name: BrsString, value: BrsString) => {
-            this.customHeaders.set(name.value, value.value);
-            // TODO: Replace value with dev-id when name = "x-roku-reserved-dev-id"
+        impl: (interpreter: Interpreter, name: BrsString, value: BrsString) => {
+            if (name.value.toLowerCase() === "x-roku-reserved-dev-id") {
+                this.customHeaders.set(name.value, interpreter.deviceInfo.get("developerId"));
+            } else {
+                this.customHeaders.set(name.value, value.value);
+            }
             return BrsBoolean.True;
         },
     });
@@ -535,12 +643,40 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("headers", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, headers: RoAssociativeArray) => {
+        impl: (interpreter: Interpreter, headers: RoAssociativeArray) => {
             this.customHeaders = new Map<string, string>();
             headers.elements.forEach((value: BrsType, key: string) => {
-                this.customHeaders.set(key, (value as BrsString).value);
-                // TODO: Replace value with dev-id when name = "x-roku-reserved-dev-id"
+                if (key.toLowerCase() === "x-roku-reserved-dev-id") {
+                    this.customHeaders.set(key, interpreter.deviceInfo.get("developerId"));
+                } else {
+                    this.customHeaders.set(key, (value as BrsString).value);
+                }
             });
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Initialize the object to send the Roku client certificate. */
+    private initClientCertificates = new Callable("initClientCertificates", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Set the certificates file used for SSL to the .pem file specified. */
+    private setCertificatesFile = new Callable("setCertificatesFile", {
+        signature: {
+            args: [new StdlibArgument("certificate", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, certificate: BrsString) => {
+            console.log(
+                "Warning: roUrlTransfer.SetCertificatesFile() parameter was ignored, default browser client certificate will be used."
+            );
             return BrsBoolean.True;
         },
     });
