@@ -62,6 +62,7 @@ const bufferCtx = supportedBrowser ? bufferCanvas.getContext("2d") : undefined;
 let buffer = new ImageData(screenSize.width, screenSize.height);
 let splashTimeout = 1600;
 let brsWorker;
+let title = "";
 let source = [];
 let paths = [];
 let txts = [];
@@ -117,6 +118,7 @@ fileSelector.onchange = function() {
     const file = this.files[0];
     const reader = new FileReader();
     reader.onload = function(progressEvent) {
+        title = file.name;
         paths = [];
         imgs = [];
         txts = [];
@@ -224,9 +226,11 @@ function openChannelZip(f) {
                         }
                         fileButton.style.visibility = "hidden";
                         let infoHtml = "";
-                        const title = manifestMap.get("title");
+                        title = manifestMap.get("title");
                         if (title) {
                             infoHtml += title + "<br/>";
+                        } else {
+                            title = "";
                         }
                         const subtitle = manifestMap.get("subtitle");
                         if (subtitle) {
@@ -318,7 +322,6 @@ function openChannelZip(f) {
                     txts = [];
                     imgs = [];
                     fonts = [];
-                    const bmpEvents = [];
                     for (let index = 0; index < assets.length; index++) {
                         paths.push(assetPaths[index]);
                         if (assetPaths[index].type === "image") {
@@ -378,6 +381,7 @@ function runChannel() {
     brsWorker.addEventListener("message", receiveMessage);
     const payload = {
         device: deviceData,
+        title: title,
         paths: paths,
         brs: source,
         texts: txts,
@@ -498,7 +502,12 @@ function receiveMessage(event) {
         } else {
             clientException(`Can't find wav sound: ${wav}`);
         }
+    } else if (event.data.substr(0, 3) === "log") {
+        console.log(event.data.substr(4));
+    } else if (event.data.substr(0, 5) === "error") {
+        console.error(event.data.substr(6));
     } else if (event.data === "end") {
+        console.log(`------ Finished '${title}' execution ------`);
         closeChannel();
     }
 }

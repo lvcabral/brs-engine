@@ -31,6 +31,8 @@ onmessage = function(event) {
     if (event.data.device) {
         const interpreter = new Interpreter();
         interpreter.onError(logError);
+        // Set Channel Title
+        interpreter.title = event.data.title;
         // Registry
         let registry = event.data.device.registry;
         registry.forEach(function(value: string, key: string) {
@@ -88,10 +90,9 @@ onmessage = function(event) {
                         mkdirTreeSync(volume, path.dirname("/" + filePath.url));
                     } catch (err) {
                         console.error(
-                            "Error creating directory " +
-                                path.dirname("/" + filePath.url) +
-                                " - " +
+                            `Error creating directory ${path.dirname("/" + filePath.url)} - ${
                                 err.message
+                            }`
                         );
                     }
                 }
@@ -101,7 +102,8 @@ onmessage = function(event) {
                     } else if (filePath.type === "font") {
                         volume.writeFileSync("/" + filePath.url, event.data.fonts[filePath.id]);
                     } else if (filePath.type === "audio") {
-                        // Save mock file to allow file exist checking, and content contains index
+                        // As the audio files are played on the renderer process we need to
+                        // save a mock file to allow file exist checking and save the index
                         volume.writeFileSync("/" + filePath.url, filePath.id.toString());
                     } else if (filePath.type === "text") {
                         volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
@@ -110,7 +112,7 @@ onmessage = function(event) {
                         volume.writeFileSync("/" + filePath.url, event.data.brs[filePath.id]);
                     }
                 } catch (err) {
-                    console.error("Error writing file " + filePath.url + " - " + err.message);
+                    console.error(`Error writing file ${filePath.url} - ${err.message}`);
                 }
             }
         }
@@ -222,11 +224,11 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
 }
 
 /**
- * Logs a detected BRS error to console.
- * @param err the error to log to `console`
+ * Logs a detected BRS error to the renderer process.
+ * @param err the error to log
  */
 function logError(err: BrsError.BrsError) {
-    console.error(err.format());
+    postMessage(`error,${err.format()}`);
 }
 
 /** Parse CSV string into a Map with first column as the key and the value contains the other columns into an array

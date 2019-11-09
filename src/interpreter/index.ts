@@ -51,12 +51,11 @@ export const defaultExecutionOptions: ExecutionOptions = {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
-
+    private _title = "";
     readonly options: ExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
-
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
@@ -65,6 +64,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get environment() {
         return this._environment;
+    }
+
+    set title(value: string) {
+        this._title = value;
     }
 
     /**
@@ -128,9 +131,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return func(this);
         } catch (err) {
             if (!(err instanceof BrsError)) {
-                console.error("Runtime error encountered in BRS implementation: ", err);
+                if (err.message !== "") {
+                    postMessage(`error,${err.message}`);
+                    err.message = "";
+                }
             } else if (!(err instanceof BlockEnd)) {
-                console.error("Runtime error encountered in BRS implementation: ", err.format());
+                if (err.message !== "") {
+                    postMessage(`error,BRS runtime error: ${err.format()}`);
+                    err.message = "";
+                }
             }
             throw err;
         } finally {
@@ -184,6 +193,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (maybeMain.signatures[0].signature.args.length === 0) {
                     args = [];
                 }
+                postMessage(`log,------ Running '${this._title}' ${mainVariable.name.text} ------`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
@@ -283,7 +293,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 printStream += this.evaluate(printable).toString();
             }
         });
-        console.log(printStream);
+        postMessage(`log,${printStream}`);
         return BrsInvalid.Instance;
     }
 
@@ -905,7 +915,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } catch (reason) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
                     throw new Error(
-                        "Something terrible happened and we didn't throw a `BlockEnd` instance."
+                        `--> Function ${functionName}() called at:\n   file/line: ${expression.location.file}(${expression.location.start.line})`
                     );
                 }
 
