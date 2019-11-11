@@ -105,6 +105,7 @@ onmessage = function(event) {
                         // As the audio files are played on the renderer process we need to
                         // save a mock file to allow file exist checking and save the index
                         volume.writeFileSync("/" + filePath.url, filePath.id.toString());
+                        interpreter.audioId = filePath.id;
                     } else if (filePath.type === "text") {
                         volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
                     } else if (filePath.type === "source") {
