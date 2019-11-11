@@ -31,9 +31,10 @@ This emulator is still a **prototype**, this way, there are several features fro
     - The _async_ methods are actually synchronous and evaluated when `WaitMessage()` or `GetMessage()` are called.
     - If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
     - Custom/Self-Signed SSL certificates are not supported, the emulator will use default browser client certificate.
+    - As custom certificates are not supported these methods are not available: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.
     - Cookies are only partially supported, if `enableFreshConnection()` is used, then Cookies from previous `send()` will be preserved.
-    - As custom certificates are not supported these methods are not available: `enablePeerVerification`, `enableHostVerification`, `setCertificatesDepth`.
-    - The following features/methods are also not supported: `EnableResume()`, `SetHttpVersion()` and `setMinimumTransferRate`.
+    - None of the Cookies related methods are implemented: `EnableCookies`, `GetCookies`, `AddCookies`, `ClearCookies`.
+    - The following methods are also not supported: `EnableResume`, `SetHttpVersion`, `RetainBodyOnError`, `SetMinimumTransferRate` and `AsyncPostFromFileToFile`.
     - The method `GetTargetIpAddress()` from `roUrlEvent` always returns an empty string.
 
 ## In Scope (mocked)
