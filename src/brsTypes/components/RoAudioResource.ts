@@ -45,9 +45,6 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
                 console.error("Invalid volume:", name);
                 this.valid = false;
             }
-            // if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
-            //     // TODO: Send data back to rendering process.
-            // }
         }
         this.audioName = name.value;
         this.currentIndex = 0;

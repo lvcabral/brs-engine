@@ -22,8 +22,6 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         this.responseString = response;
         this.headers = headers;
         this.targetIp = "";
-        console.log(status, statusText);
-        console.log(headers);
 
         this.registerMethods([
             this.getInt,
@@ -37,8 +35,12 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         ]);
     }
 
-    messageBuilder(): BrsBoolean {
-        throw new Error("Method not implemented.");
+    getStatus() {
+        return this.responseCode;
+    }
+
+    getResponseText() {
+        return this.responseString;
     }
 
     toString(parent?: BrsType): string {

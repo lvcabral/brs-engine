@@ -24,16 +24,16 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
     - Audio format `wma` is not supported.
     - Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
-    - if the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
+    - If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
     - No `Timed Metadata` support.
 *   The component `roUrlTransfer` is implemented with basic functionality but has some limitations:
     - The **web app** can only access urls from the same domain it is hosted, due to security restrictions, the **desktop app** do not have this limitation.
     - The _async_ methods are actually synchronous and evaluated when `WaitMessage()` or `GetMessage()` are called.
     - If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
     - Custom/Self-Signed SSL certificates are not supported, the emulator will use default browser client certificate.
+    - Cookies are only partially supported, if `enableFreshConnection()` is used, then Cookies from previous `send()` will be preserved.
     - As custom certificates are not supported these methods are not available: `enablePeerVerification`, `enableHostVerification`, `setCertificatesDepth`.
     - The following features/methods are also not supported: `EnableResume()`, `SetHttpVersion()` and `setMinimumTransferRate`.
-    - Download audio files is supported but for now is not possible to playback those downloaded files.    
     - The method `GetTargetIpAddress()` from `roUrlEvent` always returns an empty string.
 
 ## In Scope (mocked)

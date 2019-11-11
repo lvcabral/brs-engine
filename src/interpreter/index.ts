@@ -70,6 +70,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this._title = value;
     }
 
+    public audioId: number = 0;
+
     /**
      * Convenience function to subscribe to the `err` events emitted by `interpreter.events`.
      * @param errorHandler the function to call for every runtime error emitted after subscribing
