@@ -4,8 +4,8 @@ This emulator is still a **prototype**, this way, there are several features fro
 
 ## In Scope (to be developed/fixed)
 
-*   Usage of **@** to access attributes from `roXMLElements` is not supported.
-*   `Goto`, `Stop` and `End` statements are not supported.
+*   Usage of **@** to access attributes from `roXMLElements` is not supported, use method `GetAttributes`.
+*   Statements `Goto`, `Stop` and `End` are not supported.
 *   Usage of **colon** to do `for` or `while` loops in one line is not working. e.g. `while r.IsMatch(s): s = r.Replace(s, "\1,\2"): end while`.
 *   Trailing **colon** on a line generates an exception.
 *   It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
@@ -18,7 +18,7 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   Multi-dimensional arrays cannot be accessed as `array[x,y]` use the notation `array[x][y]` instead.
 *   Return `Invalid` from a function explicitly declared as `Object` doesn't work, use `Dynamic` or remove type declaration.
 *   Send `Invalid` on a function parameter when it explicitly defines the type, generates an error. If `Invalid` is possible remove type declaration.
-*   Positive literal number cannot be represented with plus sign. For example `a = [-1, +1]`
+*   Positive literal number cannot be represented with plus sign. For example `a = [-1, +1]`, use `a = [-1, 1]`.
 *   An `if` statement with `not` before a logic comparison expression shows an error. For example `if not foo = 1`, to avoid use `if not (foo = 1)` instead.
 *   In a `for...next` loop the usage of the notation `next <variable>` is not supported.
 *   Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
@@ -33,7 +33,7 @@ This emulator is still a **prototype**, this way, there are several features fro
     - Custom/Self-Signed SSL certificates are not supported, the emulator will use default browser client certificate.
     - As custom certificates are not supported these methods are not available: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.
     - Cookies are only partially supported, if `enableFreshConnection()` is used, then Cookies from previous `send()` will be preserved.
-    - None of the Cookies related methods are implemented: `EnableCookies`, `GetCookies`, `AddCookies`, `ClearCookies`.
+    - The Cookies related methods are not implemented: `EnableCookies`, `GetCookies`, `AddCookies`, `ClearCookies`.
     - The following methods are also not supported: `EnableResume`, `SetHttpVersion`, `RetainBodyOnError`, `SetMinimumTransferRate` and `AsyncPostFromFileToFile`.
     - The method `GetTargetIpAddress()` from `roUrlEvent` always returns an empty string.
 
