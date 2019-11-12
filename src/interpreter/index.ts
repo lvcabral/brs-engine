@@ -52,6 +52,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _title = "";
+    private _startTime = Date.now();
     readonly options: ExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
@@ -64,6 +65,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get environment() {
         return this._environment;
+    }
+
+    get startTime() {
+        return this._startTime;
     }
 
     set title(value: string) {

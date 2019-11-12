@@ -1,10 +1,11 @@
 import { BrsComponent } from "./BrsComponent";
+import { RoAppManager } from "./RoAppManager";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { RoByteArray } from "./RoByteArray";
 import { RoChannelStore } from "./RoChannelStore";
 import { RoDateTime } from "./RoDateTime";
-import { Timespan } from "./RoTimespan";
+import { RoTimespan } from "./RoTimespan";
 import { RoList } from "./RoList";
 import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
@@ -35,13 +36,14 @@ import { Int32 } from "../Int32";
 
 /** Map containing a list of brightscript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
+    ["roappmanager", (interpreter: Interpreter) => new RoAppManager()],
     ["roassociativearray", (interpreter: Interpreter) => new RoAssociativeArray([])],
     ["roarray", (interpreter: Interpreter) => new RoArray([])],
     ["robytearray", (interpreter: Interpreter) => new RoByteArray()],
     ["rochannelstore", (interpreter: Interpreter) => new RoChannelStore()],
     ["rodatetime", (interpreter: Interpreter) => new RoDateTime()],
     ["rolist", (interpreter: Interpreter) => new RoList()],
-    ["rotimespan", (interpreter: Interpreter) => new Timespan()],
+    ["rotimespan", (interpreter: Interpreter) => new RoTimespan()],
     [
         "roregex",
         (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
