@@ -19,10 +19,28 @@ Sub Main()
     audioplayer.addcontent(song)
     audioplayer.setloop(false)
     audioPlayer.play()
+    play = true
     screen.DrawObject(0,0, bmp)
     screen.finish()
     screen.swapbuffers()
-    wait(0, port)
+    app = CreateObject("roAppManager")
+    while true
+        key = wait(0, port).getInt()
+        if key = 0
+            exit while
+        else if key = 13
+            if play 
+                audioPlayer.pause()
+                uptime = app.getUpTime()
+                print "uptime:"; uptime.TotalSeconds()
+            else 
+                audioPlayer.resume()
+            end if
+            play = not play
+        else
+            print key
+        end if
+    end while
 End Sub
 
 Function CacheFile(url as string, file as string, overwrite = false as boolean) as string

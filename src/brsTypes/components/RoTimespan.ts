@@ -6,20 +6,23 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import * as luxon from "luxon";
 
-export class Timespan extends BrsComponent implements BrsValue {
+export class RoTimespan extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private markTime = Date.now();
+    private markTime: number;
 
-    constructor() {
+    constructor(markTime?: number) {
         super("roTimespan", ["ifTimespan"]);
+        if (markTime) {
+            this.markTime = markTime;
+        } else {
+            this.markTime = Date.now();
+        }
         this.registerMethods([
             this.mark,
-            this.totalmilliseconds,
-            this.totalseconds,
-            this.getsecondstoiso8601date,
+            this.totalMilliseconds,
+            this.totalSeconds,
+            this.getSecondsToISO8601Date,
         ]);
-
-        this.resetTime();
     }
 
     resetTime() {
@@ -47,7 +50,7 @@ export class Timespan extends BrsComponent implements BrsValue {
     });
 
     /** Returns total milliseconds from the mark time to now */
-    private totalmilliseconds = new Callable("totalmilliseconds", {
+    private totalMilliseconds = new Callable("totalMilliseconds", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -58,7 +61,7 @@ export class Timespan extends BrsComponent implements BrsValue {
     });
 
     /** Returns total seconds from the mark time to now */
-    private totalseconds = new Callable("totalseconds", {
+    private totalSeconds = new Callable("totalSeconds", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -71,7 +74,7 @@ export class Timespan extends BrsComponent implements BrsValue {
     /** Parses an ISO8601 date and returns number of seconds from now until the given date.
      * If the date is not a valid ISO8601 date string and can't be parsed, the int 2077252342 is returned, consistent with the brightscript method.
      */
-    private getsecondstoiso8601date = new Callable("getsecondstoiso8601date", {
+    private getSecondsToISO8601Date = new Callable("getSecondsToISO8601Date", {
         signature: {
             args: [new StdlibArgument("date", ValueKind.String)],
             returns: ValueKind.Int32,
