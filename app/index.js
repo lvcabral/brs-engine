@@ -40,7 +40,7 @@ const deviceData = {
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US",
-    timeZone: "US/Arizona",
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     locale: "en_US",
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
