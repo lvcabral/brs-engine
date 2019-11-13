@@ -27,8 +27,8 @@ Sub Main()
         else if key = 13
             if play 
                 audioPlayer.pause()
-                uptime = app.getUpTime()
-                print "uptime:"; uptime.TotalSeconds()
+                utime = app.getUpTime()
+                print "channel uptime:"; utime.TotalSeconds()
             else 
                 audioPlayer.resume()
             end if
@@ -36,7 +36,7 @@ Sub Main()
         else if key = 4
             print Tr("text to be translated %1").replace("%1", "later")
         else if key = 5
-            print UpTime(0)
+            print "device uptime:";  UpTime(0)
         else if key = 6
             RebootSystem()
         else
