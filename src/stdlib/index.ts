@@ -20,19 +20,26 @@ import {
 import { Interpreter } from "../interpreter";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 
-let warningShown = false;
+/** Returns the uptime of the system since the last reboot in seconds. */
+export const UpTime = new Callable("UpTime", {
+    signature: {
+        args: [new StdlibArgument("dummy", ValueKind.Int32)],
+        returns: ValueKind.Float,
+    },
+    impl: (interpreter: Interpreter) => {
+        const startTime = interpreter.deviceInfo.get("startTime");
+        return new Float(Math.round((Date.now() - startTime) / 1000));
+    },
+});
 
+/** Request the system to perform a soft reboot. */
 export const RebootSystem = new Callable("RebootSystem", {
     signature: {
         args: [],
         returns: ValueKind.Void,
     },
     impl: () => {
-        if (!warningShown) {
-            console.warn("`RebootSystem` is not implemented in `brs`.");
-            warningShown = true;
-        }
-
+        postMessage("reset");
         return BrsInvalid.Instance;
     },
 });
@@ -111,6 +118,18 @@ export const GetInterface = new Callable("GetInterface", {
             }
         }
         return BrsInvalid.Instance;
+    },
+});
+
+/** Translates the source string into the language of the current locale. */
+export const Tr = new Callable("Tr", {
+    signature: {
+        args: [new StdlibArgument("source", ValueKind.String)],
+        returns: ValueKind.String,
+    },
+    impl: (interpreter: Interpreter, source: BrsString) => {
+        // TODO: Support translation, for now return the source
+        return source;
     },
 });
 

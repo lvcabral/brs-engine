@@ -47,6 +47,7 @@ const deviceData = {
     defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
     maxSimulStreams: 2, // Max number of audio resource streams
     localIps: ["Ethernet,127.0.0.1"], // Running on the Browser is not possible to get a real IP
+    startTime: Date.now(),
 };
 
 // Display Aspect Ratio
@@ -495,6 +496,8 @@ function receiveMessage(event) {
     } else if (event.data === "end") {
         console.log(`------ Finished '${title}' execution ------`);
         closeChannel();
+    } else if (event.data === "reset") {
+        window.location.reload(false);
     }
 }
 
