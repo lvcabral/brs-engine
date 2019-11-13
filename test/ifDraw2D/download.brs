@@ -3,14 +3,10 @@ Sub Main()
     screen = CreateObject("roScreen")
     port = CreateObject("roMessagePort")
     screen.SetMessagePort(port)
-    CacheFile("https://diariodebordo.blog.br/feed/", "feed.xml")
-    Print ReadAsciiFile("tmp:/feed.xml")
-    CacheFile("https://diariodebordo.blog.br/wp-content/uploads/sites/5/2015/12/IMG_6489-1024x768.jpg", "image.jpg")
     CacheFile("https://raw.githubusercontent.com/lvcabral/brs-emu/master/docs/images/screenshots.png", "image.png")
-    CacheFile("https://diariodebordo.blog.br/marcelo/images/star.gif", "image.gif")
     print GetString("https://raw.githubusercontent.com/lvcabral/brs-emu-app/master/.gitignore")
     bmp = CreateObject("roBitmap", "tmp:/image.png")
-    CacheFile("https://file-examples.com/wp-content/uploads/2017/11/file_example_MP3_5MG.mp3", "music.mp3")
+    CacheFile("https://raw.githubusercontent.com/lvcabral/Prince-of-Persia-Roku/master/assets/songs/main-theme.mp3", "music.mp3")
     audioPlayer = CreateObject("roAudioPlayer")
     port2 = CreateObject("roMessagePort")
     audioPlayer.SetMessagePort(port2)
@@ -37,6 +33,12 @@ Sub Main()
                 audioPlayer.resume()
             end if
             play = not play
+        else if key = 4
+            print Tr("text to be translated %1").replace("%1", "later")
+        else if key = 5
+            print UpTime(0)
+        else if key = 6
+            RebootSystem()
         else
             print key
         end if

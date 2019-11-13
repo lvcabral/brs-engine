@@ -54,6 +54,7 @@ onmessage = function(event) {
         interpreter.deviceInfo.set("defaultFont", event.data.device.defaultFont);
         interpreter.deviceInfo.set("maxSimulStreams", event.data.device.maxSimulStreams);
         interpreter.deviceInfo.set("localIps", event.data.device.localIps);
+        interpreter.deviceInfo.set("startTime", event.data.device.startTime);
         // File System
         let fontFamily = event.data.device.defaultFont;
         let volume = interpreter.fileSystem.get("common:");
