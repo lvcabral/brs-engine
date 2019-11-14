@@ -23,13 +23,13 @@ describe("roFloat", () => {
     });
 
     describe("ifFloat, ifToStr", () => {
-        let a, b, interpreter, someNumberA, someNumberB;
+        let interpreter;
+        let someNumberA = 66.40265980865333;
+        let someNumberB = 725.4835421658863;
+        var a = new roFloat(new Float(0));
+        var b = new roFloat(new Float(0));
 
         beforeEach(() => {
-            someNumberA = (Math.random() * 4 + 7) * (Math.random() * 100 + 3);
-            someNumberB = (Math.random() * 4 + 7) * (Math.random() * 100 + 3);
-            a = new roFloat(new Float(0));
-            b = new roFloat(new Float(0));
             interpreter = new Interpreter();
         });
 

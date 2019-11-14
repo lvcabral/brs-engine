@@ -1,11 +1,11 @@
 import { ValueKind, Comparable, BrsBoolean } from "./BrsType";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { BrsType } from "./";
+import { Boxable } from "./Boxing";
 import { Float } from "./Float";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
 import { roInt } from "./components/RoInt";
-import { Boxable } from "./Boxing";
 
 export class Int32 implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Int32;
