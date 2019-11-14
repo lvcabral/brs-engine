@@ -176,12 +176,12 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             let parsedXML;
             xmlParser.parseString(xml.value, function(err: Error, parsed: any) {
                 if (err) {
-                    console.error("Error parsing XML:" + err.message);
+                    postMessage(`warning,Error parsing XML: ${err.message}`);
                 } else if (parsed) {
                     parsedXML = parsed;
                     result = true;
                 } else {
-                    console.error("Error parsing XML: Empty input");
+                    postMessage("warning,Error parsing XML: Empty input");
                 }
             });
             this.parsedXML = parsedXML;

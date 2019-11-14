@@ -489,9 +489,11 @@ function receiveMessage(event) {
         } else {
             clientException(`Can't find wav sound: ${wav}`);
         }
-    } else if (event.data.substr(0, 3) === "log") {
+    } else if (event.data.substr(0, 4) === "log,") {
         console.log(event.data.substr(4));
-    } else if (event.data.substr(0, 5) === "error") {
+    } else if (event.data.substr(0, 8) === "warning,") {
+        console.warn(event.data.substr(8));
+    } else if (event.data.substr(0, 6) === "error,") {
         console.error(event.data.substr(6));
     } else if (event.data === "end") {
         console.log(`------ Finished '${title}' execution ------`);
