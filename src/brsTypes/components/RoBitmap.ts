@@ -43,11 +43,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     image = volume.readFileSync(url.pathname);
                     this.alphaEnable = true;
                 } catch (err) {
-                    console.error("Error loading bitmap:" + url.pathname + " - " + err.message);
+                    postMessage(`warning,Error loading bitmap:${url.pathname} - ${err.message}`);
                     this.valid = false;
                 }
             } else {
-                console.error("Invalid volume:" + url.pathname);
+                postMessage(`warning,Invalid volume:${url.pathname}`);
                 this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
@@ -64,7 +64,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
         } else {
-            console.error("Invalid roBitmap param:", param);
+            postMessage(`warning,Invalid roBitmap param:${param}`);
             this.valid = false;
         }
         this.canvas = new OffscreenCanvas(width, height);
@@ -106,15 +106,15 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         imageData.data.set(new Uint8Array(data));
                         this.context.putImageData(imageData, 0, 0);
                     } else {
-                        console.error("Invalid image format!", type);
+                        postMessage(`warning,Invalid image format: ${type}`);
                         this.valid = false;
                     }
                 } else {
-                    console.error("Invalid file format!", image);
+                    postMessage(`warning,Invalid bitmap file format: ${image}`);
                     this.valid = false;
                 }
             } catch (err) {
-                console.error("Error drawing image on canvas! " + err.message);
+                postMessage(`warning,Error drawing image on canvas: ${err.message}`);
                 this.valid = false;
             }
         }

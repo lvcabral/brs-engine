@@ -125,7 +125,7 @@ function logBrsErr(functionName: string, err: Error): void {
     if (process.env.NODE_ENV === "test") {
         return;
     }
-    console.error(`BRIGHTSCRIPT: ERROR: ${functionName}: ${err.message}`);
+    postMessage(`error,BRIGHTSCRIPT: ERROR: ${functionName}: ${err.message}`);
 }
 
 export const FormatJson = new Callable("FormatJson", {

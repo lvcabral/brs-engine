@@ -125,7 +125,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             xhr.send();
             this.failureReason = xhr.statusText;
         } catch (e) {
-            console.error(e);
+            postMessage(`warning,[getToStringSync] Error getting ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
         return new RoURLEvent(
@@ -166,7 +166,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 }
             }
         } catch (e) {
-            console.error(e);
+            postMessage(`warning,[getToFileSync] Error getting ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
         return new RoURLEvent(
@@ -197,7 +197,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             xhr.send(body);
             this.failureReason = xhr.statusText;
         } catch (e) {
-            console.error(e);
+            postMessage(`warning,[postFromStringSync] Error posting to ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
         return new RoURLEvent(
@@ -232,11 +232,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.send(body);
                 this.failureReason = xhr.statusText;
             } else {
-                console.error("invalid file:", filePath);
+                postMessage(`warning,[postFromFileSync] Invalid volume: ${filePath}`);
                 return BrsInvalid.Instance;
             }
         } catch (e) {
-            console.error(e);
+            postMessage(`warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
         return new RoURLEvent(
@@ -274,7 +274,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.getAllResponseHeaders()
             );
         } catch (e) {
-            console.error(e);
+            postMessage(`warning,[requestHead] Error requesting from ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
     }
@@ -387,7 +387,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.port.registerCallback(this.getToStringSync.bind(this));
             } else {
-                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+                postMessage("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -407,7 +407,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.outFile.push(filePath.value);
                 this.port.registerCallback(this.getToFileAsync.bind(this));
             } else {
-                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+                postMessage("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -452,7 +452,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.port.registerCallback(this.requestHead.bind(this));
             } else {
-                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+                postMessage("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -486,7 +486,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.postBody.push(request.value);
                 this.port.registerCallback(this.postFromStringAsync.bind(this));
             } else {
-                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+                postMessage("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -520,7 +520,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.inFile.push(filePath.value);
                 this.port.registerCallback(this.postFromFileAsync.bind(this));
             } else {
-                console.log("Warning: No message port assigned to this roUrlTransfer instance");
+                postMessage("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -671,8 +671,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, certificate: BrsString) => {
-            console.log(
-                "Warning: roUrlTransfer.SetCertificatesFile() parameter was ignored, default browser client certificate will be used."
+            postMessage(
+                "warning,[roUrlTransfer] SetCertificatesFile() parameter was ignored, default browser client certificate will be used."
             );
             return BrsBoolean.True;
         },

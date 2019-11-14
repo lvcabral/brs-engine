@@ -90,10 +90,10 @@ onmessage = function(event) {
                     try {
                         mkdirTreeSync(volume, path.dirname("/" + filePath.url));
                     } catch (err) {
-                        console.error(
-                            `Error creating directory ${path.dirname("/" + filePath.url)} - ${
-                                err.message
-                            }`
+                        postMessage(
+                            `warning,Error creating directory ${path.dirname(
+                                "/" + filePath.url
+                            )} - ${err.message}`
                         );
                     }
                 }
@@ -114,7 +114,7 @@ onmessage = function(event) {
                         volume.writeFileSync("/" + filePath.url, event.data.brs[filePath.id]);
                     }
                 } catch (err) {
-                    console.error(`Error writing file ${filePath.url} - ${err.message}`);
+                    postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
                 }
             }
         }
@@ -220,7 +220,7 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
         aa.push({ name: new BrsString("source"), value: new BrsString("auto-run-dev") });
         return interpreter.exec(allStatements, new RoAssociativeArray(aa));
     } catch (e) {
-        console.error(e.message);
+        postMessage(`warning,Unhandled Interpreter error: ${e.message}`);
         return;
     }
 }
@@ -274,11 +274,11 @@ function download(url: string, type: XMLHttpRequestResponseType) {
         xhr.responseType = type;
         xhr.send();
         if (xhr.status !== 200) {
-            console.error(xhr.statusText, url);
+            postMessage(`warning,HTTP Error downloading ${url}: ${xhr.statusText}`);
             return undefined;
         }
         return xhr.response;
     } catch (e) {
-        console.error(e.message, url);
+        postMessage(`warning,Error downloading ${url}: ${e.message}`);
     }
 }

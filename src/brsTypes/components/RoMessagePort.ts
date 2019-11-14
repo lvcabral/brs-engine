@@ -117,14 +117,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 }
             }
             if (ms === 0) {
-                console.log(
-                    "Warning: [roMessagePort] No message in the queue, emulator will loop forever! "
+                postMessage(
+                    "warning,[roMessagePort] No message in the queue, emulator will loop forever!"
                 );
                 while (true) {
                     // Loop forever
                 }
             } else {
-                console.log("Warning: [roMessagePort] No message in the queue! ");
+                postMessage("warning,[roMessagePort] No message in the queue!");
                 ms += new Date().getTime();
                 while (new Date().getTime() < ms) {
                     //wait the timeout time
