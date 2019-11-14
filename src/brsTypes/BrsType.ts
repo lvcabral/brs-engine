@@ -1,6 +1,8 @@
 import { BrsType } from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
+import { Int32 } from "./Int32";
+import { Float } from "./Float";
 import { roBoolean } from "./components/RoBoolean";
 
 /** Set of values supported in BrightScript. */
@@ -88,6 +90,48 @@ export namespace ValueKind {
                 return undefined;
         }
     }
+}
+
+/**
+ *  Converts a specified brightscript type in string into BrsType representation, with actual value
+ *  Note: only supports native types so far.  Objects such as array/AA aren't handled at the moment.
+ *  @param {string} type data type of field
+ *  @param {string} value optional value specified as string
+ *  @returns {BrsType} BrsType value representation of the type
+ */
+export function getBrsValueFromFieldType(type: string, value?: string): BrsType {
+    let returnValue: BrsType;
+
+    switch (type.toLowerCase()) {
+        case "boolean":
+            returnValue = value ? BrsBoolean.from(value === "true") : BrsBoolean.False;
+            break;
+        case "node":
+            returnValue = BrsInvalid.Instance;
+            break;
+        case "integer":
+            returnValue = value ? new Int32(Number.parseInt(value)) : new Int32(0);
+            break;
+        case "float":
+            returnValue = value ? new Float(Number.parseFloat(value)) : new Float(0);
+            break;
+        case "roArray":
+        case "array":
+            returnValue = BrsInvalid.Instance;
+            break;
+        case "roAssociativeArray":
+        case "assocarray":
+            returnValue = BrsInvalid.Instance;
+            break;
+        case "string":
+            returnValue = value ? new BrsString(value) : new BrsString("");
+            break;
+        default:
+            returnValue = Uninitialized.Instance;
+            break;
+    }
+
+    return returnValue;
 }
 
 /** The base for all BrightScript types. */

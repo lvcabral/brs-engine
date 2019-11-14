@@ -1,11 +1,11 @@
 import { BrsType, BrsBoolean } from "./";
 import { ValueKind, Comparable } from "./BrsType";
+import { Boxable } from "./Boxing";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
 import { roFloat } from "./components/RoFloat";
-import { Boxable } from "./Boxing";
 
 /**
  * Number of significant digits represented in an IEEE 32-bit floating point number.

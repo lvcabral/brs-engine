@@ -52,7 +52,7 @@ export class roDouble extends BrsComponent implements BrsValue, Unboxable {
     private setDouble = new Callable("setDouble", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Double)],
-            returns: ValueKind.Object,
+            returns: ValueKind.Void,
         },
         impl: (_interpreter, value: Double) => {
             this.intrinsic = value;

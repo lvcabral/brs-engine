@@ -51,7 +51,7 @@ export class roBoolean extends BrsComponent implements BrsValue, Unboxable {
     private setBoolean = new Callable("setBoolean", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Boolean)],
-            returns: ValueKind.Object,
+            returns: ValueKind.Void,
         },
         impl: (_interpreter, value: BrsBoolean) => {
             this.intrinsic = value;

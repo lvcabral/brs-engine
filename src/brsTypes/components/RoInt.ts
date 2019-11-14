@@ -52,7 +52,7 @@ export class roInt extends BrsComponent implements BrsValue, Unboxable {
     private setInt = new Callable("setInt", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Int32)],
-            returns: ValueKind.Object,
+            returns: ValueKind.Void,
         },
         impl: (_interpreter, value: Int32) => {
             this.intrinsic = value;

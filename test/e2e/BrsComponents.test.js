@@ -182,6 +182,12 @@ describe("end to end brightscript functions", () => {
             "23",
             "Integer object times itself ",
             "529",
+            "Double to string ",
+            "123.456",
+            "Float to string ",
+            "789.012",
+            "Integer to string ",
+            "23",
         ]);
     });
 });
