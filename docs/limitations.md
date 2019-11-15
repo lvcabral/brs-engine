@@ -26,21 +26,22 @@ This emulator is still a **prototype**, this way, there are several features fro
     - If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
     - No `Timed Metadata` support.
 *   The component `roUrlTransfer` is implemented with basic functionality but has some limitations:
-    - The **web app** can only access urls from the same domain it is hosted, due to security restrictions, the **desktop app** do not have this limitation.
-    - The _async_ methods are actually synchronous and evaluated when `WaitMessage()` or `GetMessage()` are called.
+    - To make the **web app** access urls from domains other than the one it is hosted, add the domains to the `Content-Security-Policy` tag in `app/index.html`.
+    - The configuration above requires the web server called to respond with the proper header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
+    - The _async_ methods are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
     - If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
     - Custom/Self-Signed SSL certificates are not supported, the emulator will use default browser client certificate.
     - As custom certificates are not supported these methods are not available: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.
-    - Cookies are only partially supported, if `enableFreshConnection(false)` is used, then Cookies from previous calls will be preserved.
-    - The Cookies related methods are not implemented: `EnableCookies`, `GetCookies`, `AddCookies`, `ClearCookies`.
-    - The following methods are also not supported: `EnableResume`, `SetHttpVersion`, `RetainBodyOnError`, `SetMinimumTransferRate` and `AsyncPostFromFileToFile`.
-    - The method `GetTargetIpAddress()` from `roUrlEvent` always returns an empty string.
+    - Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
+    - The other Cookies related methods are not implemented: `GetCookies`, `AddCookies`, `ClearCookies`.
+    - The following methods are also not supported: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
+    - The method `GetTargetIpAddress` from `roUrlEvent` always returns an empty string.
 
 ## In Scope (mocked)
 
-*   RAF (Roku Ads Framework) object `Roku_Ads()` is mocked with the most common methods available.
+*   RAF (Roku Ads Framework) object `Roku_Ads` is mocked with the most common methods available.
 *   Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked.
-*   The component `roAppManager` is mocked with the exception of method `GetUptime()` that returns a `roTimeSpan` as Roku does.
+*   The component `roAppManager` is mocked with the exception of method `GetUptime` that returns a `roTimeSpan` as Roku does.
 
 ## Out of Scope
 

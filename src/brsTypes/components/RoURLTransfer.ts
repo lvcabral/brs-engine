@@ -28,7 +28,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private url: string;
     private reqMethod: string;
     private failureReason: string;
-    private encodings: boolean;
+    private cookiesEnabled: boolean;
     private xhr: XMLHttpRequest;
     private freshConnection: boolean;
     private customHeaders: Map<string, string>;
@@ -52,7 +52,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.url = "";
         this.reqMethod = "";
         this.failureReason = "";
-        this.encodings = false;
+        this.cookiesEnabled = false;
         this.xhr = new XMLHttpRequest();
         this.freshConnection = false;
         this.customHeaders = new Map<string, string>();
@@ -77,8 +77,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.postFromFile,
             this.asyncPostFromString,
             this.asyncPostFromFile,
-            // this.asyncPostFromFileToFile,
-            // this.retainBodyOnError,
+            this.asyncPostFromFileToFile,
+            this.retainBodyOnError,
             this.setUserAndPassword,
             // this.setMinimumTransferRate,
             this.getFailureReason,
@@ -96,7 +96,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.initClientCertificates,
             this.setCertificatesFile,
             // this.setCertificatesDepth,
-            // this.enableCookies,
+            this.enableCookies,
             // this.getCookies,
             // this.addCookies,
             // this.clearCookies,
@@ -106,48 +106,43 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.setPort,
         ]);
     }
-    getConnection() {
+    getConnection(methodParam: string, typeParam: XMLHttpRequestResponseType) {
         if (this.freshConnection) {
             this.xhr = new XMLHttpRequest();
         }
+        let method = this.reqMethod === "" ? methodParam : this.reqMethod;
+        this.xhr.open(method, this.url, false, this.user, this.password);
+        this.xhr.responseType = typeParam;
+        this.customHeaders.forEach((value: string, key: string) => {
+            this.xhr.setRequestHeader(key, value);
+        });
+        this.xhr.withCredentials = this.cookiesEnabled;
         return this.xhr;
     }
 
     getToStringSync(): BrsType {
-        const xhr = this.getConnection();
         try {
-            let method = this.reqMethod === "" ? "GET" : this.reqMethod;
-            xhr.open(method, this.url, false, this.user, this.password);
-            xhr.responseType = "text";
-            this.customHeaders.forEach((value: string, key: string) => {
-                xhr.setRequestHeader(key, value);
-            });
+            const xhr = this.getConnection("GET", "text");
             xhr.send();
             this.failureReason = xhr.statusText;
+            return new RoURLEvent(
+                this.identity,
+                xhr.responseText,
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
         } catch (e) {
             postMessage(`warning,[getToStringSync] Error getting ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
-        return new RoURLEvent(
-            this.identity,
-            xhr.responseText,
-            xhr.status,
-            xhr.statusText,
-            xhr.getAllResponseHeaders()
-        );
     }
 
     getToFileSync(filePath: string): BrsType {
-        const path = new URL(filePath);
-        const volume = this.interpreter.fileSystem.get(path.protocol);
-        const xhr = this.getConnection();
         try {
-            let method = this.reqMethod === "" ? "GET" : this.reqMethod;
-            xhr.open(method, this.url, false, this.user, this.password);
-            this.customHeaders.forEach((value: string, key: string) => {
-                xhr.setRequestHeader(key, value);
-            });
-            xhr.responseType = "arraybuffer";
+            const path = new URL(filePath);
+            const volume = this.interpreter.fileSystem.get(path.protocol);
+            const xhr = this.getConnection("GET", "arraybuffer");
             xhr.send();
             this.failureReason = xhr.statusText;
             if (xhr.status === 200 && volume) {
@@ -165,17 +160,17 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                     volume.writeFileSync(path.pathname, xhr.response);
                 }
             }
+            return new RoURLEvent(
+                this.identity,
+                "",
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
         } catch (e) {
             postMessage(`warning,[getToFileSync] Error getting ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
-        return new RoURLEvent(
-            this.identity,
-            "",
-            xhr.status,
-            xhr.statusText,
-            xhr.getAllResponseHeaders()
-        );
     }
 
     getToFileAsync(): BrsType {
@@ -187,26 +182,21 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     }
 
     postFromStringSync(body: string): BrsType {
-        const xhr = this.getConnection();
         try {
-            let method = this.reqMethod === "" ? "POST" : this.reqMethod;
-            xhr.open(method, this.url, false, this.user, this.password);
-            this.customHeaders.forEach((value: string, key: string) => {
-                xhr.setRequestHeader(key, value);
-            });
+            const xhr = this.getConnection("POST", "text");
             xhr.send(body);
             this.failureReason = xhr.statusText;
+            return new RoURLEvent(
+                this.identity,
+                xhr.responseText || "",
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
         } catch (e) {
             postMessage(`warning,[postFromStringSync] Error posting to ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
-        return new RoURLEvent(
-            this.identity,
-            xhr.responseText || "",
-            xhr.status,
-            xhr.statusText,
-            xhr.getAllResponseHeaders()
-        );
     }
 
     postFromStringAsync(): BrsType {
@@ -218,15 +208,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     }
 
     postFromFileSync(filePath: string): BrsType {
-        const xhr = this.getConnection();
         try {
-            let method = this.reqMethod === "" ? "POST" : this.reqMethod;
+            const xhr = this.getConnection("POST", "text");
             const path = new URL(filePath);
             const volume = this.interpreter.fileSystem.get(path.protocol);
-            xhr.open(method, this.url, false, this.user, this.password);
-            this.customHeaders.forEach((value: string, key: string) => {
-                xhr.setRequestHeader(key, value);
-            });
             if (volume) {
                 let body = volume.readFileSync(path.pathname, xhr.response);
                 xhr.send(body);
@@ -235,17 +220,17 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 postMessage(`warning,[postFromFileSync] Invalid volume: ${filePath}`);
                 return BrsInvalid.Instance;
             }
+            return new RoURLEvent(
+                this.identity,
+                xhr.responseText || "",
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
         } catch (e) {
             postMessage(`warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
-        return new RoURLEvent(
-            this.identity,
-            xhr.responseText || "",
-            xhr.status,
-            xhr.statusText,
-            xhr.getAllResponseHeaders()
-        );
     }
 
     postFromFileAsync(): BrsType {
@@ -256,14 +241,66 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         return this.postFromFileSync(filePath);
     }
 
-    requestHead(): BrsType {
-        const xhr = this.getConnection();
+    postFromFileToFileSync(inputPath: string, outputPath: string): BrsType {
         try {
-            let method = this.reqMethod === "" ? "HEAD" : this.reqMethod;
-            xhr.open(method, this.url, false, this.user, this.password);
-            this.customHeaders.forEach((value: string, key: string) => {
-                xhr.setRequestHeader(key, value);
-            });
+            const xhr = this.getConnection("POST", "arraybuffer");
+            const inPath = new URL(inputPath);
+            const inVolume = this.interpreter.fileSystem.get(inPath.protocol);
+            if (inVolume) {
+                let body = inVolume.readFileSync(inPath.pathname, xhr.response);
+                xhr.send(body);
+                const outPath = new URL(outputPath);
+                const outVolume = this.interpreter.fileSystem.get(outPath.protocol);
+                if (xhr.status === 200 && outVolume) {
+                    const bytes = xhr.response.slice(0, fileType.minimumBytes);
+                    const type = fileType(bytes);
+                    if (type && this.audio.has(type.ext)) {
+                        this.interpreter.audioId++;
+                        outVolume.writeFileSync(
+                            outPath.pathname,
+                            this.interpreter.audioId.toString()
+                        );
+                        postMessage({
+                            audioPath: outputPath,
+                            audioFormat: type.ext,
+                            audioData: xhr.response,
+                        });
+                    } else {
+                        outVolume.writeFileSync(outPath.pathname, xhr.response);
+                    }
+                }
+                this.failureReason = xhr.statusText;
+            } else {
+                postMessage(`warning,[postFromFileToFileSync] Invalid volume: ${inputPath}`);
+                return BrsInvalid.Instance;
+            }
+            return new RoURLEvent(
+                this.identity,
+                "",
+                xhr.status,
+                xhr.statusText,
+                xhr.getAllResponseHeaders()
+            );
+        } catch (e) {
+            postMessage(
+                `warning,[postFromFileToFileSync] Error posting to ${this.url}: ${e.message}`
+            );
+            return BrsInvalid.Instance;
+        }
+    }
+
+    postFromFileToFileAsync(): BrsType {
+        const inPath = this.inFile.shift();
+        const outPath = this.outFile.shift();
+        if (!inPath || !outPath) {
+            return BrsInvalid.Instance;
+        }
+        return this.postFromFileToFileSync(inPath, outPath);
+    }
+
+    requestHead(): BrsType {
+        try {
+            const xhr = this.getConnection("HEAD", "text");
             xhr.send();
             this.failureReason = xhr.statusText;
             return new RoURLEvent(
@@ -386,10 +423,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.port.registerCallback(this.getToStringSync.bind(this));
+                return BrsBoolean.True;
             } else {
                 postMessage("warning,No message port assigned to this roUrlTransfer instance!");
+                return BrsBoolean.False;
             }
-            return BrsBoolean.True;
         },
     });
 
@@ -406,10 +444,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.outFile.push(filePath.value);
                 this.port.registerCallback(this.getToFileAsync.bind(this));
+                return BrsBoolean.True;
             } else {
                 postMessage("warning,No message port assigned to this roUrlTransfer instance!");
+                return BrsBoolean.False;
             }
-            return BrsBoolean.True;
         },
     });
 
@@ -451,10 +490,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.port.registerCallback(this.requestHead.bind(this));
+                return BrsBoolean.True;
             } else {
                 postMessage("warning,No message port assigned to this roUrlTransfer instance!");
+                return BrsBoolean.False;
             }
-            return BrsBoolean.True;
         },
     });
 
@@ -485,10 +525,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.postBody.push(request.value);
                 this.port.registerCallback(this.postFromStringAsync.bind(this));
+                return BrsBoolean.True;
             } else {
                 postMessage("warning,No message port assigned to this roUrlTransfer instance!");
+                return BrsBoolean.False;
             }
-            return BrsBoolean.True;
         },
     });
 
@@ -519,13 +560,49 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.inFile.push(filePath.value);
                 this.port.registerCallback(this.postFromFileAsync.bind(this));
+                return BrsBoolean.True;
             } else {
                 postMessage("warning,No message port assigned to this roUrlTransfer instance!");
+                return BrsBoolean.False;
             }
+        },
+    });
+
+    /** Use the HTTP POST method to send the contents of the specified file to the current URL. */
+    private asyncPostFromFileToFile = new Callable("asyncPostFromFileToFile", {
+        signature: {
+            args: [
+                new StdlibArgument("fromFile", ValueKind.String),
+                new StdlibArgument("toFile", ValueKind.String),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, fromFile: BrsString, toFile: BrsString) => {
+            if (this.port) {
+                this.failureReason = "";
+                this.inFile.push(fromFile.value);
+                this.outFile.push(toFile.value);
+                this.port.registerCallback(this.postFromFileToFileAsync.bind(this));
+                return BrsBoolean.True;
+            } else {
+                postMessage("warning,No message port assigned to this roUrlTransfer instance!");
+                return BrsBoolean.False;
+            }
+        },
+    });
+
+    /** If retain is true, return the body of the response even if the HTTP status code indicates that an error occurred. */
+    private retainBodyOnError = new Callable("retainBodyOnError", {
+        signature: {
+            args: [new StdlibArgument("retain", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, retain: BrsBoolean) => {
             return BrsBoolean.True;
         },
     });
 
+    /** Enables HTTP authentication using the specified user name and password. */
     private setUserAndPassword = new Callable("setUserAndPassword", {
         signature: {
             args: [
@@ -592,9 +669,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
-            this.encodings = enable.toBoolean();
-            // TODO: Reflect this config on gzip encoding usage
-            return enable;
+            return BrsBoolean.True;
         },
     });
 
@@ -605,8 +680,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
-            this.freshConnection = true;
-            return enable;
+            this.freshConnection = enable.toBoolean();
+            return BrsBoolean.True;
         },
     });
 
@@ -675,6 +750,18 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 "warning,[roUrlTransfer] SetCertificatesFile() parameter was ignored, default browser client certificate will be used."
             );
             return BrsBoolean.True;
+        },
+    });
+
+    /** Causes any Set-Cookie headers returned from the request to be interpreted. */
+    private enableCookies = new Callable("enableCookies", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            this.cookiesEnabled = true;
+            return BrsInvalid.Instance;
         },
     });
 
