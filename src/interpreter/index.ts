@@ -226,6 +226,31 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
+    getCallableFunction(functionName: string): Callable {
+        let callbackVariable = new Expr.Variable({
+            kind: Lexeme.Identifier,
+            text: functionName,
+            isReserved: false,
+            location: {
+                start: {
+                    line: -1,
+                    column: -1,
+                },
+                end: {
+                    line: -1,
+                    column: -1,
+                },
+                file: "(internal)",
+            },
+        });
+        let maybeCallback = this.evaluate(callbackVariable);
+        if (maybeCallback.kind === ValueKind.Callable) {
+            return maybeCallback;
+        }
+
+        throw new NotFound(`${functionName} was not found in scope`);
+    }
+
     visitNamedFunction(statement: Stmt.Function): BrsType {
         if (statement.name.isReserved) {
             return this.addError(

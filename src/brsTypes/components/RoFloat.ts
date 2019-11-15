@@ -52,7 +52,7 @@ export class roFloat extends BrsComponent implements BrsValue, Unboxable {
     private setFloat = new Callable("setFloat", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Float)],
-            returns: ValueKind.Object,
+            returns: ValueKind.Void,
         },
         impl: (_interpreter, value: Float) => {
             this.intrinsic = value;
