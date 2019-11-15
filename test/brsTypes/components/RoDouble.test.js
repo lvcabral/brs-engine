@@ -23,13 +23,13 @@ describe("roDouble", () => {
     });
 
     describe("ifDouble, ifToStr", () => {
-        let a, b, interpreter, someNumberA, someNumberB;
+        let interpreter;
+        let someNumberA = 390.9131936650123;
+        let someNumberB = 324.08226086736533;
+        var a = new roDouble(new Double(0));
+        var b = new roDouble(new Double(0));
 
         beforeEach(() => {
-            someNumberA = (Math.random() * 4 + 7) * (Math.random() * 100 + 3);
-            someNumberB = (Math.random() * 4 + 7) * (Math.random() * 100 + 3);
-            a = new roDouble(new Double(0));
-            b = new roDouble(new Double(0));
             interpreter = new Interpreter();
         });
 

@@ -1,9 +1,9 @@
-sub main() 
-    booleanObjectA = createObject("roBoolean", true) 
+sub main()
+    booleanObjectA = createObject("roBoolean", true)
     booleanObjectB = createObject("roBoolean", false)
     doubleObject = createObject("roDouble", 123.456)
     floatObject = createObject("roFloat", 789.012)
-    intergerObject = createObject("roInt", 23)
+    integerObject = createObject("roInt", 23)
 
     print "Boolean object A " booleanObjectA.toStr()
     print "Boolean object B " booleanObjectB
@@ -12,7 +12,10 @@ sub main()
     print "Double value * 2 " doubleObject.getDouble() * 2
     print "Float object "floatObject
     print "Float object * 10 "floatObject.getFloat() * 10
-    print "Integer object "intergerObject
-    print "Integer object times itself "intergerObject.getInt() * intergerObject.getInt()
+    print "Integer object "integerObject
+    print "Integer object times itself "integerObject.getInt() * integerObject.getInt()
+    print "Double to string "doubleObject.toStr()
+    print "Float to string "floatObject.toStr()
+    print "Integer to string "integerObject.toStr()
 
 end sub
