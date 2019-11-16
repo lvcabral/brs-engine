@@ -29,6 +29,15 @@ body {
     z-index:20;
 }
 
+#loading{
+    position: absolute;
+    left: 45px; 
+    top: 29px;
+	z-index:60;
+	opacity: 0.9;
+	visibility: hidden;
+}
+
 #channelInfo{
 	position: absolute;
 	left: 320px; 

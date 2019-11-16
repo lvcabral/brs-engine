@@ -13,6 +13,7 @@ const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const display = document.getElementById("display");
 const ctx = display.getContext("2d", { alpha: false });
+const loading = document.getElementById("loading");
 const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
@@ -152,6 +153,7 @@ function loadZip(zip) {
     }
     running = true;
     display.style.opacity = 0;
+    loading.style.visibility = "visible";
     channelIcons("visible");
     fileSelector.value = null;
     source = [];
@@ -213,6 +215,7 @@ function openChannelZip(f) {
                                 splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(imgData => {
                                         channelIcons("hidden");
+                                        loading.style.visibility = "hidden";
                                         display.style.opacity = 1;
                                         ctx.drawImage(
                                             imgData,
@@ -252,12 +255,14 @@ function openChannelZip(f) {
                         channelInfo.innerHTML = infoHtml;
                     },
                     function error(e) {
+                        loading.style.visibility = "hidden";
                         clientException(`Error uncompressing manifest: ${e.message}`, true);
                         running = false;
                         return;
                     }
                 );
             } else {
+                loading.style.visibility = "hidden";
                 clientException("Invalid Roku package: missing manifest.", true);
                 running = false;
                 return;
@@ -346,11 +351,13 @@ function openChannelZip(f) {
                     }, splashTimeout);
                 },
                 function error(e) {
+                    loading.style.visibility = "hidden";
                     clientException(`Error uncompressing file ${e.message}`);
                 }
             );
         },
         function(e) {
+            loading.style.visibility = "hidden";
             clientException(`Error reading ${f.name}: ${e.message}`, true);
             running = false;
         }
@@ -360,6 +367,7 @@ function openChannelZip(f) {
 // Execute Emulator Web Worker
 function runChannel() {
     channelIcons("hidden");
+    loading.style.visibility = "hidden";
     display.style.opacity = 1;
     display.focus();
     brsWorker = new Worker("./lib/brsEmu.js");
