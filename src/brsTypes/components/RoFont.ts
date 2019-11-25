@@ -49,7 +49,7 @@ export class RoFont extends BrsComponent implements BrsValue {
         let sb = this.bold ? "bold" : "";
         let ss = this.size;
         let sf = this.family;
-        return `${si} ${sb} ${ss}px ${sf}`;
+        return `${si} ${sb} ${ss}px '${sf}'`;
     }
 
     toString(parent?: BrsType): string {
