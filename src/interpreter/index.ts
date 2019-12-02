@@ -917,7 +917,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (satisfiedSignature) {
             try {
-                let mPointer = this._environment.getM();
+                let mPointer = this._environment.getRootM();
 
                 if (
                     expression.callee instanceof Expr.DottedGet ||
