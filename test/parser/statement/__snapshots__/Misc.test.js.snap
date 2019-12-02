@@ -2650,6 +2650,61 @@ Array [
               "literal": undefined,
               "location": Object {
                 "end": Object {
+                  "column": 26,
+                  "line": 43,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 43,
+                },
+              },
+              "text": "rem",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 43,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 43,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 43,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 43,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 1,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
                   "column": 29,
                   "line": 44,
                 },
@@ -2661,7 +2716,7 @@ Array [
               },
               "text": "return",
             },
-            "obj": DottedGet {
+            "obj": Variable {
               "name": Object {
                 "isReserved": false,
                 "kind": "Identifier",
@@ -2678,25 +2733,6 @@ Array [
                   },
                 },
                 "text": "person",
-              },
-              "obj": Variable {
-                "name": Object {
-                  "isReserved": false,
-                  "kind": "Identifier",
-                  "literal": undefined,
-                  "location": Object {
-                    "end": Object {
-                      "column": 22,
-                      "line": 43,
-                    },
-                    "file": "",
-                    "start": Object {
-                      "column": 16,
-                      "line": 43,
-                    },
-                  },
-                  "text": "person",
-                },
               },
             },
             "value": Literal {

@@ -958,7 +958,10 @@ export class Parser {
                     });
                 }
 
-                if (previous().kind !== Lexeme.Newline && match(Lexeme.Else)) {
+                if (
+                    previous().kind !== Lexeme.Newline &&
+                    (previous().kind === Lexeme.Else || match(Lexeme.Else))
+                ) {
                     let elseStatement = declaration();
                     if (!elseStatement) {
                         throw addError(peek(), `Expected a statement to follow 'else'`);
