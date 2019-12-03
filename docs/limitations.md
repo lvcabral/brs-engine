@@ -10,7 +10,6 @@ This emulator is still a **prototype**, this way, there are several features fro
 *   Trailing **colon** on a line generates an exception.
 *   It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
 *   Do not use the same `roMessagePort` instance with different objects (`roScreen`, `roAudioPlayer` etc.) create one per object type.
-*   The global AA (root `m` object) is not accessible from a global function called inside an `AA` method.
 *   The component `roInput` (for ECP support) is not implemented yet.
 *   Reserved words like `Mod` cannot be used as function parameters (Roku does allow that).
 *   The `Dim` statement cannot create multi-dimensional arrays.
