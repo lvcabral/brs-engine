@@ -20,6 +20,7 @@ import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoXMLElement } from "./RoXMLElement";
 import { RoURLTransfer } from "./RoURLTransfer";
 import { createAudioResource } from "./RoAudioResource";
+import { RoLocalization } from "./RoLocalization";
 import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
 import { RoDeviceInfo } from "./RoDeviceInfo";
@@ -61,6 +62,7 @@ export const BrsObjects = new Map<string, Function>([
     ],
     ["romessageport", (interpreter: Interpreter) => new RoMessagePort()],
     ["rofilesystem", (interpreter: Interpreter) => new RoFileSystem()],
+    ["rolocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],
     ["rofontregistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
     ["roregistry", (interpreter: Interpreter) => new RoRegistry()],
     [
