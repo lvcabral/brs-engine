@@ -57,6 +57,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
+    readonly translations: Map<string, string> = new Map<string, string>();
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
