@@ -128,7 +128,10 @@ export const Tr = new Callable("Tr", {
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, source: BrsString) => {
-        // TODO: Support translation, for now return the source
+        let tr = interpreter.translations.get(source.value);
+        if (tr) {
+            return new BrsString(tr);
+        }
         return source;
     },
 });
