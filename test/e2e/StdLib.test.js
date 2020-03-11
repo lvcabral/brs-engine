@@ -123,7 +123,7 @@ describe("end to end standard libary", () => {
         await execute([resourceFile("stdlib", "global-utilities.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
-            "<Interface: ifAssociativeArray>",
+            "<Interface: ifFloat>",
         ]);
     });
 });

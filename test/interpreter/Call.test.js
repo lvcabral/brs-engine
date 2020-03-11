@@ -100,6 +100,30 @@ describe("interpreter calls", () => {
         expect(result.value).toEqual(new roInt(new Int32(5)).value);
     });
 
+    it("automatically boxes arguments when appropriate", () => {
+        const ast = [
+            new Stmt.Assignment(
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("result"),
+                new Stmt.Expression(
+                    new Expr.Call(
+                        new Expr.Variable(identifier("GetInterface")),
+                        token(Lexeme.RightParen, ")"),
+                        [
+                            new Expr.Literal(new BrsString("primitive")), // brsString doesn't implement ifString, but roString does!
+                            new Expr.Literal(new BrsString("ifString")),
+                        ]
+                    )
+                )
+            ),
+        ];
+
+        interpreter.exec(ast);
+
+        let result = interpreter.environment.get(identifier("result"));
+        expect(result.kind).toBe(ValueKind.Interface);
+    });
+
     it("errors when not enough arguments provided", () => {
         const call = new Stmt.Expression(
             new Expr.Call(
