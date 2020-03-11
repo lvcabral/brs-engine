@@ -49,6 +49,9 @@ describe("end to end functions", () => {
             "2",
             "whileLoopReturn:",
             "3",
+            "boxedReturnType:",
+            "roFloat",
+            "3.14159",
         ]);
     });
 

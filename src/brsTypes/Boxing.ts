@@ -1,6 +1,5 @@
 import { BrsComponent } from "./components/BrsComponent";
 import { BrsValue, BrsType, ValueKind } from "./";
-import { RoString } from "./components/RoString";
 
 export interface Boxable {
     box(): BrsComponent;

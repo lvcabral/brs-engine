@@ -977,6 +977,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (
                     returnedValue &&
+                    isBoxable(returnedValue) &&
+                    satisfiedSignature.signature.returns === ValueKind.Object
+                ) {
+                    returnedValue = returnedValue.box();
+                }
+
+                if (
+                    returnedValue &&
                     satisfiedSignature.signature.returns !== ValueKind.Dynamic &&
                     satisfiedSignature.signature.returns !== returnedValue.kind
                 ) {

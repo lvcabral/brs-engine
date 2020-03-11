@@ -28,9 +28,17 @@ function whileLoopReturn(stopAt as integer)
     end while
 end function
 
+function boxedReturnType() as object
+    return 3.14159
+end function
+
 ' ----- then execute them -----
 print staticReturn()
 print conditionalReturn(true)
 print conditionalReturn(false)
 print forLoopReturn(2)
 print whileLoopReturn(3)
+
+boxed = boxedReturnType()
+print "boxedReturnType:"
+print type(boxed) boxed ' => RoFloat 3.14159
