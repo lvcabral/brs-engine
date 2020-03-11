@@ -286,7 +286,12 @@ describe("RoAssociativeArray", () => {
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
                 let result = items.call(interpreter);
-                expect(result.elements).toEqual(new RoArray([letter1, letter2, cletter]).elements);
+                expect(result.elements[0].elements.get("key")).toEqual(new BrsString("cletter"));
+                expect(result.elements[0].elements.get("value")).toEqual(new BrsString("c"));
+                expect(result.elements[1].elements.get("key")).toEqual(new BrsString("letter1"));
+                expect(result.elements[1].elements.get("value")).toEqual(new BrsString("a"));
+                expect(result.elements[2].elements.get("key")).toEqual(new BrsString("letter2"));
+                expect(result.elements[2].elements.get("value")).toEqual(new BrsString("b"));
             });
 
             it("returns an empty array from an empty associative array", () => {
