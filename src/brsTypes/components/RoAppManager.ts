@@ -10,18 +10,20 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     constructor() {
-        super("roAppManager", ["ifAppManager"]);
-        this.registerMethods([
-            this.getUpTime,
-            this.getScreensaverTimeout,
-            this.updateLasKeyPressTime,
-            this.setUserSignedIn,
-            this.setTheme,
-            this.setThemeAttribute,
-            this.clearThemeAttribute,
-            this.isAppInstalled,
-            this.setAutomaticAudioGuideEnabled,
-        ]);
+        super("roAppManager");
+        this.registerMethods({
+            ifAppManager: [
+                this.getUpTime,
+                this.getScreensaverTimeout,
+                this.updateLasKeyPressTime,
+                this.setUserSignedIn,
+                this.setTheme,
+                this.setThemeAttribute,
+                this.clearThemeAttribute,
+                this.isAppInstalled,
+                this.setAutomaticAudioGuideEnabled,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

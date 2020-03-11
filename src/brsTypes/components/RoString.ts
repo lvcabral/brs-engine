@@ -26,31 +26,37 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     }
 
     constructor(initialValue: BrsString) {
-        super("roString", ["ifString", "ifStringOps", "ifToStr"]);
+        super("roString");
 
         this.intrinsic = initialValue;
-        this.registerMethods([
-            this.setString,
-            this.appendString,
-            this.len,
-            this.left,
-            this.right,
-            this.mid,
-            this.instr,
-            this.replace,
-            this.trim,
-            this.toInt,
-            this.toFloat,
-            this.tokenize,
-            this.split,
-            this.getEntityEncode,
-            this.escape,
-            this.unescape,
-            this.encodeUri,
-            this.decodeUri,
-            this.encodeUriComponent,
-            this.decodeUriComponent,
-        ]);
+        this.registerMethods({
+            ifString: [
+                this.setString,
+                // TODO: getString
+            ],
+            ifStringOps: [
+                this.appendString,
+                this.len,
+                this.left,
+                this.right,
+                this.mid,
+                this.instr,
+                this.replace,
+                this.trim,
+                this.toInt,
+                this.toFloat,
+                this.tokenize,
+                this.split,
+                this.getEntityEncode,
+                this.escape,
+                this.unescape,
+                this.encodeUri,
+                this.decodeUri,
+                this.encodeUriComponent,
+                this.decodeUriComponent,
+            ],
+            // TODO: ifToStr and it's toStr() method
+        });
     }
 
     equalTo(other: BrsType): BrsBoolean {

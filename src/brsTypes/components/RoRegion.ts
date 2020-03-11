@@ -27,7 +27,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private collisionRect: Rect;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
-        super("roRegion", ["ifRegion"]);
+        super("roRegion");
         this.bitmap = bitmap;
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
         this.x = x.getValue();
@@ -42,38 +42,40 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
 
-        this.registerMethods([
-            this.copy,
-            this.getBitmap,
-            this.getCollisionType,
-            this.getHeight,
-            this.getPretranslationX,
-            this.getPretranslationY,
-            this.getScaleMode,
-            this.getTime,
-            this.getWidth,
-            this.getWrap,
-            this.getX,
-            this.getY,
-            this.offset,
-            this.set,
-            this.setCollisionCircle,
-            this.setCollisionRectangle,
-            this.setCollisionType,
-            this.setPretranslation,
-            this.setScaleMode,
-            this.setTime,
-            this.setWrap,
-            this.clear,
-            this.setAlphaEnable,
-            this.drawObject,
-            // this.drawRotatedObject,
-            // this.drawScaledObject,
-            this.drawLine,
-            this.drawPoint,
-            this.drawRect,
-            this.drawText,
-        ]);
+        this.registerMethods({
+            ifRegion: [
+                this.copy,
+                this.getBitmap,
+                this.getCollisionType,
+                this.getHeight,
+                this.getPretranslationX,
+                this.getPretranslationY,
+                this.getScaleMode,
+                this.getTime,
+                this.getWidth,
+                this.getWrap,
+                this.getX,
+                this.getY,
+                this.offset,
+                this.set,
+                this.setCollisionCircle,
+                this.setCollisionRectangle,
+                this.setCollisionType,
+                this.setPretranslation,
+                this.setScaleMode,
+                this.setTime,
+                this.setWrap,
+                this.clear,
+                this.setAlphaEnable,
+                this.drawObject,
+                // this.drawRotatedObject,
+                // this.drawScaledObject,
+                this.drawLine,
+                this.drawPoint,
+                this.drawRect,
+                this.drawText,
+            ],
+        });
     }
     applyOffset(x: number, y: number, width: number, height: number) {
         this.x += x;

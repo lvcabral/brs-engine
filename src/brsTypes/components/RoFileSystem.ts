@@ -16,24 +16,26 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     constructor() {
-        super("roFileSystem", ["ifFileSystem"]);
+        super("roFileSystem");
 
-        this.registerMethods([
-            this.getVolumeList,
-            this.getVolumeInfo,
-            this.getDirectoryListing,
-            this.createDirectory,
-            this.delete,
-            this.copyFile,
-            this.rename,
-            this.find,
-            this.findRecurse,
-            this.match,
-            this.exists,
-            this.stat,
-            this.getMessagePort,
-            this.setMessagePort,
-        ]);
+        this.registerMethods({
+            ifFileSystem: [
+                this.getVolumeList,
+                this.getVolumeInfo,
+                this.getDirectoryListing,
+                this.createDirectory,
+                this.delete,
+                this.copyFile,
+                this.rename,
+                this.find,
+                this.findRecurse,
+                this.match,
+                this.exists,
+                this.stat,
+            ],
+            ifSetMessagePort: [this.setMessagePort],
+            ifGetMessagePort: [this.getMessagePort],
+        });
     }
 
     toString(parent?: BrsType): string {

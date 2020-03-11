@@ -14,33 +14,37 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     constructor();
     constructor(elementsParam: Uint8Array);
     constructor(elementsParam?: Uint8Array) {
-        super("roByteArray", ["ifByteArray", "ifArray"]);
+        super("roByteArray");
         this.elements = elementsParam ? elementsParam : new Uint8Array();
-        this.registerMethods([
-            this.readFile,
-            this.writeFile,
-            this.appendFile,
-            this.setResize,
-            this.fromHexString,
-            this.toHexString,
-            this.fromBase64String,
-            this.toBase64String,
-            this.fromAsciiString,
-            this.toAsciiString,
-            this.getSignedByte,
-            this.getSignedLong,
-            this.getCRC32,
-            this.isLittleEndianCPU,
-            this.peek,
-            this.pop,
-            this.push,
-            this.shift,
-            this.unshift,
-            this.delete,
-            this.count,
-            this.clear,
-            this.append,
-        ]);
+        this.registerMethods({
+            ifByteArray: [
+                this.readFile,
+                this.writeFile,
+                this.appendFile,
+                this.setResize,
+                this.fromHexString,
+                this.toHexString,
+                this.fromBase64String,
+                this.toBase64String,
+                this.fromAsciiString,
+                this.toAsciiString,
+                this.getSignedByte,
+                this.getSignedLong,
+                this.getCRC32,
+                this.isLittleEndianCPU,
+            ],
+            ifArray: [
+                this.peek,
+                this.pop,
+                this.push,
+                this.shift,
+                this.unshift,
+                this.delete,
+                this.count,
+                this.clear,
+                this.append,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

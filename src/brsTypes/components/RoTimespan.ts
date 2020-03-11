@@ -11,18 +11,22 @@ export class RoTimespan extends BrsComponent implements BrsValue {
     private markTime: number;
 
     constructor(markTime?: number) {
-        super("roTimespan", ["ifTimespan"]);
+        super("roTimespan");
         if (markTime) {
             this.markTime = markTime;
         } else {
             this.markTime = Date.now();
         }
-        this.registerMethods([
-            this.mark,
-            this.totalMilliseconds,
-            this.totalSeconds,
-            this.getSecondsToISO8601Date,
-        ]);
+        this.registerMethods({
+            ifTimespan: [
+                this.mark,
+                this.totalMilliseconds,
+                this.totalSeconds,
+                this.getSecondsToISO8601Date,
+            ],
+        });
+
+        this.resetTime();
     }
 
     resetTime() {

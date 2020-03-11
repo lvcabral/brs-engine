@@ -25,15 +25,17 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     private fontRegistry: Map<string, FontMetrics[]>;
 
     constructor(interpreter: Interpreter) {
-        super("roFontRegistry", ["ifFontRegistry"]);
-        this.registerMethods([
-            this.register,
-            this.getFamilies,
-            this.getFont,
-            this.getDefaultFont,
-            this.getDefaultFontSize,
-            // this.get, ---> Deprecated as only needed to roImageCanvas
-        ]);
+        super("roFontRegistry");
+        this.registerMethods({
+            ifFontRegistry: [
+                this.register,
+                this.getFamilies,
+                this.getFont,
+                this.getDefaultFont,
+                this.getDefaultFontSize,
+                // this.get, ---> Deprecated as only needed to roImageCanvas
+            ],
+        });
         this.fontRegistry = new Map();
         this.defaultFontFamily = interpreter.deviceInfo.get("defaultFont");
         this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);

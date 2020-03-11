@@ -11,24 +11,24 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     private elements: BrsType[];
 
     constructor(elements: BrsType[]) {
-        super("roArray", ["ifArray", "ifArrayJoin", "ifArraySort", "ifEnum"]);
+        super("roArray");
         this.elements = elements;
-        this.registerMethods([
-            this.peek,
-            this.pop,
-            this.push,
-            this.shift,
-            this.unshift,
-            this.delete,
-            this.count,
-            this.clear,
-            this.append,
-            this.join,
-            this.sort,
-            this.sortBy,
-            this.reverse,
-            this.isEmpty,
-        ]);
+        this.registerMethods({
+            ifArray: [
+                this.peek,
+                this.pop,
+                this.push,
+                this.shift,
+                this.unshift,
+                this.delete,
+                this.count,
+                this.clear,
+                this.append,
+            ],
+            ifArrayJoin: [this.join],
+            ifArraySort: [this.sort, this.sortBy, this.reverse],
+            ifEnum: [this.isEmpty],
+        });
     }
 
     toString(parent?: BrsType): string {

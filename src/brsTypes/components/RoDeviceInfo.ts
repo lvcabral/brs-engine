@@ -10,38 +10,40 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private port?: RoMessagePort;
 
     constructor() {
-        super("roDeviceInfo", ["ifDeviceInfo"]);
-        this.registerMethods([
-            this.getModel,
-            this.getModelDisplayName,
-            this.getModelType,
-            this.getModelDetails,
-            this.getFriendlyName,
-            this.getVersion,
-            this.getDisplayType,
-            this.getDisplayMode,
-            this.getDisplayAspectRatio,
-            this.getDisplaySize,
-            // this.getDisplayProperties,
-            // this.getSupportedGraphicsResolutions,
-            this.getUIResolution,
-            this.getGraphicsPlatform,
-            this.getChannelClientId,
-            this.getRIDA,
-            this.IsRIDADisabled,
-            this.getCountryCode,
-            this.getUserCountryCode,
-            this.getTimeZone,
-            this.getCurrentLocale,
-            this.getClockFormat,
-            // this.timeSinceLastKeypress,
-            // this.hasFeature,
-            this.getRandomUUID,
-            // this.getGeneralMemoryLevel,
-            this.getIPAddrs,
-            this.getMessagePort,
-            this.setMessagePort,
-        ]);
+        super("roDeviceInfo");
+        this.registerMethods({
+            ifDeviceInfo: [
+                this.getModel,
+                this.getModelDisplayName,
+                this.getModelType,
+                this.getModelDetails,
+                this.getFriendlyName,
+                this.getVersion,
+                this.getDisplayType,
+                this.getDisplayMode,
+                this.getDisplayAspectRatio,
+                this.getDisplaySize,
+                // this.getDisplayProperties,
+                // this.getSupportedGraphicsResolutions,
+                this.getUIResolution,
+                this.getGraphicsPlatform,
+                this.getChannelClientId,
+                this.getRIDA,
+                this.IsRIDADisabled,
+                this.getCountryCode,
+                this.getUserCountryCode,
+                this.getTimeZone,
+                this.getCurrentLocale,
+                this.getClockFormat,
+                // this.timeSinceLastKeypress,
+                // this.hasFeature,
+                this.getRandomUUID,
+                // this.getGeneralMemoryLevel,
+                this.getIPAddrs,
+                this.getMessagePort,
+                this.setMessagePort,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

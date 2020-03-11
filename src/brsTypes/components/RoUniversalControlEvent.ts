@@ -13,14 +13,16 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
         super("roUniversalControlEvent");
         this.key = key;
 
-        this.registerMethods([
-            this.getInt,
-            this.getKey,
-            this.getRemoteID,
-            this.getID,
-            this.isPress,
-            this.getChar,
-        ]);
+        this.registerMethods({
+            ifUniversalControlEvent: [
+                this.getInt,
+                this.getKey,
+                this.getRemoteID,
+                this.getID,
+                this.isPress,
+                this.getChar,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

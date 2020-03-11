@@ -68,7 +68,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 1,
             },
           },
@@ -84,7 +84,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 2,
             },
           },
@@ -134,7 +134,7 @@ Array [
               },
             },
             "value": BrsBoolean {
-              "kind": 1,
+              "kind": 2,
               "value": false,
             },
           },
@@ -246,7 +246,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 1,
               },
             },
@@ -262,7 +262,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 2,
               },
             },
@@ -278,7 +278,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 3,
               },
             },
@@ -330,7 +330,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 4,
               },
             },
@@ -346,7 +346,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 5,
               },
             },
@@ -362,7 +362,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 6,
               },
             },
@@ -473,7 +473,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -489,7 +489,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -505,7 +505,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 3,
           },
         },
@@ -750,7 +750,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -766,7 +766,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -782,7 +782,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 3,
           },
         },
@@ -875,7 +875,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -891,7 +891,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -907,7 +907,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 3,
           },
         },
@@ -1000,7 +1000,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -1016,7 +1016,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -1032,7 +1032,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 3,
           },
         },
