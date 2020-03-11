@@ -68,7 +68,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 3,
         },
       },
@@ -161,7 +161,7 @@ Array [
           },
         },
         "value": BrsString {
-          "kind": 2,
+          "kind": 3,
           "value": "lorem",
         },
       },
@@ -254,7 +254,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 4,
         },
       },
@@ -347,7 +347,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 6,
         },
       },
@@ -440,7 +440,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 7,
         },
       },
@@ -533,7 +533,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -626,7 +626,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 1,
         },
       },

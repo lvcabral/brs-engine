@@ -31,7 +31,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         width?: Int32,
         height?: Int32
     ) {
-        super("roScreen", ["ifScreen", "ifDraw2D", "ifGetMessagePort", "ifSetMessagePort"]);
+        super("roScreen");
         let defaultWidth, defaultHeight;
         if (interpreter.deviceInfo.get("displayMode") === "1080p") {
             defaultWidth = 1920;
@@ -66,27 +66,29 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas[index].height = this.height;
         }
         this.alphaEnable = false;
-        this.registerMethods([
-            this.swapBuffers,
-            this.clear,
-            this.drawObject,
-            this.drawRotatedObject,
-            this.drawScaledObject,
-            this.drawLine,
-            this.drawPoint,
-            this.drawRect,
-            this.drawText,
-            this.finish,
-            this.getAlphaEnable,
-            this.setAlphaEnable,
-            this.getByteArray,
-            this.getPng,
-            this.getWidth,
-            this.getHeight,
-            this.getMessagePort,
-            this.setMessagePort,
-            this.setPort,
-        ]);
+        // , ["", "", "ifGetMessagePort", "ifSetMessagePort"]
+        this.registerMethods({
+            ifScreen: [this.swapBuffers],
+            ifDraw2D: [
+                this.clear,
+                this.drawObject,
+                this.drawRotatedObject,
+                this.drawScaledObject,
+                this.drawLine,
+                this.drawPoint,
+                this.drawRect,
+                this.drawText,
+                this.finish,
+                this.getAlphaEnable,
+                this.setAlphaEnable,
+                this.getByteArray,
+                this.getPng,
+                this.getWidth,
+                this.getHeight,
+            ],
+            ifSetMessagePort: [this.setMessagePort, this.setPort],
+            ifGetMessagePort: [this.getMessagePort],
+        });
     }
     getCanvas(): OffscreenCanvas {
         return this.canvas[this.currentBuffer];

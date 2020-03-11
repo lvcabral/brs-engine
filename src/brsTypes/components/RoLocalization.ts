@@ -11,9 +11,9 @@ export class RoLocalization extends BrsComponent implements BrsValue {
 
     // Constructor can only be used by RoFontRegistry()
     constructor(interpreter: Interpreter) {
-        super("roLocalization", ["ifLocalization"]);
+        super("roLocalization");
         this.locale = interpreter.deviceInfo.get("locale");
-        this.registerMethods([this.getPluralString, this.getLocalizedAsset]);
+        this.registerMethods({ ifLocalization: [this.getPluralString, this.getLocalizedAsset] });
     }
 
     toString(parent?: BrsType): string {

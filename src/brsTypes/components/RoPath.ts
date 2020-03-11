@@ -17,7 +17,7 @@ export class RoPath extends BrsComponent implements BrsValue {
     private check: RegExp;
 
     constructor(pathName: BrsString) {
-        super("roPath", ["ifPath"]); // TODO: Implement ifString
+        super("roPath"); // TODO: Implement ifString
         // TODO: Validate path
         this.parsedUrl = new URL(pathName.value);
         this.check = new RegExp(/^([a-zA-Z]:)?(\/[^<>:"/\/|?*]+)+\/?$/, "i");
@@ -29,7 +29,7 @@ export class RoPath extends BrsComponent implements BrsValue {
             this.valid = true;
         }
         this.parsedPath = pathParse(this.parsedUrl.pathname);
-        this.registerMethods([this.change, this.isValid, this.split]);
+        this.registerMethods({ ifPath: [this.change, this.isValid, this.split] });
     }
 
     toString(parent?: BrsType): string {

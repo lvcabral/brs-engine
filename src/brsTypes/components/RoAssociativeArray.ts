@@ -19,23 +19,25 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     elements = new Map<string, BrsType>();
 
     constructor(elements: AAMember[]) {
-        super("roAssociativeArray", ["ifAssociativeArray", "ifEnum"]);
+        super("roAssociativeArray");
         elements.forEach(member =>
             this.elements.set(member.name.value.toLowerCase(), member.value)
         );
 
-        this.registerMethods([
-            this.clear,
-            this.delete,
-            this.addreplace,
-            this.count,
-            this.doesexist,
-            this.append,
-            this.keys,
-            this.items,
-            this.lookup,
-            this.isEmpty,
-        ]);
+        this.registerMethods({
+            ifAssociativeArray: [
+                this.clear,
+                this.delete,
+                this.addreplace,
+                this.count,
+                this.doesexist,
+                this.append,
+                this.keys,
+                this.items,
+                this.lookup,
+            ],
+            ifEnum: [this.isEmpty],
+        });
     }
 
     toString(parent?: BrsType): string {

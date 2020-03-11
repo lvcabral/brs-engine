@@ -17,7 +17,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -33,7 +33,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -188,7 +188,7 @@ Array [
                 },
               },
               "value": BrsString {
-                "kind": 2,
+                "kind": 3,
                 "value": "bob",
               },
             },
@@ -230,7 +230,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -301,7 +301,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -377,7 +377,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -448,7 +448,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,

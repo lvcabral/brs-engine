@@ -75,7 +75,7 @@ Array [
               "elements": Array [
                 Object {
                   "name": BrsString {
-                    "kind": 2,
+                    "kind": 3,
                     "value": "end",
                   },
                   "value": Literal {
@@ -91,7 +91,7 @@ Array [
                       },
                     },
                     "value": BrsBoolean {
-                      "kind": 1,
+                      "kind": 2,
                       "value": true,
                     },
                   },
@@ -153,7 +153,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -251,7 +251,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -341,7 +341,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -383,7 +383,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -548,7 +548,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -603,7 +603,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -658,7 +658,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -713,7 +713,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -768,7 +768,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -823,7 +823,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -878,7 +878,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -933,7 +933,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -988,7 +988,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1043,7 +1043,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1098,7 +1098,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1153,7 +1153,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1208,7 +1208,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1263,7 +1263,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1318,7 +1318,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1373,7 +1373,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1428,7 +1428,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1483,7 +1483,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1538,7 +1538,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1593,7 +1593,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1648,7 +1648,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1703,7 +1703,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1758,7 +1758,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1813,7 +1813,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1868,7 +1868,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1923,7 +1923,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1978,7 +1978,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2033,7 +2033,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2088,7 +2088,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2143,7 +2143,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2198,7 +2198,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2253,7 +2253,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2308,7 +2308,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2363,7 +2363,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2418,7 +2418,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2473,7 +2473,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2528,7 +2528,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2583,7 +2583,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2638,7 +2638,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2693,7 +2693,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2748,7 +2748,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2803,7 +2803,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2858,7 +2858,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2913,7 +2913,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2968,7 +2968,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3023,7 +3023,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3078,7 +3078,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3133,7 +3133,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3188,7 +3188,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3243,7 +3243,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3298,7 +3298,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3353,7 +3353,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3395,7 +3395,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -3485,7 +3485,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3540,7 +3540,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3595,7 +3595,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3650,7 +3650,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3705,7 +3705,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3760,7 +3760,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3815,7 +3815,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3870,7 +3870,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3912,7 +3912,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,

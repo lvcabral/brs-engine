@@ -42,12 +42,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
 
     // Constructor can only be used by RoFontRegistry()
     constructor(interpreter: Interpreter) {
-        super("roUrlTransfer", [
-            "ifUrlTransfer",
-            "ifHttpAgent",
-            "ifSetMessagePort",
-            "ifGetMessagePort",
-        ]);
+        super("roUrlTransfer");
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
         this.reqMethod = "";
@@ -60,51 +55,53 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
         this.interpreter = interpreter;
-        this.registerMethods([
-            this.getIdentity,
-            this.setUrl,
-            this.getUrl,
-            this.setRequest,
-            this.getRequest,
-            this.getToString,
-            this.getToFile,
-            this.asyncGetToString,
-            this.asyncGetToFile,
-            this.asyncCancel,
-            this.head,
-            this.asyncHead,
-            this.postFromString,
-            this.postFromFile,
-            this.asyncPostFromString,
-            this.asyncPostFromFile,
-            this.asyncPostFromFileToFile,
-            this.retainBodyOnError,
-            this.setUserAndPassword,
-            // this.setMinimumTransferRate,
-            this.getFailureReason,
-            this.escape,
-            this.unescape,
-            this.urlEncode,
-            this.enableEncodings,
-            // this.enableResume,
-            // this.enablePeerVerification,
-            // this.enableHostVerification,
-            this.enableFreshConnection,
-            // this.setHttpVersion,
-            this.addHeader,
-            this.setHeaders,
-            this.initClientCertificates,
-            this.setCertificatesFile,
-            // this.setCertificatesDepth,
-            this.enableCookies,
-            // this.getCookies,
-            // this.addCookies,
-            // this.clearCookies,
-            this.getMessagePort,
-            this.getPort,
-            this.setMessagePort,
-            this.setPort,
-        ]);
+        this.registerMethods({
+            ifUrlTransfer: [
+                this.getIdentity,
+                this.setUrl,
+                this.getUrl,
+                this.setRequest,
+                this.getRequest,
+                this.getToString,
+                this.getToFile,
+                this.asyncGetToString,
+                this.asyncGetToFile,
+                this.asyncCancel,
+                this.head,
+                this.asyncHead,
+                this.postFromString,
+                this.postFromFile,
+                this.asyncPostFromString,
+                this.asyncPostFromFile,
+                this.asyncPostFromFileToFile,
+                this.retainBodyOnError,
+                this.setUserAndPassword,
+                // this.setMinimumTransferRate,
+                this.getFailureReason,
+                this.escape,
+                this.unescape,
+                this.urlEncode,
+                this.enableEncodings,
+                // this.enableResume,
+                // this.enablePeerVerification,
+                // this.enableHostVerification,
+                this.enableFreshConnection,
+                // this.setHttpVersion,
+            ],
+            ifHttpAgent: [
+                this.addHeader,
+                this.setHeaders,
+                this.initClientCertificates,
+                this.setCertificatesFile,
+                // this.setCertificatesDepth,
+                this.enableCookies,
+                // this.getCookies,
+                // this.addCookies,
+                // this.clearCookies,
+            ],
+            ifSetMessagePort: [this.setMessagePort, this.setPort],
+            ifGetMessagePort: [this.getMessagePort, this.getPort],
+        });
     }
     getConnection(methodParam: string, typeParam: XMLHttpRequestResponseType) {
         if (this.freshConnection) {

@@ -14,15 +14,17 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
         super("roChannelStoreEvent");
         this.id = id;
         this.response = response;
-        this.registerMethods([
-            this.isRequestSucceeded,
-            this.isRequestFailed,
-            this.getSourceIdentity,
-            this.getResponse,
-            this.getStatus,
-            this.getStatusMessage,
-            this.isRequestInterrupted,
-        ]);
+        this.registerMethods({
+            ifChannelStoreEvent: [
+                this.isRequestSucceeded,
+                this.isRequestFailed,
+                this.getSourceIdentity,
+                this.getResponse,
+                this.getStatus,
+                this.getStatusMessage,
+                this.isRequestInterrupted,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

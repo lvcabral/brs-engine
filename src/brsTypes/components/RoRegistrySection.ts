@@ -13,19 +13,21 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     readonly devId: string;
 
     constructor(interpreter: Interpreter, section: BrsString) {
-        super("roRegistrySection", ["ifRegistrySection"]);
+        super("roRegistrySection");
         this.section = section.value;
         this.devId = interpreter.deviceInfo.get("developerId");
-        this.registerMethods([
-            this.read,
-            this.readMulti,
-            this.write,
-            this.writeMulti,
-            this.delete,
-            this.exists,
-            this.flush,
-            this.getKeyList,
-        ]);
+        this.registerMethods({
+            ifRegistrySection: [
+                this.read,
+                this.readMulti,
+                this.write,
+                this.writeMulti,
+                this.delete,
+                this.exists,
+                this.flush,
+                this.getKeyList,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

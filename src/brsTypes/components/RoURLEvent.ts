@@ -23,16 +23,18 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         this.headers = headers;
         this.targetIp = "";
 
-        this.registerMethods([
-            this.getInt,
-            this.getResponseCode,
-            this.getFailureReason,
-            this.getString,
-            this.getSourceIdentity,
-            this.getResponseHeaders,
-            this.getResponseHeadersArray,
-            this.getTargetIpAddress,
-        ]);
+        this.registerMethods({
+            ifUrlEvent: [
+                this.getInt,
+                this.getResponseCode,
+                this.getFailureReason,
+                this.getString,
+                this.getSourceIdentity,
+                this.getResponseHeaders,
+                this.getResponseHeadersArray,
+                this.getTargetIpAddress,
+            ],
+        });
     }
 
     getStatus() {

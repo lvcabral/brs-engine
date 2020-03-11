@@ -50,7 +50,7 @@ Array [
           },
         },
         "value": BrsBoolean {
-          "kind": 1,
+          "kind": 2,
           "value": true,
         },
       },
@@ -66,7 +66,7 @@ Array [
           },
         },
         "value": BrsBoolean {
-          "kind": 1,
+          "kind": 2,
           "value": false,
         },
       },
@@ -141,7 +141,7 @@ Array [
           },
         },
         "value": BrsBoolean {
-          "kind": 1,
+          "kind": 2,
           "value": true,
         },
       },
@@ -157,7 +157,7 @@ Array [
           },
         },
         "value": BrsBoolean {
-          "kind": 1,
+          "kind": 2,
           "value": false,
         },
       },

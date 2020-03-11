@@ -1,7 +1,6 @@
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { RoArray } from "../brsTypes/components/RoArray";
 import { Interpreter } from "../interpreter";
-import { Literal } from "../parser/Expression";
 
 import {
     BrsBoolean,
@@ -111,6 +110,7 @@ function jsonOf(
             break;
         case ValueKind.Callable:
         case ValueKind.Uninitialized:
+        case ValueKind.Interface:
             break;
         default:
             // Exhaustive check as per:

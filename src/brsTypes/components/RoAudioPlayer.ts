@@ -11,27 +11,28 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     private contentList: RoAssociativeArray[];
 
     constructor() {
-        super("roAudioPlayer", ["ifAudioPlayer", "ifGetMessagePort", "ifSetMessagePort"]);
+        super("roAudioPlayer");
         this.contentList = new Array();
         postMessage(new Array<string>());
         postMessage("loop,false");
         postMessage("next,-1");
-        this.registerMethods([
-            this.setContentList,
-            this.addContent,
-            this.clearContent,
-            this.play,
-            this.stop,
-            this.pause,
-            this.resume,
-            this.setLoop,
-            this.setNext,
-            this.seek,
-            //this.setTimedMetadataForKeys,
-            this.setMessagePort,
-            this.setPort,
-            this.getMessagePort,
-        ]);
+        this.registerMethods({
+            ifAudioPlayer: [
+                this.setContentList,
+                this.addContent,
+                this.clearContent,
+                this.play,
+                this.stop,
+                this.pause,
+                this.resume,
+                this.setLoop,
+                this.setNext,
+                this.seek,
+                //this.setTimedMetadataForKeys,
+            ],
+            ifSetMessagePort: [this.setMessagePort, this.setPort],
+            ifGetMessagePort: [this.getMessagePort],
+        });
     }
 
     toString(parent?: BrsType): string {

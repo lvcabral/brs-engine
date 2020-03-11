@@ -15,30 +15,32 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     constructor() {
-        super("roChannelStore", ["ifChannelStore"]);
+        super("roChannelStore");
         this.id = Math.floor(Math.random() * 100) + 1;
         this.order = [];
         this.credData = "";
-        this.registerMethods([
-            this.getIdentity,
-            this.getCatalog,
-            this.getStoreCatalog,
-            this.getPurchases,
-            this.setOrder,
-            this.clearOrder,
-            this.deltaOrder,
-            this.getOrder,
-            this.doOrder,
-            this.fakeServer,
-            this.getUserData,
-            this.getPartialUserData,
-            this.storeChannelCredData,
-            this.getChannelCred,
-            // this.requestPartnerOrder,
-            // this.confirmPartnerOrder,
-            this.getMessagePort,
-            this.setMessagePort,
-        ]);
+        this.registerMethods({
+            ifChannelStore: [
+                this.getIdentity,
+                this.getCatalog,
+                this.getStoreCatalog,
+                this.getPurchases,
+                this.setOrder,
+                this.clearOrder,
+                this.deltaOrder,
+                this.getOrder,
+                this.doOrder,
+                this.fakeServer,
+                this.getUserData,
+                this.getPartialUserData,
+                this.storeChannelCredData,
+                this.getChannelCred,
+                // this.requestPartnerOrder,
+                // this.confirmPartnerOrder,
+            ],
+            ifSetMessagePort: [this.setMessagePort],
+            ifGetMessagePort: [this.getMessagePort],
+        });
     }
 
     toString(parent?: BrsType): string {

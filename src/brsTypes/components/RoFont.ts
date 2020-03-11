@@ -22,20 +22,22 @@ export class RoFont extends BrsComponent implements BrsValue {
         italic: BrsBoolean,
         metrics: FontMetrics
     ) {
-        super("roFont", ["ifFont"]);
+        super("roFont");
         this.family = family.value;
         this.size = size.getValue();
         this.bold = bold.toBoolean();
         this.italic = italic.toBoolean();
         this.metrics = metrics;
 
-        this.registerMethods([
-            this.getOneLineHeight,
-            this.getOneLineWidth,
-            this.getAscent,
-            this.getDescent,
-            this.getMaxAdvance,
-        ]);
+        this.registerMethods({
+            ifFont: [
+                this.getOneLineHeight,
+                this.getOneLineWidth,
+                this.getAscent,
+                this.getDescent,
+                this.getMaxAdvance,
+            ],
+        });
     }
 
     getTopAdjust(): number {

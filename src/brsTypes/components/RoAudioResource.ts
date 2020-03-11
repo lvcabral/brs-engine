@@ -19,7 +19,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     private valid: boolean;
 
     constructor(interpreter: Interpreter, name: BrsString) {
-        super("roAudioResource", ["ifAudioResource"]);
+        super("roAudioResource");
         Object.freeze(this.type);
         this.maxStreams = interpreter.deviceInfo.get("maxSimulStreams");
         this.valid = true;
@@ -51,7 +51,9 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         this.audioName = name.value;
         this.currentIndex = 0;
         this.playing = false;
-        this.registerMethods([this.trigger, this.isPlaying, this.stop, this.maxSimulStreams]);
+        this.registerMethods({
+            ifAudioResource: [this.trigger, this.isPlaying, this.stop, this.maxSimulStreams],
+        });
     }
 
     toString(parent?: BrsType): string {
