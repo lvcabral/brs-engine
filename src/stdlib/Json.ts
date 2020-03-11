@@ -14,6 +14,7 @@ import {
     ValueKind,
     StdlibArgument,
 } from "../brsTypes";
+import { isUnboxable } from "../brsTypes/Boxing";
 
 /**
  * Converts a value to its representation as a BrsType. If no such
@@ -106,6 +107,9 @@ function jsonOf(
                         return jsonOf(interpreter, el, visited);
                     })
                     .join(",")}]`;
+            }
+            if (isUnboxable(x)) {
+                return jsonOf(interpreter, x.unbox(), visited);
             }
             break;
         case ValueKind.Callable:
