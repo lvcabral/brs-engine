@@ -2,11 +2,11 @@ import { BrsComponent } from "./components/BrsComponent";
 import { BrsValue, BrsType, ValueKind } from "./";
 
 export interface Boxable {
-    box(): BrsComponent;
+    box(): BrsType;
 }
 
 export interface Unboxable {
-    unbox(): BrsValue;
+    unbox(): BrsType;
 }
 
 export function isBoxable(value: BrsType): value is BrsType & Boxable {
