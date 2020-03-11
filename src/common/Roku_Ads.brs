@@ -24,9 +24,11 @@ function Roku_Ads() as object
     end sub
     this.enableAdMeasurements = sub(enable)
     end sub
-    return this
     this.setAdBufferScreenLayer = sub(zOrder,content)
     end sub
     this.enableAdBufferMessaging = sub(enableMsg, enablePB)
     end sub
+    this.setAdPrefs = sub(useRokuAdsAsFallback, maxRequests)
+    end sub
+    return this
 end function
