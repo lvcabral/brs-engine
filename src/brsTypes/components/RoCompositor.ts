@@ -19,22 +19,24 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     private spriteId: number;
 
     constructor() {
-        super("roCompositor", ["ifCompositor"]);
+        super("roCompositor");
         this.canvas = new OffscreenCanvas(10, 10);
         let context = this.canvas.getContext("2d", {
             alpha: true,
         }) as OffscreenCanvasRenderingContext2D;
         this.context = context;
         this.spriteId = 0;
-        this.registerMethods([
-            this.setDrawTo,
-            this.draw,
-            this.drawAll,
-            this.newSprite,
-            this.newAnimatedSprite,
-            this.animationTick,
-            // this.changeMatchingRegions,
-        ]);
+        this.registerMethods({
+            ifCompositor: [
+                this.setDrawTo,
+                this.draw,
+                this.drawAll,
+                this.newSprite,
+                this.newAnimatedSprite,
+                this.animationTick,
+                // this.changeMatchingRegions,
+            ],
+        });
     }
 
     setSpriteZ(id: number, currentZ: number, newZ: number) {

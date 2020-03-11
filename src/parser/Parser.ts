@@ -1350,34 +1350,44 @@ export class Parser {
         function call(): Expression {
             let expr = primary();
 
+            function indexedGet() {
+                while (match(Lexeme.Newline));
+
+                let index = expression();
+
+                while (match(Lexeme.Newline));
+                let closingSquare = consume(
+                    "Expected ']' after array or object index",
+                    Lexeme.RightSquare
+                );
+
+                expr = new Expr.IndexedGet(expr, index, closingSquare);
+            }
+
+            function dottedGet() {}
+
             while (true) {
                 if (match(Lexeme.LeftParen)) {
                     expr = finishCall(expr);
                 } else if (match(Lexeme.LeftSquare)) {
-                    while (match(Lexeme.Newline));
-
-                    let index = expression();
-
-                    while (match(Lexeme.Newline));
-                    let closingSquare = consume(
-                        "Expected ']' after array or object index",
-                        Lexeme.RightSquare
-                    );
-
-                    expr = new Expr.IndexedGet(expr, index, closingSquare);
+                    indexedGet();
                 } else if (match(Lexeme.Dot)) {
-                    while (match(Lexeme.Newline));
+                    if (match(Lexeme.LeftSquare)) {
+                        indexedGet();
+                    } else {
+                        while (match(Lexeme.Newline));
 
-                    let name = consume(
-                        "Expected property name after '.'",
-                        Lexeme.Identifier,
-                        ...allowedProperties
-                    );
+                        let name = consume(
+                            "Expected property name after '.'",
+                            Lexeme.Identifier,
+                            ...allowedProperties
+                        );
 
-                    // force it into an identifier so the AST makes some sense
-                    name.kind = Lexeme.Identifier;
+                        // force it into an identifier so the AST makes some sense
+                        name.kind = Lexeme.Identifier;
 
-                    expr = new Expr.DottedGet(expr, name as Identifier);
+                        expr = new Expr.DottedGet(expr, name as Identifier);
+                    }
                 } else {
                     break;
                 }

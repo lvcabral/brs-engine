@@ -7,6 +7,7 @@ import { roBoolean } from "./components/RoBoolean";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
+    Interface,
     Invalid,
     Boolean,
     String,
@@ -28,6 +29,8 @@ export namespace ValueKind {
      */
     export function toString(kind: ValueKind): string {
         switch (kind) {
+            case ValueKind.Interface:
+                return "Interface";
             case ValueKind.Invalid:
                 return "Invalid";
             case ValueKind.Boolean:
@@ -62,6 +65,8 @@ export namespace ValueKind {
      */
     export function fromString(kind: string): ValueKind | undefined {
         switch (kind.toLowerCase()) {
+            case "interface":
+                return ValueKind.Interface;
             case "invalid":
                 return ValueKind.Invalid;
             case "boolean":

@@ -50,7 +50,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -66,7 +66,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 2,
         },
       },
@@ -141,7 +141,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -157,7 +157,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 2,
         },
       },
@@ -232,7 +232,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -248,7 +248,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 2,
         },
       },
@@ -323,7 +323,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -339,7 +339,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 2,
         },
       },
@@ -414,7 +414,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -430,7 +430,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 2,
         },
       },
@@ -505,7 +505,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -521,7 +521,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 2,
         },
       },

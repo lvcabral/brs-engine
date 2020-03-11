@@ -12,31 +12,33 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     readonly kind = ValueKind.Object;
     private parsedXML: any;
     constructor() {
-        super("roXMLElement", ["ifXMLElement"]);
+        super("roXMLElement");
         this.parsedXML = { root: {} };
-        this.registerMethods([
-            this.parse,
-            this.getBody,
-            this.getAttributes,
-            this.getName,
-            this.getText,
-            this.getChildElements,
-            this.getChildNodes,
-            this.getNamedElements,
-            this.getNamedElementsCi,
-            this.genXML,
-            this.genXMLHdr,
-            this.isName,
-            this.hasAttribute,
-            this.setBody,
-            this.addBodyElement,
-            this.addElement,
-            this.addElementWithBody,
-            this.addText,
-            this.addAttribute,
-            this.setName,
-            this.clear,
-        ]);
+        this.registerMethods({
+            ifXMLElement: [
+                this.parse,
+                this.getBody,
+                this.getAttributes,
+                this.getName,
+                this.getText,
+                this.getChildElements,
+                this.getChildNodes,
+                this.getNamedElements,
+                this.getNamedElementsCi,
+                this.genXML,
+                this.genXMLHdr,
+                this.isName,
+                this.hasAttribute,
+                this.setBody,
+                this.addBodyElement,
+                this.addElement,
+                this.addElementWithBody,
+                this.addText,
+                this.addAttribute,
+                this.setName,
+                this.clear,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

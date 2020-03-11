@@ -3,6 +3,8 @@ sub main()
     r = createObject("RoString", "foo")
 
     s = "bar"
+    print s.getString() ' => "bar"
+    print s.toStr() ' => "bar" (again)
 
     r.setString("boo!", 1)
     r.appendString("ar", 10)

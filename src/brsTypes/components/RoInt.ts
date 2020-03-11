@@ -15,10 +15,16 @@ export class roInt extends BrsComponent implements BrsValue, Unboxable {
     }
 
     constructor(initialValue: Int32) {
-        super("roInt", ["ifInt", "ifIntOps", "ifToStr"]);
+        super("roInt");
 
         this.intrinsic = initialValue;
-        this.registerMethods([this.getInt, this.setInt, this.toStr]);
+        this.registerMethods({
+            ifInt: [this.getInt, this.setInt],
+            ifToStr: [this.toStr],
+            // Per https://developer.roku.com/docs/references/brightscript/interfaces/ifintops.md,
+            // ifIntOps _also_ implements toStr()
+            ifIntOps: [this.toStr],
+        });
     }
 
     unbox() {

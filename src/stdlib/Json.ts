@@ -1,7 +1,6 @@
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { RoArray } from "../brsTypes/components/RoArray";
 import { Interpreter } from "../interpreter";
-import { Literal } from "../parser/Expression";
 
 import {
     BrsBoolean,
@@ -15,6 +14,7 @@ import {
     ValueKind,
     StdlibArgument,
 } from "../brsTypes";
+import { isUnboxable } from "../brsTypes/Boxing";
 
 /**
  * Converts a value to its representation as a BrsType. If no such
@@ -108,9 +108,13 @@ function jsonOf(
                     })
                     .join(",")}]`;
             }
+            if (isUnboxable(x)) {
+                return jsonOf(interpreter, x.unbox(), visited);
+            }
             break;
         case ValueKind.Callable:
         case ValueKind.Uninitialized:
+        case ValueKind.Interface:
             break;
         default:
             // Exhaustive check as per:

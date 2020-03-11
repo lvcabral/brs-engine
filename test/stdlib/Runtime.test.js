@@ -2,6 +2,7 @@ const brs = require("brs");
 const {
     RoAssociativeArray,
     RoArray,
+    BrsInterface,
     BrsInvalid,
     BrsBoolean,
     BrsString,
@@ -32,6 +33,7 @@ describe("global runtime functions", () => {
     describe("Type", () => {
         describe("version 3", () => {
             [
+                { value: new BrsInterface("ifArray", []), type: "ifArray" },
                 { value: BrsInvalid.Instance, type: "Invalid" },
                 { value: BrsBoolean.False, type: "Boolean" },
                 { value: new BrsString("foo"), type: "String" },
@@ -54,6 +56,7 @@ describe("global runtime functions", () => {
 
         describe("not version 3", () => {
             [
+                { value: new BrsInterface("ifArray", []), type: "ifArray" },
                 { value: BrsInvalid.Instance, type: "Invalid" },
                 { value: BrsBoolean.False, type: "Boolean" },
                 { value: new BrsString("foo"), type: "String" },

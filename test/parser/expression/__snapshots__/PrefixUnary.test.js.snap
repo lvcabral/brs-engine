@@ -134,7 +134,7 @@ Array [
                   },
                 },
                 "value": Int32 {
-                  "kind": 3,
+                  "kind": 4,
                   "value": 5,
                 },
               },
@@ -281,7 +281,7 @@ Array [
                   },
                 },
                 "value": BrsBoolean {
-                  "kind": 1,
+                  "kind": 2,
                   "value": true,
                 },
               },
@@ -360,7 +360,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 5,
         },
       },
@@ -435,7 +435,7 @@ Array [
           },
         },
         "value": BrsBoolean {
-          "kind": 1,
+          "kind": 2,
           "value": true,
         },
       },

@@ -51,7 +51,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -67,7 +67,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -100,7 +100,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 3,
         },
       },
@@ -176,7 +176,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -192,7 +192,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -225,7 +225,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 3,
         },
       },

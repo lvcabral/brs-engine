@@ -189,7 +189,6 @@ onmessage = function(event) {
 export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
     const executionOptions = Object.assign(defaultExecutionOptions, interpreter.options);
 
-    let manifest = PP.getManifestSync(executionOptions.root);
     let volume = interpreter.fileSystem.get("pkg:") as FileSystem;
 
     return filenames
@@ -197,7 +196,7 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
             let contents = volume.readFileSync(filename, "utf8");
             let scanResults = Lexer.scan(contents, filename);
             let preprocessor = new PP.Preprocessor();
-            let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
+            let preprocessorResults = preprocessor.preprocess(scanResults.tokens);
             return Parser.parse(preprocessorResults.processedTokens).statements;
         })
         .reduce((allStatements, statements) => [...allStatements, ...statements], []);

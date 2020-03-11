@@ -9,8 +9,8 @@ export class RoRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     constructor() {
-        super("roRegistry", ["ifRegistry"]);
-        this.registerMethods([this.delete, this.flush, this.getSectionList]);
+        super("roRegistry");
+        this.registerMethods({ ifRegistry: [this.delete, this.flush, this.getSectionList] });
     }
 
     toString(parent?: BrsType): string {

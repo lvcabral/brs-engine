@@ -28,21 +28,23 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 this.message = "";
                 break;
         }
-        this.registerMethods([
-            this.getIndex,
-            this.getMessage,
-            this.getInfo,
-            this.getData,
-            this.isListItemSelected,
-            this.isFullResult,
-            this.isPartialResult,
-            this.isRequestSucceeded,
-            this.isRequestFailed,
-            this.isPaused,
-            this.isResumed,
-            this.isStatusMessage,
-            this.isTimedMetadata,
-        ]);
+        this.registerMethods({
+            ifAudioPlayerEvent: [
+                this.getIndex,
+                this.getMessage,
+                this.getInfo,
+                this.getData,
+                this.isListItemSelected,
+                this.isFullResult,
+                this.isPartialResult,
+                this.isRequestSucceeded,
+                this.isRequestFailed,
+                this.isPaused,
+                this.isResumed,
+                this.isStatusMessage,
+                this.isTimedMetadata,
+            ],
+        });
     }
 
     toString(parent?: BrsType): string {

@@ -30,7 +30,7 @@ Array [
                 },
               },
               "value": BrsString {
-                "kind": 2,
+                "kind": 3,
                 "value": "looping",
               },
             },
@@ -88,7 +88,7 @@ Array [
         },
       },
       "value": BrsBoolean {
-        "kind": 1,
+        "kind": 2,
         "value": true,
       },
     },
@@ -160,7 +160,7 @@ Array [
                 },
               },
               "value": BrsString {
-                "kind": 2,
+                "kind": 3,
                 "value": "looping",
               },
             },
@@ -198,7 +198,7 @@ Array [
         },
       },
       "value": BrsBoolean {
-        "kind": 1,
+        "kind": 2,
         "value": true,
       },
     },
