@@ -109,7 +109,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
     "name": Object {
       "isReserved": false,
@@ -170,7 +170,7 @@ Array [
             "value": Literal {
               "_location": undefined,
               "value": BrsString {
-                "kind": 2,
+                "kind": 3,
                 "value": "test",
               },
             },
@@ -210,7 +210,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
     "name": Object {
       "isReserved": false,
@@ -305,7 +305,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
     "name": Object {
       "isReserved": false,

@@ -118,4 +118,12 @@ describe("end to end standard libary", () => {
             "2",
         ]);
     });
+
+    test("stdlib/global-utilities.brs", async () => {
+        await execute([resourceFile("stdlib", "global-utilities.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "<Interface: ifFloat>",
+        ]);
+    });
 });

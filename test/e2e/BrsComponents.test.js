@@ -59,6 +59,10 @@ describe("end to end brightscript functions", () => {
             "true",
             "can check for existence: ",
             "true",
+            "items() example key: ",
+            "bar",
+            "items() example value: ",
+            "5",
             "can empty itself: ",
             "true",
         ]);
@@ -151,6 +155,8 @@ describe("end to end brightscript functions", () => {
 
         expect(allArgs(outputStreams.stderr.write)).toEqual([]);
         expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "bar",
+            "bar",
             "true", // comparison
             "5", // length
             "b", // split("/")[1]

@@ -4,7 +4,6 @@ import { Token } from "../lexer";
 
 import { Parser } from "./Parser";
 import { Preprocessor as InternalPreprocessor, FilterResults } from "./Preprocessor";
-import { Manifest, getBsConst } from "./Manifest";
 
 export class Preprocessor {
     private parser = new Parser();
@@ -46,7 +45,7 @@ export class Preprocessor {
      * @param manifest the data stored in the found manifest file
      * @returns an array of processed tokens representing a subset of the provided ones
      */
-    preprocess(tokens: ReadonlyArray<Token>, manifest: Manifest): FilterResults {
+    preprocess(tokens: ReadonlyArray<Token>): FilterResults {
         let parserResults = this.parser.parse(tokens);
         if (parserResults.errors.length > 0) {
             return {
@@ -55,7 +54,7 @@ export class Preprocessor {
             };
         }
 
-        return this._preprocessor.filter(parserResults.chunks, getBsConst(manifest));
+        return this._preprocessor.filter(parserResults.chunks);
     }
 }
 
@@ -64,4 +63,3 @@ import { BrsError } from "../Error";
 import { ParseError } from "../parser";
 export { Chunk };
 export { Parser } from "./Parser";
-export { getManifest, getManifestSync, getBsConst, Manifest } from "./Manifest";

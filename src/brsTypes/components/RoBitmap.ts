@@ -27,7 +27,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private valid: boolean;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
-        super("roBitmap", ["ifDraw2D"]);
+        super("roBitmap");
         let width = 300;
         let height = 150;
         let image;
@@ -119,23 +119,25 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             }
         }
 
-        this.registerMethods([
-            this.clear,
-            this.drawObject,
-            this.drawRotatedObject,
-            this.drawScaledObject,
-            this.drawLine,
-            this.drawPoint,
-            this.drawRect,
-            this.drawText,
-            this.finish,
-            this.getAlphaEnable,
-            this.setAlphaEnable,
-            this.getByteArray,
-            this.getPng,
-            this.getWidth,
-            this.getHeight,
-        ]);
+        this.registerMethods({
+            ifDraw2D: [
+                this.clear,
+                this.drawObject,
+                this.drawRotatedObject,
+                this.drawScaledObject,
+                this.drawLine,
+                this.drawPoint,
+                this.drawRect,
+                this.drawText,
+                this.finish,
+                this.getAlphaEnable,
+                this.setAlphaEnable,
+                this.getByteArray,
+                this.getPng,
+                this.getWidth,
+                this.getHeight,
+            ],
+        });
     }
 
     clearCanvas(rgba: number) {

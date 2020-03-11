@@ -13,26 +13,30 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     private elements: LinkedList<RoXMLElement>;
 
     constructor() {
-        super("roXMLList", ["ifXMLList", "ifList", "ifListToArray", "ifEnum"]);
+        super("roXMLList");
         this.elements = new LinkedList<RoXMLElement>();
-        this.registerMethods([
-            this.getAttributes,
-            this.getChildElements,
-            this.getNamedElements,
-            this.getNamedElementsCi,
-            this.getText,
-            this.simplify,
-            this.addHead,
-            this.addTail,
-            this.getHead,
-            this.getTail,
-            this.removeHead,
-            this.removeTail,
-            this.count,
-            this.clear,
-            this.isEmpty,
-            this.toArray,
-        ]);
+        this.registerMethods({
+            ifXMLList: [
+                this.getAttributes,
+                this.getChildElements,
+                this.getNamedElements,
+                this.getNamedElementsCi,
+                this.getText,
+                this.simplify,
+            ],
+            ifList: [
+                this.addHead,
+                this.addTail,
+                this.getHead,
+                this.getTail,
+                this.removeHead,
+                this.removeTail,
+                this.count,
+                this.clear,
+            ],
+            ifEnum: [this.isEmpty],
+            ifListToArray: [this.toArray],
+        });
     }
 
     toString(parent?: BrsType): string {

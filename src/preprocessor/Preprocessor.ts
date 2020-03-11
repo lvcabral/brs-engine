@@ -43,8 +43,8 @@ export class Preprocessor implements CC.Visitor {
      * @returns an object containing an array of `errors` and an array of `processedTokens` filtered by conditional
      *          compilation directives included within
      */
-    filter(chunks: ReadonlyArray<CC.Chunk>, bsConst: Map<string, boolean>): FilterResults {
-        this.constants = new Map(bsConst);
+    filter(chunks: ReadonlyArray<CC.Chunk>): FilterResults {
+        this.constants = new Map();
         return {
             processedTokens: chunks
                 .map(chunk => chunk.accept(this))

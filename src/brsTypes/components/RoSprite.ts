@@ -32,7 +32,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         id: number,
         compositor: RoCompositor
     ) {
-        super("roSprite", ["ifSprite"]);
+        super("roSprite");
         this.id = id;
         this.x = x.getValue();
         this.y = y.getValue();
@@ -51,28 +51,30 @@ export class RoSprite extends BrsComponent implements BrsValue {
             this.region = region;
         }
 
-        this.registerMethods([
-            this.checkCollision,
-            this.checkMultipleCollisions,
-            this.getRegion,
-            this.getCollidableFlags,
-            this.getDrawableFlag,
-            this.getMemberFlags,
-            this.getData,
-            this.getX,
-            this.getY,
-            this.getZ,
-            this.moveTo,
-            this.moveOffset,
-            this.offsetRegion,
-            this.setRegion,
-            this.setCollidableFlags,
-            this.setDrawableFlag,
-            this.setMemberFlags,
-            this.setData,
-            this.setZ,
-            this.remove,
-        ]);
+        this.registerMethods({
+            ifSprite: [
+                this.checkCollision,
+                this.checkMultipleCollisions,
+                this.getRegion,
+                this.getCollidableFlags,
+                this.getDrawableFlag,
+                this.getMemberFlags,
+                this.getData,
+                this.getX,
+                this.getY,
+                this.getZ,
+                this.moveTo,
+                this.moveOffset,
+                this.offsetRegion,
+                this.setRegion,
+                this.setCollidableFlags,
+                this.setDrawableFlag,
+                this.setMemberFlags,
+                this.setData,
+                this.setZ,
+                this.remove,
+            ],
+        });
     }
 
     getImageData(): ImageData {

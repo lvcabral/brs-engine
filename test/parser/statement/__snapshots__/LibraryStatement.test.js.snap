@@ -57,7 +57,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -83,7 +83,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -149,7 +149,7 @@ Object {
                   "isReserved": false,
                   "kind": "String",
                   "literal": BrsString {
-                    "kind": 2,
+                    "kind": 3,
                     "value": "v30/bslCore.brs",
                   },
                   "location": Object {
@@ -221,7 +221,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -322,7 +322,7 @@ Object {
                 "elements": Array [
                   Object {
                     "name": BrsString {
-                      "kind": 2,
+                      "kind": 3,
                       "value": "library",
                     },
                     "value": Literal {
@@ -338,7 +338,7 @@ Object {
                         },
                       },
                       "value": BrsString {
-                        "kind": 2,
+                        "kind": 3,
                         "value": "Gotham City Library",
                       },
                     },
@@ -400,7 +400,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -493,7 +493,7 @@ Object {
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "Gotham City Library",
                 },
               },
@@ -535,7 +535,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -652,7 +652,7 @@ Object {
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "Your Library",
                 },
               },
@@ -694,7 +694,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -799,7 +799,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -833,7 +833,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -919,7 +919,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -953,7 +953,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -994,7 +994,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -1080,7 +1080,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,

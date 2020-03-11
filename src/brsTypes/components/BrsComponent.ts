@@ -1,16 +1,16 @@
 import { BrsType } from "..";
 import { BrsInvalid, ValueKind, BrsValue } from "../BrsType";
 import { Callable } from "../Callable";
+import { BrsInterface } from "../BrsInterface";
 
 export class BrsComponent {
     private methods: Map<string, Callable> = new Map();
     private readonly componentName: string;
 
-    readonly interfaces: Set<string>;
+    readonly interfaces = new Map<string, BrsInterface>();
 
-    constructor(name: string, interfaces: string[] = []) {
+    constructor(name: string) {
         this.componentName = name;
-        this.interfaces = new Set(interfaces.map(i => i.toLowerCase()));
     }
 
     /**
@@ -21,10 +21,16 @@ export class BrsComponent {
         return this.componentName;
     }
 
-    protected registerMethods(methods: Callable[]) {
-        this.methods = new Map(
-            methods.map(m => [(m.name || "").toLowerCase(), m] as [string, Callable])
-        );
+    protected registerMethods(interfaces: Record<string, Callable[]>) {
+        this.methods = new Map<string, Callable>();
+        Object.entries(interfaces).forEach(([interfaceName, methods]) => {
+            this.interfaces.set(
+                interfaceName.toLowerCase(),
+                new BrsInterface(interfaceName, methods)
+            );
+
+            methods.forEach(m => this.methods.set((m.name || "").toLowerCase(), m));
+        });
     }
 
     getMethod(index: string): Callable | undefined {

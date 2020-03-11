@@ -26,31 +26,34 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     }
 
     constructor(initialValue: BrsString) {
-        super("roString", ["ifString", "ifStringOps", "ifToStr"]);
+        super("roString");
 
         this.intrinsic = initialValue;
-        this.registerMethods([
-            this.setString,
-            this.appendString,
-            this.len,
-            this.left,
-            this.right,
-            this.mid,
-            this.instr,
-            this.replace,
-            this.trim,
-            this.toInt,
-            this.toFloat,
-            this.tokenize,
-            this.split,
-            this.getEntityEncode,
-            this.escape,
-            this.unescape,
-            this.encodeUri,
-            this.decodeUri,
-            this.encodeUriComponent,
-            this.decodeUriComponent,
-        ]);
+        this.registerMethods({
+            ifString: [this.setString, this.getString],
+            ifStringOps: [
+                this.appendString,
+                this.len,
+                this.left,
+                this.right,
+                this.mid,
+                this.instr,
+                this.replace,
+                this.trim,
+                this.toInt,
+                this.toFloat,
+                this.tokenize,
+                this.split,
+                this.getEntityEncode,
+                this.escape,
+                this.unescape,
+                this.encodeUri,
+                this.decodeUri,
+                this.encodeUriComponent,
+                this.decodeUriComponent,
+            ],
+            ifToStr: [this.toStr],
+        });
     }
 
     equalTo(other: BrsType): BrsBoolean {
@@ -115,6 +118,14 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             }
             return BrsInvalid.Instance;
         },
+    });
+
+    private getString = new Callable("GetString", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: _interpreter => this.intrinsic,
     });
 
     /** Appends the first len characters of s to the end of the string. */
@@ -453,5 +464,13 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         impl: _interpreter => {
             return new BrsString(decodeURIComponent(this.intrinsic.value));
         },
+    });
+
+    private toStr = new Callable("toStr", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: _interpreter => this.intrinsic,
     });
 }

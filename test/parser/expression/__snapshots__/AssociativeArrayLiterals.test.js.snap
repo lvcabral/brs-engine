@@ -57,7 +57,7 @@ Array [
       "elements": Array [
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "foo",
           },
           "value": Literal {
@@ -72,14 +72,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 1,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "bar",
           },
           "value": Literal {
@@ -94,14 +94,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 2,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "requires-hyphens",
           },
           "value": Literal {
@@ -116,7 +116,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
@@ -215,7 +215,7 @@ Array [
               "elements": Array [
                 Object {
                   "name": BrsString {
-                    "kind": 2,
+                    "kind": 3,
                     "value": "name",
                   },
                   "value": Literal {
@@ -230,14 +230,14 @@ Array [
                       },
                     },
                     "value": BrsString {
-                      "kind": 2,
+                      "kind": 3,
                       "value": "Bob",
                     },
                   },
                 },
                 Object {
                   "name": BrsString {
-                    "kind": 2,
+                    "kind": 3,
                     "value": "age",
                   },
                   "value": Literal {
@@ -252,7 +252,7 @@ Array [
                       },
                     },
                     "value": Int32 {
-                      "kind": 3,
+                      "kind": 4,
                       "value": 3,
                     },
                   },
@@ -311,7 +311,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -542,7 +542,7 @@ Array [
       "elements": Array [
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "foo",
           },
           "value": Literal {
@@ -557,14 +557,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 1,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "bar",
           },
           "value": Literal {
@@ -579,14 +579,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 2,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "baz",
           },
           "value": Literal {
@@ -601,7 +601,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
@@ -685,7 +685,7 @@ Array [
       "elements": Array [
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "foo",
           },
           "value": Literal {
@@ -700,14 +700,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 1,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "bar",
           },
           "value": Literal {
@@ -722,14 +722,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 2,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "baz",
           },
           "value": Literal {
@@ -744,7 +744,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
@@ -828,7 +828,7 @@ Array [
       "elements": Array [
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "foo",
           },
           "value": Literal {
@@ -843,14 +843,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 1,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "bar",
           },
           "value": Literal {
@@ -865,14 +865,14 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 2,
             },
           },
         },
         Object {
           "name": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "baz",
           },
           "value": Literal {
@@ -887,7 +887,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
