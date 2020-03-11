@@ -12,6 +12,8 @@ sub main()
     print "can look up elements: " aa.lookup("foo") = "foo"     ' => true
     print "can look up elements (brackets): " aa["foo"] = "foo" ' => true
     print "can check for existence: " aa.doesExist("bar")       ' => true
+    print "items() example key: " aa.items()[0].key             ' => bar
+    print "items() example value: " aa.items()[0].value         ' => 5
 
     aa.clear()
     print "can empty itself: " aa.isEmpty()                     ' => true

@@ -59,6 +59,10 @@ describe("end to end brightscript functions", () => {
             "true",
             "can check for existence: ",
             "true",
+            "items() example key: ",
+            "bar",
+            "items() example value: ",
+            "5",
             "can empty itself: ",
             "true",
         ]);

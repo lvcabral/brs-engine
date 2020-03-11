@@ -205,7 +205,20 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            return new RoArray(this.getValues());
+            return new RoArray(
+                this.getElements().map((key: BrsString) => {
+                    return new RoAssociativeArray([
+                        {
+                            name: new BrsString("key"),
+                            value: key,
+                        },
+                        {
+                            name: new BrsString("value"),
+                            value: this.get(key),
+                        },
+                    ]);
+                })
+            );
         },
     });
 
