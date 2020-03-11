@@ -27,7 +27,7 @@ describe("RoString", () => {
         expect(new RoString(new BrsString("A1b2C#☃︎")).toString()).toBe("A1b2C#☃︎");
     });
 
-    describe("ifStringOps", () => {
+    describe("ifString", () => {
         let interpreter;
 
         beforeEach(() => {
@@ -57,6 +57,21 @@ describe("RoString", () => {
                 setString.call(interpreter, new BrsString("after"), new Int32(-1));
                 expect(s.intrinsic).toEqual(new BrsString(""));
             });
+        });
+
+        test("getString", () => {
+            let s = new RoString(new BrsString("hello"));
+            getString = s.getMethod("getString");
+            expect(getString).toBeInstanceOf(Callable);
+            expect(getString.call(interpreter)).toEqual(new BrsString("hello"));
+        });
+    });
+
+    describe("ifStringOps", () => {
+        let interpreter;
+
+        beforeEach(() => {
+            interpreter = new Interpreter();
         });
 
         describe("appendString", () => {
@@ -579,6 +594,16 @@ describe("RoString", () => {
                     new BrsString("http://example.com/?bullet=•")
                 );
             });
+        });
+    });
+
+    describe("ifToStr", () => {
+        test("toStr", () => {
+            let s = new RoString(new BrsString("world"));
+            let toStr = s.getMethod("toStr");
+
+            expect(toStr).toBeInstanceOf(Callable);
+            expect(toStr.call(new Interpreter())).toEqual(new BrsString("world"));
         });
     });
 });
