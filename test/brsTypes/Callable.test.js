@@ -145,6 +145,22 @@ describe("Callable", () => {
             ).toEqual([]);
         });
 
+        it("allows float to be passed to a double argument", () => {
+            const hasArgs = new BrsTypes.Callable("acceptsDouble", {
+                signature: {
+                    args: [new BrsTypes.StdlibArgument("doubleArg", BrsTypes.ValueKind.Double)],
+                    returns: BrsTypes.String,
+                },
+                impl: () => {},
+            });
+
+            expect(
+                hasArgs
+                    .getAllSignatureMismatches([new BrsTypes.Float(1.5)])
+                    .map(mm => mm.mismatches)[0]
+            ).toEqual([]);
+        });
+
         it("allows integer to be passed to a float argument", () => {
             const hasArgs = new BrsTypes.Callable("acceptsAnything", {
                 signature: {
