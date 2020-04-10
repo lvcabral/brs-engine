@@ -196,4 +196,16 @@ describe("end to end brightscript functions", () => {
             "23",
         ]);
     });
+
+    test("components/roInvalid.brs", async () => {
+        await execute([resourceFile("components", "roInvalid.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "roInvalid",
+            "<Component: roInvalid>",
+            "invalid",
+            "true",
+        ]);
+    });
 });
