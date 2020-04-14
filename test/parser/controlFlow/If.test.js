@@ -11,6 +11,54 @@ describe("parser if statements", () => {
         parser = new brs.parser.Parser();
     });
 
+    it("single-line if next to else or endif", () => {
+        let { tokens } = brs.lexer.Lexer.scan(`
+            if type(component.TextAttrs.font) = "roString"
+                font = m.fonts.Lookup(component.TextAttrs.font)
+                if font = invalid then font = m.fonts.medium
+            else if type(component.TextAttrs.font) = "roFont"
+                font = component.TextAttrs.font
+            else
+                font = m.fonts.reg.GetDefaultFont()
+            end if
+        `);
+        let { statements, errors } = parser.parse(tokens);
+
+        expect(errors).toEqual([]);
+        expect(statements.length).toBeGreaterThan(0);
+        expect(statements).toMatchSnapshot();
+    });
+
+    it("single-line if inside multi-line if", () => {
+        let { tokens } = brs.lexer.Lexer.scan(`
+            if true
+                if true then t = 1
+            else
+                ' empty line or line with just a comment causes crash
+            end if
+        `);
+        let { statements, errors } = parser.parse(tokens);
+
+        expect(errors).toEqual([]);
+        expect(statements.length).toBeGreaterThan(0);
+        expect(statements).toMatchSnapshot();
+    });
+
+    it("dotted set in else block", () => {
+        let { tokens } = brs.lexer.Lexer.scan(`
+            if true then m.top.visible = true else m.top.visible = false
+        `);
+        let { statements, errors } = parser.parse(tokens);
+
+        if (errors.length > 0) {
+            console.log(errors);
+        }
+
+        expect(errors).toEqual([]);
+        expect(statements.length).toBeGreaterThan(0);
+        expect(statements).toMatchSnapshot();
+    });
+
     describe("single-line if", () => {
         it("parses if only", () => {
             let { statements, errors } = parser.parse([
@@ -191,6 +239,28 @@ describe("parser if statements", () => {
             expect(errors).toEqual([]);
             expect(statements).toBeDefined();
             expect(statements).not.toBeNull();
+            expect(statements).toMatchSnapshot();
+        });
+
+        it("sets endif token properly", () => {
+            //this test requires token locations, so use the lexer
+            let { tokens } = brs.lexer.Lexer.scan(`
+                sub a()
+                    if true then
+                        print false
+                    else if true then
+                        print "true"
+                    else
+                        print "else"
+                    end if 'comment
+                end sub
+            `);
+            let { statements, errors } = parser.parse(tokens);
+            expect(errors.length).toEqual(0);
+            expect(statements.length).toBeGreaterThan(0);
+
+            //the endif token should be set
+            expect(statements[0].func.body.statements[0].tokens.endIf).toBeTruthy();
             expect(statements).toMatchSnapshot();
         });
     });
