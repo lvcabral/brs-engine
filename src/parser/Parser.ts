@@ -898,7 +898,7 @@ export class Parser {
 
                     match(Lexeme.Newline);
                     elseBranch = block(Lexeme.EndIf);
-                    let endIfToken = advance(); // skip past "end if"
+                    endIfToken = advance();
 
                     //ensure that single-line `if` statements have a colon right before 'end if'
                     if (ifToken.location.start.line === endIfToken.location.start.line) {

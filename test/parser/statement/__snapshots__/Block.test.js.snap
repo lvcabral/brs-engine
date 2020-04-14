@@ -668,7 +668,23 @@ Array [
                   "text": "else if",
                 },
               ],
-              "endIf": undefined,
+              "endIf": Object {
+                "isReserved": false,
+                "kind": "EndIf",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 9,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 9,
+                  },
+                },
+                "text": "end if",
+              },
               "if": Object {
                 "isReserved": true,
                 "kind": "If",
