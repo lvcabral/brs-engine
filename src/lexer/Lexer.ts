@@ -692,7 +692,7 @@ export class Lexer {
                     advance();
                 } // read the next word
 
-                let twoWords = source.slice(start, current);
+                let twoWords = source.slice(start, current).toLowerCase();
                 switch (twoWords.replace(/ {2,}/g, " ")) {
                     case "#else if":
                         addToken(Lexeme.HashElseIf);
