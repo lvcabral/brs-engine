@@ -284,6 +284,18 @@ describe("RoString", () => {
                     )
                 ).toEqual(new BrsString("tossed salad and scrambled eggs"));
             });
+
+            it("escapes strings with reserved regex characters", () => {
+                let s = new RoString(new BrsString("oh baby {1}"));
+                replace = s.getMethod("replace");
+                expect(
+                    replace.call(
+                        interpreter,
+                        new BrsString("{1}"),
+                        new BrsString("I hear the blues a-callin'")
+                    )
+                ).toEqual(new BrsString("oh baby I hear the blues a-callin'"));
+            });
         });
 
         describe("trim", () => {
