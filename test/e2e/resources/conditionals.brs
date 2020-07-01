@@ -53,3 +53,71 @@ end if
 aa = {}
 if foo > 5 then aa.value = ">5" else aa.value = 8
 print aa.value
+
+' if not with boolean
+if not true then
+    print "this will never print"
+end if
+
+if not false then
+    print "not false"
+end if
+
+' if not with an expression
+bar = "abc"
+if not bar = "def" then
+    print "bar does not equal 'def'"
+end if
+
+' if not with or
+if not bar = "def" or false then
+    print "if not with or variation 1"
+end if
+
+if not bar = "abc" or true then
+    print "if not with or variation 2"
+end if
+
+' if not with and
+if not bar = "def" and true then
+    print "if not with and"
+end if
+
+' if not with two expressions
+foo = 1
+if not bar = "def" and foo = 1 then
+    print "if not with two expressions variation 1"
+end if
+
+if bar = "abc" and not foo = 2 then
+    print "if not with two expressions variation 2"
+end if
+
+' if not multiple times
+foo = 1
+if not bar = "def" and not foo = 2 then
+    print "if not multiple times"
+end if
+
+' if not with <> operator
+if not bar <> "abc" then
+    print "if not with <> operator"
+end if
+
+' if not with > operator
+foo = 1
+if not foo > 1 then
+    print "foo is not > 1"
+end if
+
+' if not with < operator
+foo = 2
+if not foo < 2 then
+    print "foo is not < 2"
+end if
+
+' if not with < operator
+foo = 2
+if not foo < 2 and not foo > 2 then
+    print "foo is not < 2 and not > 2"
+end if
