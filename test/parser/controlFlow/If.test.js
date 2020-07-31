@@ -165,6 +165,20 @@ describe("parser if statements", () => {
             expect(statements).not.toBeNull();
             expect(statements).toMatchSnapshot();
         });
+
+        it("allows multiple statements in 'then' block (#481)", () => {
+            let { tokens } = brs.lexer.Lexer.scan(`
+                if false then nop(): print "#481 still repro's": return
+                print "#481 fixed"
+            `);
+
+            let { statements, errors } = parser.parse(tokens);
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+            let ifStatement = statements[0];
+            expect(ifStatement.thenBranch.statements.length).toBe(3);
+        });
     });
 
     describe("block if", () => {
@@ -379,8 +393,4 @@ describe("parser if statements", () => {
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });
-
-    // TODO: Improve `if` statement structure to allow a linter to require a `then` keyword for
-    // all `if` statements, then test location tracking
-    test.todo("location tracking");
 });

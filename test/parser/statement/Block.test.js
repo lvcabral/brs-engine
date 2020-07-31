@@ -18,7 +18,7 @@ describe("block statements", () => {
         //the block location should begin immediately following `sub Main()`, and end immediately preceeding the first character of `end sub`
         expect(blockLocation).toEqual({
             file: "",
-            start: { line: 2, column: 23 },
+            start: { line: 2, column: 22 },
             end: { line: 4, column: 12 },
         });
 
@@ -45,21 +45,21 @@ describe("block statements", () => {
         const thenBlock = ifStatement.thenBranch;
         expect(thenBlock.location).toEqual({
             file: "",
-            start: { line: 3, column: 29 },
+            start: { line: 3, column: 28 },
             end: { line: 5, column: 16 },
         });
 
         const elseIfBlock = ifStatement.elseIfs[0].thenBranch;
         expect(elseIfBlock.location).toEqual({
             file: "",
-            start: { line: 5, column: 34 },
+            start: { line: 5, column: 33 },
             end: { line: 7, column: 16 },
         });
 
         const elseBlock = ifStatement.elseBranch;
         expect(elseBlock.location).toEqual({
             file: "",
-            start: { line: 7, column: 21 },
+            start: { line: 7, column: 20 },
             end: { line: 9, column: 16 },
         });
 
@@ -81,7 +81,7 @@ describe("block statements", () => {
         //the block location should begin immediately following `step 1`, and end immediately preceeding the first character of `end for`
         expect(loopBlock.location).toEqual({
             file: "",
-            start: { line: 3, column: 39 },
+            start: { line: 3, column: 38 },
             end: { line: 5, column: 16 },
         });
 
