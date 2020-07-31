@@ -133,7 +133,7 @@ Array [
           },
           "file": "",
           "start": Object {
-            "column": 29,
+            "column": 28,
             "line": 2,
           },
         },
@@ -260,7 +260,7 @@ Array [
           },
           "file": "",
           "start": Object {
-            "column": 29,
+            "column": 28,
             "line": 6,
           },
         },
@@ -336,7 +336,7 @@ Array [
           },
           "file": "",
           "start": Object {
-            "column": 29,
+            "column": 28,
             "line": 2,
           },
         },
@@ -407,7 +407,7 @@ Array [
           },
           "file": "",
           "start": Object {
-            "column": 29,
+            "column": 28,
             "line": 5,
           },
         },

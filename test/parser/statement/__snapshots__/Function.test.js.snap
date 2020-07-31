@@ -19,7 +19,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 39,
+              "column": 38,
               "line": 2,
             },
           },
@@ -129,7 +129,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 40,
+              "column": 39,
               "line": 6,
             },
           },
@@ -239,7 +239,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 38,
+              "column": 37,
               "line": 10,
             },
           },
@@ -349,7 +349,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 39,
+              "column": 38,
               "line": 14,
             },
           },
@@ -1562,7 +1562,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 32,
+              "column": 31,
               "line": 2,
             },
           },
@@ -1674,7 +1674,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 34,
+              "column": 33,
               "line": 6,
             },
           },
@@ -1758,7 +1758,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 33,
+              "column": 32,
               "line": 2,
             },
           },
@@ -1829,7 +1829,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 34,
+              "column": 33,
               "line": 5,
             },
           },
@@ -1900,7 +1900,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 32,
+              "column": 31,
               "line": 8,
             },
           },
@@ -1971,7 +1971,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 33,
+              "column": 32,
               "line": 11,
             },
           },
@@ -3072,7 +3072,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 27,
+              "column": 26,
               "line": 2,
             },
           },
@@ -3184,7 +3184,7 @@ Object {
             },
             "file": "",
             "start": Object {
-              "column": 34,
+              "column": 33,
               "line": 6,
             },
           },

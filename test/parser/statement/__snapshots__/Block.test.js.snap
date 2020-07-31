@@ -12,7 +12,7 @@ Array [
           },
           "file": "",
           "start": Object {
-            "column": 23,
+            "column": 22,
             "line": 2,
           },
         },
@@ -26,7 +26,7 @@ Array [
                 },
                 "file": "",
                 "start": Object {
-                  "column": 39,
+                  "column": 38,
                   "line": 3,
                 },
               },
@@ -307,7 +307,7 @@ Array [
           },
           "file": "",
           "start": Object {
-            "column": 23,
+            "column": 22,
             "line": 2,
           },
         },
@@ -439,7 +439,7 @@ Array [
           },
           "file": "",
           "start": Object {
-            "column": 23,
+            "column": 22,
             "line": 2,
           },
         },
@@ -470,7 +470,7 @@ Array [
                 },
                 "file": "",
                 "start": Object {
-                  "column": 21,
+                  "column": 20,
                   "line": 7,
                 },
               },
@@ -544,7 +544,7 @@ Array [
                     },
                     "file": "",
                     "start": Object {
-                      "column": 34,
+                      "column": 33,
                       "line": 5,
                     },
                   },
@@ -601,7 +601,7 @@ Array [
                 },
                 "file": "",
                 "start": Object {
-                  "column": 29,
+                  "column": 28,
                   "line": 3,
                 },
               },
