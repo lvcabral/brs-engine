@@ -304,5 +304,72 @@ describe("RoAssociativeArray", () => {
                 expect(result.elements).toEqual(new RoArray([]).elements);
             });
         });
+
+        describe("setModeCaseSensitive", () => {
+            it("looks for key using case insensitive by default", () => {
+                let v1 = new BrsString("value1");
+
+                let aa = new RoAssociativeArray([{ name: new BrsString("key1"), value: v1 }]);
+
+                let lookup = aa.getMethod("lookup");
+                expect(lookup).toBeTruthy();
+
+                let doesexist = aa.getMethod("doesexist");
+                expect(doesexist).toBeTruthy();
+
+                let result = lookup.call(interpreter, new BrsString("KeY1"));
+                expect(result).toBe(v1);
+
+                result = doesexist.call(interpreter, new BrsString("KeY1"));
+                expect(result.kind).toBe(ValueKind.Boolean);
+                expect(result).toBe(BrsBoolean.True);
+
+                result = aa.get(new BrsString("KEY1"));
+                expect(result).toBe(v1);
+            });
+
+            it("changes lookups to case sensitive mode", () => {
+                let v1 = new BrsString("value1");
+                let v2 = new BrsString("value2");
+
+                let aa = new RoAssociativeArray([{ name: new BrsString("key1"), value: v1 }]);
+
+                let lookup = aa.getMethod("lookup");
+                expect(lookup).toBeTruthy();
+
+                let doesexist = aa.getMethod("doesexist");
+                expect(doesexist).toBeTruthy();
+
+                let addreplace = aa.getMethod("addreplace");
+                expect(addreplace).toBeTruthy();
+
+                let setModeCaseSensitive = aa.getMethod("setmodecasesensitive");
+                expect(setModeCaseSensitive).toBeTruthy();
+
+                // Keys added in constructor are case insensitive
+                let result1 = lookup.call(interpreter, new BrsString("KeY1"));
+                expect(result1).toBe(v1);
+
+                result1 = doesexist.call(interpreter, new BrsString("key1"));
+                expect(result1.kind).toBe(ValueKind.Boolean);
+                expect(result1).toBe(BrsBoolean.True);
+
+                // Turn on case sensitive mode
+                setModeCaseSensitive.call(interpreter);
+
+                // Add a new key aftet case mode changed
+                addreplace.call(interpreter, new BrsString("KeY2"), v2);
+
+                let result2 = doesexist.call(interpreter, new BrsString("key2"));
+                expect(result2.kind).toBe(ValueKind.Boolean);
+                expect(result2).toBe(BrsBoolean.False);
+
+                result2 = lookup.call(interpreter, new BrsString("KeY2"));
+                expect(result2).toBe(v2);
+
+                result2 = aa.get(new BrsString("KeY2"));
+                expect(result2).toBe(v2);
+            });
+        });
     });
 });
