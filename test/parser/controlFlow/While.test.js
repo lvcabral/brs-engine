@@ -48,6 +48,27 @@ describe("parser while statements", () => {
         expect(statements).toMatchSnapshot();
     });
 
+    test("nested", () => {
+        const { tokens } = brs.lexer.Lexer.scan(
+            `
+            while i < 1000
+                while j < 1000
+                    while k < 1000 : k++ : end while
+                    j++
+                end while
+                i++
+            end while
+            `
+        );
+
+        const { statements, errors } = parser.parse(tokens);
+
+        expect(errors).toEqual([]);
+        expect(statements).toBeDefined();
+        expect(statements).not.toBeNull();
+        expect(statements).toMatchSnapshot();
+    });
+
     test("location tracking", () => {
         /**
          *    0   0   0   1   1

@@ -1858,8 +1858,8 @@ Array [
     "thenBranch": Block {
       "location": Object {
         "end": Object {
-          "column": 8,
-          "line": 3,
+          "column": 41,
+          "line": 2,
         },
         "file": "",
         "start": Object {
@@ -2432,8 +2432,8 @@ Array [
     "elseBranch": Block {
       "location": Object {
         "end": Object {
-          "column": 8,
-          "line": 3,
+          "column": 72,
+          "line": 2,
         },
         "file": "",
         "start": Object {
@@ -2522,7 +2522,7 @@ Array [
     "thenBranch": Block {
       "location": Object {
         "end": Object {
-          "column": 51,
+          "column": 46,
           "line": 2,
         },
         "file": "",
@@ -2959,7 +2959,24 @@ Array [
       ],
     },
     "tokens": Object {
-      "elseIfs": Array [],
+      "elseIfs": Array [
+        Object {
+          "isReserved": false,
+          "kind": "ElseIf",
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "else if",
+        },
+      ],
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
@@ -4889,7 +4906,24 @@ Array [
       ],
     },
     "tokens": Object {
-      "elseIfs": Array [],
+      "elseIfs": Array [
+        Object {
+          "isReserved": false,
+          "kind": "ElseIf",
+          "literal": undefined,
+          "location": Object {
+            "end": Object {
+              "column": -9,
+              "line": -9,
+            },
+            "start": Object {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "else if",
+        },
+      ],
       "endIf": undefined,
       "if": Object {
         "isReserved": true,
