@@ -131,6 +131,7 @@ describe("end to end syntax", () => {
             "4", // count up
             "5",
             "4", // count down with exit
+            "15", // compute 3 * 5 with nested loops
         ]);
     });
 
