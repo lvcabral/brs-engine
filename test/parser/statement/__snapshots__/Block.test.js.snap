@@ -649,6 +649,23 @@ Array [
               ],
             },
             "tokens": Object {
+              "else": Object {
+                "isReserved": true,
+                "kind": "Else",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 20,
+                    "line": 7,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 7,
+                  },
+                },
+                "text": "else",
+              },
               "elseIfs": Array [
                 Object {
                   "isReserved": false,
