@@ -3,6 +3,13 @@ const { Int32, Float, BrsString, RoString, RoArray, BrsBoolean, Callable } = brs
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoString", () => {
+    describe("constructor", () => {
+        it("starts with empty string when no arg is passed to constructor", () => {
+            let a = new RoString();
+            expect(a.equalTo(new BrsString(""))).toBe(BrsBoolean.True);
+        });
+    });
+
     describe("equality", () => {
         it("compares to intrinsic strings", () => {
             let a = new RoString(new BrsString("foo"));
