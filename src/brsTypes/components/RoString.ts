@@ -19,16 +19,19 @@ import { Float } from "../Float";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;
-    private intrinsic: BrsString;
+    private intrinsic: BrsString = new BrsString("");
 
     public getValue(): string {
         return this.intrinsic.value;
     }
 
-    constructor(initialValue: BrsString) {
+    constructor(initialValue?: BrsString) {
         super("roString");
 
-        this.intrinsic = initialValue;
+        if (initialValue) {
+            this.intrinsic = initialValue;
+        }
+
         this.registerMethods({
             ifString: [this.setString, this.getString],
             ifStringOps: [

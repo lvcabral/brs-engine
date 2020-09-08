@@ -1,6 +1,9 @@
 sub main()
     ' direct creation
-    r = createObject("RoString", "foo")
+    r = createObject("RoString")
+
+    r.appendString("hello", 5) ' appends hello to the default empty string
+    print r.getString() ' => "hello"
 
     s = "bar"
     print s.getString() ' => "bar"
