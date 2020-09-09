@@ -374,6 +374,56 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
+    visitDim(statement: Stmt.Dim): BrsType {
+        if (statement.name.isReserved) {
+            this.addError(
+                new BrsError(
+                    `Cannot assign a value to reserved name '${statement.name.text}'`,
+                    statement.name.location
+                )
+            );
+            return BrsInvalid.Instance;
+        }
+
+        // NOTE: Roku's dim implementation creates a resizeable, empty array for the
+        //   bottom children. Resizeable arrays aren't implemented yet (issue #530),
+        //   so when that's added this code should be updated so the bottom-level arrays
+        //   are resizeable, but empty
+        let dimensionValues: number[] = [];
+        statement.dimensions.forEach((expr) => {
+            let val = this.evaluate(expr);
+            if (val.kind !== ValueKind.Int32) {
+                this.addError(
+                    new BrsError(`Dim expression must evaluate to an integer`, expr.location)
+                );
+                return BrsInvalid.Instance;
+            }
+            // dim takes max-index, so +1 to get the actual array size
+            dimensionValues.push(val.getValue() + 1);
+            return;
+        });
+
+        let createArrayTree = (dimIndex: number = 0): RoArray => {
+            let children: RoArray[] = [];
+            let size = dimensionValues[dimIndex];
+            for (let i = 0; i < size; i++) {
+                if (dimIndex < dimensionValues.length) {
+                    let subchildren = createArrayTree(dimIndex + 1);
+                    if (subchildren !== undefined) children.push(subchildren);
+                }
+            }
+            let child = new RoArray(children);
+
+            return child;
+        };
+
+        let array = createArrayTree();
+
+        this.environment.define(Scope.Function, statement.name.text, array);
+
+        return BrsInvalid.Instance;
+    }
+
     visitBinary(expression: Expr.Binary) {
         let lexeme = expression.token.kind;
         let left = this.evaluate(expression.left);

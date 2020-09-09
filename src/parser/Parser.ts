@@ -623,6 +623,10 @@ export class Parser {
                 return returnStatement();
             }
 
+            if (check(Lexeme.Dim)) {
+                return dimStatement();
+            }
+
             if (check(Lexeme.Goto)) {
                 return gotoStatement();
             }
@@ -1173,6 +1177,32 @@ export class Parser {
             consume("Labels must be declared on their own line", Lexeme.Newline, Lexeme.Eof);
 
             return new Stmt.Label(tokens);
+        }
+
+        /**
+         * Parses a `dim` statement
+         * @returns an AST representation of an `goto` statement.
+         */
+        function dimStatement() {
+            let dimToken = advance();
+
+            let name = consume("Expected variable name after 'dim'", Lexeme.Identifier);
+
+            match(Lexeme.LeftSquare);
+
+            let dimensions: Expression[] = [expression()];
+            while (!match(Lexeme.RightSquare)) {
+                consume("Expected ',' after expression in 'dim' statement", Lexeme.Comma);
+                dimensions.push(expression());
+            }
+            let rightSquare = previous();
+
+            let tokens = {
+                dim: dimToken,
+                closingBrace: rightSquare,
+            };
+
+            return new Stmt.Dim(tokens, name as Identifier, dimensions);
         }
 
         /**
