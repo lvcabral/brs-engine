@@ -219,12 +219,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } catch (err) {
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value || BrsInvalid.Instance];
-            } else {
+            } else if (!(err instanceof BrsError)) {
+                // Swallow BrsErrors, because they should have been exposed to the user downstream.
                 throw err;
             }
-        } finally {
-            return results;
         }
+
+        return results;
     }
 
     getCallableFunction(functionName: string): Callable {
@@ -1142,28 +1143,33 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
         let source = this.evaluate(expression.obj);
         if (!isIterable(source)) {
-            throw new TypeMismatch({
-                message: "Attempting to retrieve property from non-iterable value",
-                left: {
-                    type: source,
-                    location: expression.location,
-                },
-            });
+            this.addError(
+                new TypeMismatch({
+                    message: "Attempting to retrieve property from non-iterable value",
+                    left: {
+                        type: source,
+                        location: expression.location,
+                    },
+                })
+            );
         }
 
         let index = this.evaluate(expression.index);
         if (!isBrsNumber(index) && !isBrsString(index)) {
-            throw new TypeMismatch({
-                message: "Attempting to retrieve property from iterable with illegal index type",
-                left: {
-                    type: source,
-                    location: expression.obj.location,
-                },
-                right: {
-                    type: index,
-                    location: expression.index.location,
-                },
-            });
+            this.addError(
+                new TypeMismatch({
+                    message:
+                        "Attempting to retrieve property from iterable with illegal index type",
+                    left: {
+                        type: source,
+                        location: expression.obj.location,
+                    },
+                    right: {
+                        type: index,
+                        location: expression.index.location,
+                    },
+                })
+            );
         }
 
         try {
