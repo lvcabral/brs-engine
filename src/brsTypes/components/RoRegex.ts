@@ -124,7 +124,10 @@ export class RoRegex extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, str: BrsString, replacement: BrsString) => {
             const source = this.jsRegex.source;
-            const flags = this.jsRegex.flags + "g";
+            let flags = this.jsRegex.flags;
+            if (!flags.includes("g")) {
+                flags += "g";
+            }
             this.jsRegex = new RegExp(source, flags);
             const newStr = this.jsRegex[Symbol.replace](str.value, replacement.value);
 
@@ -153,7 +156,10 @@ export class RoRegex extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, str: BrsString) => {
             const source = this.jsRegex.source;
-            const flags = this.jsRegex.flags + "g";
+            let flags = this.jsRegex.flags;
+            if (!flags.includes("g")) {
+                flags += "g";
+            }
             this.jsRegex = new RegExp(source, flags);
             let arr = [];
             let matches: string[] | null;
