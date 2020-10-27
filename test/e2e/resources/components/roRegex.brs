@@ -27,4 +27,11 @@ sub main()
 
     ' make sure we can call matchall multiple times without error.
     regex.matchall("123 456 789")
+
+    regex = createObject("roRegex", "a(b.)", "i")
+    matches = regex.matchall("abx abyz")
+    print "Matches with groups: [ "
+    print "[ " matches[0][0] ", " matches[0][1] " ]"
+    print "[ " matches[1][0] ", " matches[1][1] " ]"
+    print " ]"
 end sub
