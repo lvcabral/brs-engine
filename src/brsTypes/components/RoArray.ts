@@ -1,10 +1,84 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType, isBrsString, isBrsNumber } from "..";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
+import { BrsType, isBrsString, isBrsNumber, isBrsBoolean } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+
+/**
+ * Gives the order for sorting different types in a mixed array
+ *
+ * Mixed Arrays seem to get sorted in this order (tested with Roku OS 9.4):
+ *
+ * numbers in numeric order
+ * strings in alphabetical order,
+ * assocArrays in original order
+ * everything else in original order
+ */
+function getTypeSortIndex(a: BrsType): number {
+    if (isBrsNumber(a)) {
+        return 0;
+    } else if (isBrsString(a)) {
+        return 1;
+    } else if (a instanceof RoAssociativeArray) {
+        return 2;
+    }
+    return 3;
+}
+
+/**
+ * Sorts two BrsTypes in the order that ROku would sort them
+ * @param originalArray A copy of the original array. Used to get the order of items
+ * @param a
+ * @param b
+ * @param caseInsensitive Should strings be compared case insensitively? defaults to false
+ * @param sortInsideTypes Should two numbers or two strings be sorted? defaults to true
+ * @return compare value for array.sort()
+ */
+function sortCompare(
+    originalArray: BrsType[],
+    a: BrsType,
+    b: BrsType,
+    caseInsensitive: boolean = false,
+    sortInsideTypes: boolean = true
+): number {
+    let compare = 0;
+    if (a !== undefined && b !== undefined) {
+        const aSortOrder = getTypeSortIndex(a);
+        const bSortOrder = getTypeSortIndex(b);
+        if (aSortOrder < bSortOrder) {
+            compare = -1;
+        } else if (bSortOrder < aSortOrder) {
+            compare = 1;
+        } else {
+            // a and b have the same type
+            if (sortInsideTypes && isBrsNumber(a)) {
+                // two numbers are in numeric order
+                compare = (a as Comparable).greaterThan(b).toBoolean() ? 1 : -1;
+            } else if (sortInsideTypes && isBrsString(a)) {
+                // two strings are in alphabetical order
+                let aStr = a.toString();
+                let bStr = b.toString();
+                if (caseInsensitive) {
+                    aStr = aStr.toLowerCase();
+                    bStr = bStr.toLowerCase();
+                }
+                // roku does not use locale for sorting strings
+                compare = aStr > bStr ? 1 : -1;
+            } else {
+                // everything else is in the same order as the original
+
+                const aOriginalIndex = originalArray.indexOf(a);
+                const bOriginalIndex = originalArray.indexOf(b);
+                if (aOriginalIndex > -1 && bOriginalIndex > -1) {
+                    compare = aOriginalIndex - bOriginalIndex;
+                }
+            }
+        }
+    }
+    return compare;
+}
 
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -216,41 +290,14 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             if (flags.toString().match(/([^ir])/g) != null) {
                 postMessage("warning,roArray.Sort: Flags contains invalid option(s).");
             } else {
-                this.elements = this.elements.sort(function(a, b) {
-                    var compare = 0;
-                    if (a !== undefined && b !== undefined) {
-                        if (a instanceof RoArray && b instanceof RoAssociativeArray) {
-                            compare = 1;
-                        } else if (a instanceof RoAssociativeArray && b instanceof RoArray) {
-                            compare = -1;
-                        } else if (
-                            !(isBrsString(a) || isBrsNumber(a)) &&
-                            (isBrsString(b) || isBrsNumber(b))
-                        ) {
-                            compare = 1;
-                        } else if (
-                            (isBrsString(a) || isBrsNumber(a)) &&
-                            !(isBrsString(b) || isBrsNumber(b))
-                        ) {
-                            compare = -1;
-                        } else if (
-                            flags.toString().indexOf("i") > -1 &&
-                            isBrsString(a) &&
-                            isBrsString(b)
-                        ) {
-                            compare = a
-                                .toString()
-                                .toLowerCase()
-                                .localeCompare(b.toString().toLowerCase());
-                        } else {
-                            compare = a > b ? 1 : -1;
-                        }
-                    }
-                    if (flags.toString().indexOf("r") > -1) {
-                        compare = -compare;
-                    }
-                    return compare;
+                const caseInsensitive = flags.toString().indexOf("i") > -1;
+                const originalArrayCopy = [...this.elements];
+                this.elements = this.elements.sort((a, b) => {
+                    return sortCompare(originalArrayCopy, a, b, caseInsensitive);
                 });
+                if (flags.toString().indexOf("r") > -1) {
+                    this.elements = this.elements.reverse();
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -268,48 +315,31 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             if (flags.toString().match(/([^ir])/g) != null) {
                 postMessage("warning,roArray.SortBy: Flags contains invalid option(s).");
             } else {
-                this.elements = this.elements.sort(function(a, b) {
-                    var compare = 0;
+                const caseInsensitive = flags.toString().indexOf("i") > -1;
+                const originalArrayCopy = [...this.elements];
+                this.elements = this.elements.sort((a, b) => {
+                    let compare = 0;
                     if (a instanceof RoAssociativeArray && b instanceof RoAssociativeArray) {
-                        if (
-                            a.elements.has(fieldName.toString().toLowerCase()) &&
-                            b.elements.has(fieldName.toString().toLowerCase())
-                        ) {
-                            var valueA = a.get(fieldName);
-                            var valueB = b.get(fieldName);
-                            if (
-                                flags.toString().indexOf("i") > -1 &&
-                                isBrsString(valueA) &&
-                                isBrsString(valueB)
-                            ) {
-                                compare = valueA
-                                    .toString()
-                                    .toLowerCase()
-                                    .localeCompare(valueB.toString().toLowerCase());
-                            } else if (valueA !== undefined && valueB !== undefined) {
-                                compare = valueA > valueB ? 1 : -1;
-                            }
+                        const aHasField = a.elements.has(fieldName.toString().toLowerCase());
+                        const bHasField = b.elements.has(fieldName.toString().toLowerCase());
+                        if (aHasField && bHasField) {
+                            const valueA = a.get(fieldName);
+                            const valueB = b.get(fieldName);
+                            compare = sortCompare(
+                                originalArrayCopy,
+                                valueA,
+                                valueB,
+                                caseInsensitive
+                            );
+                        } else if (aHasField) {
+                            // assocArray with fields come before assocArrays without
+                            compare = -1;
+                        } else if (bHasField) {
+                            // assocArray with fields come before assocArrays without
+                            compare = 1;
                         }
                     } else if (a !== undefined && b !== undefined) {
-                        if (a instanceof RoArray && b instanceof RoAssociativeArray) {
-                            compare = 1;
-                        } else if (a instanceof RoAssociativeArray && b instanceof RoArray) {
-                            compare = -1;
-                        } else if (isBrsString(a) && isBrsNumber(b)) {
-                            compare = 1;
-                        } else if (isBrsNumber(a) && isBrsString(b)) {
-                            compare = -1;
-                        } else if (
-                            !(isBrsString(a) || isBrsNumber(a)) &&
-                            (isBrsString(b) || isBrsNumber(b))
-                        ) {
-                            compare = 1;
-                        } else if (
-                            (isBrsString(a) || isBrsNumber(a)) &&
-                            !(isBrsString(b) || isBrsNumber(b))
-                        ) {
-                            compare = -1;
-                        }
+                        compare = sortCompare(originalArrayCopy, a, b, false, false);
                     }
                     return compare;
                 });
