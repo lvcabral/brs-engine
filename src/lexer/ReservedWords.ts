@@ -2,7 +2,7 @@ import { Lexeme as L } from "./Lexeme";
 
 /**
  * The set of all reserved words in the reference BrightScript runtime. These can't be used for any
- * other purpose within a BrightScript file.
+ * other purpose (e.g. as identifiers) within a BrightScript file.
  * @see https://sdkdocs.roku.com/display/sdkdoc/Reserved+Words
  */
 export const ReservedWords = new Set([
@@ -44,6 +44,7 @@ export const ReservedWords = new Set([
     "tab",
     "then",
     "to",
+    "throw",
     "true",
     "type",
     "while",
@@ -51,7 +52,7 @@ export const ReservedWords = new Set([
 
 /**
  * The set of keywords in the reference BrightScript runtime. Any of these that *are not* reserved
- * words can be used within a BrightScript file for other purposes, e.g. `tab`.
+ * words can be used within a BrightScript file for other purposes as identifiers, e.g. `tab`.
  *
  * Unfortunately there's no canonical source for this!
  */

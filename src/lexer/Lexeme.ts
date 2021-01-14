@@ -69,6 +69,7 @@ export enum Lexeme {
     // canonical source: https://sdkdocs.roku.com/display/sdkdoc/Reserved+Words
     And = "And",
     Box = "Box",
+    Catch = "Catch",
     CreateObject = "CreateObject",
     Dim = "Dim",
     Else = "Else",
@@ -78,6 +79,7 @@ export enum Lexeme {
     EndFor = "EndFor",
     EndIf = "EndIf",
     EndSub = "EndSub",
+    EndTry = "EndTry",
     EndWhile = "EndWhile",
     Eval = "Eval",
     Exit = "Exit",
@@ -106,8 +108,10 @@ export enum Lexeme {
     Stop = "Stop",
     Sub = "Sub",
     Tab = "Tab",
+    Throw = "Throw",
     To = "To",
     True = "True",
+    Try = "Try",
     Type = "Type",
     While = "While",
 
