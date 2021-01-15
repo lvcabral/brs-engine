@@ -28,7 +28,9 @@ type BlockTerminator =
     | Lexeme.EndSub
     | Lexeme.EndFunction
     | Lexeme.Newline // possible only in a single-line `if` statement
-    | Lexeme.Eof; // possible only in a single-line `if` statement
+    | Lexeme.Eof // possible only in a single-line `if` statement
+    | Lexeme.Catch
+    | Lexeme.EndTry;
 
 /** The set of operators valid for use in assignment statements. */
 const assignmentOperators = [
@@ -90,7 +92,13 @@ const allowedProperties = [
 ];
 
 /** List of Lexeme that are allowed as local var identifiers. */
-const allowedIdentifiers = [Lexeme.EndFor, Lexeme.ExitFor, Lexeme.ForEach];
+const allowedIdentifiers = [
+    Lexeme.EndFor,
+    Lexeme.ExitFor,
+    Lexeme.ForEach,
+    Lexeme.Try,
+    Lexeme.Catch,
+];
 
 /**
  * List of string versions of Lexeme that are NOT allowed as local var identifiers.
@@ -587,6 +595,10 @@ export class Parser {
                 return stopStatement();
             }
 
+            if (check(Lexeme.Try)) {
+                return tryCatch();
+            }
+
             if (check(Lexeme.If)) {
                 return ifStatement();
             }
@@ -638,6 +650,32 @@ export class Parser {
 
             // TODO: support multi-statements
             return setStatement(...additionalterminators);
+        }
+
+        function tryCatch(): Stmt.TryCatch {
+            let tryKeyword = advance();
+            let tryBlock = block(Lexeme.Catch);
+            if (!tryBlock) {
+                throw addError(peek(), "Expected 'catch' to terminate try block");
+            }
+
+            if (!check(Lexeme.Identifier)) {
+                // defer this error so we can parse the `catch` block.
+                // it'll be thrown if the catch block parses successfully otherwise.
+                throw addError(peek(), "Expected variable name for caught error after 'catch'");
+            }
+
+            let caughtVariable = new Expr.Variable(advance() as Identifier);
+            let catchBlock = block(Lexeme.EndTry);
+            if (!catchBlock) {
+                throw addError(peek(), "Expected 'end try' or 'endtry' to terminate catch block");
+            }
+
+            return new Stmt.TryCatch(tryBlock.body, catchBlock.body, caughtVariable, {
+                try: tryKeyword,
+                catch: tryBlock.closingToken,
+                endtry: catchBlock.closingToken,
+            });
         }
 
         function whileStatement(): Stmt.While {

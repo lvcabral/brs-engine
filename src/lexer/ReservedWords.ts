@@ -57,6 +57,7 @@ export const ReservedWords = new Set([
  */
 export const KeyWords: { [key: string]: L } = {
     and: L.And,
+    catch: L.Catch,
     dim: L.Dim,
     else: L.Else,
     elseif: L.ElseIf,
@@ -69,6 +70,8 @@ export const KeyWords: { [key: string]: L } = {
     "end if": L.EndIf,
     endsub: L.EndSub,
     "end sub": L.EndSub,
+    endtry: L.EndTry,
+    "end try": L.EndTry, // note: 'endtry' (no space) is *not* a keyword
     endwhile: L.EndWhile,
     "end while": L.EndWhile,
     exit: L.Exit,
@@ -94,6 +97,8 @@ export const KeyWords: { [key: string]: L } = {
     stop: L.Stop,
     sub: L.Sub,
     to: L.To,
+    try: L.Try,
+    throw: L.Throw,
     true: L.True,
     while: L.While,
 };
