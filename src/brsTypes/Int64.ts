@@ -4,8 +4,10 @@ import { BrsNumber, Numeric } from "./BrsNumber";
 import { ValueKind, Comparable } from "./BrsType";
 import { Float } from "./Float";
 import { Double } from "./Double";
+import { Boxable } from "./Boxing";
+import { roLongInteger } from "./components/RoLongInteger";
 
-export class Int64 implements Numeric, Comparable {
+export class Int64 implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Int64;
     private readonly value: Long;
 
@@ -220,5 +222,9 @@ export class Int64 implements Numeric, Comparable {
 
     toString(parent?: BrsType): string {
         return this.value.toString();
+    }
+
+    box() {
+        return new roLongInteger(this);
     }
 }

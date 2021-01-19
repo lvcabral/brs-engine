@@ -213,6 +213,10 @@ describe("end to end brightscript functions", () => {
             "789.012",
             "Integer to string ",
             "23",
+            "LongInteger object type",
+            "roLongInteger",
+            "LongInteger to string ",
+            "2000111222333",
         ]);
     });
 

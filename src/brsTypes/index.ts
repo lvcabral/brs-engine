@@ -43,6 +43,7 @@ export * from "./components/RoBoolean";
 export * from "./components/RoDouble";
 export * from "./components/RoFloat";
 export * from "./components/RoInt";
+export * from "./components/RoLongInteger";
 export * from "./components/RoInvalid";
 export * from "./Callable";
 
