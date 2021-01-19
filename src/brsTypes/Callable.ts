@@ -6,6 +6,7 @@ import { Location } from "../lexer";
 import { Int32 } from "./Int32";
 import { Float } from "./Float";
 import { Double } from "./Double";
+import { Int64 } from "./Int64";
 
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
@@ -279,6 +280,14 @@ export class Callable implements Brs.BrsValue {
                 received.kind === Brs.ValueKind.Float
             ) {
                 args[index] = new Double(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int64 &&
+                received.kind === Brs.ValueKind.Int32
+            ) {
+                args[index] = new Int64(received.getValue());
                 return;
             }
 

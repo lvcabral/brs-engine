@@ -4,6 +4,7 @@ sub main()
     doubleObject = createObject("roDouble", 123.456)
     floatObject = createObject("roFloat", 789.012)
     integerObject = createObject("roInt", 23)
+    longIntegerObject = createObject("roLongInteger", 2000111222333)
 
     print "Boolean object A " booleanObjectA.toStr()
     print "Boolean object B " booleanObjectB
@@ -17,5 +18,7 @@ sub main()
     print "Double to string "doubleObject.toStr()
     print "Float to string "floatObject.toStr()
     print "Integer to string "integerObject.toStr()
+    print "LongInteger object type"type(longIntegerObject)
+    print "LongInteger to string "longIntegerObject.toStr()
 
 end sub

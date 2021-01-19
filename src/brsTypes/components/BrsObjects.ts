@@ -31,9 +31,11 @@ import { roBoolean } from "./RoBoolean";
 import { roDouble } from "./RoDouble";
 import { roFloat } from "./RoFloat";
 import { roInt } from "./RoInt";
+import { roLongInteger } from "./RoLongInteger";
 import { Double } from "../Double";
 import { Float } from "../Float";
 import { Int32 } from "../Int32";
+import { Int64 } from "../Int64";
 import { roInvalid } from "./RoInvalid";
 
 /** Map containing a list of brightscript components that can be created. */
@@ -56,6 +58,7 @@ export const BrsObjects = new Map<string, Function>([
     ["rodouble", (interpreter: Interpreter, literal: Double) => new roDouble(literal)],
     ["rofloat", (interpreter: Interpreter, literal: Float) => new roFloat(literal)],
     ["roint", (interpreter: Interpreter, literal: Int32) => new roInt(literal)],
+    ["rolonginteger", (interpreter: Interpreter, literal: Int64) => new roLongInteger(literal)],
     ["ropath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
     [
         "robitmap",
@@ -96,5 +99,5 @@ export const BrsObjects = new Map<string, Function>([
     ],
     ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
     ["rourltransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
-    ["roinvalid", (_: Interpreter) => new roInvalid()],
+    ["roinvalid", (interpreter: Interpreter) => new roInvalid()],
 ]);
