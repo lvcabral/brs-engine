@@ -53,7 +53,7 @@ export namespace ValueKind {
             case ValueKind.Void:
                 return "Void";
             case ValueKind.Uninitialized:
-                return "<UNINITIALIZED>";
+                return "<uninitialized>";
             case ValueKind.Object:
                 return "Object";
         }
@@ -352,9 +352,9 @@ export class Uninitialized implements BrsValue, Comparable {
 
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.String) {
-            // Allow variables to be compared to the string "<UNINITIALIZED>" to test if they've
+            // Allow variables to be compared to the string "<uninitialized>" to test if they've
             // been initialized
-            return BrsBoolean.from(other.value === this.toString());
+            return BrsBoolean.from(other.value === this.toString().toLowerCase());
         }
 
         return BrsBoolean.False;
