@@ -617,12 +617,10 @@ export class Lexer {
                     advance();
                 } // read the next word
 
-                let twoWords = source.slice(start, current);
-                //replace all of the whitespace with a single space character so we can properly match keyword token types
-                twoWords = twoWords.replace(whitespace, " ");
-                let maybeTokenType = KeyWords[twoWords.toLowerCase()];
-                if (maybeTokenType) {
-                    addToken(maybeTokenType);
+                // replace all of the whitespace with a single space character so we can properly match keyword token types
+                let twoWords = source.slice(start, current).replace(whitespace, " ").toLowerCase();
+                if (KeyWords.hasOwnProperty(twoWords)) {
+                    addToken(KeyWords[twoWords]);
                     return;
                 } else {
                     // reset if the last word and the current word didn't form a multi-word Lexeme
@@ -639,7 +637,10 @@ export class Lexer {
                 advance();
             }
 
-            let tokenType = KeyWords[text.toLowerCase()] || Lexeme.Identifier;
+            let textLower = text.toLowerCase();
+            let tokenType = KeyWords.hasOwnProperty(textLower)
+                ? KeyWords[textLower]
+                : Lexeme.Identifier;
             if (tokenType === KeyWords.rem) {
                 //the rem keyword can be used as an identifier on objects,
                 //so do a quick look-behind to see if there's a preceeding dot
