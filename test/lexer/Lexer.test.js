@@ -317,6 +317,18 @@ describe("lexer", () => {
                 "amet&",
             ]);
         });
+
+        it("allows JS keywords as identifiers", () => {
+            let { tokens } = Lexer.scan("constructor valueOf toString __proto__");
+            let identifiers = tokens.filter((t) => t.kind !== Lexeme.Eof);
+            expect(identifiers.every((t) => t.kind === Lexeme.Identifier)).toBe(true);
+            expect(identifiers.map((t) => t.text)).toEqual([
+                "constructor",
+                "valueOf",
+                "toString",
+                "__proto__",
+            ]);
+        });
     });
 
     describe("conditional compilation", () => {
