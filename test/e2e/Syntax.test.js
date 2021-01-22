@@ -68,6 +68,9 @@ describe("end to end syntax", () => {
             "16",
             "8",
             "4",
+            "-5", // unary + and -
+            "5",
+            "-5",
         ]);
     });
 

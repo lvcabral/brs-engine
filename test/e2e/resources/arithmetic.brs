@@ -40,3 +40,7 @@ print 32 >> 3
 print 2147483647 + 1
 print -2147483648 - 1
 print 214748364 * 20
+' unary operations
+print -5 ' => -5
+print +5 ' => 5
+print -+-+-+5 ' => -5
