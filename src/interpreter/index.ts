@@ -1526,6 +1526,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     );
                 }
+            case Lexeme.Plus:
+                if (isBrsNumber(right)) {
+                    return right;
+                } else {
+                    return this.addError(
+                        new BrsError(
+                            `Attempting to apply unary positive operator to non-numeric value.
+                            value type: ${ValueKind.toString(right.kind)}`,
+                            expression.operator.location
+                        )
+                    );
+                }
             case Lexeme.Not:
                 if (isBrsBoolean(right)) {
                     return right.not();

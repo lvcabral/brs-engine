@@ -1409,7 +1409,7 @@ export class Parser {
         }
 
         function prefixUnary(): Expression {
-            if (match(Lexeme.Not, Lexeme.Minus)) {
+            if (match(Lexeme.Not, Lexeme.Minus, Lexeme.Plus)) {
                 let operator = previous();
                 let right = relational();
                 return new Expr.Unary(operator, right);
