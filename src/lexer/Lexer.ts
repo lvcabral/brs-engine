@@ -474,14 +474,13 @@ export class Lexer {
             let numberOfDigits = containsDecimal ? asString.length - 1 : asString.length;
             let designator = peek().toLowerCase();
 
-            if (numberOfDigits >= 10 && designator !== "&") {
-                // numeric literals over 10 digits with no type designator are implicitly Doubles
-                addToken(Lexeme.Double, Double.fromString(asString));
-                return;
-            } else if (designator === "#") {
+            if (designator === "#") {
                 // numeric literals ending with "#" are forced to Doubles
                 advance();
-                asString = source.slice(start, current);
+                addToken(Lexeme.Double, Double.fromString(asString));
+                return;
+            } else if (numberOfDigits >= 10 && designator !== "&") {
+                // numeric literals over 10 digits with no type designator are implicitly Doubles
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
             } else if (designator === "d") {

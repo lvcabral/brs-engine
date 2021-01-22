@@ -152,6 +152,12 @@ describe("lexer", () => {
             expect(d.literal).toEqual(new Double(123));
         });
 
+        it("respects '#' suffix on very long literals", () => {
+            let d = Lexer.scan("0000000006#").tokens[0];
+            expect(d.kind).toBe(Lexeme.Double);
+            expect(d.literal).toEqual(new Double(6));
+        });
+
         it("forces literals >= 10 digits into doubles", () => {
             let d = Lexer.scan("0000000005").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
