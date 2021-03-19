@@ -13,6 +13,7 @@ print Mid(mixedCase, 4, 2) ' "ed"
 print Instr(0, mixedCase, "Case") ' 7
 print Instr(6, mixedCase, "e") ' 10
 print Str(3.4) ' " 3.4"
+print Str(9.7#) ' " 9.7"
 print StrI(-3) ' "-3"
 print Val("12.34") ' 12.34
 print Substitute("{0} and {1}", "Mary", "Bob")
