@@ -30,6 +30,7 @@ describe("end to end syntax", () => {
             "true",
             "false",
             "5",
+            "6",
             "7",
             "30",
             "40",
