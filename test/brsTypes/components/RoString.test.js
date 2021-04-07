@@ -614,6 +614,22 @@ describe("RoString", () => {
                 );
             });
         });
+
+        describe("isEmpty", () => {
+            it("check if empty string is empty", () => {
+                let s = new RoString(new BrsString(""));
+                let len = s.getMethod("isEmpty");
+                expect(len).toBeInstanceOf(Callable);
+                expect(len.call(interpreter)).toBe(BrsBoolean.True);
+            });
+
+            it("check if filled string is not empty", () => {
+                let s = new RoString(new BrsString("<3"));
+                let len = s.getMethod("isEmpty");
+                expect(len).toBeInstanceOf(Callable);
+                expect(len.call(interpreter)).toBe(BrsBoolean.False);
+            });
+        });
     });
 
     describe("ifToStr", () => {
