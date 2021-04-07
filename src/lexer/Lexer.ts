@@ -543,6 +543,9 @@ export class Lexer {
                 addToken(Lexeme.LongInteger, Int64.fromString(asString));
                 return;
             } else {
+                if (designator === "%") {
+                    advance();
+                } // consume the "%"
                 // otherwise, it's a regular integer
                 addToken(Lexeme.Integer, Int32.fromString(asString));
                 return;

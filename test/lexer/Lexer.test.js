@@ -244,6 +244,12 @@ describe("lexer", () => {
             expect(i.literal).toEqual(new Int32(255));
         });
 
+        it("supports '%' suffix", () => {
+            let i = Lexer.scan("123%").tokens[0];
+            expect(i.kind).toBe(Lexeme.Integer);
+            expect(i.literal).toEqual(new Int32(123));
+        });
+
         it("falls back to a regular integer", () => {
             let i = Lexer.scan("123").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);
