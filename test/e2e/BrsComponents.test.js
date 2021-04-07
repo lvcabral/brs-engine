@@ -181,6 +181,8 @@ describe("end to end brightscript functions", () => {
             "b", // split("/")[1]
             "%F0%9F%90%B6", // dog emoji, uri-encoded
             "🐶", // uri-encoded dog emoji, decoded
+            "true", // isEmpty for empty string
+            "false", // isEmpty for filled string
         ]);
     });
 

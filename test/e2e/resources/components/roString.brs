@@ -23,4 +23,6 @@ sub main()
     u = "🐶"
     print u.encodeUriComponent() ' => %F0%9F%90%B6
     print "%F0%9F%90%B6".decodeUriComponent() ' => 🐶
+    print "".isEmpty() ' => true
+    print "<3".isEmpty() ' => false
 end sub
