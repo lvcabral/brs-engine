@@ -186,6 +186,83 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
+    test("components/roXMLElement.brs", () => {
+        return execute([resourceFile("components", "roXMLElement.brs")], outputStreams).then(() => {
+            expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+                "xmlParser = ",
+                "<Component: roXMLElement>",
+                "type(xmlParser) = ",
+                "roXMLElement",
+                "parse bad xml string, result = ",
+                "false",
+                "parse good xml string, result = ",
+                "true",
+                "getName() = ",
+                "tag1",
+                "getAttributes() = ",
+                `<Component: roAssociativeArray> =\n` +
+                    `{\n` +
+                    `    id: "someId"\n` +
+                    `    attr1: "0"\n` +
+                    `}`,
+                'getNamedElementsCi("child1") count = ',
+                "2",
+                "name of first child  = ",
+                "Child1",
+                "mame of second child = ",
+                "CHILD1",
+            ]);
+        });
+    });
+
+    test("components/customComponent.brs", async () => {
+        await execute([resourceFile("components", "customComponent.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "node.baseBoolField: ",
+            "false",
+            "node.baseIntField: ",
+            "0",
+            "node.normalBoolField: ",
+            "true",
+            "node.advancedStringField: ",
+            "advancedField!",
+            "node.advancedIntField: ",
+            "12345",
+            "node child count is: ",
+            "6",
+            "child id is: ",
+            "normalLabel",
+            "otherNode child count is: ",
+            "3",
+            "anotherNode child count is: ",
+            "1",
+            "baseRectangle width: ",
+            "100",
+            "baseRectangle height: ",
+            "200",
+        ]);
+    });
+
+    test("components/componentExtension.brs", async () => {
+        await execute([resourceFile("components", "componentExtension.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "BaseChild init",
+            "BaseComponent init",
+            "ExtendedComponent start",
+            "ExtendedChild init",
+            "ExtendedComponent init",
+            "ExtendedComponent start",
+            "true", //m.top.isSubtype("ExtendedComponent")
+            "true", //m.top.isSubtype("BaseComponent")
+            "true", //m.top.isSubtype("Node")
+            "false", // m.top.isSubtype("OtherComponent")
+            "BaseComponent", //m.top.parentSubtype("ExtendedComponent")
+            "Node", //m.top.parentSubtype("BaseComponent")
+        ]);
+    });
+
     test("components/roIntrinsics.brs", async () => {
         await execute([resourceFile("components", "roIntrinsics.brs")], outputStreams);
 

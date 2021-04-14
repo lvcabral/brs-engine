@@ -25,7 +25,7 @@ describe("RoArray", () => {
 [
     <Component: roArray>
     true
-    a string
+    "a string"
     -1
     invalid
 ]`

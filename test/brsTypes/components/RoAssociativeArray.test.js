@@ -37,7 +37,7 @@ describe("RoAssociativeArray", () => {
     array: <Component: roArray>
     associative-array: <Component: roAssociativeArray>
     boolean: true
-    string: a string
+    string: "a string"
     number: -1
     invalid: invalid
 }`
