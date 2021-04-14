@@ -30,7 +30,7 @@ describe("end to end standard libary", () => {
             "false",
             "true",
             "false",
-            "<Component: roArray> =\n[\n    test_backup.txt\n]",
+            '<Component: roArray> =\n[\n    "test_backup.txt"\n]',
             "true",
         ]);
     });
@@ -102,7 +102,7 @@ describe("end to end standard libary", () => {
                 "    integer: 2147483647",
                 "    longinteger: 2147483650",
                 "    null: invalid",
-                "    string: ok",
+                '    string: "ok"',
                 "}",
             ].join("\n"),
         ]);
