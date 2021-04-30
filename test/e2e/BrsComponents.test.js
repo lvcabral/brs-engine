@@ -57,6 +57,8 @@ describe("end to end brightscript functions", () => {
             "true",
             "can look up elements (brackets): ",
             "true",
+            "can case insensitive look up elements: ",
+            "true",
             "can check for existence: ",
             "true",
             "items() example key: ",
@@ -69,8 +71,18 @@ describe("end to end brightscript functions", () => {
             "value1",
             "lookup uses mode case too",
             "value1",
+            "lookupCI ignore mode case",
+            "value1",
             "can empty itself: ",
             "true",
+            "saved key: ",
+            "DD",
+            "saved key after accessing by dot: ",
+            "dd",
+            "saved key after accessing by index: ",
+            "Dd",
+            "AA keys size: ",
+            "1",
         ]);
     });
 

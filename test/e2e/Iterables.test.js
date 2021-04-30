@@ -37,7 +37,7 @@ describe("end to end iterables", () => {
             // iterate through keys
             "has-second-layer",
             "level",
-            "secondlayer",
+            "secondLayer",
 
             // twoDimensional.secondLayer.level
             "2",

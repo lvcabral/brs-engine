@@ -196,7 +196,7 @@ describe("end to end syntax", () => {
 
         expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             // note: associative array keys are sorted before iteration
-            "createobject",
+            "createObject",
             "in",
             "run",
             "stop",
