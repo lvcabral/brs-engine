@@ -1,12 +1,4 @@
-import {
-    ValueKind,
-    BrsInvalid,
-    BrsBoolean,
-    BrsString,
-    Uninitialized,
-    Comparable,
-    BrsValue,
-} from "./BrsType";
+import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized, BrsValue } from "./BrsType";
 import { RoArray } from "./components/RoArray";
 import { RoAssociativeArray } from "./components/RoAssociativeArray";
 import { Int32 } from "./Int32";
@@ -47,24 +39,36 @@ export * from "./components/RoFloat";
 export * from "./components/RoInt";
 export * from "./components/RoLongInteger";
 export * from "./components/RoInvalid";
+export * from "./components/RoAppInfo";
+export * from "./coercion";
 export * from "./Callable";
-
 /**
  * Determines whether or not the given value is a number.
  * @param value the BrightScript value in question.
  * @returns `true` if `value` is a numeric value, otherwise `false`.
  */
 export function isBrsNumber(value: BrsType): value is BrsNumber {
-    switch (value.kind) {
-        case ValueKind.Int32:
-        case ValueKind.Int64:
-        case ValueKind.Float:
-        case ValueKind.Double:
-            return true;
-        default:
-            return false;
-    }
+    return NumberKinds.has(value.kind);
 }
+
+export function isNumberKind(kind: ValueKind): boolean {
+    return NumberKinds.has(kind);
+}
+
+export const NumberKinds = new Set([
+    ValueKind.Int32,
+    ValueKind.Float,
+    ValueKind.Double,
+    ValueKind.Int64,
+]);
+
+export const PrimitiveKinds = new Set([
+    ValueKind.Uninitialized,
+    ValueKind.Invalid,
+    ValueKind.Boolean,
+    ...NumberKinds,
+    ValueKind.String,
+]);
 
 /**
  * Determines whether or not the given value is a string.

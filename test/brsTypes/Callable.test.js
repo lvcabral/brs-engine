@@ -1,5 +1,6 @@
 const BrsTypes = require("../../lib/brsTypes");
 const { UCase, LCase } = require("../../lib/stdlib");
+const { Interpreter } = require("../../lib/interpreter");
 
 describe("Callable", () => {
     it("is less than nothing", () => {
@@ -129,52 +130,133 @@ describe("Callable", () => {
             });
         });
 
-        it("allows float to be passed to an integer argument", () => {
-            const hasArgs = new BrsTypes.Callable("acceptsAnything", {
-                signature: {
-                    args: [new BrsTypes.StdlibArgument("intArg", BrsTypes.ValueKind.Int32)],
-                    returns: BrsTypes.String,
+        it("doesn't mutate args while checking for argument mismatches", () => {
+            let func = new BrsTypes.Callable(
+                "acceptsIntOrFloat",
+                {
+                    signature: {
+                        args: [
+                            new BrsTypes.StdlibArgument("input", BrsTypes.ValueKind.Int32),
+                            new BrsTypes.StdlibArgument("something_else", BrsTypes.ValueKind.Int32),
+                        ],
+                        returns: BrsTypes.Int32,
+                    },
+                    impl: (_interpreter, input) => input,
                 },
-                impl: () => {},
-            });
+                {
+                    signature: {
+                        args: [
+                            new BrsTypes.StdlibArgument("input", BrsTypes.ValueKind.Float),
+                            new BrsTypes.StdlibArgument(
+                                "something_else",
+                                BrsTypes.ValueKind.Boolean
+                            ),
+                        ],
+                        returns: BrsTypes.Float,
+                    },
+                    impl: (_interpreter, input) => input,
+                }
+            );
 
-            expect(
-                hasArgs
-                    .getAllSignatureMismatches([new BrsTypes.Float(1.5)])
-                    .map((mm) => mm.mismatches)[0]
-            ).toEqual([]);
+            let pi = new BrsTypes.Float(3.1415927);
+            let result = func.call(new Interpreter(), pi, BrsTypes.BrsBoolean.False);
+
+            // mutation between checks would cause `input` to be the integer 3 - make sure that doesn't happen
+            expect(result).toEqual(pi);
         });
 
-        it("allows float to be passed to a double argument", () => {
-            const hasArgs = new BrsTypes.Callable("acceptsDouble", {
-                signature: {
-                    args: [new BrsTypes.StdlibArgument("doubleArg", BrsTypes.ValueKind.Double)],
-                    returns: BrsTypes.String,
-                },
-                impl: () => {},
+        describe("coercion", () => {
+            describe("into integer", () => {
+                let fn = new BrsTypes.Callable("acceptsInt", {
+                    signature: {
+                        args: [new BrsTypes.StdlibArgument("input", BrsTypes.ValueKind.Int32)],
+                        returns: BrsTypes.ValueKind.Int32,
+                    },
+                    impl: (_interpreter, input) => input,
+                });
+
+                test.each([
+                    // pairs of [type, input, coerced_value]
+                    ["integer", new BrsTypes.Int32(-5), new BrsTypes.Int32(-5)],
+                    ["float", new BrsTypes.Float(3.14159), new BrsTypes.Int32(3)],
+                    ["double", new BrsTypes.Double(2.71828), new BrsTypes.Int32(2)],
+                    ["longinteger", new BrsTypes.Int64(2147483647119), new BrsTypes.Int32(-881)],
+                ])("from %s to integer", (_type, input, output) => {
+                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                });
             });
 
-            expect(
-                hasArgs
-                    .getAllSignatureMismatches([new BrsTypes.Float(1.5)])
-                    .map((mm) => mm.mismatches)[0]
-            ).toEqual([]);
-        });
+            describe("into float", () => {
+                let fn = new BrsTypes.Callable("acceptsFloat", {
+                    signature: {
+                        args: [new BrsTypes.StdlibArgument("input", BrsTypes.ValueKind.Float)],
+                        returns: BrsTypes.ValueKind.Float,
+                    },
+                    impl: (_interpreter, input) => input,
+                });
 
-        it("allows integer to be passed to a float argument", () => {
-            const hasArgs = new BrsTypes.Callable("acceptsAnything", {
-                signature: {
-                    args: [new BrsTypes.StdlibArgument("floatArg", BrsTypes.ValueKind.Float)],
-                    returns: BrsTypes.String,
-                },
-                impl: () => {},
+                test.each([
+                    // pairs of [type, input, coerced_value]
+                    ["integer", new BrsTypes.Int32(-5), new BrsTypes.Float(-5)],
+                    ["float", new BrsTypes.Float(3.14159), new BrsTypes.Float(3.14159)],
+                    ["double", new BrsTypes.Double(2.71828), new BrsTypes.Float(2.71828)],
+                    [
+                        "longinteger",
+                        new BrsTypes.Int64(2147483647119),
+                        new BrsTypes.Float(2147483647119),
+                    ],
+                ])("from %s to float", (_type, input, output) => {
+                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                });
             });
 
-            expect(
-                hasArgs
-                    .getAllSignatureMismatches([new BrsTypes.Int32(4)])
-                    .map((mm) => mm.mismatches)[0]
-            ).toEqual([]);
+            describe("into double", () => {
+                let fn = new BrsTypes.Callable("acceptsDouble", {
+                    signature: {
+                        args: [new BrsTypes.StdlibArgument("input", BrsTypes.ValueKind.Double)],
+                        returns: BrsTypes.ValueKind.Double,
+                    },
+                    impl: (_interpreter, input) => input,
+                });
+
+                test.each([
+                    // pairs of [type, input, coerced_value]
+                    ["integer", new BrsTypes.Int32(-5), new BrsTypes.Double(-5)],
+                    ["float", new BrsTypes.Float(3.14159), new BrsTypes.Double(3.14159)],
+                    ["double", new BrsTypes.Double(2.71828), new BrsTypes.Double(2.71828)],
+                    [
+                        "longinteger",
+                        new BrsTypes.Int64(2147483647119),
+                        new BrsTypes.Double(2147483647119),
+                    ],
+                ])("from %s to double", (_type, input, output) => {
+                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                });
+            });
+
+            describe("into longinteger", () => {
+                let fn = new BrsTypes.Callable("acceptsLongInteger", {
+                    signature: {
+                        args: [new BrsTypes.StdlibArgument("input", BrsTypes.ValueKind.Int64)],
+                        returns: BrsTypes.ValueKind.Int64,
+                    },
+                    impl: (_interpreter, input) => input,
+                });
+
+                test.each([
+                    // pairs of [type, input, coerced_value]
+                    ["integer", new BrsTypes.Int32(-5), new BrsTypes.Int64(-5)],
+                    ["float", new BrsTypes.Float(3.14159), new BrsTypes.Int64(3)],
+                    ["double", new BrsTypes.Double(2.71828), new BrsTypes.Int64(2)],
+                    [
+                        "longinteger",
+                        new BrsTypes.Int64(2147483647119),
+                        new BrsTypes.Int64(2147483647119),
+                    ],
+                ])("from %s to longinteger", (_type, input, output) => {
+                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                });
+            });
         });
 
         it("allows any type for dynamic and object", () => {
