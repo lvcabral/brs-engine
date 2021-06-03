@@ -13,8 +13,22 @@ export interface Token {
     isReserved: boolean;
     /** The literal value (using the BRS type system) associated with this token, if any. */
     literal?: BrsType;
-    /** Where the token was found. */
+    /** The starting and ending line/column pairs where the token was found. */
     location: Location;
+}
+
+/** Represents a BrightScript comment scanned by the lexer. */
+export interface Comment {
+    /** The type of comment (block or line) this node represents. */
+    type: "Block" | "Line";
+    /** The text that started this comment - one of `("'" | "rem" | "REM")`, or any other capitalization. */
+    starter: string;
+    /** The text found in this comment (excludes the `starter`). */
+    value: string;
+    /** The starting and ending line/column pairs where the comment was found. */
+    loc: Location;
+    /** The starting and ending byte offsets in `loc.file` where the comment was found. */
+    range: [number, number];
 }
 
 /** Represents the location at which a `Token` was found. */

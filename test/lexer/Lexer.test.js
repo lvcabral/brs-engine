@@ -34,19 +34,150 @@ describe("lexer", () => {
     });
 
     describe("comments", () => {
-        it("ignores everything after `'`", () => {
-            let { tokens } = Lexer.scan("= ' (");
+        it("produces line comments starting with `'`", () => {
+            let { tokens, comments } = Lexer.scan("= ' (");
             expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Equal, Lexeme.Eof]);
+            expect(comments).toEqual([
+                expect.objectContaining({
+                    type: "Line",
+                    starter: "'",
+                    value: " (",
+                }),
+            ]);
         });
 
-        it("ignores everything after `REM`", () => {
-            let { tokens } = Lexer.scan("= REM (");
-            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Equal, Lexeme.Eof]);
+        it("produces block comments starting with `'`", () => {
+            let { tokens, comments } = Lexer.scan("    ' (");
+            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Eof]);
+            expect(comments).toEqual([
+                expect.objectContaining({
+                    type: "Block",
+                    starter: "'",
+                    value: " (",
+                }),
+            ]);
         });
 
-        it("ignores everything after `rem`", () => {
-            let { tokens } = Lexer.scan("= rem (");
+        it("produces line comments starting with `REM`", () => {
+            let { tokens, comments } = Lexer.scan("= REM (");
             expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Equal, Lexeme.Eof]);
+            expect(comments).toEqual([
+                expect.objectContaining({
+                    type: "Line",
+                    starter: "REM",
+                    value: " (",
+                }),
+            ]);
+        });
+
+        it("produces block comments starting with `REM`", () => {
+            let { tokens, comments } = Lexer.scan("REM (");
+            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Eof]);
+            expect(comments).toEqual([
+                expect.objectContaining({
+                    type: "Block",
+                    starter: "REM",
+                    value: " (",
+                }),
+            ]);
+        });
+
+        it("produces line comments starting with `rem` ", () => {
+            let { tokens, comments } = Lexer.scan("= rem (");
+            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Equal, Lexeme.Eof]);
+            expect(comments).toEqual([
+                expect.objectContaining({
+                    type: "Line",
+                    starter: "rem",
+                    value: " (",
+                }),
+            ]);
+        });
+
+        it("produces block comments starting with `rem` ", () => {
+            let { tokens, comments } = Lexer.scan("rem (");
+            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Eof]);
+            expect(comments).toEqual([
+                expect.objectContaining({
+                    type: "Block",
+                    starter: "rem",
+                    value: " (",
+                }),
+            ]);
+        });
+
+        it("merges block commments", () => {
+            let { comments } = Lexer.scan(
+                [
+                    "'",
+                    "' merged with above",
+                    "a() ' hello world", // line comments not merged
+                    "    REM foo bar", // block and line comments don't get merged together
+                    "rem asdf", // mixed-case block comments don't get merged together
+                    `UCase("123")`,
+                    "rem foo bar", // not merged with `asdf` since UCase("123") is in the way
+                    "rem also merged",
+                ].join("\n")
+            );
+
+            expect(comments.map((c) => c.value)).toEqual([
+                "\n merged with above",
+                " hello world",
+                " foo bar",
+                " asdf",
+                " foo bar\n also merged",
+            ]);
+        });
+
+        it("tracks comment locations", () => {
+            let { comments } = Lexer.scan(
+                // prettier-ignore
+                [
+                //   0   0   0   1   1
+                //   0   4   8   2   6
+                    "'",
+                    "' merged with above",
+                    "a() ' hello world",
+                    "    REM foo bar",
+                    "rem foo bar",
+                    "rem also merged",
+                ].join("\n")
+            );
+
+            expect(comments.map(({ range, loc }) => ({ range, loc }))).toEqual([
+                {
+                    range: [0, 21],
+                    loc: {
+                        start: { line: 1, column: 0 },
+                        end: { line: 2, column: 19 },
+                        file: "",
+                    },
+                },
+                {
+                    range: [26, 39],
+                    loc: {
+                        start: { line: 3, column: 4 },
+                        end: { line: 3, column: 17 },
+                        file: "",
+                    },
+                },
+                {
+                    range: [44, 55],
+                    loc: {
+                        start: { line: 4, column: 4 },
+                        end: { line: 4, column: 15 },
+                        file: "",
+                    },
+                },
+                {
+                    range: [56, 83],
+                    loc: {
+                        start: { line: 5, column: 0 },
+                        end: { line: 6, column: 15 },
+                        file: "",
+                    },
+                },
+            ]);
         });
     }); // comments
 
