@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
  *
- *  Copyright (c) 2019 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2021 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -10,6 +10,7 @@ import { RoAssociativeArray, AAMember, BrsString } from "./brsTypes";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer } from "./lexer";
 import { Parser } from "./parser";
+import { version } from '../package.json';
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!./common/v30/bslCore.brs";
@@ -171,6 +172,8 @@ onmessage = function(event) {
         // Run Channel
         run(source, interpreter);
         postMessage("end");
+    } else if (event.data === "getVersion") {
+        postMessage('version:' + version);
     } else {
         // Setup Control Shared Array
         shared.set("buffer", new Int32Array(event.data));
