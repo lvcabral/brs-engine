@@ -11,6 +11,7 @@ const supportedBrowser =
     info.platform.type == "desktop" && info.engine.name == "Blink" && info.browser.version > "68";
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
+const libVersion = document.getElementById("libVersion");
 const display = document.getElementById("display");
 const ctx = display.getContext("2d", { alpha: false });
 const loading = document.getElementById("loading");
@@ -63,7 +64,6 @@ const bufferCanvas = supportedBrowser
 const bufferCtx = supportedBrowser ? bufferCanvas.getContext("2d") : undefined;
 let buffer = new ImageData(screenSize.width, screenSize.height);
 let splashTimeout = 1600;
-let brsWorker;
 let title = "";
 let source = [];
 let paths = [];
@@ -71,6 +71,11 @@ let txts = [];
 let imgs = [];
 let fonts = [];
 let running = false;
+
+// Initialize Worker
+let brsWorker = new Worker("./lib/brsEmu.js");
+brsWorker.addEventListener("message", receiveMessage);
+brsWorker.postMessage("getVersion");
 
 // Sound Objects
 const audioEvent = { SELECTED: 0, FULL: 1, PARTIAL: 2, PAUSED: 3, RESUMED: 4, FAILED: 5 };
@@ -508,6 +513,8 @@ function receiveMessage(event) {
         closeChannel();
     } else if (event.data === "reset") {
         window.location.reload(false);
+    } else if (event.data.substr(0, 8) === "version:") {
+        libVersion.innerHTML = event.data.substr(8);
     }
 }
 
