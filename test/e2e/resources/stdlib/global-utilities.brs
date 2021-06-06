@@ -1,3 +1,3 @@
 sub main()
-    print getInterface(1.123, "ifFloat");
+    print getInterface({}, "ifAssociativeArray");
 end sub
