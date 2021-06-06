@@ -901,7 +901,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // evaluate the function to call (it could be the result of another function call)
         const callee = this.evaluate(expression.callee);
         // evaluate all of the arguments as well (they could also be function calls)
-        let args = expression.args.map(this.evaluate, this);
+        const args = expression.args.map(this.evaluate, this);
 
         if (!isBrsCallable(callee)) {
             return this.addError(
@@ -919,16 +919,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (satisfiedSignature) {
             try {
                 let mPointer = this._environment.getRootM();
-
-                let signature = satisfiedSignature.signature;
-                args = args.map((arg, index) => {
-                    // any arguments of type "object" must be automatically boxed
-                    if (signature.args[index].type.kind === ValueKind.Object && isBoxable(arg)) {
-                        return arg.box();
-                    }
-
-                    return arg;
-                });
 
                 if (
                     expression.callee instanceof Expr.DottedGet ||
