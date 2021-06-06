@@ -1,6 +1,6 @@
 {
   "name": "brs-emu",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "BrightScript Draw 2D API Emulator",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "contributors": [
@@ -73,7 +73,7 @@
     "tslint-config-prettier": "^1.18.0",
     "typescript": "3",
     "webpack": "^4.39.0",
-    "webpack-cli": "^3.3.6"
+    "webpack-cli": "^3.3.12"
   },
   "repository": "https://github.com/lvcabral/brs-emu",
   "jest": {
