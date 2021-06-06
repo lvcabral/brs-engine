@@ -34,6 +34,8 @@ If you just want to try the emulator, not downloading or installing anything, th
 ### Web Application
 As mentioned above, this repo provides a sample web appplication for testing the emulator. The application cannot be run as pure HTML page, because some functionalities used by the emulator have security restrictions on the browser engine, so you will need a web server to run the application. For that you can use `Apache` or `IIS` but there is a simpler option if your have [Python](https://www.python.org/) installed. The steps below consider that option:
 
+**Note**: The method described below will not work starting from **Chrome** version **92** as the emulator sample app will need to be hosted with [COOP and COEP custom headers](https://developer.chrome.com/blog/enabling-shared-array-buffer/) to allow isolation and enable usage of **ShareArrayBuffer**. More information visit: https://developer.chrome.com/blog/enabling-shared-array-buffer/
+
 * Download the `zip` file from the [latest release](https://github.com/lvcabral/brs-emu/releases)
 * Unzip the package to a folder. 
 * Using your OS `terminal` run the commands below inside the `app` directory. 

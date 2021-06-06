@@ -9,3 +9,4 @@ out/
 *.pkg
 desktop.ini
 .DS_Store
+.husky

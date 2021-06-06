@@ -1,14 +1,15 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
  *
- *  Copyright (c) 2019 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2021 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 const info = bowser.parse(window.navigator.userAgent);
-const supportedBrowser =
-    info.platform.type == "desktop" && info.engine.name == "Blink" && info.browser.version > "68";
+const supportedBrowser = info.engine.name == "Blink" && 
+    ((info.platform.type == "desktop" && info.browser.version.substr(0,2) > "68") || 
+    info.browser.version.substr(0,2) > "89");
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const libVersion = document.getElementById("libVersion");
@@ -93,9 +94,12 @@ resetSounds();
 const dataType = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
 Object.freeze(dataType);
 const length = 7;
-const sharedBuffer = supportedBrowser
-    ? new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length)
-    : [0, 0, 0, 0, 0, 0, 0];
+let sharedBuffer = [0, 0, 0, 0, 0, 0, 0];
+if (supportedBrowser && info.browser.version.substr(0,2) > "91" && !self.crossOriginIsolated){
+    console.warn("Keyboard control will not work as SharedArrayBuffer is not enabled, to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/");
+} else if (supportedBrowser) {
+    sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+}
 const sharedArray = new Int32Array(sharedBuffer);
 
 // Keyboard handlers
