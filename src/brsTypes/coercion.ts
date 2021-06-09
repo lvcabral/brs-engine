@@ -26,6 +26,9 @@ export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefine
         } else if (value instanceof BrsComponent) {
             // types that are always objects should be returned unmodified
             return value;
+        } else if (value.kind === ValueKind.Callable) {
+            // functions can be given the object type
+            return value;
         }
     }
 

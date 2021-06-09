@@ -1,4 +1,5 @@
 const { types } = require("../../lib");
+const { Callable } = require("../../lib/brsTypes/Callable");
 const {
     tryCoerce,
     ValueKind,
@@ -49,6 +50,7 @@ describe("type coercion", () => {
             ["string", new BrsString("lorem"), ValueKind.String],
             ["boolean", BrsBoolean.False, ValueKind.Boolean],
             ["invalid", BrsInvalid.Instance, ValueKind.Invalid],
+            ["function", new Callable("foo"), ValueKind.Object],
         ])("returns input for %s target when no coercion needed", (_type, input, target) => {
             expect(input).toBeDefined();
             expect(tryCoerce(input, target)).toBe(input);
