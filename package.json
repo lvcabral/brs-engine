@@ -30,7 +30,7 @@
     "crc": "^3.8.0",
     "decode-bmp": "^0.1.0",
     "file-type": "^12.4.0",
-    "jpeg-js": "^0.3.6",
+    "jpeg-js": "^0.4.0",
     "linked-list-typescript": "^1.0.15",
     "long": "^3.2.0",
     "luxon": "^1.8.3",
