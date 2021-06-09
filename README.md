@@ -2,7 +2,7 @@
 
 ## The Repository
 
-This repository is a fork from [**BRS**](https://github.com/sjbarag/brs) project, a _command line interpreter_ for **BrightScript** language created by [Sean Barag](https://github.com/sjbarag/). My fork extends **BRS** by implementing the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) and several other **BrightScript** components allowing a full channel execution over an **HTML5 Canvas**, including emulation of the Roku remote control. I will keep sending _pull requests_ to the original project, of fixes and implementations done here, so the _interpreter_ can improve and better support this emulator.
+This repository was originally a fork from [**brs**](https://github.com/sjbarag/brs) project, a _command line interpreter_ for **BrightScript** language created by [Sean Barag](https://github.com/sjbarag/). This repository extends **brs** by implementing the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) and several other **BrightScript** components allowing a full channel execution over an **HTML5 Canvas**, including emulation of the Roku remote control. I will keep sending _pull requests_ to the original project, of fixes and implementations done here, so the _interpreter_ can improve and better support this emulator.
 
 ### So can I use this to watch TV without a Roku?
 
