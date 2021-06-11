@@ -148,7 +148,7 @@ export const Mid = new Callable(
  */
 export const Str = new Callable("Str", {
     signature: {
-        args: [new StdlibArgument("value", ValueKind.Double)],
+        args: [new StdlibArgument("value", ValueKind.Float)],
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, value: Float): BrsString => {
