@@ -198,16 +198,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
             if (object instanceof RoBitmap) {
                 ctx.drawImage(cvs, x.getValue(), y.getValue());
             } else {
-                ctx.drawImage(
-                    cvs,
-                    object.getPosX(),
-                    object.getPosY(),
-                    object.getImageWidth(),
-                    object.getImageHeight(),
-                    x.getValue() + object.getTransX(),
-                    y.getValue() + object.getTransY(),
-                    object.getImageWidth(),
-                    object.getImageHeight()
+                let rcv = object.getRegionCanvas();
+                ctx.drawImage(rcv, 
+                    x.getValue() + object.getTransX(), 
+                    y.getValue() + object.getTransY()
                 );
             }
             ctx.globalAlpha = 1.0;
