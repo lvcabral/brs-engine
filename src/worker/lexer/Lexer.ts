@@ -728,10 +728,6 @@ export class Lexer {
             const commentType: Comment["type"] =
                 peekPrevious()?.location.start.line === line ? "Line" : "Block";
 
-            if (starter === "REM") {
-                console.log({ start, current });
-            }
-
             let commentText = "";
             while (peek() !== "\n" && !isAtEnd()) {
                 commentText += advance();
