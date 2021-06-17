@@ -10,6 +10,7 @@ import { Rect, Circle } from "./RoCompositor";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private valid: boolean;
     private bitmap: RoBitmap | RoScreen;
     private canvas: OffscreenCanvas;
     private context: OffscreenCanvasRenderingContext2D;
@@ -28,6 +29,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
+        this.valid = false;
         this.bitmap = bitmap;
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
         this.x = x.getValue();
@@ -43,10 +45,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
         // Create new canvas
         this.canvas = new OffscreenCanvas(this.width, this.height);
-        this.context = this.canvas.getContext("2d", {
-            alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
-        this.redrawCanvas();
+        this.context = this.canvas.getContext("2d", { alpha: true }) as OffscreenCanvasRenderingContext2D;
+        if (this.x + this.width <= bitmap.getCanvas().width && this.y + this.height <= bitmap.getCanvas().height) {
+            this.redrawCanvas();
+            this.valid = true;
+        }
         this.registerMethods({
             ifRegion: [
                 this.copy,
@@ -82,6 +85,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ],
         });
     }
+
+    isValid() {
+        return this.valid;
+    }
+
     applyOffset(x: number, y: number, width: number, height: number) {
         const bmp = this.bitmap.getCanvas();
         let newX = this.x + x;
@@ -713,4 +721,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
             return this.bitmap.setCanvasAlpha(alphaEnabled.toBoolean());
         },
     });
+}
+
+export function createRegion(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
+    const reg = new RoRegion(bitmap, x, y, width, height);
+    return reg.isValid() ? reg : BrsInvalid.Instance;
 }

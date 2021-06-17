@@ -14,7 +14,7 @@ import { RoFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
-import { RoRegion } from "./RoRegion";
+import { RoRegion, createRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
 import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoXMLElement } from "./RoXMLElement";
@@ -85,12 +85,12 @@ export const BrsObjects = new Map<string, Function>([
         "roregion",
         (
             interpreter: Interpreter,
-            bitmap: RoBitmap,
+            bitmap: RoBitmap | RoScreen,
             x: Int32,
             y: Int32,
             width: Int32,
             height: Int32
-        ) => new RoRegion(bitmap, x, y, width, height),
+        ) => createRegion(bitmap, x, y, width, height),
     ],
     [
         "roscreen",
