@@ -64,6 +64,19 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         return this.elements.toArray().slice();
     }
 
+    getAttribute(index: BrsType) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("XML Element attribute must be strings");
+        }
+        if (this.elements.length === 1) {
+            let xmlElm = this.elements.head;
+            if (xmlElm instanceof RoXMLElement) {
+                return xmlElm.getAttribute(index);
+            }
+        }
+        return BrsInvalid.Instance;
+    }
+
     get(index: BrsType) {
         switch (index.kind) {
             case ValueKind.Float:

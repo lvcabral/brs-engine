@@ -1446,6 +1446,16 @@ export class Parser {
                     expr = finishCall(expr);
                 } else if (match(Lexeme.LeftSquare)) {
                     indexedGet();
+                } else if (match(Lexeme.AtSymbol)) {
+                    while (match(Lexeme.Newline));
+                    let name = consume(
+                        "Expected identifier name after '@'",
+                        Lexeme.Identifier,
+                        ...allowedProperties
+                    );
+                    // force it into an identifier so the AST makes some sense
+                    name.kind = Lexeme.Identifier;
+                    expr = new Expr.AtSignGet(expr, name as Identifier);                
                 } else if (match(Lexeme.Dot)) {
                     if (match(Lexeme.LeftSquare)) {
                         indexedGet();
@@ -1460,7 +1470,6 @@ export class Parser {
 
                         // force it into an identifier so the AST makes some sense
                         name.kind = Lexeme.Identifier;
-
                         expr = new Expr.DottedGet(expr, name as Identifier);
                     }
                 } else {

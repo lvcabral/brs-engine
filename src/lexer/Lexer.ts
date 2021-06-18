@@ -158,6 +158,9 @@ export class Lexer {
                         addToken(Lexeme.Dot);
                     }
                     break;
+                case "@":
+                    addToken(Lexeme.AtSymbol);
+                    break;
                 case "+":
                     switch (peek()) {
                         case "=":
