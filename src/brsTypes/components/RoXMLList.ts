@@ -71,7 +71,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             case ValueKind.Int32:
                 return this.getElements()[index.getValue()] || BrsInvalid.Instance;
             case ValueKind.String:
-                return this.getMethod(index.value) || BrsInvalid.Instance;
+                return this.getMethod(index.value) || this.namedElements(index.value, true);
             default:
                 throw new Error(
                     "List indexes must be 32-bit integers, or method names must be strings"
@@ -79,14 +79,14 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    set(index: BrsType, value: RoXMLElement) {
+    set(index: BrsType, value: BrsType) {
         if (index.kind !== ValueKind.Int32 && index.kind != ValueKind.Float) {
             throw new Error("List indexes must be 32-bit integers");
         }
         let current = 0;
         for (let item of this.elements) {
             if (Math.trunc(index.getValue()) === current) {
-                item = value;
+                item = value as RoXMLElement;
                 break;
             }
             current++;
@@ -102,6 +102,29 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         return this.elements.length;
     }
 
+    namedElements(name: string, ci: boolean) {
+        if (ci) {
+            name = name.toLocaleLowerCase();
+        }
+        let elements = new RoXMLList();
+        let xmlElm = this.elements.head;
+        if (xmlElm instanceof RoXMLElement) {
+            let childElm = xmlElm.childElements();
+            for (let index = 0; index < childElm.length(); index++) {
+                const element = childElm.getElements()[index];               
+                let key:string
+                if (ci) {
+                    key =  element.name().value.toLocaleLowerCase();
+                } else {
+                    key =  element.name().value;
+                }
+                if (key === name) {
+                    elements.add(element);
+                }
+            }
+        }
+        return elements;
+    }
     //--------------------------------- ifXMLList ---------------------------------
 
     /** If list contains only one item, returns the attributes of that item. Otherwise returns invalid */
@@ -162,13 +185,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, name: BrsString) => {
-            let elements = new RoXMLList();
-            for (let element of this.elements) {
-                if (element.name().value === name.value) {
-                    elements.add(element);
-                }
-            }
-            return elements;
+            return this.namedElements(name.value, false);
         },
     });
 
@@ -179,13 +196,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, name: BrsString) => {
-            let elements = new RoXMLList();
-            for (let element of this.elements) {
-                if (element.name().value.toLocaleLowerCase() === name.value.toLocaleLowerCase()) {
-                    elements.add(element);
-                }
-            }
-            return elements;
+            return this.namedElements(name.value, true);
         },
     });
 
