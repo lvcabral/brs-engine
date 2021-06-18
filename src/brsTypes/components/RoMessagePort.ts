@@ -61,12 +61,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    wait(ms: number) {
+    wait(interpreter: Interpreter, ms: number) {
         if (this.screen) {
             if (ms === 0) {
                 while (true) {
                     if (this.buffer[0] !== this.lastKey) {
                         this.lastKey = this.buffer[this.type.KEY];
+                        interpreter.lastKeyTime = interpreter.currKeyTime;
+                        interpreter.currKeyTime = Date.now();
                         return new RoUniversalControlEvent(this.lastKey);
                     }
                 }
@@ -75,6 +77,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 while (new Date().getTime() < ms) {
                     if (this.buffer[this.type.KEY] !== this.lastKey) {
                         this.lastKey = this.buffer[this.type.KEY];
+                        interpreter.lastKeyTime = interpreter.currKeyTime;
+                        interpreter.currKeyTime = Date.now();
                         return new RoUniversalControlEvent(this.lastKey);
                     }
                 }
@@ -142,8 +146,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("timeout", ValueKind.Int32)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, timeout: Int32) => {
-            return this.wait(timeout.getValue());
+        impl: (interpreter: Interpreter, timeout: Int32) => {
+            return this.wait(interpreter, timeout.getValue());
         },
     });
 

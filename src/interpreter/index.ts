@@ -81,6 +81,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     public audioId: number = 0;
+    public lastKeyTime: number = Date.now();
+    public currKeyTime: number = Date.now();
 
     /**
      * Convenience function to subscribe to the `err` events emitted by `interpreter.events`.
