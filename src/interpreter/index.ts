@@ -22,6 +22,7 @@ import {
     Comparable,
     Float,
     Double,
+    RoXMLElement,
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
@@ -39,6 +40,7 @@ import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
+import { RoXMLList } from "../brsTypes/components/RoXMLList";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -1113,6 +1115,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             return this.addError(
                 new BrsError([header, ...messages].join("\n"), expression.closingParen.location)
+            );
+        }
+    }
+
+    visitAtSignGet(expression: Expr.AtSignGet) {
+        let source = this.evaluate(expression.obj);
+
+        if (isIterable(source) && (source instanceof RoXMLElement || source instanceof RoXMLList)) {
+            try {
+                return source.getAttribute(new BrsString(expression.name.text));
+            } catch (err) {
+                return this.addError(new BrsError(err.message, expression.name.location));
+            }
+        } else {
+            return this.addError(
+                new TypeMismatch({
+                    message: "Attempting to retrieve attribute from value not roXMLList or roXMLElement",
+                    left: {
+                        type: source,
+                        location: expression.location,
+                    },
+                })
             );
         }
     }

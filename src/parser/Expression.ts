@@ -6,6 +6,7 @@ export interface Visitor<T> {
     visitBinary(expression: Binary): T;
     visitCall(expression: Call): T;
     visitAnonymousFunction(func: Function): T;
+    visitAtSignGet(expression: AtSignGet): T;
     visitDottedGet(expression: DottedGet): T;
     visitIndexedGet(expression: IndexedGet): T;
     visitGrouping(expression: Grouping): T;
@@ -85,6 +86,22 @@ export class Function implements Expression {
             file: this.keyword.location.file,
             start: this.keyword.location.start,
             end: this.end.location.end,
+        };
+    }
+}
+
+export class AtSignGet implements Expression {
+    constructor(readonly obj: Expression, readonly name: Identifier) {}
+
+    accept<R>(visitor: Visitor<R>): R {
+        return visitor.visitAtSignGet(this);
+    }
+ 
+    get location() {
+        return {
+            file: this.obj.location.file,
+            start: this.obj.location.start,
+            end: this.name.location.end,
         };
     }
 }
