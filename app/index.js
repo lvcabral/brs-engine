@@ -49,8 +49,10 @@ const deviceData = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
     maxSimulStreams: 2, // Max number of audio resource streams
-    localIps: ["Ethernet,127.0.0.1"], // Running on the Browser is not possible to get a real IP
+    connectionType: "WiFiConnection", // Options: "WiFiConnection", "WiredConnection", ""
+    localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
+    audioVolume: 40
 };
 
 // Display Aspect Ratio
