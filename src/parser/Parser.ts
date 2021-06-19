@@ -138,18 +138,27 @@ const disallowedIdentifiers = new Set(
     ].map(x => Lexeme[x].toLowerCase())
 );
 
+const bsLibraries = new Map<string, boolean>();
+
 /** The results of a Parser's parsing pass. */
 interface ParseResults {
     /** The statements produced by the parser. */
     statements: Stmt.Statement[];
     /** The errors encountered by the Parser. */
     errors: ParseError[];
+    /** Libraries ussage encountered by the Parser */
+    libraries: Map<string, boolean>;
 }
 
 export class Parser {
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
+    constructor() {
+        bsLibraries.set("v30/bslCore.brs", false);
+        bsLibraries.set("v30/bslDefender.brs", false);
+        bsLibraries.set("Roku_Ads.brs", false);
+    }
     /**
      * A convenience function, equivalent to `new Parser().parse(toParse)`, that parses an array of
      * `Token`s into an abstract syntax tree that can be executed with the `Interpreter`.
@@ -230,6 +239,7 @@ export class Parser {
             return {
                 statements: [],
                 errors: [],
+                libraries: bsLibraries,
             };
         }
 
@@ -241,11 +251,12 @@ export class Parser {
                 }
             }
 
-            return { statements, errors };
+            return { statements, errors, libraries: bsLibraries };
         } catch (parseError) {
             return {
                 statements: [],
                 errors: errors,
+                libraries: bsLibraries,
             };
         }
 
@@ -759,6 +770,20 @@ export class Parser {
             }
             //consume to the next newline, eof, or colon
             while (match(Lexeme.Newline, Lexeme.Eof, Lexeme.Colon));
+
+            //flag library usage
+            let path = libraryStatement.tokens.filePath;
+            if (path) {
+                let key = path.text.slice(1, path.text.length - 1);
+                if (bsLibraries.has(key)) {
+                    bsLibraries.set(key, true);
+                } else {
+                    addErrorAtLocation(
+                        libraryStatement.location,
+                        'Invalid library! Valid options are "v30/bslCore.brs", "v30/bslDefender.brs" or "Roku_Ads.brs"'
+                    );
+                }
+            }
             return libraryStatement;
         }
 
@@ -911,7 +936,7 @@ export class Parser {
                 }
                 thenBranch = new Stmt.Block([thenStatement], peek().location);
 
-                while (match(Lexeme.ElseIf)) {
+                while (previous().kind !== Lexeme.Newline && match(Lexeme.ElseIf)) {
                     let elseIf = previous();
                     let elseIfCondition = expression();
                     if (checkThen()) {
@@ -933,7 +958,10 @@ export class Parser {
                     });
                 }
 
-                if (match(Lexeme.Else)) {
+                if (
+                    previous().kind !== Lexeme.Newline &&
+                    (previous().kind === Lexeme.Else || match(Lexeme.Else))
+                ) {
                     let elseStatement = declaration();
                     if (!elseStatement) {
                         throw addError(peek(), `Expected a statement to follow 'else'`);
@@ -1018,6 +1046,8 @@ export class Parser {
                     consume(
                         "Expected newline or ':' after indexed 'set' statement",
                         Lexeme.Newline,
+                        Lexeme.Else,
+                        Lexeme.ElseIf,
                         Lexeme.Colon,
                         Lexeme.Eof
                     );
@@ -1034,6 +1064,8 @@ export class Parser {
                     consume(
                         "Expected newline or ':' after dotted 'set' statement",
                         Lexeme.Newline,
+                        Lexeme.Else,
+                        Lexeme.ElseIf,
                         Lexeme.Colon,
                         Lexeme.Eof
                     );
@@ -1198,7 +1230,18 @@ export class Parser {
                 // TODO: Figure out how to handle unterminated blocks well
             }
 
-            return new Stmt.Block(statements, startingToken.location);
+            //the block's location starts at the end of the preceeding token, and stops at the beginning of the `end` token
+            const preceedingToken = tokens[tokens.indexOf(startingToken) - 1];
+            const postceedingToken = tokens[current];
+            const location: Location = {
+                file: startingToken.location.file,
+                start: {
+                    line: preceedingToken.location.end.line,
+                    column: preceedingToken.location.end.column,
+                },
+                end: postceedingToken.location.start,
+            };
+            return new Stmt.Block(statements, location);
         }
 
         function expression(): Expression {
@@ -1226,7 +1269,7 @@ export class Parser {
         }
 
         function relational(): Expression {
-            let expr = additive();
+            let expr = bitshift();
 
             while (
                 match(
@@ -1239,14 +1282,24 @@ export class Parser {
                 )
             ) {
                 let operator = previous();
-                let right = additive();
+                let right = bitshift();
                 expr = new Expr.Binary(expr, operator, right);
             }
 
             return expr;
         }
 
-        // TODO: bitshift
+        function bitshift(): Expression {
+            let expr = additive();
+
+            while (match(Lexeme.LeftShift, Lexeme.RightShift)) {
+                let operator = previous();
+                let right = additive();
+                expr = new Expr.Binary(expr, operator, right);
+            }
+
+            return expr;
+        }
 
         function additive(): Expression {
             let expr = multiplicative();
@@ -1297,34 +1350,44 @@ export class Parser {
         function call(): Expression {
             let expr = primary();
 
+            function indexedGet() {
+                while (match(Lexeme.Newline));
+
+                let index = expression();
+
+                while (match(Lexeme.Newline));
+                let closingSquare = consume(
+                    "Expected ']' after array or object index",
+                    Lexeme.RightSquare
+                );
+
+                expr = new Expr.IndexedGet(expr, index, closingSquare);
+            }
+
+            function dottedGet() {}
+
             while (true) {
                 if (match(Lexeme.LeftParen)) {
                     expr = finishCall(expr);
                 } else if (match(Lexeme.LeftSquare)) {
-                    while (match(Lexeme.Newline));
-
-                    let index = expression();
-
-                    while (match(Lexeme.Newline));
-                    let closingSquare = consume(
-                        "Expected ']' after array or object index",
-                        Lexeme.RightSquare
-                    );
-
-                    expr = new Expr.IndexedGet(expr, index, closingSquare);
+                    indexedGet();
                 } else if (match(Lexeme.Dot)) {
-                    while (match(Lexeme.Newline));
+                    if (match(Lexeme.LeftSquare)) {
+                        indexedGet();
+                    } else {
+                        while (match(Lexeme.Newline));
 
-                    let name = consume(
-                        "Expected property name after '.'",
-                        Lexeme.Identifier,
-                        ...allowedProperties
-                    );
+                        let name = consume(
+                            "Expected property name after '.'",
+                            Lexeme.Identifier,
+                            ...allowedProperties
+                        );
 
-                    // force it into an identifier so the AST makes some sense
-                    name.kind = Lexeme.Identifier;
+                        // force it into an identifier so the AST makes some sense
+                        name.kind = Lexeme.Identifier;
 
-                    expr = new Expr.DottedGet(expr, name as Identifier);
+                        expr = new Expr.DottedGet(expr, name as Identifier);
+                    }
                 } else {
                     break;
                 }

@@ -1,6 +1,15 @@
 import { BrsComponent } from "./BrsComponent";
 import { RoArray } from "./RoArray";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
+import { RoList } from "./RoList";
+import {
+    BrsValue,
+    ValueKind,
+    BrsString,
+    BrsBoolean,
+    BrsInvalid,
+    Comparable,
+    Uninitialized,
+} from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType } from "..";
@@ -17,31 +26,34 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     }
 
     constructor(initialValue: BrsString) {
-        super("roString", ["ifStringOps"]);
+        super("roString");
 
         this.intrinsic = initialValue;
-        this.registerMethods([
-            this.setString,
-            this.appendString,
-            this.len,
-            this.left,
-            this.right,
-            this.mid,
-            this.instr,
-            this.replace,
-            this.trim,
-            this.toInt,
-            this.toFloat,
-            this.tokenize,
-            this.split,
-            this.getEntityEncode,
-            this.escape,
-            this.unescape,
-            this.encodeUri,
-            this.decodeUri,
-            this.encodeUriComponent,
-            this.decodeUriComponent,
-        ]);
+        this.registerMethods({
+            ifString: [this.setString, this.getString],
+            ifStringOps: [
+                this.appendString,
+                this.len,
+                this.left,
+                this.right,
+                this.mid,
+                this.instr,
+                this.replace,
+                this.trim,
+                this.toInt,
+                this.toFloat,
+                this.tokenize,
+                this.split,
+                this.getEntityEncode,
+                this.escape,
+                this.unescape,
+                this.encodeUri,
+                this.decodeUri,
+                this.encodeUriComponent,
+                this.decodeUriComponent,
+            ],
+            ifToStr: [this.toStr],
+        });
     }
 
     equalTo(other: BrsType): BrsBoolean {
@@ -94,14 +106,26 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         signature: {
             args: [
                 new StdlibArgument("s", ValueKind.String),
-                new StdlibArgument("len", ValueKind.Int32),
+                new StdlibArgument("len", ValueKind.Int32, BrsInvalid.Instance),
             ],
             returns: ValueKind.Void,
         },
         impl: (_interpreter, s: BrsString, len: Int32) => {
-            this.intrinsic = new BrsString(s.value.substr(0, len.getValue()));
+            if (len instanceof Int32) {
+                this.intrinsic = new BrsString(s.value.substr(0, len.getValue()));
+            } else {
+                this.intrinsic = s;
+            }
             return BrsInvalid.Instance;
         },
+    });
+
+    private getString = new Callable("GetString", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: _interpreter => this.intrinsic,
     });
 
     /** Appends the first len characters of s to the end of the string. */
@@ -306,11 +330,16 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("delim", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: _interpreter => {
-            _interpreter.stderr.write(
-                "WARNING: tokenize not yet implemented, because it returns an RoList.  Returning `invalid`."
-            );
-            return BrsInvalid.Instance;
+        impl: (_interpreter, separator: BrsString) => {
+            let parts;
+            if (separator.value === "") {
+                // split characters apart, preserving multi-character unicode structures
+                parts = Array.from(this.intrinsic.value);
+            } else {
+                parts = this.intrinsic.value.split(separator.value);
+            }
+
+            return new RoList(parts.map(part => new BrsString(part)));
         },
     });
 
@@ -435,5 +464,13 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         impl: _interpreter => {
             return new BrsString(decodeURIComponent(this.intrinsic.value));
         },
+    });
+
+    private toStr = new Callable("toStr", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: _interpreter => this.intrinsic,
     });
 }

@@ -12,27 +12,29 @@ export class RoDateTime extends BrsComponent implements BrsValue {
 
     constructor() {
         super("roDateTime");
-        this.registerMethods([
-            this.mark,
-            this.asDateString,
-            this.asDateStringNoParam,
-            this.asSeconds,
-            this.fromISO8601String,
-            this.fromSeconds,
-            this.getDayOfMonth,
-            this.getDayOfWeek,
-            this.getHours,
-            this.getLastDayOfMonth,
-            this.getMilliseconds,
-            this.getMinutes,
-            this.getMonth,
-            this.getSeconds,
-            this.getTimeZoneOffset,
-            this.getWeekday,
-            this.getYear,
-            this.toISOString,
-            this.toLocalTime,
-        ]);
+        this.registerMethods({
+            ifDateTime: [
+                this.mark,
+                this.asDateString,
+                this.asDateStringNoParam,
+                this.asSeconds,
+                this.fromISO8601String,
+                this.fromSeconds,
+                this.getDayOfMonth,
+                this.getDayOfWeek,
+                this.getHours,
+                this.getLastDayOfMonth,
+                this.getMilliseconds,
+                this.getMinutes,
+                this.getMonth,
+                this.getSeconds,
+                this.getTimeZoneOffset,
+                this.getWeekday,
+                this.getYear,
+                this.toISOString,
+                this.toLocalTime,
+            ],
+        });
 
         this.resetTime();
     }

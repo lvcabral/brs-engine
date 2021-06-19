@@ -39,11 +39,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -64,7 +65,7 @@ Array [
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "Lorem ipsum",
                 },
               },
@@ -123,7 +124,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -168,11 +169,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -226,7 +228,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
@@ -258,7 +260,7 @@ Array [
             "text": "a",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -285,7 +287,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 4,
             },
           },
@@ -317,7 +319,7 @@ Array [
             "text": "b",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -363,7 +365,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 5,
               },
             },
@@ -412,7 +414,7 @@ Array [
             "text": "c",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -427,7 +429,7 @@ Array [
           },
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -472,11 +474,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -547,7 +550,7 @@ Array [
             "text": "a",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -591,7 +594,7 @@ Array [
             "text": "b",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -606,7 +609,7 @@ Array [
           },
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -651,11 +654,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -726,7 +730,7 @@ Array [
             "text": "str",
           },
           "type": Object {
-            "kind": 2,
+            "kind": 3,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -769,7 +773,7 @@ Array [
             "text": "count",
           },
           "type": Object {
-            "kind": 3,
+            "kind": 4,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -812,7 +816,7 @@ Array [
             "text": "separator",
           },
           "type": Object {
-            "kind": 11,
+            "kind": 12,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -826,7 +830,7 @@ Array [
           },
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -871,11 +875,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -929,7 +934,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
@@ -961,7 +966,7 @@ Array [
             "text": "a",
           },
           "type": Object {
-            "kind": 3,
+            "kind": 4,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -1006,7 +1011,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 5,
               },
             },
@@ -1055,7 +1060,7 @@ Array [
             "text": "b",
           },
           "type": Object {
-            "kind": 3,
+            "kind": 4,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -1069,7 +1074,7 @@ Array [
           },
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -1114,11 +1119,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1159,7 +1165,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -1204,11 +1210,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1229,7 +1236,7 @@ Array [
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "Lorem ipsum",
                 },
               },
@@ -1288,7 +1295,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -1333,11 +1340,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1378,7 +1386,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
   },
 ]
@@ -1423,11 +1431,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1468,7 +1477,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
   },
 ]
@@ -1513,11 +1522,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1538,7 +1548,7 @@ Array [
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "Lorem ipsum",
                 },
               },
@@ -1597,7 +1607,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
   },
 ]
@@ -1642,11 +1652,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -1700,7 +1711,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
@@ -1732,7 +1743,7 @@ Array [
             "text": "a",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -1759,7 +1770,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 4,
             },
           },
@@ -1791,7 +1802,7 @@ Array [
             "text": "b",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -1837,7 +1848,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 5,
               },
             },
@@ -1886,7 +1897,7 @@ Array [
             "text": "c",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -1901,7 +1912,7 @@ Array [
           },
         },
       ],
-      "returns": 10,
+      "returns": 11,
     },
   },
 ]
@@ -1946,11 +1957,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2021,7 +2033,7 @@ Array [
             "text": "a",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -2065,7 +2077,7 @@ Array [
             "text": "b",
           },
           "type": Object {
-            "kind": 9,
+            "kind": 10,
             "location": Object {
               "end": Object {
                 "column": -1,
@@ -2080,7 +2092,7 @@ Array [
           },
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -2125,11 +2137,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2200,7 +2213,7 @@ Array [
             "text": "str",
           },
           "type": Object {
-            "kind": 2,
+            "kind": 3,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -2243,7 +2256,7 @@ Array [
             "text": "count",
           },
           "type": Object {
-            "kind": 3,
+            "kind": 4,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -2286,7 +2299,7 @@ Array [
             "text": "cb",
           },
           "type": Object {
-            "kind": 7,
+            "kind": 8,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -2300,7 +2313,7 @@ Array [
           },
         },
       ],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -2345,11 +2358,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2403,7 +2417,7 @@ Array [
               },
             },
             "value": Int32 {
-              "kind": 3,
+              "kind": 4,
               "value": 3,
             },
           },
@@ -2435,7 +2449,7 @@ Array [
             "text": "a",
           },
           "type": Object {
-            "kind": 3,
+            "kind": 4,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -2480,7 +2494,7 @@ Array [
                 },
               },
               "value": Int32 {
-                "kind": 3,
+                "kind": 4,
                 "value": 5,
               },
             },
@@ -2529,7 +2543,7 @@ Array [
             "text": "b",
           },
           "type": Object {
-            "kind": 3,
+            "kind": 4,
             "location": Object {
               "end": Object {
                 "column": -9,
@@ -2543,7 +2557,7 @@ Array [
           },
         },
       ],
-      "returns": 10,
+      "returns": 11,
     },
   },
 ]
@@ -2588,11 +2602,12 @@ Array [
     },
     "value": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
             "column": -9,
             "line": -9,
           },
+          "file": undefined,
           "start": Object {
             "column": -9,
             "line": -9,
@@ -2613,7 +2628,7 @@ Array [
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "I'm anonymous",
                 },
               },
@@ -2672,7 +2687,7 @@ Array [
         "text": "function",
       },
       "parameters": Array [],
-      "returns": 9,
+      "returns": 10,
     },
   },
 ]
@@ -2685,11 +2700,12 @@ Array [
       "args": Array [
         Function {
           "body": Block {
-            "startingLocation": Object {
+            "location": Object {
               "end": Object {
                 "column": -9,
                 "line": -9,
               },
+              "file": undefined,
               "start": Object {
                 "column": -9,
                 "line": -9,
@@ -2710,7 +2726,7 @@ Array [
                       },
                     },
                     "value": BrsString {
-                      "kind": 2,
+                      "kind": 3,
                       "value": "I'm a callback",
                     },
                   },
@@ -2769,7 +2785,7 @@ Array [
             "text": "function",
           },
           "parameters": Array [],
-          "returns": 9,
+          "returns": 10,
         },
       ],
       "callee": Variable {

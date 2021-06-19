@@ -11,6 +11,6 @@ print parseJson(formatJson({
     null: invalid,
     longinteger: 2147483650,
     integer: 2147483647,
-    float: 3.14,
+    float: createObject("roFloat", 3.14),
     boolean: false
 }))

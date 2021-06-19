@@ -1,5 +1,5 @@
 import { Identifier } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32, BrsInvalid, RoSGNode } from "../brsTypes";
+import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -20,6 +20,13 @@ export class NotFound extends Error {
 
 /** Holds a set of values in multiple scopes and provides access operations to them. */
 export class Environment {
+    constructor(rootM?: RoAssociativeArray) {
+        if (!rootM) {
+            this.rootM = this.mPointer;
+        } else {
+            this.rootM = rootM;
+        }
+    }
     /**
      * Functions that are always accessible.
      * @see Scope.Global
@@ -37,13 +44,7 @@ export class Environment {
     private function = new Map<string, BrsType>();
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer = new RoAssociativeArray([]);
-    /**
-     * The one true focus of the scenegraph app, only one component can have focus at a time.
-     * Note: this focus is only meaningful if the node being set focus to
-     * is a child of the main scene graph tree.  Otherwise, it will not follow the rule
-     * of stealing focus away from another node if a new node got focus.
-     */
-    private focusedNode: RoSGNode | BrsInvalid = BrsInvalid.Instance;
+    private rootM: RoAssociativeArray;
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -86,11 +87,30 @@ export class Environment {
     }
 
     /**
+     * Retrieves the the special `m` variable from the root Environment.
+     * @returns the current value used for the root `m` pointer.
+     */
+    public getRootM(): RoAssociativeArray {
+        return this.rootM;
+    }
+
+    /**
      * Removes a variable from this environment's function scope.
      * @param name the name of the variable to remove (in the form of an `Identifier`)
+     * @param scope the scope to remove this variable from (defaults to "function")
      */
-    public remove(name: string): void {
-        this.function.delete(name.toLowerCase());
+    public remove(name: string, scope: Scope = Scope.Function): void {
+        let lowercaseName = name.toLowerCase();
+        switch (scope) {
+            case Scope.Module:
+                this.module.delete(lowercaseName);
+                break;
+            case Scope.Function:
+                this.function.delete(lowercaseName);
+                break;
+            default:
+                break;
+        }
     }
 
     /**
@@ -165,33 +185,15 @@ export class Environment {
      * 2. Named functions compiled together into a single "module"
      * 3. Parameters passed into the function
      * 4. The `m` pointer, defined by the way in which a function was called
-     * 5. Currently focused node object that reacts to onKey button presses
      *
      * @returns a copy of this environment but with no function-scoped values.
      */
     public createSubEnvironment(): Environment {
-        let newEnvironment = new Environment();
+        let newEnvironment = new Environment(this.rootM);
         newEnvironment.global = this.global;
         newEnvironment.module = this.module;
         newEnvironment.mPointer = this.mPointer;
-        newEnvironment.focusedNode = this.focusedNode;
 
         return newEnvironment;
-    }
-
-    /**
-     * Sets the currently focused node, which reacts to onKey button presses
-     * @param node either node object or invalid
-     */
-    public setFocusedNode(node: RoSGNode | BrsInvalid) {
-        this.focusedNode = node;
-    }
-
-    /**
-     * Gets the currently focused node, which reacts to onKey button presses
-     * @returns currently focused node
-     */
-    public getFocusedNode(): RoSGNode | BrsInvalid {
-        return this.focusedNode;
     }
 }

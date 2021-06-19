@@ -1,7 +1,6 @@
 const brs = require("brs");
 const {
     RoAssociativeArray,
-    RoSGNode,
     RoArray,
     BrsBoolean,
     BrsString,
@@ -27,7 +26,6 @@ describe("RoAssociativeArray", () => {
                     value: new RoArray([new BrsString("I shouldn't appear")]),
                 },
                 { name: new BrsString("associative-array"), value: new RoAssociativeArray([]) },
-                { name: new BrsString("node"), value: new RoSGNode([]) },
                 { name: new BrsString("boolean"), value: BrsBoolean.True },
                 { name: new BrsString("string"), value: new BrsString("a string") },
                 { name: new BrsString("number"), value: new Int32(-1) },
@@ -38,7 +36,6 @@ describe("RoAssociativeArray", () => {
 {
     array: <Component: roArray>
     associative-array: <Component: roAssociativeArray>
-    node: <Component: roSGNode:Node>
     boolean: true
     string: a string
     number: -1
@@ -194,6 +191,16 @@ describe("RoAssociativeArray", () => {
                 expect(result.kind).toBe(ValueKind.Boolean);
                 expect(result).toBe(BrsBoolean.False);
             });
+            it("returns true even when the value of an item contains invalid in the array", () => {
+                let aa = new RoAssociativeArray([
+                    { name: new BrsString("letter1"), value: BrsInvalid.Instance },
+                ]);
+
+                let doesexist = aa.getMethod("doesexist");
+                let result = doesexist.call(interpreter, new BrsString("letter1"));
+                expect(result.kind).toBe(ValueKind.Boolean);
+                expect(result).toBe(BrsBoolean.True);
+            });
         });
 
         describe("append", () => {
@@ -279,7 +286,12 @@ describe("RoAssociativeArray", () => {
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
                 let result = items.call(interpreter);
-                expect(result.elements).toEqual(new RoArray([letter1, letter2, cletter]).elements);
+                expect(result.elements[0].elements.get("key")).toEqual(new BrsString("cletter"));
+                expect(result.elements[0].elements.get("value")).toEqual(new BrsString("c"));
+                expect(result.elements[1].elements.get("key")).toEqual(new BrsString("letter1"));
+                expect(result.elements[1].elements.get("value")).toEqual(new BrsString("a"));
+                expect(result.elements[2].elements.get("key")).toEqual(new BrsString("letter2"));
+                expect(result.elements[2].elements.get("value")).toEqual(new BrsString("b"));
             });
 
             it("returns an empty array from an empty associative array", () => {

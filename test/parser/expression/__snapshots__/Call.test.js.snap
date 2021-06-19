@@ -17,7 +17,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 1,
           },
         },
@@ -33,7 +33,7 @@ Array [
             },
           },
           "value": Int32 {
-            "kind": 3,
+            "kind": 4,
             "value": 2,
           },
         },
@@ -126,15 +126,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 22,
-            "line": 4,
+            "column": 12,
+            "line": 5,
           },
           "file": "",
           "start": Object {
-            "column": 16,
-            "line": 4,
+            "column": 29,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -188,7 +188,7 @@ Array [
                 },
               },
               "value": BrsString {
-                "kind": 2,
+                "kind": 3,
                 "value": "bob",
               },
             },
@@ -230,7 +230,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -253,15 +253,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 19,
+            "column": 12,
             "line": 7,
           },
           "file": "",
           "start": Object {
-            "column": 12,
-            "line": 7,
+            "column": 29,
+            "line": 6,
           },
         },
         "statements": Array [],
@@ -301,7 +301,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -329,15 +329,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 22,
-            "line": 3,
+            "column": 12,
+            "line": 4,
           },
           "file": "",
           "start": Object {
-            "column": 16,
-            "line": 3,
+            "column": 29,
+            "line": 2,
           },
         },
         "statements": Array [],
@@ -377,7 +377,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -400,15 +400,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 19,
+            "column": 12,
             "line": 6,
           },
           "file": "",
           "start": Object {
-            "column": 12,
-            "line": 6,
+            "column": 29,
+            "line": 5,
           },
         },
         "statements": Array [],
@@ -448,7 +448,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,

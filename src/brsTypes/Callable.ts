@@ -3,6 +3,8 @@ import * as Brs from ".";
 import * as Expr from "../parser/Expression";
 import { Scope } from "../interpreter/Environment";
 import { Location } from "../lexer";
+import { Int32 } from "./Int32";
+import { Float } from "./Float";
 
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
@@ -255,6 +257,22 @@ export class Callable implements Brs.BrsValue {
                 return;
             }
 
+            if (
+                expected.type.kind === Brs.ValueKind.Float &&
+                received.kind === Brs.ValueKind.Int32
+            ) {
+                args[index] = new Float(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int32 &&
+                received.kind === Brs.ValueKind.Float
+            ) {
+                args[index] = new Int32(received.getValue());
+                return;
+            }
+
             if (expected.type.kind !== received.kind) {
                 reasons.push({
                     reason: MismatchReason.ArgumentTypeMismatch,
@@ -266,5 +284,36 @@ export class Callable implements Brs.BrsValue {
         });
 
         return reasons;
+    }
+
+    /**
+     * Creates several copies of the provided signature and implementation pair, simulating variadic types by creating a
+     * function that accepts zero args, one that accepts one arg, one that accepts two args, (…).
+     *
+     * @param signatureAndImpl the base signature and implementation to make variadic
+     *
+     * @returns an array containing psuedo-variadic versions of the provided signature and implementation
+     */
+    static variadic(signatureAndImpl: SignatureAndImplementation): SignatureAndImplementation[] {
+        let { signature, impl } = signatureAndImpl;
+        return [
+            signatureAndImpl,
+            ...new Array(10).fill(0).map((_, numArgs) => {
+                return {
+                    signature: {
+                        args: [
+                            ...signature.args,
+                            ...new Array(numArgs)
+                                .fill(0)
+                                .map(
+                                    (_, i) => new StdlibArgument(`arg${i}`, Brs.ValueKind.Dynamic)
+                                ),
+                        ],
+                        returns: signature.returns,
+                    },
+                    impl: impl,
+                };
+            }),
+        ];
     }
 }

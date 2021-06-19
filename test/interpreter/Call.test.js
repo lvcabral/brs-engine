@@ -3,7 +3,7 @@ const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("brs");
 const { Lexeme } = brs.lexer;
-const { BrsString, Int32, ValueKind } = brs.types;
+const { BrsString, Int32, roInt, ValueKind } = brs.types;
 
 const { token, identifier } = require("../parser/ParserTests");
 
@@ -60,6 +60,44 @@ describe("interpreter calls", () => {
         let foo = interpreter.environment.get(identifier("foo"));
         expect(foo.kind).toBe(ValueKind.Object);
         expect(foo.get(new BrsString("id"))).toEqual(new BrsString("this is an ID"));
+    });
+
+    it("automatically boxes return values when appropriate", () => {
+        const ast = [
+            new Stmt.Function(
+                identifier("foo"),
+                new Expr.Function(
+                    [],
+                    ValueKind.Object,
+                    new Stmt.Block(
+                        [
+                            new Stmt.Return(
+                                { return: token(Lexeme.Return, "return") },
+                                new Expr.Literal(new Int32(5))
+                            ),
+                        ],
+                        token(Lexeme.Newline, "\n")
+                    )
+                )
+            ),
+            new Stmt.Assignment(
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("result"),
+                new Stmt.Expression(
+                    new Expr.Call(
+                        new Expr.Variable(identifier("foo")),
+                        token(Lexeme.RightParen, ")"),
+                        [] // no args required
+                    )
+                )
+            ),
+        ];
+
+        interpreter.exec(ast);
+
+        let result = interpreter.environment.get(identifier("result"));
+        expect(result.kind).toBe(ValueKind.Object);
+        expect(result.value).toEqual(new roInt(new Int32(5)).value);
     });
 
     it("errors when not enough arguments provided", () => {

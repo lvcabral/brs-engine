@@ -4,11 +4,7 @@ import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import MemoryFileSystem from "memory-fs";
 import { crc32 } from "crc";
-import * as fs from "fs";
-
-type Volume = MemoryFileSystem | typeof fs;
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -20,32 +16,36 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     constructor(elementsParam?: Uint8Array) {
         super("roByteArray");
         this.elements = elementsParam ? elementsParam : new Uint8Array();
-        this.registerMethods([
-            this.readFile,
-            this.writeFile,
-            this.appendFile,
-            this.setResize,
-            this.fromHexString,
-            this.toHexString,
-            this.fromBase64String,
-            this.toBase64String,
-            this.fromAsciiString,
-            this.toAsciiString,
-            this.getSignedByte,
-            this.getSignedLong,
-            this.getCRC32,
-            this.isLittleEndianCPU,
-            this.peek,
-            this.pop,
-            this.push,
-            this.shift,
-            this.unshift,
-            this.delete,
-            this.count,
-            this.clear,
-            this.append,
-            this.isEmpty,
-        ]);
+        this.registerMethods({
+            ifByteArray: [
+                this.readFile,
+                this.writeFile,
+                this.appendFile,
+                this.setResize,
+                this.fromHexString,
+                this.toHexString,
+                this.fromBase64String,
+                this.toBase64String,
+                this.fromAsciiString,
+                this.toAsciiString,
+                this.getSignedByte,
+                this.getSignedLong,
+                this.getCRC32,
+                this.isLittleEndianCPU,
+            ],
+            ifArray: [
+                this.peek,
+                this.pop,
+                this.push,
+                this.shift,
+                this.unshift,
+                this.delete,
+                this.count,
+                this.clear,
+                this.append,
+            ],
+            ifEnum: [this.isEmpty],
+        });
     }
 
     toString(parent?: BrsType): string {
@@ -116,27 +116,22 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
-                let volume: Volume;
-                const protocol = url.protocol;
-                if (protocol === "tmp:") {
-                    volume = interpreter.temporaryVolume;
-                } else if (protocol === "pkg:") {
-                    volume = fs;
-                } else {
-                    return BrsBoolean.False;
-                }
-                let array: Uint8Array = volume.readFileSync(url.pathname);
-                if (index.getValue() > 0 || length.getValue() > 0) {
-                    let start = index.getValue();
-                    let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                    this.elements = array.slice(start, end);
-                } else {
-                    this.elements = array;
+                const volume = interpreter.fileSystem.get(url.protocol);
+                if (volume) {
+                    let array: Uint8Array = volume.readFileSync(url.pathname);
+                    if (index.getValue() > 0 || length.getValue() > 0) {
+                        let start = index.getValue();
+                        let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                        this.elements = array.slice(start, end);
+                    } else {
+                        this.elements = array;
+                    }
+                    return BrsBoolean.True;
                 }
             } catch (err) {
                 return BrsBoolean.False;
             }
-            return BrsBoolean.True;
+            return BrsBoolean.False;
         },
     });
 
@@ -152,27 +147,26 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
-                let volume: Volume;
-                const protocol = url.protocol;
-                if (protocol === "tmp:") {
-                    volume = interpreter.temporaryVolume;
-                } else {
-                    return BrsBoolean.False;
-                }
-                if (index.getValue() > 0 || length.getValue() > 0) {
-                    let start = index.getValue();
-                    let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                    volume.writeFileSync(
-                        url.pathname,
-                        Buffer.from(this.elements.slice(start, end))
-                    );
-                } else {
-                    volume.writeFileSync(url.pathname, Buffer.from(this.elements));
+                if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
+                    const volume = interpreter.fileSystem.get(url.protocol);
+                    if (volume) {
+                        if (index.getValue() > 0 || length.getValue() > 0) {
+                            let start = index.getValue();
+                            let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                            volume.writeFileSync(
+                                url.pathname,
+                                Buffer.from(this.elements.slice(start, end))
+                            );
+                        } else {
+                            volume.writeFileSync(url.pathname, Buffer.from(this.elements));
+                        }
+                        return BrsBoolean.True;
+                    }
                 }
             } catch (err) {
                 return BrsBoolean.False;
             }
-            return BrsBoolean.True;
+            return BrsBoolean.False;
         },
     });
 
@@ -188,32 +182,31 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
                 const url = new URL(filepath.value);
-                let volume: Volume;
-                const protocol = url.protocol;
-                if (protocol === "tmp:") {
-                    volume = interpreter.temporaryVolume;
-                } else {
-                    return BrsBoolean.False;
+                if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
+                    const volume = interpreter.fileSystem.get(url.protocol);
+                    if (volume) {
+                        let file: Uint8Array = volume.readFileSync(url.pathname);
+                        let array: Uint8Array;
+                        if (index.getValue() > 0 || length.getValue() > 0) {
+                            let start = index.getValue();
+                            let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                            let elements = this.elements.slice(start, end);
+                            array = new Uint8Array(file.length + elements.length);
+                            array.set(file, 0);
+                            array.set(elements, file.length);
+                        } else {
+                            array = new Uint8Array(file.length + this.elements.length);
+                            array.set(file, 0);
+                            array.set(this.elements, file.length);
+                        }
+                        volume.writeFileSync(url.pathname, Buffer.from(array));
+                        return BrsBoolean.True;
+                    }
                 }
-                let file: Uint8Array = volume.readFileSync(url.pathname);
-                let array: Uint8Array;
-                if (index.getValue() > 0 || length.getValue() > 0) {
-                    let start = index.getValue();
-                    let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                    let elements = this.elements.slice(start, end);
-                    array = new Uint8Array(file.length + elements.length);
-                    array.set(file, 0);
-                    array.set(elements, file.length);
-                } else {
-                    array = new Uint8Array(file.length + this.elements.length);
-                    array.set(file, 0);
-                    array.set(this.elements, file.length);
-                }
-                volume.writeFileSync(url.pathname, Buffer.from(array));
             } catch (err) {
                 return BrsBoolean.False;
             }
-            return BrsBoolean.True;
+            return BrsBoolean.False;
         },
     });
 

@@ -4,8 +4,10 @@ import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
+import { roDouble } from "./components/RoDouble";
+import { Boxable } from "./Boxing";
 
-export class Double implements Numeric, Comparable {
+export class Double implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Double;
     private readonly value: number;
 
@@ -103,6 +105,28 @@ export class Double implements Numeric, Comparable {
         }
     }
 
+    leftShift(rhs: BrsNumber): Int32 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int32(Math.trunc(this.getValue()) << Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int32(Math.trunc(this.getValue()) << rhs.getValue().toNumber());
+        }
+    }
+
+    rightShift(rhs: BrsNumber): Int32 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int32(Math.trunc(this.getValue()) >> Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int32(Math.trunc(this.getValue()) >> rhs.getValue().toNumber());
+        }
+    }
+
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
             case ValueKind.Int32:
@@ -179,5 +203,9 @@ export class Double implements Numeric, Comparable {
 
     toString(parent?: BrsType): string {
         return this.value.toString();
+    }
+
+    box() {
+        return new roDouble(this);
     }
 }
