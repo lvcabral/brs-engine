@@ -29,6 +29,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getSupportedGraphicsResolutions,
                 this.getUIResolution,
                 this.getGraphicsPlatform,
+                this.getSoundEffectsVolume,
                 this.getChannelClientId,
                 this.getRIDA,
                 this.isRIDADisabled,
@@ -40,6 +41,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.timeSinceLastKeypress,
                 this.hasFeature,
                 this.getRandomUUID,
+                this.getConnectionType,
                 this.getLinkStatus,
                 this.getInternetStatus,
                 this.getIPAddrs,
@@ -133,6 +135,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(interpreter.deviceInfo.get("firmwareVersion"));
+        },
+    });
+
+    /** Checks for the user interface sound effects volume level. */
+    private getSoundEffectsVolume = new Callable("getSoundEffectsVolume", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new Int32(interpreter.deviceInfo.get("audioVolume"));
         },
     });
 
@@ -450,6 +463,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(generateUUID());
+        },
+    });
+
+    /** Checks whether the device has a WiFi or wired connection, or if it is not connected through any type of network. */
+    private getConnectionType = new Callable("getConnectionType", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.deviceInfo.get("connectionType"));
         },
     });
 
