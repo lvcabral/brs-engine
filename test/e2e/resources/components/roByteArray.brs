@@ -59,4 +59,6 @@ sub main()
     ba3=CreateObject("roByteArray")
     print ba3.readFile("tmp:/ByteArrayTestFileSmall")
     print ba3.toAsciiString()
+    ba3.clear()
+    print "can empty itself: " ba3.isEmpty()
 end sub
