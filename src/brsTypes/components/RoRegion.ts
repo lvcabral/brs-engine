@@ -401,14 +401,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private offset = new Callable("offset", {
         signature: {
             args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("w", ValueKind.Int32),
-                new StdlibArgument("h", ValueKind.Int32),
+                new StdlibArgument("x", ValueKind.Dynamic),
+                new StdlibArgument("y", ValueKind.Dynamic),
+                new StdlibArgument("w", ValueKind.Dynamic),
+                new StdlibArgument("h", ValueKind.Dynamic),
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, w: Int32, h: Int32) => {
+        impl: (_: Interpreter, x: Float, y: Float, w: Float, h: Float) => {
             this.applyOffset(x.getValue(), y.getValue(), w.getValue(), h.getValue());
             return BrsInvalid.Instance;
         },
