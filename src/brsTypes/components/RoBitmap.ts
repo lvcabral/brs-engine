@@ -379,14 +379,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     cvs.height * scaleY.getValue()
                 );
             } else if (object instanceof RoRegion) {
+                let rcv = object.getRegionCanvas();
                 let tx = object.getTransX() * scaleX.getValue();
                 let ty = object.getTransY() * scaleY.getValue();
                 ctx.drawImage(
-                    cvs,
-                    object.getPosX(),
-                    object.getPosY(),
-                    object.getImageWidth(),
-                    object.getImageHeight(),
+                    rcv,
                     x.getValue() + tx,
                     y.getValue() + ty,
                     object.getImageWidth() * scaleX.getValue(),
