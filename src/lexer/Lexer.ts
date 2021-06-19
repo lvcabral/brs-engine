@@ -641,14 +641,33 @@ export class Lexer {
 
             let tokenType = KeyWords[text.toLowerCase()] || Lexeme.Identifier;
             if (tokenType === KeyWords.rem) {
-                // The 'rem' keyword can be used to indicate comments as well, so
-                // consume the rest of the line, but don't add the token; it's not
-                // particularly useful.
-                while (peek() !== "\n" && !isAtEnd()) {
-                    advance();
+                //the rem keyword can be used as an identifier on objects,
+                //so do a quick look-behind to see if there's a preceeding dot
+                if (checkPrevious(Lexeme.Dot)) {
+                    addToken(Lexeme.Identifier);
+                } else {
+                    // The 'rem' keyword can be used to indicate comments as well, so
+                    // consume the rest of the line, but don't add the token; it's not
+                    // particularly useful.
+                    while (peek() !== "\n" && !isAtEnd()) {
+                        advance();
+                    }
                 }
             } else {
                 addToken(tokenType);
+            }
+        }
+
+        /**
+         * Check that the previous token was of the specified type
+         * @param kind
+         */
+        function checkPrevious(kind: Lexeme) {
+            let previous = tokens[tokens.length - 1];
+            if (previous && previous.kind === kind) {
+                return true;
+            } else {
+                return false;
             }
         }
 

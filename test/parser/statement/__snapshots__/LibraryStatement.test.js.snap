@@ -9,15 +9,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 3,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [],
@@ -57,7 +57,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -83,7 +83,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -131,15 +131,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 3,
+              "column": 12,
+              "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [
@@ -149,7 +149,7 @@ Object {
                   "isReserved": false,
                   "kind": "String",
                   "literal": BrsString {
-                    "kind": 2,
+                    "kind": 3,
                     "value": "v30/bslCore.brs",
                   },
                   "location": Object {
@@ -221,7 +221,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -252,15 +252,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 25,
-              "line": 3,
+              "column": 12,
+              "line": 6,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [
@@ -322,7 +322,7 @@ Object {
                 "elements": Array [
                   Object {
                     "name": BrsString {
-                      "kind": 2,
+                      "kind": 3,
                       "value": "library",
                     },
                     "value": Literal {
@@ -338,7 +338,7 @@ Object {
                         },
                       },
                       "value": BrsString {
-                        "kind": 2,
+                        "kind": 3,
                         "value": "Gotham City Library",
                       },
                     },
@@ -400,7 +400,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -431,15 +431,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 3,
+              "column": 12,
+              "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 3,
+              "column": 23,
+              "line": 2,
             },
           },
           "statements": Array [
@@ -493,7 +493,7 @@ Object {
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "Gotham City Library",
                 },
               },
@@ -535,7 +535,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -590,15 +590,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 23,
-              "line": 4,
+              "column": 12,
+              "line": 5,
             },
             "file": "",
             "start": Object {
-              "column": 16,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [
@@ -652,7 +652,7 @@ Object {
                   },
                 },
                 "value": BrsString {
-                  "kind": 2,
+                  "kind": 3,
                   "value": "Your Library",
                 },
               },
@@ -694,7 +694,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -751,15 +751,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [],
@@ -799,7 +799,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -833,7 +833,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -871,15 +871,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [],
@@ -919,7 +919,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,
@@ -953,7 +953,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -994,7 +994,7 @@ Object {
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
-            "kind": 2,
+            "kind": 3,
             "value": "v30/bslCore.brs",
           },
           "location": Object {
@@ -1032,15 +1032,15 @@ Object {
     Function {
       "func": Function {
         "body": Block {
-          "startingLocation": Object {
+          "location": Object {
             "end": Object {
-              "column": 19,
+              "column": 12,
               "line": 4,
             },
             "file": "",
             "start": Object {
-              "column": 12,
-              "line": 4,
+              "column": 23,
+              "line": 3,
             },
           },
           "statements": Array [],
@@ -1080,7 +1080,7 @@ Object {
           "text": "sub",
         },
         "parameters": Array [],
-        "returns": 10,
+        "returns": 11,
       },
       "name": Object {
         "isReserved": false,

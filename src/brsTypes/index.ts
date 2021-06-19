@@ -16,20 +16,33 @@ import { Double } from "./Double";
 import { Callable } from "./Callable";
 import { BrsComponent } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
+import { BrsInterface } from "./BrsInterface";
 
 export * from "./BrsType";
 export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
+export * from "./BrsInterface";
 export * from "./components/RoArray";
 export * from "./components/RoDateTime";
+export * from "./components/RoList";
 export * from "./components/RoAssociativeArray";
-export * from "./components/Timespan";
-export * from "./components/RoSGNode";
+export * from "./components/RoTimespan";
 export * from "./components/BrsObjects";
 export * from "./components/RoRegex";
 export * from "./components/RoString";
+export * from "./components/RoBitmap";
+export * from "./components/RoRegion";
+export * from "./components/RoScreen";
+export * from "./components/RoMessagePort";
+export * from "./components/RoFontRegistry";
+export * from "./components/RoFont";
+export * from "./components/RoXMLElement";
+export * from "./components/RoBoolean";
+export * from "./components/RoDouble";
+export * from "./components/RoFloat";
+export * from "./components/RoInt";
 export * from "./Callable";
 
 /**
@@ -92,7 +105,7 @@ export type BrsNumber = Int32 | Int64 | Float | Double;
  * The set of all comparable BrightScript types. Only primitive (i.e. intrinsic * and unboxed)
  * BrightScript types are comparable to each other.
  */
-export type BrsPrimitive = BrsInvalid | BrsBoolean | BrsString | BrsNumber;
+export type BrsPrimitive = BrsInterface | BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 
 /** The set of BrightScript iterable types. */
 export type Iterable = RoArray | RoAssociativeArray;

@@ -11,10 +11,13 @@ export const Type = new Callable("type", {
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, variable: BrsType, version: Int32) => {
-        if (variable.kind !== ValueKind.Object) {
-            return new BrsString(ValueKind.toString(variable.kind));
-        } else {
-            return new BrsString(variable.getComponentName());
+        switch (variable.kind) {
+            case ValueKind.Object:
+                return new BrsString(variable.getComponentName());
+            case ValueKind.Interface:
+                return new BrsString(variable.name);
+            default:
+                return new BrsString(ValueKind.toString(variable.kind));
         }
     },
 });

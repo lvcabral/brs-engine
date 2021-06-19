@@ -5,15 +5,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 25,
-            "line": 3,
+            "column": 12,
+            "line": 7,
           },
           "file": "",
           "start": Object {
-            "column": 16,
-            "line": 3,
+            "column": 23,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -75,7 +75,7 @@ Array [
               "elements": Array [
                 Object {
                   "name": BrsString {
-                    "kind": 2,
+                    "kind": 3,
                     "value": "stop",
                   },
                   "value": Literal {
@@ -91,7 +91,7 @@ Array [
                       },
                     },
                     "value": BrsBoolean {
-                      "kind": 1,
+                      "kind": 2,
                       "value": false,
                     },
                   },
@@ -166,7 +166,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -208,7 +208,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,

@@ -25,4 +25,4 @@ print twoDimensional.secondLayer.level
 
 ' add property to `empty` to be really silly
 empty.isEmpty = oneDimensional.isOneDimensional and false
-print empty.isEmpty
+print empty.["isEmpty"]

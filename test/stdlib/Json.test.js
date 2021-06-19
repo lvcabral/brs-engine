@@ -10,6 +10,7 @@ const {
     Int32,
     Int64,
     Uninitialized,
+    roInt,
 } = require("../../lib/brsTypes");
 
 const { allArgs } = require("../e2e/E2ETests");
@@ -88,6 +89,12 @@ describe("global JSON functions", () => {
         it("converts BRS integer to bare integer string", () => {
             expect(FormatJson.call(interpreter, Int32.fromString("2147483647"))).toEqual(
                 new BrsString("2147483647")
+            );
+        });
+
+        it("converts boxed BRS types to string representations", () => {
+            expect(FormatJson.call(interpreter, new roInt(new Int32(-1)))).toEqual(
+                new BrsString("-1")
             );
         });
 

@@ -45,6 +45,44 @@ describe("parser indexing", () => {
             expect(statements).toMatchSnapshot();
         });
 
+        describe("dotted and bracketed", () => {
+            test("single dot", () => {
+                let { statements, errors } = parser.parse([
+                    identifier("_"),
+                    token(Lexeme.Equal, "="),
+                    identifier("foo"),
+                    token(Lexeme.Dot, "."),
+                    token(Lexeme.LeftSquare, "["),
+                    token(Lexeme.Integer, "2", new Int32(2)),
+                    token(Lexeme.RightSquare, "]"),
+                    EOF,
+                ]);
+
+                expect(errors).toEqual([]);
+                expect(statements).toBeDefined();
+                expect(statements).not.toBeNull();
+                expect(statements).toMatchSnapshot();
+            });
+
+            test("multiple dots", () => {
+                let { statements, errors } = parser.parse([
+                    identifier("_"),
+                    token(Lexeme.Equal, "="),
+                    identifier("foo"),
+                    token(Lexeme.Dot, "."),
+                    token(Lexeme.Dot, "."),
+                    token(Lexeme.Dot, "."),
+                    token(Lexeme.LeftSquare, "["),
+                    token(Lexeme.Integer, "2", new Int32(2)),
+                    token(Lexeme.RightSquare, "]"),
+                    EOF,
+                ]);
+
+                expect(errors.length).toBe(1);
+                expect(errors[0]).toHaveProperty("message", "Expected property name after '.'");
+            });
+        });
+
         test("location tracking", () => {
             /**
              *    0   0   0   1

@@ -4,11 +4,12 @@ exports[`parser while statements while with exit 1`] = `
 Array [
   While {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
@@ -29,7 +30,7 @@ Array [
                 },
               },
               "value": BrsString {
-                "kind": 2,
+                "kind": 3,
                 "value": "looping",
               },
             },
@@ -87,7 +88,7 @@ Array [
         },
       },
       "value": BrsBoolean {
-        "kind": 1,
+        "kind": 2,
         "value": true,
       },
     },
@@ -133,11 +134,12 @@ exports[`parser while statements while without exit 1`] = `
 Array [
   While {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
@@ -158,7 +160,7 @@ Array [
                 },
               },
               "value": BrsString {
-                "kind": 2,
+                "kind": 3,
                 "value": "looping",
               },
             },
@@ -196,7 +198,7 @@ Array [
         },
       },
       "value": BrsBoolean {
-        "kind": 1,
+        "kind": 2,
         "value": true,
       },
     },

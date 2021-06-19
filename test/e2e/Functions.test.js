@@ -49,6 +49,9 @@ describe("end to end functions", () => {
             "2",
             "whileLoopReturn:",
             "3",
+            "boxedReturnType:",
+            "roFloat",
+            "3.14159",
         ]);
     });
 
@@ -73,6 +76,25 @@ describe("end to end functions", () => {
             "true",
             "m.houseAge = ",
             "old",
+        ]);
+    });
+
+    test("function/m-pointer-global.brs", async () => {
+        await execute([resourceFile("function", "m-pointer-global.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "old: ",
+            "value 1",
+            "new: ",
+            "value 2",
+            "glb: ",
+            "value 2",
+            "old: ",
+            "invalid",
+            "new: ",
+            "value 4",
+            "glb: ",
+            "value 3",
         ]);
     });
 

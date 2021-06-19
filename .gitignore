@@ -1,5 +1,12 @@
+.vscode/
 .idea/
-lib/
+app/lib/brsEmu*
 types/
 node_modules/
-.vscode/
+dist/
+out/
+/channels/
+*.pkg
+desktop.ini
+.DS_Store
+.husky

@@ -1,6 +1,7 @@
 import * as Expr from "./Expression";
 import { Token, Identifier, Location, Lexeme } from "../lexer";
 import { BrsType, BrsInvalid } from "../brsTypes";
+import { BrsError } from "../Error";
 
 /** A set of reasons why a `Block` stopped executing. */
 export * from "./BlockEndReason";
@@ -21,6 +22,7 @@ export interface Visitor<T> {
     visitDottedSet(statement: DottedSet): BrsType;
     visitIndexedSet(statement: IndexedSet): BrsType;
     visitIncrement(expression: Increment): BrsInvalid;
+    visitLibrary(expression: Library): BrsInvalid;
 }
 
 /** A BrightScript statement */
@@ -60,25 +62,10 @@ export class Assignment implements Statement {
 }
 
 export class Block implements Statement {
-    constructor(
-        readonly statements: ReadonlyArray<Statement>,
-        readonly startingLocation: Location
-    ) {}
+    constructor(readonly statements: ReadonlyArray<Statement>, readonly location: Location) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitBlock(this);
-    }
-
-    get location() {
-        let end = this.statements.length
-            ? this.statements[this.statements.length - 1].location.end
-            : this.startingLocation.start;
-
-        return {
-            file: this.startingLocation.file,
-            start: this.startingLocation.start,
-            end: end,
-        };
     }
 }
 
@@ -261,7 +248,7 @@ export class Goto implements Statement {
 
     accept<R>(visitor: Visitor<R>): BrsType {
         //should search the code for the corresponding label, and set that as the next line to execute
-        throw new Error("Not implemented");
+        throw new BrsError("Goto statement not implemented!", this.tokens.goto.location);
     }
 
     get location() {
@@ -282,7 +269,7 @@ export class Label implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        throw new Error("Not implemented");
+        throw new BrsError("Label support not implemented!", this.tokens.identifier.location);
     }
 
     get location() {
@@ -324,7 +311,7 @@ export class End implements Statement {
 
     accept<R>(visitor: Visitor<R>): BrsType {
         //TODO implement this in the runtime. It should immediately terminate program execution, without error
-        throw new Error("Not implemented");
+        throw new BrsError("End statement not implemented!", this.tokens.end.location);
     }
 
     get location() {
@@ -345,7 +332,7 @@ export class Stop implements Statement {
 
     accept<R>(visitor: Visitor<R>): BrsType {
         //TODO implement this in the runtime. It should pause code execution until a `c` command is issued from the console
-        throw new Error("Not implemented");
+        throw new BrsError("Stop statement not implemented!", this.tokens.stop.location);
     }
 
     get location() {
@@ -481,7 +468,7 @@ export class Library implements Statement {
         }
     ) {}
     accept<R>(visitor: Visitor<R>): BrsType {
-        throw new Error("Library is not implemented");
+        return visitor.visitLibrary(this);
     }
 
     get location() {

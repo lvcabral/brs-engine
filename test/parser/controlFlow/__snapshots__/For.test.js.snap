@@ -4,11 +4,12 @@ exports[`parser for loops accepts a 'step' clause 1`] = `
 Array [
   For {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
@@ -63,7 +64,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 0,
         },
       },
@@ -80,7 +81,7 @@ Array [
         },
       },
       "value": Int32 {
-        "kind": 3,
+        "kind": 4,
         "value": 5,
       },
     },
@@ -96,7 +97,7 @@ Array [
         },
       },
       "value": Int32 {
-        "kind": 3,
+        "kind": 4,
         "value": 2,
       },
     },
@@ -174,11 +175,12 @@ exports[`parser for loops allows 'next' to terminate loop 1`] = `
 Array [
   For {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
@@ -233,7 +235,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 0,
         },
       },
@@ -250,7 +252,7 @@ Array [
         },
       },
       "value": Int32 {
-        "kind": 3,
+        "kind": 4,
         "value": 5,
       },
     },
@@ -266,7 +268,7 @@ Array [
         },
       },
       "value": Int32 {
-        "kind": 3,
+        "kind": 4,
         "value": 1,
       },
     },
@@ -329,11 +331,12 @@ exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
 Array [
   For {
     "body": Block {
-      "startingLocation": Object {
+      "location": Object {
         "end": Object {
           "column": -9,
           "line": -9,
         },
+        "file": undefined,
         "start": Object {
           "column": -9,
           "line": -9,
@@ -388,7 +391,7 @@ Array [
           },
         },
         "value": Int32 {
-          "kind": 3,
+          "kind": 4,
           "value": 0,
         },
       },
@@ -405,7 +408,7 @@ Array [
         },
       },
       "value": Int32 {
-        "kind": 3,
+        "kind": 4,
         "value": 5,
       },
     },
@@ -421,7 +424,7 @@ Array [
         },
       },
       "value": Int32 {
-        "kind": 3,
+        "kind": 4,
         "value": 1,
       },
     },

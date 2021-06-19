@@ -5,15 +5,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 26,
-            "line": 3,
+            "column": 16,
+            "line": 6,
           },
           "file": "",
           "start": Object {
-            "column": 20,
-            "line": 3,
+            "column": 27,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -75,7 +75,7 @@ Array [
               "elements": Array [
                 Object {
                   "name": BrsString {
-                    "kind": 2,
+                    "kind": 3,
                     "value": "end",
                   },
                   "value": Literal {
@@ -91,7 +91,7 @@ Array [
                       },
                     },
                     "value": BrsBoolean {
-                      "kind": 1,
+                      "kind": 2,
                       "value": true,
                     },
                   },
@@ -153,7 +153,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -181,15 +181,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 23,
-            "line": 3,
+            "column": 16,
+            "line": 4,
           },
           "file": "",
           "start": Object {
-            "column": 20,
-            "line": 3,
+            "column": 27,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -251,7 +251,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -279,15 +279,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 23,
-            "line": 3,
+            "column": 16,
+            "line": 4,
           },
           "file": "",
           "start": Object {
-            "column": 20,
-            "line": 3,
+            "column": 27,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -341,7 +341,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -383,7 +383,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -411,15 +411,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 22,
-            "line": 3,
+            "column": 12,
+            "line": 56,
           },
           "file": "",
           "start": Object {
-            "column": 16,
-            "line": 3,
+            "column": 23,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -548,7 +548,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -603,7 +603,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -658,7 +658,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -713,7 +713,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -768,7 +768,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -823,7 +823,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -878,7 +878,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -933,7 +933,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -988,7 +988,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1043,7 +1043,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1098,7 +1098,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1153,7 +1153,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1208,7 +1208,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1263,7 +1263,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1318,7 +1318,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1373,7 +1373,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1428,7 +1428,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1483,7 +1483,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1538,7 +1538,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1593,7 +1593,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1648,7 +1648,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1703,7 +1703,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1758,7 +1758,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1813,7 +1813,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1868,7 +1868,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1923,7 +1923,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -1978,7 +1978,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2033,7 +2033,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2088,7 +2088,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2143,7 +2143,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2198,7 +2198,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2253,7 +2253,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2308,7 +2308,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2363,7 +2363,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2418,7 +2418,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2473,7 +2473,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2528,7 +2528,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2583,7 +2583,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2638,7 +2638,62 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": Object {
+              "isReserved": true,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 26,
+                  "line": 43,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 23,
+                  "line": 43,
+                },
+              },
+              "text": "rem",
+            },
+            "obj": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 22,
+                    "line": 43,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 16,
+                    "line": 43,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 33,
+                  "line": 43,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 29,
+                  "line": 43,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2661,7 +2716,7 @@ Array [
               },
               "text": "return",
             },
-            "obj": DottedGet {
+            "obj": Variable {
               "name": Object {
                 "isReserved": false,
                 "kind": "Identifier",
@@ -2679,25 +2734,6 @@ Array [
                 },
                 "text": "person",
               },
-              "obj": Variable {
-                "name": Object {
-                  "isReserved": false,
-                  "kind": "Identifier",
-                  "literal": undefined,
-                  "location": Object {
-                    "end": Object {
-                      "column": 22,
-                      "line": 43,
-                    },
-                    "file": "",
-                    "start": Object {
-                      "column": 16,
-                      "line": 43,
-                    },
-                  },
-                  "text": "person",
-                },
-              },
             },
             "value": Literal {
               "_location": Object {
@@ -2712,7 +2748,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2767,7 +2803,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2822,7 +2858,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2877,7 +2913,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2932,7 +2968,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -2987,7 +3023,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3042,7 +3078,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3097,7 +3133,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3152,7 +3188,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3207,7 +3243,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3262,7 +3298,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3317,7 +3353,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3359,7 +3395,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,
@@ -3387,15 +3423,15 @@ Array [
   Function {
     "func": Function {
       "body": Block {
-        "startingLocation": Object {
+        "location": Object {
           "end": Object {
-            "column": 22,
-            "line": 3,
+            "column": 12,
+            "line": 11,
           },
           "file": "",
           "start": Object {
-            "column": 16,
-            "line": 3,
+            "column": 23,
+            "line": 2,
           },
         },
         "statements": Array [
@@ -3449,7 +3485,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3504,7 +3540,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3559,7 +3595,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3614,7 +3650,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3669,7 +3705,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3724,7 +3760,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3779,7 +3815,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3834,7 +3870,7 @@ Array [
                 },
               },
               "value": BrsBoolean {
-                "kind": 1,
+                "kind": 2,
                 "value": true,
               },
             },
@@ -3876,7 +3912,7 @@ Array [
         "text": "sub",
       },
       "parameters": Array [],
-      "returns": 10,
+      "returns": 11,
     },
     "name": Object {
       "isReserved": false,

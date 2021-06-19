@@ -13,21 +13,22 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     constructor(elements: BrsType[]) {
         super("roArray");
         this.elements = elements;
-        this.registerMethods([
-            this.peek,
-            this.pop,
-            this.push,
-            this.shift,
-            this.unshift,
-            this.delete,
-            this.count,
-            this.clear,
-            this.append,
-            this.join,
-            this.sort,
-            this.sortBy,
-            this.reverse,
-        ]);
+        this.registerMethods({
+            ifArray: [
+                this.peek,
+                this.pop,
+                this.push,
+                this.shift,
+                this.unshift,
+                this.delete,
+                this.count,
+                this.clear,
+                this.append,
+            ],
+            ifArrayJoin: [this.join],
+            ifArraySort: [this.sort, this.sortBy, this.reverse],
+            ifEnum: [this.isEmpty],
+        });
     }
 
     toString(parent?: BrsType): string {
@@ -57,6 +58,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
 
     get(index: BrsType) {
         switch (index.kind) {
+            case ValueKind.Float:
+                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
             case ValueKind.Int32:
                 return this.getElements()[index.getValue()] || BrsInvalid.Instance;
             case ValueKind.String:
@@ -69,11 +72,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32) {
+        if (index.kind !== ValueKind.Int32 && index.kind != ValueKind.Float) {
             throw new Error("Array indexes must be 32-bit integers");
         }
 
-        this.elements[index.getValue()] = value;
+        this.elements[Math.trunc(index.getValue())] = value;
 
         return BrsInvalid.Instance;
     }
@@ -197,7 +200,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                     return !(element instanceof BrsString);
                 })
             ) {
-                interpreter.stderr.write("roArray.Join: Array contains non-string value(s).\n");
+                postMessage("warning,roArray.Join: Array contains non-string value(s).");
                 return new BrsString("");
             }
             return new BrsString(this.elements.join(separator.value));
@@ -211,7 +214,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                interpreter.stderr.write("roArray.Sort: Flags contains invalid option(s).\n");
+                postMessage("warning,roArray.Sort: Flags contains invalid option(s).");
             } else {
                 this.elements = this.elements.sort(function(a, b) {
                     var compare = 0;
@@ -263,7 +266,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                interpreter.stderr.write("roArray.SortBy: Flags contains invalid option(s).\n");
+                postMessage("warning,roArray.SortBy: Flags contains invalid option(s).");
             } else {
                 this.elements = this.elements.sort(function(a, b) {
                     var compare = 0;
@@ -326,6 +329,16 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, separator: BrsString) => {
             this.elements = this.elements.reverse();
             return BrsInvalid.Instance;
+        },
+    });
+    // ifEnum
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(this.elements.length === 0);
         },
     });
 }

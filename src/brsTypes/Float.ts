@@ -1,9 +1,11 @@
 import { BrsType, BrsBoolean } from "./";
 import { ValueKind, Comparable } from "./BrsType";
+import { Boxable } from "./Boxing";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
+import { roFloat } from "./components/RoFloat";
 
 /**
  * Number of significant digits represented in an IEEE 32-bit floating point number.
@@ -11,7 +13,7 @@ import { Int64 } from "./Int64";
  */
 const IEEE_FLOAT_SIGFIGS = 7;
 
-export class Float implements Numeric, Comparable {
+export class Float implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Float;
     private readonly value: number;
 
@@ -114,6 +116,28 @@ export class Float implements Numeric, Comparable {
         }
     }
 
+    leftShift(rhs: BrsNumber): Int32 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int32(Math.trunc(this.getValue()) << Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int32(Math.trunc(this.getValue()) << rhs.getValue().toNumber());
+        }
+    }
+
+    rightShift(rhs: BrsNumber): Int32 {
+        switch (rhs.kind) {
+            case ValueKind.Int32:
+            case ValueKind.Float:
+            case ValueKind.Double:
+                return new Int32(Math.trunc(this.getValue()) >> Math.trunc(rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int32(Math.trunc(this.getValue()) >> rhs.getValue().toNumber());
+        }
+    }
+
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
             case ValueKind.Int32:
@@ -193,5 +217,9 @@ export class Float implements Numeric, Comparable {
 
     toString(parent?: BrsType): string {
         return this.value.toString();
+    }
+
+    box() {
+        return new roFloat(this);
     }
 }

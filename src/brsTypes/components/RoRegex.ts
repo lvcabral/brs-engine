@@ -14,14 +14,16 @@ export class RoRegex extends BrsComponent implements BrsValue {
         super("roRegex");
         this.jsRegex = new RegExp(expression.value, this.parseFlags(flags.value));
 
-        this.registerMethods([
-            this.isMatch,
-            this.match,
-            this.replace,
-            this.replaceAll,
-            this.split,
-            this.matchAll,
-        ]);
+        this.registerMethods({
+            ifRegex: [
+                this.isMatch,
+                this.match,
+                this.replace,
+                this.replaceAll,
+                this.split,
+                this.matchAll,
+            ],
+        });
     }
 
     toString(parent?: BrsType) {

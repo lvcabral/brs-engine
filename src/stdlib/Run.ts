@@ -8,7 +8,6 @@ import {
     BrsString,
     BrsInvalid,
     StdlibArgument,
-    SignatureAndImplementation,
     RoArray,
     isBrsString,
 } from "../brsTypes";
@@ -38,8 +37,10 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
     }
 
     try {
-        let results = brs.executeSync(pathsToFiles, interpreter.options, args);
-        return results[0] || BrsInvalid.Instance;
+        let ast = brs.lexParseSync(interpreter, pathsToFiles);
+        // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
+        let sandbox = new Interpreter(interpreter.options);
+        return sandbox.exec(ast, ...args)[0] || BrsInvalid.Instance;
     } catch (err) {
         // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
         // syntax errors, etc.
@@ -47,38 +48,9 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
     }
 }
 
-/**
- * Creates several copies of the provided signature and implementation pair, simulating variadic types by creating a
- * function that accepts zero args, one that accepts one arg, one that accepts two args, (…).
- *
- * @param signatureAndImpl the base signature and implementation to make variadic
- *
- * @returns an array containing psuedo-variadic versions of the provided signature and implementation
- */
-function variadic(signatureAndImpl: SignatureAndImplementation): SignatureAndImplementation[] {
-    let { signature, impl } = signatureAndImpl;
-    return [
-        signatureAndImpl,
-        ...new Array(10).fill(0).map((_, numArgs) => {
-            return {
-                signature: {
-                    args: [
-                        ...signature.args,
-                        ...new Array(numArgs)
-                            .fill(0)
-                            .map((_, i) => new StdlibArgument(`arg${i}`, ValueKind.Dynamic)),
-                    ],
-                    returns: signature.returns,
-                },
-                impl: impl,
-            };
-        }),
-    ];
-}
-
 export const Run = new Callable(
     "Run",
-    ...variadic({
+    ...Callable.variadic({
         signature: {
             args: [new StdlibArgument("filename", ValueKind.String)],
             returns: ValueKind.Dynamic,
@@ -87,7 +59,7 @@ export const Run = new Callable(
             return runFiles(interpreter, [filename], args);
         },
     }),
-    ...variadic({
+    ...Callable.variadic({
         signature: {
             args: [new StdlibArgument("filenamearray", ValueKind.Object)],
             returns: ValueKind.Dynamic,

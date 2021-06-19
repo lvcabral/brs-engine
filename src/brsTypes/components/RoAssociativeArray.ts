@@ -24,17 +24,20 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             this.elements.set(member.name.value.toLowerCase(), member.value)
         );
 
-        this.registerMethods([
-            this.clear,
-            this.delete,
-            this.addreplace,
-            this.count,
-            this.doesexist,
-            this.append,
-            this.keys,
-            this.items,
-            this.lookup,
-        ]);
+        this.registerMethods({
+            ifAssociativeArray: [
+                this.clear,
+                this.delete,
+                this.addreplace,
+                this.count,
+                this.doesexist,
+                this.append,
+                this.keys,
+                this.items,
+                this.lookup,
+            ],
+            ifEnum: [this.isEmpty],
+        });
     }
 
     toString(parent?: BrsType): string {
@@ -162,7 +165,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, str: BrsString) => {
-            return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
+            return this.elements.has(str.value.toLowerCase()) ? BrsBoolean.True : BrsBoolean.False;
         },
     });
 
@@ -202,7 +205,20 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            return new RoArray(this.getValues());
+            return new RoArray(
+                this.getElements().map((key: BrsString) => {
+                    return new RoAssociativeArray([
+                        {
+                            name: new BrsString("key"),
+                            value: key,
+                        },
+                        {
+                            name: new BrsString("value"),
+                            value: this.get(key),
+                        },
+                    ]);
+                })
+            );
         },
     });
 
@@ -215,6 +231,19 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         impl: (interpreter: Interpreter, key: BrsString) => {
             let lKey = key.value.toLowerCase();
             return this.get(new BrsString(lKey));
+        },
+    });
+
+    //--------------------------------- ifEnum ---------------------------------
+
+    /** Returns true if enumeration contains no elements, false otherwise	 */
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(this.elements.size === 0);
         },
     });
 }
