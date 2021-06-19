@@ -293,7 +293,8 @@ export class Label implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        throw new BrsError("Label support not implemented!", this.tokens.identifier.location);
+        // Label support not implemented, ignore labels for now.
+        return BrsInvalid.Instance; 
     }
 
     get location() {
