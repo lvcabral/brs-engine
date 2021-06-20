@@ -179,14 +179,14 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             var date = new Date(this.markTime);
-            var options = {
+            var dtoptions = {
                 weekday: "long",
                 year: "numeric",
                 month: "long",
                 day: "numeric",
                 timeZone: "UTC",
-            };
-            return new BrsString(date.toLocaleDateString("en-US", options).replace(",", ""));
+            } as Intl.DateTimeFormatOptions;
+            return new BrsString(date.toLocaleDateString("en-US", dtoptions).replace(",", ""));
         },
     });
 
