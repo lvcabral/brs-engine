@@ -33,6 +33,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
                 this.removeTail,
                 this.count,
                 this.clear,
+                // this.resetIndex,
             ],
             ifEnum: [this.isEmpty],
             ifListToArray: [this.toArray],
