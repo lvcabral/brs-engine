@@ -25,8 +25,6 @@ export class RoTimespan extends BrsComponent implements BrsValue {
                 this.getSecondsToISO8601Date,
             ],
         });
-
-        this.resetTime();
     }
 
     resetTime() {
@@ -71,7 +69,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(Math.round((Date.now() - this.markTime) / 1000));
+            return new Int32(Math.floor((Date.now() - this.markTime) / 1000));
         },
     });
 
