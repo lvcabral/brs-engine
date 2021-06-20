@@ -73,8 +73,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.setScaleMode,
                 this.setTime,
                 this.setWrap,
+            ],
+            ifDraw2D: [
                 this.clear,
-                this.setAlphaEnable,
                 this.drawObject,
                 // this.drawRotatedObject,
                 // this.drawScaledObject,
@@ -82,6 +83,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.drawPoint,
                 this.drawRect,
                 this.drawText,
+                // this.finish,
+                // this.getAlphaEnable,
+                this.setAlphaEnable,
+                // this.getByteArray,
+                // this.getPng,
             ],
         });
     }

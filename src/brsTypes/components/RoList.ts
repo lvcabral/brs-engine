@@ -26,6 +26,9 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
                 this.getTail,
                 this.removeHead,
                 this.removeTail,
+                this.count,
+                this.clear,
+                // this.resetIndex,
             ],
             ifArray: [
                 this.peek,
