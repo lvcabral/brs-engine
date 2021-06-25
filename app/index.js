@@ -71,8 +71,7 @@ let title = "";
 let source = [];
 let paths = [];
 let txts = [];
-let imgs = [];
-let fonts = [];
+let bins = [];
 let running = false;
 
 // Initialize Worker
@@ -133,9 +132,8 @@ fileSelector.onchange = function() {
     reader.onload = function(progressEvent) {
         title = file.name;
         paths = [];
-        imgs = [];
+        bins = [];
         txts = [];
-        fonts = [];
         source.push(this.result);
         paths.push({ url: `source/${file.name}`, id: 0, type: "source" });
         ctx.fillStyle = "rgba(0, 0, 0, 1)";
@@ -280,10 +278,9 @@ function openChannelZip(f) {
             }
             const assetPaths = [];
             const assetsEvents = [];
-            let bmpId = 0;
             let txtId = 0;
+            let binId = 0;
             let srcId = 0;
-            let fntId = 0;
             let audId = 0;
             zip.forEach(function(relativePath, zipEntry) {
                 const lcasePath = relativePath.toLowerCase();
@@ -294,26 +291,12 @@ function openChannelZip(f) {
                     srcId++;
                 } else if (
                     !zipEntry.dir &&
-                    (lcasePath === "manifest" || ext === "csv" || ext === "xml" || ext === "json")
+                    (lcasePath === "manifest" || ext === "csv" || ext === "xml" || 
+                        ext === "json" || ext === "txt" || ext === "ts")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
                     assetsEvents.push(zipEntry.async("string"));
                     txtId++;
-                } else if (
-                    !zipEntry.dir &&
-                    (ext === "png" ||
-                        ext === "gif" ||
-                        ext === "jpg" ||
-                        ext === "jpeg" ||
-                        ext === "bmp")
-                ) {
-                    assetPaths.push({ url: relativePath, id: bmpId, type: "image" });
-                    assetsEvents.push(zipEntry.async("arraybuffer"));
-                    bmpId++;
-                } else if (!zipEntry.dir && (ext === "ttf" || ext === "otf")) {
-                    assetPaths.push({ url: relativePath, id: fntId, type: "font" });
-                    assetsEvents.push(zipEntry.async("arraybuffer"));
-                    fntId++;
                 } else if (
                     !zipEntry.dir &&
                     (ext === "wav" ||
@@ -331,20 +314,21 @@ function openChannelZip(f) {
                     assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
                     assetsEvents.push(zipEntry.async("blob"));
                     audId++;
+                } else if (!zipEntry.dir) {
+                    assetPaths.push({ url: relativePath, id: binId, type: "binary" });
+                    assetsEvents.push(zipEntry.async("arraybuffer"));
+                    binId++;
                 }
             });
             Promise.all(assetsEvents).then(
                 function success(assets) {
                     paths = [];
                     txts = [];
-                    imgs = [];
-                    fonts = [];
+                    bins = [];
                     for (let index = 0; index < assets.length; index++) {
                         paths.push(assetPaths[index]);
-                        if (assetPaths[index].type === "image") {
-                            imgs.push(assets[index]);
-                        } else if (assetPaths[index].type === "font") {
-                            fonts.push(assets[index]);
+                        if (assetPaths[index].type === "binary") {
+                            bins.push(assets[index]);
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
                         } else if (assetPaths[index].type === "audio") {
@@ -389,11 +373,10 @@ function runChannel() {
         paths: paths,
         brs: source,
         texts: txts,
-        fonts: fonts,
-        images: imgs,
+        binaries: bins,
     };
     brsWorker.postMessage(sharedBuffer);
-    brsWorker.postMessage(payload, imgs);
+    brsWorker.postMessage(payload, bins);
 }
 
 // Receive Messages from the Web Worker

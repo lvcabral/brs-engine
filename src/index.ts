@@ -102,10 +102,8 @@ onmessage = function(event) {
                     }
                 }
                 try {
-                    if (filePath.type === "image") {
-                        volume.writeFileSync("/" + filePath.url, event.data.images[filePath.id]);
-                    } else if (filePath.type === "font") {
-                        volume.writeFileSync("/" + filePath.url, event.data.fonts[filePath.id]);
+                    if (filePath.type === "binary") {
+                        volume.writeFileSync("/" + filePath.url, event.data.binaries[filePath.id]);
                     } else if (filePath.type === "audio") {
                         // As the audio files are played on the renderer process we need to
                         // save a mock file to allow file exist checking and save the index
