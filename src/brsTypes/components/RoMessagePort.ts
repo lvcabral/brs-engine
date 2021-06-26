@@ -65,21 +65,15 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         if (this.screen) {
             if (ms === 0) {
                 while (true) {
-                    if (this.buffer[0] !== this.lastKey) {
-                        this.lastKey = this.buffer[this.type.KEY];
-                        interpreter.lastKeyTime = interpreter.currKeyTime;
-                        interpreter.currKeyTime = Date.now();
-                        return new RoUniversalControlEvent(this.lastKey);
+                    if (this.buffer[this.type.KEY] !== this.lastKey) {
+                        return this.newControlEvent(interpreter);
                     }
                 }
             } else {
                 ms += new Date().getTime();
                 while (new Date().getTime() < ms) {
                     if (this.buffer[this.type.KEY] !== this.lastKey) {
-                        this.lastKey = this.buffer[this.type.KEY];
-                        interpreter.lastKeyTime = interpreter.currKeyTime;
-                        interpreter.currKeyTime = Date.now();
-                        return new RoUniversalControlEvent(this.lastKey);
+                        return this.newControlEvent(interpreter);
                     }
                 }
             }
@@ -140,6 +134,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
+    newControlEvent(interpreter: Interpreter): RoUniversalControlEvent {
+        this.lastKey = this.buffer[this.type.KEY];
+        let mod = this.buffer[this.type.MOD];
+        interpreter.lastKeyTime = interpreter.currKeyTime;
+        interpreter.currKeyTime = Date.now();
+        return new RoUniversalControlEvent("WD:0", this.lastKey, mod);
+    }
+
     /** Waits until an event object is available or timeout milliseconds have passed. */
     private waitMessage = new Callable("waitMessage", {
         signature: {
@@ -157,12 +159,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.screen) {
                 if (this.buffer[this.type.KEY] !== this.lastKey) {
-                    this.lastKey = this.buffer[this.type.KEY];
-                    return new RoUniversalControlEvent(this.lastKey);
-                }
+                    return this.newControlEvent(interpreter);                }
             } else if (this.audio) {
                 if (this.buffer[this.type.SND] !== this.lastFlags) {
                     this.lastFlags = this.buffer[this.type.SND];
@@ -194,7 +194,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             if (this.screen) {
                 if (this.buffer[this.type.KEY] !== this.lastKey) {
-                    return new RoUniversalControlEvent(this.buffer[this.type.KEY]);
+                    return new RoUniversalControlEvent("WD:0", this.buffer[this.type.KEY], this.buffer[this.type.MOD]);
                 }
             } else if (this.audio) {
                 if (this.buffer[this.type.SND] !== this.lastFlags) {
