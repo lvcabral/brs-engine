@@ -631,6 +631,7 @@ function closeChannel() {
     fileSelector.value = null;
     brsWorker.terminate();
     sharedArray[dataType.KEY] = 0;
+    sharedArray[dataType.MOD] = 0;
     sharedArray[dataType.SND] = -1;
     sharedArray[dataType.IDX] = -1;
     resetSounds();
@@ -672,6 +673,7 @@ function keyUpHandler(event) {
 
 // Keyboard Handler
 function handleKey(key, mod) {
+    sharedArray[dataType.MOD] = mod;
     if (key == "back") {
         sharedArray[dataType.KEY] = 0 + mod;
     } else if (key == "select") {
