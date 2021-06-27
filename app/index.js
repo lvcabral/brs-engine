@@ -501,7 +501,7 @@ function receiveMessage(event) {
         console.log(`------ Finished '${title}' execution ------`);
         closeChannel();
     } else if (event.data === "reset") {
-        window.location.reload(false);
+        window.location.reload();
     } else if (event.data.substr(0, 8) === "version:") {
         libVersion.innerHTML = event.data.substr(8);
     }
@@ -645,6 +645,7 @@ function closeChannel() {
 const preventDefault = new Set(["Enter", "Space", "ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown"]);
 const keys = new Map();
 keys.set("Backspace", "back");
+keys.set("Delete", "backspace");
 keys.set("Enter", "select");
 keys.set("Escape", "home");
 keys.set("Space", "play");
@@ -690,6 +691,8 @@ function handleKey(key, mod) {
         sharedArray[dataType.KEY] = 7 + mod;
     } else if (key == "info") {
         sharedArray[dataType.KEY] = 10 + mod;
+    } else if (key == "backspace") {
+        sharedArray[dataType.KEY] = 11 + mod;
     } else if (key == "rev") {
         sharedArray[dataType.KEY] = 8 + mod;
     } else if (key == "play") {
