@@ -67,6 +67,48 @@ body {
     z-index:30;
 }
 
+#channel4{
+    position: absolute;
+    left: 398px; 
+    top: 245px;
+    z-index:30;
+}
+
+#channel5{
+    position: absolute;
+    left: 541px; 
+    top: 245px;
+    z-index:30;
+}
+
+#channel6{
+    position: absolute;
+    left: 683px; 
+    top: 245px;
+    z-index:30;
+}
+
+#channel7{
+    position: absolute;
+    left: 398px; 
+    top: 354px;
+    z-index:30;
+}
+
+#channel8{
+    position: absolute;
+    left: 541px; 
+    top: 354px;
+    z-index:30;
+}
+
+#channel9{
+    position: absolute;
+    left: 683px; 
+    top: 354px;
+    z-index:30;
+}
+
 h1 {
 	font-size: 4em;
 	color: #3e5763;
