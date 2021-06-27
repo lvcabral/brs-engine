@@ -8,6 +8,7 @@ export * from "./BlockEndReason";
 
 export interface Visitor<T> {
     visitAssignment(statement: Assignment): BrsType;
+    visitDim(statement: Dim): BrsType;
     visitExpression(statement: Expression): BrsType;
     visitExitFor(statement: ExitFor): never;
     visitExitWhile(statement: ExitWhile): never;
@@ -57,6 +58,29 @@ export class Assignment implements Statement {
             file: this.name.location.file,
             start: this.name.location.start,
             end: this.value.location.end,
+        };
+    }
+}
+
+export class Dim implements Statement {
+    constructor(
+        readonly tokens: {
+            dim: Token;
+            closingBrace: Token;
+        },
+        readonly name: Identifier,
+        readonly dimensions: Expr.Expression[]
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitDim(this);
+    }
+
+    get location() {
+        return {
+            file: this.tokens.dim.location.file,
+            start: this.tokens.dim.location.start,
+            end: this.tokens.closingBrace.location.end,
         };
     }
 }
@@ -269,7 +293,8 @@ export class Label implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        throw new BrsError("Label support not implemented!", this.tokens.identifier.location);
+        // Label support not implemented, ignore labels for now.
+        return BrsInvalid.Instance; 
     }
 
     get location() {

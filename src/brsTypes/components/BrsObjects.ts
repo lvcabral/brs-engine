@@ -14,7 +14,7 @@ import { RoFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
-import { RoRegion } from "./RoRegion";
+import { RoRegion, createRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
 import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoXMLElement } from "./RoXMLElement";
@@ -31,9 +31,12 @@ import { roBoolean } from "./RoBoolean";
 import { roDouble } from "./RoDouble";
 import { roFloat } from "./RoFloat";
 import { roInt } from "./RoInt";
+import { roLongInteger } from "./RoLongInteger";
 import { Double } from "../Double";
 import { Float } from "../Float";
 import { Int32 } from "../Int32";
+import { Int64 } from "../Int64";
+import { roInvalid } from "./RoInvalid";
 
 /** Map containing a list of brightscript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
@@ -50,11 +53,12 @@ export const BrsObjects = new Map<string, Function>([
         (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
             new RoRegex(expression, flags),
     ],
-    ["rostring", (interpreter: Interpreter, literal: BrsString) => new RoString(literal)],
+    ["rostring", (interpreter: Interpreter) => new RoString()],
     ["roboolean", (interpreter: Interpreter, literal: BrsBoolean) => new roBoolean(literal)],
     ["rodouble", (interpreter: Interpreter, literal: Double) => new roDouble(literal)],
     ["rofloat", (interpreter: Interpreter, literal: Float) => new roFloat(literal)],
     ["roint", (interpreter: Interpreter, literal: Int32) => new roInt(literal)],
+    ["rolonginteger", (interpreter: Interpreter, literal: Int64) => new roLongInteger(literal)],
     ["ropath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
     [
         "robitmap",
@@ -81,12 +85,12 @@ export const BrsObjects = new Map<string, Function>([
         "roregion",
         (
             interpreter: Interpreter,
-            bitmap: RoBitmap,
+            bitmap: RoBitmap | RoScreen,
             x: Int32,
             y: Int32,
             width: Int32,
             height: Int32
-        ) => new RoRegion(bitmap, x, y, width, height),
+        ) => createRegion(bitmap, x, y, width, height),
     ],
     [
         "roscreen",
@@ -95,4 +99,5 @@ export const BrsObjects = new Map<string, Function>([
     ],
     ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
     ["rourltransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
+    ["roinvalid", (interpreter: Interpreter) => new roInvalid()],
 ]);

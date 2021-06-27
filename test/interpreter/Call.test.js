@@ -3,7 +3,7 @@ const Stmt = require("../../lib/parser/Statement");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("brs");
 const { Lexeme } = brs.lexer;
-const { BrsString, Int32, roInt, ValueKind } = brs.types;
+const { BrsString, Int32, roInt, ValueKind, BrsInvalid, roInvalid } = brs.types;
 
 const { token, identifier } = require("../parser/ParserTests");
 
@@ -163,6 +163,42 @@ describe("interpreter calls", () => {
         expect(() => interpreter.exec(ast)).toThrow(
             /Attempting to return value of type Integer, but function foo declares return value of type String/
         );
+    });
+
+    it("boxes invalid when return type is Object", () => {
+        const ast = [
+            new Stmt.Function(
+                identifier("foo"),
+                new Expr.Function(
+                    [],
+                    ValueKind.Object,
+                    new Stmt.Block(
+                        [
+                            new Stmt.Return(
+                                { return: token(Lexeme.Return, "return") },
+                                new Expr.Literal(BrsInvalid.Instance)
+                            ),
+                        ],
+                        token(Lexeme.Newline, "\n")
+                    )
+                )
+            ),
+            new Stmt.Assignment(
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("result"),
+                new Stmt.Expression(
+                    new Expr.Call(
+                        new Expr.Variable(identifier("foo")),
+                        token(Lexeme.RightParen, ")"),
+                        [] // no args required
+                    )
+                )
+            ),
+        ];
+        interpreter.exec(ast);
+        let result = interpreter.environment.get(identifier("result"));
+        expect(result.kind).toEqual(ValueKind.Object);
+        expect(result.value).toEqual(new roInvalid().value);
     });
 
     it("errors when returning from a void return", () => {

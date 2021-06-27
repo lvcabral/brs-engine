@@ -19,16 +19,19 @@ import { Float } from "../Float";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;
-    private intrinsic: BrsString;
+    private intrinsic: BrsString = new BrsString("");
 
     public getValue(): string {
         return this.intrinsic.value;
     }
 
-    constructor(initialValue: BrsString) {
+    constructor(initialValue?: BrsString) {
         super("roString");
 
-        this.intrinsic = initialValue;
+        if (initialValue) {
+            this.intrinsic = initialValue;
+        }
+
         this.registerMethods({
             ifString: [this.setString, this.getString],
             ifStringOps: [
@@ -51,6 +54,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 this.decodeUri,
                 this.encodeUriComponent,
                 this.decodeUriComponent,
+                this.isEmpty,
             ],
             ifToStr: [this.toStr],
         });
@@ -96,8 +100,8 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         return this.intrinsic;
     }
 
-    toString(_parent?: BrsType): string {
-        return this.intrinsic.toString();
+    toString(parent?: BrsType): string {
+        return this.intrinsic.toString(parent);
     }
 
     // ---------- ifStringOps ----------
@@ -265,8 +269,11 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 return this.intrinsic;
             }
 
+            // From Mozilla's guide to escaping regex:
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
+            let escapedFrom = from.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             return new BrsString(
-                this.intrinsic.value.replace(new RegExp(from.value, "g"), to.value)
+                this.intrinsic.value.replace(new RegExp(escapedFrom, "g"), to.value)
             );
         },
     });
@@ -336,9 +343,8 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 // split characters apart, preserving multi-character unicode structures
                 parts = Array.from(this.intrinsic.value);
             } else {
-                parts = this.intrinsic.value.split(separator.value);
+                parts = this.intrinsic.value.split(separator.value).filter(function(el) {return el.length != 0});
             }
-
             return new RoList(parts.map(part => new BrsString(part)));
         },
     });
@@ -411,6 +417,17 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
         impl: _interpreter => {
             return new BrsString(decodeURIComponent(this.intrinsic.value));
+        },
+    });
+
+    /** returns whether string is empty or not */
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_interpreter) => {
+            return BrsBoolean.from(this.intrinsic.value.length === 0);
         },
     });
 

@@ -15,13 +15,14 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             ifAppManager: [
                 this.getUpTime,
                 this.getScreensaverTimeout,
-                this.updateLasKeyPressTime,
+                this.updateLastKeyPressTime,
                 this.setUserSignedIn,
                 this.setTheme,
                 this.setThemeAttribute,
                 this.clearThemeAttribute,
                 this.isAppInstalled,
                 this.setAutomaticAudioGuideEnabled,
+                //this.launchApp,
             ],
         });
     }
@@ -60,12 +61,13 @@ export class RoAppManager extends BrsComponent implements BrsValue {
 
     /** Resets the idle timer that is used to count down to screensaver activation, so if a screensaver
      *  is not already displayed it will reset the timer and defer the activation. */
-    private updateLasKeyPressTime = new Callable("updateLasKeyPressTime", {
+    private updateLastKeyPressTime = new Callable("updateLastKeyPressTime", {
         signature: {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            interpreter.lastKeyTime = Date.now();
             return BrsInvalid.Instance;
         },
     });

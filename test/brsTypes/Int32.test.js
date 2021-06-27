@@ -10,23 +10,37 @@ const {
 } = require("../../lib/brsTypes");
 
 describe("Int32", () => {
-    it("truncates initial values to integers", () => {
-        let three = new Int32(3.4);
-        let four = new Int32(3.5);
-        expect(three.getValue()).toBe(3);
-        expect(four.getValue()).toBe(3);
-    });
+    describe("construction", () => {
+        it("truncates initial values to integers", () => {
+            let three = new Int32(3.4);
+            let four = new Int32(3.5);
+            expect(three.getValue()).toBe(3);
+            expect(four.getValue()).toBe(3);
+        });
 
-    it("creates base-10 integers from strings", () => {
-        let three = Int32.fromString("3.4");
-        let four = Int32.fromString("3.5");
-        expect(three.getValue()).toBe(3);
-        expect(four.getValue()).toBe(3);
-    });
+        it("creates base-10 integers from strings", () => {
+            let three = Int32.fromString("3.4");
+            let four = Int32.fromString("3.5");
+            expect(three.getValue()).toBe(3);
+            expect(four.getValue()).toBe(3);
+        });
 
-    it("creates base-16 integers from strings", () => {
-        let twoFiftyFive = Int32.fromString("&hFF");
-        expect(twoFiftyFive.getValue()).toBe(255);
+        it("creates base-16 integers from strings", () => {
+            let twoFiftyFive = Int32.fromString("&hFF");
+            expect(twoFiftyFive.getValue()).toBe(255);
+        });
+
+        it("ignores upper 32 bits of 64-bit input", () => {
+            let large = new Int64(2147483647119);
+            let truncated = new Int32(large.getValue());
+            expect(truncated.getValue()).toBe(-881);
+        });
+
+        it("doesn't modify 64-bit inputs that only require 32-bits for storage", () => {
+            let long = new Int64(11235813);
+            let int = new Int32(long.getValue());
+            expect(int.getValue()).toBe(11235813);
+        });
     });
 
     describe("addition", () => {

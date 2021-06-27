@@ -15,6 +15,13 @@ sub main()
     print "items() example key: " aa.items()[0].key             ' => bar
     print "items() example value: " aa.items()[0].value         ' => 5
 
+    ' Enable case sentitive mode
+    aa.setModeCaseSensitive()
+    aa["KeY1"] = "value1"
+    print "key is not found if sensitive mode is enabled" aa.doesExist("key1") ' => false
+    print "key exits with correct casing" aa["KeY1"] ' => value1
+    print "lookup uses mode case too" aa.lookup("KeY1") ' => value1
+
     aa.clear()
     print "can empty itself: " aa.isEmpty()                     ' => true
 end sub

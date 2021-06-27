@@ -59,7 +59,9 @@ describe("interpreter variables", () => {
             new Stmt.Assignment(tokens, identifier("int32%"), new Expr.Literal(new Int32(1))),
             new Stmt.Assignment(tokens, identifier("float!"), new Expr.Literal(new Float(2))),
             new Stmt.Assignment(tokens, identifier("double#"), new Expr.Literal(new Double(3))),
+            new Stmt.Assignment(tokens, identifier("double#"), new Expr.Literal(new Float(3))),
             new Stmt.Assignment(tokens, identifier("int64&"), new Expr.Literal(new Int64(4))),
+            new Stmt.Assignment(tokens, identifier("int64&"), new Expr.Literal(new Int32(4))),
         ];
 
         expect(() => interpreter.exec(assign)).not.toThrow();
@@ -100,11 +102,11 @@ describe("interpreter variables", () => {
             },
             {
                 lhs: "double#",
-                values: [str, int32, float, int64],
+                values: [str, int32, int64],
             },
             {
                 lhs: "int64&",
-                values: [str, int32, float, double],
+                values: [str, float, double],
             },
         ].forEach(({ lhs, values }) => {
             test(lhs, () => {

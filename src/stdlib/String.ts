@@ -144,7 +144,7 @@ export const Mid = new Callable(
 );
 
 /**
- * Return a string from a float. If it is positive, prefix it with a space.
+ * Return a string from a float/double. If it is positive, prefix it with a space.
  */
 export const Str = new Callable("Str", {
     signature: {

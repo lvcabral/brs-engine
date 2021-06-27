@@ -30,6 +30,7 @@ describe("end to end syntax", () => {
             "true",
             "false",
             "5",
+            "6",
             "7",
             "30",
             "40",
@@ -68,6 +69,9 @@ describe("end to end syntax", () => {
             "16",
             "8",
             "4",
+            "-5", // unary + and -
+            "5",
+            "-5",
         ]);
     });
 
@@ -103,6 +107,33 @@ describe("end to end syntax", () => {
             "6",
             "7",
             "8",
+            // testing if not
+            "not false",
+            "bar does not equal 'def'",
+            "if not with or variation 1",
+            "if not with or variation 2",
+            "if not with and",
+            "if not with two expressions variation 1",
+            "if not with two expressions variation 2",
+            "if not multiple times",
+            "if not with <> operator",
+            "foo is not > 1",
+            "foo is not < 2",
+            "foo is not < 2 and not > 2",
+            "#481 fixed",
+        ]);
+    });
+
+    test("dim.brs", async () => {
+        await execute([resourceFile("dim.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "4",
+            "5",
+            "5",
+            "hello",
+            "invalid",
+            "invalid",
         ]);
     });
 
@@ -117,6 +148,7 @@ describe("end to end syntax", () => {
             "4", // count up
             "5",
             "4", // count down with exit
+            "15", // compute 3 * 5 with nested loops
         ]);
     });
 

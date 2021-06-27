@@ -17,6 +17,7 @@ export interface AAMember {
 export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     elements = new Map<string, BrsType>();
+    private modeCaseSensitive: boolean = false;
 
     constructor(elements: AAMember[]) {
         super("roAssociativeArray");
@@ -35,6 +36,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
                 this.keys,
                 this.items,
                 this.lookup,
+                this.setmodecasesensitive,
             ],
             ifEnum: [this.isEmpty],
         });
@@ -91,18 +93,16 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         // method with the desired name separately? That last bit would work but it's pretty gross.
         // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
         // Same with RoAssociativeArrays I guess.
-        return (
-            this.elements.get(index.value.toLowerCase()) ||
-            this.getMethod(index.value) ||
-            BrsInvalid.Instance
-        );
+        let indexValue = this.modeCaseSensitive ? index.value : index.value.toLowerCase();
+        return this.elements.get(indexValue) || this.getMethod(index.value) || BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("Associative array indexes must be strings");
         }
-        this.elements.set(index.value.toLowerCase(), value);
+        let indexValue = this.modeCaseSensitive ? index.value : index.value.toLowerCase();
+        this.elements.set(indexValue, value);
         return BrsInvalid.Instance;
     }
 
@@ -165,7 +165,8 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, str: BrsString) => {
-            return this.elements.has(str.value.toLowerCase()) ? BrsBoolean.True : BrsBoolean.False;
+            let strValue = this.modeCaseSensitive ? str.value : str.value.toLowerCase();
+            return this.elements.has(strValue) ? BrsBoolean.True : BrsBoolean.False;
         },
     });
 
@@ -229,8 +230,20 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, key: BrsString) => {
-            let lKey = key.value.toLowerCase();
+            let lKey = key.value;
             return this.get(new BrsString(lKey));
+        },
+    });
+
+    /** Changes the sensitive case method for lookups */
+    private setmodecasesensitive = new Callable("setModeCaseSensitive", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (interpreter: Interpreter) => {
+            this.modeCaseSensitive = !this.modeCaseSensitive;
+            return BrsInvalid.Instance;
         },
     });
 

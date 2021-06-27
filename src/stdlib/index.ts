@@ -70,8 +70,8 @@ export const Wait = new Callable("Wait", {
         ],
         returns: ValueKind.Dynamic,
     },
-    impl: (_: Interpreter, timeout: Int32, port: RoMessagePort) => {
-        return port.wait(timeout.getValue());
+    impl: (interpreter: Interpreter, timeout: Int32, port: RoMessagePort) => {
+        return port.wait(interpreter, timeout.getValue());
     },
 });
 
