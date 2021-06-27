@@ -4,6 +4,7 @@ import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
 import { Float } from "./Float";
 import { roBoolean } from "./components/RoBoolean";
+import { roInvalid } from "./components/RoInvalid";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
@@ -52,7 +53,7 @@ export namespace ValueKind {
             case ValueKind.Void:
                 return "Void";
             case ValueKind.Uninitialized:
-                return "<UNINITIALIZED>";
+                return "<uninitialized>";
             case ValueKind.Object:
                 return "Object";
         }
@@ -214,9 +215,7 @@ export class BrsString implements BrsValue, Comparable, Boxable {
     }
 
     toString(parent?: BrsType) {
-        if (parent) {
-            return '"' + this.value + '"';
-        }
+        if (parent) return `"${this.value}"`;
         return this.value;
     }
 
@@ -302,7 +301,7 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 }
 
 /** Internal representation of the BrightScript `invalid` value. */
-export class BrsInvalid implements BrsValue, Comparable {
+export class BrsInvalid implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Invalid;
     static Instance = new BrsInvalid();
 
@@ -328,6 +327,10 @@ export class BrsInvalid implements BrsValue, Comparable {
     toString(parent?: BrsType) {
         return "invalid";
     }
+
+    box() {
+        return new roInvalid();
+    }
 }
 
 /** Internal representation of uninitialized BrightScript variables. */
@@ -347,9 +350,9 @@ export class Uninitialized implements BrsValue, Comparable {
 
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.String) {
-            // Allow variables to be compared to the string "<UNINITIALIZED>" to test if they've
+            // Allow variables to be compared to the string "<uninitialized>" to test if they've
             // been initialized
-            return BrsBoolean.from(other.value === this.toString());
+            return BrsBoolean.from(other.value === this.toString().toLowerCase());
         }
 
         return BrsBoolean.False;

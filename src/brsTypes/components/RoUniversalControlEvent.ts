@@ -8,10 +8,14 @@ import { Int32 } from "../Int32";
 export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private key: number;
+    private remote: string;
+    private mod: number;
 
-    constructor(key: number) {
+    constructor(remote: string, key: number, mod: number) {
         super("roUniversalControlEvent");
         this.key = key;
+        this.remote = remote;
+        this.mod = mod;
 
         this.registerMethods({
             ifUniversalControlEvent: [
@@ -51,10 +55,11 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            if (this.key < 100) {
-                return new Int32(this.key);
+            let id = this.key - this.mod;
+            if (id >= 32) {
+                id = 0;
             }
-            return new Int32(this.key - 100);
+            return new Int32(id);
         },
     });
 
@@ -65,11 +70,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            // TODO: Implement support for keyboard letters and numbers
-            if (this.key < 100) {
-                return new Int32(this.key);
-            }
-            return new Int32(this.key - 100);
+            return new Int32(this.key - this.mod);
         },
     });
 
@@ -80,7 +81,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString("WD:0");
+            return new BrsString(this.remote);
         },
     });
 
@@ -91,7 +92,11 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(0); // TODO: Implement support for keyboard letters and numbers
+            let char = this.key - this.mod;
+            if (char < 32) {
+                char = 0;
+            }
+            return new Int32(char);
         },
     });
 
@@ -102,7 +107,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.key < 100);
+            return BrsBoolean.from(this.mod < 100);
         },
     });
 }

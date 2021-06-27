@@ -152,6 +152,12 @@ describe("lexer", () => {
             expect(d.literal).toEqual(new Double(123));
         });
 
+        it("respects '#' suffix on very long literals", () => {
+            let d = Lexer.scan("0000000006#").tokens[0];
+            expect(d.kind).toBe(Lexeme.Double);
+            expect(d.literal).toEqual(new Double(6));
+        });
+
         it("forces literals >= 10 digits into doubles", () => {
             let d = Lexer.scan("0000000005").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
@@ -238,6 +244,12 @@ describe("lexer", () => {
             expect(i.literal).toEqual(new Int32(255));
         });
 
+        it("supports '%' suffix", () => {
+            let i = Lexer.scan("123%").tokens[0];
+            expect(i.kind).toBe(Lexeme.Integer);
+            expect(i.literal).toEqual(new Int32(123));
+        });
+
         it("falls back to a regular integer", () => {
             let i = Lexer.scan("123").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);
@@ -317,6 +329,18 @@ describe("lexer", () => {
                 "amet&",
             ]);
         });
+
+        it("allows JS keywords as identifiers", () => {
+            let { tokens } = Lexer.scan("constructor valueOf toString __proto__");
+            let identifiers = tokens.filter((t) => t.kind !== Lexeme.Eof);
+            expect(identifiers.every((t) => t.kind === Lexeme.Identifier)).toBe(true);
+            expect(identifiers.map((t) => t.text)).toEqual([
+                "constructor",
+                "valueOf",
+                "toString",
+                "__proto__",
+            ]);
+        });
     });
 
     describe("conditional compilation", () => {
@@ -341,8 +365,16 @@ describe("lexer", () => {
         });
 
         it("reads conditional directives", () => {
-            let { tokens } = Lexer.scan("#if #else if #elseif #else #end if #endif");
+            let { tokens } = Lexer.scan(
+                "#if #else if #elseif #else #end if #endif #IF #ELSE IF #ELSEIF #ELSE #END IF #ENDIF"
+            );
             expect(tokens.map(t => t.kind)).toEqual([
+                Lexeme.HashIf,
+                Lexeme.HashElseIf,
+                Lexeme.HashElseIf,
+                Lexeme.HashElse,
+                Lexeme.HashEndIf,
+                Lexeme.HashEndIf,
                 Lexeme.HashIf,
                 Lexeme.HashElseIf,
                 Lexeme.HashElseIf,

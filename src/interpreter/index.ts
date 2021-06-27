@@ -10,6 +10,7 @@ import {
     BrsString,
     isBrsBoolean,
     Int32,
+    Int64,
     isBrsCallable,
     Uninitialized,
     RoArray,
@@ -20,6 +21,8 @@ import {
     BrsNumber,
     Comparable,
     Float,
+    Double,
+    RoXMLElement,
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
@@ -37,6 +40,7 @@ import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
+import { RoXMLList } from "../brsTypes/components/RoXMLList";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -77,6 +81,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     public audioId: number = 0;
+    public lastKeyTime: number = Date.now();
+    public currKeyTime: number = Date.now();
 
     /**
      * Convenience function to subscribe to the `err` events emitted by `interpreter.events`.
@@ -219,12 +225,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } catch (err) {
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value || BrsInvalid.Instance];
-            } else {
+            } else if (!(err instanceof BrsError)) {
+                // Swallow BrsErrors, because they should have been exposed to the user downstream.
                 throw err;
             }
-        } finally {
-            return results;
         }
+
+        return results;
     }
 
     getCallableFunction(functionName: string): Callable {
@@ -355,22 +362,78 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let requiredType = typeDesignators[name.charAt(name.length - 1)];
 
         if (requiredType && requiredType !== value.kind) {
-            return this.addError(
-                new TypeMismatch({
-                    message: `Attempting to assign incorrect value to statically-typed variable '${name}'`,
-                    left: {
-                        type: requiredType,
-                        location: statement.name.location,
-                    },
-                    right: {
-                        type: value,
-                        location: statement.value.location,
-                    },
-                })
-            );
+            if (requiredType === ValueKind.Int64 && value.kind === ValueKind.Int32) {
+                value = new Int64(value.getValue());
+            } else if (requiredType === ValueKind.Double && value.kind === ValueKind.Float) {
+                value = new Double(value.getValue());
+            } else {
+                return this.addError(
+                    new TypeMismatch({
+                        message: `Attempting to assign incorrect value to statically-typed variable '${name}'`,
+                        left: {
+                            type: requiredType,
+                            location: statement.name.location,
+                        },
+                        right: {
+                            type: value,
+                            location: statement.value.location,
+                        },
+                    })
+                );
+            }
         }
 
         this.environment.define(Scope.Function, statement.name.text, value);
+        return BrsInvalid.Instance;
+    }
+
+    visitDim(statement: Stmt.Dim): BrsType {
+        if (statement.name.isReserved) {
+            this.addError(
+                new BrsError(
+                    `Cannot assign a value to reserved name '${statement.name.text}'`,
+                    statement.name.location
+                )
+            );
+            return BrsInvalid.Instance;
+        }
+
+        // NOTE: Roku's dim implementation creates a resizeable, empty array for the
+        //   bottom children. Resizeable arrays aren't implemented yet (issue #530),
+        //   so when that's added this code should be updated so the bottom-level arrays
+        //   are resizeable, but empty
+        let dimensionValues: number[] = [];
+        statement.dimensions.forEach((expr) => {
+            let val = this.evaluate(expr);
+            if (val.kind !== ValueKind.Int32) {
+                this.addError(
+                    new BrsError(`Dim expression must evaluate to an integer`, expr.location)
+                );
+                return BrsInvalid.Instance;
+            }
+            // dim takes max-index, so +1 to get the actual array size
+            dimensionValues.push(val.getValue() + 1);
+            return;
+        });
+
+        let createArrayTree = (dimIndex: number = 0): RoArray => {
+            let children: RoArray[] = [];
+            let size = dimensionValues[dimIndex];
+            for (let i = 0; i < size; i++) {
+                if (dimIndex < dimensionValues.length) {
+                    let subchildren = createArrayTree(dimIndex + 1);
+                    if (subchildren !== undefined) children.push(subchildren);
+                }
+            }
+            let child = new RoArray(children);
+
+            return child;
+        };
+
+        let array = createArrayTree();
+
+        this.environment.define(Scope.Function, statement.name.text, array);
+
         return BrsInvalid.Instance;
     }
 
@@ -1058,6 +1121,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
+    visitAtSignGet(expression: Expr.AtSignGet) {
+        let source = this.evaluate(expression.obj);
+
+        if (isIterable(source) && (source instanceof RoXMLElement || source instanceof RoXMLList)) {
+            try {
+                return source.getAttribute(new BrsString(expression.name.text));
+            } catch (err) {
+                return this.addError(new BrsError(err.message, expression.name.location));
+            }
+        } else {
+            return this.addError(
+                new TypeMismatch({
+                    message: "Attempting to retrieve attribute from value not roXMLList or roXMLElement",
+                    left: {
+                        type: source,
+                        location: expression.location,
+                    },
+                })
+            );
+        }
+    }
+
     visitDottedGet(expression: Expr.DottedGet) {
         let source = this.evaluate(expression.obj);
 
@@ -1092,28 +1177,33 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
         let source = this.evaluate(expression.obj);
         if (!isIterable(source)) {
-            throw new TypeMismatch({
-                message: "Attempting to retrieve property from non-iterable value",
-                left: {
-                    type: source,
-                    location: expression.location,
-                },
-            });
+            this.addError(
+                new TypeMismatch({
+                    message: "Attempting to retrieve property from non-iterable value",
+                    left: {
+                        type: source,
+                        location: expression.location,
+                    },
+                })
+            );
         }
 
         let index = this.evaluate(expression.index);
         if (!isBrsNumber(index) && !isBrsString(index)) {
-            throw new TypeMismatch({
-                message: "Attempting to retrieve property from iterable with illegal index type",
-                left: {
-                    type: source,
-                    location: expression.obj.location,
-                },
-                right: {
-                    type: index,
-                    location: expression.index.location,
-                },
-            });
+            this.addError(
+                new TypeMismatch({
+                    message:
+                        "Attempting to retrieve property from iterable with illegal index type",
+                    left: {
+                        type: source,
+                        location: expression.obj.location,
+                    },
+                    right: {
+                        type: index,
+                        location: expression.index.location,
+                    },
+                })
+            );
         }
 
         try {
@@ -1457,6 +1547,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return this.addError(
                         new BrsError(
                             `Attempting to negate non-numeric value.
+                            value type: ${ValueKind.toString(right.kind)}`,
+                            expression.operator.location
+                        )
+                    );
+                }
+            case Lexeme.Plus:
+                if (isBrsNumber(right)) {
+                    return right;
+                } else {
+                    return this.addError(
+                        new BrsError(
+                            `Attempting to apply unary positive operator to non-numeric value.
                             value type: ${ValueKind.toString(right.kind)}`,
                             expression.operator.location
                         )

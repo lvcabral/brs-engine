@@ -26,7 +26,9 @@ type BlockTerminator =
     | Lexeme.EndIf
     | Lexeme.EndWhile
     | Lexeme.EndSub
-    | Lexeme.EndFunction;
+    | Lexeme.EndFunction
+    | Lexeme.Newline // possible only in a single-line `if` statement
+    | Lexeme.Eof; // possible only in a single-line `if` statement
 
 /** The set of operators valid for use in assignment statements. */
 const assignmentOperators = [
@@ -272,28 +274,56 @@ export class Parser {
 
         function declaration(...additionalTerminators: BlockTerminator[]): Statement | undefined {
             try {
-                // consume any leading newlines
-                while (match(Lexeme.Newline));
+                let statementSeparators = [Lexeme.Colon];
 
-                if (check(Lexeme.Sub, Lexeme.Function)) {
-                    return functionDeclaration(false);
+                if (additionalTerminators.includes(Lexeme.Newline)) {
+                    // if this declaration can be terminated with a newline, check for one
+                    // before other statement separators
+                    if (check(Lexeme.Newline)) {
+                        return;
+                    }
+                } else {
+                    statementSeparators.push(Lexeme.Newline);
                 }
 
-                if (checkLibrary()) {
-                    return libraryStatement();
+                while (match(...statementSeparators));
+
+                if (additionalTerminators.includes(Lexeme.Newline)) {
+                    // if this declaration can be terminated with a newline, check for one
+                    // _after_ a series of `:`s.
+                    if (check(Lexeme.Newline)) {
+                        return;
+                    }
                 }
 
-                // BrightScript is like python, in that variables can be declared without a `var`,
-                // `let`, (...) keyword. As such, we must check the token *after* an identifier to figure
-                // out what to do with it.
-                if (
-                    check(Lexeme.Identifier, ...allowedIdentifiers) &&
-                    checkNext(...assignmentOperators)
-                ) {
-                    return assignment(...additionalTerminators);
+                // if we reached the end, don't attempt to do anything else
+                if (isAtEnd()) {
+                    return;
                 }
 
-                return statement(...additionalTerminators);
+                try {
+                    if (functionDeclarationLevel === 0 && check(Lexeme.Sub, Lexeme.Function)) {
+                        return functionDeclaration(false);
+                    }
+
+                    if (checkLibrary()) {
+                        return libraryStatement();
+                    }
+
+                    // BrightScript is like python, in that variables can be declared without a `var`,
+                    // `let`, (...) keyword. As such, we must check the token *after* an identifier to figure
+                    // out what to do with it.
+                    if (
+                        check(Lexeme.Identifier, ...allowedIdentifiers) &&
+                        checkNext(...assignmentOperators)
+                    ) {
+                        return assignment(...additionalTerminators);
+                    }
+
+                    return statement(...additionalTerminators);
+                } finally {
+                    while (match(...statementSeparators));
+                }
             } catch (error) {
                 synchronize();
                 return;
@@ -396,21 +426,20 @@ export class Parser {
                     return haveFoundOptional || !!arg.defaultValue;
                 }, false);
 
-                consume(
+                checkOrThrow(
                     `Expected newline or ':' after ${functionType.text} signature`,
                     Lexeme.Newline,
                     Lexeme.Colon
                 );
                 //support ending the function with `end sub` OR `end function`
-                let body = block(Lexeme.EndSub, Lexeme.EndFunction);
-                if (!body) {
+                let maybeBody = block(Lexeme.EndSub, Lexeme.EndFunction);
+                if (!maybeBody) {
                     throw addError(
                         peek(),
                         `Expected 'end ${functionType.text}' to terminate ${functionType.text} block`
                     );
                 }
-                // consume 'end sub' or 'end function'
-                let endingKeyword = advance();
+                let endingKeyword = maybeBody.closingToken;
                 let expectedEndKind = isSub ? Lexeme.EndSub : Lexeme.EndFunction;
 
                 //if `function` is ended with `end sub`, or `sub` is ended with `end function`, then
@@ -425,7 +454,7 @@ export class Parser {
                 let func = new Expr.Function(
                     args,
                     returnType,
-                    body,
+                    maybeBody.body,
                     startingKeyword,
                     endingKeyword
                 );
@@ -594,6 +623,10 @@ export class Parser {
                 return returnStatement();
             }
 
+            if (check(Lexeme.Dim)) {
+                return dimStatement();
+            }
+
             if (check(Lexeme.Goto)) {
                 return gotoStatement();
             }
@@ -611,25 +644,26 @@ export class Parser {
             const whileKeyword = advance();
             const condition = expression();
 
-            consume("Expected newline after 'while ...condition...'", Lexeme.Newline);
-            const whileBlock = block(Lexeme.EndWhile);
-            if (!whileBlock) {
+            checkOrThrow(
+                "Expected newline or ':' after 'while ...condition...'",
+                Lexeme.Newline,
+                Lexeme.Colon
+            );
+            const maybeWhileBlock = block(Lexeme.EndWhile);
+            if (!maybeWhileBlock) {
                 throw addError(peek(), "Expected 'end while' to terminate while-loop block");
             }
-            const endWhile = advance();
-            while (match(Lexeme.Newline));
 
             return new Stmt.While(
-                { while: whileKeyword, endWhile: endWhile },
+                { while: whileKeyword, endWhile: maybeWhileBlock.closingToken },
                 condition,
-                whileBlock
+                maybeWhileBlock.body
             );
         }
 
         function exitWhile(): Stmt.ExitWhile {
             let keyword = advance();
-            consume("Expected newline after 'exit while'", Lexeme.Newline);
-            while (match(Lexeme.Newline)) {}
+            checkOrThrow("Expected newline after 'exit while'", Lexeme.Newline);
             return new Stmt.ExitWhile({ exitWhile: keyword });
         }
 
@@ -648,14 +682,11 @@ export class Parser {
                 // BrightScript for/to/step loops default to a step of 1 if no `step` is provided
                 increment = new Expr.Literal(new Int32(1), peek().location);
             }
-            while (match(Lexeme.Newline));
 
-            let body = block(Lexeme.EndFor, Lexeme.Next);
-            if (!body) {
+            let maybeBody = block(Lexeme.EndFor, Lexeme.Next);
+            if (!maybeBody) {
                 throw addError(peek(), "Expected 'end for' or 'next' to terminate for-loop block");
             }
-            let endFor = advance();
-            while (match(Lexeme.Newline));
 
             // WARNING: BrightScript doesn't delete the loop initial value after a for/to loop! It just
             // stays around in scope with whatever value it was when the loop exited.
@@ -664,12 +695,12 @@ export class Parser {
                     for: forKeyword,
                     to: to,
                     step: step,
-                    endFor: endFor,
+                    endFor: maybeBody.closingToken,
                 },
                 initializer,
                 finalValue,
                 increment,
-                body
+                maybeBody.body
             );
         }
 
@@ -689,31 +720,27 @@ export class Parser {
                 throw addError(peek(), "Expected target object to iterate over");
             }
             advance();
-            while (match(Lexeme.Newline));
 
-            let body = block(Lexeme.EndFor, Lexeme.Next);
-            if (!body) {
+            let maybeBody = block(Lexeme.EndFor, Lexeme.Next);
+            if (!maybeBody) {
                 throw addError(peek(), "Expected 'end for' or 'next' to terminate for-loop block");
             }
-            let endFor = advance();
-            while (match(Lexeme.Newline));
 
             return new Stmt.ForEach(
                 {
                     forEach: forEach,
                     in: maybeIn,
-                    endFor: endFor,
+                    endFor: maybeBody.closingToken,
                 },
                 name,
                 target,
-                body
+                maybeBody.body
             );
         }
 
         function exitFor(): Stmt.ExitFor {
             let keyword = advance();
-            consume("Expected newline after 'exit for'", Lexeme.Newline);
-            while (match(Lexeme.Newline)) {}
+            checkOrThrow("Expected newline after 'exit for'", Lexeme.Newline);
             return new Stmt.ExitFor({ exitFor: keyword });
         }
 
@@ -799,6 +826,7 @@ export class Parser {
             let thenToken: Token | undefined;
             let elseIfTokens: Token[] = [];
             let endIfToken: Token | undefined;
+            let elseToken: Token | undefined;
 
             /**
              * A simple wrapper around `check`, to make tests for a `then` identifier.
@@ -816,17 +844,7 @@ export class Parser {
                 thenToken = advance();
             }
 
-            if (match(Lexeme.Newline) || match(Lexeme.Colon)) {
-                //consume until no more colons
-                while (check(Lexeme.Colon)) {
-                    advance();
-                }
-
-                //consume exactly 1 newline, if found
-                if (check(Lexeme.Newline)) {
-                    advance();
-                }
-
+            if (check(Lexeme.Newline) || check(Lexeme.Colon)) {
                 //keep track of the current error count, because if the then branch fails,
                 //we will trash them in favor of a single error on if
                 let errorsLengthBeforeBlock = errors.length;
@@ -848,57 +866,49 @@ export class Parser {
                     );
                 }
 
-                let blockEnd = previous();
+                let blockEnd = maybeThenBranch.closingToken;
                 if (blockEnd.kind === Lexeme.EndIf) {
                     endIfToken = blockEnd;
                 }
 
-                thenBranch = maybeThenBranch;
-                match(Lexeme.Newline);
+                thenBranch = maybeThenBranch.body;
 
                 // attempt to read a bunch of "else if" clauses
-                while (check(Lexeme.ElseIf)) {
-                    elseIfTokens.push(advance());
+                while (blockEnd.kind === Lexeme.ElseIf) {
+                    elseIfTokens.push(blockEnd);
                     let elseIfCondition = expression();
                     if (checkThen()) {
                         // `then` is optional after `else if ...condition...`, so only advance to the next token if `then` is present
                         advance();
                     }
 
-                    //consume any trailing colons
-                    while (check(Lexeme.Colon)) {
-                        advance();
-                    }
-
-                    match(Lexeme.Newline);
-                    let elseIfThen = block(Lexeme.EndIf, Lexeme.Else, Lexeme.ElseIf);
-                    if (!elseIfThen) {
+                    let maybeElseIfThen = block(Lexeme.EndIf, Lexeme.Else, Lexeme.ElseIf);
+                    if (!maybeElseIfThen) {
                         throw addError(
                             peek(),
                             "Expected 'end if', 'else if', or 'else' to terminate 'then' block"
                         );
                     }
 
-                    let blockEnd = previous();
+                    blockEnd = maybeElseIfThen.closingToken;
                     if (blockEnd.kind === Lexeme.EndIf) {
                         endIfToken = blockEnd;
                     }
 
                     elseIfBranches.push({
                         condition: elseIfCondition,
-                        thenBranch: elseIfThen,
+                        thenBranch: maybeElseIfThen.body,
                     });
                 }
 
-                if (match(Lexeme.Else)) {
-                    //consume any trailing colons
-                    while (check(Lexeme.Colon)) {
-                        advance();
+                if (blockEnd.kind === Lexeme.Else) {
+                    elseToken = blockEnd;
+                    let maybeElseBranch = block(Lexeme.EndIf);
+                    if (!maybeElseBranch) {
+                        throw addError(peek(), "Expected 'end if' to terminate 'else' block");
                     }
-
-                    match(Lexeme.Newline);
-                    elseBranch = block(Lexeme.EndIf);
-                    let endIfToken = advance(); // skip past "end if"
+                    elseBranch = maybeElseBranch.body;
+                    endIfToken = maybeElseBranch.closingToken;
 
                     //ensure that single-line `if` statements have a colon right before 'end if'
                     if (ifToken.location.start.line === endIfToken.location.start.line) {
@@ -910,11 +920,12 @@ export class Parser {
                     }
                     match(Lexeme.Newline);
                 } else {
-                    match(Lexeme.Newline);
-                    endIfToken = consume(
-                        `Expected 'end if' to close 'if' statement started on line ${startingLine}`,
-                        Lexeme.EndIf
-                    );
+                    if (!endIfToken) {
+                        throw addError(
+                            blockEnd,
+                            `Expected 'end if' to close 'if' statement started on line ${startingLine.start.line}`
+                        );
+                    }
 
                     //ensure that single-line `if` statements have a colon right before 'end if'
                     if (ifToken.location.start.line === endIfToken.location.start.line) {
@@ -927,46 +938,55 @@ export class Parser {
                     match(Lexeme.Newline);
                 }
             } else {
-                let thenStatement = declaration(Lexeme.ElseIf, Lexeme.Else);
-                if (!thenStatement) {
+                let maybeThenBranch = block(Lexeme.Newline, Lexeme.Eof, Lexeme.ElseIf, Lexeme.Else);
+                if (!maybeThenBranch) {
                     throw addError(
                         peek(),
                         "Expected a statement to follow 'if ...condition... then'"
                     );
                 }
-                thenBranch = new Stmt.Block([thenStatement], peek().location);
+                thenBranch = maybeThenBranch.body;
 
-                while (previous().kind !== Lexeme.Newline && match(Lexeme.ElseIf)) {
-                    let elseIf = previous();
+                let closingToken = maybeThenBranch.closingToken;
+                while (closingToken.kind === Lexeme.ElseIf) {
+                    let elseIf = maybeThenBranch.closingToken;
+                    elseIfTokens.push(elseIf);
                     let elseIfCondition = expression();
                     if (checkThen()) {
                         // `then` is optional after `else if ...condition...`, so only advance to the next token if `then` is present
                         advance();
                     }
 
-                    let elseIfThen = declaration(Lexeme.ElseIf, Lexeme.Else);
-                    if (!elseIfThen) {
+                    let maybeElseIfBranch = block(
+                        Lexeme.Newline,
+                        Lexeme.Eof,
+                        Lexeme.ElseIf,
+                        Lexeme.Else
+                    );
+                    if (!maybeElseIfBranch) {
                         throw addError(
                             peek(),
                             `Expected a statement to follow '${elseIf.text} ...condition... then'`
                         );
                     }
+                    closingToken = maybeElseIfBranch.closingToken;
 
                     elseIfBranches.push({
                         condition: elseIfCondition,
-                        thenBranch: new Stmt.Block([elseIfThen], peek().location),
+                        thenBranch: maybeElseIfBranch.body,
                     });
                 }
 
                 if (
-                    previous().kind !== Lexeme.Newline &&
-                    (previous().kind === Lexeme.Else || match(Lexeme.Else))
+                    closingToken.kind !== Lexeme.Newline &&
+                    (closingToken.kind === Lexeme.Else || match(Lexeme.Else))
                 ) {
-                    let elseStatement = declaration();
-                    if (!elseStatement) {
+                    elseToken = closingToken;
+                    let maybeElseBranch = block(Lexeme.Newline, Lexeme.Eof);
+                    if (!maybeElseBranch) {
                         throw addError(peek(), `Expected a statement to follow 'else'`);
                     }
-                    elseBranch = new Stmt.Block([elseStatement], peek().location);
+                    elseBranch = maybeElseBranch.body;
                 }
             }
 
@@ -976,6 +996,7 @@ export class Parser {
                     then: thenToken,
                     elseIfs: elseIfTokens,
                     endIf: endIfToken,
+                    else: elseToken,
                 },
                 condition,
                 thenBranch,
@@ -1010,8 +1031,6 @@ export class Parser {
                             "Increment/decrement operators are not allowed on the result of a function call"
                         );
                     }
-
-                    while (match(Lexeme.Newline, Lexeme.Colon));
 
                     return new Stmt.Increment(expr, operator);
                 }
@@ -1161,6 +1180,32 @@ export class Parser {
         }
 
         /**
+         * Parses a `dim` statement
+         * @returns an AST representation of an `goto` statement.
+         */
+        function dimStatement() {
+            let dimToken = advance();
+
+            let name = consume("Expected variable name after 'dim'", Lexeme.Identifier);
+
+            match(Lexeme.LeftSquare);
+
+            let dimensions: Expression[] = [expression()];
+            while (!match(Lexeme.RightSquare)) {
+                consume("Expected ',' after expression in 'dim' statement", Lexeme.Comma);
+                dimensions.push(expression());
+            }
+            let rightSquare = previous();
+
+            let tokens = {
+                dim: dimToken,
+                closingBrace: rightSquare,
+            };
+
+            return new Stmt.Dim(tokens, name as Identifier, dimensions);
+        }
+
+        /**
          * Parses a `goto` statement
          * @returns an AST representation of an `goto` statement.
          */
@@ -1203,14 +1248,24 @@ export class Parser {
          * @param terminators the token(s) that signifies the end of this block; all other terminators are
          *                    ignored.
          */
-        function block(...terminators: BlockTerminator[]): Stmt.Block | undefined {
+        function block(
+            ...terminators: BlockTerminator[]
+        ): { body: Stmt.Block; closingToken: Token } | undefined {
             let startingToken = peek();
 
+            let statementSeparators = [Lexeme.Colon];
+            if (!terminators.includes(Lexeme.Newline)) {
+                statementSeparators.push(Lexeme.Newline);
+            }
+
+            while (match(...statementSeparators));
+
+            let closingToken: Token | undefined;
             const statements: Statement[] = [];
             while (!check(...terminators) && !isAtEnd()) {
                 //grab the location of the current token
                 let loopCurrent = current;
-                let dec = declaration();
+                let dec = declaration(...terminators);
 
                 if (dec) {
                     statements.push(dec);
@@ -1223,25 +1278,41 @@ export class Parser {
                     //trash the newline character so we start the next iteraion on the next line
                     advance();
                 }
+
+                if (checkPrevious(...terminators)) {
+                    closingToken = previous();
+                    while (match(...statementSeparators));
+                    break;
+                } else {
+                    while (match(...statementSeparators));
+                }
             }
 
-            if (isAtEnd()) {
+            if (isAtEnd() && !terminators.includes(Lexeme.Eof)) {
                 return undefined;
                 // TODO: Figure out how to handle unterminated blocks well
             }
 
+            // consume the last terminator
+            if (check(...terminators) && !closingToken) {
+                closingToken = advance();
+            }
+
+            if (!closingToken) {
+                return undefined;
+            }
+
             //the block's location starts at the end of the preceeding token, and stops at the beginning of the `end` token
-            const preceedingToken = tokens[tokens.indexOf(startingToken) - 1];
-            const postceedingToken = tokens[current];
             const location: Location = {
                 file: startingToken.location.file,
-                start: {
-                    line: preceedingToken.location.end.line,
-                    column: preceedingToken.location.end.column,
-                },
-                end: postceedingToken.location.start,
+                start: startingToken.location.start,
+                end: closingToken.location.start,
             };
-            return new Stmt.Block(statements, location);
+
+            return {
+                body: new Stmt.Block(statements, location),
+                closingToken,
+            };
         }
 
         function expression(): Expression {
@@ -1338,7 +1409,11 @@ export class Parser {
         }
 
         function prefixUnary(): Expression {
-            if (match(Lexeme.Not, Lexeme.Minus)) {
+            if (match(Lexeme.Not)) {
+                let operator = previous();
+                let right = relational();
+                return new Expr.Unary(operator, right);
+            } else if (match(Lexeme.Minus, Lexeme.Plus)) {
                 let operator = previous();
                 let right = prefixUnary();
                 return new Expr.Unary(operator, right);
@@ -1371,6 +1446,16 @@ export class Parser {
                     expr = finishCall(expr);
                 } else if (match(Lexeme.LeftSquare)) {
                     indexedGet();
+                } else if (match(Lexeme.AtSymbol)) {
+                    while (match(Lexeme.Newline));
+                    let name = consume(
+                        "Expected identifier name after '@'",
+                        Lexeme.Identifier,
+                        ...allowedProperties
+                    );
+                    // force it into an identifier so the AST makes some sense
+                    name.kind = Lexeme.Identifier;
+                    expr = new Expr.AtSignGet(expr, name as Identifier);                
                 } else if (match(Lexeme.Dot)) {
                     if (match(Lexeme.LeftSquare)) {
                         indexedGet();
@@ -1385,7 +1470,6 @@ export class Parser {
 
                         // force it into an identifier so the AST makes some sense
                         name.kind = Lexeme.Identifier;
-
                         expr = new Expr.DottedGet(expr, name as Identifier);
                     }
                 } else {
@@ -1570,6 +1654,14 @@ export class Parser {
             return result;
         }
 
+        /**
+         * Checks that the next token is one of a list of lexemes and returns that token, and *advances past it*.
+         * If the next token is none of the provided lexemes, throws an error.
+         * @param message - the message to include in the thrown error if the next token isn't one of the provided `lexemes`
+         * @param lexemes - the set of `lexemes` to check for
+         *
+         * @see checkOrError
+         */
         function consume(message: string, ...lexemes: Lexeme[]): Token {
             let foundLexeme = lexemes
                 .map(lexeme => peek().kind === lexeme)
@@ -1586,6 +1678,25 @@ export class Parser {
                 current++;
             }
             return previous();
+        }
+
+        /**
+         * Checks that the next token is one of a list of lexemes and returns that token, but *does not advance past it*.
+         * If the next token is none of the provided lexemes, throws an error.
+         * @param message - the message to include in the thrown error if the next token isn't one of the provided `lexemes`
+         * @param lexemes - the set of `lexemes` to check for
+         *
+         * @see consume
+         */
+        function checkOrThrow(message: string, ...lexemes: Lexeme[]): Token {
+            let foundLexeme = lexemes
+                .map((lexeme) => peek().kind === lexeme)
+                .reduce((foundAny, foundCurrent) => foundAny || foundCurrent, false);
+            if (foundLexeme) {
+                return peek();
+            }
+
+            throw addError(peek(), message);
         }
 
         /**

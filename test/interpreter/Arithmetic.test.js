@@ -97,6 +97,50 @@ describe("interpreter arithmetic", () => {
         expect(result.getValue()).toBe(35);
     });
 
+    it("supports positive and negative unary prefix operators", () => {
+        let ast = [
+            new Stmt.Expression(
+                new Expr.Unary(token(Lexeme.Minus), new Expr.Literal(new brs.types.Int32(4)))
+            ),
+            new Stmt.Expression(
+                new Expr.Unary(token(Lexeme.Plus), new Expr.Literal(new brs.types.Float(3.14159)))
+            ),
+        ];
+
+        let [minusFour, pi] = interpreter.exec(ast);
+        expect(minusFour.getValue()).toBe(-4);
+        expect(pi.getValue()).toBe(3.14159);
+    });
+
+    it("supports silly amounts of mixed unary prefix operators", () => {
+        let ast = [
+            new Stmt.Expression(
+                new Expr.Unary(
+                    token(Lexeme.Plus),
+                    new Expr.Unary(
+                        token(Lexeme.Minus),
+                        new Expr.Unary(
+                            token(Lexeme.Plus),
+                            new Expr.Unary(
+                                token(Lexeme.Minus),
+                                new Expr.Unary(
+                                    token(Lexeme.Plus),
+                                    new Expr.Unary(
+                                        token(Lexeme.Minus),
+                                        new Expr.Literal(new brs.types.Int32(3))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            ),
+        ];
+
+        let [minusThree] = interpreter.exec(ast);
+        expect(minusThree.getValue()).toBe(-3);
+    });
+
     it("doesn't allow non-numeric negation", () => {
         let ast = new Stmt.Expression(
             new Expr.Unary(token(Lexeme.Minus), new Expr.Literal(new brs.types.BrsString("four")))

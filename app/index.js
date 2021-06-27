@@ -49,8 +49,10 @@ const deviceData = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
     maxSimulStreams: 2, // Max number of audio resource streams
-    localIps: ["Ethernet,127.0.0.1"], // Running on the Browser is not possible to get a real IP
+    connectionType: "WiFiConnection", // Options: "WiFiConnection", "WiredConnection", ""
+    localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
+    audioVolume: 40
 };
 
 // Display Aspect Ratio
@@ -69,8 +71,7 @@ let title = "";
 let source = [];
 let paths = [];
 let txts = [];
-let imgs = [];
-let fonts = [];
+let bins = [];
 let running = false;
 
 // Initialize Worker
@@ -131,9 +132,8 @@ fileSelector.onchange = function() {
     reader.onload = function(progressEvent) {
         title = file.name;
         paths = [];
-        imgs = [];
+        bins = [];
         txts = [];
-        fonts = [];
         source.push(this.result);
         paths.push({ url: `source/${file.name}`, id: 0, type: "source" });
         ctx.fillStyle = "rgba(0, 0, 0, 1)";
@@ -278,10 +278,9 @@ function openChannelZip(f) {
             }
             const assetPaths = [];
             const assetsEvents = [];
-            let bmpId = 0;
             let txtId = 0;
+            let binId = 0;
             let srcId = 0;
-            let fntId = 0;
             let audId = 0;
             zip.forEach(function(relativePath, zipEntry) {
                 const lcasePath = relativePath.toLowerCase();
@@ -292,26 +291,12 @@ function openChannelZip(f) {
                     srcId++;
                 } else if (
                     !zipEntry.dir &&
-                    (lcasePath === "manifest" || ext === "csv" || ext === "xml" || ext === "json")
+                    (lcasePath === "manifest" || ext === "csv" || ext === "xml" || 
+                        ext === "json" || ext === "txt" || ext === "ts")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
                     assetsEvents.push(zipEntry.async("string"));
                     txtId++;
-                } else if (
-                    !zipEntry.dir &&
-                    (ext === "png" ||
-                        ext === "gif" ||
-                        ext === "jpg" ||
-                        ext === "jpeg" ||
-                        ext === "bmp")
-                ) {
-                    assetPaths.push({ url: relativePath, id: bmpId, type: "image" });
-                    assetsEvents.push(zipEntry.async("arraybuffer"));
-                    bmpId++;
-                } else if (!zipEntry.dir && (ext === "ttf" || ext === "otf")) {
-                    assetPaths.push({ url: relativePath, id: fntId, type: "font" });
-                    assetsEvents.push(zipEntry.async("arraybuffer"));
-                    fntId++;
                 } else if (
                     !zipEntry.dir &&
                     (ext === "wav" ||
@@ -329,20 +314,21 @@ function openChannelZip(f) {
                     assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
                     assetsEvents.push(zipEntry.async("blob"));
                     audId++;
+                } else if (!zipEntry.dir) {
+                    assetPaths.push({ url: relativePath, id: binId, type: "binary" });
+                    assetsEvents.push(zipEntry.async("arraybuffer"));
+                    binId++;
                 }
             });
             Promise.all(assetsEvents).then(
                 function success(assets) {
                     paths = [];
                     txts = [];
-                    imgs = [];
-                    fonts = [];
+                    bins = [];
                     for (let index = 0; index < assets.length; index++) {
                         paths.push(assetPaths[index]);
-                        if (assetPaths[index].type === "image") {
-                            imgs.push(assets[index]);
-                        } else if (assetPaths[index].type === "font") {
-                            fonts.push(assets[index]);
+                        if (assetPaths[index].type === "binary") {
+                            bins.push(assets[index]);
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
                         } else if (assetPaths[index].type === "audio") {
@@ -387,11 +373,10 @@ function runChannel() {
         paths: paths,
         brs: source,
         texts: txts,
-        fonts: fonts,
-        images: imgs,
+        binaries: bins,
     };
     brsWorker.postMessage(sharedBuffer);
-    brsWorker.postMessage(payload, imgs);
+    brsWorker.postMessage(payload, bins);
 }
 
 // Receive Messages from the Web Worker
@@ -516,7 +501,7 @@ function receiveMessage(event) {
         console.log(`------ Finished '${title}' execution ------`);
         closeChannel();
     } else if (event.data === "reset") {
-        window.location.reload(false);
+        window.location.reload();
     } else if (event.data.substr(0, 8) === "version:") {
         libVersion.innerHTML = event.data.substr(8);
     }
@@ -646,82 +631,83 @@ function closeChannel() {
     fileSelector.value = null;
     brsWorker.terminate();
     sharedArray[dataType.KEY] = 0;
+    sharedArray[dataType.MOD] = 0;
     sharedArray[dataType.SND] = -1;
     sharedArray[dataType.IDX] = -1;
     resetSounds();
     running = false;
 }
 
+
 // Remote control emulator
+
+// Keyboard Mapping
+const preventDefault = new Set(["Enter", "Space", "ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown"]);
+const keys = new Map();
+keys.set("Backspace", "back");
+keys.set("Delete", "backspace");
+keys.set("Enter", "select");
+keys.set("Escape", "home");
+keys.set("Space", "play");
+keys.set("ArrowLeft", "left");
+keys.set("ArrowUp", "up")
+keys.set("ArrowRight", "right");
+keys.set("ArrowDown", "down");
+keys.set("Slash", "instantreplay");
+keys.set("NumpadMultiply", "info");
+keys.set("Digit8", "info");
+keys.set("Comma", "rev");
+keys.set("Period", "fwd");
+keys.set("KeyA", "a");
+keys.set("KeyZ", "b");
+
 function keyDownHandler(event) {
-    if (event.keyCode == 8) {
-        sharedArray[dataType.KEY] = 0; // BUTTON_BACK_PRESSED
-    } else if (event.keyCode == 13) {
-        sharedArray[dataType.KEY] = 6; // BUTTON_SELECT_PRESSED
+    handleKey(keys.get(event.code), 0);
+    if (preventDefault.has(event.code)) {
         event.preventDefault();
-    } else if (event.keyCode == 37) {
-        sharedArray[dataType.KEY] = 4; // BUTTON_LEFT_PRESSED
-        event.preventDefault();
-    } else if (event.keyCode == 39) {
-        sharedArray[dataType.KEY] = 5; // BUTTON_RIGHT_PRESSED
-        event.preventDefault();
-    } else if (event.keyCode == 38) {
-        sharedArray[dataType.KEY] = 2; // BUTTON_UP_PRESSED
-        event.preventDefault();
-    } else if (event.keyCode == 40) {
-        sharedArray[dataType.KEY] = 3; // BUTTON_DOWN_PRESSED
-        event.preventDefault();
-    } else if (event.keyCode == 111) {
-        sharedArray[dataType.KEY] = 7; // BUTTON_INSTANT_REPLAY_PRESSED
-    } else if (event.keyCode == 106) {
-        sharedArray[dataType.KEY] = 10; // BUTTON_INFO_PRESSED
-    } else if (event.keyCode == 188) {
-        sharedArray[dataType.KEY] = 8; // BUTTON_REWIND_PRESSED
-    } else if (event.keyCode == 32) {
-        sharedArray[dataType.KEY] = 13; // BUTTON_PLAY_PRESSED
-        event.preventDefault();
-    } else if (event.keyCode == 190) {
-        sharedArray[dataType.KEY] = 9; // BUTTON_FAST_FORWARD_PRESSED
-    } else if (event.keyCode == 65) {
-        sharedArray[dataType.KEY] = 17; // BUTTON_A_PRESSED
-    } else if (event.keyCode == 90) {
-        sharedArray[dataType.KEY] = 18; // BUTTON_B_PRESSED
-    } else if (event.keyCode == 27) {
-        if (brsWorker != undefined) {
-            // HOME BUTTON (ESC)
-            closeChannel();
-        }
     }
-    // TODO: Send TimeSinceLastKeypress()
 }
 
 function keyUpHandler(event) {
-    if (event.keyCode == 8) {
-        sharedArray[dataType.KEY] = 100; // BUTTON_BACK_RELEASED
-    } else if (event.keyCode == 13) {
-        sharedArray[dataType.KEY] = 106; // BUTTON_SELECT_RELEASED
-    } else if (event.keyCode == 37) {
-        sharedArray[dataType.KEY] = 104; // BUTTON_LEFT_RELEASED
-    } else if (event.keyCode == 39) {
-        sharedArray[dataType.KEY] = 105; // BUTTON_RIGHT_RELEASED
-    } else if (event.keyCode == 38) {
-        sharedArray[dataType.KEY] = 102; // BUTTON_UP_RELEASED
-    } else if (event.keyCode == 40) {
-        sharedArray[dataType.KEY] = 103; // BUTTON_DOWN_RELEASED
-    } else if (event.keyCode == 111) {
-        sharedArray[dataType.KEY] = 107; // BUTTON_INSTANT_REPLAY_RELEASED
-    } else if (event.keyCode == 106) {
-        sharedArray[dataType.KEY] = 110; // BUTTON_INFO_RELEASED
-    } else if (event.keyCode == 188) {
-        sharedArray[dataType.KEY] = 108; // BUTTON_REWIND_RELEASED
-    } else if (event.keyCode == 32) {
-        sharedArray[dataType.KEY] = 113; // BUTTON_PLAY_RELEASED
-    } else if (event.keyCode == 190) {
-        sharedArray[dataType.KEY] = 109; // BUTTON_FAST_FORWARD_RELEASED
-    } else if (event.keyCode == 65) {
-        sharedArray[dataType.KEY] = 117; // BUTTON_A_RELEASED
-    } else if (event.keyCode == 90) {
-        sharedArray[dataType.KEY] = 118; // BUTTON_B_RELEASED
+    handleKey(keys.get(event.code), 100);
+}
+
+// Keyboard Handler
+function handleKey(key, mod) {
+    sharedArray[dataType.MOD] = mod;
+    if (key == "back") {
+        sharedArray[dataType.KEY] = 0 + mod;
+    } else if (key == "select") {
+        sharedArray[dataType.KEY] = 6 + mod;
+    } else if (key == "left") {
+        sharedArray[dataType.KEY] = 4 + mod;
+    } else if (key == "right") {
+        sharedArray[dataType.KEY] = 5 + mod;
+    } else if (key == "up") {
+        sharedArray[dataType.KEY] = 2 + mod;
+    } else if (key == "down") {
+        sharedArray[dataType.KEY] = 3 + mod;
+    } else if (key == "instantreplay") {
+        sharedArray[dataType.KEY] = 7 + mod;
+    } else if (key == "info") {
+        sharedArray[dataType.KEY] = 10 + mod;
+    } else if (key == "backspace") {
+        sharedArray[dataType.KEY] = 11 + mod;
+    } else if (key == "rev") {
+        sharedArray[dataType.KEY] = 8 + mod;
+    } else if (key == "play") {
+        sharedArray[dataType.KEY] = 13 + mod;
+    } else if (key == "fwd") {
+        sharedArray[dataType.KEY] = 9 + mod;
+    } else if (key == "a") {
+        sharedArray[dataType.KEY] = 17 + mod;
+    } else if (key == "b") {
+        sharedArray[dataType.KEY] = 18 + mod;
+    } else if (key == "home" && mod === 0) {
+        if (brsWorker != undefined) {
+            closeChannel("Home Button");
+            soundsDat[0].play();
+        }
     }
 }
 

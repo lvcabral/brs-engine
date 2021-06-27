@@ -63,6 +63,12 @@ describe("end to end brightscript functions", () => {
             "bar",
             "items() example value: ",
             "5",
+            "key is not found if sensitive mode is enabled",
+            "false",
+            "key exits with correct casing",
+            "value1",
+            "lookup uses mode case too",
+            "value1",
             "can empty itself: ",
             "true",
         ]);
@@ -147,6 +153,18 @@ describe("end to end brightscript functions", () => {
             "789",
             " ]",
             " ]",
+            "Matches with groups: [ ",
+            "[ ",
+            "abx",
+            ", ",
+            "bx",
+            " ]",
+            "[ ",
+            "aby",
+            ", ",
+            "by",
+            " ]",
+            " ]",
         ]);
     });
 
@@ -154,7 +172,8 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roString.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stderr.write)).toEqual([]);
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "hello",
             "bar",
             "bar",
             "true", // comparison
@@ -162,6 +181,85 @@ describe("end to end brightscript functions", () => {
             "b", // split("/")[1]
             "%F0%9F%90%B6", // dog emoji, uri-encoded
             "🐶", // uri-encoded dog emoji, decoded
+            "true", // isEmpty for empty string
+            "false", // isEmpty for filled string
+        ]);
+    });
+
+    test("components/roXMLElement.brs", () => {
+        return execute([resourceFile("components", "roXMLElement.brs")], outputStreams).then(() => {
+            expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+                "xmlParser = ",
+                "<Component: roXMLElement>",
+                "type(xmlParser) = ",
+                "roXMLElement",
+                "parse bad xml string, result = ",
+                "false",
+                "parse good xml string, result = ",
+                "true",
+                "getName() = ",
+                "tag1",
+                "getAttributes() = ",
+                `<Component: roAssociativeArray> =\n` +
+                    `{\n` +
+                    `    id: "someId"\n` +
+                    `    attr1: "0"\n` +
+                    `}`,
+                'getNamedElementsCi("child1") count = ',
+                "2",
+                "name of first child  = ",
+                "Child1",
+                "mame of second child = ",
+                "CHILD1",
+            ]);
+        });
+    });
+
+    test("components/customComponent.brs", async () => {
+        await execute([resourceFile("components", "customComponent.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "node.baseBoolField: ",
+            "false",
+            "node.baseIntField: ",
+            "0",
+            "node.normalBoolField: ",
+            "true",
+            "node.advancedStringField: ",
+            "advancedField!",
+            "node.advancedIntField: ",
+            "12345",
+            "node child count is: ",
+            "6",
+            "child id is: ",
+            "normalLabel",
+            "otherNode child count is: ",
+            "3",
+            "anotherNode child count is: ",
+            "1",
+            "baseRectangle width: ",
+            "100",
+            "baseRectangle height: ",
+            "200",
+        ]);
+    });
+
+    test("components/componentExtension.brs", async () => {
+        await execute([resourceFile("components", "componentExtension.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "BaseChild init",
+            "BaseComponent init",
+            "ExtendedComponent start",
+            "ExtendedChild init",
+            "ExtendedComponent init",
+            "ExtendedComponent start",
+            "true", //m.top.isSubtype("ExtendedComponent")
+            "true", //m.top.isSubtype("BaseComponent")
+            "true", //m.top.isSubtype("Node")
+            "false", // m.top.isSubtype("OtherComponent")
+            "BaseComponent", //m.top.parentSubtype("ExtendedComponent")
+            "Node", //m.top.parentSubtype("BaseComponent")
         ]);
     });
 
@@ -194,6 +292,22 @@ describe("end to end brightscript functions", () => {
             "789.012",
             "Integer to string ",
             "23",
+            "LongInteger object type",
+            "roLongInteger",
+            "LongInteger to string ",
+            "2000111222333",
+        ]);
+    });
+
+    test("components/roInvalid.brs", async () => {
+        await execute([resourceFile("components", "roInvalid.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+            "roInvalid",
+            "<Component: roInvalid>",
+            "invalid",
+            "true",
         ]);
     });
 });

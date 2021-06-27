@@ -54,6 +54,7 @@ export enum Lexeme {
     Comma = "Comma",
     Colon = "Colon",
     Semicolon = "Semicolon",
+    AtSymbol = "AtSymbol",
 
     // conditional compilation
     HashIf = "HashIf",

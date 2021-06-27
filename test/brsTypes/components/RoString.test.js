@@ -3,6 +3,13 @@ const { Int32, Float, BrsString, RoString, RoArray, BrsBoolean, Callable } = brs
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoString", () => {
+    describe("constructor", () => {
+        it("starts with empty string when no arg is passed to constructor", () => {
+            let a = new RoString();
+            expect(a.equalTo(new BrsString(""))).toBe(BrsBoolean.True);
+        });
+    });
+
     describe("equality", () => {
         it("compares to intrinsic strings", () => {
             let a = new RoString(new BrsString("foo"));
@@ -283,6 +290,18 @@ describe("RoString", () => {
                         new BrsString("oh baby I hear the blues a-callin'")
                     )
                 ).toEqual(new BrsString("tossed salad and scrambled eggs"));
+            });
+
+            it("escapes strings with reserved regex characters", () => {
+                let s = new RoString(new BrsString("oh baby {1}"));
+                replace = s.getMethod("replace");
+                expect(
+                    replace.call(
+                        interpreter,
+                        new BrsString("{1}"),
+                        new BrsString("I hear the blues a-callin'")
+                    )
+                ).toEqual(new BrsString("oh baby I hear the blues a-callin'"));
             });
         });
 
@@ -593,6 +612,22 @@ describe("RoString", () => {
                 expect(decodeUriComponent.call(interpreter)).toEqual(
                     new BrsString("http://example.com/?bullet=•")
                 );
+            });
+        });
+
+        describe("isEmpty", () => {
+            it("check if empty string is empty", () => {
+                let s = new RoString(new BrsString(""));
+                let len = s.getMethod("isEmpty");
+                expect(len).toBeInstanceOf(Callable);
+                expect(len.call(interpreter)).toBe(BrsBoolean.True);
+            });
+
+            it("check if filled string is not empty", () => {
+                let s = new RoString(new BrsString("<3"));
+                let len = s.getMethod("isEmpty");
+                expect(len).toBeInstanceOf(Callable);
+                expect(len.call(interpreter)).toBe(BrsBoolean.False);
             });
         });
     });

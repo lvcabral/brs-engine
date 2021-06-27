@@ -44,8 +44,8 @@ describe("global runtime functions", () => {
                 { value: CreateObject, type: "Function" },
                 { value: new RoArray([]), type: "roArray" },
                 { value: new RoAssociativeArray([]), type: "roAssociativeArray" },
-                { value: Uninitialized.Instance, type: "<UNINITIALIZED>" },
-            ].forEach(testCase =>
+                { value: Uninitialized.Instance, type: "<uninitialized>" },
+            ].forEach((testCase) =>
                 test(testCase.type, () => {
                     expect(Type.call(interpreter, testCase.value, new Int32(3))).toEqual(
                         new BrsString(testCase.type)
@@ -67,8 +67,8 @@ describe("global runtime functions", () => {
                 { value: CreateObject, type: "Function" },
                 { value: new RoArray([]), type: "roArray" },
                 { value: new RoAssociativeArray([]), type: "roAssociativeArray" },
-                { value: Uninitialized.Instance, type: "<UNINITIALIZED>" },
-            ].forEach(testCase =>
+                { value: Uninitialized.Instance, type: "<uninitialized>" },
+            ].forEach((testCase) =>
                 test(testCase.type, () => {
                     expect(Type.call(interpreter, testCase.value)).toEqual(
                         new BrsString(testCase.type)

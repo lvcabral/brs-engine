@@ -158,6 +158,9 @@ export class Lexer {
                         addToken(Lexeme.Dot);
                     }
                     break;
+                case "@":
+                    addToken(Lexeme.AtSymbol);
+                    break;
                 case "+":
                     switch (peek()) {
                         case "=":
@@ -474,14 +477,13 @@ export class Lexer {
             let numberOfDigits = containsDecimal ? asString.length - 1 : asString.length;
             let designator = peek().toLowerCase();
 
-            if (numberOfDigits >= 10 && designator !== "&") {
-                // numeric literals over 10 digits with no type designator are implicitly Doubles
-                addToken(Lexeme.Double, Double.fromString(asString));
-                return;
-            } else if (designator === "#") {
+            if (designator === "#") {
                 // numeric literals ending with "#" are forced to Doubles
                 advance();
-                asString = source.slice(start, current);
+                addToken(Lexeme.Double, Double.fromString(asString));
+                return;
+            } else if (numberOfDigits >= 10 && designator !== "&") {
+                // numeric literals over 10 digits with no type designator are implicitly Doubles
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
             } else if (designator === "d") {
@@ -544,6 +546,9 @@ export class Lexer {
                 addToken(Lexeme.LongInteger, Int64.fromString(asString));
                 return;
             } else {
+                if (designator === "%") {
+                    advance();
+                } // consume the "%"
                 // otherwise, it's a regular integer
                 addToken(Lexeme.Integer, Int32.fromString(asString));
                 return;
@@ -617,12 +622,10 @@ export class Lexer {
                     advance();
                 } // read the next word
 
-                let twoWords = source.slice(start, current);
-                //replace all of the whitespace with a single space character so we can properly match keyword token types
-                twoWords = twoWords.replace(whitespace, " ");
-                let maybeTokenType = KeyWords[twoWords.toLowerCase()];
-                if (maybeTokenType) {
-                    addToken(maybeTokenType);
+                // replace all of the whitespace with a single space character so we can properly match keyword token types
+                let twoWords = source.slice(start, current).replace(whitespace, " ").toLowerCase();
+                if (KeyWords.hasOwnProperty(twoWords)) {
+                    addToken(KeyWords[twoWords]);
                     return;
                 } else {
                     // reset if the last word and the current word didn't form a multi-word Lexeme
@@ -639,7 +642,10 @@ export class Lexer {
                 advance();
             }
 
-            let tokenType = KeyWords[text.toLowerCase()] || Lexeme.Identifier;
+            let textLower = text.toLowerCase();
+            let tokenType = KeyWords.hasOwnProperty(textLower)
+                ? KeyWords[textLower]
+                : Lexeme.Identifier;
             if (tokenType === KeyWords.rem) {
                 //the rem keyword can be used as an identifier on objects,
                 //so do a quick look-behind to see if there's a preceeding dot
@@ -692,7 +698,7 @@ export class Lexer {
                     advance();
                 } // read the next word
 
-                let twoWords = source.slice(start, current);
+                let twoWords = source.slice(start, current).toLowerCase();
                 switch (twoWords.replace(/ {2,}/g, " ")) {
                     case "#else if":
                         addToken(Lexeme.HashElseIf);

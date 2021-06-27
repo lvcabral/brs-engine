@@ -4,6 +4,7 @@ import { BrsType, RoMessagePort, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
+import { RoArray } from "./RoArray";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -21,25 +22,30 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getVersion,
                 this.getDisplayType,
                 this.getDisplayMode,
+                this.getVideoMode,
                 this.getDisplayAspectRatio,
                 this.getDisplaySize,
-                // this.getDisplayProperties,
-                // this.getSupportedGraphicsResolutions,
+                this.getDisplayProperties,
+                this.getSupportedGraphicsResolutions,
                 this.getUIResolution,
                 this.getGraphicsPlatform,
+                this.getSoundEffectsVolume,
                 this.getChannelClientId,
                 this.getRIDA,
-                this.IsRIDADisabled,
+                this.isRIDADisabled,
                 this.getCountryCode,
                 this.getUserCountryCode,
                 this.getTimeZone,
                 this.getCurrentLocale,
                 this.getClockFormat,
-                // this.timeSinceLastKeypress,
-                // this.hasFeature,
+                this.timeSinceLastKeypress,
+                this.hasFeature,
                 this.getRandomUUID,
-                // this.getGeneralMemoryLevel,
+                this.getConnectionType,
+                this.getLinkStatus,
+                this.getInternetStatus,
                 this.getIPAddrs,
+                this.getGeneralMemoryLevel,
                 this.getMessagePort,
                 this.setMessagePort,
             ],
@@ -132,6 +138,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Checks for the user interface sound effects volume level. */
+    private getSoundEffectsVolume = new Callable("getSoundEffectsVolume", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new Int32(interpreter.deviceInfo.get("audioVolume"));
+        },
+    });
+
     /** Returns a unique identifier of the unit running the script. */
     private getChannelClientId = new Callable("getChannelClientId", {
         signature: {
@@ -155,7 +172,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if the user has disabled RIDA tracking. */
-    private IsRIDADisabled = new Callable("getRIDA", {
+    private isRIDADisabled = new Callable("isRIDADisabled", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -247,6 +264,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns the video playback resolution. */
+    private getVideoMode = new Callable("getVideoMode", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.deviceInfo.get("displayMode"));
+        },
+    });
+
     /** Returns the aspect ration for the display screen. */
     private getDisplayAspectRatio = new Callable("getDisplayAspectRatio", {
         signature: {
@@ -283,6 +311,80 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 result.push({ name: new BrsString("w"), value: new Int32(1920) });
             }
             return new RoAssociativeArray(result);
+        },
+    });
+
+    /** Returns An associative array with the following key/value pairs for the display properties of the screen. */
+    private getDisplayProperties = new Callable("getDisplayProperties", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let result = new Array<AAMember>();
+            let display = interpreter.deviceInfo.get("displayMode");
+            result.push({ name: new BrsString("DolbyVision"), value: BrsBoolean.False });
+            result.push({ name: new BrsString("Hdr10"), value: BrsBoolean.False });
+            result.push({ name: new BrsString("Hdr10Plus"), value: BrsBoolean.False });
+            result.push({ name: new BrsString("HdrSeamless"), value: BrsBoolean.False });
+            result.push({ name: new BrsString("internal"), value: BrsBoolean.True });
+            if (display.substr(0, 3) === "480") {
+                result.push({ name: new BrsString("height"), value: new Int32(3) });
+                result.push({ name: new BrsString("width"), value: new Int32(4) });
+            } else if (display.substr(0, 3) === "720") {
+                result.push({ name: new BrsString("height"), value: new Int32(9) });
+                result.push({ name: new BrsString("width"), value: new Int32(16) });
+            } else {
+                result.push({ name: new BrsString("height"), value: new Int32(72) });
+                result.push({ name: new BrsString("width"), value: new Int32(129) });
+            }
+            return new RoAssociativeArray(result);
+        },
+    });
+
+    /** Returns An associative array with the following key/value pairs for the display properties of the screen. */
+    private getSupportedGraphicsResolutions = new Callable("getSupportedGraphicsResolutions", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let result: RoAssociativeArray[] = [];
+            let mode = new Array<AAMember>();
+            let display = interpreter.deviceInfo.get("displayMode");
+            mode.push({ name: new BrsString("name"), value: new BrsString("SD") });
+            mode.push({ name: new BrsString("height"), value: new Int32(480) });
+            mode.push({ name: new BrsString("width"), value: new Int32(720) });
+            mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
+            if (display.substr(0, 3) === "480") {
+                mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
+            } else {
+                mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
+            }
+            result.push(new RoAssociativeArray(mode));
+            mode = new Array<AAMember>();
+            mode.push({ name: new BrsString("name"), value: new BrsString("HD") });
+            mode.push({ name: new BrsString("height"), value: new Int32(720) });
+            mode.push({ name: new BrsString("width"), value: new Int32(1280) });
+            mode.push({ name: new BrsString("preferred"), value: BrsBoolean.True });
+            if (display.substr(0, 3) === "720") {
+                mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
+            } else {
+                mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
+            }
+            result.push(new RoAssociativeArray(mode));
+            mode = new Array<AAMember>();
+            mode.push({ name: new BrsString("name"), value: new BrsString("FHD") });
+            mode.push({ name: new BrsString("height"), value: new Int32(1080) });
+            mode.push({ name: new BrsString("width"), value: new Int32(1920) });
+            mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
+            if (display.substr(0, 4) === "1080") {
+                mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
+            } else {
+                mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
+            }
+            result.push(new RoAssociativeArray(mode));
+            return new RoArray(result);
         },
     });
 
@@ -330,6 +432,29 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Checks if the current device/firmware supports the passed in feature string. */
+    private hasFeature = new Callable("hasFeature", {
+        signature: {
+            args: [new StdlibArgument("feature", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, feature: BrsString) => {
+            return BrsBoolean.from(feature.value.toLocaleLowerCase() === "gaming_hardware");
+        },
+    });
+
+    /** Checks for the number of seconds passed since the last remote keypress. */
+    private timeSinceLastKeypress = new Callable("timeSinceLastKeypress", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new Int32((Date.now()-interpreter.lastKeyTime) / 1000);
+        },
+    });
+
+    
     /** Returns a randomly generated unique identifier.. */
     private getRandomUUID = new Callable("getRandomUUID", {
         signature: {
@@ -338,6 +463,39 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(generateUUID());
+        },
+    });
+
+    /** Checks whether the device has a WiFi or wired connection, or if it is not connected through any type of network. */
+    private getConnectionType = new Callable("getConnectionType", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.deviceInfo.get("connectionType"));
+        },
+    });
+
+    /** Checks if the device has an active connection. */
+    private getLinkStatus = new Callable("getLinkStatus", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(navigator.onLine);
+        },
+    });
+
+    /** Checks the internet connection status of the device. */
+    private getInternetStatus = new Callable("getInternetStatus", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(navigator.onLine);
         },
     });
 
@@ -359,6 +517,16 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    private getGeneralMemoryLevel = new Callable("getGeneralMemoryLevel", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString("normal");
+        },
+    });
+  
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */

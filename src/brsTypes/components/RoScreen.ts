@@ -198,16 +198,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
             if (object instanceof RoBitmap) {
                 ctx.drawImage(cvs, x.getValue(), y.getValue());
             } else {
-                ctx.drawImage(
-                    cvs,
-                    object.getPosX(),
-                    object.getPosY(),
-                    object.getImageWidth(),
-                    object.getImageHeight(),
-                    x.getValue() + object.getTransX(),
-                    y.getValue() + object.getTransY(),
-                    object.getImageWidth(),
-                    object.getImageHeight()
+                let rcv = object.getRegionCanvas();
+                ctx.drawImage(rcv, 
+                    x.getValue() + object.getTransX(), 
+                    y.getValue() + object.getTransY()
                 );
             }
             ctx.globalAlpha = 1.0;
@@ -324,14 +318,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     cvs.height * scaleY.getValue()
                 );
             } else if (object instanceof RoRegion) {
+                let rcv = object.getRegionCanvas();
                 let tx = object.getTransX() * scaleX.getValue();
                 let ty = object.getTransY() * scaleY.getValue();
                 ctx.drawImage(
-                    cvs,
-                    object.getPosX(),
-                    object.getPosY(),
-                    object.getImageWidth(),
-                    object.getImageHeight(),
+                    rcv,
                     x.getValue() + tx,
                     y.getValue() + ty,
                     object.getImageWidth() * scaleX.getValue(),

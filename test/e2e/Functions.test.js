@@ -52,6 +52,9 @@ describe("end to end functions", () => {
             "boxedReturnType:",
             "roFloat",
             "3.14159",
+            "invalidAsObject:",
+            "roInvalid",
+            "<Component: roInvalid>",
         ]);
     });
 

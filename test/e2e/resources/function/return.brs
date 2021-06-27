@@ -32,6 +32,10 @@ function boxedReturnType() as object
     return 3.14159
 end function
 
+function returnInvalidAsObject() as object
+    return invalid
+end function
+
 ' ----- then execute them -----
 print staticReturn()
 print conditionalReturn(true)
@@ -42,3 +46,7 @@ print whileLoopReturn(3)
 boxed = boxedReturnType()
 print "boxedReturnType:"
 print type(boxed) boxed ' => RoFloat 3.14159
+
+print "invalidAsObject:"
+boxedInvalid = returnInvalidAsObject() ' => invalid
+print type(boxedInvalid) boxedInvalid ' => roInvalid <Component: roInvalid>
