@@ -4,7 +4,6 @@ This emulator is still a **prototype**, this way, there are several features fro
 
 ## In Scope (to be developed/fixed)
 
-*   Usage of **@** to access attributes from `roXMLElements` is not supported, use method `GetAttributes`.
 *   Statements `Goto`, `Stop` and `End` are not supported.
 *   It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
 *   Do not use the same `roMessagePort` instance with different objects (`roScreen`, `roAudioPlayer` etc.) create one per object type.
