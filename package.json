@@ -3,15 +3,24 @@
   "version": "0.9.0",
   "description": "BrightScript Draw 2D API Emulator",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
+  "homepage": "https://lvcabral.com/brs/",
   "contributors": [
     "Sean Barag <sean@barag.org>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lvcabral/brs-emu"
+  },
+  "keywords": [
+    "brightscript", 
+    "roku", 
+    "emulator", 
+    "webworker", 
+    "worker"
   ],
   "license": "MIT",
   "main": "app/lib/brsEmu.js",
   "typings": "./types/index.d.ts",
-  "bin": {
-    "brs-emu": "./app/index.html"
-  },
   "scripts": {
     "build": "webpack --env.NODE_ENV=development",
     "release": "webpack --env.NODE_ENV=production --env.production",
@@ -23,8 +32,7 @@
     "prepublishOnly": "npm-run-all --serial clean build lint prettier test"
   },
   "files": [
-    "app/",
-    "types/"
+    "brsEmu.min.js"
   ],
   "dependencies": {
     "crc": "^3.8.0",
@@ -74,7 +82,6 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12"
   },
-  "repository": "https://github.com/lvcabral/brs-emu",
   "jest": {
     "testEnvironment": "node"
   },
