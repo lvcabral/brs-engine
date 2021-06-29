@@ -10,3 +10,4 @@ out/
 desktop.ini
 .DS_Store
 .husky
+*.tgz
