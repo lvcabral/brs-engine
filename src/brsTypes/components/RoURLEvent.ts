@@ -86,8 +86,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** For transfer complete AsyncGetToString, AsyncPostFromString and AsnycPostFromFile requests
-     *  this will be the actual response body from the server. */
+    /** For transfer complete AsyncGetToString, AsyncPostFromString and AsnycPostFromFile requests this will be the actual response body from the server. */
     private getString = new Callable("getString", {
         signature: {
             args: [],
@@ -142,8 +141,8 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns an array of roAssociativeArray, each AA contains a single header name/value pair. Use this function if you
-     *  need access to duplicate headers, since GetResponseHeaders() returns only the last name/value pair for a given name. */
+    /** Returns an array of roAssociativeArray, each AA contains a single header name/value pair. */
+    /** Use this function if you need access to duplicate headers, since GetResponseHeaders() returns only the last name/value pair for a given name. */
     private getResponseHeadersArray = new Callable("getResponseHeadersArray", {
         signature: {
             args: [],

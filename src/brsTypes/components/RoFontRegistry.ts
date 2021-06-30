@@ -65,7 +65,9 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                     descent: Math.abs(fontObj.descender / fontObj.unitsPerEm),
                     maxAdvance: fontObj.tables.hhea.advanceWidthMax / fontObj.unitsPerEm,
                     lineHeight:
-                        (fontObj.ascender - fontObj.descender + fontObj.tables.hhea.lineGap) /
+                        (fontObj.ascender -
+                            fontObj.descender +
+                            (fontObj.tables.hhea.lineGap as number)) /
                         fontObj.unitsPerEm,
                     style: fontObj.tables.head.macStyle & (1 << 1) ? "italic" : "normal",
                     weight: fontObj.tables.head.macStyle & (1 << 0) ? "bold" : "normal",

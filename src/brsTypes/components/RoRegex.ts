@@ -168,8 +168,8 @@ export class RoRegex extends BrsComponent implements BrsValue {
                 arr.push(
                     new RoArray(
                         matches
-                            .filter((match) => match !== undefined)
-                            .map((match) => new BrsString(match))
+                            .filter(match => match !== undefined)
+                            .map(match => new BrsString(match))
                     )
                 );
             }
