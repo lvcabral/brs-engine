@@ -46,7 +46,7 @@ Below a simple code using the library to display its version on the console.
 
 ```javascript
 // Initialize Worker
-let brsWorker = new Worker("node_modules/brs-emu/app/lib/brsEmu.min.js");
+let brsWorker = new Worker("node_modules/brs-emu/app/lib/brsEmu.js");
 brsWorker.addEventListener("message", receiveMessage);
 brsWorker.postMessage("getVersion");
 // Web Worker Callback
