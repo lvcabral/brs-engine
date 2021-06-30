@@ -146,7 +146,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32 && index.kind != ValueKind.Float) {
+        if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
             throw new Error("Array indexes must be 32-bit integers");
         }
 

@@ -6,10 +6,12 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+const brsEmuLib = "./lib/brsEmu.js";
 const info = bowser.parse(window.navigator.userAgent);
-const supportedBrowser = info.engine.name == "Blink" && 
-    ((info.platform.type == "desktop" && info.browser.version.substr(0,2) > "68") || 
-    info.browser.version.substr(0,2) > "89");
+const supportedBrowser =
+    info.engine.name == "Blink" &&
+    ((info.platform.type == "desktop" && info.browser.version.substr(0, 2) > "68") ||
+        info.browser.version.substr(0, 2) > "89");
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const libVersion = document.getElementById("libVersion");
@@ -36,7 +38,7 @@ const developerId = "UniqueDeveloperId";
 const deviceData = {
     developerId: developerId,
     friendlyName: "BrightScript Emulator",
-    serialNumber: "BRSEMUAPP070",
+    serialNumber: "BRSEMUAPP091",
     registry: new Map(),
     deviceModel: "8000X",
     firmwareVersion: "049.10E04111A",
@@ -47,12 +49,13 @@ const deviceData = {
     locale: "en_US",
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-    defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
+    defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
+    fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
     maxSimulStreams: 2, // Max number of audio resource streams
     connectionType: "WiFiConnection", // Options: "WiFiConnection", "WiredConnection", ""
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
-    audioVolume: 40
+    audioVolume: 40,
 };
 
 // Display Aspect Ratio
@@ -75,7 +78,7 @@ let bins = [];
 let running = false;
 
 // Initialize Worker
-let brsWorker = new Worker("./lib/brsEmu.js");
+let brsWorker = new Worker(brsEmuLib);
 brsWorker.addEventListener("message", receiveMessage);
 brsWorker.postMessage("getVersion");
 
@@ -96,8 +99,10 @@ const dataType = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
 Object.freeze(dataType);
 const length = 7;
 let sharedBuffer = [0, 0, 0, 0, 0, 0, 0];
-if (supportedBrowser && info.browser.version.substr(0,2) > "91" && !self.crossOriginIsolated){
-    console.warn("Keyboard control will not work as SharedArrayBuffer is not enabled, to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/");
+if (supportedBrowser && info.browser.version.substr(0, 2) > "91" && !self.crossOriginIsolated) {
+    console.warn(
+        "Keyboard control will not work as SharedArrayBuffer is not enabled, to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/"
+    );
 } else if (supportedBrowser) {
     sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 }
@@ -291,8 +296,12 @@ function openChannelZip(f) {
                     srcId++;
                 } else if (
                     !zipEntry.dir &&
-                    (lcasePath === "manifest" || ext === "csv" || ext === "xml" || 
-                        ext === "json" || ext === "txt" || ext === "ts")
+                    (lcasePath === "manifest" ||
+                        ext === "csv" ||
+                        ext === "xml" ||
+                        ext === "json" ||
+                        ext === "txt" ||
+                        ext === "ts")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
                     assetsEvents.push(zipEntry.async("string"));
@@ -365,7 +374,7 @@ function runChannel() {
     loading.style.visibility = "hidden";
     display.style.opacity = 1;
     display.focus();
-    brsWorker = new Worker("./lib/brsEmu.js");
+    brsWorker = new Worker(brsEmuLib);
     brsWorker.addEventListener("message", receiveMessage);
     const payload = {
         device: deviceData,
@@ -638,11 +647,17 @@ function closeChannel() {
     running = false;
 }
 
-
 // Remote control emulator
 
 // Keyboard Mapping
-const preventDefault = new Set(["Enter", "Space", "ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown"]);
+const preventDefault = new Set([
+    "Enter",
+    "Space",
+    "ArrowLeft",
+    "ArrowUp",
+    "ArrowRight",
+    "ArrowDown",
+]);
 const keys = new Map();
 keys.set("Backspace", "back");
 keys.set("Delete", "backspace");
@@ -650,7 +665,7 @@ keys.set("Enter", "select");
 keys.set("Escape", "home");
 keys.set("Space", "play");
 keys.set("ArrowLeft", "left");
-keys.set("ArrowUp", "up")
+keys.set("ArrowUp", "up");
 keys.set("ArrowRight", "right");
 keys.set("ArrowDown", "down");
 keys.set("Slash", "instantreplay");

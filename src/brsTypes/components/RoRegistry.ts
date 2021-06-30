@@ -30,7 +30,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, section: BrsString) => {
             let devId = interpreter.deviceInfo.get("developerId");
             [...interpreter.registry.keys()].forEach(key => {
-                let regSection = devId + "." + section;
+                let regSection = `${devId}.${section}`;
                 if (key.substr(0, regSection.length) === regSection) {
                     interpreter.registry.delete(key);
                 }

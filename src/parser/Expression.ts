@@ -96,7 +96,7 @@ export class AtSignGet implements Expression {
     accept<R>(visitor: Visitor<R>): R {
         return visitor.visitAtSignGet(this);
     }
- 
+
     get location() {
         return {
             file: this.obj.location.file,

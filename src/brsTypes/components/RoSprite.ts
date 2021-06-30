@@ -361,8 +361,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Sets flags to define the sprite membership. These flags are used with
-     * CollidableFlags to define what sprites are allowed to collide. */
+    /** Sets flags to define the sprite membership. These flags are used with CollidableFlags to define what sprites are allowed to collide. */
     private setMemberFlags = new Callable("setMemberFlags", {
         signature: {
             args: [new StdlibArgument("memberFlags", ValueKind.Int32)],

@@ -33,9 +33,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private freshConnection: boolean;
     private customHeaders: Map<string, string>;
     private port?: RoMessagePort;
-    private inFile: Array<string>;
-    private outFile: Array<string>;
-    private postBody: Array<string>;
+    private inFile: string[];
+    private outFile: string[];
+    private postBody: string[];
     private interpreter: Interpreter;
     private user?: string;
     private password?: string;
@@ -428,9 +428,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Like AsyncGetToString, this starts a transfer without waiting for it to complete.
-     *  However, the response body will be written to a file on the device's filesystem
-     *  instead of being returned in a String object. */
+    /** Like AsyncGetToString, this starts a transfer without waiting for it to complete. */
+    /** However, the response body will be written to a file on the device's filesystem */
+    /** instead of being returned in a String object. */
     private asyncGetToFile = new Callable("asyncGetToFile", {
         signature: {
             args: [new StdlibArgument("filePath", ValueKind.String)],
@@ -510,8 +510,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Use the HTTP POST method to send the supplied string to the current URL. When the POST completes,
-     *  an roUrlEvent will be sent to the message port associated with the object. */
+    /** Use the HTTP POST method to send the supplied string to the current URL. When the POST completes, */
+    /** an roUrlEvent will be sent to the message port associated with the object. */
     private asyncPostFromString = new Callable("asyncPostFromString", {
         signature: {
             args: [new StdlibArgument("request", ValueKind.String)],
@@ -530,8 +530,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Use the HTTP POST method to send the contents of the specified file to the current URL.
-     *  The HTTP response code is returned. */
+    /** Use the HTTP POST method to send the contents of the specified file to the current URL. */
+    /** The HTTP response code is returned. */
     private postFromFile = new Callable("postFromFile", {
         signature: {
             args: [new StdlibArgument("filePath", ValueKind.String)],
