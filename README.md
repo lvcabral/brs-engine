@@ -1,4 +1,5 @@
 # BRS-EMU: BrightScript 2D API Emulator
+
 An emulator for the Roku BrightScript language that runs on Chromium based browsers and Electron applications.
 
 [![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
