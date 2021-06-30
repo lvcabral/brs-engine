@@ -172,7 +172,7 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roString.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stderr.write)).toEqual([]);
-        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "hello",
             "bar",
             "bar",
@@ -188,7 +188,7 @@ describe("end to end brightscript functions", () => {
 
     test("components/roXMLElement.brs", () => {
         return execute([resourceFile("components", "roXMLElement.brs")], outputStreams).then(() => {
-            expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
                 "xmlParser = ",
                 "<Component: roXMLElement>",
                 "type(xmlParser) = ",
@@ -218,7 +218,7 @@ describe("end to end brightscript functions", () => {
     test("components/customComponent.brs", async () => {
         await execute([resourceFile("components", "customComponent.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "node.baseBoolField: ",
             "false",
             "node.baseIntField: ",
@@ -247,7 +247,7 @@ describe("end to end brightscript functions", () => {
     test("components/componentExtension.brs", async () => {
         await execute([resourceFile("components", "componentExtension.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
             "BaseChild init",
             "BaseComponent init",
             "ExtendedComponent start",

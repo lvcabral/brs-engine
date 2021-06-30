@@ -60,7 +60,11 @@ describe("manifest support", () => {
             );
 
             return expect(getManifest("/has/a/manifest")).resolves.toEqual(
-                new Map([["foo", "bar=baz"], ["lorem", true], ["five", 5]])
+                new Map([
+                    ["foo", "bar=baz"],
+                    ["lorem", true],
+                    ["five", 5],
+                ])
             );
         });
     });
@@ -102,7 +106,12 @@ describe("manifest support", () => {
         it("allows case-insensitive booleans", () => {
             let manifest = new Map([["bs_const", "foo=true;bar=FalSE"]]);
 
-            expect(getBsConst(manifest)).toEqual(new Map([["foo", true], ["bar", false]]));
+            expect(getBsConst(manifest)).toEqual(
+                new Map([
+                    ["foo", true],
+                    ["bar", false],
+                ])
+            );
         });
     });
 });

@@ -202,8 +202,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Create a new sprite that consists of a sequence of frames to be animated.
-     *  The frames are defined by the regionArray which is an roArray of roRegions. */
+    /** Create a new sprite that consists of a sequence of frames to be animated. The frames are defined by the regionArray which is an roArray of roRegions. */
     private newAnimatedSprite = new Callable("newAnimatedSprite", {
         signature: {
             args: [
@@ -225,8 +224,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Duration is the number of ms since the last call. Moves all animated sprites.
-     *  Sprites will not animate unless you call this function regularly  */
+    /** Duration is the number of ms since the last call. Moves all animated sprites. Sprites will not animate unless you call this function regularly  */
     private animationTick = new Callable("animationTick", {
         signature: {
             args: [new StdlibArgument("duration", ValueKind.Int32)],

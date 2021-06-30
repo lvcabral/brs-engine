@@ -343,7 +343,9 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 // split characters apart, preserving multi-character unicode structures
                 parts = Array.from(this.intrinsic.value);
             } else {
-                parts = this.intrinsic.value.split(separator.value).filter(function(el) {return el.length != 0});
+                parts = this.intrinsic.value.split(separator.value).filter(function(el) {
+                    return el.length !== 0;
+                });
             }
             return new RoList(parts.map(part => new BrsString(part)));
         },
@@ -426,7 +428,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_interpreter) => {
+        impl: _interpreter => {
             return BrsBoolean.from(this.intrinsic.value.length === 0);
         },
     });

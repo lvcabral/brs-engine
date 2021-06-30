@@ -10,7 +10,7 @@ import { RoAssociativeArray, AAMember, BrsString } from "./brsTypes";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer } from "./lexer";
 import { Parser } from "./parser";
-import { version } from '../package.json';
+import { version } from "../package.json";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
 import * as bslCore from "raw-loader!./common/v30/bslCore.brs";
@@ -88,32 +88,31 @@ onmessage = function(event) {
         const source = new Map<string, string>();
         volume = interpreter.fileSystem.get("pkg:");
         if (volume) {
-            for (let index = 0; index < event.data.paths.length; index++) {
-                let filePath = event.data.paths[index];
-                if (!volume.existsSync(path.dirname("/" + filePath.url))) {
+            for (let filePath of event.data.paths) {
+                if (!volume.existsSync(path.dirname(`/${filePath.url}`))) {
                     try {
-                        mkdirTreeSync(volume, path.dirname("/" + filePath.url));
+                        mkdirTreeSync(volume, path.dirname(`/${filePath.url}`));
                     } catch (err) {
                         postMessage(
                             `warning,Error creating directory ${path.dirname(
-                                "/" + filePath.url
+                                `/${filePath.url}`
                             )} - ${err.message}`
                         );
                     }
                 }
                 try {
                     if (filePath.type === "binary") {
-                        volume.writeFileSync("/" + filePath.url, event.data.binaries[filePath.id]);
+                        volume.writeFileSync(`/${filePath.url}`, event.data.binaries[filePath.id]);
                     } else if (filePath.type === "audio") {
                         // As the audio files are played on the renderer process we need to
                         // save a mock file to allow file exist checking and save the index
-                        volume.writeFileSync("/" + filePath.url, filePath.id.toString());
+                        volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
                         interpreter.audioId = filePath.id;
                     } else if (filePath.type === "text") {
-                        volume.writeFileSync("/" + filePath.url, event.data.texts[filePath.id]);
+                        volume.writeFileSync(`/${filePath.url}`, event.data.texts[filePath.id]);
                     } else if (filePath.type === "source") {
                         source.set(filePath.url, event.data.brs[filePath.id]);
-                        volume.writeFileSync("/" + filePath.url, event.data.brs[filePath.id]);
+                        volume.writeFileSync(`/${filePath.url}`, event.data.brs[filePath.id]);
                     }
                 } catch (err) {
                     postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
@@ -173,7 +172,7 @@ onmessage = function(event) {
         run(source, interpreter);
         postMessage("end");
     } else if (event.data === "getVersion") {
-        postMessage('version:' + version);
+        postMessage("version:" + version);
     } else {
         // Setup Control Shared Array
         shared.set("buffer", new Int32Array(event.data));

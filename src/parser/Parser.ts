@@ -1110,7 +1110,8 @@ export class Parser {
             let values: (
                 | Expr.Expression
                 | Stmt.PrintSeparator.Tab
-                | Stmt.PrintSeparator.Space)[] = [];
+                | Stmt.PrintSeparator.Space
+            )[] = [];
 
             //print statements can be empty, so look for empty print conditions
             if (isAtEnd() || check(Lexeme.Newline, Lexeme.Colon)) {
@@ -1455,7 +1456,7 @@ export class Parser {
                     );
                     // force it into an identifier so the AST makes some sense
                     name.kind = Lexeme.Identifier;
-                    expr = new Expr.AtSignGet(expr, name as Identifier);                
+                    expr = new Expr.AtSignGet(expr, name as Identifier);
                 } else if (match(Lexeme.Dot)) {
                     if (match(Lexeme.LeftSquare)) {
                         indexedGet();
@@ -1690,7 +1691,7 @@ export class Parser {
          */
         function checkOrThrow(message: string, ...lexemes: Lexeme[]): Token {
             let foundLexeme = lexemes
-                .map((lexeme) => peek().kind === lexeme)
+                .map(lexeme => peek().kind === lexeme)
                 .reduce((foundAny, foundCurrent) => foundAny || foundCurrent, false);
             if (foundLexeme) {
                 return peek();
