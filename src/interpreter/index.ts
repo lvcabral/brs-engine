@@ -403,7 +403,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         //   so when that's added this code should be updated so the bottom-level arrays
         //   are resizeable, but empty
         let dimensionValues: number[] = [];
-        statement.dimensions.forEach((expr) => {
+        statement.dimensions.forEach(expr => {
             let val = this.evaluate(expr);
             if (val.kind !== ValueKind.Int32) {
                 this.addError(
@@ -1133,7 +1133,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } else {
             return this.addError(
                 new TypeMismatch({
-                    message: "Attempting to retrieve attribute from value not roXMLList or roXMLElement",
+                    message:
+                        "Attempting to retrieve attribute from value not roXMLList or roXMLElement",
                     left: {
                         type: source,
                         location: expression.location,

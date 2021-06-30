@@ -94,7 +94,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32 && index.kind != ValueKind.Float) {
+        if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
             throw new Error("List indexes must be 32-bit integers");
         }
         let current = 0;
@@ -125,12 +125,12 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         if (xmlElm instanceof RoXMLElement) {
             let childElm = xmlElm.childElements();
             for (let index = 0; index < childElm.length(); index++) {
-                const element = childElm.getElements()[index];               
-                let key:string
+                const element = childElm.getElements()[index];
+                let key: string;
                 if (ci) {
-                    key =  element.name().value.toLocaleLowerCase();
+                    key = element.name().value.toLocaleLowerCase();
                 } else {
-                    key =  element.name().value;
+                    key = element.name().value;
                 }
                 if (key === name) {
                     elements.add(element);

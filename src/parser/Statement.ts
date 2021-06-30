@@ -294,7 +294,7 @@ export class Label implements Statement {
 
     accept<R>(visitor: Visitor<R>): BrsType {
         // Label support not implemented, ignore labels for now.
-        return BrsInvalid.Instance; 
+        return BrsInvalid.Instance;
     }
 
     get location() {

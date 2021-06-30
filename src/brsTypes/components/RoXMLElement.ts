@@ -211,10 +211,10 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         },
     });
 
-    /** Returns the body of the element. If the element contains child elements,
-     * returns an roXMLList representing those elements, like GetChildElements().
-     * If there are no children but the element contains text, returns an roString like GetText().
-     * If the element is empty, GetBody() returns invalid */
+    /** Returns the body of the element. If the element contains child elements, */
+    /** returns an roXMLList representing those elements, like GetChildElements(). */
+    /** If there are no children but the element contains text, returns an roString like GetText(). */
+    /** If the element is empty, GetBody() returns invalid */
     private getBody = new Callable("getBody", {
         signature: {
             args: [],

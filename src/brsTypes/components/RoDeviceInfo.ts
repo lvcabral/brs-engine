@@ -450,11 +450,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter) => {
-            return new Int32((Date.now()-interpreter.lastKeyTime) / 1000);
+            return new Int32((Date.now() - interpreter.lastKeyTime) / 1000);
         },
     });
 
-    
     /** Returns a randomly generated unique identifier.. */
     private getRandomUUID = new Callable("getRandomUUID", {
         signature: {
@@ -506,7 +505,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            const ips = interpreter.deviceInfo.get("localIps") as Array<string>;
+            const ips = interpreter.deviceInfo.get("localIps") as string[];
             const result = new Array<AAMember>();
             ips.forEach(function(iface: string) {
                 let name: string = iface.split(",")[0];
@@ -526,7 +525,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             return new BrsString("normal");
         },
     });
-  
+
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
@@ -558,7 +557,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
 function generateUUID(): string {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
         var r = (Math.random() * 16) | 0,
-            v = c == "x" ? r : (r & 0x3) | 0x8;
+            v = c === "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });
 }

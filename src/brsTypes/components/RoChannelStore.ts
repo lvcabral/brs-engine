@@ -202,8 +202,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Stores an access token, oAuth token, or other authentication artifact
-     * that can be retrieved by calling the GetChannelCred method. */
+    /** Stores an access token, oAuth token, or other authentication artifact that can be retrieved by calling the GetChannelCred method. */
     private storeChannelCredData = new Callable("storeChannelCredData", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.String)],

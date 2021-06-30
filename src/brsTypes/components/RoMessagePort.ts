@@ -162,7 +162,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             if (this.screen) {
                 if (this.buffer[this.type.KEY] !== this.lastKey) {
-                    return this.newControlEvent(interpreter);                }
+                    return this.newControlEvent(interpreter);
+                }
             } else if (this.audio) {
                 if (this.buffer[this.type.SND] !== this.lastFlags) {
                     this.lastFlags = this.buffer[this.type.SND];
@@ -194,7 +195,11 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             if (this.screen) {
                 if (this.buffer[this.type.KEY] !== this.lastKey) {
-                    return new RoUniversalControlEvent("WD:0", this.buffer[this.type.KEY], this.buffer[this.type.MOD]);
+                    return new RoUniversalControlEvent(
+                        "WD:0",
+                        this.buffer[this.type.KEY],
+                        this.buffer[this.type.MOD]
+                    );
                 }
             } else if (this.audio) {
                 if (this.buffer[this.type.SND] !== this.lastFlags) {
