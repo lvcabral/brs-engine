@@ -6,6 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+const brsEmuLib = "./lib/brsEmu.js";
 const info = bowser.parse(window.navigator.userAgent);
 const supportedBrowser =
     info.engine.name == "Blink" &&
@@ -48,7 +49,8 @@ const deviceData = {
     locale: "en_US",
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-    defaultFont: "Asap", // Options: "Asap", "Roboto" or "Open Sans"
+    defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
+    fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
     maxSimulStreams: 2, // Max number of audio resource streams
     connectionType: "WiFiConnection", // Options: "WiFiConnection", "WiredConnection", ""
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
@@ -76,7 +78,7 @@ let bins = [];
 let running = false;
 
 // Initialize Worker
-let brsWorker = new Worker("./lib/brsEmu.js");
+let brsWorker = new Worker(brsEmuLib);
 brsWorker.addEventListener("message", receiveMessage);
 brsWorker.postMessage("getVersion");
 
@@ -372,7 +374,7 @@ function runChannel() {
     loading.style.visibility = "hidden";
     display.style.opacity = 1;
     display.focus();
-    brsWorker = new Worker("./lib/brsEmu.js");
+    brsWorker = new Worker(brsEmuLib);
     brsWorker.addEventListener("message", receiveMessage);
     const payload = {
         device: deviceData,

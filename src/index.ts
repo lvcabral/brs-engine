@@ -41,6 +41,8 @@ onmessage = function(event) {
             interpreter.registry.set(key, value);
         });
         // DeviceInfo
+        let fontFamily = event.data.device.defaultFont || "Asap";
+        let fontPath = event.data.device.fontPath || "../fonts/";
         interpreter.deviceInfo.set("developerId", event.data.device.developerId);
         interpreter.deviceInfo.set("friendlyName", event.data.device.friendlyName);
         interpreter.deviceInfo.set("deviceModel", event.data.device.deviceModel);
@@ -53,14 +55,13 @@ onmessage = function(event) {
         interpreter.deviceInfo.set("clockFormat", event.data.device.clockFormat);
         interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
         interpreter.deviceInfo.set("models", parseCSV(models.default));
-        interpreter.deviceInfo.set("defaultFont", event.data.device.defaultFont);
+        interpreter.deviceInfo.set("defaultFont", fontFamily);
         interpreter.deviceInfo.set("maxSimulStreams", event.data.device.maxSimulStreams);
         interpreter.deviceInfo.set("connectionType", event.data.device.connectionType);
         interpreter.deviceInfo.set("localIps", event.data.device.localIps);
         interpreter.deviceInfo.set("startTime", event.data.device.startTime);
         interpreter.deviceInfo.set("audioVolume", event.data.device.audioVolume);
         // File System
-        let fontFamily = event.data.device.defaultFont;
         let volume = interpreter.fileSystem.get("common:");
         if (volume) {
             volume.mkdirSync("/LibCore");
@@ -68,19 +69,19 @@ onmessage = function(event) {
             volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore.default);
             volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender.default);
             volume.mkdirSync("/Fonts");
-            let fontRegular = download(`../fonts/${fontFamily}-Regular.ttf`, "arraybuffer");
+            let fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
             if (fontRegular) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
             }
-            let fontBold = download(`../fonts/${fontFamily}-Bold.ttf`, "arraybuffer");
+            let fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
             if (fontBold) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
             }
-            let fontItalic = download(`../fonts/${fontFamily}-Italic.ttf`, "arraybuffer");
+            let fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
             if (fontItalic) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
             }
-            let fontBoldIt = download(`../fonts/${fontFamily}-BoldItalic.ttf`, "arraybuffer");
+            let fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
             if (fontBoldIt) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
             }
