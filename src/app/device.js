@@ -6,6 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
+import bowser from "bowser";
 import { subscribeDisplay, initDisplayModule, drawBufferImage, drawSplashScreen, showDisplay, clearDisplay } from "./display";
 import { subscribeControl, initControlModule } from "./control";
 import {
@@ -13,6 +14,13 @@ import {
     pauseSound, resumeSound, setLoop, setNext, triggerWav, stopWav, addPlaylist
 } from "./sound";
 import "./hash";
+
+// Browser Support
+const info = bowser.parse(window.navigator.userAgent);
+const supportedBrowser =
+    info.engine.name == "Blink" &&
+    ((info.platform.type == "desktop" && info.browser.version.substr(0, 2) > "68") ||
+        info.browser.version.substr(0, 2) > "89");
 
 // Load Device Info and Registry
 const brsEmuLib = "./lib/brsEmu.js";
@@ -46,10 +54,6 @@ for (let index = 0; index < storage.length; index++) {
         deviceData.registry.set(key, storage.getItem(key));
     }
 }
-// Initialize Worker
-let brsWorker = new Worker(brsEmuLib);
-brsWorker.addEventListener("message", workerCallback);
-brsWorker.postMessage("getVersion");
 let splashTimeout = 1600;
 let source = [];
 let paths = [];
@@ -59,7 +63,14 @@ let bins = [];
 export const currentChannel = { id: "", file: "", title: "", subtitle: "", version: "", running: false };
 // Shared buffer (Keys and Sounds)
 const length = 7;
-const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+let sharedBuffer = [0, 0, 0, 0, 0, 0, 0];
+if (supportedBrowser && info.browser.version.substr(0, 2) > "91" && !self.crossOriginIsolated) {
+    console.warn(
+        `Remote control emulation will not work as SharedArrayBuffer is not enabled, to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
+    );
+} else if (supportedBrowser) {
+    sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+}
 export const sharedArray = new Int32Array(sharedBuffer);
 export const dataType = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
 Object.freeze(dataType);
@@ -97,6 +108,10 @@ subscribeControl("channel", (event) => {
         }
     }
 })
+// Initialize Worker
+let brsWorker = new Worker(brsEmuLib);
+brsWorker.addEventListener("message", workerCallback);
+brsWorker.postMessage("getVersion");
 
 // Open File
 export function loadFile(filePath, fileData) {

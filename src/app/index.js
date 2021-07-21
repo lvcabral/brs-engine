@@ -87,21 +87,6 @@ subscribeDevice("app", (event, data) => {
     }
 });
 
-
-// Shared buffers
-const dataType = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
-Object.freeze(dataType);
-const length = 7;
-let sharedBuffer = [0, 0, 0, 0, 0, 0, 0];
-if (supportedBrowser && info.browser.version.substr(0, 2) > "91" && !self.crossOriginIsolated) {
-    console.warn(
-        "Keyboard control will not work as SharedArrayBuffer is not enabled, to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/"
-    );
-} else if (supportedBrowser) {
-    sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-}
-const sharedArray = new Int32Array(sharedBuffer);
-
 // Load Registry
 const storage = window.localStorage;
 for (let index = 0; index < storage.length; index++) {
