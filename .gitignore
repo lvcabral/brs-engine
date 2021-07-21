@@ -1,6 +1,7 @@
 .vscode/
 .idea/
 app/lib/brsEmu*
+app/brsApp*
 types/
 node_modules/
 dist/

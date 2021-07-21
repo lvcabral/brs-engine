@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' data: blob: 'self' 
+    <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' data: blob: 'self' 
         https://fonts.googleapis.com
         https://fonts.gstatic.com
         https://www.googletagmanager.com
@@ -26,13 +26,13 @@
             <img class="img" src="images/brightscript-tv.png" width="1252" height="650"/>
             <img id="loading" src="images/loading.gif" width="854px" height="480px"/>
             <canvas id="display" width="854px" height="480px"></canvas>
-            <a href="#" onclick="loadZip('channels/Rect-Bounce.zip')">
+            <a href="#" onclick="brsApp.loadZip('channels/Rect-Bounce.zip')">
                 <img id="channel1" src="images/rect-bounce-icon.png" title="Open Rectangle Bounce demo channel"/>
             </a>
-            <a href="#" onclick="loadZip('channels/Ball-Boing.zip')">
+            <a href="#" onclick="brsApp.loadZip('channels/Ball-Boing.zip')">
                 <img id="channel2" src="images/ball-boing-icon.png" title="Open Ball Boing demo channel"/>
             </a>
-            <a href="#" onclick="loadZip('channels/Collisions.zip')">
+            <a href="#" onclick="brsApp.loadZip('channels/Collisions.zip')">
                 <img id="channel3" src="images/collisions-icon.png" title="Open Sprite Collisions demo channel" />
             </a>
             <span id="channelInfo"></span>
@@ -62,9 +62,6 @@
              - contact: <a href="https://twitter.com/lvcabral">@lvcabral</a>
         </div>
     </div>
-    <script type="text/javascript" src="lib/howler.core.min.js"></script>
-    <script type="text/javascript" src="lib/bowser.es5.js"></script>
-    <script type="text/javascript" src="lib/jszip.js"></script>
-    <script type="text/javascript" src="index.js"></script>
+    <script type="text/javascript" src="brsApp.js"></script>
 </body>
 </html>
