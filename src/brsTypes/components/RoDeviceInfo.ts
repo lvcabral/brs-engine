@@ -30,6 +30,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getUIResolution,
                 this.getGraphicsPlatform,
                 this.getSoundEffectsVolume,
+                this.getClientTrackingId,
                 this.getChannelClientId,
                 this.getRIDA,
                 this.isRIDADisabled,
@@ -78,10 +79,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            let name = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[0];
-            return new BrsString(name);
+            const device = interpreter.deviceInfo
+            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+            return new BrsString(device ? device[0] : "Roku 3");
         },
     });
 
@@ -92,10 +92,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            let type = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[1];
-            return new BrsString(type);
+            const device = interpreter.deviceInfo
+            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+            return new BrsString(device ? device[1] : "STB");
         },
     });
 
@@ -146,6 +145,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new Int32(interpreter.deviceInfo.get("audioVolume"));
+        },
+    });
+    
+    /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId()*/
+    private getClientTrackingId = new Callable("getClientTrackingId", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.deviceInfo.get("clientId"));
         },
     });
 
@@ -407,9 +417,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 result.push({ name: new BrsString("height"), value: new Int32(1080) });
                 result.push({ name: new BrsString("width"), value: new Int32(1920) });
             }
-            let model = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[3];
+            const device = interpreter.deviceInfo
+            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+            let model = device ? device[3] : "HD";
             result.push({
                 name: new BrsString("name"),
                 value: new BrsString(model.toUpperCase()),
@@ -425,10 +435,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            let platform = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[2];
-            return new BrsString(platform);
+            const device = interpreter.deviceInfo
+            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+            return new BrsString(device ? device[2] : "opengl");
         },
     });
 
