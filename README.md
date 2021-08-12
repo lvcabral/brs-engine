@@ -41,8 +41,7 @@ $ yarn add brs-emu
 
 ### Integrating to your Code
 
-The full documentation for integrating the library to an application is not available yet, please take a look at the file `app/index.js` for reference on how to use it.
-Below a simple code using the library to display its version on the console.
+The full documentation for integrating the library to an application is not available yet, for now, please take a look at the file `app/index.js` for reference on how to use it. Below a simple code using the library to display its version on the console. An API will soon be available to facilitate the usage of the web worker library.
 
 ```javascript
 // Initialize Worker
@@ -60,6 +59,14 @@ if (event.data.substr(0, 8) === "version:") {
 ### Web Application
 
 This repository provides a sample web appplication for testing the emulator, located under the `app` folder. The application cannot be run as pure HTML page, because some functionalities used by the emulator have security restrictions on the browser engine, so you will need a web server to run it. For that you can use `Apache`, `IIS` or any simpler web server, but please note that starting from **Chrome** version **92**, the emulator web app will require to be hosted with [COOP and COEP custom headers](https://developer.chrome.com/blog/enabling-shared-array-buffer/) to allow isolation and enable usage of **ShareArrayBuffer**. More information visit: https://developer.chrome.com/blog/enabling-shared-array-buffer/
+
+The repository provides a **Python 3** script to create a simplified web server to help testing the web application on development environment, in order to start the web server, on a terminal, go to the `app/` folder located under repository root, and execute:
+```shell
+    python ./web-server.py
+```
+By default the server will use the port 8080, if you prefer another port just change it inside the python script (**web-server.py**).
+To run the web application navigate with your Chromium based browser to `http://localhost:8080/index.html`.
+
 
 ### Desktop Application
 
