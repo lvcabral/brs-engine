@@ -37,7 +37,7 @@
   "dependencies": {
     "crc": "^3.8.0",
     "decode-bmp": "^0.1.0",
-    "file-type": "^12.4.2",
+    "file-type": "^16.5.4",
     "jpeg-js": "^0.4.3",
     "linked-list-typescript": "^1.0.15",
     "long": "^3.2.0",
