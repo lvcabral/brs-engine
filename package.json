@@ -41,7 +41,7 @@
     "jpeg-js": "^0.4.3",
     "linked-list-typescript": "^1.0.15",
     "long": "^3.2.0",
-    "luxon": "^1.8.3",
+    "luxon": "^2.5.2",
     "memory-fs": "^0.5.0",
     "nanomatch": "^1.2.13",
     "omggif": "^1.0.10",
