@@ -10,10 +10,11 @@ import bowser from "bowser";
 import { subscribeDevice, deviceData, loadFile } from "./device";
 import { handleKey} from "./control";
 const info = bowser.parse(window.navigator.userAgent);
+const browserVersion = parseVersionString(info.browser.version)
 const supportedBrowser =
     info.engine.name == "Blink" &&
-    ((info.platform.type == "desktop" && info.browser.version.substr(0, 2) > "68") ||
-        info.browser.version.substr(0, 2) > "89");
+    ((info.platform.type == "desktop" && browserVersion.major > 68) ||
+        browserVersion.major > 89);
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const libVersion = document.getElementById("libVersion");
@@ -182,5 +183,16 @@ function channelIcons(visibility) {
         channel1.style.visibility = visibility;
         channel2.style.visibility = visibility;
         channel3.style.visibility = visibility;
+    }
+}
+
+// Version Parser
+function parseVersionString (str) {
+    if (typeof(str) != 'string') { return {}; }
+    var vArray = str.split('.');
+    return {
+        major: parseInt(vArray[0]) || 0,
+        minor: parseInt(vArray[1]) || 0,
+        patch: parseInt(vArray[2]) || 0
     }
 }

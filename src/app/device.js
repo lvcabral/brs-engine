@@ -17,10 +17,11 @@ import "./hash";
 
 // Browser Support
 const info = bowser.parse(window.navigator.userAgent);
+const browserVersion = parseVersionString(info.browser.version)
 const supportedBrowser =
     info.engine.name == "Blink" &&
-    ((info.platform.type == "desktop" && info.browser.version.substr(0, 2) > "68") ||
-        info.browser.version.substr(0, 2) > "89");
+    ((info.platform.type == "desktop" && browserVersion.major > 68) ||
+        browserVersion.major > 89);
 
 // Load Device Info and Registry
 const brsEmuLib = "./lib/brsEmu.js";
