@@ -116,7 +116,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
         impl: (_interpreter, s: BrsString, len: Int32) => {
             if (len instanceof Int32) {
-                this.intrinsic = new BrsString(s.value.substr(0, len.getValue()));
+                this.intrinsic = new BrsString(s.value.slice(0, len.getValue()));
             } else {
                 this.intrinsic = s;
             }
@@ -143,7 +143,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
         impl: (_interpreter, s: BrsString, len: Int32) => {
             this.intrinsic = this.intrinsic.concat(
-                new BrsString(s.value.substr(0, len.getValue()))
+                new BrsString(s.value.slice(0, len.getValue()))
             );
             return BrsInvalid.Instance;
         },
@@ -167,7 +167,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             returns: ValueKind.String,
         },
         impl: (_interpreter, len: Int32) => {
-            return new BrsString(this.intrinsic.value.substr(0, len.getValue()));
+            return new BrsString(this.intrinsic.value.slice(0, len.getValue()));
         },
     });
 
@@ -179,7 +179,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
         impl: (_interpreter, len: Int32) => {
             let source = this.intrinsic.value;
-            return new BrsString(source.substr(source.length - len.getValue()));
+            return new BrsString(source.slice(-source.length));
         },
     });
 
@@ -195,7 +195,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 returns: ValueKind.String,
             },
             impl: (_interpreter, startIndex: Int32) => {
-                return new BrsString(this.intrinsic.value.substr(startIndex.getValue()));
+                return new BrsString(this.intrinsic.value.slice(startIndex.getValue()));
             },
         },
 
@@ -213,9 +213,9 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             },
             impl: (_interpreter, startIndex: Int32, numChars: Int32) => {
                 let source = this.intrinsic.value;
-                return new BrsString(
-                    this.intrinsic.value.substr(startIndex.getValue(), numChars.getValue())
-                );
+                let start = startIndex.getValue() > 0 ? startIndex.getValue() : 0;
+                let length = numChars.getValue() > 0 ? numChars.getValue() : 0;
+                return new BrsString(source.substring(start, start + length));
             },
         }
     );

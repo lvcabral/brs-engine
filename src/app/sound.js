@@ -33,7 +33,7 @@ export function playSound() {
         let sound;
         if (soundsIdx.has(audio.toLowerCase())) {
             sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-        } else if (audio.substr(0, 4).toLowerCase() === "http") {
+        } else if (audio.slice(0, 4).toLowerCase() === "http") {
             sound = addWebSound(audio);
         } else {
             console.warn(`[playSound] Can't find audio data: ${audio}`);

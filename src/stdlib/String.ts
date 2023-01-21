@@ -61,7 +61,7 @@ export const Left = new Callable("Left", {
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, s: BrsString, n: Int32) =>
-        new BrsString(s.value.substr(0, n.getValue())),
+        new BrsString(s.value.slice(0, n.getValue())),
 });
 
 /**
@@ -73,12 +73,8 @@ export const Right = new Callable("Right", {
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, s: BrsString, n: Int32) => {
-        let end = s.value.length - 1;
-        let start = end - (n.getValue() - 1);
-
         if (n.getValue() <= 0) return new BrsString("");
-        else if (start < 0) return new BrsString(s.value);
-        return new BrsString(s.value.substr(start, end));
+        return new BrsString(s.value.slice(-n.getValue()));
     },
 });
 

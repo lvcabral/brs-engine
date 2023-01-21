@@ -51,7 +51,7 @@ export let  deviceData = {
 
 for (let index = 0; index < storage.length; index++) {
     const key = storage.key(index);
-    if (key.substr(0, deviceData.developerId.length) === deviceData.developerId) {
+    if (key.slice(0, deviceData.developerId.length) === deviceData.developerId) {
         deviceData.registry.set(key, storage.getItem(key));
     }
 }
@@ -65,7 +65,7 @@ export const currentChannel = { id: "", file: "", title: "", subtitle: "", versi
 // Shared buffer (Keys and Sounds)
 const length = 7;
 let sharedBuffer = [0, 0, 0, 0, 0, 0, 0];
-if (supportedBrowser && info.browser.version.substr(0, 2) > "91" && !self.crossOriginIsolated) {
+if (supportedBrowser && browserVersion.major > 91 && !self.crossOriginIsolated) {
     console.warn(
         `Remote control emulation will not work as SharedArrayBuffer is not enabled, to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
     );
@@ -186,8 +186,8 @@ function openChannelZip(f) {
                             }
                         }
                         clearDisplay()
-                        if (splash && splash.substr(0, 5) === "pkg:/") {
-                            const splashFile = zip.file(splash.substr(5));
+                        if (splash && splash.slice(0, 5) === "pkg:/") {
+                            const splashFile = zip.file(splash.slice(5));
                             if (splashFile) {
                                 splashFile.async("blob").then((blob) => {
                                     createImageBitmap(blob).then(drawSplashScreen);
@@ -202,8 +202,8 @@ function openChannelZip(f) {
                                 icon = manifestMap.get("mm_icon_focus_sd");
                             }
                         }
-                        if (icon && icon.substr(0, 5) === "pkg:/") {
-                            const iconFile = zip.file(icon.substr(5));
+                        if (icon && icon.slice(0, 5) === "pkg:/") {
+                            const iconFile = zip.file(icon.slice(5));
                             if (iconFile) {
                                 iconFile.async("base64").then((content) => {
                                     notifyAll("icon", content);
@@ -260,7 +260,7 @@ function openChannelZip(f) {
             zip.forEach(function (relativePath, zipEntry) {
                 const lcasePath = relativePath.toLowerCase();
                 const ext = lcasePath.split(".").pop();
-                if (!zipEntry.dir && lcasePath.substr(0, 6) === "source" && ext === "brs") {
+                if (!zipEntry.dir && lcasePath.slice(0, 6) === "source" && ext === "brs") {
                     assetPaths.push({ url: relativePath, id: srcId, type: "source" });
                     assetsEvents.push(zipEntry.async("string"));
                     srcId++;
@@ -376,48 +376,48 @@ function workerCallback(event) {
         pauseSound();
     } else if (event.data === "resume") {
         resumeSound();
-    } else if (event.data.substr(0, 4) === "loop") {
+    } else if (event.data.slice(0, 4) === "loop") {
         const loop = event.data.split(",")[1];
         if (loop) {
             setLoop(loop === "true");
         } else {
             console.warn(`Missing loop parameter: ${event.data}`);
         }
-    } else if (event.data.substr(0, 4) === "next") {
+    } else if (event.data.slice(0, 4) === "next") {
         const newIndex = event.data.split(",")[1];
         if (newIndex && !isNaN(parseInt(newIndex))) {
             setNext(parseInt(newIndex));
         } else {
             console.warn(`Invalid next index: ${event.data}`);
         }
-    } else if (event.data.substr(0, 4) === "seek") {
+    } else if (event.data.slice(0, 4) === "seek") {
         const position = event.data.split(",")[1];
         if (position && !isNaN(parseInt(position))) {
             seekSound(parseInt(position));
         } else {
             console.warn(`Invalid seek position: ${event.data}`);
         }
-    } else if (event.data.substr(0, 7) === "trigger") {
+    } else if (event.data.slice(0, 7) === "trigger") {
         const trigger = event.data.split(",");
         if (trigger.length >= 4) {
             triggerWav(trigger[1], parseInt(trigger[2]), parseInt(trigger[3]));
         } else {
             console.warn(`Missing Trigger parameters: ${event.data}`);
         }
-    } else if (event.data.substr(0, 5) === "stop,") {
+    } else if (event.data.slice(0, 5) === "stop,") {
         stopWav(event.data.split(",")[1])
-    } else if (event.data.substr(0, 4) === "log,") {
-        console.log(event.data.substr(4));
-    } else if (event.data.substr(0, 8) === "warning,") {
-        console.warn(event.data.substr(8));
-    } else if (event.data.substr(0, 6) === "error,") {
-        console.error(event.data.substr(6));
+    } else if (event.data.slice(0, 4) === "log,") {
+        console.log(event.data.slice(4));
+    } else if (event.data.slice(0, 8) === "warning,") {
+        console.warn(event.data.slice(8));
+    } else if (event.data.slice(0, 6) === "error,") {
+        console.error(event.data.slice(6));
     } else if (event.data === "end") {
         closeChannel("Normal");
     } else if (event.data === "reset") {
         notifyAll("reset");
-    } else if (event.data.substr(0, 8) === "version:") {
-        notifyAll("version", event.data.substr(8));
+    } else if (event.data.slice(0, 8) === "version:") {
+        notifyAll("version", event.data.slice(8));
     }
 }
 
@@ -443,4 +443,15 @@ export function closeChannel(reason) {
     currentChannel.version = "";
     setChannelState(false);
     notifyAll("closed", currentChannel);
+}
+
+// Version Parser
+export function parseVersionString (str) {
+    if (typeof(str) != 'string') { return {}; }
+    var vArray = str.split('.');
+    return {
+        major: parseInt(vArray[0]) || 0,
+        minor: parseInt(vArray[1]) || 0,
+        patch: parseInt(vArray[2]) || 0
+    }
 }

@@ -256,7 +256,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let display = interpreter.deviceInfo.get("displayMode");
             let result = "HDTV";
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result = "4:3 standard";
             }
             return new BrsString(result);
@@ -294,7 +294,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let display = interpreter.deviceInfo.get("displayMode");
             let result = "16x9";
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result = "4x3";
             }
             return new BrsString(result);
@@ -310,10 +310,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let result = new Array<AAMember>();
             let display = interpreter.deviceInfo.get("displayMode");
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result.push({ name: new BrsString("h"), value: new Int32(480) });
                 result.push({ name: new BrsString("w"), value: new Int32(720) });
-            } else if (display.substr(0, 3) === "720") {
+            } else if (display.slice(0, 3) === "720") {
                 result.push({ name: new BrsString("h"), value: new Int32(720) });
                 result.push({ name: new BrsString("w"), value: new Int32(1280) });
             } else {
@@ -338,10 +338,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             result.push({ name: new BrsString("Hdr10Plus"), value: BrsBoolean.False });
             result.push({ name: new BrsString("HdrSeamless"), value: BrsBoolean.False });
             result.push({ name: new BrsString("internal"), value: BrsBoolean.True });
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result.push({ name: new BrsString("height"), value: new Int32(3) });
                 result.push({ name: new BrsString("width"), value: new Int32(4) });
-            } else if (display.substr(0, 3) === "720") {
+            } else if (display.slice(0, 3) === "720") {
                 result.push({ name: new BrsString("height"), value: new Int32(9) });
                 result.push({ name: new BrsString("width"), value: new Int32(16) });
             } else {
@@ -366,7 +366,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             mode.push({ name: new BrsString("height"), value: new Int32(480) });
             mode.push({ name: new BrsString("width"), value: new Int32(720) });
             mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
             } else {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
@@ -377,7 +377,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             mode.push({ name: new BrsString("height"), value: new Int32(720) });
             mode.push({ name: new BrsString("width"), value: new Int32(1280) });
             mode.push({ name: new BrsString("preferred"), value: BrsBoolean.True });
-            if (display.substr(0, 3) === "720") {
+            if (display.slice(0, 3) === "720") {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
             } else {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
@@ -388,7 +388,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             mode.push({ name: new BrsString("height"), value: new Int32(1080) });
             mode.push({ name: new BrsString("width"), value: new Int32(1920) });
             mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
-            if (display.substr(0, 4) === "1080") {
+            if (display.slice(0, 4) === "1080") {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
             } else {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
@@ -407,10 +407,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let result = new Array<AAMember>();
             let display = interpreter.deviceInfo.get("displayMode");
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result.push({ name: new BrsString("height"), value: new Int32(480) });
                 result.push({ name: new BrsString("width"), value: new Int32(720) });
-            } else if (display.substr(0, 3) === "720") {
+            } else if (display.slice(0, 3) === "720") {
                 result.push({ name: new BrsString("height"), value: new Int32(720) });
                 result.push({ name: new BrsString("width"), value: new Int32(1280) });
             } else {

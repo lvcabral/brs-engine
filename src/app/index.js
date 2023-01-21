@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import Hammer, { Tap } from "hammerjs";
 import bowser from "bowser";
-import { subscribeDevice, deviceData, loadFile } from "./device";
+import { subscribeDevice, deviceData, loadFile, parseVersionString } from "./device";
 import { handleKey} from "./control";
 const info = bowser.parse(window.navigator.userAgent);
 const browserVersion = parseVersionString(info.browser.version)
@@ -92,7 +92,7 @@ subscribeDevice("app", (event, data) => {
 const storage = window.localStorage;
 for (let index = 0; index < storage.length; index++) {
     const key = storage.key(index);
-    if (key.substr(0, developerId.length) === developerId) {
+    if (key.slice(0, developerId.length) === developerId) {
         deviceData.registry.set(key, storage.getItem(key));
     }
 }
@@ -161,8 +161,8 @@ doubleTap.recognizeWith(singleTap);
 singleTap.requireFailure(doubleTap);
 mc.on("panleft panright panup pandown tap doubletap", function(ev) {
     console.log(ev.type);
-    if (ev.type.substr(0,3) === "pan") {
-        sendKeyPress(ev.type.substr(3));
+    if (ev.type.slice(0, 3) === "pan") {
+        sendKeyPress(ev.type.slice(3));
     } else if (ev.type === "tap") {
         sendKeyPress("select");
     } else if (ev.type === "doubletap") {
@@ -183,16 +183,5 @@ function channelIcons(visibility) {
         channel1.style.visibility = visibility;
         channel2.style.visibility = visibility;
         channel3.style.visibility = visibility;
-    }
-}
-
-// Version Parser
-function parseVersionString (str) {
-    if (typeof(str) != 'string') { return {}; }
-    var vArray = str.split('.');
-    return {
-        major: parseInt(vArray[0]) || 0,
-        minor: parseInt(vArray[1]) || 0,
-        patch: parseInt(vArray[2]) || 0
     }
 }

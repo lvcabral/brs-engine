@@ -99,8 +99,8 @@ export function handleKey(key, mod) {
         sharedArray[dataType.KEY] = 18 + mod;
     } else if (key.toLowerCase() == "home" && mod == 0) {
         notifyAll("home");
-    } else if (key.substr(0,4).toLowerCase() === "lit_") {
-        if (key.substr(4).length == 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
+    } else if (key.slice(0, 4).toLowerCase() === "lit_") {
+        if (key.slice(4).length == 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
             sharedArray[dataType.KEY] = key.charCodeAt(4) + mod; 
         }
     }

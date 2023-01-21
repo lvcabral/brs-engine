@@ -50,8 +50,8 @@ brsWorker.addEventListener("message", receiveMessage);
 brsWorker.postMessage("getVersion");
 // Web Worker Callback
 function receiveMessage(event) {
-if (event.data.substr(0, 8) === "version:") {
-        console.log(event.data.substr(8));
+if (event.data.slice(0, 8) === "version:") {
+        console.log(event.data.slice(8));
     }
 }
 ```
