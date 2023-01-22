@@ -7,14 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import Hammer, { Tap } from "hammerjs";
 import bowser from "bowser";
-import { subscribeDevice, deviceData, loadFile, parseVersionString } from "./device";
-import { handleKey} from "./control";
-const info = bowser.parse(window.navigator.userAgent);
-const browserVersion = parseVersionString(info.browser.version)
-const supportedBrowser =
-    info.engine.name == "Blink" &&
-    ((info.platform.type == "desktop" && browserVersion.major > 68) ||
-        browserVersion.major > 89);
+import { initDevice, subscribeDevice, loadFile, keyPress } from "./device";
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const libVersion = document.getElementById("libVersion");
@@ -24,24 +17,18 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
-if (!supportedBrowser) {
-    channelIcons("hidden");
-    fileButton.style.visibility = "hidden";
-    let infoHtml = "";
-    infoHtml += "<br/>";
-    infoHtml += "Your browser is not supported!";
-    channelInfo.innerHTML = infoHtml;
-} else {
-    channelInfo.innerHTML = "<br/>";
-}
-let running = false;
-
+// Browser Support
+const info = bowser.parse(window.navigator.userAgent);
+const browserVersion = parseVersionString(info.browser.version)
+const supportedBrowser = info.engine.name == "Blink" &&
+    ((info.platform.type == "desktop" && browserVersion.major > 68) || browserVersion.major > 89);
+let supportSharedArray = false
 // Device Data
-const developerId = "UniqueDeveloperId";
+let running = false;
 const deviceInfo = {
-    developerId: developerId,
-    friendlyName: "BrightScript Emulator",
-    serialNumber: "BRSEMUAPP091",
+    developerId: "UniqueDeveloperId",
+    friendlyName: "BrightScript Emulator Web",
+    serialNumber: "BRSEMUAPP092",
     deviceModel: "8000X",
     firmwareVersion: "049.10E04111A",
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
@@ -59,58 +46,66 @@ const deviceInfo = {
     startTime: Date.now(),
     audioVolume: 40,
 };
-Object.assign(deviceData, deviceInfo);
 
-subscribeDevice("app", (event, data) => {
-    if (event === "loaded") {
-        fileButton.style.visibility = "hidden";
-        let infoHtml = data.title + "<br/>";
-        infoHtml += data.subtitle + "<br/>";
-        infoHtml += data.version;
-        channelInfo.innerHTML = infoHtml;
-    } else if (event === "running") {
-        channelIcons("hidden");
-        loading.style.visibility = "hidden";
-    } else if (event === "closed" || event === "error") {
-        display.style.opacity = 0;
-        channelInfo.innerHTML = "<br/>";
-        fileButton.style.visibility = "visible";
-        loading.style.visibility = "hidden";
-        channelIcons("visible");
-        fileSelector.value = null;
-        running = false;
-    } else if (event === "icon") {
-        console.log("received icon event from device");
-    } else if (event === "reset") {
-        console.log("received reset event from device");
-    } else if (event === "version") {
-        libVersion.innerHTML = data;
-    }
-});
+if (supportedBrowser) {
+    channelInfo.innerHTML = "<br/>";
+    supportSharedArray = (browserVersion.major < 92 || self.crossOriginIsolated)
 
-// Load Registry
-const storage = window.localStorage;
-for (let index = 0; index < storage.length; index++) {
-    const key = storage.key(index);
-    if (key.slice(0, developerId.length) === developerId) {
-        deviceData.registry.set(key, storage.getItem(key));
-    }
+    const customKeys = new Map();
+    customKeys.set("Home", "home");
+
+    // Initialize Device Emulator and subscribe to events
+    initDevice(deviceInfo, supportSharedArray, false, customKeys)
+
+    subscribeDevice("app", (event, data) => {
+        if (event === "loaded") {
+            fileButton.style.visibility = "hidden";
+            let infoHtml = data.title + "<br/>";
+            infoHtml += data.subtitle + "<br/>";
+            infoHtml += data.version;
+            channelInfo.innerHTML = infoHtml;
+        } else if (event === "running") {
+            channelIcons("hidden");
+            loading.style.visibility = "hidden";
+        } else if (event === "closed" || event === "error") {
+            display.style.opacity = 0;
+            channelInfo.innerHTML = "<br/>";
+            fileButton.style.visibility = "visible";
+            loading.style.visibility = "hidden";
+            channelIcons("visible");
+            fileSelector.value = null;
+            running = false;
+        } else if (event === "icon") {
+            console.log("received icon event from device");
+        } else if (event === "reset") {
+            console.log("received reset event from device");
+        } else if (event === "version") {
+            libVersion.innerHTML = data;
+        }
+    });
+} else {
+    channelIcons("hidden");
+    fileButton.style.visibility = "hidden";
+    let infoHtml = "";
+    infoHtml += "<br/>";
+    infoHtml += "Your browser is not supported!";
+    channelInfo.innerHTML = infoHtml;
 }
 
 // File selector
 const fileSelector = document.getElementById("file");
-fileButton.onclick = function() {
+fileButton.onclick = function () {
     fileSelector.click();
 };
-fileSelector.onclick = function() {
+fileSelector.onclick = function () {
     this.value = null;
 };
-fileSelector.onchange = function() {
+fileSelector.onchange = function () {
     const file = this.files[0];
     const reader = new FileReader();
     const fileExt = file.name.split(".").pop();
     if (fileExt === "zip" || fileExt === "brs") {
-        reader.onload = function(evt) {
+        reader.onload = function (evt) {
             // file is loaded
             loadFile(file.name, evt.target.result);
             channelIcons("hidden");
@@ -154,28 +149,21 @@ const mc = new Hammer(display);
 mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
 // listen to events...
-var singleTap = new Tap({event: 'tap' });
-var doubleTap = new Tap({event: 'doubletap', taps: 2 });
+var singleTap = new Tap({ event: 'tap' });
+var doubleTap = new Tap({ event: 'doubletap', taps: 2 });
 mc.add([doubleTap, singleTap]);
 doubleTap.recognizeWith(singleTap);
 singleTap.requireFailure(doubleTap);
-mc.on("panleft panright panup pandown tap doubletap", function(ev) {
+mc.on("panleft panright panup pandown tap doubletap", function (ev) {
     console.log(ev.type);
     if (ev.type.slice(0, 3) === "pan") {
-        sendKeyPress(ev.type.slice(3));
+        keyPress(ev.type.slice(3));
     } else if (ev.type === "tap") {
-        sendKeyPress("select");
+        keyPress("select");
     } else if (ev.type === "doubletap") {
-        sendKeyPress("back");
+        keyPress("back");
     }
 });
-
-function sendKeyPress(key) {
-    setTimeout(function () {
-        handleKey(key, 100);
-    }, 300);
-    handleKey(key, 0);
-}
 
 // Channel icons Visibility
 function channelIcons(visibility) {
@@ -183,5 +171,16 @@ function channelIcons(visibility) {
         channel1.style.visibility = visibility;
         channel2.style.visibility = visibility;
         channel3.style.visibility = visibility;
+    }
+}
+
+// Version Parser
+function parseVersionString(str) {
+    if (typeof (str) != 'string') { return {}; }
+    var vArray = str.split('.');
+    return {
+        major: parseInt(vArray[0]) || 0,
+        minor: parseInt(vArray[1]) || 0,
+        patch: parseInt(vArray[2]) || 0
     }
 }

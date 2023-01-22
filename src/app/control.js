@@ -25,13 +25,32 @@ keys.set("Comma", "rev");
 keys.set("Period", "fwd");
 keys.set("KeyA", "a");
 keys.set("KeyZ", "b");
-// Control array
+
+// Initialize Control Module
 let sharedArray;
 let dataType;
-// Initialize Control Module
-export function initControlModule(array, types) {
+export function initControlModule(array, types, disableKeys, keysMap) {
     sharedArray = array;
     dataType = types;
+    if (!disableKeys) {
+        if (keysMap instanceof Map) {
+            concatMaps(keys, keysMap)
+        }
+        // Keyboard handlers
+        document.addEventListener("keydown", function (event) {    
+            if (keys.has(event.code)) {
+                handleKey(keys.get(event.code), 0);
+                if (preventDefault.has(event.code)) {
+                    event.preventDefault();
+                }    
+            }   
+        });
+        document.addEventListener("keyup", function keyUpHandler(event) {
+            if (keys.has(event.code)) {
+                handleKey(keys.get(event.code), 100);
+            }
+        });
+    }
 }
 // Observers Handling
 const observers = new Map();
@@ -46,20 +65,6 @@ function notifyAll(eventName, eventData) {
         callback(eventName, eventData);
     });
 }
-// Keyboard handlers
-document.addEventListener("keydown", function (event) {    
-    if (keys.has(event.code)) {
-        handleKey(keys.get(event.code), 0);
-        if (preventDefault.has(event.code)) {
-            event.preventDefault();
-        }    
-    }   
-});
-document.addEventListener("keyup", function keyUpHandler(event) {
-    if (keys.has(event.code)) {
-        handleKey(keys.get(event.code), 100);
-    }
-});
 // Keyboard Handler
 export function handleKey(key, mod) {
     sharedArray[dataType.MOD] = mod;
@@ -102,6 +107,14 @@ export function handleKey(key, mod) {
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
         if (key.slice(4).length == 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
             sharedArray[dataType.KEY] = key.charCodeAt(4) + mod; 
+        }
+    }
+}
+
+function concatMaps(map, ...iterables) {
+    for (const iterable of iterables) {
+        for (const item of iterable) {
+            map.set(...item);
         }
     }
 }
