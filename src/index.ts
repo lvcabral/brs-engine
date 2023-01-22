@@ -93,7 +93,7 @@ onmessage = function(event) {
                 if (!volume.existsSync(path.dirname(`/${filePath.url}`))) {
                     try {
                         mkdirTreeSync(volume, path.dirname(`/${filePath.url}`));
-                    } catch (err: any) {
+                    } catch (err) {
                         postMessage(
                             `warning,Error creating directory ${path.dirname(
                                 `/${filePath.url}`
@@ -115,7 +115,7 @@ onmessage = function(event) {
                         source.set(filePath.url, event.data.brs[filePath.id]);
                         volume.writeFileSync(`/${filePath.url}`, event.data.brs[filePath.id]);
                     }
-                } catch (err: any) {
+                } catch (err) {
                     postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
                 }
             }
@@ -164,7 +164,7 @@ onmessage = function(event) {
                         }
                     });
                 }
-            } catch (err: any) {
+            } catch (err) {
                 const badPath = `pkg:/locale/${locale}/`;
                 postMessage(`warning,Invalid path: ${badPath} - ${err.message}`);
             }
@@ -271,8 +271,8 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
         });
         aa.push({ name: new BrsString("source"), value: new BrsString("auto-run-dev") });
         return interpreter.exec(allStatements, new RoAssociativeArray(aa));
-    } catch (e: any) {
-        postMessage(`warning,Unhandled Interpreter error: ${e.message}`);
+    } catch (err) {
+        postMessage(`warning,Unhandled Interpreter error: ${err.message}`);
         return;
     }
 }
@@ -330,7 +330,7 @@ function download(url: string, type: XMLHttpRequestResponseType) {
             return undefined;
         }
         return xhr.response;
-    } catch (e: any) {
-        postMessage(`warning,Error downloading ${url}: ${e.message}`);
+    } catch (err) {
+        postMessage(`warning,Error downloading ${url}: ${err.message}`);
     }
 }
