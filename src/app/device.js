@@ -37,6 +37,7 @@ export const deviceData = {
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
+    lowResolutionCanvas: false,
     channelRunning: false,
     registry: new Map()
 };
@@ -76,7 +77,7 @@ export function initDevice(deviceInfo, supportSharedArray, disableKeys, keysMap)
     sharedArray = new Int32Array(sharedBuffer);
 
     // Initialize Display, Control and Sound Modules
-    initDisplayModule(deviceData.displayMode);
+    initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas);
     initControlModule(sharedArray, dataType, disableKeys, keysMap);
     initSoundModule(sharedArray, dataType, deviceData.maxSimulStreams);
     // Subscribe Events

@@ -45,6 +45,7 @@ const deviceInfo = {
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
+    lowResolutionCanvas: true
 };
 
 if (supportedBrowser) {
