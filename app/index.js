@@ -1,13 +1,10 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
  *
- *  Copyright (c) 2019-2021 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import Hammer, { Tap } from "hammerjs";
-import bowser from "bowser";
-import { initDevice, subscribeDevice, loadFile, keyPress } from "./device";
 const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const libVersion = document.getElementById("libVersion");
@@ -56,9 +53,9 @@ if (supportedBrowser) {
     customKeys.set("Home", "home");
 
     // Initialize Device Emulator and subscribe to events
-    initDevice(deviceInfo, supportSharedArray, false, customKeys)
+    brsEmu.initDevice(deviceInfo, supportSharedArray, false, customKeys)
 
-    subscribeDevice("app", (event, data) => {
+    brsEmu.subscribeDevice("app", (event, data) => {
         if (event === "loaded") {
             fileButton.style.visibility = "hidden";
             let infoHtml = data.title + "<br/>";
@@ -108,7 +105,7 @@ fileSelector.onchange = function () {
     if (fileExt === "zip" || fileExt === "brs") {
         reader.onload = function (evt) {
             // file is loaded
-            loadFile(file.name, evt.target.result);
+            brsEmu.loadFile(file.name, evt.target.result);
             channelIcons("hidden");
         };
         reader.onerror = function (evt) {
@@ -120,7 +117,7 @@ fileSelector.onchange = function () {
     }
 };
 // Download Zip
-export function loadZip(zip) {
+function loadZip(zip) {
     if (running) {
         return;
     }
@@ -132,7 +129,7 @@ export function loadZip(zip) {
     fetch(zip).then(function (response) {
         if (response.status === 200 || response.status === 0) {
             console.log(`Loading ${zip}...`);
-            loadFile(zip, response.blob());
+            brsEmu.loadFile(zip, response.blob());
             display.focus();
         } else {
             loading.style.visibility = "hidden";
@@ -150,19 +147,19 @@ const mc = new Hammer(display);
 mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
 // listen to events...
-var singleTap = new Tap({ event: 'tap' });
-var doubleTap = new Tap({ event: 'doubletap', taps: 2 });
+var singleTap = new Hammer.Tap({ event: 'tap' });
+var doubleTap = new Hammer.Tap({ event: 'doubletap', taps: 2 });
 mc.add([doubleTap, singleTap]);
 doubleTap.recognizeWith(singleTap);
 singleTap.requireFailure(doubleTap);
 mc.on("panleft panright panup pandown tap doubletap", function (ev) {
     console.log(ev.type);
     if (ev.type.slice(0, 3) === "pan") {
-        keyPress(ev.type.slice(3));
+        brsEmu.keyPress(ev.type.slice(3));
     } else if (ev.type === "tap") {
-        keyPress("select");
+        brsEmu.keyPress("select");
     } else if (ev.type === "doubletap") {
-        keyPress("back");
+        brsEmu.keyPress("back");
     }
 });
 
