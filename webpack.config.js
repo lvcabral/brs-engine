@@ -3,17 +3,19 @@ const JavaScriptObfuscator = require("webpack-obfuscator");
 
 module.exports = env => {
     const isProduction = env.NODE_ENV === "production";
-    let outputLib, outputApp, mode;
+    let outputLib, outputWrk, mode, distPath;
     let libraryName = "brsEmu";
     let workerName = "brsEmu.worker";
     if (isProduction) {
         mode = "production";
-        outputWrk = workerName + ".min.js";
+        outputWrk = libraryName + ".worker.min.js";
         outputLib = libraryName + ".min.js";
+        distPath = "dist"
     } else {
         mode = "development";
-        outputWrk = workerName + ".js";
+        outputWrk = libraryName + ".worker.js";
         outputLib = libraryName + ".js";
+        distPath = "app/lib"
     }
     return [
         {
@@ -44,7 +46,7 @@ module.exports = env => {
             ],
             node: { fs: "empty", readline: "empty" },
             output: {
-                path: path.join(__dirname, "app/lib"),
+                path: path.join(__dirname, distPath),
                 filename: outputWrk,
                 library: workerName,
                 libraryTarget: "umd",
@@ -59,7 +61,7 @@ module.exports = env => {
             output: {
               filename: outputLib,
               library: libraryName,
-              path: path.resolve(__dirname, "app/lib"),
+              path: path.resolve(__dirname, distPath),
               globalObject: "typeof self !== 'undefined' ? self : this",
             }
         }
