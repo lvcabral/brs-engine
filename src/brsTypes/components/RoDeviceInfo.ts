@@ -150,7 +150,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId()*/
+    /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId() */
     private getClientTrackingId = new Callable("getClientTrackingId", {
         signature: {
             args: [],
