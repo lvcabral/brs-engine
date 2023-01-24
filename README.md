@@ -17,8 +17,8 @@ This library extends [**brs**](https://github.com/sjbarag/brs), a _command line 
 ## Technology and Compatibility
 
 This emulator is bundled as a couple of **[Webpack](https://webpack.js.org/)** Javascript libraries: 
-- `brsEmu.js` the **[emulator API](docs/emulator-api.md)** 
-- `brsEmu.worker.js` that runs as a **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)**
+- `brsEmu.js` the **[emulator API](docs/emulator-api.md)** to be used by the application.
+- `brsEmu.worker.js` the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter.
 
 It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _bleeding edge_ in the browser engines implementation, because of that, at this moment, it can only be executed in [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/), [Edge](https://www.microsoft.com/en-us/edge) or embedded on an [Electron](https://electronjs.org/) application. The **BrightScript 2D API Emulator** is a full client-side library, nothing is sent or processed in the server side.
 
