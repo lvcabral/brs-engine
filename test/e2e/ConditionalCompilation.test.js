@@ -42,7 +42,7 @@ describe("end to end conditional compilation", () => {
 
                 stderr.mockRestore();
                 done.fail("execute() should have rejected");
-            } catch (err) {
+            } catch (err: any) {
                 expect(allArgs(stderr).filter(arg => arg !== "\n")).toEqual([
                     expect.stringContaining("I'm a compile-time error!"),
                 ]);

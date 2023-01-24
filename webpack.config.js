@@ -27,8 +27,11 @@ module.exports = env => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "ts-loader",
-                        exclude: /node_modules/,
+                        loader: "babel-loader",
+                        options: {
+                            presets: ["@babel/env", "@babel/preset-typescript"]
+                        },
+                exclude: /node_modules/,
                     },
                 ],
             },
@@ -59,10 +62,10 @@ module.exports = env => {
             target: "web",
             mode: mode,
             output: {
-              filename: outputLib,
-              library: libraryName,
-              path: path.resolve(__dirname, distPath),
-              globalObject: "typeof self !== 'undefined' ? self : this",
+                filename: outputLib,
+                library: libraryName,
+                path: path.resolve(__dirname, distPath),
+                globalObject: "typeof self !== 'undefined' ? self : this",
             }
         }
     ];

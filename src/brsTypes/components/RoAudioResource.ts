@@ -37,7 +37,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
                     if (id && id >= 0) {
                         this.audioId = id + systemwav.length;
                     }
-                } catch (err) {
+                } catch (err: any) {
                     postMessage(
                         `warning,Error loading audio file: ${url.pathname} - ${err.message}`
                     );

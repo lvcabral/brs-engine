@@ -42,7 +42,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 try {
                     image = volume.readFileSync(url.pathname);
                     this.alphaEnable = true;
-                } catch (err) {
+                } catch (err: any) {
                     postMessage(`warning,Error loading bitmap:${url.pathname} - ${err.message}`);
                     this.valid = false;
                 }
@@ -113,7 +113,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     postMessage(`warning,Invalid bitmap file format: ${image}`);
                     this.valid = false;
                 }
-            } catch (err) {
+            } catch (err: any) {
                 postMessage(`warning,Error drawing image on canvas: ${err.message}`);
                 this.valid = false;
             }

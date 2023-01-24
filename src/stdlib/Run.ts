@@ -41,7 +41,7 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
         let sandbox = new Interpreter(interpreter.options);
         return sandbox.exec(ast, ...args)[0] || BrsInvalid.Instance;
-    } catch (err) {
+    } catch (err: any) {
         // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
         // syntax errors, etc.
         return BrsInvalid.Instance;

@@ -85,7 +85,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 } else {
                     this.fontRegistry.set(fontFamily, [fontMetrics]);
                 }
-            } catch (err) {
+            } catch (err: any) {
                 postMessage(`warning,Error loading font:${url.pathname} - ${err.message}`);
             }
         } else {

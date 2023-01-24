@@ -19,7 +19,7 @@ export function getVolumeByPath(interpreter: Interpreter, path: string): Volume 
         if (volume) {
             return volume;
         }
-    } catch (err) {
+    } catch (err: any) {
         return null;
     }
     return null;
@@ -42,7 +42,7 @@ export function createDir(interpreter: Interpreter, dir: string) {
     try {
         volume.mkdirSync(memfsPath);
         return BrsBoolean.True;
-    } catch (err) {
+    } catch (err: any) {
         return BrsBoolean.False;
     }
 }
@@ -72,7 +72,7 @@ export const CopyFile = new Callable("CopyFile", {
             let contents = srcVolume.readFileSync(srcMemfsPath);
             dstVolume.writeFileSync(dstMemfsPath, contents);
             return BrsBoolean.True;
-        } catch (err) {
+        } catch (err: any) {
             return BrsBoolean.False;
         }
     },
@@ -104,7 +104,7 @@ export const MoveFile = new Callable("MoveFile", {
             dstVolume.writeFileSync(dstMemfsPath, contents);
             srcVolume.rmfileSync(srcMemfsPath);
             return BrsBoolean.True;
-        } catch (err) {
+        } catch (err: any) {
             return BrsBoolean.False;
         }
     },
@@ -126,7 +126,7 @@ export const DeleteFile = new Callable("DeleteFile", {
         try {
             volume.rmfileSync(memfsPath);
             return BrsBoolean.True;
-        } catch (err) {
+        } catch (err: any) {
             return BrsBoolean.False;
         }
     },
@@ -148,7 +148,7 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
         try {
             volume.rmdirSync(memfsPath);
             return BrsBoolean.True;
-        } catch (err) {
+        } catch (err: any) {
             return BrsBoolean.False;
         }
     },
@@ -198,7 +198,7 @@ export const ListDir = new Callable("ListDir", {
         try {
             let subPaths = volume.readdirSync(memfsPath).map(s => new BrsString(s));
             return new RoList(subPaths);
-        } catch (err) {
+        } catch (err: any) {
             return new RoList([]);
         }
     },
@@ -217,7 +217,7 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
                 const memfsPath = getPath(filepath.value);
                 const textDecoder = new TextDecoder();
                 return new BrsString(textDecoder.decode(volume.readFileSync(memfsPath)));
-            } catch (err) {
+            } catch (err: any) {
                 return new BrsString("");
             }
         }
@@ -243,7 +243,7 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         try {
             volume.writeFileSync(memfsPath, text.value, "utf-8");
             return BrsBoolean.True;
-        } catch (err) {
+        } catch (err: any) {
             return BrsBoolean.False;
         }
     },
@@ -276,7 +276,7 @@ export const MatchFiles = new Callable("MatchFiles", {
             matchedFiles = (matchedFiles || []).map((match: string) => new BrsString(match));
 
             return new RoList(matchedFiles);
-        } catch (err) {
+        } catch (err: any) {
             return new RoList([]);
         }
     },

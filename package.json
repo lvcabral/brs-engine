@@ -32,32 +32,36 @@
     "prepublishOnly": "npm-run-all --serial clean build lint prettier"
   },
   "files": [
-    "app/fonts/"
+    "app/fonts/",
+    "dist/"
   ],
   "dependencies": {
+    "babel-loader": "^8.3.0",
     "bowser": "^2.11.0",
     "crc": "^3.8.0",
     "decode-bmp": "^0.1.0",
     "file-type": "^12.4.2",
     "hammerjs": "^2.0.8",
     "howler": "^2.2.3",
-    "jpeg-js": "^0.4.3",
-    "jszip": "^3.6.0",
+    "jpeg-js": "^0.4.4",
+    "jszip": "^3.10.1",
     "linked-list-typescript": "^1.0.15",
     "long": "^3.2.0",
     "luxon": "^1.8.3",
     "memory-fs": "^0.5.0",
     "nanomatch": "^1.2.13",
     "omggif": "^1.0.10",
-    "opentype.js": "^1.1.0",
+    "opentype.js": "^1.3.4",
     "p-settle": "^2.1.0",
     "path-parse": "^1.0.6",
-    "ts-loader": "^6.0.4",
     "upng-js": "^2.1.0",
-    "url-parse": "^1.4.7",
+    "url-parse": "^1.5.10",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
+    "@babel/core": "^7.20.12",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-typescript": "^7.18.6",
     "@types/crc": "^3.4.0",
     "@types/css-font-loading-module": "^0.0.2",
     "@types/lolex": "^2.1.3",
@@ -82,7 +86,7 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "3",
+    "typescript": "4",
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12",
     "webpack-obfuscator": "^0.18.8"

@@ -143,7 +143,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         try {
             this._environment = newEnv;
             return func(this);
-        } catch (err) {
+        } catch (err: any) {
             if (!(err instanceof BrsError)) {
                 if (err.message !== "") {
                     postMessage(`error,${err.message}`);
@@ -222,7 +222,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     "warning,No entry point found! You must define a function Main() or RunUserInterface()"
                 );
             }
-        } catch (err) {
+        } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value || BrsInvalid.Instance];
             } else if (!(err instanceof BrsError)) {
@@ -1127,7 +1127,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (isIterable(source) && (source instanceof RoXMLElement || source instanceof RoXMLList)) {
             try {
                 return source.getAttribute(new BrsString(expression.name.text));
-            } catch (err) {
+            } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
         } else {
@@ -1150,7 +1150,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (isIterable(source)) {
             try {
                 return source.get(new BrsString(expression.name.text));
-            } catch (err) {
+            } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
         }
@@ -1159,7 +1159,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (boxedSource instanceof BrsComponent) {
             try {
                 return boxedSource.getMethod(expression.name.text) || BrsInvalid.Instance;
-            } catch (err) {
+            } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
         } else {
@@ -1209,7 +1209,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         try {
             return source.get(index);
-        } catch (err) {
+        } catch (err: any) {
             return this.addError(new BrsError(err.message, expression.closingSquare.location));
         }
     }
@@ -1437,7 +1437,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         try {
             source.set(new BrsString(statement.name.text), value);
-        } catch (err) {
+        } catch (err: any) {
             return this.addError(new BrsError(err.message, statement.name.location));
         }
 
@@ -1480,7 +1480,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         try {
             source.set(index, value);
-        } catch (err) {
+        } catch (err: any) {
             return this.addError(new BrsError(err.message, statement.closingSquare.location));
         }
 
@@ -1585,7 +1585,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitVariable(expression: Expr.Variable) {
         try {
             return this.environment.get(expression.name);
-        } catch (err) {
+        } catch (err: any) {
             if (err instanceof NotFound) {
                 return Uninitialized.Instance;
             }

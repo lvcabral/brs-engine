@@ -128,7 +128,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     }
                     return BrsBoolean.True;
                 }
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
             return BrsBoolean.False;
@@ -163,7 +163,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                         return BrsBoolean.True;
                     }
                 }
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
             return BrsBoolean.False;
@@ -203,7 +203,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                         return BrsBoolean.True;
                     }
                 }
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
             return BrsBoolean.False;
