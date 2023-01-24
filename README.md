@@ -1,6 +1,6 @@
 # BRS-EMU: BrightScript 2D API Emulator
 
-An emulator for the Roku BrightScript language that runs on Chromium based browsers and Electron applications.
+An emulator for the Roku BrightScript language that runs on Firefox or Chrome browsers and Electron applications.
 
 [![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
 
@@ -20,7 +20,7 @@ This emulator is bundled as a couple of **[Webpack](https://webpack.js.org/)** J
 - `brsEmu.js` the **[emulator API](docs/emulator-api.md)** to be used by the application.
 - `brsEmu.worker.js` the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter.
 
-It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _bleeding edge_ in the browser engines implementation, because of that, at this moment, it can only be executed in [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/), [Edge](https://www.microsoft.com/en-us/edge) or embedded on an [Electron](https://electronjs.org/) application. The **BrightScript 2D API Emulator** is a full client-side library, nothing is sent or processed in the server side.
+It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _bleeding edge_ in the browser engines implementation, because of that, at this moment, it can only be executed in [Firefox](https://firefox.com) (version 105 or higher) or [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/), [Edge](https://www.microsoft.com/en-us/edge). The emulator can also be embedded on an [Electron](https://electronjs.org/) application. The **BrightScript 2D API Emulator** is a full client-side library, nothing is sent or processed in the server side.
 
  ## How to use it
 

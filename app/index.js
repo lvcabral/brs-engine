@@ -14,13 +14,6 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
-// Browser Support
-const info = bowser.parse(window.navigator.userAgent);
-const browserVersion = parseVersionString(info.browser.version);
-const supportedBrowser =
-    info.engine.name == "Blink" &&
-    ((info.platform.type == "desktop" && browserVersion.major > 68) || browserVersion.major > 89);
-let supportSharedArray = false;
 // Device Data
 let running = false;
 const deviceInfo = {
@@ -46,15 +39,14 @@ const deviceInfo = {
     lowResolutionCanvas: true,
 };
 
-if (supportedBrowser) {
+if (supportedBrowser()) {
     channelInfo.innerHTML = "<br/>";
-    supportSharedArray = browserVersion.major < 92 || self.crossOriginIsolated;
 
     const customKeys = new Map();
     customKeys.set("Home", "home");
 
     // Initialize Device Emulator and subscribe to events
-    brsEmu.initialize(deviceInfo, supportSharedArray, false, customKeys);
+    brsEmu.initialize(deviceInfo, self.crossOriginIsolated, false, customKeys);
 
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
@@ -131,7 +123,6 @@ function loadZip(zip) {
     fileSelector.value = null;
     fetch(zip).then(function(response) {
         if (response.status === 200 || response.status === 0) {
-            console.log(`Loading ${zip}...`);
             brsEmu.execute(zip, response.blob());
             display.focus();
         } else {
@@ -175,7 +166,21 @@ function channelIcons(visibility) {
     }
 }
 
-// Version Parser
+// Browser Check
+
+function supportedBrowser() {
+    const info = bowser.parse(window.navigator.userAgent);
+    console.log(info.engine.name, info.platform.type, info.browser.version)
+    const browserVersion = parseVersionString(info.browser.version);
+    let supported = false;
+    if (info.engine.name == "Blink") {
+        supported = ((info.platform.type == "desktop" && browserVersion.major > 68) || browserVersion.major > 88)
+    } else if (info.engine.name == "Gecko") {
+        supported = (browserVersion.major > 104)
+    }       
+    return supported; 
+}
+
 function parseVersionString(str) {
     if (typeof str != "string") {
         return {};
