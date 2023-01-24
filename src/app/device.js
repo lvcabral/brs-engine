@@ -6,19 +6,18 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
-import { subscribeDisplay, initDisplayModule, drawBufferImage, drawSplashScreen, showDisplay, clearDisplay } from "./display";
+import { subscribeDisplay, initDisplayModule, drawBufferImage, drawSplashScreen, showDisplay,
+         redrawDisplay, clearDisplay, setCurrentMode, setOverscan, overscanMode } from "./display";
 import { subscribeControl, initControlModule, handleKey } from "./control";
-import {
-    initSoundModule, addSound, resetSounds, playSound, stopSound, playWav,
-    pauseSound, resumeSound, setLoop, setNext, triggerWav, stopWav, addPlaylist
-} from "./sound";
+import { initSoundModule, addSound, resetSounds, playSound, stopSound, playWav,
+         pauseSound, resumeSound, setLoop, setNext, triggerWav, stopWav, addPlaylist } from "./sound";
 import "./hash";
+let brsWorker;
+let brsEmuLib = "./lib/brsEmu.worker.js";
 
 // Default Device Data
-let brsWorker;
-const brsEmuLib = "./lib/brsEmu.worker.js";
 const storage = window.localStorage;
-export const deviceData = {
+const deviceData = {
     developerId: "UniqueDeveloperId",
     friendlyName: "BrightScript Emulator",
     serialNumber: "BRSEMUAPP092",
@@ -38,7 +37,6 @@ export const deviceData = {
     startTime: Date.now(),
     audioVolume: 40,
     lowResolutionCanvas: false,
-    channelRunning: false,
     registry: new Map()
 };
 
@@ -51,11 +49,11 @@ let bins = [];
 let sharedBuffer = [0, 0, 0, 0, 0, 0, 0];
 let sharedArray = new Int32Array(sharedBuffer);
 
-export const currentChannel = { id: "", file: "", title: "", subtitle: "", version: "", running: false };
-export const dataType = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
+const currentChannel = { id: "", file: "", title: "", subtitle: "", version: "", running: false };
+const dataType = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
 Object.freeze(dataType);
 
-export function initDevice(deviceInfo, supportSharedArray, disableKeys, keysMap) {
+export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap, libPath) {
     Object.assign(deviceData, deviceInfo);
     console.log(deviceData.friendlyName)
     // Load Registry 
@@ -71,7 +69,8 @@ export function initDevice(deviceInfo, supportSharedArray, disableKeys, keysMap)
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
         console.warn(
-            `Remote control emulation will not work as SharedArrayBuffer is not enabled, to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
+            `Remote control emulation will not work as SharedArrayBuffer is not enabled, 
+            to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
         );
     }
     sharedArray = new Int32Array(sharedBuffer);
@@ -85,19 +84,23 @@ export function initDevice(deviceInfo, supportSharedArray, disableKeys, keysMap)
         if (event === "mode") {
             deviceData.displayMode = data;
             if (currentChannel.running) {
-                closeChannel("DisplayMode");
+                terminate("DisplayMode");
             }
+            notifyAll("display", data);
+        } else if (["redraw", "resolution", "dblclick"].includes(event)) {
+            notifyAll(event, data);
         }
     });
     subscribeControl("channel", (event) => {
         if (event === "home") {
             if (currentChannel.running) {
-                closeChannel("Home Button");
+                terminate("Home Button");
                 playWav(0);
             }
         }
     })
     // Initialize Worker
+    brsEmuLib = libPath || brsEmuLib
     brsWorker = new Worker(brsEmuLib);
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage("getVersion");
@@ -105,10 +108,10 @@ export function initDevice(deviceInfo, supportSharedArray, disableKeys, keysMap)
 
 // Observers Handling
 const observers = new Map();
-export function subscribeDevice(observerId, observerCallback) {
+export function subscribe(observerId, observerCallback) {
     observers.set(observerId, observerCallback);
 }
-export function unsubscribeDevice(observerId) {
+export function unsubscribe(observerId) {
     observers.delete(observerId);
 }
 function notifyAll(eventName, eventData) {
@@ -118,10 +121,30 @@ function notifyAll(eventName, eventData) {
 }
 
 // Open File
-export function loadFile(filePath, fileData) {
+export function execute(filePath, fileData) {
     const fileName = filePath.split('.').slice(0, -1).join('.');
     const fileExt = filePath.split(".").pop();
-    console.log(`${fileName} -- ${fileExt}`);
+    source = [];
+    currentChannel.id = filePath.hashCode();
+    currentChannel.file = filePath;
+    if (typeof brsWorker !== 'undefined') {
+        brsWorker.terminate();
+        sharedArray[dataType.KEY] = 0;
+        sharedArray[dataType.MOD] = 0;
+        sharedArray[dataType.SND] = -1;
+        sharedArray[dataType.IDX] = -1;
+        resetSounds();
+    }
+    console.log(`Loading ${filePath}...`);
+    if (fileExt === "zip") {
+        openChannelZip(fileData);
+    } else {
+        openSourceCode(fileName, fileData);
+    }
+}
+
+// Open source file
+function openSourceCode(fileName, fileData) {
     const reader = new FileReader();
     reader.onload = function (progressEvent) {
         currentChannel.id = "brs";
@@ -135,24 +158,9 @@ export function loadFile(filePath, fileData) {
         notifyAll("loaded", currentChannel);
         runChannel();
     };
-    source = [];
-    currentChannel.id = filePath.hashCode();
-    currentChannel.file = filePath;
-    if (typeof brsWorker !== 'undefined') {
-        brsWorker.terminate();
-        sharedArray[dataType.KEY] = 0;
-        sharedArray[dataType.MOD] = 0;
-        sharedArray[dataType.SND] = -1;
-        sharedArray[dataType.IDX] = -1;
-        resetSounds();
-    }
-    console.log(`Loading ${fileName}...`);
-    if (fileExt === "zip") {
-        openChannelZip(fileData);
-    } else {
-        reader.readAsText(new Blob([fileData], { type: "text/plain" }));
-    }
+    reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
+
 // Uncompress Zip and execute
 function openChannelZip(f) {
     JSZip.loadAsync(f).then(
@@ -242,7 +250,7 @@ function openChannelZip(f) {
                     function error(e) {
                         const msg = `Error uncompressing manifest: ${e.message}`;
                         console.error(msg);
-                        setChannelState(false);
+                        currentChannel.running = false;
                         notifyAll("error", msg);
                         return;
                     }
@@ -250,7 +258,7 @@ function openChannelZip(f) {
             } else {
                 const msg = "Invalid Channel Package: missing manifest.";
                 console.error(msg);
-                setChannelState(false);
+                currentChannel.running = false;
                 notifyAll("error", msg);
                 return;
             }
@@ -328,21 +336,22 @@ function openChannelZip(f) {
             const msg = `Error reading ${f.name}: ${e.message}`;
             console.error(msg);
             notifyAll("error", msg);
-            setChannelState(false);
+            currentChannel.running = false;
         }
     );
 }
+
 // Execute Emulator Web Worker
 function runChannel() {
     showDisplay()
-    if (currentChannel.running || typeof brsWorker !== 'undefined') {
+    if (currentChannel.running && typeof brsWorker !== 'undefined') {
         brsWorker.terminate();
         sharedArray[dataType.KEY] = 0;
         sharedArray[dataType.MOD] = 0;
         sharedArray[dataType.SND] = -1;
         sharedArray[dataType.IDX] = -1;
     }
-    setChannelState(true);
+    currentChannel.running = true;
     brsWorker = new Worker(brsEmuLib);
     brsWorker.addEventListener("message", workerCallback);
     const payload = {
@@ -355,7 +364,7 @@ function runChannel() {
     };
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
-    notifyAll("running", currentChannel);
+    notifyAll("started", currentChannel);
 }
 
 // Receive Messages from Web Worker
@@ -416,7 +425,7 @@ function workerCallback(event) {
     } else if (event.data.slice(0, 6) === "error,") {
         console.error(event.data.slice(6));
     } else if (event.data === "end") {
-        closeChannel("Normal");
+        terminate("Normal");
     } else if (event.data === "reset") {
         notifyAll("reset");
     } else if (event.data.slice(0, 8) === "version:") {
@@ -424,14 +433,8 @@ function workerCallback(event) {
     }
 }
 
-// Set the flags of running channel state
-function setChannelState(running) {
-    currentChannel.running = running;
-    deviceData.channelRunning = running;
-}
-
-// Restore emulator menu and terminate Worker
-export function closeChannel(reason) {
+// Restore emulator state and terminate Worker
+export function terminate(reason) {
     console.log(`------ Finished '${currentChannel.title}' execution [${reason}] ------`);
     clearDisplay();
     brsWorker.terminate();
@@ -444,20 +447,40 @@ export function closeChannel(reason) {
     currentChannel.file = "";
     currentChannel.title = "";
     currentChannel.version = "";
-    setChannelState(false);
-    notifyAll("closed", currentChannel);
+    currentChannel.running = false;
+    notifyAll("closed", reason);
+}
+
+// Display API
+export function redraw(fullScreen){
+    redrawDisplay(currentChannel.running, fullScreen)
+}
+export function getDisplayMode() {
+    return deviceData.displayMode;
+}
+
+export function setDisplayMode(mode) {
+    setCurrentMode(mode);
+}
+
+export function getOverscanMode() {
+    return overscanMode;
+}
+
+export function setOverscanMode(mode) {
+    setOverscan(mode);
 }
 
 // Remote Control Emulation
-export function keyDown(key) {
+export function sendKeyDown(key) {
     handleKey(key, 0);
-};
-export function keyUp(key) {
+}
+export function sendKeyUp(key) {
     handleKey(key, 100);
-};
-export function keyPress(key) {
+}
+export function sendKeyPress(key) {
     setTimeout(function () {
         handleKey(key, 100);
     }, 300);
     handleKey(key, 0);
-};
+}

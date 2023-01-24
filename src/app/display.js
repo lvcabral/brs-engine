@@ -137,14 +137,15 @@ export function showDisplay() {
 export function clearDisplay() {
     ctx.clearRect(0, 0, display.width, display.height);
 }
-// Set Display Mode
-export function setDisplayMode(mode) {
+// Set Current Display Mode
+export function setCurrentMode(mode) {
     displayMode = mode;
     aspectRatio = mode === "480p" ? 4 / 3 : 16 / 9;
     notifyAll("mode", mode);
 }
+
 // Set Overscan Mode
-export function setOverscanMode(mode) {
+export function setOverscan(mode) {
     overscanMode = mode;
 }
 

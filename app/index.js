@@ -53,16 +53,16 @@ if (supportedBrowser) {
     customKeys.set("Home", "home");
 
     // Initialize Device Emulator and subscribe to events
-    brsEmu.initDevice(deviceInfo, supportSharedArray, false, customKeys)
+    brsEmu.initialize(deviceInfo, supportSharedArray, false, customKeys)
 
-    brsEmu.subscribeDevice("app", (event, data) => {
+    brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
             fileButton.style.visibility = "hidden";
             let infoHtml = data.title + "<br/>";
             infoHtml += data.subtitle + "<br/>";
             infoHtml += data.version;
             channelInfo.innerHTML = infoHtml;
-        } else if (event === "running") {
+        } else if (event === "started") {
             channelIcons("hidden");
             loading.style.visibility = "hidden";
         } else if (event === "closed" || event === "error") {
@@ -73,12 +73,14 @@ if (supportedBrowser) {
             channelIcons("visible");
             fileSelector.value = null;
             running = false;
-        } else if (event === "icon") {
-            console.log("received icon event from device");
-        } else if (event === "reset") {
-            console.log("received reset event from device");
         } else if (event === "version") {
             libVersion.innerHTML = data;
+        } else if (event === "dblclick") {
+            if (running) {
+                display.requestFullscreen();    
+            }
+        } else {
+            console.log(`received unhandled event "${event}"`)
         }
     });
 } else {
@@ -105,7 +107,7 @@ fileSelector.onchange = function () {
     if (fileExt === "zip" || fileExt === "brs") {
         reader.onload = function (evt) {
             // file is loaded
-            brsEmu.loadFile(file.name, evt.target.result);
+            brsEmu.execute(file.name, evt.target.result);
             channelIcons("hidden");
         };
         reader.onerror = function (evt) {
@@ -129,7 +131,7 @@ function loadZip(zip) {
     fetch(zip).then(function (response) {
         if (response.status === 200 || response.status === 0) {
             console.log(`Loading ${zip}...`);
-            brsEmu.loadFile(zip, response.blob());
+            brsEmu.execute(zip, response.blob());
             display.focus();
         } else {
             loading.style.visibility = "hidden";
@@ -155,11 +157,11 @@ singleTap.requireFailure(doubleTap);
 mc.on("panleft panright panup pandown tap doubletap", function (ev) {
     console.log(ev.type);
     if (ev.type.slice(0, 3) === "pan") {
-        brsEmu.keyPress(ev.type.slice(3));
+        brsEmu.sendKeyPress(ev.type.slice(3));
     } else if (ev.type === "tap") {
-        brsEmu.keyPress("select");
+        brsEmu.sendKeyPress("select");
     } else if (ev.type === "doubletap") {
-        brsEmu.keyPress("back");
+        brsEmu.sendKeyPress("back");
     }
 });
 
