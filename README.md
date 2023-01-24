@@ -24,7 +24,7 @@ It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/do
 
  ## How to use it
 
-If you just want to try the emulator, not installing or downloading anything, then simply try the web application at: https://lvcabral.com/brs
+If you just want to try the emulator, not installing or downloading anything, then simply go to the web application at: https://lvcabral.com/brs
 
 ### Desktop Application
 
@@ -59,7 +59,6 @@ There are many ways in which you can participate in the project, read documents 
 ### Note for BrightScript Developers
 
 You can see the debug messages from `print` statements in your code using the _browser or desktop app console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your channel package or brs file. Exceptions from the emulator will be shown there too. If your code does show an error in some scenario not listed on the [limitations documentation](docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-emu/issues).
-
 
 ## Games and Demos
 
