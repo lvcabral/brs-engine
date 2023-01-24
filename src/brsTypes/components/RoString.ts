@@ -142,9 +142,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             returns: ValueKind.Void,
         },
         impl: (_interpreter, s: BrsString, len: Int32) => {
-            this.intrinsic = this.intrinsic.concat(
-                new BrsString(s.value.slice(0, len.getValue()))
-            );
+            this.intrinsic = this.intrinsic.concat(new BrsString(s.value.slice(0, len.getValue())));
             return BrsInvalid.Instance;
         },
     });

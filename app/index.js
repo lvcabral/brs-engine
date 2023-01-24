@@ -16,10 +16,11 @@ const channel3 = document.getElementById("channel3");
 
 // Browser Support
 const info = bowser.parse(window.navigator.userAgent);
-const browserVersion = parseVersionString(info.browser.version)
-const supportedBrowser = info.engine.name == "Blink" &&
+const browserVersion = parseVersionString(info.browser.version);
+const supportedBrowser =
+    info.engine.name == "Blink" &&
     ((info.platform.type == "desktop" && browserVersion.major > 68) || browserVersion.major > 89);
-let supportSharedArray = false
+let supportSharedArray = false;
 // Device Data
 let running = false;
 const deviceInfo = {
@@ -42,18 +43,18 @@ const deviceInfo = {
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
-    lowResolutionCanvas: true
+    lowResolutionCanvas: true,
 };
 
 if (supportedBrowser) {
     channelInfo.innerHTML = "<br/>";
-    supportSharedArray = (browserVersion.major < 92 || self.crossOriginIsolated)
+    supportSharedArray = browserVersion.major < 92 || self.crossOriginIsolated;
 
     const customKeys = new Map();
     customKeys.set("Home", "home");
 
     // Initialize Device Emulator and subscribe to events
-    brsEmu.initialize(deviceInfo, supportSharedArray, false, customKeys)
+    brsEmu.initialize(deviceInfo, supportSharedArray, false, customKeys);
 
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
@@ -77,10 +78,10 @@ if (supportedBrowser) {
             libVersion.innerHTML = data;
         } else if (event === "dblclick") {
             if (running) {
-                display.requestFullscreen();    
+                display.requestFullscreen();
             }
         } else {
-            console.log(`received unhandled event "${event}"`)
+            console.log(`received unhandled event "${event}"`);
         }
     });
 } else {
@@ -94,25 +95,25 @@ if (supportedBrowser) {
 
 // File selector
 const fileSelector = document.getElementById("file");
-fileButton.onclick = function () {
+fileButton.onclick = function() {
     fileSelector.click();
 };
-fileSelector.onclick = function () {
+fileSelector.onclick = function() {
     this.value = null;
 };
-fileSelector.onchange = function () {
+fileSelector.onchange = function() {
     const file = this.files[0];
     const reader = new FileReader();
     const fileExt = file.name.split(".").pop();
     if (fileExt === "zip" || fileExt === "brs") {
-        reader.onload = function (evt) {
+        reader.onload = function(evt) {
             // file is loaded
             brsEmu.execute(file.name, evt.target.result);
             channelIcons("hidden");
         };
-        reader.onerror = function (evt) {
+        reader.onerror = function(evt) {
             console.error(`Error opening ${file.name}:${reader.error}`);
-        }
+        };
         reader.readAsArrayBuffer(file);
     } else {
         console.error(`File format not supported: ${fileExt}`);
@@ -128,7 +129,7 @@ function loadZip(zip) {
     loading.style.visibility = "visible";
     channelIcons("visible");
     fileSelector.value = null;
-    fetch(zip).then(function (response) {
+    fetch(zip).then(function(response) {
         if (response.status === 200 || response.status === 0) {
             console.log(`Loading ${zip}...`);
             brsEmu.execute(zip, response.blob());
@@ -146,15 +147,15 @@ function loadZip(zip) {
 const mc = new Hammer(display);
 // let the pan gesture support all directions.
 // this will block the vertical scrolling on a touch-device while on the element
-mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+mc.get("pan").set({ direction: Hammer.DIRECTION_ALL });
 
 // listen to events...
-var singleTap = new Hammer.Tap({ event: 'tap' });
-var doubleTap = new Hammer.Tap({ event: 'doubletap', taps: 2 });
+var singleTap = new Hammer.Tap({ event: "tap" });
+var doubleTap = new Hammer.Tap({ event: "doubletap", taps: 2 });
 mc.add([doubleTap, singleTap]);
 doubleTap.recognizeWith(singleTap);
 singleTap.requireFailure(doubleTap);
-mc.on("panleft panright panup pandown tap doubletap", function (ev) {
+mc.on("panleft panright panup pandown tap doubletap", function(ev) {
     console.log(ev.type);
     if (ev.type.slice(0, 3) === "pan") {
         brsEmu.sendKeyPress(ev.type.slice(3));
@@ -176,11 +177,13 @@ function channelIcons(visibility) {
 
 // Version Parser
 function parseVersionString(str) {
-    if (typeof (str) != 'string') { return {}; }
-    var vArray = str.split('.');
+    if (typeof str != "string") {
+        return {};
+    }
+    var vArray = str.split(".");
     return {
         major: parseInt(vArray[0]) || 0,
         minor: parseInt(vArray[1]) || 0,
-        patch: parseInt(vArray[2]) || 0
-    }
+        patch: parseInt(vArray[2]) || 0,
+    };
 }

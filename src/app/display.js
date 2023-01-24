@@ -38,7 +38,7 @@ export function initDisplayModule(mode, lowRes) {
             screenSize.width = 1280;
             screenSize.height = 720;
             aspectRatio = 16 / 9;
-        }   
+        }
     }
 }
 // Observers Handling
@@ -67,7 +67,8 @@ export function redrawDisplay(running, fullScreen) {
     } else {
         const ratio = 0.98;
         let offset = 25;
-        if (display.style.bottom !== "0px") { // TODO: Check if this is  effective
+        if (display.style.bottom !== "0px") {
+            // TODO: Check if this is  effective
             offset = 30;
         }
         screenSize.width = window.innerWidth * ratio;
@@ -87,7 +88,7 @@ export function redrawDisplay(running, fullScreen) {
         clearDisplay();
     }
 }
-// Draw Channel Splash 
+// Draw Channel Splash
 export function drawSplashScreen(imgData) {
     display.style.opacity = 1;
     ctx.drawImage(imgData, 0, 0, screenSize.width, screenSize.height);
@@ -150,6 +151,6 @@ export function setOverscan(mode) {
 }
 
 // Toggle Full Screen when Double Click
-display.ondblclick = function () {
+display.ondblclick = function() {
     notifyAll("dblclick");
 };

@@ -80,7 +80,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const device = interpreter.deviceInfo
-            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[0] : "Roku 3");
         },
     });
@@ -93,7 +94,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const device = interpreter.deviceInfo
-            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[1] : "STB");
         },
     });
@@ -147,7 +149,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             return new Int32(interpreter.deviceInfo.get("audioVolume"));
         },
     });
-    
+
     /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId()*/
     private getClientTrackingId = new Callable("getClientTrackingId", {
         signature: {
@@ -418,7 +420,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 result.push({ name: new BrsString("width"), value: new Int32(1920) });
             }
             const device = interpreter.deviceInfo
-            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"));
             let model = device ? device[3] : "HD";
             result.push({
                 name: new BrsString("name"),
@@ -436,7 +439,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const device = interpreter.deviceInfo
-            .get("models").get(interpreter.deviceInfo.get("deviceModel"));
+                .get("models")
+                .get(interpreter.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[2] : "opengl");
         },
     });

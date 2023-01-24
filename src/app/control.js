@@ -7,7 +7,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Keyboard Mapping
-const preventDefault = new Set(["Enter", "Space", "ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown"]);
+const preventDefault = new Set([
+    "Enter",
+    "Space",
+    "ArrowLeft",
+    "ArrowUp",
+    "ArrowRight",
+    "ArrowDown",
+]);
 const keys = new Map();
 keys.set("Backspace", "back");
 keys.set("Delete", "backspace");
@@ -15,7 +22,7 @@ keys.set("Enter", "select");
 keys.set("Escape", "home");
 keys.set("Space", "play");
 keys.set("ArrowLeft", "left");
-keys.set("ArrowUp", "up")
+keys.set("ArrowUp", "up");
 keys.set("ArrowRight", "right");
 keys.set("ArrowDown", "down");
 keys.set("Slash", "instantreplay");
@@ -34,16 +41,16 @@ export function initControlModule(array, types, disableKeys, keysMap) {
     dataType = types;
     if (!disableKeys) {
         if (keysMap instanceof Map) {
-            concatMaps(keys, keysMap)
+            concatMaps(keys, keysMap);
         }
         // Keyboard handlers
-        document.addEventListener("keydown", function (event) {    
+        document.addEventListener("keydown", function(event) {
             if (keys.has(event.code)) {
                 handleKey(keys.get(event.code), 0);
                 if (preventDefault.has(event.code)) {
                     event.preventDefault();
-                }    
-            }   
+                }
+            }
         });
         document.addEventListener("keyup", function keyUpHandler(event) {
             if (keys.has(event.code)) {
@@ -106,7 +113,7 @@ export function handleKey(key, mod) {
         notifyAll("home");
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
         if (key.slice(4).length == 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            sharedArray[dataType.KEY] = key.charCodeAt(4) + mod; 
+            sharedArray[dataType.KEY] = key.charCodeAt(4) + mod;
         }
     }
 }

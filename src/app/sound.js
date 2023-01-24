@@ -118,7 +118,7 @@ export function seekSound(position) {
 }
 
 export function setLoop(enable) {
-    playLoop = enable;    
+    playLoop = enable;
 }
 
 export function setNext(index) {
@@ -233,7 +233,7 @@ function addWebSound(url) {
         onplayerror: function(id, message) {
             console.warn(`Error playing ${path}: ${message}`);
         },
-    })
+    });
     soundsDat.push(sound);
     return sound;
 }

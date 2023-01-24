@@ -6,11 +6,34 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
-import { subscribeDisplay, initDisplayModule, drawBufferImage, drawSplashScreen, showDisplay,
-         redrawDisplay, clearDisplay, setCurrentMode, setOverscan, overscanMode } from "./display";
+import {
+    subscribeDisplay,
+    initDisplayModule,
+    drawBufferImage,
+    drawSplashScreen,
+    showDisplay,
+    redrawDisplay,
+    clearDisplay,
+    setCurrentMode,
+    setOverscan,
+    overscanMode,
+} from "./display";
 import { subscribeControl, initControlModule, handleKey } from "./control";
-import { initSoundModule, addSound, resetSounds, playSound, stopSound, playWav,
-         pauseSound, resumeSound, setLoop, setNext, triggerWav, stopWav, addPlaylist } from "./sound";
+import {
+    initSoundModule,
+    addSound,
+    resetSounds,
+    playSound,
+    stopSound,
+    playWav,
+    pauseSound,
+    resumeSound,
+    setLoop,
+    setNext,
+    triggerWav,
+    stopWav,
+    addPlaylist,
+} from "./sound";
 import "./hash";
 let brsWorker;
 let brsEmuLib = "./lib/brsEmu.worker.js";
@@ -37,7 +60,7 @@ const deviceData = {
     startTime: Date.now(),
     audioVolume: 40,
     lowResolutionCanvas: false,
-    registry: new Map()
+    registry: new Map(),
 };
 
 // Channel Data
@@ -55,8 +78,8 @@ Object.freeze(dataType);
 
 export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap, libPath) {
     Object.assign(deviceData, deviceInfo);
-    console.log(deviceData.friendlyName)
-    // Load Registry 
+    console.log(deviceData.friendlyName);
+    // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
         if (key.slice(0, deviceData.developerId.length) === deviceData.developerId) {
@@ -91,16 +114,16 @@ export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap,
             notifyAll(event, data);
         }
     });
-    subscribeControl("channel", (event) => {
+    subscribeControl("channel", event => {
         if (event === "home") {
             if (currentChannel.running) {
                 terminate("Home Button");
                 playWav(0);
             }
         }
-    })
+    });
     // Initialize Worker
-    brsEmuLib = libPath || brsEmuLib
+    brsEmuLib = libPath || brsEmuLib;
     brsWorker = new Worker(brsEmuLib);
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage("getVersion");
@@ -122,12 +145,15 @@ function notifyAll(eventName, eventData) {
 
 // Open File
 export function execute(filePath, fileData) {
-    const fileName = filePath.split('.').slice(0, -1).join('.');
+    const fileName = filePath
+        .split(".")
+        .slice(0, -1)
+        .join(".");
     const fileExt = filePath.split(".").pop();
     source = [];
     currentChannel.id = filePath.hashCode();
     currentChannel.file = filePath;
-    if (typeof brsWorker !== 'undefined') {
+    if (typeof brsWorker !== "undefined") {
         brsWorker.terminate();
         sharedArray[dataType.KEY] = 0;
         sharedArray[dataType.MOD] = 0;
@@ -146,7 +172,7 @@ export function execute(filePath, fileData) {
 // Open source file
 function openSourceCode(fileName, fileData) {
     const reader = new FileReader();
-    reader.onload = function (progressEvent) {
+    reader.onload = function(progressEvent) {
         currentChannel.id = "brs";
         currentChannel.title = fileName;
         paths = [];
@@ -164,13 +190,13 @@ function openSourceCode(fileName, fileData) {
 // Uncompress Zip and execute
 function openChannelZip(f) {
     JSZip.loadAsync(f).then(
-        function (zip) {
+        function(zip) {
             const manifest = zip.file("manifest");
             if (manifest) {
                 manifest.async("string").then(
                     function success(content) {
                         const manifestMap = new Map();
-                        content.match(/[^\r\n]+/g).map(function (ln) {
+                        content.match(/[^\r\n]+/g).map(function(ln) {
                             const line = ln.split("=");
                             manifestMap.set(line[0].toLowerCase(), line[1]);
                         });
@@ -196,11 +222,11 @@ function openChannelZip(f) {
                                 }
                             }
                         }
-                        clearDisplay()
+                        clearDisplay();
                         if (splash && splash.slice(0, 5) === "pkg:/") {
                             const splashFile = zip.file(splash.slice(5));
                             if (splashFile) {
-                                splashFile.async("blob").then((blob) => {
+                                splashFile.async("blob").then(blob => {
                                     createImageBitmap(blob).then(drawSplashScreen);
                                 });
                             }
@@ -216,7 +242,7 @@ function openChannelZip(f) {
                         if (icon && icon.slice(0, 5) === "pkg:/") {
                             const iconFile = zip.file(icon.slice(5));
                             if (iconFile) {
-                                iconFile.async("base64").then((content) => {
+                                iconFile.async("base64").then(content => {
                                     notifyAll("icon", content);
                                 });
                             }
@@ -268,7 +294,7 @@ function openChannelZip(f) {
             let txtId = 0;
             let srcId = 0;
             let audId = 0;
-            zip.forEach(function (relativePath, zipEntry) {
+            zip.forEach(function(relativePath, zipEntry) {
                 const lcasePath = relativePath.toLowerCase();
                 const ext = lcasePath.split(".").pop();
                 if (!zipEntry.dir && lcasePath.slice(0, 6) === "source" && ext === "brs") {
@@ -277,8 +303,12 @@ function openChannelZip(f) {
                     srcId++;
                 } else if (
                     !zipEntry.dir &&
-                    (lcasePath === "manifest" || ext === "csv" || ext === "xml"
-                        || ext === "json" || ext === "txt" || ext == "ts")
+                    (lcasePath === "manifest" ||
+                        ext === "csv" ||
+                        ext === "xml" ||
+                        ext === "json" ||
+                        ext === "txt" ||
+                        ext == "ts")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
                     assetsEvents.push(zipEntry.async("string"));
@@ -318,7 +348,11 @@ function openChannelZip(f) {
                         } else if (assetPaths[index].type === "source") {
                             source.push(assets[index]);
                         } else if (assetPaths[index].type === "audio") {
-                            addSound(`pkg:/${assetPaths[index].url}`, assetPaths[index].format, assets[index]);
+                            addSound(
+                                `pkg:/${assetPaths[index].url}`,
+                                assetPaths[index].format,
+                                assets[index]
+                            );
                         } else if (assetPaths[index].type === "text") {
                             txts.push(assets[index]);
                         }
@@ -332,7 +366,7 @@ function openChannelZip(f) {
                 }
             );
         },
-        function (e) {
+        function(e) {
             const msg = `Error reading ${f.name}: ${e.message}`;
             console.error(msg);
             notifyAll("error", msg);
@@ -343,8 +377,8 @@ function openChannelZip(f) {
 
 // Execute Emulator Web Worker
 function runChannel() {
-    showDisplay()
-    if (currentChannel.running && typeof brsWorker !== 'undefined') {
+    showDisplay();
+    if (currentChannel.running && typeof brsWorker !== "undefined") {
         brsWorker.terminate();
         sharedArray[dataType.KEY] = 0;
         sharedArray[dataType.MOD] = 0;
@@ -360,7 +394,7 @@ function runChannel() {
         paths: paths,
         brs: source,
         texts: txts,
-        binaries: bins
+        binaries: bins,
     };
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
@@ -373,7 +407,7 @@ function workerCallback(event) {
         drawBufferImage(event.data);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
-        deviceData.registry.forEach(function (value, key) {
+        deviceData.registry.forEach(function(value, key) {
             storage.setItem(key, value);
         });
     } else if (event.data instanceof Array) {
@@ -417,7 +451,7 @@ function workerCallback(event) {
             console.warn(`Missing Trigger parameters: ${event.data}`);
         }
     } else if (event.data.slice(0, 5) === "stop,") {
-        stopWav(event.data.split(",")[1])
+        stopWav(event.data.split(",")[1]);
     } else if (event.data.slice(0, 4) === "log,") {
         console.log(event.data.slice(4));
     } else if (event.data.slice(0, 8) === "warning,") {
@@ -452,8 +486,8 @@ export function terminate(reason) {
 }
 
 // Display API
-export function redraw(fullScreen){
-    redrawDisplay(currentChannel.running, fullScreen)
+export function redraw(fullScreen) {
+    redrawDisplay(currentChannel.running, fullScreen);
 }
 export function getDisplayMode() {
     return deviceData.displayMode;
@@ -479,7 +513,7 @@ export function sendKeyUp(key) {
     handleKey(key, 100);
 }
 export function sendKeyPress(key) {
-    setTimeout(function () {
+    setTimeout(function() {
         handleKey(key, 100);
     }, 300);
     handleKey(key, 0);
