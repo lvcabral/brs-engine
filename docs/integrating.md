@@ -15,8 +15,7 @@ To run the web application navigate with your Chromium based browser to `http://
 
 ## Simple Web Example
 
-Make sure you get the library files `brsEmu.js` and `brsEmu.worker.js` and place in the folder `lib` under the main folder where you save the files `example.html` and `example.js`. To learn more about the methods and events of the library visit the [API documentation](docs/emulator-api.md). Remember to host these files on a web server
-
+Make sure you get the library files `brsEmu.js` and `brsEmu.worker.js` and place in the folder `lib` under the main folder where you save the files `example.html` and `example.js`. To learn more about the methods and events of the library visit the [API documentation](docs/emulator-api.md). Remember that you need to host these files on a web server like the on described in the section above.
 
 ### example.html
 ```html
