@@ -110,7 +110,7 @@ export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap,
                 terminate("DisplayMode");
             }
             notifyAll("display", data);
-        } else if (["redraw", "resolution", "dblclick"].includes(event)) {
+        } else if (["redraw", "resolution"].includes(event)) {
             notifyAll(event, data);
         }
     });

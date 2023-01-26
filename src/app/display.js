@@ -149,8 +149,3 @@ export function setCurrentMode(mode) {
 export function setOverscan(mode) {
     overscanMode = mode;
 }
-
-// Toggle Full Screen when Double Click
-display.ondblclick = function() {
-    notifyAll("dblclick");
-};

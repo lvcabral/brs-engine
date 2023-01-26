@@ -46,7 +46,5 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
     - `data` (boolean): If `true` the display canvas is in **full screen** mode
 - **resolution** - Triggered when the emulated screen resolution changes (controled via BrightScript)
     - `data` (object): Contains screen dimensions: `{width: integer, height: integer}`
-- **dblclick** - Triggered when the user double clicks with the mouse on the display canvas
-    - `data` (null): Nothing is returned as data.
 - **error** - Triggered when the any execution error happens
     - `data` (string): Contains the message describing the error

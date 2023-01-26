@@ -15,7 +15,7 @@ const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
 // Device Data
-let running = false;
+let currentChannel = {id: "", running: false}
 const deviceInfo = {
     developerId: "UniqueDeveloperId",
     friendlyName: "BrightScript Emulator Web",
@@ -50,30 +50,26 @@ if (supportedBrowser()) {
 
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
+            currentChannel = data;
             fileButton.style.visibility = "hidden";
             let infoHtml = data.title + "<br/>";
             infoHtml += data.subtitle + "<br/>";
             infoHtml += data.version;
             channelInfo.innerHTML = infoHtml;
         } else if (event === "started") {
+            currentChannel = data;
             channelIcons("hidden");
             loading.style.visibility = "hidden";
         } else if (event === "closed" || event === "error") {
+            currentChannel = {id: "", running: false};
             display.style.opacity = 0;
             channelInfo.innerHTML = "<br/>";
             fileButton.style.visibility = "visible";
             loading.style.visibility = "hidden";
             channelIcons("visible");
             fileSelector.value = null;
-            running = false;
         } else if (event === "version") {
             libVersion.innerHTML = data;
-        } else if (event === "dblclick") {
-            if (running) {
-                display.requestFullscreen();
-            }
-        } else {
-            console.log(`received unhandled event "${event}"`);
         }
     });
 } else {
@@ -113,10 +109,9 @@ fileSelector.onchange = function() {
 };
 // Download Zip
 function loadZip(zip) {
-    if (running) {
+    if (currentChannel.running) {
         return;
     }
-    running = true;
     display.style.opacity = 0;
     loading.style.visibility = "visible";
     channelIcons("visible");
@@ -127,12 +122,28 @@ function loadZip(zip) {
             display.focus();
         } else {
             loading.style.visibility = "hidden";
-            running = false;
             return Promise.reject(new Error(response.statusText));
         }
     });
 }
-// Remote control emulator
+
+// Display Fullscreen control
+display.addEventListener('dblclick', function(event) { 
+    event.preventDefault();
+    if (currentChannel.running) {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            display.requestFullscreen();
+        }
+    }
+});
+
+display.addEventListener('mousedown', function(event) { 
+    if (event.detail === 2 ) {
+        event.preventDefault();
+    }
+});
 
 // Touch handlers
 const mc = new Hammer(display);
@@ -142,18 +153,13 @@ mc.get("pan").set({ direction: Hammer.DIRECTION_ALL });
 
 // listen to events...
 var singleTap = new Hammer.Tap({ event: "tap" });
-var doubleTap = new Hammer.Tap({ event: "doubletap", taps: 2 });
-mc.add([doubleTap, singleTap]);
-doubleTap.recognizeWith(singleTap);
-singleTap.requireFailure(doubleTap);
-mc.on("panleft panright panup pandown tap doubletap", function(ev) {
+mc.add([singleTap]);
+mc.on("panleft panright panup pandown tap", function(ev) {
     console.log(ev.type);
     if (ev.type.slice(0, 3) === "pan") {
         brsEmu.sendKeyPress(ev.type.slice(3));
     } else if (ev.type === "tap") {
         brsEmu.sendKeyPress("select");
-    } else if (ev.type === "doubletap") {
-        brsEmu.sendKeyPress("back");
     }
 });
 
@@ -167,7 +173,6 @@ function channelIcons(visibility) {
 }
 
 // Browser Check
-
 function supportedBrowser() {
     const info = bowser.parse(window.navigator.userAgent);
     console.log(info.engine.name, info.platform.type, info.browser.version)
