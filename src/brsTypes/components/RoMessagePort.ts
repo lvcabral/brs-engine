@@ -65,27 +65,30 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         if (this.screen) {
             if (ms === 0) {
                 while (true) {
-                    if (this.buffer[this.type.KEY] !== this.lastKey) {
-                        return this.newControlEvent(interpreter);
+                    const key = Atomics.load(this.buffer, this.type.KEY);
+                    if (key !== this.lastKey) {
+                        return this.newControlEvent(interpreter, key);
                     }
                 }
             } else {
                 ms += new Date().getTime();
                 while (new Date().getTime() < ms) {
-                    if (this.buffer[this.type.KEY] !== this.lastKey) {
-                        return this.newControlEvent(interpreter);
+                    const key = Atomics.load(this.buffer, this.type.KEY);
+                    if (key !== this.lastKey) {
+                        return this.newControlEvent(interpreter, key);
                     }
                 }
             }
         } else if (this.audio) {
             if (ms === 0) {
                 while (true) {
-                    if (this.buffer[this.type.SND] !== this.lastFlags) {
-                        this.lastFlags = this.buffer[this.type.SND];
+                    const flags = Atomics.load(this.buffer, this.type.SND);
+                    if (flags !== this.lastFlags) {
+                        this.lastFlags = flags;
                         if (this.lastFlags >= 0) {
                             return new RoAudioPlayerEvent(
                                 this.lastFlags,
-                                this.buffer[this.type.IDX]
+                                Atomics.load(this.buffer, this.type.IDX)
                             );
                         }
                     }
@@ -93,12 +96,13 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             } else {
                 ms += new Date().getTime();
                 while (new Date().getTime() < ms) {
-                    if (this.buffer[this.type.SND] !== this.lastFlags) {
-                        this.lastFlags = this.buffer[this.type.SND];
+                    const flags = Atomics.load(this.buffer, this.type.SND);
+                    if (flags !== this.lastFlags) {
+                        this.lastFlags = flags;
                         if (this.lastFlags >= 0) {
                             return new RoAudioPlayerEvent(
                                 this.lastFlags,
-                                this.buffer[this.type.IDX]
+                                Atomics.load(this.buffer, this.type.IDX)
                             );
                         }
                     }
@@ -134,12 +138,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    newControlEvent(interpreter: Interpreter): RoUniversalControlEvent {
-        this.lastKey = this.buffer[this.type.KEY];
-        let mod = this.buffer[this.type.MOD];
+    newControlEvent(interpreter: Interpreter, key: number): RoUniversalControlEvent {
+        this.lastKey = key;
+        let mod = Atomics.load(this.buffer, this.type.MOD);
         interpreter.lastKeyTime = interpreter.currKeyTime;
         interpreter.currKeyTime = Date.now();
-        return new RoUniversalControlEvent("WD:0", this.lastKey, mod);
+        return new RoUniversalControlEvent("WD:0", key, mod);
     }
 
     /** Waits until an event object is available or timeout milliseconds have passed. */
@@ -161,14 +165,19 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.screen) {
-                if (this.buffer[this.type.KEY] !== this.lastKey) {
-                    return this.newControlEvent(interpreter);
+                const key = Atomics.load(this.buffer, this.type.KEY);
+                if (key !== this.lastKey) {
+                    return this.newControlEvent(interpreter, key);
                 }
             } else if (this.audio) {
-                if (this.buffer[this.type.SND] !== this.lastFlags) {
-                    this.lastFlags = this.buffer[this.type.SND];
+                const flags = Atomics.load(this.buffer, this.type.SND);
+                if (flags !== this.lastFlags) {
+                    this.lastFlags = flags;
                     if (this.lastFlags >= 0) {
-                        return new RoAudioPlayerEvent(this.lastFlags, this.buffer[this.type.IDX]);
+                        return new RoAudioPlayerEvent(
+                            this.lastFlags,
+                            Atomics.load(this.buffer, this.type.IDX)
+                        );
                     }
                 }
             } else if (this.messageQueue.length > 0) {
@@ -194,21 +203,16 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.screen) {
-                if (this.buffer[this.type.KEY] !== this.lastKey) {
-                    return new RoUniversalControlEvent(
-                        "WD:0",
-                        this.buffer[this.type.KEY],
-                        this.buffer[this.type.MOD]
-                    );
+                const key = Atomics.load(this.buffer, this.type.KEY);
+                if (key !== this.lastKey) {
+                    const mod = Atomics.load(this.buffer, this.type.MOD);
+                    return new RoUniversalControlEvent("WD:0", key, mod);
                 }
             } else if (this.audio) {
-                if (this.buffer[this.type.SND] !== this.lastFlags) {
-                    if (this.buffer[this.type.SND] >= 0) {
-                        return new RoAudioPlayerEvent(
-                            this.buffer[this.type.SND],
-                            this.buffer[this.type.IDX]
-                        );
-                    }
+                const flags = Atomics.load(this.buffer, this.type.SND);
+                if (flags !== this.lastFlags && flags >= 0) {
+                    const idx = Atomics.load(this.buffer, this.type.IDX);
+                    return new RoAudioPlayerEvent(flags, idx);
                 }
             } else if (this.messageQueue.length > 0) {
                 let message = this.messageQueue[0];

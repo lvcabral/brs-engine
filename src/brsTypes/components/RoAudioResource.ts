@@ -94,7 +94,8 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.audioId) {
-                this.playing = this.buffer[this.type.WAV + this.currentIndex] === this.audioId;
+                const currentWav = Atomics.load(this.buffer, this.type.WAV + this.currentIndex);
+                this.playing = currentWav === this.audioId;
             }
             return BrsBoolean.from(this.playing);
         },

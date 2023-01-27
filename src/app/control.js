@@ -15,46 +15,64 @@ const preventDefault = new Set([
     "ArrowRight",
     "ArrowDown",
 ]);
-const keys = new Map();
-keys.set("Backspace", "back");
-keys.set("Delete", "backspace");
-keys.set("Enter", "select");
-keys.set("Escape", "home");
-keys.set("Space", "play");
-keys.set("ArrowLeft", "left");
-keys.set("ArrowUp", "up");
-keys.set("ArrowRight", "right");
-keys.set("ArrowDown", "down");
-keys.set("Slash", "instantreplay");
-keys.set("NumpadMultiply", "info");
-keys.set("Digit8", "info");
-keys.set("Comma", "rev");
-keys.set("Period", "fwd");
-keys.set("KeyA", "a");
-keys.set("KeyZ", "b");
+const keysMap = new Map();
+keysMap.set("Backspace", "back");
+keysMap.set("ArrowUp", "up");
+keysMap.set("ArrowDown", "down");
+keysMap.set("ArrowLeft", "left");
+keysMap.set("ArrowRight", "right");
+keysMap.set("Enter", "select");
+keysMap.set("Slash", "instantreplay");
+keysMap.set("Comma", "rev");
+keysMap.set("Period", "fwd");
+keysMap.set("NumpadMultiply", "info");
+keysMap.set("Digit8", "info");
+keysMap.set("Delete", "backspace");
+keysMap.set("Space", "play");
+keysMap.set("KeyA", "a");
+keysMap.set("KeyZ", "b");
+keysMap.set("Escape", "home");
+
+const rokuKeys = new Map();
+rokuKeys.set("back", 0);
+rokuKeys.set("up", 2);
+rokuKeys.set("down", 3);
+rokuKeys.set("left", 4);
+rokuKeys.set("right", 5);
+rokuKeys.set("select", 6);
+rokuKeys.set("instantreplay", 7);
+rokuKeys.set("rev", 8);
+rokuKeys.set("fwd", 9);
+rokuKeys.set("info", 10);
+rokuKeys.set("backspace", 11);
+rokuKeys.set("play", 13);
+rokuKeys.set("enter", 15);
+rokuKeys.set("a", 17);
+rokuKeys.set("b", 18);
+rokuKeys.set("stop", 23);
 
 // Initialize Control Module
 let sharedArray;
 let dataType;
-export function initControlModule(array, types, disableKeys, keysMap) {
+export function initControlModule(array, types, disableKeys, customKeys) {
     sharedArray = array;
     dataType = types;
     if (!disableKeys) {
-        if (keysMap instanceof Map) {
-            concatMaps(keys, keysMap);
+        if (customKeys instanceof Map) {
+            concatMaps(keysMap, customKeys);
         }
         // Keyboard handlers
         document.addEventListener("keydown", function(event) {
-            if (keys.has(event.code)) {
-                handleKey(keys.get(event.code), 0);
+            if (keysMap.has(event.code)) {
+                handleKey(keysMap.get(event.code), 0);
                 if (preventDefault.has(event.code)) {
                     event.preventDefault();
                 }
             }
         });
         document.addEventListener("keyup", function keyUpHandler(event) {
-            if (keys.has(event.code)) {
-                handleKey(keys.get(event.code), 100);
+            if (keysMap.has(event.code)) {
+                handleKey(keysMap.get(event.code), 100);
             }
         });
     }
@@ -74,46 +92,14 @@ function notifyAll(eventName, eventData) {
 }
 // Keyboard Handler
 export function handleKey(key, mod) {
-    sharedArray[dataType.MOD] = mod;
-    if (key.toLowerCase() == "back") {
-        sharedArray[dataType.KEY] = 0 + mod;
-    } else if (key.toLowerCase() == "select") {
-        sharedArray[dataType.KEY] = 6 + mod;
-    } else if (key.toLowerCase() == "left") {
-        sharedArray[dataType.KEY] = 4 + mod;
-    } else if (key.toLowerCase() == "right") {
-        sharedArray[dataType.KEY] = 5 + mod;
-    } else if (key.toLowerCase() == "up") {
-        sharedArray[dataType.KEY] = 2 + mod;
-    } else if (key.toLowerCase() == "down") {
-        sharedArray[dataType.KEY] = 3 + mod;
-    } else if (key.toLowerCase() == "instantreplay") {
-        sharedArray[dataType.KEY] = 7 + mod;
-    } else if (key.toLowerCase() == "info") {
-        sharedArray[dataType.KEY] = 10 + mod;
-    } else if (key.toLowerCase() == "backspace") {
-        sharedArray[dataType.KEY] = 11 + mod;
-    } else if (key.toLowerCase() == "enter") {
-        sharedArray[dataType.KEY] = 15 + mod;
-    } else if (key.toLowerCase() == "rev") {
-        sharedArray[dataType.KEY] = 8 + mod;
-    } else if (key.toLowerCase() == "fwd") {
-        sharedArray[dataType.KEY] = 9 + mod;
-    } else if (key.toLowerCase() == "play") {
-        sharedArray[dataType.KEY] = 13 + mod;
-    } else if (key.toLowerCase() == "playonly") {
-        sharedArray[dataType.KEY] = 22 + mod;
-    } else if (key.toLowerCase() == "stop") {
-        sharedArray[dataType.KEY] = 23 + mod;
-    } else if (key.toLowerCase() == "a") {
-        sharedArray[dataType.KEY] = 17 + mod;
-    } else if (key.toLowerCase() == "b") {
-        sharedArray[dataType.KEY] = 18 + mod;
-    } else if (key.toLowerCase() == "home" && mod == 0) {
+    Atomics.store(sharedArray, dataType.MOD, mod);
+    if (key.toLowerCase() == "home" && mod == 0) {
         notifyAll("home");
+    } else if (rokuKeys.has(key)) {
+        Atomics.store(sharedArray, dataType.KEY, rokuKeys.get(key) + mod);
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
         if (key.slice(4).length == 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            sharedArray[dataType.KEY] = key.charCodeAt(4) + mod;
+            Atomics.store(sharedArray, dataType.KEY, key.charCodeAt(4) + mod);
         }
     }
 }

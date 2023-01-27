@@ -207,7 +207,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (maybeMain.signatures[0].signature.args.length === 0) {
                     args = [];
                 }
-                postMessage(`log,------ Running '${this._title}' ${mainVariable.name.text} ------`);
+                let subName = mainVariable.name.text;
+                postMessage(`log,------ Running dev '${this._title}' ${subName} ------`);
+                postMessage(`log,${this.getNow()} [scrpt.ctx.run.enter] UI: Entering '${this._title}', id '${subName}'`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
@@ -1615,5 +1617,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.errors.push(err);
         this.events.emit("err", err);
         throw err;
+    }
+
+    private getNow(): string {
+        let d = new Date();
+        let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
+        let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
+        let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
+        let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
+        let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
+        let ms = d.getMilliseconds();
+        return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
     }
 }

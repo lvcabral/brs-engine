@@ -15,7 +15,7 @@ const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
 // Device Data
-let currentChannel = {id: "", running: false}
+let currentChannel = { id: "", running: false };
 const deviceInfo = {
     developerId: "UniqueDeveloperId",
     friendlyName: "BrightScript Emulator Web",
@@ -61,7 +61,7 @@ if (supportedBrowser()) {
             channelIcons("hidden");
             loading.style.visibility = "hidden";
         } else if (event === "closed" || event === "error") {
-            currentChannel = {id: "", running: false};
+            currentChannel = { id: "", running: false };
             display.style.opacity = 0;
             channelInfo.innerHTML = "<br/>";
             fileButton.style.visibility = "visible";
@@ -128,7 +128,7 @@ function loadZip(zip) {
 }
 
 // Display Fullscreen control
-display.addEventListener('dblclick', function(event) { 
+display.addEventListener("dblclick", function(event) {
     event.preventDefault();
     if (currentChannel.running) {
         if (document.fullscreenElement) {
@@ -139,8 +139,8 @@ display.addEventListener('dblclick', function(event) {
     }
 });
 
-display.addEventListener('mousedown', function(event) { 
-    if (event.detail === 2 ) {
+display.addEventListener("mousedown", function(event) {
+    if (event.detail === 2) {
         event.preventDefault();
     }
 });
@@ -175,15 +175,17 @@ function channelIcons(visibility) {
 // Browser Check
 function supportedBrowser() {
     const info = bowser.parse(window.navigator.userAgent);
-    console.log(info.engine.name, info.platform.type, info.browser.version)
+    console.log(info.engine.name, info.platform.type, info.browser.version);
     const browserVersion = parseVersionString(info.browser.version);
     let supported = false;
     if (info.engine.name == "Blink") {
-        supported = ((info.platform.type == "desktop" && browserVersion.major > 68) || browserVersion.major > 88)
+        supported =
+            (info.platform.type == "desktop" && browserVersion.major > 68) ||
+            browserVersion.major > 88;
     } else if (info.engine.name == "Gecko") {
-        supported = (browserVersion.major > 104)
-    }       
-    return supported; 
+        supported = browserVersion.major > 104;
+    }
+    return supported;
 }
 
 function parseVersionString(str) {

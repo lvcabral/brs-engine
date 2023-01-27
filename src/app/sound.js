@@ -49,8 +49,8 @@ export function playSound() {
         } else {
             sound.play();
         }
-        sharedArray[dataType.IDX] = playIndex;
-        sharedArray[dataType.SND] = audioEvent.SELECTED;
+        Atomics.store(sharedArray, dataType.IDX, playIndex);
+        Atomics.store(sharedArray, dataType.SND, audioEvent.SELECTED);
     } else {
         console.warn(`Can't find audio index: ${playIndex}`);
     }
@@ -70,7 +70,7 @@ export function nextSound() {
         playSound();
     } else {
         playIndex = 0;
-        sharedArray[dataType.SND] = audioEvent.FULL;
+        Atomics.store(sharedArray, dataType.SND, audioEvent.FULL);
     }
 }
 
@@ -79,7 +79,7 @@ export function stopSound() {
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
         sound.stop();
-        sharedArray[dataType.SND] = audioEvent.PARTIAL;
+        Atomics.store(sharedArray, dataType.SND, audioEvent.PARTIAL);
     } else {
         console.warn(`[stopSound] Can't find audio data: ${playIndex} - ${audio}`);
     }
@@ -90,7 +90,7 @@ export function pauseSound() {
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
         sound.pause();
-        sharedArray[dataType.SND] = audioEvent.PAUSED;
+        Atomics.store(sharedArray, dataType.SND, audioEvent.PAUSED);
     } else {
         console.warn(`[message:pause] Can't find audio data: ${playIndex} - ${audio}`);
     }
@@ -101,7 +101,7 @@ export function resumeSound() {
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
         sound.play();
-        sharedArray[dataType.SND] = audioEvent.RESUMED;
+        Atomics.store(sharedArray, dataType.SND, audioEvent.RESUMED);
     } else {
         console.warn(`[message:resume] Can't find audio data: ${playIndex} - ${audio}`);
     }
@@ -142,10 +142,10 @@ export function triggerWav(wav, volume, index) {
             }
             wavStreams[index] = sound;
             sound.on("end", function() {
-                sharedArray[dataType.WAV + index] = -1;
+                Atomics.store(sharedArray, dataType.WAV + index, -1);
             });
             sound.play();
-            sharedArray[dataType.WAV + index] = soundId;
+            Atomics.store(sharedArray, dataType.WAV + index, soundId);
         }
     }
 }
@@ -161,8 +161,9 @@ export function stopWav(wav) {
         const soundId = soundsIdx.get(wav.toLowerCase());
         const sound = soundsDat[soundId];
         for (let index = 0; index < maxStreams; index++) {
-            if (sharedArray[dataType.WAV + index] === soundId) {
-                sharedArray[dataType.WAV + index] = -1;
+            const wavId = Atomics.load(sharedArray, dataType.WAV + index);
+            if (wavId === soundId) {
+                Atomics.store(sharedArray, dataType.WAV + index, -1);
                 break;
             }
         }

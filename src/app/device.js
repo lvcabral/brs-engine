@@ -91,6 +91,7 @@ export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap,
     if (supportSharedArray) {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
+        sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
         console.warn(
             `Remote control emulation will not work as SharedArrayBuffer is not enabled, 
             to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
@@ -143,7 +144,7 @@ function notifyAll(eventName, eventData) {
     });
 }
 
-// Open File
+// Execute Channel/Source File
 export function execute(filePath, fileData) {
     const fileName = filePath
         .split(".")
@@ -154,12 +155,7 @@ export function execute(filePath, fileData) {
     currentChannel.id = filePath.hashCode();
     currentChannel.file = filePath;
     if (typeof brsWorker !== "undefined") {
-        brsWorker.terminate();
-        sharedArray[dataType.KEY] = 0;
-        sharedArray[dataType.MOD] = 0;
-        sharedArray[dataType.SND] = -1;
-        sharedArray[dataType.IDX] = -1;
-        resetSounds();
+        resetWorker();
     }
     console.log(`Loading ${filePath}...`);
     if (fileExt === "zip") {
@@ -167,6 +163,15 @@ export function execute(filePath, fileData) {
     } else {
         openSourceCode(fileName, fileData);
     }
+}
+
+function resetWorker() {
+    brsWorker.terminate();
+    Atomics.store(sharedArray, dataType.KEY, 0);
+    Atomics.store(sharedArray, dataType.MOD, 0);
+    Atomics.store(sharedArray, dataType.SND, -1);
+    Atomics.store(sharedArray, dataType.IDX, -1);
+    resetSounds();
 }
 
 // Open source file
@@ -379,11 +384,7 @@ function openChannelZip(f) {
 function runChannel() {
     showDisplay();
     if (currentChannel.running && typeof brsWorker !== "undefined") {
-        brsWorker.terminate();
-        sharedArray[dataType.KEY] = 0;
-        sharedArray[dataType.MOD] = 0;
-        sharedArray[dataType.SND] = -1;
-        sharedArray[dataType.IDX] = -1;
+        resetWorker();
     }
     currentChannel.running = true;
     brsWorker = new Worker(brsEmuLib);
@@ -469,20 +470,27 @@ function workerCallback(event) {
 
 // Restore emulator state and terminate Worker
 export function terminate(reason) {
+    console.log(`${getNow()} [beacon.report] |AppExitComplete`);
     console.log(`------ Finished '${currentChannel.title}' execution [${reason}] ------`);
     clearDisplay();
-    brsWorker.terminate();
-    sharedArray[dataType.KEY] = 0;
-    sharedArray[dataType.MOD] = 0;
-    sharedArray[dataType.SND] = -1;
-    sharedArray[dataType.IDX] = -1;
-    resetSounds();
+    resetWorker();
     currentChannel.id = "";
     currentChannel.file = "";
     currentChannel.title = "";
     currentChannel.version = "";
     currentChannel.running = false;
     notifyAll("closed", reason);
+}
+
+function getNow() {
+    let d = new Date();
+    let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
+    let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
+    let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
+    let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
+    let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
+    let ms = d.getMilliseconds();
+    return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
 }
 
 // Display API
@@ -505,7 +513,7 @@ export function setOverscanMode(mode) {
     setOverscan(mode);
 }
 
-// Remote Control Emulation
+// Remote Control API
 export function sendKeyDown(key) {
     handleKey(key, 0);
 }

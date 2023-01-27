@@ -5,11 +5,11 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 
 ## Methods
 
-- brsEmu.**initialize**(deviceInfo, supportSharedArray, disableKeys, keysMap, workerPath) - Initialize the Emulator device
+- brsEmu.**initialize**(deviceInfo, supportSharedArray, disableKeys, customKeys, workerPath) - Initialize the Emulator device
     - `deviceInfo` (object): customized device information, to use default data just send an empty object
     - `supportSharedArray` (boolean): inform the emulator if `sharedArrayBuffer` is supported
     - `disableKeys` (boolean): if `true` disables the default keyboard remote control emulation
-    - `keysMap` (Map): a custom mapping of keyboard keys to the remote control buttons
+    - `customKeys` (Map): a custom mapping of keyboard keys to the remote control buttons (see default map in the code)
     - `workerPath` (string): the relative path to the worker library, the default is `.\lib\brsEmu.worker.js`
 - brsEmu.**subscribe**(observerId, observerCallback) - Subscribes to the Emulator events (see list below)
     - `observerId` (string): Identifier of the subscriber process
