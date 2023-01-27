@@ -37,7 +37,7 @@ describe("parser call expressions", () => {
         expect(errors.length).toBeGreaterThan(0);
 
         //ALL of the errors should be on the `DoThin` line
-        let lineNumbers = errors.map(x => x.location.start.line);
+        let lineNumbers = errors.map((x) => x.location.start.line);
         for (let lineNumber of lineNumbers) {
             expect(lineNumber).toEqual(3);
         }

@@ -95,9 +95,11 @@ describe("interpreter if statements", () => {
         let shouldNotExecute = jest.fn();
 
         [assignTo.foo, assignTo.bar, assignTo.dolor, assignTo.sit, assignTo.amet].forEach(
-            assignment => (assignment.accept = shouldNotExecute)
+            (assignment) => (assignment.accept = shouldNotExecute)
         );
-        [assignTo.lorem, assignTo.ipsum].forEach(assignment => (assignment.accept = shouldExecute));
+        [assignTo.lorem, assignTo.ipsum].forEach(
+            (assignment) => (assignment.accept = shouldExecute)
+        );
 
         let statements = [
             new Stmt.If(
@@ -144,7 +146,7 @@ describe("interpreter if statements", () => {
             assignTo.ipsum,
             assignTo.dolor,
             assignTo.sit,
-        ].forEach(assignment => (assignment.accept = shouldNotExecute));
+        ].forEach((assignment) => (assignment.accept = shouldNotExecute));
         assignTo.amet.accept = shouldExecute;
 
         let statements = [

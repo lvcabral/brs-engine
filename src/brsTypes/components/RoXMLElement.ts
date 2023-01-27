@@ -128,7 +128,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 if (key !== "$" && key !== "_") {
                     if (value instanceof Array) {
-                        value.forEach(item => {
+                        value.forEach((item) => {
                             let element = new RoXMLElement();
                             element.parsedXML = { [key]: item };
                             elements.add(element);
@@ -147,7 +147,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 if (key !== "$") {
                     if (value instanceof Array) {
-                        value.forEach(item => {
+                        value.forEach((item) => {
                             let element = new RoXMLElement();
                             element.parsedXML = { [key]: item };
                             nodes.add(element);
@@ -174,7 +174,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                 }
                 if (key === name) {
                     if (value instanceof Array) {
-                        value.forEach(item => {
+                        value.forEach((item) => {
                             let element = new RoXMLElement();
                             element.parsedXML = { [key]: item };
                             elements.add(element);
@@ -196,7 +196,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             let result = false;
             let xmlParser = new xml2js.Parser();
             let parsedXML;
-            xmlParser.parseString(xml.value, function(err: Error, parsed: any) {
+            xmlParser.parseString(xml.value, function (err: Error, parsed: any) {
                 if (err) {
                     postMessage(`warning,Error parsing XML: ${err.message}`);
                 } else if (parsed) {

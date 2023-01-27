@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Generate short Hash
-String.prototype.hashCode = function() {
+String.prototype.hashCode = function () {
     var hash = 0,
         i,
         chr;

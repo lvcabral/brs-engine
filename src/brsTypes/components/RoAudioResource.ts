@@ -25,7 +25,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         this.valid = true;
         this.buffer = shared.get("buffer") || new Int32Array([]);
         const systemwav = ["select", "navsingle", "navmulti", "deadend"];
-        const sysIndex = systemwav.findIndex(wav => wav === name.value.toLowerCase());
+        const sysIndex = systemwav.findIndex((wav) => wav === name.value.toLowerCase());
         if (sysIndex > -1) {
             this.audioId = sysIndex;
         } else {

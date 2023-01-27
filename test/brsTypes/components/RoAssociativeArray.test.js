@@ -1,13 +1,6 @@
 const brs = require("brs");
-const {
-    RoAssociativeArray,
-    RoArray,
-    BrsBoolean,
-    BrsString,
-    Int32,
-    BrsInvalid,
-    ValueKind,
-} = brs.types;
+const { RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } =
+    brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoAssociativeArray", () => {

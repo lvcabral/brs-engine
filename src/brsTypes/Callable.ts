@@ -162,7 +162,7 @@ export class Callable implements Brs.BrsValue {
 
         let mutableArgs = args.slice();
 
-        return interpreter.inSubEnv(subInterpreter => {
+        return interpreter.inSubEnv((subInterpreter) => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
             signature.args.forEach((param, index) => {
@@ -219,12 +219,12 @@ export class Callable implements Brs.BrsValue {
 
     getFirstSatisfiedSignature(args: Brs.BrsType[]): SignatureAndImplementation | undefined {
         return this.signatures.filter(
-            sigAndImpl => this.getSignatureMismatches(sigAndImpl.signature, args).length === 0
+            (sigAndImpl) => this.getSignatureMismatches(sigAndImpl.signature, args).length === 0
         )[0];
     }
 
     getAllSignatureMismatches(args: Brs.BrsType[]): SignatureAndMismatches[] {
-        return this.signatures.map(sigAndImpl => ({
+        return this.signatures.map((sigAndImpl) => ({
             signature: sigAndImpl.signature,
             mismatches: this.getSignatureMismatches(sigAndImpl.signature, args),
         }));
@@ -232,7 +232,7 @@ export class Callable implements Brs.BrsValue {
 
     private getSignatureMismatches(sig: Signature, args: Brs.BrsType[]): SignatureMismatch[] {
         let reasons: SignatureMismatch[] = [];
-        let requiredArgCount = sig.args.filter(arg => !arg.defaultValue).length;
+        let requiredArgCount = sig.args.filter((arg) => !arg.defaultValue).length;
 
         if (args.length < requiredArgCount) {
             reasons.push({

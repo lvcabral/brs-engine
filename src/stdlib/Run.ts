@@ -26,13 +26,13 @@ import { BrsComponent } from "../brsTypes/components/BrsComponent";
  * @returns the value returned by the executed file(s) if no errors are detected, otherwise `invalid`
  */
 function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
-    let volumes = filenames.map(filename => getVolumeByPath(interpreter, filename.value));
-    let pathsToFiles = filenames.map(filename =>
+    let volumes = filenames.map((filename) => getVolumeByPath(interpreter, filename.value));
+    let pathsToFiles = filenames.map((filename) =>
         path.join(interpreter.options.root, getPath(filename.value))
     );
 
     // if the file-to-run doesn't exist, RBI returns invalid
-    if (!volumes.every(volume => volume != null)) {
+    if (!volumes.every((volume) => volume != null)) {
         return BrsInvalid.Instance;
     }
 

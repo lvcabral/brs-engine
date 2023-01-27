@@ -261,7 +261,7 @@ describe("parser indexed assignment", () => {
 
         expect(errors).toEqual([]);
         expect(statements.length).toBe(2);
-        expect(statements.map(s => s.location)).toEqual([
+        expect(statements.map((s) => s.location)).toEqual([
             {
                 start: { line: 1, column: 0 },
                 end: { line: 1, column: 10 },

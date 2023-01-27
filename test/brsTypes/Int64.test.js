@@ -288,7 +288,7 @@ describe("Int64", () => {
 
         it("returns false for all other types", () => {
             let nonNumbers = [new BrsString("hello"), BrsBoolean.True, BrsInvalid.Instance];
-            nonNumbers.forEach(rhs => expect(lhs.lessThan(rhs)).toBe(BrsBoolean.False));
+            nonNumbers.forEach((rhs) => expect(lhs.lessThan(rhs)).toBe(BrsBoolean.False));
         });
     });
 
@@ -330,7 +330,7 @@ describe("Int64", () => {
 
         it("returns false for all other types", () => {
             let nonNumbers = [new BrsString("hello"), BrsBoolean.True, BrsInvalid.Instance];
-            nonNumbers.forEach(rhs => expect(lhs.greaterThan(rhs)).toBe(BrsBoolean.False));
+            nonNumbers.forEach((rhs) => expect(lhs.greaterThan(rhs)).toBe(BrsBoolean.False));
         });
     });
 
@@ -372,7 +372,7 @@ describe("Int64", () => {
 
         it("returns false for all other types", () => {
             let nonNumbers = [new BrsString("hello"), BrsBoolean.True, BrsInvalid.Instance];
-            nonNumbers.forEach(rhs => expect(lhs.equalTo(rhs)).toBe(BrsBoolean.False));
+            nonNumbers.forEach((rhs) => expect(lhs.equalTo(rhs)).toBe(BrsBoolean.False));
         });
     });
 

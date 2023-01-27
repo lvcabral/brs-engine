@@ -20,7 +20,7 @@ describe("end to end functions", () => {
     test("function/arguments.brs", async () => {
         await execute([resourceFile("function", "arguments.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "noArgsFunc",
             "requiredArgsFunc:",
             "1",
@@ -39,7 +39,7 @@ describe("end to end functions", () => {
     test("function/return.brs", async () => {
         await execute([resourceFile("function", "return.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "staticReturn",
             "conditionalReturn:",
             "5",
@@ -61,7 +61,7 @@ describe("end to end functions", () => {
     test("function/expressions.brs", async () => {
         await execute([resourceFile("function", "expressions.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "anonymous function",
             "immediately-invoked function expression (IIFE)",
             "pre-callback",
@@ -74,7 +74,7 @@ describe("end to end functions", () => {
     test("function/m-pointer.brs", async () => {
         await execute([resourceFile("function", "m-pointer.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "carpenter.safetyGlassesOn = ",
             "true",
             "m.houseAge = ",
@@ -85,7 +85,7 @@ describe("end to end functions", () => {
     test("function/m-pointer-global.brs", async () => {
         await execute([resourceFile("function", "m-pointer-global.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "old: ",
             "value 1",
             "new: ",
@@ -104,7 +104,7 @@ describe("end to end functions", () => {
     test("function/scoping.brs", async () => {
         await execute([resourceFile("function", "scoping.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "Global: ",
             "true",
             "Module: ",

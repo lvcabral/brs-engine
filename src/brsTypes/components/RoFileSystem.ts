@@ -50,7 +50,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         try {
             let knownFiles = volume.readdirSync(pathName);
             let matchedFiles: BrsString[] = [];
-            knownFiles.forEach(fileName => {
+            knownFiles.forEach((fileName) => {
                 if (jsRegex.test(fileName)) {
                     matchedFiles.push(new BrsString(fileName));
                     let fullPath = path.join(pathName, fileName);
@@ -77,7 +77,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             let volumes = new Array<BrsString>();
-            [...interpreter.fileSystem.keys()].forEach(key => {
+            [...interpreter.fileSystem.keys()].forEach((key) => {
                 volumes.push(new BrsString(key));
             });
             return new RoList(volumes);
@@ -115,7 +115,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
                 try {
-                    let subPaths = volume.readdirSync(url.pathname).map(s => new BrsString(s));
+                    let subPaths = volume.readdirSync(url.pathname).map((s) => new BrsString(s));
                     return new RoList(subPaths);
                 } catch (err: any) {
                     return new RoList([]);
@@ -273,7 +273,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 try {
                     let knownFiles = volume.readdirSync(url.pathname);
                     let matchedFiles: BrsString[] = [];
-                    knownFiles.forEach(fileName => {
+                    knownFiles.forEach((fileName) => {
                         if (jsRegex.test(fileName)) {
                             matchedFiles.push(new BrsString(fileName));
                         }

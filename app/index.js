@@ -83,23 +83,23 @@ if (supportedBrowser()) {
 
 // File selector
 const fileSelector = document.getElementById("file");
-fileButton.onclick = function() {
+fileButton.onclick = function () {
     fileSelector.click();
 };
-fileSelector.onclick = function() {
+fileSelector.onclick = function () {
     this.value = null;
 };
-fileSelector.onchange = function() {
+fileSelector.onchange = function () {
     const file = this.files[0];
     const reader = new FileReader();
     const fileExt = file.name.split(".").pop();
     if (fileExt === "zip" || fileExt === "brs") {
-        reader.onload = function(evt) {
+        reader.onload = function (evt) {
             // file is loaded
             brsEmu.execute(file.name, evt.target.result);
             channelIcons("hidden");
         };
-        reader.onerror = function(evt) {
+        reader.onerror = function (evt) {
             console.error(`Error opening ${file.name}:${reader.error}`);
         };
         reader.readAsArrayBuffer(file);
@@ -116,7 +116,7 @@ function loadZip(zip) {
     loading.style.visibility = "visible";
     channelIcons("visible");
     fileSelector.value = null;
-    fetch(zip).then(function(response) {
+    fetch(zip).then(function (response) {
         if (response.status === 200 || response.status === 0) {
             brsEmu.execute(zip, response.blob());
             display.focus();
@@ -128,7 +128,7 @@ function loadZip(zip) {
 }
 
 // Display Fullscreen control
-display.addEventListener("dblclick", function(event) {
+display.addEventListener("dblclick", function (event) {
     event.preventDefault();
     if (currentChannel.running) {
         if (document.fullscreenElement) {
@@ -139,7 +139,7 @@ display.addEventListener("dblclick", function(event) {
     }
 });
 
-display.addEventListener("mousedown", function(event) {
+display.addEventListener("mousedown", function (event) {
     if (event.detail === 2) {
         event.preventDefault();
     }
@@ -154,7 +154,7 @@ mc.get("pan").set({ direction: Hammer.DIRECTION_ALL });
 // listen to events...
 var singleTap = new Hammer.Tap({ event: "tap" });
 mc.add([singleTap]);
-mc.on("panleft panright panup pandown tap", function(ev) {
+mc.on("panleft panright panup pandown tap", function (ev) {
     console.log(ev.type);
     if (ev.type.slice(0, 3) === "pan") {
         brsEmu.sendKeyPress(ev.type.slice(3));

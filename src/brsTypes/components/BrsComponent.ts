@@ -29,7 +29,7 @@ export class BrsComponent {
                 new BrsInterface(interfaceName, methods)
             );
 
-            methods.forEach(m => this.methods.set((m.name || "").toLowerCase(), m));
+            methods.forEach((m) => this.methods.set((m.name || "").toLowerCase(), m));
         });
     }
 

@@ -11,7 +11,7 @@ describe("Invalid", () => {
             BrsTypes.BrsBoolean.False,
         ];
 
-        notInvalid.forEach(other =>
+        notInvalid.forEach((other) =>
             expect(BrsTypes.BrsInvalid.Instance.equalTo(other)).toBe(BrsTypes.BrsBoolean.False)
         );
 
@@ -31,7 +31,7 @@ describe("Invalid", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        notInvalid.forEach(other =>
+        notInvalid.forEach((other) =>
             expect(BrsTypes.BrsInvalid.Instance.lessThan(other)).toBe(BrsTypes.BrsBoolean.False)
         );
     });
@@ -47,7 +47,7 @@ describe("Invalid", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        notInvalid.forEach(other =>
+        notInvalid.forEach((other) =>
             expect(BrsTypes.BrsInvalid.Instance.greaterThan(other)).toBe(BrsTypes.BrsBoolean.False)
         );
     });

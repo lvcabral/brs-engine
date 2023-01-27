@@ -62,7 +62,7 @@ export function initControlModule(array, types, disableKeys, customKeys) {
             concatMaps(keysMap, customKeys);
         }
         // Keyboard handlers
-        document.addEventListener("keydown", function(event) {
+        document.addEventListener("keydown", function (event) {
             if (keysMap.has(event.code)) {
                 handleKey(keysMap.get(event.code), 0);
                 if (preventDefault.has(event.code)) {

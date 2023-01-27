@@ -43,7 +43,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         let layer = this.sprites.get(currentZ);
         if (layer) {
             let sprite;
-            layer.some(function(element, index, object) {
+            layer.some(function (element, index, object) {
                 if (element.getId() === id) {
                     object.splice(index, 1);
                     sprite = element;
@@ -60,8 +60,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     }
 
     removeSprite(id: number, animation: boolean) {
-        this.sprites.forEach(function(layer) {
-            layer.some(function(sprite, index, object) {
+        this.sprites.forEach(function (layer) {
+            layer.some(function (sprite, index, object) {
                 if (sprite.getId() === id) {
                     object.splice(index, 1);
                     return true; // break
@@ -70,7 +70,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             });
         });
         if (animation) {
-            this.animations.some(function(sprite, index, object) {
+            this.animations.some(function (sprite, index, object) {
                 if (sprite.getId() === id) {
                     object.splice(index, 1);
                     return true; // break
@@ -89,7 +89,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         let collisions: RoSprite[] = [];
         collision = BrsInvalid.Instance;
         for (let [z, layer] of this.sprites) {
-            layer.some(function(target, index, object) {
+            layer.some(function (target, index, object) {
                 if (source.getId() !== target.getId()) {
                     let targetFlags = target.getFlags();
                     let targetType = target.getType();
@@ -137,10 +137,10 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             this.destBitmap.drawImage(this.canvas, 0, 0);
         }
         let layers = [...this.sprites.keys()].sort((a, b) => a - b);
-        layers.forEach(z => {
+        layers.forEach((z) => {
             const layer = this.sprites.get(z);
             if (layer) {
-                layer.forEach(sprite => {
+                layer.forEach((sprite) => {
                     if (sprite.visible()) {
                         ctx.putImageData(sprite.getImageData(), sprite.getPosX(), sprite.getPosY());
                         if (this.destBitmap) {
@@ -231,7 +231,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, duration: Int32) => {
-            this.animations.forEach(sprite => {
+            this.animations.forEach((sprite) => {
                 sprite.nextFrame(duration.getValue());
             });
             return BrsInvalid.Instance;

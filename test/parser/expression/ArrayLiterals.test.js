@@ -324,7 +324,7 @@ describe("parser array literals", () => {
 
         expect(errors).toEqual([]);
         expect(statements.length).toEqual(2);
-        expect(statements.map(s => s.value.location)).toEqual([
+        expect(statements.map((s) => s.value.location)).toEqual([
             {
                 start: { line: 1, column: 4 },
                 end: { line: 1, column: 9 },

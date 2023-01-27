@@ -10,7 +10,7 @@ const { Lexeme } = brs.lexer;
  * @param {*} [literal] the literal value that the produced token should contain, if any
  * @returns {object} a token of `kind` representing `text` with value `literal`.
  */
-exports.token = function(kind, text, literal) {
+exports.token = function (kind, text, literal) {
     return {
         kind: kind,
         text: text,
@@ -28,7 +28,7 @@ exports.token = function(kind, text, literal) {
  * @param {string} text
  * @returns {object} a token with the provided `text`.
  */
-exports.identifier = function(text) {
+exports.identifier = function (text) {
     return exports.token(Lexeme.Identifier, text);
 };
 

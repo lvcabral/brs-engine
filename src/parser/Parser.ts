@@ -137,7 +137,7 @@ const disallowedIdentifiers = new Set(
         Lexeme.True,
         Lexeme.Type,
         Lexeme.While,
-    ].map(x => Lexeme[x].toLowerCase())
+    ].map((x) => Lexeme[x].toLowerCase())
 );
 
 const bsLibraries = new Map<string, boolean>();
@@ -1107,11 +1107,8 @@ export class Parser {
         function printStatement(...additionalterminators: BlockTerminator[]): Stmt.Print {
             let printKeyword = advance();
 
-            let values: (
-                | Expr.Expression
-                | Stmt.PrintSeparator.Tab
-                | Stmt.PrintSeparator.Space
-            )[] = [];
+            let values: (Expr.Expression | Stmt.PrintSeparator.Tab | Stmt.PrintSeparator.Space)[] =
+                [];
 
             //print statements can be empty, so look for empty print conditions
             if (isAtEnd() || check(Lexeme.Newline, Lexeme.Colon)) {
@@ -1576,8 +1573,9 @@ export class Parser {
                         } else {
                             throw addError(
                                 peek(),
-                                `Expected identifier or string as associative array key, but received '${peek()
-                                    .text || ""}'`
+                                `Expected identifier or string as associative array key, but received '${
+                                    peek().text || ""
+                                }'`
                             );
                         }
 
@@ -1665,7 +1663,7 @@ export class Parser {
          */
         function consume(message: string, ...lexemes: Lexeme[]): Token {
             let foundLexeme = lexemes
-                .map(lexeme => peek().kind === lexeme)
+                .map((lexeme) => peek().kind === lexeme)
                 .reduce((foundAny, foundCurrent) => foundAny || foundCurrent, false);
 
             if (foundLexeme) {
@@ -1691,7 +1689,7 @@ export class Parser {
          */
         function checkOrThrow(message: string, ...lexemes: Lexeme[]): Token {
             let foundLexeme = lexemes
-                .map(lexeme => peek().kind === lexeme)
+                .map((lexeme) => peek().kind === lexeme)
                 .reduce((foundAny, foundCurrent) => foundAny || foundCurrent, false);
             if (foundLexeme) {
                 return peek();
@@ -1720,7 +1718,7 @@ export class Parser {
                 return false;
             }
 
-            return lexemes.some(lexeme => peek().kind === lexeme);
+            return lexemes.some((lexeme) => peek().kind === lexeme);
         }
 
         function checkNext(...lexemes: Lexeme[]) {
@@ -1728,7 +1726,7 @@ export class Parser {
                 return false;
             }
 
-            return lexemes.some(lexeme => peekNext().kind === lexeme);
+            return lexemes.some((lexeme) => peekNext().kind === lexeme);
         }
 
         function isAtEnd() {

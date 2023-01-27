@@ -115,7 +115,7 @@ export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap,
             notifyAll(event, data);
         }
     });
-    subscribeControl("channel", event => {
+    subscribeControl("channel", (event) => {
         if (event === "home") {
             if (currentChannel.running) {
                 terminate("Home Button");
@@ -146,10 +146,7 @@ function notifyAll(eventName, eventData) {
 
 // Execute Channel/Source File
 export function execute(filePath, fileData) {
-    const fileName = filePath
-        .split(".")
-        .slice(0, -1)
-        .join(".");
+    const fileName = filePath.split(".").slice(0, -1).join(".");
     const fileExt = filePath.split(".").pop();
     source = [];
     currentChannel.id = filePath.hashCode();
@@ -177,7 +174,7 @@ function resetWorker() {
 // Open source file
 function openSourceCode(fileName, fileData) {
     const reader = new FileReader();
-    reader.onload = function(progressEvent) {
+    reader.onload = function (progressEvent) {
         currentChannel.id = "brs";
         currentChannel.title = fileName;
         paths = [];
@@ -195,13 +192,13 @@ function openSourceCode(fileName, fileData) {
 // Uncompress Zip and execute
 function openChannelZip(f) {
     JSZip.loadAsync(f).then(
-        function(zip) {
+        function (zip) {
             const manifest = zip.file("manifest");
             if (manifest) {
                 manifest.async("string").then(
                     function success(content) {
                         const manifestMap = new Map();
-                        content.match(/[^\r\n]+/g).map(function(ln) {
+                        content.match(/[^\r\n]+/g).map(function (ln) {
                             const line = ln.split("=");
                             manifestMap.set(line[0].toLowerCase(), line[1]);
                         });
@@ -231,7 +228,7 @@ function openChannelZip(f) {
                         if (splash && splash.slice(0, 5) === "pkg:/") {
                             const splashFile = zip.file(splash.slice(5));
                             if (splashFile) {
-                                splashFile.async("blob").then(blob => {
+                                splashFile.async("blob").then((blob) => {
                                     createImageBitmap(blob).then(drawSplashScreen);
                                 });
                             }
@@ -247,7 +244,7 @@ function openChannelZip(f) {
                         if (icon && icon.slice(0, 5) === "pkg:/") {
                             const iconFile = zip.file(icon.slice(5));
                             if (iconFile) {
-                                iconFile.async("base64").then(content => {
+                                iconFile.async("base64").then((content) => {
                                     notifyAll("icon", content);
                                 });
                             }
@@ -299,7 +296,7 @@ function openChannelZip(f) {
             let txtId = 0;
             let srcId = 0;
             let audId = 0;
-            zip.forEach(function(relativePath, zipEntry) {
+            zip.forEach(function (relativePath, zipEntry) {
                 const lcasePath = relativePath.toLowerCase();
                 const ext = lcasePath.split(".").pop();
                 if (!zipEntry.dir && lcasePath.slice(0, 6) === "source" && ext === "brs") {
@@ -371,7 +368,7 @@ function openChannelZip(f) {
                 }
             );
         },
-        function(e) {
+        function (e) {
             const msg = `Error reading ${f.name}: ${e.message}`;
             console.error(msg);
             notifyAll("error", msg);
@@ -408,7 +405,7 @@ function workerCallback(event) {
         drawBufferImage(event.data);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
-        deviceData.registry.forEach(function(value, key) {
+        deviceData.registry.forEach(function (value, key) {
             storage.setItem(key, value);
         });
     } else if (event.data instanceof Array) {
@@ -521,7 +518,7 @@ export function sendKeyUp(key) {
     handleKey(key, 100);
 }
 export function sendKeyPress(key) {
-    setTimeout(function() {
+    setTimeout(function () {
         handleKey(key, 100);
     }, 300);
     handleKey(key, 0);

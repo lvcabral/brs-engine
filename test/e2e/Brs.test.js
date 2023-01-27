@@ -25,7 +25,7 @@ describe("end to end brightscript functions", () => {
 
         await execute(resourceFiles, outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "function in same file: from sameFileFunc()",
             "function in different file: from differentFileFunc()",
             "function with dependency: from dependentFunc() with help from: from dependencyFunc()",

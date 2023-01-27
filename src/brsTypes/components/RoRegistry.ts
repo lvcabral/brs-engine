@@ -29,7 +29,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, section: BrsString) => {
             let devId = interpreter.deviceInfo.get("developerId");
-            [...interpreter.registry.keys()].forEach(key => {
+            [...interpreter.registry.keys()].forEach((key) => {
                 let regSection = `${devId}.${section}`;
                 if (key.slice(0, regSection.length) === regSection) {
                     interpreter.registry.delete(key);
@@ -60,13 +60,13 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let devId = interpreter.deviceInfo.get("developerId");
             let sections = new Set<string>();
-            [...interpreter.registry.keys()].forEach(key => {
+            [...interpreter.registry.keys()].forEach((key) => {
                 if (key.split(".")[0] === devId) {
                     sections.add(key.split(".")[1]);
                 }
             });
             return new RoList(
-                [...sections].map(function(value: string) {
+                [...sections].map(function (value: string) {
                     return new BrsString(value);
                 })
             );

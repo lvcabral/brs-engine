@@ -29,7 +29,7 @@ export { PP as preprocessor };
 export { _parser as parser };
 export const shared = new Map<string, Int32Array>();
 
-onmessage = function(event) {
+onmessage = function (event) {
     if (event.data.device) {
         const interpreter = new Interpreter();
         interpreter.onError(logError);
@@ -37,7 +37,7 @@ onmessage = function(event) {
         interpreter.title = event.data.title;
         // Registry
         let registry = event.data.device.registry;
-        registry.forEach(function(value: string, key: string) {
+        registry.forEach(function (value: string, key: string) {
             interpreter.registry.set(key, value);
         });
         // DeviceInfo
@@ -137,7 +137,7 @@ onmessage = function(event) {
                 if (trType !== "") {
                     let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
                     let xmlParser = new xml2js.Parser(xmlOptions);
-                    xmlParser.parseString(xmlText, function(err: Error, parsed: any) {
+                    xmlParser.parseString(xmlText, function (err: Error, parsed: any) {
                         if (err) {
                             postMessage(`warning,Error parsing XML: ${err.message}`);
                         } else if (parsed) {
@@ -149,7 +149,7 @@ onmessage = function(event) {
                                     trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
                                 }
                                 if (trArray instanceof Array) {
-                                    trArray.forEach(item => {
+                                    trArray.forEach((item) => {
                                         if (item["source"]) {
                                             interpreter.translations.set(
                                                 item["source"],
@@ -195,7 +195,7 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
     let volume = interpreter.fileSystem.get("pkg:") as FileSystem;
 
     return filenames
-        .map(filename => {
+        .map((filename) => {
             let contents = volume.readFileSync(filename, "utf8");
             let scanResults = Lexer.scan(contents, filename);
             let preprocessor = new PP.Preprocessor();
@@ -224,7 +224,7 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
     lib.set("Roku_Ads.brs", false);
     lexer.onError(logError);
     parser.onError(logError);
-    source.forEach(function(code, path) {
+    source.forEach(function (code, path) {
         const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
             return;
@@ -292,7 +292,7 @@ function parseCSV(csv: string): Map<string, string[]> {
     let result = new Map<string, string[]>();
     let lines = csv.match(/[^\r\n]+/g);
     if (lines) {
-        lines.forEach(line => {
+        lines.forEach((line) => {
             let fields = line.split(",");
             result.set(fields[0], [fields[1], fields[2], fields[3], fields[4]]);
         });

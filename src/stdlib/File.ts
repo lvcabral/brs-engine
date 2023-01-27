@@ -196,7 +196,7 @@ export const ListDir = new Callable("ListDir", {
 
         const memfsPath = getPath(path.value);
         try {
-            let subPaths = volume.readdirSync(memfsPath).map(s => new BrsString(s));
+            let subPaths = volume.readdirSync(memfsPath).map((s) => new BrsString(s));
             return new RoList(subPaths);
         } catch (err: any) {
             return new RoList([]);

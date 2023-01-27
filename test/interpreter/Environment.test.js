@@ -10,7 +10,7 @@ describe("Environment", () => {
     let lineNumber;
 
     /** Creates an identifier with the given text. */
-    let identifier = text => ({ kind: Lexeme.Identifier, text: text, line: lineNumber++ });
+    let identifier = (text) => ({ kind: Lexeme.Identifier, text: text, line: lineNumber++ });
 
     beforeEach(() => {
         env = new Environment();

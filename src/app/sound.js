@@ -42,7 +42,7 @@ export function playSound() {
         sound.seek(0);
         sound.once("end", nextSound);
         if (sound.state() === "unloaded") {
-            sound.once("load", function() {
+            sound.once("load", function () {
                 sound.play();
             });
             sound.load();
@@ -141,7 +141,7 @@ export function triggerWav(wav, volume, index) {
                 wavStreams[index].stop();
             }
             wavStreams[index] = sound;
-            sound.on("end", function() {
+            sound.on("end", function () {
                 Atomics.store(sharedArray, dataType.WAV + index, -1);
             });
             sound.play();
@@ -189,10 +189,10 @@ export function addSound(path, format, data) {
             src: [window.URL.createObjectURL(data)],
             format: format,
             preload: format === "wav",
-            onloaderror: function(id, message) {
+            onloaderror: function (id, message) {
                 console.warn(`Error loading ${path}: ${message}`);
             },
-            onplayerror: function(id, message) {
+            onplayerror: function (id, message) {
                 console.warn(`Error playing ${path}: ${message}`);
             },
         })
@@ -201,7 +201,7 @@ export function addSound(path, format, data) {
 
 export function resetSounds() {
     if (soundsDat.length > 0) {
-        soundsDat.forEach(sound => {
+        soundsDat.forEach((sound) => {
             sound.unload();
         });
     }
@@ -228,10 +228,10 @@ function addWebSound(url) {
     let sound = new Howl({
         src: [url],
         preload: true,
-        onloaderror: function(id, message) {
+        onloaderror: function (id, message) {
             console.warn(`Error loading ${path}: ${message}`);
         },
-        onplayerror: function(id, message) {
+        onplayerror: function (id, message) {
             console.warn(`Error playing ${path}: ${message}`);
         },
     });

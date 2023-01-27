@@ -520,7 +520,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             const ips = interpreter.deviceInfo.get("localIps") as string[];
             const result = new Array<AAMember>();
-            ips.forEach(function(iface: string) {
+            ips.forEach(function (iface: string) {
                 let name: string = iface.split(",")[0];
                 let ip: string = iface.split(",")[1];
                 result.push({ name: new BrsString(name), value: new BrsString(ip) });
@@ -568,7 +568,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
 }
 // Helper Functions
 function generateUUID(): string {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
         var r = (Math.random() * 16) | 0,
             v = c === "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
