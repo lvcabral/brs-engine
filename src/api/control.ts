@@ -5,9 +5,10 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { dataType, subscribeCallback } from "./util";
 
 // Keyboard Mapping
-const preventDefault = new Set([
+const preventDefault: Set<string> = new Set([
     "Enter",
     "Space",
     "ArrowLeft",
@@ -15,7 +16,8 @@ const preventDefault = new Set([
     "ArrowRight",
     "ArrowDown",
 ]);
-const keysMap = new Map();
+
+const keysMap: Map<string, string> = new Map();
 keysMap.set("Backspace", "back");
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
@@ -33,7 +35,7 @@ keysMap.set("KeyA", "a");
 keysMap.set("KeyZ", "b");
 keysMap.set("Escape", "home");
 
-const rokuKeys = new Map();
+const rokuKeys: Map<string, number> = new Map();
 rokuKeys.set("back", 0);
 rokuKeys.set("up", 2);
 rokuKeys.set("down", 3);
@@ -52,62 +54,67 @@ rokuKeys.set("b", 18);
 rokuKeys.set("stop", 23);
 
 // Initialize Control Module
-let sharedArray;
-let dataType;
-export function initControlModule(array, types, disableKeys, customKeys) {
+let sharedArray: Int32Array;
+
+export function initControlModule(
+    array: Int32Array,
+    disableKeys: boolean,
+    customKeys: Map<string, string>
+) {
     sharedArray = array;
-    dataType = types;
     if (!disableKeys) {
         if (customKeys instanceof Map) {
-            concatMaps(keysMap, customKeys);
+            customKeys.forEach(function (value: string, key: string) {
+                keysMap.set(key, value);
+            });
         }
         // Keyboard handlers
-        document.addEventListener("keydown", function (event) {
-            if (keysMap.has(event.code)) {
-                handleKey(keysMap.get(event.code), 0);
+        document.addEventListener("keydown", function (event: KeyboardEvent) {
+            const key: string | undefined = keysMap.get(event.code);
+            if (key) {
+                handleKey(key, 0);
                 if (preventDefault.has(event.code)) {
                     event.preventDefault();
                 }
             }
         });
-        document.addEventListener("keyup", function keyUpHandler(event) {
-            if (keysMap.has(event.code)) {
-                handleKey(keysMap.get(event.code), 100);
+        document.addEventListener("keyup", function keyUpHandler(event: KeyboardEvent) {
+            const key: string | undefined = keysMap.get(event.code);
+            if (key) {
+                handleKey(key, 100);
             }
         });
     }
 }
+
 // Observers Handling
 const observers = new Map();
-export function subscribeControl(observerId, observerCallback) {
+export function subscribeControl(observerId: string, observerCallback: subscribeCallback) {
     observers.set(observerId, observerCallback);
 }
-export function unsubscribeControl(observerId) {
+export function unsubscribeControl(observerId: string) {
     observers.delete(observerId);
 }
-function notifyAll(eventName, eventData) {
+function notifyAll(eventName: string, eventData?: any) {
     observers.forEach((callback, id) => {
         callback(eventName, eventData);
     });
 }
+
 // Keyboard Handler
-export function handleKey(key, mod) {
-    Atomics.store(sharedArray, dataType.MOD, mod);
+export function handleKey(key: string, mod: number) {
     if (key.toLowerCase() == "home" && mod == 0) {
         notifyAll("home");
     } else if (rokuKeys.has(key)) {
-        Atomics.store(sharedArray, dataType.KEY, rokuKeys.get(key) + mod);
+        const code = rokuKeys.get(key);
+        if (typeof code !== "undefined") {
+            Atomics.store(sharedArray, dataType.MOD, mod);
+            Atomics.store(sharedArray, dataType.KEY, code + mod);
+        }
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
         if (key.slice(4).length == 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
+            Atomics.store(sharedArray, dataType.MOD, mod);
             Atomics.store(sharedArray, dataType.KEY, key.charCodeAt(4) + mod);
-        }
-    }
-}
-
-function concatMaps(map, ...iterables) {
-    for (const iterable of iterables) {
-        for (const item of iterable) {
-            map.set(...item);
         }
     }
 }

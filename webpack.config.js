@@ -31,7 +31,7 @@ module.exports = env => {
                         options: {
                             presets: ["@babel/env", "@babel/preset-typescript"]
                         },
-                exclude: /node_modules/,
+                        exclude: /node_modules/,
                     },
                 ],
             },
@@ -58,9 +58,25 @@ module.exports = env => {
             },
         },
         {
-            entry: "./src/app/device.js",
+            entry: "./src/api/device.ts",
             target: "web",
             mode: mode,
+            module: {
+                rules: [
+                    {
+                        test: /\.tsx?$/,
+                        loader: "babel-loader",
+                        options: {
+                            presets: ["@babel/env", "@babel/preset-typescript"]
+                        },
+                        exclude: /node_modules/,
+                    },
+                ],
+            },
+            resolve: {
+                modules: [path.resolve("./node_modules"), path.resolve("./src")],
+                extensions: [".tsx", ".ts", ".js"],
+            },
             output: {
                 filename: outputLib,
                 library: libraryName,

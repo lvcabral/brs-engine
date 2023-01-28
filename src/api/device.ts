@@ -6,6 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
+import { dataType, subscribeCallback, getNow } from "./util";
 import {
     subscribeDisplay,
     initDisplayModule,
@@ -33,13 +34,15 @@ import {
     triggerWav,
     stopWav,
     addPlaylist,
+    seekSound,
 } from "./sound";
-import "./hash";
-let brsWorker;
-let brsEmuLib = "./lib/brsEmu.worker.js";
+
+// Interpreter Library
+let brsWorker: Worker;
+let brsEmuLib: string = "./lib/brsEmu.worker.js";
 
 // Default Device Data
-const storage = window.localStorage;
+const storage: Storage = window.localStorage;
 const deviceData = {
     developerId: "UniqueDeveloperId",
     friendlyName: "BrightScript Emulator",
@@ -64,25 +67,29 @@ const deviceData = {
 };
 
 // Channel Data
-let splashTimeout = 1600;
-let source = [];
-let paths = [];
-let txts = [];
-let bins = [];
-let sharedBuffer = [0, 0, 0, 0, 0, 0, 0];
-let sharedArray = new Int32Array(sharedBuffer);
+let splashTimeout: number = 1600;
+let source: any[] = [];
+let paths: any[] = [];
+let txts: any[] = [];
+let bins: any[] = [];
+let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
+let sharedArray: Int32Array;
 
 const currentChannel = { id: "", file: "", title: "", subtitle: "", version: "", running: false };
-const dataType = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
-Object.freeze(dataType);
 
-export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap, libPath) {
+export function initialize(
+    deviceInfo: any,
+    supportSharedArray: boolean,
+    disableKeys: boolean,
+    keysMap: Map<string, string>,
+    libPath: string
+) {
     Object.assign(deviceData, deviceInfo);
     console.log(deviceData.friendlyName);
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
-        if (key.slice(0, deviceData.developerId.length) === deviceData.developerId) {
+        if (key && key.slice(0, deviceData.developerId.length) === deviceData.developerId) {
             deviceData.registry.set(key, storage.getItem(key));
         }
     }
@@ -101,10 +108,10 @@ export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap,
 
     // Initialize Display, Control and Sound Modules
     initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas);
-    initControlModule(sharedArray, dataType, disableKeys, keysMap);
-    initSoundModule(sharedArray, dataType, deviceData.maxSimulStreams);
+    initControlModule(sharedArray, disableKeys, keysMap);
+    initSoundModule(sharedArray, deviceData.maxSimulStreams);
     // Subscribe Events
-    subscribeDisplay("channel", (event, data) => {
+    subscribeDisplay("channel", (event: string, data: any) => {
         if (event === "mode") {
             deviceData.displayMode = data;
             if (currentChannel.running) {
@@ -115,7 +122,7 @@ export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap,
             notifyAll(event, data);
         }
     });
-    subscribeControl("channel", (event) => {
+    subscribeControl("channel", (event: string) => {
         if (event === "home") {
             if (currentChannel.running) {
                 terminate("Home Button");
@@ -132,20 +139,20 @@ export function initialize(deviceInfo, supportSharedArray, disableKeys, keysMap,
 
 // Observers Handling
 const observers = new Map();
-export function subscribe(observerId, observerCallback) {
+export function subscribe(observerId: string, observerCallback: subscribeCallback) {
     observers.set(observerId, observerCallback);
 }
-export function unsubscribe(observerId) {
+export function unsubscribe(observerId: string) {
     observers.delete(observerId);
 }
-function notifyAll(eventName, eventData) {
+function notifyAll(eventName: string, eventData?: any) {
     observers.forEach((callback, id) => {
         callback(eventName, eventData);
     });
 }
 
 // Execute Channel/Source File
-export function execute(filePath, fileData) {
+export function execute(filePath: string, fileData: any) {
     const fileName = filePath.split(".").slice(0, -1).join(".");
     const fileExt = filePath.split(".").pop();
     source = [];
@@ -162,6 +169,7 @@ export function execute(filePath, fileData) {
     }
 }
 
+// Terminate and reset BrightScript interpreter
 function resetWorker() {
     brsWorker.terminate();
     Atomics.store(sharedArray, dataType.KEY, 0);
@@ -172,7 +180,7 @@ function resetWorker() {
 }
 
 // Open source file
-function openSourceCode(fileName, fileData) {
+function openSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
     reader.onload = function (progressEvent) {
         currentChannel.id = "brs";
@@ -190,16 +198,17 @@ function openSourceCode(fileName, fileData) {
 }
 
 // Uncompress Zip and execute
-function openChannelZip(f) {
+function openChannelZip(f: any) {
     JSZip.loadAsync(f).then(
         function (zip) {
             const manifest = zip.file("manifest");
             if (manifest) {
                 manifest.async("string").then(
-                    function success(content) {
+                    function success(content: string) {
                         const manifestMap = new Map();
-                        content.match(/[^\r\n]+/g).map(function (ln) {
-                            const line = ln.split("=");
+                        const manifestLines = content.match(/[^\r\n]+/g) ?? [];
+                        manifestLines.map(function (ln: string) {
+                            const line: string[] = ln.split("=");
                             manifestMap.set(line[0].toLowerCase(), line[1]);
                         });
                         const splashMinTime = manifestMap.get("splash_min_time");
@@ -290,14 +299,14 @@ function openChannelZip(f) {
                 notifyAll("error", msg);
                 return;
             }
-            let assetPaths = [];
-            let assetsEvents = [];
-            let binId = 0;
-            let txtId = 0;
-            let srcId = 0;
-            let audId = 0;
-            zip.forEach(function (relativePath, zipEntry) {
-                const lcasePath = relativePath.toLowerCase();
+            let assetPaths: any[] = [];
+            let assetsEvents: any[] = [];
+            let binId: number = 0;
+            let txtId: number = 0;
+            let srcId: number = 0;
+            let audId: number = 0;
+            zip.forEach(function (relativePath: string, zipEntry: JSZip.JSZipObject) {
+                const lcasePath: string = relativePath.toLowerCase();
                 const ext = lcasePath.split(".").pop();
                 if (!zipEntry.dir && lcasePath.slice(0, 6) === "source" && ext === "brs") {
                     assetPaths.push({ url: relativePath, id: srcId, type: "source" });
@@ -400,12 +409,12 @@ function runChannel() {
 }
 
 // Receive Messages from Web Worker
-function workerCallback(event) {
+function workerCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         drawBufferImage(event.data);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
-        deviceData.registry.forEach(function (value, key) {
+        deviceData.registry.forEach(function (value: string, key: string) {
             storage.setItem(key, value);
         });
     } else if (event.data instanceof Array) {
@@ -442,7 +451,7 @@ function workerCallback(event) {
             console.warn(`Invalid seek position: ${event.data}`);
         }
     } else if (event.data.slice(0, 7) === "trigger") {
-        const trigger = event.data.split(",");
+        const trigger: Array<string> = event.data.split(",");
         if (trigger.length >= 4) {
             triggerWav(trigger[1], parseInt(trigger[2]), parseInt(trigger[3]));
         } else {
@@ -466,7 +475,7 @@ function workerCallback(event) {
 }
 
 // Restore emulator state and terminate Worker
-export function terminate(reason) {
+export function terminate(reason: string) {
     console.log(`${getNow()} [beacon.report] |AppExitComplete`);
     console.log(`------ Finished '${currentChannel.title}' execution [${reason}] ------`);
     clearDisplay();
@@ -479,45 +488,31 @@ export function terminate(reason) {
     notifyAll("closed", reason);
 }
 
-function getNow() {
-    let d = new Date();
-    let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
-    let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
-    let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
-    let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
-    let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
-    let ms = d.getMilliseconds();
-    return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
-}
-
 // Display API
-export function redraw(fullScreen) {
+export function redraw(fullScreen: boolean) {
     redrawDisplay(currentChannel.running, fullScreen);
 }
 export function getDisplayMode() {
     return deviceData.displayMode;
 }
-
-export function setDisplayMode(mode) {
+export function setDisplayMode(mode: string) {
     setCurrentMode(mode);
 }
-
 export function getOverscanMode() {
     return overscanMode;
 }
-
-export function setOverscanMode(mode) {
+export function setOverscanMode(mode: string) {
     setOverscan(mode);
 }
 
 // Remote Control API
-export function sendKeyDown(key) {
+export function sendKeyDown(key: string) {
     handleKey(key, 0);
 }
-export function sendKeyUp(key) {
+export function sendKeyUp(key: string) {
     handleKey(key, 100);
 }
-export function sendKeyPress(key) {
+export function sendKeyPress(key: string) {
     setTimeout(function () {
         handleKey(key, 100);
     }, 300);

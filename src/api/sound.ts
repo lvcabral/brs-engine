@@ -5,34 +5,35 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { dataType, audioEvent } from "./util";
 import { Howl } from "howler";
+
 // Sound Objects
-const audioEvent = { SELECTED: 0, FULL: 1, PARTIAL: 2, PAUSED: 3, RESUMED: 4, FAILED: 5 };
-Object.freeze(audioEvent);
-let soundsIdx = new Map();
-let soundsDat = new Array();
+let soundsIdx: Map<string, number> = new Map();
+let soundsDat: Array<Howl> = new Array();
 let playList = new Array();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
-let sharedArray;
-let dataType;
-let wavStreams;
-let maxStreams;
+let sharedArray: Int32Array;
+let wavStreams: Array<Howl>;
+let maxStreams: number;
+
 // Initialize Sound Module
-export function initSoundModule(array, types, streams) {
+export function initSoundModule(array: Int32Array, streams: number) {
     sharedArray = array;
-    dataType = types;
     maxStreams = streams;
     resetSounds();
 }
+
 // Sound Functions
 export function playSound() {
     const audio = playList[playIndex];
     if (audio) {
-        let sound;
-        if (soundsIdx.has(audio.toLowerCase())) {
-            sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
+        let sound: Howl;
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            sound = soundsDat[idx];
         } else if (audio.slice(0, 4).toLowerCase() === "http") {
             sound = addWebSound(audio);
         } else {
@@ -77,8 +78,10 @@ export function nextSound() {
 export function stopSound() {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
-        const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-        sound.stop();
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            soundsDat[idx].stop();
+        }
         Atomics.store(sharedArray, dataType.SND, audioEvent.PARTIAL);
     } else {
         console.warn(`[stopSound] Can't find audio data: ${playIndex} - ${audio}`);
@@ -88,8 +91,10 @@ export function stopSound() {
 export function pauseSound() {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
-        const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-        sound.pause();
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            soundsDat[idx].pause();
+        }
         Atomics.store(sharedArray, dataType.SND, audioEvent.PAUSED);
     } else {
         console.warn(`[message:pause] Can't find audio data: ${playIndex} - ${audio}`);
@@ -99,39 +104,43 @@ export function pauseSound() {
 export function resumeSound() {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
-        const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-        sound.play();
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            soundsDat[idx].play();
+        }
         Atomics.store(sharedArray, dataType.SND, audioEvent.RESUMED);
     } else {
         console.warn(`[message:resume] Can't find audio data: ${playIndex} - ${audio}`);
     }
 }
 
-export function seekSound(position) {
+export function seekSound(position: number) {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
-        const sound = soundsDat[soundsIdx.get(audio.toLowerCase())];
-        sound.seek(position);
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            soundsDat[idx].seek(position);
+        }
     } else {
         console.warn(`[message:seek] Can't find audio data: ${playIndex} - ${audio}`);
     }
 }
 
-export function setLoop(enable) {
+export function setLoop(enable: boolean) {
     playLoop = enable;
 }
 
-export function setNext(index) {
+export function setNext(index: number) {
     playNext = index;
     if (playNext >= playList.length) {
         playNext = -1;
-        console.warn(`Next index out of range: ${newIndex}`);
+        console.warn(`Next index out of range: ${index}`);
     }
 }
 
-export function triggerWav(wav, volume, index) {
-    if (wav && soundsIdx.has(wav.toLowerCase())) {
-        const soundId = soundsIdx.get(wav.toLowerCase());
+export function triggerWav(wav: string, volume: number, index: number) {
+    const soundId = soundsIdx.get(wav.toLowerCase());
+    if (soundId) {
         const sound = soundsDat[soundId];
         if (volume && !isNaN(volume)) {
             sound.volume(volume / 100);
@@ -150,15 +159,15 @@ export function triggerWav(wav, volume, index) {
     }
 }
 
-export function playWav(soundId) {
+export function playWav(soundId: number) {
     if (soundsDat[soundId]) {
         soundsDat[soundId].play();
     }
 }
 
-export function stopWav(wav) {
-    if (wav && soundsIdx.has(wav.toLowerCase())) {
-        const soundId = soundsIdx.get(wav.toLowerCase());
+export function stopWav(wav: string) {
+    const soundId = soundsIdx.get(wav.toLowerCase());
+    if (soundId) {
         const sound = soundsDat[soundId];
         for (let index = 0; index < maxStreams; index++) {
             const wavId = Atomics.load(sharedArray, dataType.WAV + index);
@@ -173,16 +182,16 @@ export function stopWav(wav) {
     }
 }
 
-export function addPlaylist(playlist) {
+export function addPlaylist(newList: Array<any>) {
     if (playList.length > 0) {
         stopSound();
     }
-    playList = playlist;
+    playList = newList;
     playIndex = 0;
     playNext = -1;
 }
 
-export function addSound(path, format, data) {
+export function addSound(path: string, format: string, data: any) {
     soundsIdx.set(path.toLowerCase(), soundsDat.length);
     soundsDat.push(
         new Howl({
@@ -222,17 +231,17 @@ export function resetSounds() {
     playNext = -1;
 }
 
-function addWebSound(url) {
+function addWebSound(url: string) {
     // TODO: Fix the WAV index if a roAudioResource is created after this call
     soundsIdx.set(url.toLowerCase(), soundsDat.length);
     let sound = new Howl({
         src: [url],
         preload: true,
         onloaderror: function (id, message) {
-            console.warn(`Error loading ${path}: ${message}`);
+            console.warn(`Error loading ${url}: ${message}`);
         },
         onplayerror: function (id, message) {
-            console.warn(`Error playing ${path}: ${message}`);
+            console.warn(`Error playing ${url}: ${message}`);
         },
     });
     soundsDat.push(sound);
