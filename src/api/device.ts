@@ -19,7 +19,7 @@ import {
     setOverscan,
     overscanMode,
 } from "./display";
-import { subscribeControl, initControlModule, handleKey } from "./control";
+import { subscribeControl, initControlModule, sendKey } from "./control";
 import {
     initSoundModule,
     addSound,
@@ -36,6 +36,7 @@ import {
     addPlaylist,
     seekSound,
 } from "./sound";
+import { version } from "../../package.json";
 
 // Interpreter Library
 let brsWorker: Worker;
@@ -44,21 +45,22 @@ let brsEmuLib: string = "./lib/brsEmu.worker.js";
 // Default Device Data
 const storage: Storage = window.localStorage;
 const deviceData = {
-    developerId: "UniqueDeveloperId",
-    friendlyName: "BrightScript Emulator",
-    serialNumber: "BRSEMUAPP092",
-    deviceModel: "8000X",
-    firmwareVersion: "049.10E04111A",
+    developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
+    friendlyName: "BrightScript Emulator Library",
+    serialNumber: "BRSEMUAPP" + version.replaceAll(".", ""),
+    deviceModel: "8000X", // Roku TV (Midland)
+    firmwareVersion: "049.10E04111A", // v9.10
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
-    countryCode: "US",
+    countryCode: "US", // Channel Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    locale: "en_US",
+    locale: "en_US", // Used if channel supports localization
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap",
+    fontPath: "../fonts/",
     maxSimulStreams: 2, // Max number of audio resource streams
-    connectionType: "WiFiConnection", // Options: "WiFiConnection", "WiredConnection", ""
+    connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
@@ -78,14 +80,13 @@ let sharedArray: Int32Array;
 const currentChannel = { id: "", file: "", title: "", subtitle: "", version: "", running: false };
 
 export function initialize(
-    deviceInfo: any,
-    supportSharedArray: boolean,
-    disableKeys: boolean,
-    keysMap: Map<string, string>,
-    libPath: string
+    customDeviceInfo?: any,
+    disableKeys?: boolean,
+    keysMap?: Map<string, string>,
+    libPath?: string
 ) {
-    Object.assign(deviceData, deviceInfo);
-    console.log(deviceData.friendlyName);
+    Object.assign(deviceData, customDeviceInfo);
+    console.log(deviceData.friendlyName, `v${version}`, deviceData.serialNumber);
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
@@ -95,7 +96,7 @@ export function initialize(
     }
     // Shared buffer (Keys and Sounds)
     const length = 7;
-    if (supportSharedArray) {
+    if (self.crossOriginIsolated) {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
@@ -106,10 +107,9 @@ export function initialize(
     }
     sharedArray = new Int32Array(sharedBuffer);
 
-    // Initialize Display, Control and Sound Modules
+    // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas);
     initControlModule(sharedArray, disableKeys, keysMap);
-    initSoundModule(sharedArray, deviceData.maxSimulStreams);
     // Subscribe Events
     subscribeDisplay("channel", (event: string, data: any) => {
         if (event === "mode") {
@@ -162,6 +162,8 @@ export function execute(filePath: string, fileData: any) {
         resetWorker();
     }
     console.log(`Loading ${filePath}...`);
+    initSoundModule(sharedArray, deviceData.maxSimulStreams);
+
     if (fileExt === "zip") {
         openChannelZip(fileData);
     } else {
@@ -507,14 +509,19 @@ export function setOverscanMode(mode: string) {
 
 // Remote Control API
 export function sendKeyDown(key: string) {
-    handleKey(key, 0);
+    sendKey(key, 0);
 }
 export function sendKeyUp(key: string) {
-    handleKey(key, 100);
+    sendKey(key, 100);
 }
 export function sendKeyPress(key: string) {
     setTimeout(function () {
-        handleKey(key, 100);
+        sendKey(key, 100);
     }, 300);
-    handleKey(key, 0);
+    sendKey(key, 0);
+}
+
+// API Library version
+export function getVersion() {
+    return version;
 }

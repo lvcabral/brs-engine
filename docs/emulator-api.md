@@ -5,11 +5,10 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 
 ## Methods
 
-- brsEmu.**initialize**(deviceInfo, supportSharedArray, disableKeys, customKeys, workerPath) - Initialize the Emulator device
-    - `deviceInfo` (object): customized device information, to use default data just send an empty object
-    - `supportSharedArray` (boolean): inform the emulator if `sharedArrayBuffer` is supported
-    - `disableKeys` (boolean): if `true` disables the default keyboard remote control emulation
-    - `customKeys` (Map): a custom mapping of keyboard keys to the remote control buttons (see default map in the code)
+- brsEmu.**initialize**(customDeviceInfo?, disableKeys?, customKeys?, workerPath?) - Initialize the Emulator device
+    - `customDeviceInfo` (object): customized device information 
+    - `disableKeys` (boolean): if `true` disables the default keyboard handling for remote control emulation
+    - `customKeys` (Map): a custom map of keyboard keys to add/remove to the remote control emulation
     - `workerPath` (string): the relative path to the worker library, the default is `.\lib\brsEmu.worker.js`
 - brsEmu.**subscribe**(observerId, observerCallback) - Subscribes to the Emulator events (see list below)
     - `observerId` (string): Identifier of the subscriber process
@@ -17,8 +16,8 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 - brsEmu.**unsubscribe**(observerId) -  Unsubscribes to the Emulator events
     - `observerId` (string) - Identifier of the subscriber process
 - brsEmu.**execute**(filePath, fileData) - Executes a source code, supports plain text or `zip` files
-    - `filePath` (string) - Full path of the loaded file
-    - `fileData` (string/Array/Blob) - Contents of the file
+    - `filePath` (string) - Path of the loaded file, make sure extension is `.zip` if loading a full channel
+    - `fileData` (string/Array/Blob) - Contents of the file or just string with code
 - brsEmu.**terminate**(reason) - Terminates the current channel/source execution
     - `reason` (string) - The reason for the termination (showed on console)
 - brsEMu.**sendKeyDown**(key) - Send a remote control key down event to the emulator
@@ -27,11 +26,12 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
     - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
 - brsEMu.**sendKeyPress**(key) - Send a remote control key press event to the emulator
     - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
+- brsEMu.**getVersion**() - Returns the version of the API library
 
 ## Events
 
 - **version** - Triggered during the initialization of the emulator.
-    - `data` (string): Contains the version of the library.
+    - `data` (string): Contains the version of the worker library.
 - **loaded** - Triggered when the source code data has finished loading
     - `data` (object): Contains metadata: `{ id: string, file: string, title: string, subtitle: string, version: string, running: boolean }`
 - **icon** - Triggered when the zip file is loaded and manifest links to a valid icon for the channel

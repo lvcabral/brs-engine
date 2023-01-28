@@ -14,40 +14,33 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
-// Device Data
+// Customize Device Info - Some fields are informational, others change the emulator behavior
 let currentChannel = { id: "", running: false };
-const deviceInfo = {
-    developerId: "UniqueDeveloperId",
-    friendlyName: "BrightScript Emulator Web",
-    serialNumber: "BRSEMUAPP092",
-    deviceModel: "8000X",
-    firmwareVersion: "049.10E04111A",
-    clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
-    RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
-    countryCode: "US",
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    locale: "en_US",
+const customDeviceInfo = {
+    developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
+    friendlyName: "BrightScript Emulator Sample Web App",
+    locale: "en_US", // Used if channel supports localization
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
     fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
-    maxSimulStreams: 2, // Max number of audio resource streams
-    connectionType: "WiFiConnection", // Options: "WiFiConnection", "WiredConnection", ""
-    localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
-    startTime: Date.now(),
-    audioVolume: 40,
     lowResolutionCanvas: true,
 };
 
+// Start the emulator
 if (supportedBrowser()) {
     channelInfo.innerHTML = "<br/>";
 
     const customKeys = new Map();
-    customKeys.set("Home", "home");
+    customKeys.set("Comma", "rev"); // Keep consistency with older versions
+    customKeys.set("Period", "fwd"); // Keep consistency with older versions
+    customKeys.set("Space", "play"); // Keep consistency with older versions
+    customKeys.set("PageUp", "ignore"); // do not handle on browser
+    customKeys.set("PageDown", "ignore"); // do not handle on browser
 
     // Initialize Device Emulator and subscribe to events
-    brsEmu.initialize(deviceInfo, self.crossOriginIsolated, false, customKeys);
-
+    libVersion.innerHTML = brsEmu.getVersion();
+    brsEmu.initialize(customDeviceInfo, false, customKeys);
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
             currentChannel = data;
@@ -142,24 +135,6 @@ display.addEventListener("dblclick", function (event) {
 display.addEventListener("mousedown", function (event) {
     if (event.detail === 2) {
         event.preventDefault();
-    }
-});
-
-// Touch handlers
-const mc = new Hammer(display);
-// let the pan gesture support all directions.
-// this will block the vertical scrolling on a touch-device while on the element
-mc.get("pan").set({ direction: Hammer.DIRECTION_ALL });
-
-// listen to events...
-var singleTap = new Hammer.Tap({ event: "tap" });
-mc.add([singleTap]);
-mc.on("panleft panright panup pandown tap", function (ev) {
-    console.log(ev.type);
-    if (ev.type.slice(0, 3) === "pan") {
-        brsEmu.sendKeyPress(ev.type.slice(3));
-    } else if (ev.type === "tap") {
-        brsEmu.sendKeyPress("select");
     }
 });
 

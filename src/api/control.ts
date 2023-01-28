@@ -15,25 +15,39 @@ const preventDefault: Set<string> = new Set([
     "ArrowUp",
     "ArrowRight",
     "ArrowDown",
+    "Home",
+    "End",
+    "PageUp",
+    "PageDown",
+    "Backspace",
+    "Escape",
 ]);
 
 const keysMap: Map<string, string> = new Map();
-keysMap.set("Backspace", "back");
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
 keysMap.set("ArrowLeft", "left");
 keysMap.set("ArrowRight", "right");
 keysMap.set("Enter", "select");
-keysMap.set("Slash", "instantreplay");
-keysMap.set("Comma", "rev");
-keysMap.set("Period", "fwd");
+keysMap.set("Escape", "back");
+keysMap.set("Delete", "back");
+keysMap.set("Home", "home");
+keysMap.set("Shift+Escape", "home");
+keysMap.set("Ctrl+Escape", "home");
+keysMap.set("Backspace", "instantreplay");
+keysMap.set("Ctrl+Backspace", "backspace");
+keysMap.set("Ctrl+Enter", "play");
+keysMap.set("End", "play");
+keysMap.set("Ctrl+Enter", "select");
+keysMap.set("PageDown", "rev");
+keysMap.set("Ctrl+ArrowLeft", "rev");
+keysMap.set("PageUp", "fwd");
+keysMap.set("Ctrl+ArrowRight", "fwd");
 keysMap.set("NumpadMultiply", "info");
-keysMap.set("Digit8", "info");
-keysMap.set("Delete", "backspace");
-keysMap.set("Space", "play");
+keysMap.set("Insert", "info");
+keysMap.set("Ctrl+Digit8", "info");
 keysMap.set("KeyA", "a");
 keysMap.set("KeyZ", "b");
-keysMap.set("Escape", "home");
 
 const rokuKeys: Map<string, number> = new Map();
 rokuKeys.set("back", 0);
@@ -58,8 +72,8 @@ let sharedArray: Int32Array;
 
 export function initControlModule(
     array: Int32Array,
-    disableKeys: boolean,
-    customKeys: Map<string, string>
+    disableKeys?: boolean,
+    customKeys?: Map<string, string>
 ) {
     sharedArray = array;
     if (!disableKeys) {
@@ -70,20 +84,31 @@ export function initControlModule(
         }
         // Keyboard handlers
         document.addEventListener("keydown", function (event: KeyboardEvent) {
-            const key: string | undefined = keysMap.get(event.code);
-            if (key) {
-                handleKey(key, 0);
-                if (preventDefault.has(event.code)) {
-                    event.preventDefault();
-                }
-            }
+            handleKeyboardEvent(event, 0);
         });
         document.addEventListener("keyup", function keyUpHandler(event: KeyboardEvent) {
-            const key: string | undefined = keysMap.get(event.code);
-            if (key) {
-                handleKey(key, 100);
-            }
+            handleKeyboardEvent(event, 100);
         });
+    }
+}
+
+function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
+    let keyCode: string = event.code;
+    if (event.shiftKey) {
+        keyCode = "Shift+" + keyCode;
+    } else if (event.ctrlKey) {
+        keyCode = "Ctrl+" + keyCode;
+    } else if (event.altKey) {
+        keyCode = "Alt+" + keyCode;
+    } else if (event.metaKey) {
+        keyCode = "Win+" + keyCode;
+    }
+    const key: string | undefined = keysMap.get(keyCode);
+    if (key && key.toLowerCase() !== "ignore") {
+        sendKey(key, mod);
+        if (mod == 0 && preventDefault.has(event.code)) {
+            event.preventDefault();
+        }
     }
 }
 
@@ -102,9 +127,10 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Keyboard Handler
-export function handleKey(key: string, mod: number) {
-    if (key.toLowerCase() == "home" && mod == 0) {
-        notifyAll("home");
+export function sendKey(key: string, mod: number) {
+    key = key.toLowerCase();
+    if (key == "home" && mod == 0) {
+        notifyAll(key);
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
