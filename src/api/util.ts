@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// Shared array data types
+// Shared array data types enumerator
 export enum dataType {
     KEY,
     MOD,
@@ -15,7 +15,7 @@ export enum dataType {
     WAV,
 }
 
-// Audio events
+// Audio events enumerator
 export enum audioEvent {
     SELECTED,
     FULL,
@@ -25,11 +25,11 @@ export enum audioEvent {
     FAILED,
 }
 
-// Module callback function
+// Module callback function definition
 export type subscribeCallback = (event: string, data?: any) => void;
 
 // Roku beacon date format
-export function getNow() {
+export function getNow(): string {
     let d = new Date();
     let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
     let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
@@ -38,6 +38,16 @@ export function getNow() {
     let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
     let ms = d.getMilliseconds();
     return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
+}
+
+// Libraries Path
+export function getApiPath(): string {
+    const scripts = document.getElementsByTagName("script");
+    return scripts[scripts.length - 1].src;
+}
+export function getEmuPath(): string {
+    const apiPath = getApiPath();
+    return apiPath.replace("brsEmu.", "brsEmu.worker.");
 }
 
 // Generate short Hash

@@ -10,7 +10,7 @@ module.exports = env => {
         mode = "production";
         outputWrk = libraryName + ".worker.min.js";
         outputLib = libraryName + ".min.js";
-        distPath = "dist"
+        distPath = "app/lib"
     } else {
         mode = "development";
         outputWrk = libraryName + ".worker.js";

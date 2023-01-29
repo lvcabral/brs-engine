@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
-import { dataType, subscribeCallback, getNow } from "./util";
+import { dataType, subscribeCallback, getNow, getApiPath, getEmuPath } from "./util";
 import {
     subscribeDisplay,
     initDisplayModule,
@@ -40,7 +40,8 @@ import { version } from "../../package.json";
 
 // Interpreter Library
 let brsWorker: Worker;
-let brsEmuLib: string = "./lib/brsEmu.worker.js";
+let brsEmuLib: string = getEmuPath();
+const brsApiLib = getApiPath().split("/").pop();
 
 // Default Device Data
 const storage: Storage = window.localStorage;
@@ -77,7 +78,15 @@ let bins: any[] = [];
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
 let sharedArray: Int32Array;
 
-const currentChannel = { id: "", file: "", title: "", subtitle: "", version: "", running: false };
+const currentChannel = {
+    id: "",
+    file: "",
+    title: "",
+    subtitle: "",
+    version: "",
+    clearDisplay: true,
+    running: false,
+};
 
 export function initialize(
     customDeviceInfo?: any,
@@ -86,7 +95,7 @@ export function initialize(
     libPath?: string
 ) {
     Object.assign(deviceData, customDeviceInfo);
-    console.log(`${deviceData.friendlyName} - brsEmu.js Library v${version}`);
+    console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
@@ -130,11 +139,8 @@ export function initialize(
             }
         }
     });
-    // Initialize Worker
+    // Set custom worker lib path (if provided)
     brsEmuLib = libPath || brsEmuLib;
-    brsWorker = new Worker(brsEmuLib);
-    brsWorker.addEventListener("message", workerCallback);
-    brsWorker.postMessage("getVersion");
 }
 
 // Observers Handling
@@ -152,16 +158,22 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute Channel/Source File
-export function execute(filePath: string, fileData: any, mute: boolean = false) {
+export function execute(
+    filePath: string,
+    fileData: any,
+    clearDisplayOnExit: boolean = true,
+    mute: boolean = false
+) {
     const fileName = filePath.split(".").slice(0, -1).join(".");
     const fileExt = filePath.split(".").pop();
     source = [];
     currentChannel.id = filePath.hashCode();
     currentChannel.file = filePath;
+    currentChannel.clearDisplay = clearDisplayOnExit;
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
-    console.log(`Loading ${filePath}...`);
+    console.info(`Loading ${filePath}...`);
     initSoundModule(sharedArray, deviceData.maxSimulStreams, mute);
 
     if (fileExt === "zip") {
@@ -391,7 +403,7 @@ function openChannelZip(f: any) {
 // Execute Emulator Web Worker
 function runChannel() {
     showDisplay();
-    if (currentChannel.running && typeof brsWorker !== "undefined") {
+    if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
     currentChannel.running = true;
@@ -462,11 +474,17 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data.slice(0, 5) === "stop,") {
         stopWav(event.data.split(",")[1]);
     } else if (event.data.slice(0, 4) === "log,") {
-        console.log(event.data.slice(4));
+        const content = event.data.slice(4);
+        console.log(content);
+        notifyAll("console", { level: "log", content: content });
     } else if (event.data.slice(0, 8) === "warning,") {
-        console.warn(event.data.slice(8));
+        const content = event.data.slice(8);
+        console.warn(content);
+        notifyAll("console", { level: "warning", content: content });
     } else if (event.data.slice(0, 6) === "error,") {
-        console.error(event.data.slice(6));
+        const content = event.data.slice(6);
+        console.error(content);
+        notifyAll("console", { level: "error", content: content });
     } else if (event.data.slice(0, 4) === "end,") {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {
@@ -480,7 +498,9 @@ function workerCallback(event: MessageEvent) {
 export function terminate(reason: string) {
     console.log(`${getNow()} [beacon.report] |AppExitComplete`);
     console.log(`------ Finished '${currentChannel.title}' execution [${reason}] ------`);
-    clearDisplay();
+    if (currentChannel.clearDisplay) {
+        clearDisplay();
+    }
     resetWorker();
     currentChannel.id = "";
     currentChannel.file = "";
@@ -526,10 +546,9 @@ export function getVersion() {
     return version;
 }
 function getSerialNumber() {
-    let verPlain = ""
-    const verArray = version.split(".").forEach(element => {
-        verPlain += element.padStart(2,"0");
+    let verPlain = "";
+    version.split(".").forEach((element) => {
+        verPlain += element.padStart(2, "0");
     });
     return `BRSEMU${verPlain}`;
 }
-

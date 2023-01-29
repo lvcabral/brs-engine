@@ -18,7 +18,6 @@ const channel3 = document.getElementById("channel3");
 let currentChannel = { id: "", running: false };
 const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
-    friendlyName: "BrightScript Emulator Sample Web App",
     locale: "en_US", // Used if channel supports localization
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
@@ -61,8 +60,6 @@ if (supportedBrowser()) {
             loading.style.visibility = "hidden";
             channelIcons("visible");
             fileSelector.value = null;
-        } else if (event === "version") {
-            libVersion.innerHTML = data;
         }
     });
 } else {

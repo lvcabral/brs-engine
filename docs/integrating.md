@@ -25,20 +25,20 @@ Make sure you get the library files `brsEmu.js` and `brsEmu.worker.js` and place
 </head>
 <body>
 <canvas id="display" width="854px" height="480px"></canvas><br />
-<label for="story">Type some Brightscript code (open developer tools to see the console):</label><br />
+<label for="story">Type some Brightscript code: (open Developer Tools console to see <b>print</b> outputs)</label><br />
 <textarea id="source-code" name="source-code" rows="15" cols="100">
-    purple=&h6F1AB1FF
-    screen=CreateObject("roScreen")
-    screen.SetAlphaEnable(true)
-    screen.Clear(purple)
-    screen.DrawRect(300, 100, 300, 300, &h80)
-    screen.finish()
-    while true
-        ' loop forever to avoid finish
-    end while
+sub main()
+  print "starting code execution!"
+  purple=&h6F1AB1FF
+  screen=CreateObject("roScreen")
+  screen.SetAlphaEnable(true)
+  screen.Clear(purple)
+  screen.DrawRect(300, 100, 300, 300, &h80)
+  screen.finish()
+end sub
 </textarea><br />
 <input id="clickMe" type="button" value="Run Code!" onclick="executeBrs();" />
-<script type="text/javascript" src="lib/brsEmu.js"></script>
+<script type="text/javascript" src="lib/brsEmu.min.js"></script>
 <script type="text/javascript" src="example.js"></script>
 </body>
 </html>
@@ -46,25 +46,23 @@ Make sure you get the library files `brsEmu.js` and `brsEmu.worker.js` and place
 
 ### example.js
 ```javascript
-// Initialize Device Emulator and subscribe to events
-brsEmu.initialize({}, true, true);
+// Initialize Device Emulator
+brsEmu.initialize({}, true);
+// Subscribe to Events (optional)
 brsEmu.subscribe("myApp", (event, data) => {
     if (event === "loaded") {
-        console.log(`Source code loaded: ${data.id}`);
+        console.info(`Source code loaded: ${data.id}`);
     } else if (event === "started") {
-        console.log(`Source code executing: ${data.id}`);
+        console.info(`Source code executing: ${data.id}`);
     } else if (event === "closed" || event === "error") {
-        console.log(`Execution terminated! ${event}: ${data}`);
-    } else if (event === "version") {
-        console.log(`brsEmu version ${data}`);
-    } else {
-        console.log(`received unhandled event "${event}"`)
+        console.info(`Execution terminated! ${event}: ${data}`);
     }
 });
+// On click handler to execute the code
 function executeBrs()
 {
     source = document.getElementById("source-code").value
-    brsEmu.execute("main.brs", source);
+    brsEmu.execute("main.brs", source, false);
 }
 ```
 

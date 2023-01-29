@@ -178,7 +178,7 @@ onmessage = function (event) {
         // Setup Control Shared Array
         shared.set("buffer", new Int32Array(event.data));
     } else {
-        console.log("Invalid message received!", event.data);
+        console.warn("Invalid message received!", event.data);
     }
 };
 
