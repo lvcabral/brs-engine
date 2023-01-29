@@ -47,7 +47,7 @@ const storage: Storage = window.localStorage;
 const deviceData = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Emulator Library",
-    serialNumber: "BRSEMUAPP" + version.replaceAll(".", ""),
+    serialNumber: getSerialNumber(),
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "049.10E04111A", // v9.10
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
@@ -521,7 +521,15 @@ export function sendKeyPress(key: string) {
     sendKey(key, 0);
 }
 
-// API Library version
+// API Library version and device Serial Number
 export function getVersion() {
     return version;
 }
+function getSerialNumber() {
+    let verPlain = ""
+    const verArray = version.split(".").forEach(element => {
+        verPlain += element.padStart(2,"0");
+    });
+    return `BRSEMU${verPlain}`;
+}
+
