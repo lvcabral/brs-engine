@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
  *
- *  Copyright (c) 2019-2021 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -170,13 +170,15 @@ onmessage = function (event) {
             }
         }
         // Run Channel
-        run(source, interpreter);
-        postMessage("end");
-    } else if (event.data === "getVersion") {
-        postMessage("version:" + version);
-    } else {
+        const exitReason = run(source, interpreter);
+        postMessage(`end,${exitReason}`);
+    } else if (typeof event.data == "string" && event.data === "getVersion") {
+        postMessage(`version,${version}`);
+    } else if (event.data instanceof SharedArrayBuffer || event.data instanceof ArrayBuffer) {
         // Setup Control Shared Array
         shared.set("buffer", new Int32Array(event.data));
+    } else {
+        console.log("Invalid message received!", event.data);
     }
 };
 
@@ -214,7 +216,7 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(source: Map<string, string>, interpreter: Interpreter) {
+function run(source: Map<string, string>, interpreter: Interpreter): string {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
@@ -270,10 +272,11 @@ function run(source: Map<string, string>, interpreter: Interpreter) {
             value: new BrsString("EXIT_UNKNOWN"),
         });
         aa.push({ name: new BrsString("source"), value: new BrsString("auto-run-dev") });
-        return interpreter.exec(allStatements, new RoAssociativeArray(aa));
+        interpreter.exec(allStatements, new RoAssociativeArray(aa));
+        return "EXIT_USER_KILL";
     } catch (err: any) {
         postMessage(`warning,Unhandled Interpreter error: ${err.message}`);
-        return;
+        return "EXIT_BRIGHTSCRIPT_CRASH";
     }
 }
 

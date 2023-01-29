@@ -115,7 +115,7 @@ export function initialize(
         if (event === "mode") {
             deviceData.displayMode = data;
             if (currentChannel.running) {
-                terminate("DisplayMode");
+                terminate("EXIT_SETTINGS_UPDATE");
             }
             notifyAll("display", data);
         } else if (["redraw", "resolution"].includes(event)) {
@@ -125,7 +125,7 @@ export function initialize(
     subscribeControl("channel", (event: string) => {
         if (event === "home") {
             if (currentChannel.running) {
-                terminate("Home Button");
+                terminate("EXIT_USER_NAV");
                 playWav(0);
             }
         }
@@ -467,11 +467,11 @@ function workerCallback(event: MessageEvent) {
         console.warn(event.data.slice(8));
     } else if (event.data.slice(0, 6) === "error,") {
         console.error(event.data.slice(6));
-    } else if (event.data === "end") {
-        terminate("Normal");
+    } else if (event.data.slice(0, 4) === "end,") {
+        terminate(event.data.slice(4));
     } else if (event.data === "reset") {
         notifyAll("reset");
-    } else if (event.data.slice(0, 8) === "version:") {
+    } else if (event.data.slice(0, 8) === "version,") {
         notifyAll("version", event.data.slice(8));
     }
 }

@@ -160,7 +160,12 @@ function supportedBrowser() {
         supported = browserVersion.major > 104;
     }
     if (!supported) {
-        console.error("Browser not supported:", info.engine.name, info.platform.type, info.browser.version);
+        console.error(
+            "Browser not supported:",
+            info.engine.name,
+            info.platform.type,
+            info.browser.version
+        );
     }
     return supported;
 }

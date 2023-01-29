@@ -40,7 +40,7 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 - **started** - Triggered when the emulator started running the source code
     - `data` (object): Contains metadata: `{ id: string, file: string, title: string, subtitle: string, version: string, running: boolean }`
 - **closed** - Triggered when the emulator terminated the execution of the source code
-    - `data` (object): Contains metadata: `{ id: string, file: string, title: string, subtitle: string, version: string, running: boolean }`
+    - `data` (string): Contains the exit reason based on [Roku documentation](https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter)
 - **reset** - Triggered when the `RebootSystem()` function is executed from the emulator
     - `data` (null): Nothing is returned as data.
 - **redraw** - Triggered when the display canvas is redrawn/resized

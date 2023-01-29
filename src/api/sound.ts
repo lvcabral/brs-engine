@@ -23,7 +23,7 @@ let maxStreams: number;
 export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
     sharedArray = array;
     maxStreams = streams;
-    resetSounds();    
+    resetSounds();
     Howler.mute(mute);
 }
 
