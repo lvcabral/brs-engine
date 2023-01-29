@@ -86,7 +86,7 @@ export function initialize(
     libPath?: string
 ) {
     Object.assign(deviceData, customDeviceInfo);
-    console.log(deviceData.friendlyName, `v${version}`, deviceData.serialNumber);
+    console.log(`${deviceData.friendlyName} - brsEmu.js Library v${version}`);
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
@@ -152,7 +152,7 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute Channel/Source File
-export function execute(filePath: string, fileData: any) {
+export function execute(filePath: string, fileData: any, mute: boolean = false) {
     const fileName = filePath.split(".").slice(0, -1).join(".");
     const fileExt = filePath.split(".").pop();
     source = [];
@@ -162,7 +162,7 @@ export function execute(filePath: string, fileData: any) {
         resetWorker();
     }
     console.log(`Loading ${filePath}...`);
-    initSoundModule(sharedArray, deviceData.maxSimulStreams);
+    initSoundModule(sharedArray, deviceData.maxSimulStreams, mute);
 
     if (fileExt === "zip") {
         openChannelZip(fileData);

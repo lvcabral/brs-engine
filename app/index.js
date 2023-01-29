@@ -150,7 +150,6 @@ function channelIcons(visibility) {
 // Browser Check
 function supportedBrowser() {
     const info = bowser.parse(window.navigator.userAgent);
-    console.log(info.engine.name, info.platform.type, info.browser.version);
     const browserVersion = parseVersionString(info.browser.version);
     let supported = false;
     if (info.engine.name == "Blink") {
@@ -159,6 +158,9 @@ function supportedBrowser() {
             browserVersion.major > 88;
     } else if (info.engine.name == "Gecko") {
         supported = browserVersion.major > 104;
+    }
+    if (!supported) {
+        console.error("Browser not supported:", info.engine.name, info.platform.type, info.browser.version);
     }
     return supported;
 }

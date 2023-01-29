@@ -15,9 +15,10 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
     - `observerCallback` (function): Callback function to receive the events from the emulator
 - brsEmu.**unsubscribe**(observerId) -  Unsubscribes to the Emulator events
     - `observerId` (string) - Identifier of the subscriber process
-- brsEmu.**execute**(filePath, fileData) - Executes a source code, supports plain text or `zip` files
+- brsEmu.**execute**(filePath, fileData, mute?) - Executes a source code, supports plain text or `zip` files
     - `filePath` (string) - Path of the loaded file, make sure extension is `.zip` if loading a full channel
     - `fileData` (string/Array/Blob) - Contents of the file or just string with code
+    - `mute` (boolean) - If `true` the emulator will mute all audio playback but events are still raised.
 - brsEmu.**terminate**(reason) - Terminates the current channel/source execution
     - `reason` (string) - The reason for the termination (showed on console)
 - brsEMu.**sendKeyDown**(key) - Send a remote control key down event to the emulator

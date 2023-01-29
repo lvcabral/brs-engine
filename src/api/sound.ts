@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { dataType, audioEvent } from "./util";
-import { Howl } from "howler";
+import { Howl, Howler } from "howler";
 
 // Sound Objects
 let soundsIdx: Map<string, number> = new Map();
@@ -20,10 +20,11 @@ let wavStreams: Array<Howl>;
 let maxStreams: number;
 
 // Initialize Sound Module
-export function initSoundModule(array: Int32Array, streams: number) {
+export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
     sharedArray = array;
     maxStreams = streams;
-    resetSounds();
+    resetSounds();    
+    Howler.mute(mute);
 }
 
 // Sound Functions
@@ -83,7 +84,7 @@ export function stopSound() {
             soundsDat[idx].stop();
         }
         Atomics.store(sharedArray, dataType.SND, audioEvent.PARTIAL);
-    } else {
+    } else if (audio) {
         console.warn(`[stopSound] Can't find audio data: ${playIndex} - ${audio}`);
     }
 }
@@ -96,7 +97,7 @@ export function pauseSound() {
             soundsDat[idx].pause();
         }
         Atomics.store(sharedArray, dataType.SND, audioEvent.PAUSED);
-    } else {
+    } else if (audio) {
         console.warn(`[message:pause] Can't find audio data: ${playIndex} - ${audio}`);
     }
 }
@@ -109,7 +110,7 @@ export function resumeSound() {
             soundsDat[idx].play();
         }
         Atomics.store(sharedArray, dataType.SND, audioEvent.RESUMED);
-    } else {
+    } else if (audio) {
         console.warn(`[message:resume] Can't find audio data: ${playIndex} - ${audio}`);
     }
 }
@@ -121,7 +122,7 @@ export function seekSound(position: number) {
         if (idx) {
             soundsDat[idx].seek(position);
         }
-    } else {
+    } else if (audio) {
         console.warn(`[message:seek] Can't find audio data: ${playIndex} - ${audio}`);
     }
 }
