@@ -5,8 +5,9 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 
 ## Methods
 
-- brsEmu.**initialize**(customDeviceInfo?, disableKeys?, customKeys?, workerPath?) - Initialize the Emulator device
+- brsEmu.**initialize**(customDeviceInfo?, debugToConsole=`true`, disableKeys=`false`, customKeys?, workerPath?) - Initialize the Emulator device
     - `customDeviceInfo` (object): customized device information 
+    - `debugToConsole` (boolean): if `true` all debug messages from the emulator will be sent to the `console`. If disabled use the `debug` event.
     - `disableKeys` (boolean): if `true` disables the default keyboard handling for remote control emulation
     - `customKeys` (Map): a custom map of keyboard keys to add/remove from the remote control emulation
     - `workerPath` (string): the path to the worker library, the default is the same path of the API library
@@ -47,7 +48,7 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
     - `data` (boolean): If `true` the display canvas is in **full screen** mode
 - **resolution** - Triggered when the emulated screen resolution changes (controled via BrightScript)
     - `data` (object): Contains screen dimensions: `{width: integer, height: integer}`
-- **console** - Triggered when console messages arrive from the worker library (BrightScript Interpreter)
-    - `data` (object): Contains: `{level: string, content: string}`, levels are: `log` (from `print` statements), `warning` and `error`
+- **debug** - Triggered when debug messages arrive from the worker library (BrightScript Interpreter)
+    - `data` (object): Contains: `{level: string, content: string}`, levels are: `print`, `warning` and `error`
 - **error** - Triggered when the any execution exception happens on the API library
     - `data` (string): Contains the message describing the error

@@ -68,6 +68,7 @@ const deviceData = {
     lowResolutionCanvas: false,
     registry: new Map(),
 };
+let consoleDebug: boolean = true;
 
 // Channel Data
 let splashTimeout: number = 1600;
@@ -90,12 +91,14 @@ const currentChannel = {
 
 export function initialize(
     customDeviceInfo?: any,
-    disableKeys?: boolean,
+    debugToConsole: boolean = true,
+    disableKeys: boolean = false,
     keysMap?: Map<string, string>,
     libPath?: string
 ) {
     Object.assign(deviceData, customDeviceInfo);
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
+    consoleDebug = debugToConsole;
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
@@ -473,18 +476,12 @@ function workerCallback(event: MessageEvent) {
         }
     } else if (event.data.slice(0, 5) === "stop,") {
         stopWav(event.data.split(",")[1]);
-    } else if (event.data.slice(0, 4) === "log,") {
-        const content = event.data.slice(4);
-        console.log(content);
-        notifyAll("console", { level: "log", content: content });
+    } else if (event.data.slice(0, 6) === "print,") {
+        deviceDebug(event.data);
     } else if (event.data.slice(0, 8) === "warning,") {
-        const content = event.data.slice(8);
-        console.warn(content);
-        notifyAll("console", { level: "warning", content: content });
+        deviceDebug(event.data);
     } else if (event.data.slice(0, 6) === "error,") {
-        const content = event.data.slice(6);
-        console.error(content);
-        notifyAll("console", { level: "error", content: content });
+        deviceDebug(event.data);
     } else if (event.data.slice(0, 4) === "end,") {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {
@@ -493,11 +490,27 @@ function workerCallback(event: MessageEvent) {
         notifyAll("version", event.data.slice(8));
     }
 }
+function deviceDebug(data: string) {
+    const level = data.split(",")[0];
+    const content = data.slice(level.length + 1);
+    notifyAll("debug", { level: level, content: content });
+    if (consoleDebug) {
+        if (level === "error") {
+            console.error(content);
+        } else if (level === "warning") {
+            console.warn(content);
+        } else {
+            console.log(content);
+        }
+    }
+}
 
 // Restore emulator state and terminate Worker
 export function terminate(reason: string) {
-    console.log(`${getNow()} [beacon.report] |AppExitComplete`);
-    console.log(`------ Finished '${currentChannel.title}' execution [${reason}] ------`);
+    deviceDebug(`print,${getNow()} [beacon.report] |AppExitComplete`);
+    deviceDebug(
+        `print,------ Finished '${currentChannel.title}' execution [${reason}] ------`
+    );
     if (currentChannel.clearDisplay) {
         clearDisplay();
     }

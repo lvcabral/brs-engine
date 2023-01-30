@@ -23,7 +23,7 @@ const customDeviceInfo = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
     fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
-    lowResolutionCanvas: true,
+    lowResolutionCanvas: true, // Faster display
 };
 
 // Start the emulator
@@ -39,7 +39,7 @@ if (supportedBrowser()) {
 
     // Initialize Device Emulator and subscribe to events
     libVersion.innerHTML = brsEmu.getVersion();
-    brsEmu.initialize(customDeviceInfo, false, customKeys);
+    brsEmu.initialize(customDeviceInfo, true, false, customKeys);
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
             currentChannel = data;

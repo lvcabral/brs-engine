@@ -208,9 +208,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     args = [];
                 }
                 let subName = mainVariable.name.text;
-                postMessage(`log,------ Running dev '${this._title}' ${subName} ------`);
+                postMessage(`print,------ Running dev '${this._title}' ${subName} ------`);
                 postMessage(
-                    `log,${this.getNow()} [scrpt.ctx.run.enter] UI: Entering '${
+                    `print,${this.getNow()} [scrpt.ctx.run.enter] UI: Entering '${
                         this._title
                     }', id '${subName}'`
                 );
@@ -339,7 +339,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 printStream += this.evaluate(printable).toString();
             }
         });
-        postMessage(`log,${printStream}`);
+        postMessage(`print,${printStream}`);
         return BrsInvalid.Instance;
     }
 

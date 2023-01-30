@@ -47,7 +47,7 @@ end sub
 ### example.js
 ```javascript
 // Initialize Device Emulator
-brsEmu.initialize({}, true);
+brsEmu.initialize({lowResolutionCanvas: true}, true, true);
 // Subscribe to Events (optional)
 brsEmu.subscribe("myApp", (event, data) => {
     if (event === "loaded") {
