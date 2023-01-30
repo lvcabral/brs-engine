@@ -15,7 +15,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         if (markTime) {
             this.markTime = markTime;
         } else {
-            this.markTime = Date.now();
+            this.markTime = performance.now();
         }
         this.registerMethods({
             ifTimespan: [
@@ -58,7 +58,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(Date.now() - this.markTime);
+            return new Int32(performance.now() - this.markTime);
         },
     });
 
@@ -69,7 +69,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(Math.floor((Date.now() - this.markTime) / 1000));
+            return new Int32(Math.floor((performance.now() - this.markTime) / 1000));
         },
     });
 
