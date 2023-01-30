@@ -26,7 +26,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         });
         this.messageQueue = [];
         this.callbackQueue = [];
-        this.lastKey = 0;
+        this.lastKey = -1;
         this.screen = false;
         this.lastFlags = -1;
         this.audio = false;

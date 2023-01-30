@@ -118,6 +118,7 @@ export function initialize(
         );
     }
     sharedArray = new Int32Array(sharedBuffer);
+    resetArray();
 
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas);
@@ -189,11 +190,14 @@ export function execute(
 // Terminate and reset BrightScript interpreter
 function resetWorker() {
     brsWorker.terminate();
-    Atomics.store(sharedArray, dataType.KEY, 0);
-    Atomics.store(sharedArray, dataType.MOD, 0);
+    resetArray();
+    resetSounds();
+}
+function resetArray() {
+    Atomics.store(sharedArray, dataType.KEY, -1);
+    Atomics.store(sharedArray, dataType.MOD, -1);
     Atomics.store(sharedArray, dataType.SND, -1);
     Atomics.store(sharedArray, dataType.IDX, -1);
-    resetSounds();
 }
 
 // Open source file

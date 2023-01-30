@@ -103,7 +103,7 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
     } else if (event.metaKey) {
         keyCode = "Win+" + keyCode;
     }
-    const key: string | undefined = keysMap.get(keyCode);
+    const key = keysMap.get(keyCode);
     if (key && key.toLowerCase() !== "ignore") {
         sendKey(key, mod);
         if (mod == 0 && preventDefault.has(event.code)) {
