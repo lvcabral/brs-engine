@@ -18,6 +18,7 @@ import {
     setCurrentMode,
     setOverscan,
     overscanMode,
+    setShowFps,
 } from "./display";
 import { subscribeControl, initControlModule, sendKey } from "./control";
 import {
@@ -39,9 +40,10 @@ import {
 import { version } from "../../package.json";
 
 // Interpreter Library
-let brsWorker: Worker;
-let brsEmuLib: string = getEmuPath();
+const workerLibPath = getEmuPath()
 const brsApiLib = getApiPath().split("/").pop();
+let brsEmuLib: string;
+let brsWorker: Worker;
 
 // Default Device Data
 const storage: Storage = window.localStorage;
@@ -93,8 +95,8 @@ export function initialize(
     customDeviceInfo?: any,
     debugToConsole: boolean = true,
     disableKeys: boolean = false,
-    keysMap?: Map<string, string>,
-    libPath?: string
+    customKeys?: Map<string, string>,
+    workerPath?: string
 ) {
     Object.assign(deviceData, customDeviceInfo);
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
@@ -122,7 +124,7 @@ export function initialize(
 
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas);
-    initControlModule(sharedArray, disableKeys, keysMap);
+    initControlModule(sharedArray, disableKeys, customKeys);
     // Subscribe Events
     subscribeDisplay("channel", (event: string, data: any) => {
         if (event === "mode") {
@@ -143,8 +145,8 @@ export function initialize(
             }
         }
     });
-    // Set custom worker lib path (if provided)
-    brsEmuLib = libPath || brsEmuLib;
+    // Set worker lib path
+    brsEmuLib = workerPath || workerLibPath;
 }
 
 // Observers Handling
@@ -410,9 +412,6 @@ function openChannelZip(f: any) {
 // Execute Emulator Web Worker
 function runChannel() {
     showDisplay();
-    if (typeof brsWorker !== "undefined") {
-        resetWorker();
-    }
     currentChannel.running = true;
     brsWorker = new Worker(brsEmuLib);
     brsWorker.addEventListener("message", workerCallback);
@@ -542,6 +541,9 @@ export function getOverscanMode() {
 }
 export function setOverscanMode(mode: string) {
     setOverscan(mode);
+}
+export function showDisplayFps(state: boolean) {
+    setShowFps(state);
 }
 
 // Remote Control API

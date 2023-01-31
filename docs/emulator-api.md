@@ -22,6 +22,16 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
     - `mute` (boolean) - If `true` the emulator will mute all audio playback but events are still raised
 - brsEmu.**terminate**(reason) - Terminates the current channel/source execution
     - `reason` (string) - The reason for the termination (showed on console)
+- brsEMu.**redraw**(fullscreen) - Send a remote control key down event to the emulator
+    - `fullscreen` (boolean) - Request a display redraw informing if the fullscren mode is activated
+- brsEMu.**getDisplayMode**() - Returns the current display mode. 
+- brsEMu.**setDisplayMode**(mode) - Configure the display mode. If a channel is running will reset the device
+    - `mode` (string) - One of the supported modes: `"480p"` (SD), `"720p"` (HD) or `"1080p"`(FHD)
+- brsEMu.**getOverscanMode**() - Returns the current overscan mode. 
+- brsEMu.**setOverscanMode**(mode) - Configure the overscan mode. Can show guidelines or actually cut the frame
+    - `mode` (string) - One of the supported modes: `"disabled"`, `"guidelines"` or `"overscan"`
+- brsEMu.**showDisplayFps**(mode) - Enable or disable display the average frames per seconds on screen
+    - `state` (boolean) - If `true` shows the FPS on the top left corner of the display
 - brsEMu.**sendKeyDown**(key) - Send a remote control key down event to the emulator
     - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
 - brsEMu.**sendKeyUp**(key) - Send a remote control key up event to the emulator

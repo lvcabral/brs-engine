@@ -16,20 +16,21 @@ const channel3 = document.getElementById("channel3");
 
 // Customize Device Info - Some fields are informational, others change the emulator behavior
 let currentChannel = { id: "", running: false };
-const customDeviceInfo = {
-    developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
-    locale: "en_US", // Used if channel supports localization
-    clockFormat: "12h",
-    displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-    defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
-    fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
-    lowResolutionCanvas: true, // Faster display
-};
 
 // Start the emulator
 if (supportedBrowser()) {
     channelInfo.innerHTML = "<br/>";
-
+    // Custom DeviceConfiguration
+    const customDeviceInfo = {
+        developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
+        deviceModel: "5000X", // Roku TV (MIPS)
+        locale: "en_US", // Used if channel supports localization
+        clockFormat: "12h",
+        displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
+        defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
+        fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
+        lowResolutionCanvas: true, // Faster display
+    };
     const customKeys = new Map();
     customKeys.set("Comma", "rev"); // Keep consistency with older versions
     customKeys.set("Period", "fwd"); // Keep consistency with older versions
@@ -40,6 +41,7 @@ if (supportedBrowser()) {
     // Initialize Device Emulator and subscribe to events
     libVersion.innerHTML = brsEmu.getVersion();
     brsEmu.initialize(customDeviceInfo, true, false, customKeys);
+    brsEmu.showDisplayFps(true);
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
             currentChannel = data;
