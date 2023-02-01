@@ -5,12 +5,12 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 
 ## Methods
 
-- brsEmu.**initialize**(customDeviceInfo?, debugToConsole=`true`, disableKeys=`false`, customKeys?, workerPath?) - Initialize the Emulator device
-    - `customDeviceInfo` (object): customized device information 
-    - `debugToConsole` (boolean): if `true` all debug messages from the emulator will be sent to the `console`. If disabled use the `debug` event.
-    - `disableKeys` (boolean): if `true` disables the default keyboard handling for remote control emulation
-    - `customKeys` (Map): a custom map of keyboard keys to add/remove from the remote control emulation
-    - `workerPath` (string): the path to the worker library, the default is the same path of the API library
+- brsEmu.**initialize**(customDeviceInfo?, options?) - Initialize the Emulator device
+    - `customDeviceInfo` (object): customized device information (see `device.ts` for the valid fields)
+    - `options` (objec): {debugToConsole: boolean, disableKeys: boolean, customKeys: Map}
+        - `debugToConsole` - default true: if `true` all debug messages from the emulator will be sent to the `console`. If disabled use the `debug` event.
+        - `disableKeys` - default false: if `true` disables the default keyboard handling for remote control emulation
+        - `customKeys` - optional: a custom map of keyboard keys to add/remove from the remote control emulation
 - brsEmu.**subscribe**(observerId, observerCallback) - Subscribes to the Emulator events (see list below)
     - `observerId` (string): Identifier of the subscriber process
     - `observerCallback` (function): Callback function to receive the events from the emulator

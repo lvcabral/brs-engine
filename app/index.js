@@ -23,7 +23,6 @@ if (supportedBrowser()) {
     // Custom DeviceConfiguration
     const customDeviceInfo = {
         developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
-        deviceModel: "5000X", // Roku TV (MIPS)
         locale: "en_US", // Used if channel supports localization
         clockFormat: "12h",
         displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
@@ -40,7 +39,7 @@ if (supportedBrowser()) {
 
     // Initialize Device Emulator and subscribe to events
     libVersion.innerHTML = brsEmu.getVersion();
-    brsEmu.initialize(customDeviceInfo, true, false, customKeys);
+    brsEmu.initialize(customDeviceInfo, { debugToConsole: true, customKeys: customKeys });
     brsEmu.showDisplayFps(true);
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {

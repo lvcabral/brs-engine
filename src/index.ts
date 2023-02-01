@@ -172,7 +172,7 @@ onmessage = function (event) {
         // Run Channel
         const exitReason = run(source, interpreter);
         postMessage(`end,${exitReason}`);
-    } else if (typeof event.data == "string" && event.data === "getVersion") {
+    } else if (typeof event.data === "string" && event.data === "getVersion") {
         postMessage(`version,${version}`);
     } else if (event.data instanceof SharedArrayBuffer || event.data instanceof ArrayBuffer) {
         // Setup Control Shared Array

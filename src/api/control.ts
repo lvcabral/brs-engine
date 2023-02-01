@@ -70,15 +70,11 @@ rokuKeys.set("stop", 23);
 // Initialize Control Module
 let sharedArray: Int32Array;
 
-export function initControlModule(
-    array: Int32Array,
-    disableKeys?: boolean,
-    customKeys?: Map<string, string>
-) {
+export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
-    if (!disableKeys) {
-        if (customKeys instanceof Map) {
-            customKeys.forEach(function (value: string, key: string) {
+    if (!options.disableKeys) {
+        if (options.customKeys instanceof Map) {
+            options.customKeys.forEach(function (value: string, key: string) {
                 keysMap.set(key, value);
             });
         }
@@ -106,7 +102,7 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
     const key = keysMap.get(keyCode);
     if (key && key.toLowerCase() !== "ignore") {
         sendKey(key, mod);
-        if (mod == 0 && preventDefault.has(event.code)) {
+        if (mod === 0 && preventDefault.has(event.code)) {
             event.preventDefault();
         }
     }
@@ -129,7 +125,7 @@ function notifyAll(eventName: string, eventData?: any) {
 // Keyboard Handler
 export function sendKey(key: string, mod: number) {
     key = key.toLowerCase();
-    if (key == "home" && mod == 0) {
+    if (key === "home" && mod === 0) {
         notifyAll(key);
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
@@ -138,7 +134,7 @@ export function sendKey(key: string, mod: number) {
             Atomics.store(sharedArray, dataType.KEY, code + mod);
         }
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
-        if (key.slice(4).length == 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
+        if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
             Atomics.store(sharedArray, dataType.MOD, mod);
             Atomics.store(sharedArray, dataType.KEY, key.charCodeAt(4) + mod);
         }

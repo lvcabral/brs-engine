@@ -10,13 +10,13 @@ import { Howl, Howler } from "howler";
 
 // Sound Objects
 let soundsIdx: Map<string, number> = new Map();
-let soundsDat: Array<Howl> = new Array();
+let soundsDat: Howl[] = new Array();
 let playList = new Array();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
 let sharedArray: Int32Array;
-let wavStreams: Array<Howl>;
+let wavStreams: Howl[];
 let maxStreams: number;
 
 // Initialize Sound Module
@@ -183,7 +183,7 @@ export function stopWav(wav: string) {
     }
 }
 
-export function addPlaylist(newList: Array<any>) {
+export function addPlaylist(newList: any[]) {
     if (playList.length > 0) {
         stopSound();
     }

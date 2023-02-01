@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
-import { dataType, subscribeCallback, getNow, getApiPath, getEmuPath } from "./util";
+import { dataType, subscribeCallback, getNow, getApiPath, getEmuPath, isElectron } from "./util";
 import {
     subscribeDisplay,
     initDisplayModule,
@@ -40,9 +40,8 @@ import {
 import { version } from "../../package.json";
 
 // Interpreter Library
-const workerLibPath = getEmuPath()
 const brsApiLib = getApiPath().split("/").pop();
-let brsEmuLib: string;
+const brsEmuLib = getEmuPath();
 let brsWorker: Worker;
 
 // Default Device Data
@@ -70,7 +69,7 @@ const deviceData = {
     lowResolutionCanvas: false,
     registry: new Map(),
 };
-let consoleDebug: boolean = true;
+let debugToConsole: boolean = true;
 
 // Channel Data
 let splashTimeout: number = 1600;
@@ -91,16 +90,12 @@ const currentChannel = {
     running: false,
 };
 
-export function initialize(
-    customDeviceInfo?: any,
-    debugToConsole: boolean = true,
-    disableKeys: boolean = false,
-    customKeys?: Map<string, string>,
-    workerPath?: string
-) {
+export function initialize(customDeviceInfo?: any, options: any = {}) {
     Object.assign(deviceData, customDeviceInfo);
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
-    consoleDebug = debugToConsole;
+    if (typeof options.debugToConsole === "boolean") {
+        debugToConsole = options.debugToConsole;
+    }
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
@@ -110,7 +105,7 @@ export function initialize(
     }
     // Shared buffer (Keys and Sounds)
     const length = 7;
-    if (self.crossOriginIsolated) {
+    if (self.crossOriginIsolated || isElectron()) {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
@@ -124,7 +119,7 @@ export function initialize(
 
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas);
-    initControlModule(sharedArray, disableKeys, customKeys);
+    initControlModule(sharedArray, options);
     // Subscribe Events
     subscribeDisplay("channel", (event: string, data: any) => {
         if (event === "mode") {
@@ -145,8 +140,6 @@ export function initialize(
             }
         }
     });
-    // Set worker lib path
-    brsEmuLib = workerPath || workerLibPath;
 }
 
 // Observers Handling
@@ -239,7 +232,7 @@ function openChannelZip(f: any) {
                             splashTimeout = parseInt(splashMinTime);
                         }
                         let splash;
-                        if (deviceData.displayMode == "480p") {
+                        if (deviceData.displayMode === "480p") {
                             splash = manifestMap.get("splash_screen_sd");
                             if (!splash) {
                                 splash = manifestMap.get("splash_screen_hd");
@@ -292,19 +285,19 @@ function openChannelZip(f: any) {
                         if (subtitle) {
                             currentChannel.subtitle = subtitle;
                         }
-                        currentChannel.version = "";
-                        const majorVersion = manifestMap.get("major_version");
-                        if (majorVersion) {
-                            currentChannel.version += "v" + majorVersion;
+                        let majorVersion = manifestMap.get("major_version") || "";
+                        if (majorVersion !== "") {
+                            majorVersion = `v${majorVersion}`;
                         }
-                        const minorVersion = manifestMap.get("minor_version");
-                        if (minorVersion) {
-                            currentChannel.version += "." + minorVersion;
+                        let minorVersion = manifestMap.get("minor_version") || "";
+                        if (minorVersion !== "") {
+                            minorVersion = `.${minorVersion}`;
                         }
-                        const buildVersion = manifestMap.get("build_version");
-                        if (buildVersion) {
-                            currentChannel.version += "." + buildVersion;
+                        let buildVersion = manifestMap.get("build_version") || "";
+                        if (buildVersion !== "") {
+                            buildVersion = `.${buildVersion}`;
                         }
+                        currentChannel.version = `${majorVersion}${minorVersion}${buildVersion}`;
                         notifyAll("loaded", currentChannel);
                     },
                     function error(e) {
@@ -342,7 +335,7 @@ function openChannelZip(f: any) {
                         ext === "xml" ||
                         ext === "json" ||
                         ext === "txt" ||
-                        ext == "ts")
+                        ext === "ts")
                 ) {
                     assetPaths.push({ url: relativePath, id: txtId, type: "text" });
                     assetsEvents.push(zipEntry.async("string"));
@@ -471,7 +464,7 @@ function workerCallback(event: MessageEvent) {
             console.warn(`Invalid seek position: ${event.data}`);
         }
     } else if (event.data.slice(0, 7) === "trigger") {
-        const trigger: Array<string> = event.data.split(",");
+        const trigger: string[] = event.data.split(",");
         if (trigger.length >= 4) {
             triggerWav(trigger[1], parseInt(trigger[2]), parseInt(trigger[3]));
         } else {
@@ -497,7 +490,7 @@ function deviceDebug(data: string) {
     const level = data.split(",")[0];
     const content = data.slice(level.length + 1);
     notifyAll("debug", { level: level, content: content });
-    if (consoleDebug) {
+    if (debugToConsole) {
         if (level === "error") {
             console.error(content);
         } else if (level === "warning") {
@@ -511,9 +504,7 @@ function deviceDebug(data: string) {
 // Restore emulator state and terminate Worker
 export function terminate(reason: string) {
     deviceDebug(`print,${getNow()} [beacon.report] |AppExitComplete`);
-    deviceDebug(
-        `print,------ Finished '${currentChannel.title}' execution [${reason}] ------`
-    );
+    deviceDebug(`print,------ Finished '${currentChannel.title}' execution [${reason}] ------`);
     if (currentChannel.clearDisplay) {
         clearDisplay();
     }

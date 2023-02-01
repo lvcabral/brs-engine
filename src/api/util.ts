@@ -50,6 +50,19 @@ export function getEmuPath(): string {
     return apiPath.replace("brsEmu.", "brsEmu.worker.");
 }
 
+// Check if the library is running inside Electron
+export function isElectron() {
+    // Detect the user agent when the `nodeIntegration` option is set to true
+    if (
+        typeof navigator === "object" &&
+        typeof navigator.userAgent === "string" &&
+        navigator.userAgent.indexOf("Electron") >= 0
+    ) {
+        return true;
+    }
+    return false;
+}
+
 // Generate short Hash
 declare global {
     interface String {
