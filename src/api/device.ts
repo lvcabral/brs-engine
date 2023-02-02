@@ -474,6 +474,9 @@ function workerCallback(event: MessageEvent) {
         stopWav(event.data.split(",")[1]);
     } else if (event.data.slice(0, 6) === "print,") {
         deviceDebug(event.data);
+    } else if (event.data.slice(0, 4) === "log,") {
+        // for backward compatibility with v0.9.1
+        deviceDebug(event.data);
     } else if (event.data.slice(0, 8) === "warning,") {
         deviceDebug(event.data);
     } else if (event.data.slice(0, 6) === "error,") {

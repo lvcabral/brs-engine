@@ -1,4 +1,4 @@
-# Emulator API
+# BrightScript Emulator API
 
 The emulator library has a programable interface to make it easy to integrate into any web based application. 
 The only pre-requisite is to expose a `canvas` object named `display` on the default `document`.

@@ -1,4 +1,4 @@
-# BRS-EMU: BrightScript 2D API Emulator
+# BRS-EMU: BrightScript Emulator
 
 An emulator for the Roku BrightScript language that runs on Firefox or Chrome browsers and Electron applications.
 
@@ -6,7 +6,7 @@ An emulator for the Roku BrightScript language that runs on Firefox or Chrome br
 
 ## The Library
 
-This library extends [**brs**](https://github.com/sjbarag/brs), a _command line interpreter_ for **BrightScript** language, by implementing the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) and several other **BrightScript** components allowing a full channel execution over an **HTML5 Canvas**, including emulation of the Roku remote control. 
+This library extends [**brs**](https://github.com/sjbarag/brs), a _command line interpreter_ for **BrightScript** language, by focusing on the implementation of the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) and several other **BrightScript** components allowing a full channel execution over an **HTML5 Canvas**, including emulation of the Roku remote control. 
 
 **Note:** Although **brs-emu** runs channels with user interface, it has no intention of emulating the full **Roku OS** user interface, see [Current Limitations](docs/limitations.md) page for full details on what is out of scope.
 
@@ -20,7 +20,7 @@ This emulator is bundled as a couple of **[Webpack](https://webpack.js.org/)** J
 - `brsEmu.js` the **[emulator API](docs/emulator-api.md)** to be used by the application.
 - `brsEmu.worker.js` the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter.
 
-It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _bleeding edge_ in the browser engines implementation, because of that, at this moment, it can only be executed in [Firefox](https://firefox.com) (version 105 or higher) or [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/), [Edge](https://www.microsoft.com/en-us/edge). The emulator can also be embedded on an [Electron](https://electronjs.org/) application. The **BrightScript 2D API Emulator** is a full client-side library, nothing is sent or processed in the server side.
+It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _bleeding edge_ in the browser engines implementation, because of that, at this moment, it can only be executed in [Firefox](https://firefox.com) (version 105 or higher) or [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/), [Edge](https://www.microsoft.com/en-us/edge). The emulator can also be embedded on an [Electron](https://electronjs.org/) application. The **BrightScript Emulator** is a full client-side library, nothing is sent or processed in the server side.
 
  ## How to use it
 
@@ -67,7 +67,6 @@ You can try the emulator by running one of the demonstration channels included i
 *   [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.18.3778/Prince-of-Persia-Roku-018.zip)
 *   [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.18.707/Lode-Runner-Roku-018.zip)
 *   [Retaliate](https://github.com/lvcabral/retaliate-roku) game by Romans I XVI - Download [zip file](https://github.com/lvcabral/retaliate-roku/releases/download/v1.7.0-emu/retaliate-brs-emu.zip)
-
 
 ## Author Links
 

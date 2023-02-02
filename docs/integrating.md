@@ -1,4 +1,4 @@
-# How add the Emulator to a Web Application
+# How add the BrightScript Emulator to a Web Application
 
 This repository provides a sample web appplication for testing the emulator, located under the `app` folder, you can download it from the [release page](https://github.com/lvcabral/brs-emu/releases) with the libraries already integrated, or you can try the simpler example below.
 
