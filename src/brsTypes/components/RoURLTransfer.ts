@@ -1,7 +1,7 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { RoMessagePort } from "./RoMessagePort";
-import { BrsType } from "..";
+import { BrsType, RoArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -76,28 +76,28 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.asyncPostFromFileToFile,
                 this.retainBodyOnError,
                 this.setUserAndPassword,
-                // this.setMinimumTransferRate,
+                this.setMinimumTransferRate,
                 this.getFailureReason,
                 this.escape,
                 this.unescape,
                 this.urlEncode,
                 this.enableEncodings,
-                // this.enableResume,
-                // this.enablePeerVerification,
-                // this.enableHostVerification,
+                this.enableResume,
+                this.enablePeerVerification,
+                this.enableHostVerification,
                 this.enableFreshConnection,
-                // this.setHttpVersion,
+                this.setHttpVersion,
             ],
             ifHttpAgent: [
                 this.addHeader,
                 this.setHeaders,
                 this.initClientCertificates,
                 this.setCertificatesFile,
-                // this.setCertificatesDepth,
+                this.setCertificatesDepth,
                 this.enableCookies,
-                // this.getCookies,
-                // this.addCookies,
-                // this.clearCookies,
+                this.getCookies,
+                this.addCookies,
+                this.clearCookies,
             ],
             ifSetMessagePort: [this.setMessagePort, this.setPort],
             ifGetMessagePort: [this.getMessagePort, this.getPort],
@@ -129,7 +129,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
-        } catch (e) {
+        } catch (e: any) {
             postMessage(`warning,[getToStringSync] Error getting ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
@@ -164,7 +164,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
-        } catch (e) {
+        } catch (e: any) {
             postMessage(`warning,[getToFileSync] Error getting ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
@@ -190,7 +190,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
-        } catch (e) {
+        } catch (e: any) {
             postMessage(`warning,[postFromStringSync] Error posting to ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
@@ -224,7 +224,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
-        } catch (e) {
+        } catch (e: any) {
             postMessage(`warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
@@ -278,7 +278,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
-        } catch (e) {
+        } catch (e: any) {
             postMessage(
                 `warning,[postFromFileToFileSync] Error posting to ${this.url}: ${e.message}`
             );
@@ -307,7 +307,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
-        } catch (e) {
+        } catch (e: any) {
             postMessage(`warning,[requestHead] Error requesting from ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
@@ -615,6 +615,23 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Terminates the transfer automatically if the transfer rate drops below the */
+    /** specified rate (bytes_per_second) over a specific interval (period_in_seconds). */
+    private setMinimumTransferRate = new Callable("setMinimumTransferRate", {
+        signature: {
+            args: [
+                new StdlibArgument("bytes_per_second", ValueKind.Int32),
+                new StdlibArgument("period_in_seconds", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, bps: Int32, period: Int32) => {
+            // This method is mocked for compatibility
+            // returns false to allow proper handling on BrightScript code
+            return BrsBoolean.False;
+        },
+    });
+
     /** Returns a description of the failure that occurred. */
     private getFailureReason = new Callable("getFailureReason", {
         signature: {
@@ -670,6 +687,45 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Enables automatic resumption of AsyncGetToFile and GetToFile requests. */
+    private enableResume = new Callable("enableResume", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // This method is mocked for compatibility
+            // returns false to allow proper handling on BrightScript code
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Verifies that the certificate has a chain of trust up to a valid root certificate. */
+    private enablePeerVerification = new Callable("enablePeerVerification", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // This method is mocked for compatibility
+            // returns false to allow proper handling on BrightScript code
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Verifies that the certificate belongs to the host. */
+    private enableHostVerification = new Callable("enableHostVerification", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // This method is mocked for compatibility
+            // returns false to allow proper handling on BrightScript code
+            return BrsBoolean.False;
+        },
+    });
+
     /** Specify whether to enable fresh connections. */
     private enableFreshConnection = new Callable("enableFreshConnection", {
         signature: {
@@ -679,6 +735,18 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, enable: BrsBoolean) => {
             this.freshConnection = enable.toBoolean();
             return BrsBoolean.True;
+        },
+    });
+
+    /** An optional function that enables HTTP/2 support. */
+    private setHttpVersion = new Callable("setHttpVersion", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // This method is mocked for compatibility
+            return BrsInvalid.Instance;
         },
     });
 
@@ -750,6 +818,21 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Sets the maximum depth of the certificate chain that will be accepted. */
+    private setCertificatesDepth = new Callable("setCertificatesDepth", {
+        signature: {
+            args: [new StdlibArgument("depth", ValueKind.Int32)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, depth: Int32) => {
+            // This method is mocked for compatibility
+            postMessage(
+                "warning,[roUrlTransfer] SetCertificatesDepth() is not supported, nothing was done."
+            );
+            return BrsInvalid.Instance;
+        },
+    });
+
     /** Causes any Set-Cookie headers returned from the request to be interpreted. */
     private enableCookies = new Callable("enableCookies", {
         signature: {
@@ -758,6 +841,49 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             this.cookiesEnabled = true;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns any cookies from the cookie cache that match the specified domain and path. */
+    private getCookies = new Callable("getCookies", {
+        signature: {
+            args: [
+                new StdlibArgument("domain", ValueKind.String),
+                new StdlibArgument("path", ValueKind.String),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter, domain: BrsString, path: BrsString) => {
+            // This method is mocked for compatibility
+            return new RoArray([]);
+        },
+    });
+
+    /** Verifies that the certificate belongs to the host. */
+    private addCookies = new Callable("addCookies", {
+        signature: {
+            args: [new StdlibArgument("cookies", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, cookies: BrsType) => {
+            // This method is mocked for compatibility
+            // returns false to allow proper handling on BrightScript code
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Removes all cookies from the cookie cache. */
+    private clearCookies = new Callable("clearCookies", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            // This method is mocked for compatibility
+            postMessage(
+                "warning,[roUrlTransfer] ClearCookies() is not supported, nothing was done."
+            );
             return BrsInvalid.Instance;
         },
     });
