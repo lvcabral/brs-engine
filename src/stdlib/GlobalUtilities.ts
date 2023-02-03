@@ -34,6 +34,20 @@ export const RebootSystem = new Callable("RebootSystem", {
     },
 });
 
+export const RunGarbageCollector = new Callable("RunGarbageCollector", {
+    signature: {
+        args: [],
+        returns: ValueKind.Object,
+    },
+    impl: () => {
+        return new RoAssociativeArray([
+            { name: new BrsString("COUNT"), value: new Int32(0) },
+            { name: new BrsString("ORPHANED"), value: new Int32(0) },
+            { name: new BrsString("ROOT"), value: new Int32(0) },
+        ]);
+    },
+});
+
 // export const GetInterface = new Callable("GetInterface", {
 //     signature: {
 //         args: [
@@ -47,8 +61,8 @@ export const RebootSystem = new Callable("RebootSystem", {
 //     },
 // });
 
-/** This is a draft inplementation of GetInterface() as BRS still do not expose
- *  intefaces as components, so it returns the original object if it implements
+/** This is a draft implementation of GetInterface() as BRS still do not expose
+ *  interfaces as components, so it returns the original object if it implements
  *  the specified interface.
  */
 export const GetInterface = new Callable("GetInterface", {
