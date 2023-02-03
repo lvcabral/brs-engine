@@ -10,6 +10,7 @@ import { RoList } from "./RoList";
 import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
+import { RoInput } from "./RoInput";
 import { RoFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
@@ -66,6 +67,7 @@ export const BrsObjects = new Map<string, Function>([
         (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
     ],
     ["romessageport", (interpreter: Interpreter) => new RoMessagePort()],
+    ["roinput", (interpreter: Interpreter) => new RoInput()],
     ["rofilesystem", (interpreter: Interpreter) => new RoFileSystem()],
     ["rolocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],
     ["rofontregistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
