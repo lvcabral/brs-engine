@@ -47,7 +47,7 @@ let brsWorker: Worker;
 // Default Device Data
 const storage: Storage = window.localStorage;
 const deviceData = {
-    developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
+    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Emulator Library",
     serialNumber: getSerialNumber(),
     deviceModel: "8000X", // Roku TV (Midland)
@@ -80,6 +80,7 @@ let bins: any[] = [];
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
 let sharedArray: Int32Array;
 
+const manifestMap = new Map();
 const currentChannel = {
     id: "",
     file: "",
@@ -213,7 +214,7 @@ function openSourceCode(fileName: string, fileData: any) {
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
-// Uncompress Zip and execute
+// Decompress Zip and execute
 function openChannelZip(f: any) {
     JSZip.loadAsync(f).then(
         function (zip) {
@@ -221,14 +222,20 @@ function openChannelZip(f: any) {
             if (manifest) {
                 manifest.async("string").then(
                     function success(content: string) {
-                        const manifestMap = new Map();
+                        manifestMap.clear();
                         const manifestLines = content.match(/[^\r\n]+/g) ?? [];
                         manifestLines.map(function (ln: string) {
                             const line: string[] = ln.split("=");
                             manifestMap.set(line[0].toLowerCase(), line[1]);
                         });
+                        currentChannel.title = manifestMap.get("title") || "No Title";
+                        currentChannel.subtitle = manifestMap.get("subtitle") || "";
+                        const majorVersion = parseInt(manifestMap.get("major_version")) || 0;
+                        const minorVersion = parseInt(manifestMap.get("minor_version")) || 0;
+                        const buildVersion = parseInt(manifestMap.get("build_version")) || 0;
+                        currentChannel.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
                         const splashMinTime = manifestMap.get("splash_min_time");
-                        if (splashMinTime && !isNaN(splashMinTime)) {
+                        if (splashMinTime && !isNaN(parseInt(splashMinTime))) {
                             splashTimeout = parseInt(splashMinTime);
                         }
                         let splash;
@@ -274,30 +281,6 @@ function openChannelZip(f: any) {
                                 });
                             }
                         }
-                        const title = manifestMap.get("title");
-                        if (title) {
-                            currentChannel.title = title;
-                        } else {
-                            currentChannel.title = "No Title";
-                        }
-                        currentChannel.subtitle = "";
-                        const subtitle = manifestMap.get("subtitle");
-                        if (subtitle) {
-                            currentChannel.subtitle = subtitle;
-                        }
-                        let majorVersion = manifestMap.get("major_version") || "";
-                        if (majorVersion !== "") {
-                            majorVersion = `v${majorVersion}`;
-                        }
-                        let minorVersion = manifestMap.get("minor_version") || "";
-                        if (minorVersion !== "") {
-                            minorVersion = `.${minorVersion}`;
-                        }
-                        let buildVersion = manifestMap.get("build_version") || "";
-                        if (buildVersion !== "") {
-                            buildVersion = `.${buildVersion}`;
-                        }
-                        currentChannel.version = `${majorVersion}${minorVersion}${buildVersion}`;
                         notifyAll("loaded", currentChannel);
                     },
                     function error(e) {
@@ -410,7 +393,7 @@ function runChannel() {
     brsWorker.addEventListener("message", workerCallback);
     const payload = {
         device: deviceData,
-        title: currentChannel.title,
+        manifest: manifestMap,
         paths: paths,
         brs: source,
         texts: txts,

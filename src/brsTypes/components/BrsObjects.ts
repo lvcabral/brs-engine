@@ -23,6 +23,7 @@ import { createAudioResource } from "./RoAudioResource";
 import { RoLocalization } from "./RoLocalization";
 import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
+import { RoAppInfo } from "./RoAppInfo";
 import { RoDeviceInfo } from "./RoDeviceInfo";
 import { RoFileSystem } from "./RoFileSystem";
 import { Interpreter } from "../../interpreter";
@@ -74,6 +75,7 @@ export const BrsObjects = new Map<string, Function>([
         (interpreter: Interpreter, section: BrsString) =>
             new RoRegistrySection(interpreter, section),
     ],
+    ["roappinfo", (interpreter: Interpreter) => new RoAppInfo()],
     ["rodeviceinfo", (interpreter: Interpreter) => new RoDeviceInfo()],
     ["roaudioplayer", (interpreter: Interpreter) => new RoAudioPlayer()],
     [

@@ -55,10 +55,10 @@ export const defaultExecutionOptions: ExecutionOptions = {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
-    private _title = "";
     private _startTime = Date.now();
     readonly options: ExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
+    readonly manifest: Map<string, any> = new Map<string, any>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
@@ -74,10 +74,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get startTime() {
         return this._startTime;
-    }
-
-    set title(value: string) {
-        this._title = value;
     }
 
     public audioId: number = 0;
@@ -207,13 +203,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (maybeMain.signatures[0].signature.args.length === 0) {
                     args = [];
                 }
-                let subName = mainVariable.name.text;
-                postMessage(`print,------ Running dev '${this._title}' ${subName} ------`);
-                postMessage(
-                    `print,${this.getNow()} [scrpt.ctx.run.enter] UI: Entering '${
-                        this._title
-                    }', id '${subName}'`
-                );
+                const title = this.manifest.get("title") || "No Title";
+                const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
+                const subName = mainVariable.name.text;
+                postMessage(`print,------ Running dev '${title}' ${subName} ------`);
+                postMessage(`print,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
@@ -404,10 +398,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return BrsInvalid.Instance;
         }
 
-        // NOTE: Roku's dim implementation creates a resizeable, empty array for the
-        //   bottom children. Resizeable arrays aren't implemented yet (issue #530),
+        // NOTE: Roku's dim implementation creates a resizable, empty array for the
+        //   bottom children. Resizable arrays aren't implemented yet (issue #530),
         //   so when that's added this code should be updated so the bottom-level arrays
-        //   are resizeable, but empty
+        //   are resizable, but empty
         let dimensionValues: number[] = [];
         statement.dimensions.forEach((expr) => {
             let val = this.evaluate(expr);
@@ -599,7 +593,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: "Attempting to exponentiate non-numeric values.",
+                            message: "Attempting to potentiate non-numeric values.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -849,7 +843,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     // TODO: figure out how to handle 32-bit int AND 64-bit int
                     return this.addError(
                         new TypeMismatch({
-                            message: "Attempting to bitwise 'and' number with non-numberic value",
+                            message: "Attempting to bitwise 'and' number with non-numeric value",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -1323,13 +1317,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitForEach(statement: Stmt.ForEach): BrsType {
         let target = this.evaluate(statement.target);
         if (!isIterable(target)) {
-            return this.addError(
-                new BrsError(
-                    `Attempting to iterate across values of non-iterable type ` +
-                        ValueKind.toString(target.kind),
-                    statement.item.location
-                )
-            );
+            // Roku device does not crash if the value is not iterable, just send a console message
+            const message = `BRIGHTSCRIPT: ERROR: Runtime: FOR EACH value is ${ValueKind.toString(
+                target.kind
+            )}`;
+            const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
+            postMessage(`warning,${message}: ${location}`);
+            return BrsInvalid.Instance;
         }
 
         target.getElements().every((element) => {

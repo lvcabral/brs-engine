@@ -33,13 +33,20 @@ onmessage = function (event) {
     if (event.data.device) {
         const interpreter = new Interpreter();
         interpreter.onError(logError);
-        // Set Channel Title
-        interpreter.title = event.data.title;
+        // Manifest
+        let manifest = event.data.manifest;
+        if (manifest instanceof Map) {
+            manifest.forEach(function (value: string, key: string) {
+                interpreter.manifest.set(key, value);
+            });
+        }
         // Registry
         let registry = event.data.device.registry;
-        registry.forEach(function (value: string, key: string) {
-            interpreter.registry.set(key, value);
-        });
+        if (registry instanceof Map) {
+            registry.forEach(function (value: string, key: string) {
+                interpreter.registry.set(key, value);
+            });
+        }
         // DeviceInfo
         let fontFamily = event.data.device.defaultFont || "Asap";
         let fontPath = event.data.device.fontPath || "../fonts/";
@@ -318,7 +325,7 @@ function mkdirTreeSync(fs: FileSystem, directory: string) {
 }
 
 /**
- * Dowload helper funcion
+ * Download helper function
  * @param url url of the file to be downloaded
  * @param type return type (eg. arraybuffer)
  */
