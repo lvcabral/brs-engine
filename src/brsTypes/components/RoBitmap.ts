@@ -355,7 +355,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context;
-            ctx.imageSmoothingEnabled = false;
             let cvs: OffscreenCanvas;
             if (object instanceof RoBitmap || object instanceof RoRegion) {
                 if (rgba instanceof Int32) {
@@ -371,6 +370,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 return BrsBoolean.False;
             }
             if (object instanceof RoBitmap) {
+                ctx.imageSmoothingEnabled = false;
                 ctx.drawImage(
                     cvs,
                     x.getValue(),
@@ -382,6 +382,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 let rcv = object.getRegionCanvas();
                 let tx = object.getTransX() * scaleX.getValue();
                 let ty = object.getTransY() * scaleY.getValue();
+                ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
                 ctx.drawImage(
                     rcv,
                     x.getValue() + tx,

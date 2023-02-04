@@ -221,6 +221,10 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return ctx.getImageData(0, 0, this.width, this.height);
     }
 
+    getRegionScaleMode(): number {
+        return this.scaleMode;
+    }
+
     redrawCanvas(): void {
         // TODO: Check the impact of translate on this method
         const bmp = this.bitmap.getCanvas();
@@ -774,7 +778,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            ctx.imageSmoothingEnabled = false;
             let cvs: OffscreenCanvas;
             if (object instanceof RoBitmap || object instanceof RoRegion) {
                 if (rgba instanceof Int32) {
@@ -790,6 +793,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 return BrsBoolean.False;
             }
             if (object instanceof RoBitmap) {
+                ctx.imageSmoothingEnabled = false;
                 ctx.drawImage(
                     cvs,
                     x.getValue(),
@@ -801,6 +805,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 let rcv = object.getRegionCanvas();
                 let tx = object.getTransX() * scaleX.getValue();
                 let ty = object.getTransY() * scaleY.getValue();
+                ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
                 ctx.drawImage(
                     rcv,
                     x.getValue() + tx,
