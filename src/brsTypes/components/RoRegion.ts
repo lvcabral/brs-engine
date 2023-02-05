@@ -51,7 +51,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.canvas = new OffscreenCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d", {
             alpha: true,
-            willReadFrequently: true,
         }) as OffscreenCanvasRenderingContext2D;
         if (
             this.x + this.width <= bitmap.getCanvas().width &&

@@ -12,7 +12,7 @@ const screenSize = { width: 1280, height: 720 };
 const display: HTMLCanvasElement | OffscreenCanvas =
     (document.getElementById("display") as HTMLCanvasElement) ||
     new OffscreenCanvas(screenSize.width, screenSize.height);
-const ctx = display.getContext("2d", { alpha: false, willReadFrequently: true });
+const ctx = display.getContext("2d", { alpha: false });
 const bufferCanvas: OffscreenCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
 const bufferCtx = bufferCanvas.getContext("2d") as CanvasRenderingContext2D | null;
 // Performance Variables

@@ -55,8 +55,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.doubleBuffer =
             (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
         this.currentBuffer = 0;
-        this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 3 : 1);
-        this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 3 : 1);
+        this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 2 : 1);
+        this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
         for (let index = 0; index < this.canvas.length; index++) {
             this.canvas[index] = new OffscreenCanvas(this.width, this.height);
             this.context[index] = this.canvas[index].getContext("2d", {
@@ -66,7 +66,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas[index].height = this.height;
         }
         this.alphaEnable = false;
-        // , ["", "", "ifGetMessagePort", "ifSetMessagePort"]
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
