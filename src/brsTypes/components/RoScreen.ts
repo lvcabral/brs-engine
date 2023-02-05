@@ -113,7 +113,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         for (let index = 0; index < this.canvas.length; index++) {
             this.context[index] = this.canvas[index].getContext("2d", {
                 alpha: this.alphaEnable,
-                willReadFrequently: true
+                willReadFrequently: true,
             }) as OffscreenCanvasRenderingContext2D;
         }
         return BrsInvalid.Instance;
