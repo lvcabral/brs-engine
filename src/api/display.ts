@@ -16,7 +16,7 @@ const ctx = display.getContext("2d", { alpha: false });
 const bufferCanvas: OffscreenCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
 const bufferCtx = bufferCanvas.getContext("2d") as CanvasRenderingContext2D | null;
 // Performance Variables
-let showFPS = false;
+let calcFps = false;
 let lastTime = 0;
 let frames = 0;
 let fpsSum = 0;
@@ -153,7 +153,7 @@ export function drawBufferImage(buffer?: any) {
             ctx.setLineDash([1, 2]);
             ctx.strokeRect(x, y, w, h);
         }
-        if (showFPS) {
+        if (calcFps) {
             const now = performance.now();
             const fps = 1000 / (now - lastTime);
             lastTime = now;
@@ -164,9 +164,7 @@ export function drawBufferImage(buffer?: any) {
                 frames = 0;
                 fpsSum = 0;
             }
-            ctx.font = "16px monospace";
-            ctx.fillStyle = "white";
-            ctx.fillText(`fps: ${fpsAvg.toFixed(3)}`, 25, 25);
+            notifyAll("fps", fpsAvg);
         }
     }
 }
@@ -199,7 +197,7 @@ export function setOverscan(mode: string) {
     overscanMode = mode;
 }
 
-// Set flag to show Frames per Second on Screen
-export function setShowFps(state: boolean) {
-    showFPS = state;
+// Set flag to calculate Frames per Second on Screen
+export function setCalcFps(state: boolean) {
+    calcFps = state;
 }

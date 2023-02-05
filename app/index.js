@@ -40,7 +40,7 @@ if (supportedBrowser()) {
     // Initialize Device Emulator and subscribe to events
     libVersion.innerHTML = brsEmu.getVersion();
     brsEmu.initialize(customDeviceInfo, { debugToConsole: true, customKeys: customKeys });
-    brsEmu.showDisplayFps(true);
+    brsEmu.enableFps(true);
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
             currentChannel = data;
@@ -61,6 +61,8 @@ if (supportedBrowser()) {
             loading.style.visibility = "hidden";
             channelIcons("visible");
             fileSelector.value = null;
+        } else if (event === "fps") {
+            channelInfo.innerHTML = `${currentChannel.title}<br/>fps: ${data.toFixed(3)}<br/>`;
         }
     });
 } else {

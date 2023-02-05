@@ -30,8 +30,8 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 - brsEMu.**getOverscanMode**() - Returns the current overscan mode. 
 - brsEMu.**setOverscanMode**(mode) - Configure the overscan mode. Can show guidelines or actually cut the frame
     - `mode` (string) - One of the supported modes: `"disabled"`, `"guidelines"` or `"overscan"`
-- brsEMu.**showDisplayFps**(mode) - Enable or disable display the average frames per seconds on screen
-    - `state` (boolean) - If `true` shows the FPS on the top left corner of the display
+- brsEMu.**enableFps**(mode) - Enable or disable calculating the average frames per seconds
+    - `state` (boolean) - If `true` the library will generate an event with the average FPS every 15 frames
 - brsEMu.**sendKeyDown**(key) - Send a remote control key down event to the emulator
     - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
 - brsEMu.**sendKeyUp**(key) - Send a remote control key up event to the emulator
@@ -58,6 +58,8 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
     - `data` (boolean): If `true` the display canvas is in **full screen** mode
 - **resolution** - Triggered when the emulated screen resolution changes (controled via BrightScript)
     - `data` (object): Contains screen dimensions: `{width: integer, height: integer}`
+- **fps** - If enabled by the `enableFps()` method (see above) triggered every 15 frames
+    - `data` (number): Contains the average Frames per Seconds of the last 15 frames
 - **debug** - Triggered when debug messages arrive from the worker library (BrightScript Interpreter)
     - `data` (object): Contains: `{level: string, content: string}`, levels are: `print`, `warning` and `error`
 - **error** - Triggered when the any execution exception happens on the API library

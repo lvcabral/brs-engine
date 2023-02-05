@@ -18,7 +18,7 @@ import {
     setCurrentMode,
     setOverscan,
     overscanMode,
-    setShowFps,
+    setCalcFps,
 } from "./display";
 import { subscribeControl, initControlModule, sendKey } from "./control";
 import {
@@ -129,7 +129,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
                 terminate("EXIT_SETTINGS_UPDATE");
             }
             notifyAll("display", data);
-        } else if (["redraw", "resolution"].includes(event)) {
+        } else if (["redraw", "resolution", "fps"].includes(event)) {
             notifyAll(event, data);
         }
     });
@@ -519,8 +519,8 @@ export function getOverscanMode() {
 export function setOverscanMode(mode: string) {
     setOverscan(mode);
 }
-export function showDisplayFps(state: boolean) {
-    setShowFps(state);
+export function enableFps(state: boolean) {
+    setCalcFps(state);
 }
 
 // Remote Control API
