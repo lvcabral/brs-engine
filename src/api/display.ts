@@ -142,16 +142,16 @@ export function drawBufferImage(buffer?: any) {
             ctx.drawImage(bufferCanvas, x, y, w, h, 0, 0, screenSize.width, screenSize.height);
         } else {
             ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
-        }
-        if (overscanMode === "guidelines") {
-            let x = Math.round(screenSize.width * overscan);
-            let y = Math.round(screenSize.height * overscan);
-            let w = screenSize.width - x * 2;
-            let h = screenSize.height - y * 2;
-            ctx.strokeStyle = "#D0D0D0FF";
-            ctx.lineWidth = 2;
-            ctx.setLineDash([1, 2]);
-            ctx.strokeRect(x, y, w, h);
+            if (overscanMode === "guidelines") {
+                let x = Math.round(screenSize.width * overscan);
+                let y = Math.round(screenSize.height * overscan);
+                let w = screenSize.width - x * 2;
+                let h = screenSize.height - y * 2;
+                ctx.strokeStyle = "#D0D0D0FF";
+                ctx.lineWidth = 2;
+                ctx.setLineDash([1, 2]);
+                ctx.strokeRect(x, y, w, h);
+            }
         }
         if (calcFps) {
             const now = performance.now();
