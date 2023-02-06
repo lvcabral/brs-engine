@@ -1041,6 +1041,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (
                     returnedValue &&
                     isBoxable(returnedValue) &&
+                    returnedValue.kind !== ValueKind.Invalid &&
                     satisfiedSignature.signature.returns === ValueKind.Object
                 ) {
                     returnedValue = returnedValue.box();
@@ -1048,8 +1049,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (
                     returnedValue &&
+                    this.canAutoCast(returnedValue.kind, satisfiedSignature.signature.returns)
+                ) {
+                    if (
+                        returnedValue instanceof Float ||
+                        returnedValue instanceof Double ||
+                        returnedValue instanceof Int32
+                    ) {
+                        if (satisfiedSignature.signature.returns === ValueKind.Double) {
+                            returnedValue = new Double(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Float) {
+                            returnedValue = new Float(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Int32) {
+                            returnedValue = new Int32(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Int64) {
+                            returnedValue = new Int64(returnedValue.getValue());
+                        }
+                    }
+                } else if (
+                    returnedValue &&
                     satisfiedSignature.signature.returns !== ValueKind.Dynamic &&
-                    satisfiedSignature.signature.returns !== returnedValue.kind
+                    satisfiedSignature.signature.returns !== returnedValue.kind &&
+                    returnedValue.kind !== ValueKind.Invalid
                 ) {
                     this.addError(
                         new Stmt.Runtime(
@@ -1614,5 +1635,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
         let ms = d.getMilliseconds();
         return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
+    }
+
+    private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
+        if (fromKind === ValueKind.Float && toKind === ValueKind.Double) {
+            return true;
+        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int32) {
+            return true;
+        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int64) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Float) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int32) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int64) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Float) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Double) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Int64) {
+            return true;
+        }
+        return false;
     }
 }

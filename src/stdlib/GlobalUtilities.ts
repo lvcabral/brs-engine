@@ -14,6 +14,7 @@ import {
     roDouble,
     BrsBoolean,
     Int32,
+    Int64,
     Float,
     Double,
 } from "../brsTypes";
@@ -89,6 +90,16 @@ export const GetInterface = new Callable("GetInterface", {
                 return new roFloat(object);
             } else if (ifname.value.toLowerCase() === "ifdouble" && object instanceof Double) {
                 return new roDouble(object);
+            } else if (
+                ifname.value.toLowerCase() === "iftostr" &&
+                (object instanceof BrsString ||
+                    object instanceof BrsBoolean ||
+                    object instanceof Int32 ||
+                    object instanceof Int64 ||
+                    object instanceof Float ||
+                    object instanceof Double)
+            ) {
+                return object;
             }
         }
         return BrsInvalid.Instance;
