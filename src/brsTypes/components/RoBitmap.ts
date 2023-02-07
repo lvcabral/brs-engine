@@ -52,11 +52,19 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             }
         } else if (param instanceof RoAssociativeArray) {
             let paramWidth = param.get(new BrsString("width"));
-            if (paramWidth instanceof Int32 || paramWidth instanceof Float || paramWidth instanceof Double) {
+            if (
+                paramWidth instanceof Int32 ||
+                paramWidth instanceof Float ||
+                paramWidth instanceof Double
+            ) {
                 width = Math.trunc(paramWidth.getValue());
             }
             let paramHeight = param.get(new BrsString("height"));
-            if (paramHeight instanceof Int32 || paramHeight instanceof Float || paramHeight instanceof Double) {
+            if (
+                paramHeight instanceof Int32 ||
+                paramHeight instanceof Float ||
+                paramHeight instanceof Double
+            ) {
                 height = Math.trunc(paramHeight.getValue());
             }
             let alphaEnable = param.get(new BrsString("alphaEnable"));
