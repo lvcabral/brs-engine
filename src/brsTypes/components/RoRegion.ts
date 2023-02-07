@@ -156,6 +156,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         const ctx = this.bitmap.getContext();
         ctx.fillStyle = rgbaIntToHex(rgba);
         ctx.fillRect(this.x, this.y, this.width, this.height);
+        this.redrawCanvas();
     }
 
     drawImage(image: OffscreenCanvas, x: number, y: number) {
@@ -171,6 +172,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             image.width,
             image.height
         );
+        this.redrawCanvas();
     }
 
     getCanvas(): OffscreenCanvas {
@@ -700,6 +702,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                     this.y + y.getValue() + object.getTransY()
                 );
             }
+            this.redrawCanvas();
             ctx.globalAlpha = 1.0;
             return BrsBoolean.True;
         },
@@ -748,8 +751,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
             if (object instanceof RoBitmap) {
                 ctx.drawImage(cvs, 0, 0, cvs.width, cvs.height);
             } else {
+                let rcv = object.getRegionCanvas();
                 ctx.drawImage(
-                    cvs,
+                    rcv,
                     object.getPosX(),
                     object.getPosY(),
                     object.getImageWidth(),
@@ -760,6 +764,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                     object.getImageHeight()
                 );
             }
+            this.redrawCanvas();
             ctx.rotate(-angleInRad);
             ctx.translate(-positionX, -positionY);
             ctx.globalAlpha = 1.0;
@@ -826,6 +831,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                     object.getImageHeight() * scaleY.getValue()
                 );
             }
+            this.redrawCanvas();
             ctx.globalAlpha = 1.0;
             return BrsBoolean.True;
         },
@@ -857,6 +863,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
             ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
             ctx.stroke();
+            this.redrawCanvas();
             return BrsBoolean.True;
         },
     });
@@ -881,6 +888,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 size.getValue(),
                 size.getValue()
             );
+            this.redrawCanvas();
             return BrsBoolean.True;
         },
     });
@@ -906,6 +914,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 width.getValue(),
                 height.getValue()
             );
+            this.redrawCanvas();
             return BrsBoolean.True;
         },
     });
@@ -932,6 +941,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.x + x.getValue(),
                 this.y + y.getValue() + font.getTopAdjust()
             );
+            this.redrawCanvas();
             return BrsBoolean.True;
         },
     });
