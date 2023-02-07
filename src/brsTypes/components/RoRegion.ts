@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Float, RoFont } from "..";
+import { BrsType, Double, Float, RoFont } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -35,10 +35,22 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.valid = false;
         this.bitmap = bitmap;
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
-        this.x = x.getValue();
-        this.y = y.getValue();
-        this.width = width.getValue();
-        this.height = height.getValue();
+        this.x = 0;
+        if (x instanceof Float || x instanceof Double || x instanceof Int32) {
+            this.x = Math.trunc(x.getValue());
+        }
+        this.y = 0;
+        if (y instanceof Float || y instanceof Double || y instanceof Int32) {
+            this.y = Math.trunc(y.getValue());
+        }
+        this.width = bitmap.getCanvas().width;
+        if (width instanceof Float || width instanceof Double || width instanceof Int32) {
+            this.width = Math.trunc(width.getValue());
+        }
+        this.height = bitmap.getCanvas().height;
+        if (height instanceof Float || height instanceof Double || height instanceof Int32) {
+            this.height = Math.trunc(height.getValue());
+        }
         this.translationX = 0;
         this.translationY = 0;
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)

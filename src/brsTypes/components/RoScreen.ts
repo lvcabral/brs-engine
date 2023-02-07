@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, Double } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -32,25 +32,28 @@ export class RoScreen extends BrsComponent implements BrsValue {
         height?: Int32
     ) {
         super("roScreen");
-        let defaultWidth, defaultHeight;
+        let defaultWidth = 854;
+        let defaultHeight = 480;
         if (interpreter.deviceInfo.get("displayMode") === "1080p") {
             defaultWidth = 1920;
             defaultHeight = 1080;
         } else if (interpreter.deviceInfo.get("displayMode") === "720p") {
             defaultWidth = 1280;
             defaultHeight = 720;
-        } else {
-            defaultWidth = 720;
-            defaultHeight = 480;
         }
-        this.width =
-            (width instanceof Int32 && width.getValue() && width.getValue()) || defaultWidth;
-        this.height = (height instanceof Int32 && height.getValue()) || defaultHeight;
-        if (this.width <= 0) {
-            this.width = defaultWidth;
+        this.width = defaultWidth;
+        this.height = defaultHeight;
+        if (width instanceof Float || width instanceof Double || width instanceof Int32) {
+            this.width = Math.trunc(width.getValue());
+            if (this.width <= 0) {
+                this.width = defaultWidth;
+            }
         }
-        if (this.height <= 0) {
-            this.height = defaultHeight;
+        if (height instanceof Float || height instanceof Double || height instanceof Int32) {
+            this.height = Math.trunc(height.getValue());
+            if (this.height <= 0) {
+                this.height = defaultHeight;
+            }
         }
         this.doubleBuffer =
             (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
@@ -272,7 +275,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Draw the source object, at position x,y, scaled horizotally by scaleX and vertically by scaleY. */
+    /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
     private drawScaledObject = new Callable("drawScaledObject", {
         signature: {
             args: [

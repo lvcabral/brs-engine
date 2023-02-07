@@ -276,10 +276,18 @@ export class Callable implements Brs.BrsValue {
             }
 
             if (
+                expected.type.kind === Brs.ValueKind.Int32 &&
+                received.kind === Brs.ValueKind.Double
+            ) {
+                args[index] = new Int32(received.getValue());
+                return;
+            }
+
+            if (
                 expected.type.kind === Brs.ValueKind.Double &&
                 received.kind === Brs.ValueKind.Float
             ) {
-                args[index] = new Float(received.getValue());
+                args[index] = new Double(received.getValue());
                 return;
             }
 
@@ -287,7 +295,7 @@ export class Callable implements Brs.BrsValue {
                 expected.type.kind === Brs.ValueKind.Float &&
                 received.kind === Brs.ValueKind.Double
             ) {
-                args[index] = new Double(received.getValue());
+                args[index] = new Float(received.getValue());
                 return;
             }
 

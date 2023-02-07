@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, Double } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -52,12 +52,12 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             }
         } else if (param instanceof RoAssociativeArray) {
             let paramWidth = param.get(new BrsString("width"));
-            if (paramWidth instanceof Int32 || paramWidth instanceof Float) {
-                width = paramWidth.getValue();
+            if (paramWidth instanceof Int32 || paramWidth instanceof Float || paramWidth instanceof Double) {
+                width = Math.trunc(paramWidth.getValue());
             }
             let paramHeight = param.get(new BrsString("height"));
-            if (paramHeight instanceof Int32 || paramHeight instanceof Float) {
-                height = paramHeight.getValue();
+            if (paramHeight instanceof Int32 || paramHeight instanceof Float || paramHeight instanceof Double) {
+                height = Math.trunc(paramHeight.getValue());
             }
             let alphaEnable = param.get(new BrsString("alphaEnable"));
             if (alphaEnable instanceof BrsBoolean) {
@@ -332,7 +332,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Draw the source object, at position x,y, scaled horizotally by scaleX and vertically by scaleY. */
+    /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
     private drawScaledObject = new Callable("drawScaledObject", {
         signature: {
             args: [
