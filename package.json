@@ -1,6 +1,6 @@
 {
   "name": "brs-emu",
-  "version": "0.10.3-dev",
+  "version": "0.10.4-dev",
   "description": "BrightScript Draw 2D API Emulator",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "homepage": "https://lvcabral.com/brs/",
