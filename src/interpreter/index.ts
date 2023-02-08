@@ -775,6 +775,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.Equal:
                 if (canCheckEquality(left, lexeme, right)) {
+                    if (left.kind === ValueKind.Invalid) {
+                        return right.equalTo(left);
+                    }
                     return left.equalTo(right);
                 }
 
@@ -793,6 +796,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.LessGreater:
                 if (canCheckEquality(left, lexeme, right)) {
+                    if (left.kind === ValueKind.Invalid) {
+                        return right.equalTo(left).not();
+                    }
                     return left.equalTo(right).not();
                 }
 
