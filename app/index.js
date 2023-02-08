@@ -14,7 +14,7 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
-// Customize Device Info - Some fields are informational, others change the emulator behavior
+// Init Current Channel
 let currentChannel = { id: "", running: false };
 
 // Start the emulator
