@@ -9,12 +9,11 @@ import { subscribeCallback } from "./util";
 
 // Emulator Display
 const screenSize = { width: 1280, height: 720 };
-const display: HTMLCanvasElement | OffscreenCanvas =
-    (document.getElementById("display") as HTMLCanvasElement) ||
-    new OffscreenCanvas(screenSize.width, screenSize.height);
-const ctx = display.getContext("2d", { alpha: false });
-const bufferCanvas: OffscreenCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
-const bufferCtx = bufferCanvas.getContext("2d") as CanvasRenderingContext2D | null;
+let display: HTMLCanvasElement | OffscreenCanvas;
+let ctx: CanvasRenderingContext2D | null;
+let bufferCanvas: OffscreenCanvas;
+let bufferCtx: CanvasRenderingContext2D | null;
+
 // Performance Variables
 let calcFps = false;
 let lastTime = 0;
@@ -27,6 +26,24 @@ export let displayMode = "720p";
 export let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 export function initDisplayModule(mode: string, lowRes: boolean) {
+    // Initialize Display Canvas
+    if (typeof OffscreenCanvas !== "undefined") {
+        display =
+            (document.getElementById("display") as HTMLCanvasElement) ||
+            new OffscreenCanvas(screenSize.width, screenSize.height);
+        if (display) {
+            ctx = display.getContext("2d", { alpha: false });
+        }
+        bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
+        if (bufferCanvas) {
+            bufferCtx = bufferCanvas.getContext("2d") as CanvasRenderingContext2D | null;
+        }
+    } else {
+        console.warn(
+            `Your browser does not support OffscreenCanvas, so the emulator will not work properly, ` +
+                `to know more visit https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas`
+        );
+    }
     displayMode = mode;
     // Display Aspect Ratio
     if (lowRes) {

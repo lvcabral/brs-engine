@@ -111,8 +111,8 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     } else {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
         console.warn(
-            `Remote control emulation will not work as SharedArrayBuffer is not enabled, 
-            to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
+            `Remote control emulation will not work as SharedArrayBuffer is not enabled, ` +
+                `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
         );
     }
     sharedArray = new Int32Array(sharedBuffer);

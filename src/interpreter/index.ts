@@ -1064,7 +1064,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
 
                 if (returnedValue) {
-                    let coercedValue = tryCoerce(returnedValue, satisfiedSignature.signature.returns);
+                    let coercedValue = tryCoerce(
+                        returnedValue,
+                        satisfiedSignature.signature.returns
+                    );
                     if (coercedValue != null) {
                         returnedValue = coercedValue;
                     }

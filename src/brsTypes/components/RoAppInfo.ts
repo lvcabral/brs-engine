@@ -1,12 +1,11 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort } from "..";
+import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
 export class RoAppInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private port?: RoMessagePort;
 
     constructor() {
         super("roAppInfo");
