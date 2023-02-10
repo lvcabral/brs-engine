@@ -194,11 +194,16 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
-            let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
-            let layer = this.sprites.get(z.getValue());
-            layer ? layer.push(sprite) : (layer = [sprite]);
-            this.sprites.set(z.getValue(), layer);
-            return sprite;
+            if (region instanceof RoRegion) {
+                let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
+                let layer = this.sprites.get(z.getValue());
+                layer ? layer.push(sprite) : (layer = [sprite]);
+                this.sprites.set(z.getValue(), layer);
+                return sprite;
+            } else {
+                postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid:"); // TODO: add location
+            }
+            return BrsInvalid.Instance;
         },
     });
 
@@ -208,19 +213,32 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("regions", ValueKind.Object),
+                new StdlibArgument("regionArray", ValueKind.Object),
                 new StdlibArgument("z", ValueKind.Int32, new Int32(0)),
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, regions: RoArray, z: Int32) => {
-            // TODO: Verify if there is at least one RoRegion in the regions array
-            let sprite = new RoSprite(x, y, regions, z, this.spriteId++, this);
-            let layer = this.sprites.get(z.getValue());
-            layer ? layer.push(sprite) : (layer = [sprite]);
-            this.sprites.set(z.getValue(), layer);
-            this.animations.push(sprite);
-            return sprite;
+        impl: (_: Interpreter, x: Int32, y: Int32, regionArray: RoArray, z: Int32) => {
+            if (regionArray instanceof RoArray) {
+                const regions = regionArray.getElements();
+                if (regions && regions.length > 0) {
+                    if (regions[0] instanceof RoRegion) {
+                        let sprite = new RoSprite(x, y, regionArray, z, this.spriteId++, this);
+                        let layer = this.sprites.get(z.getValue());
+                        layer ? layer.push(sprite) : (layer = [sprite]);
+                        this.sprites.set(z.getValue(), layer);
+                        this.animations.push(sprite);
+                        return sprite;
+                    } else {
+                        postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray item type is roInvalid:"); // TODO: add location
+                    }
+                } else {
+                    postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray is empty:"); // TODO: add location
+                }
+            } else {
+                postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray parameter type roInvalid:"); // TODO: add location
+            }
+            return BrsInvalid.Instance;
         },
     });
 
