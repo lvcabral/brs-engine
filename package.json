@@ -74,7 +74,7 @@
     "@types/path-parse": "^1.0.19",
     "@types/upng-js": "^2.1.1",
     "@types/url-parse": "^1.4.3",
-    "@types/xml2js": "^0.4.4",
+    "@types/xml2js": "^0.4.8",
     "husky": ">=1",
     "jest": "26",
     "jest-junit": "^6.1.0",

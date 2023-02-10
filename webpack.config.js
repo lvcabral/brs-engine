@@ -1,5 +1,5 @@
 const path = require("path");
-const JavaScriptObfuscator = require("webpack-obfuscator");
+const WebpackObfuscator = require('webpack-obfuscator');
 
 module.exports = env => {
     const isProduction = env.NODE_ENV === "production";
@@ -40,11 +40,11 @@ module.exports = env => {
                 extensions: [".tsx", ".ts", ".js"],
             },
             plugins: [
-                new JavaScriptObfuscator(
+                new WebpackObfuscator(
                     {
                         rotateUnicodeArray: true,
                     },
-                    ["brsEmu.worker.js"]
+                    ["brsEmu.js", "brsEmu.worker.js"]
                 ),
             ],
             node: { fs: "empty", readline: "empty" },

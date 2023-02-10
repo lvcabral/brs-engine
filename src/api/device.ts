@@ -72,7 +72,8 @@ const deviceData = {
 let debugToConsole: boolean = true;
 
 // Channel Data
-let splashTimeout: number = 1600;
+const defaultSplashTime = 1600;
+let splashTimeout = 0;
 let source: any[] = [];
 let paths: any[] = [];
 let txts: any[] = [];
@@ -87,9 +88,11 @@ const currentChannel = {
     title: "",
     subtitle: "",
     version: "",
+    execSource: "",
     clearDisplay: true,
     running: false,
 };
+const lastChannel = { id: "", exitReason: "EXIT_UNKNOWN" };
 
 export function initialize(customDeviceInfo?: any, options: any = {}) {
     Object.assign(deviceData, customDeviceInfo);
@@ -162,7 +165,8 @@ export function execute(
     filePath: string,
     fileData: any,
     clearDisplayOnExit: boolean = true,
-    mute: boolean = false
+    mute: boolean = false,
+    execSource: string = "auto-run-dev"
 ) {
     const fileName = filePath.split(".").slice(0, -1).join(".");
     const fileExt = filePath.split(".").pop();
@@ -170,6 +174,7 @@ export function execute(
     currentChannel.id = filePath.hashCode();
     currentChannel.file = filePath;
     currentChannel.clearDisplay = clearDisplayOnExit;
+    currentChannel.execSource = execSource;
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
@@ -207,6 +212,7 @@ function openSourceCode(fileName: string, fileData: any) {
         txts = [];
         source.push(this.result);
         paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
+        splashTimeout = 0;
         clearDisplay();
         notifyAll("loaded", currentChannel);
         runChannel();
@@ -235,6 +241,7 @@ function openChannelZip(f: any) {
                         const buildVersion = parseInt(manifestMap.get("build_version")) || 0;
                         currentChannel.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
                         const splashMinTime = manifestMap.get("splash_min_time");
+                        splashTimeout = defaultSplashTime;
                         if (splashMinTime && !isNaN(parseInt(splashMinTime))) {
                             splashTimeout = parseInt(splashMinTime);
                         }
@@ -389,11 +396,22 @@ function openChannelZip(f: any) {
 function runChannel() {
     showDisplay();
     currentChannel.running = true;
+    const input = new Map([
+        ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+        ["splashTime", splashTimeout.toString()],
+    ]);
+    if (currentChannel.id === lastChannel.id) {
+        input.set("lastExitOrTerminationReason", lastChannel.exitReason);
+    }
+    if (currentChannel.execSource !== "") {
+        input.set("source", currentChannel.execSource);
+    }
     brsWorker = new Worker(brsEmuLib);
     brsWorker.addEventListener("message", workerCallback);
     const payload = {
         device: deviceData,
         manifest: manifestMap,
+        input: input,
         paths: paths,
         brs: source,
         texts: txts,
@@ -495,10 +513,13 @@ export function terminate(reason: string) {
         clearDisplay();
     }
     resetWorker();
+    lastChannel.id = currentChannel.id;
+    lastChannel.exitReason = reason;
     currentChannel.id = "";
     currentChannel.file = "";
     currentChannel.title = "";
     currentChannel.version = "";
+    currentChannel.execSource = "";
     currentChannel.running = false;
     notifyAll("closed", reason);
 }

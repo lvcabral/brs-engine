@@ -14,7 +14,7 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
-// Init Current Channel
+// Channel status object
 let currentChannel = { id: "", running: false };
 
 // Start the emulator
@@ -111,7 +111,7 @@ function loadZip(zip) {
     fileSelector.value = null;
     fetch(zip).then(function (response) {
         if (response.status === 200 || response.status === 0) {
-            brsEmu.execute(zip, response.blob());
+            brsEmu.execute(zip, response.blob(), true, false, "homescreen");
             display.focus();
         } else {
             loading.style.visibility = "hidden";

@@ -33,6 +33,23 @@ onmessage = function (event) {
     if (event.data.device) {
         const interpreter = new Interpreter();
         interpreter.onError(logError);
+        // Input Parameters / Deep Link
+        const inputArray = new Array<AAMember>();
+        const inputMap = new Map([
+            ["instant_on_run_mode", "foreground"],
+            ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+            ["source", "auto-run-dev"],
+            ["splashTime", "0"],
+        ]);
+        let input = event.data.input;
+        if (input instanceof Map) {
+            input.forEach((value, key) => {
+                inputMap.set(key, value);
+            });
+        }
+        inputMap.forEach((value, key) => {
+            inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
+        });
         // Manifest
         let manifest = event.data.manifest;
         if (manifest instanceof Map) {
@@ -144,7 +161,7 @@ onmessage = function (event) {
                 if (trType !== "") {
                     let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
                     let xmlParser = new xml2js.Parser(xmlOptions);
-                    xmlParser.parseString(xmlText, function (err: Error, parsed: any) {
+                    xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
                         if (err) {
                             postMessage(`warning,Error parsing XML: ${err.message}`);
                         } else if (parsed) {
@@ -177,7 +194,7 @@ onmessage = function (event) {
             }
         }
         // Run Channel
-        const exitReason = run(source, interpreter);
+        const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
         postMessage(`end,${exitReason}`);
     } else if (typeof event.data === "string" && event.data === "getVersion") {
         postMessage(`version,${version}`);
@@ -219,11 +236,16 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
  * @param source array of BrightScript code to lex, parse, and interpret.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
+ * @param aa associative array with the input parameters
  * @returns an array of statement execution results, indicating why each
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(source: Map<string, string>, interpreter: Interpreter): string {
+function run(
+    source: Map<string, string>,
+    interpreter: Interpreter,
+    aa: RoAssociativeArray,
+): string {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
@@ -273,14 +295,8 @@ function run(source: Map<string, string>, interpreter: Interpreter): string {
         allStatements.push(...libParse.statements);
     }
     try {
-        let aa = new Array<AAMember>();
-        aa.push({
-            name: new BrsString("lastExitOrTerminationReason"),
-            value: new BrsString("EXIT_UNKNOWN"),
-        });
-        aa.push({ name: new BrsString("source"), value: new BrsString("auto-run-dev") });
-        interpreter.exec(allStatements, new RoAssociativeArray(aa));
-        return "EXIT_USER_KILL";
+        interpreter.exec(allStatements, aa);
+        return "EXIT_USER_NAV";
     } catch (err: any) {
         postMessage(`warning,Unhandled Interpreter error: ${err.message}`);
         return "EXIT_BRIGHTSCRIPT_CRASH";
