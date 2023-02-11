@@ -175,6 +175,22 @@ export class Environment {
     }
 
     /**
+     * Returns list of variables of a specific in this environment.
+     * @param scope the scope to return variables map
+     * @returns the map of variables for the requested scope
+     */
+    public getList(scope: Scope): Map<string, BrsType> {
+        switch (scope) {
+            case Scope.Global:
+                return this.global;
+            case Scope.Module:
+                return this.module;
+            case Scope.Function:
+                return this.function;
+        }
+    }
+
+    /**
      * Creates a clone of the current environment, but without its function-scoped
      * values. Useful for creating sub-environments.
      *

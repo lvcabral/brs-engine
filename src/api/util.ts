@@ -13,6 +13,20 @@ export enum dataType {
     SND,
     IDX,
     WAV,
+    CMD,
+}
+
+// Debug commands enumerator
+export enum debugCommand {
+    BT,
+    CONT,
+    EXIT,
+    HELP,
+    LAST,
+    LIST,
+    PRINT,
+    THREADS,
+    VAR,
 }
 
 // Audio events enumerator

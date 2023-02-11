@@ -42,6 +42,7 @@ import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
+import { shared } from "..";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -54,6 +55,17 @@ export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
 };
 
+enum debugCommand {
+    BT,
+    CONT,
+    EXIT,
+    HELP,
+    LAST,
+    LIST,
+    PRINT,
+    THREADS,
+    VAR,
+}
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _startTime = Date.now();
@@ -63,6 +75,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
+    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4, CMD: 5 };
+
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
@@ -338,6 +352,98 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
+    visitStop(statement: Stmt.Stop): BrsType {
+        // TODO:
+        //  - split lines in batches
+        const buffer = shared.get("buffer") || new Int32Array([]);
+        const error = new BrsError("Stop statement not implemented yet!", statement.location);
+        const prompt = "Brightscript Debugger> ";
+        let debugMsg = "BrightScript Micro Debugger.\r\n";
+        debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n";
+        debugMsg += "Current Function:\r\n";
+        let line: number = statement.location.start.line;
+        for (let index = line - 8; index < line; index++) {
+            debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
+        }
+        debugMsg += `${line.toString().padStart(3, "0")}:*     stop\r\n`;
+        for (let index = line + 1; index < line + 5; index++) {
+            debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
+        }
+        debugMsg += "Source Digest(s):\r\n";
+        debugMsg += `pkg: dev ${this.getChannelVersion()} 5c04534a ${this.manifest.get(
+            "title"
+        )}\r\n`;
+        debugMsg += `STOP (runtime error &hf7) in ${this.formatLocation(statement.location)}\r\n`;
+        debugMsg += "Backtrace: ";
+        postMessage(`print,${debugMsg}`);
+        this.debugBackTrace(statement.location);
+        postMessage(`print,Local variables:`);
+        this.debugLocalVariables();
+        postMessage(`print,${prompt}`);
+        let inDebug = true;
+        while (inDebug) {
+            Atomics.wait(buffer, this.type.CMD, -1);
+            let cmd = Atomics.load(buffer, this.type.CMD);
+            switch (cmd) {
+                case debugCommand.BT:
+                    this.debugBackTrace(statement.location);
+                    postMessage(`print,${prompt}`);
+                    break;
+                case debugCommand.EXIT:
+                    inDebug = false;
+                    break;
+                case debugCommand.THREADS:
+                    debugMsg = "ID    Location                                Source Code\r\n";
+                    debugMsg += `0*    ${this.formatLocation(statement.location).padEnd(
+                        40
+                    )}stop\r\n`;
+                    debugMsg += " *selected";
+                    postMessage(`print,${debugMsg}`);
+                    postMessage(`print,${prompt}`);
+                    break;
+                case debugCommand.VAR:
+                    this.debugLocalVariables();
+                    postMessage(`print,${prompt}`);
+                    break;
+                default:
+                    console.log("command not implemented yet!");
+                    break;
+            }
+            Atomics.store(buffer, this.type.CMD, -1);
+        }
+        throw error;
+    }
+
+    private debugBackTrace(location: any) {
+        let debugMsg = `#1  Function ${"startmenu()"} As ${"Integer"}\r\n`;
+        debugMsg += `   file/line: ${this.formatLocation(location)}\r\n`;
+        debugMsg += `#0  Function ${"main()"} As ${"Void"}\r\n`;
+        debugMsg += `   file/line: ${"pkg:/source/gameMain.brs(90)"}`;
+        postMessage(`print,${debugMsg}`);
+    }
+
+    private debugLocalVariables() {
+        let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
+        debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
+            this.environment.getM().getElements().length
+        }\r\n`;
+        let fnc = this.environment.getList(Scope.Function);
+        fnc.forEach((value, key) => {
+            if (value instanceof Int32) {
+                debugMsg += `${key.padEnd(16)} Integer val:${value.toString()}\r\n`;
+            } else if (value instanceof RoAssociativeArray) {
+                debugMsg += `${key.padEnd(16)} roAssociativeArray count:${
+                    value.getElements().length
+                }\r\n`;
+            } else {
+                debugMsg += `${key.padEnd(17)}${this.debugComponentName(value.toString())}\r\n`;
+            }
+        });
+        postMessage(`print,${debugMsg}`);
+    }
+    private debugComponentName(value: string): string {
+        return value.split(": ")[1].replace(">", "");
+    }
     visitAssignment(statement: Stmt.Assignment): BrsType {
         if (statement.name.isReserved) {
             this.addError(
@@ -1623,6 +1729,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return statement.accept<BrsType>(this);
     }
 
+    getChannelVersion(): string {
+        let majorVersion = parseInt(this.manifest.get("major_version")) || 0;
+        let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
+        let buildVersion = parseInt(this.manifest.get("build_version")) || 0;
+        return `${majorVersion}.${minorVersion}.${buildVersion}`;
+    }
+
     /**
      * Emits an error via this processor's `events` property, then throws it.
      * @param err the ParseError to emit then throw
@@ -1642,5 +1755,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
         let ms = d.getMilliseconds();
         return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
+    }
+
+    private formatLocation(location: any) {
+        let formattedLocation: string;
+        if (location.start.line) {
+            formattedLocation = `pkg:/${location.file}(${location.start.line})`;
+        } else {
+            formattedLocation = `pkg:/${location.file}(??)`;
+        }
+        return formattedLocation;
     }
 }

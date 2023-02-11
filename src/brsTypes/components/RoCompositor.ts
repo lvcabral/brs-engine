@@ -201,7 +201,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 this.sprites.set(z.getValue(), layer);
                 return sprite;
             } else {
-                postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid:"); // TODO: add location
+                postMessage(
+                    "warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid:"
+                ); // TODO: add location
             }
             return BrsInvalid.Instance;
         },
@@ -230,13 +232,19 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                         this.animations.push(sprite);
                         return sprite;
                     } else {
-                        postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray item type is roInvalid:"); // TODO: add location
+                        postMessage(
+                            "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray item type is roInvalid:"
+                        ); // TODO: add location
                     }
                 } else {
-                    postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray is empty:"); // TODO: add location
+                    postMessage(
+                        "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray is empty:"
+                    ); // TODO: add location
                 }
             } else {
-                postMessage("warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray parameter type roInvalid:"); // TODO: add location
+                postMessage(
+                    "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray parameter type roInvalid:"
+                ); // TODO: add location
             }
             return BrsInvalid.Instance;
         },

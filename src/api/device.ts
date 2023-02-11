@@ -6,7 +6,15 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
-import { dataType, subscribeCallback, getNow, getApiPath, getEmuPath, isElectron } from "./util";
+import {
+    dataType,
+    subscribeCallback,
+    getNow,
+    getApiPath,
+    getEmuPath,
+    isElectron,
+    debugCommand,
+} from "./util";
 import {
     subscribeDisplay,
     initDisplayModule,
@@ -199,6 +207,7 @@ function resetArray() {
     Atomics.store(sharedArray, dataType.MOD, -1);
     Atomics.store(sharedArray, dataType.SND, -1);
     Atomics.store(sharedArray, dataType.IDX, -1);
+    Atomics.store(sharedArray, dataType.CMD, -1);
 }
 
 // Open source file
@@ -556,6 +565,26 @@ export function sendKeyPress(key: string) {
         sendKey(key, 100);
     }, 300);
     sendKey(key, 0);
+}
+
+// Telnet Debug API
+export function sendDebugCommand(command: string): boolean {
+    const commandsMap = new Map([
+        ["bt", debugCommand.BT],
+        ["exit", debugCommand.EXIT],
+        ["help", debugCommand.HELP],
+        ["threads", debugCommand.THREADS],
+        ["ths", debugCommand.THREADS],
+        ["var", debugCommand.VAR],
+    ]);
+    if (command) {
+        let cmd = commandsMap.get(command.toLowerCase().trim());
+        if (cmd !== undefined) {
+            Atomics.store(sharedArray, dataType.CMD, cmd);
+            return Atomics.notify(sharedArray, dataType.CMD) > 0;
+        }
+    }
+    return false;
 }
 
 // API Library version and device Serial Number

@@ -71,10 +71,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            let majorVersion = parseInt(interpreter.manifest.get("major_version")) || 0;
-            let minorVersion = parseInt(interpreter.manifest.get("minor_version")) || 0;
-            let buildVersion = parseInt(interpreter.manifest.get("build_version")) || 0;
-            return new BrsString(`${majorVersion}.${minorVersion}.${buildVersion}`);
+            return new BrsString(interpreter.getChannelVersion());
         },
     });
 

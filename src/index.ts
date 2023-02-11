@@ -244,7 +244,7 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
 function run(
     source: Map<string, string>,
     interpreter: Interpreter,
-    aa: RoAssociativeArray,
+    aa: RoAssociativeArray
 ): string {
     const lexer = new Lexer();
     const parser = new Parser();
