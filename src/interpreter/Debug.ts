@@ -150,7 +150,7 @@ export function debugGetExpr(buffer: Int32Array): string {
 
 export function debugBackTrace(location: any) {
     let debugMsg = `#1  Function ${"startmenu()"} As ${"Integer"}\r\n`;
-    debugMsg += `   file/line: ${formatLocation(location)}\r\n`;
+    debugMsg += `   file/line: ${formatLocation(location, 1)}\r\n`;
     debugMsg += `#0  Function ${"main()"} As ${"Void"}\r\n`;
     debugMsg += `   file/line: ${"pkg:/source/gameMain.brs(90)\r\n"}`;
     postMessage(`print,${debugMsg}`);
@@ -180,10 +180,10 @@ export function debugLocalVariables(environment: Environment) {
     postMessage(`print,${debugMsg}`);
 }
 
-export function formatLocation(location: any) {
+export function formatLocation(location: any, lineOffset: number = 0) {
     let formattedLocation: string;
     if (location.start.line) {
-        formattedLocation = `pkg:/${location.file}(${location.start.line})`;
+        formattedLocation = `pkg:/${location.file}(${location.start.line + lineOffset})`;
     } else {
         formattedLocation = `pkg:/${location.file}(??)`;
     }
