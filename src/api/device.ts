@@ -579,6 +579,7 @@ export function debug(command: string): boolean {
             ["cont", debugCommand.CONT],
             ["c", debugCommand.CONT],
             ["exit", debugCommand.EXIT],
+            ["q", debugCommand.EXIT],
             ["help", debugCommand.HELP],
             ["threads", debugCommand.THREADS],
             ["ths", debugCommand.THREADS],
@@ -594,6 +595,9 @@ export function debug(command: string): boolean {
             }
         } else {
             let expr = command.toString().trim();
+            if (exprs[0].toLowerCase() === "p") {
+                expr = "? " + expr.slice(1);
+            }
             Atomics.store(sharedArray, dataType.DBG, debugCommand.EXPR);
             Atomics.store(sharedArray, dataType.EXP, 1);
             debugExpression(expr);
