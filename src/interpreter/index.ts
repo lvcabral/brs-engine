@@ -19,6 +19,7 @@ import {
     MismatchReason,
     Callable,
     BrsNumber,
+    PrimitiveKinds,
     Comparable,
     Float,
     Double,
@@ -26,16 +27,16 @@ import {
     tryCoerce,
 } from "../brsTypes";
 
-import { Lexeme } from "../lexer";
+import { Lexeme, Lexer } from "../lexer";
 import { isToken } from "../lexer/Token";
-import { Expr, Stmt } from "../parser";
+import { Expr, Parser, Stmt } from "../parser";
 import { BrsError, TypeMismatch } from "../Error";
 
 import * as StdLib from "../stdlib";
 
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
-import { Runtime, BlockEnd } from "../parser/Statement";
+import { Runtime, BlockEnd, Print, Assignment, DottedSet, ForEach } from "../parser/Statement";
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
@@ -43,6 +44,20 @@ import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
 import { shared } from "..";
+
+// Debug Constants
+enum debugCommand {
+    BT,
+    CONT,
+    EXIT,
+    HELP,
+    LAST,
+    LIST,
+    THREADS,
+    VAR,
+    EXPR,
+}
+const dataBufferIndex = 32;
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -55,17 +70,6 @@ export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
 };
 
-enum debugCommand {
-    BT,
-    CONT,
-    EXIT,
-    HELP,
-    LAST,
-    LIST,
-    PRINT,
-    THREADS,
-    VAR,
-}
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _startTime = Date.now();
@@ -75,7 +79,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4, CMD: 5 };
+    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4, DBG: 5, EXP: 6 };
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -221,8 +225,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const title = this.manifest.get("title") || "No Title";
                 const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
                 const subName = mainVariable.name.text;
-                postMessage(`print,------ Running dev '${title}' ${subName} ------`);
-                postMessage(`print,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'`);
+                postMessage(`print,------ Running dev '${title}' ${subName} ------\r\n`);
+                postMessage(`print,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'\r\n`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
@@ -326,15 +330,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        printStream += " ";
+                        printStream += "\t";
                         break;
                     case Lexeme.Semicolon:
-                        if (index === statement.expressions.length - 1) {
-                            // Don't write an extra space for trailing `;` in print lists.
-                            // They're used to suppress trailing newlines in `print` statements
-                            break;
-                        }
-                        printStream += " ";
                         break;
                     default:
                         this.addError(
@@ -345,22 +343,40 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                 }
             } else {
-                printStream += this.evaluate(printable).toString();
+                let toPrint = this.evaluate(printable);
+                if (isBrsNumber(toPrint) && toPrint.getValue() >= 0) {
+                    printStream += " " + toPrint.toString();
+                } else {
+                    printStream += toPrint.toString();
+                }
             }
         });
-        postMessage(`print,${printStream}`);
+        postMessage(`print,${printStream}\r\n`);
         return BrsInvalid.Instance;
     }
 
     visitStop(statement: Stmt.Stop): BrsType {
         // TODO:
-        //  - split lines in batches
+        // - Implement help
+        // - Implement support for break with Ctrl+C
+        // - Create a call stack to save position for each Callable call
+        // - Create a isDebug flag and allow step by checking every Callable call
+        // - Prevent error when exit is called
+        // - Add lines of code to the list
+        // - Show real backtrace or just one level
+        // - Check if possible to enable aa.addReplace()
+        const lexer = new Lexer();
+        const parser = new Parser();
+
         const buffer = shared.get("buffer") || new Int32Array([]);
-        const error = new BrsError("Stop statement not implemented yet!", statement.location);
+        const error = new BrsError("stop-exit", statement.location);
         const prompt = "Brightscript Debugger> ";
+        const loc = statement.location;
+
         let debugMsg = "BrightScript Micro Debugger.\r\n";
-        debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n";
-        debugMsg += "Current Function:\r\n";
+        debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
+
+        debugMsg += "\r\nCurrent Function:\r\n";
         let line: number = statement.location.start.line;
         for (let index = line - 8; index < line; index++) {
             debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
@@ -370,55 +386,107 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
         }
         debugMsg += "Source Digest(s):\r\n";
-        debugMsg += `pkg: dev ${this.getChannelVersion()} 5c04534a ${this.manifest.get(
-            "title"
-        )}\r\n`;
-        debugMsg += `STOP (runtime error &hf7) in ${this.formatLocation(statement.location)}\r\n`;
-        debugMsg += "Backtrace: ";
+        debugMsg += `pkg: dev ${this.getChannelVersion()} 5c04534a `;
+        debugMsg += `${this.manifest.get("title")}\r\n\r\n`;
+
+        debugMsg += `STOP (runtime error &hf7) in ${this.formatLocation(loc)}\r\n`;
+        debugMsg += "Backtrace: \r\n";
         postMessage(`print,${debugMsg}`);
-        this.debugBackTrace(statement.location);
-        postMessage(`print,Local variables:`);
+        this.debugBackTrace(loc);
+        postMessage(`print,Local variables:\r\n`);
         this.debugLocalVariables();
-        postMessage(`print,${prompt}`);
+        postMessage(`print,\r\n${prompt}`);
+
         let inDebug = true;
         while (inDebug) {
-            Atomics.wait(buffer, this.type.CMD, -1);
-            let cmd = Atomics.load(buffer, this.type.CMD);
+            Atomics.wait(buffer, this.type.DBG, -1);
+            let cmd = Atomics.load(buffer, this.type.DBG);
+            let exp = Atomics.load(buffer, this.type.EXP);
             switch (cmd) {
                 case debugCommand.BT:
+                    if (exp) {
+                        postMessage("warning,Unexpected parameter");
+                        break;
+                    }
                     this.debugBackTrace(statement.location);
-                    postMessage(`print,${prompt}`);
                     break;
+                case debugCommand.CONT:
+                    if (exp) {
+                        postMessage("warning,Unexpected parameter");
+                        break;
+                    }
+                    return BrsInvalid.Instance;
                 case debugCommand.EXIT:
+                    if (exp) {
+                        postMessage("warning,Unexpected parameter");
+                        break;
+                    }
                     inDebug = false;
                     break;
                 case debugCommand.THREADS:
+                    if (exp) {
+                        postMessage("warning,Unexpected parameter");
+                        break;
+                    }
                     debugMsg = "ID    Location                                Source Code\r\n";
-                    debugMsg += `0*    ${this.formatLocation(statement.location).padEnd(
-                        40
-                    )}stop\r\n`;
+                    debugMsg += `0*    ${this.formatLocation(loc).padEnd(40)}stop\r\n`;
                     debugMsg += " *selected";
-                    postMessage(`print,${debugMsg}`);
-                    postMessage(`print,${prompt}`);
+                    postMessage(`print,${debugMsg}\r\n`);
                     break;
                 case debugCommand.VAR:
+                    if (exp) {
+                        postMessage("warning,Unexpected parameter");
+                        break;
+                    }
                     this.debugLocalVariables();
-                    postMessage(`print,${prompt}`);
                     break;
                 default:
-                    console.log("command not implemented yet!");
+                    let expr = this.debugGetExpr(buffer);
+                    const exprScan = lexer.scan(expr, "debug");
+                    const exprParse = parser.parse(exprScan.tokens);
+                    if (exprParse.statements.length > 0) {
+                        const exprStmt = exprParse.statements[0];
+                        try {
+                            if (exprStmt instanceof Assignment) {
+                                this.visitAssignment(exprStmt);
+                            } else if (exprStmt instanceof DottedSet) {
+                                this.visitDottedSet(exprStmt);
+                            } else if (exprStmt instanceof Print) {
+                                this.visitPrint(exprStmt);
+                            } else if (exprStmt instanceof ForEach) {
+                                this.visitForEach(exprStmt);
+                            } else {
+                                postMessage(`print,Debug command/expression not supported!\r\n`);
+                            }
+                        } catch (err: any) {
+                            // ignore to avoid crash
+                        }
+                    } else {
+                        postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
+                    }
                     break;
             }
-            Atomics.store(buffer, this.type.CMD, -1);
+            Atomics.store(buffer, this.type.DBG, -1);
+            postMessage(`print,\r\n${prompt}`);
         }
         throw error;
+    }
+    private debugGetExpr(buffer: Int32Array): string {
+        let expr = "";
+        buffer.slice(dataBufferIndex).every((char) => {
+            if (char > 0) {
+                expr += String.fromCharCode(char).toLocaleLowerCase();
+            }
+            return char; // if \0 stops decoding
+        });
+        return expr;
     }
 
     private debugBackTrace(location: any) {
         let debugMsg = `#1  Function ${"startmenu()"} As ${"Integer"}\r\n`;
         debugMsg += `   file/line: ${this.formatLocation(location)}\r\n`;
         debugMsg += `#0  Function ${"main()"} As ${"Void"}\r\n`;
-        debugMsg += `   file/line: ${"pkg:/source/gameMain.brs(90)"}`;
+        debugMsg += `   file/line: ${"pkg:/source/gameMain.brs(90)\r\n"}`;
         postMessage(`print,${debugMsg}`);
     }
 
@@ -429,21 +497,23 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }\r\n`;
         let fnc = this.environment.getList(Scope.Function);
         fnc.forEach((value, key) => {
-            if (value instanceof Int32) {
-                debugMsg += `${key.padEnd(16)} Integer val:${value.toString()}\r\n`;
-            } else if (value instanceof RoAssociativeArray) {
-                debugMsg += `${key.padEnd(16)} roAssociativeArray count:${
+            if (PrimitiveKinds.has(value.kind)) {
+                debugMsg += `${key.padEnd(16)} ${ValueKind.toString(
+                    value.kind
+                )} val:${value.toString()}\r\n`;
+            } else if (isIterable(value)) {
+                debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
                     value.getElements().length
                 }\r\n`;
+            } else if (value.kind === ValueKind.Object) {
+                debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
             } else {
-                debugMsg += `${key.padEnd(17)}${this.debugComponentName(value.toString())}\r\n`;
+                debugMsg += `${key.padEnd(17)}${value.toString()}\r\n`;
             }
         });
         postMessage(`print,${debugMsg}`);
     }
-    private debugComponentName(value: string): string {
-        return value.split(": ")[1].replace(">", "");
-    }
+
     visitAssignment(statement: Stmt.Assignment): BrsType {
         if (statement.name.isReserved) {
             this.addError(

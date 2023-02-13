@@ -149,7 +149,7 @@ export const Str = new Callable("Str", {
     },
     impl: (interpreter: Interpreter, value: Float): BrsString => {
         const floatValue = value.getValue();
-        const prefix = floatValue > 0.0 ? " " : "";
+        const prefix = floatValue >= 0.0 ? " " : "";
         return new BrsString(prefix + String(floatValue));
     },
 });
@@ -172,7 +172,7 @@ export const StrI = new Callable("StrI", {
         }
 
         const intValue = value.getValue();
-        const prefix = intValue > 0 && radix === 10 ? " " : "";
+        const prefix = intValue >= 0 && radix === 10 ? " " : "";
 
         return new BrsString(prefix + intValue.toString(radix));
     },

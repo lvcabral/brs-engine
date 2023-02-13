@@ -8,6 +8,8 @@
 import JSZip from "jszip";
 import {
     dataType,
+    dataBufferIndex,
+    dataBufferSize,
     subscribeCallback,
     getNow,
     getApiPath,
@@ -115,8 +117,8 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
             deviceData.registry.set(key, storage.getItem(key));
         }
     }
-    // Shared buffer (Keys and Sounds)
-    const length = 7;
+    // Shared buffer (Keys, Sounds and Debug Commands)
+    const length = dataBufferIndex + dataBufferSize;
     if (self.crossOriginIsolated || isElectron()) {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
@@ -207,7 +209,8 @@ function resetArray() {
     Atomics.store(sharedArray, dataType.MOD, -1);
     Atomics.store(sharedArray, dataType.SND, -1);
     Atomics.store(sharedArray, dataType.IDX, -1);
-    Atomics.store(sharedArray, dataType.CMD, -1);
+    Atomics.store(sharedArray, dataType.DBG, -1);
+    Atomics.store(sharedArray, dataType.EXP, -1);
 }
 
 // Open source file
@@ -486,11 +489,11 @@ function workerCallback(event: MessageEvent) {
         deviceDebug(event.data);
     } else if (event.data.slice(0, 4) === "log,") {
         // for backward compatibility with v0.9.1
-        deviceDebug(event.data);
+        deviceDebug(`${event.data}\r\n`);
     } else if (event.data.slice(0, 8) === "warning,") {
-        deviceDebug(event.data);
+        deviceDebug(`${event.data}\r\n`);
     } else if (event.data.slice(0, 6) === "error,") {
-        deviceDebug(event.data);
+        deviceDebug(`${event.data}\r\n`);
     } else if (event.data.slice(0, 4) === "end,") {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {
@@ -516,8 +519,8 @@ function deviceDebug(data: string) {
 
 // Restore emulator state and terminate Worker
 export function terminate(reason: string) {
-    deviceDebug(`print,${getNow()} [beacon.report] |AppExitComplete`);
-    deviceDebug(`print,------ Finished '${currentChannel.title}' execution [${reason}] ------`);
+    deviceDebug(`print,${getNow()} [beacon.report] |AppExitComplete\r\n`);
+    deviceDebug(`print,------ Finished '${currentChannel.title}' execution [${reason}] ------\r\n`);
     if (currentChannel.clearDisplay) {
         clearDisplay();
     }
@@ -568,23 +571,48 @@ export function sendKeyPress(key: string) {
 }
 
 // Telnet Debug API
-export function sendDebugCommand(command: string): boolean {
-    const commandsMap = new Map([
-        ["bt", debugCommand.BT],
-        ["exit", debugCommand.EXIT],
-        ["help", debugCommand.HELP],
-        ["threads", debugCommand.THREADS],
-        ["ths", debugCommand.THREADS],
-        ["var", debugCommand.VAR],
-    ]);
-    if (command) {
-        let cmd = commandsMap.get(command.toLowerCase().trim());
+export function debug(command: string): boolean {
+    let handled = false;
+    if (currentChannel.running && command && command.length > 0) {
+        const commandsMap = new Map([
+            ["bt", debugCommand.BT],
+            ["cont", debugCommand.CONT],
+            ["c", debugCommand.CONT],
+            ["exit", debugCommand.EXIT],
+            ["help", debugCommand.HELP],
+            ["threads", debugCommand.THREADS],
+            ["ths", debugCommand.THREADS],
+            ["var", debugCommand.VAR],
+        ]);
+        let exprs = command.toString().trim().split(/(?<=^\S+)\s/);
+        let cmd = commandsMap.get(exprs[0].toLowerCase());
         if (cmd !== undefined) {
-            Atomics.store(sharedArray, dataType.CMD, cmd);
-            return Atomics.notify(sharedArray, dataType.CMD) > 0;
+            Atomics.store(sharedArray, dataType.DBG, cmd);
+            Atomics.store(sharedArray, dataType.EXP, exprs.length - 1);
+            if (exprs.length > 1) {
+                debugExpression(exprs[1]);
+            }
+        } else {
+            let expr = command.toString().trim();
+            Atomics.store(sharedArray, dataType.DBG, debugCommand.EXPR);
+            Atomics.store(sharedArray, dataType.EXP, 1);
+            debugExpression(expr);
         }
+        handled = Atomics.notify(sharedArray, dataType.DBG) > 0;
     }
-    return false;
+    return handled;
+}
+function debugExpression(expr: string) {
+    // Store string on SharedArrayBuffer
+    expr = expr.trim();
+    let len = Math.min(expr.length, dataBufferSize);
+    for (var i = 0; i < len; i++) {
+        Atomics.store(sharedArray, dataBufferIndex + i, expr.charCodeAt(i));
+    }
+    // String terminator
+    if (len < dataBufferSize) {
+        Atomics.store(sharedArray, dataBufferIndex + len, 0);
+    }
 }
 
 // API Library version and device Serial Number

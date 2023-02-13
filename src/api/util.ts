@@ -13,8 +13,12 @@ export enum dataType {
     SND,
     IDX,
     WAV,
-    CMD,
+    DBG,
+    EXP,
 }
+
+export const dataBufferIndex = 32;
+export const dataBufferSize = 512;
 
 // Debug commands enumerator
 export enum debugCommand {
@@ -24,9 +28,9 @@ export enum debugCommand {
     HELP,
     LAST,
     LIST,
-    PRINT,
     THREADS,
     VAR,
+    EXPR,
 }
 
 // Audio events enumerator
