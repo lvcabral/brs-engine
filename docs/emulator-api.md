@@ -34,6 +34,9 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
   - `mode` (string) - One of the supported modes: `"disabled"`, `"guidelines"` or `"overscan"`
 - brsEMu.**enableFps**(mode) - Enable or disable calculating the average frames per seconds
   - `state` (boolean) - If `true` the library will generate an event with the average FPS every 15 frames
+- brsEMu.**getAudioMute**() - Return `true` if the audio is muted
+- brsEMu.**setAudioMute**(mute) - Mute or unmute the audio during channel execution
+  - `mute` (boolean) - If `true` the audio will be muted
 - brsEMu.**sendKeyDown**(key) - Send a remote control key down event to the emulator
   - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
 - brsEMu.**sendKeyUp**(key) - Send a remote control key up event to the emulator

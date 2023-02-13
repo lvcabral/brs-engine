@@ -46,6 +46,8 @@ import {
     stopWav,
     addPlaylist,
     seekSound,
+    muteSound,
+    isMuted,
 } from "./sound";
 import { version } from "../../package.json";
 
@@ -554,6 +556,17 @@ export function setOverscanMode(mode: string) {
 }
 export function enableFps(state: boolean) {
     setCalcFps(state);
+}
+
+// Audio API
+export function setAudioMute(mute: boolean) {
+    if (currentChannel.running) {
+        muteSound(mute);
+    }
+}
+
+export function getAudioMute() {
+    return isMuted();
 }
 
 // Remote Control API

@@ -18,16 +18,26 @@ let playNext = -1;
 let sharedArray: Int32Array;
 let wavStreams: Howl[];
 let maxStreams: number;
+let muted: boolean;
 
 // Initialize Sound Module
 export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
     sharedArray = array;
     maxStreams = streams;
     resetSounds();
-    Howler.mute(mute);
+    muteSound(mute);
 }
 
 // Sound Functions
+export function muteSound(mute: boolean) {
+    muted = mute;
+    Howler.mute(mute);
+}
+
+export function isMuted() {
+    return muted;
+}
+
 export function playSound() {
     const audio = playList[playIndex];
     if (audio) {
