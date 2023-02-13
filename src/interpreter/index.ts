@@ -27,37 +27,23 @@ import {
     tryCoerce,
 } from "../brsTypes";
 
-import { Lexeme, Lexer } from "../lexer";
+import { Lexeme } from "../lexer";
 import { isToken } from "../lexer/Token";
-import { Expr, Parser, Stmt } from "../parser";
+import { Expr, Stmt } from "../parser";
 import { BrsError, TypeMismatch } from "../Error";
 
 import * as StdLib from "../stdlib";
 
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
-import { Runtime, BlockEnd, Print, Assignment, DottedSet, ForEach } from "../parser/Statement";
+import { Runtime, BlockEnd } from "../parser/Statement";
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
-import { shared } from "..";
-
-// Debug Constants
-enum debugCommand {
-    BT,
-    CONT,
-    EXIT,
-    HELP,
-    LAST,
-    LIST,
-    THREADS,
-    VAR,
-    EXPR,
-}
-const dataBufferIndex = 32;
+import { startDebugger } from "./Debug";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -356,162 +342,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitStop(statement: Stmt.Stop): BrsType {
-        // TODO:
-        // - Implement help
-        // - Implement support for break with Ctrl+C
-        // - Create a call stack to save position for each Callable call
-        // - Create a isDebug flag and allow step by checking every Callable call
-        // - Prevent error when exit is called
-        // - Add lines of code to the list
-        // - Show real backtrace or just one level
-        // - Check if possible to enable aa.addReplace()
-        const lexer = new Lexer();
-        const parser = new Parser();
-
-        const buffer = shared.get("buffer") || new Int32Array([]);
-        const error = new BrsError("stop-exit", statement.location);
-        const prompt = "Brightscript Debugger> ";
-        const loc = statement.location;
-
-        let debugMsg = "BrightScript Micro Debugger.\r\n";
-        debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
-
-        debugMsg += "\r\nCurrent Function:\r\n";
-        let line: number = statement.location.start.line;
-        for (let index = line - 8; index < line; index++) {
-            debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
+        if (startDebugger(this, statement)) {
+            return BrsInvalid.Instance;
         }
-        debugMsg += `${line.toString().padStart(3, "0")}:*     stop\r\n`;
-        for (let index = line + 1; index < line + 5; index++) {
-            debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
-        }
-        debugMsg += "Source Digest(s):\r\n";
-        debugMsg += `pkg: dev ${this.getChannelVersion()} 5c04534a `;
-        debugMsg += `${this.manifest.get("title")}\r\n\r\n`;
-
-        debugMsg += `STOP (runtime error &hf7) in ${this.formatLocation(loc)}\r\n`;
-        debugMsg += "Backtrace: \r\n";
-        postMessage(`print,${debugMsg}`);
-        this.debugBackTrace(loc);
-        postMessage(`print,Local variables:\r\n`);
-        this.debugLocalVariables();
-        postMessage(`print,\r\n${prompt}`);
-
-        let inDebug = true;
-        while (inDebug) {
-            Atomics.wait(buffer, this.type.DBG, -1);
-            let cmd = Atomics.load(buffer, this.type.DBG);
-            let exp = Atomics.load(buffer, this.type.EXP);
-            switch (cmd) {
-                case debugCommand.BT:
-                    if (exp) {
-                        postMessage("warning,Unexpected parameter");
-                        break;
-                    }
-                    this.debugBackTrace(statement.location);
-                    break;
-                case debugCommand.CONT:
-                    if (exp) {
-                        postMessage("warning,Unexpected parameter");
-                        break;
-                    }
-                    return BrsInvalid.Instance;
-                case debugCommand.EXIT:
-                    if (exp) {
-                        postMessage("warning,Unexpected parameter");
-                        break;
-                    }
-                    inDebug = false;
-                    break;
-                case debugCommand.THREADS:
-                    if (exp) {
-                        postMessage("warning,Unexpected parameter");
-                        break;
-                    }
-                    debugMsg = "ID    Location                                Source Code\r\n";
-                    debugMsg += `0*    ${this.formatLocation(loc).padEnd(40)}stop\r\n`;
-                    debugMsg += " *selected";
-                    postMessage(`print,${debugMsg}\r\n`);
-                    break;
-                case debugCommand.VAR:
-                    if (exp) {
-                        postMessage("warning,Unexpected parameter");
-                        break;
-                    }
-                    this.debugLocalVariables();
-                    break;
-                default:
-                    let expr = this.debugGetExpr(buffer);
-                    const exprScan = lexer.scan(expr, "debug");
-                    const exprParse = parser.parse(exprScan.tokens);
-                    if (exprParse.statements.length > 0) {
-                        const exprStmt = exprParse.statements[0];
-                        try {
-                            if (exprStmt instanceof Assignment) {
-                                this.visitAssignment(exprStmt);
-                            } else if (exprStmt instanceof DottedSet) {
-                                this.visitDottedSet(exprStmt);
-                            } else if (exprStmt instanceof Print) {
-                                this.visitPrint(exprStmt);
-                            } else if (exprStmt instanceof ForEach) {
-                                this.visitForEach(exprStmt);
-                            } else {
-                                postMessage(`print,Debug command/expression not supported!\r\n`);
-                            }
-                        } catch (err: any) {
-                            // ignore to avoid crash
-                        }
-                    } else {
-                        postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
-                    }
-                    break;
-            }
-            Atomics.store(buffer, this.type.DBG, -1);
-            postMessage(`print,\r\n${prompt}`);
-        }
-        throw error;
-    }
-    private debugGetExpr(buffer: Int32Array): string {
-        let expr = "";
-        buffer.slice(dataBufferIndex).every((char) => {
-            if (char > 0) {
-                expr += String.fromCharCode(char).toLocaleLowerCase();
-            }
-            return char; // if \0 stops decoding
-        });
-        return expr;
-    }
-
-    private debugBackTrace(location: any) {
-        let debugMsg = `#1  Function ${"startmenu()"} As ${"Integer"}\r\n`;
-        debugMsg += `   file/line: ${this.formatLocation(location)}\r\n`;
-        debugMsg += `#0  Function ${"main()"} As ${"Void"}\r\n`;
-        debugMsg += `   file/line: ${"pkg:/source/gameMain.brs(90)\r\n"}`;
-        postMessage(`print,${debugMsg}`);
-    }
-
-    private debugLocalVariables() {
-        let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
-        debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
-            this.environment.getM().getElements().length
-        }\r\n`;
-        let fnc = this.environment.getList(Scope.Function);
-        fnc.forEach((value, key) => {
-            if (PrimitiveKinds.has(value.kind)) {
-                debugMsg += `${key.padEnd(16)} ${ValueKind.toString(
-                    value.kind
-                )} val:${value.toString()}\r\n`;
-            } else if (isIterable(value)) {
-                debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
-                    value.getElements().length
-                }\r\n`;
-            } else if (value.kind === ValueKind.Object) {
-                debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
-            } else {
-                debugMsg += `${key.padEnd(17)}${value.toString()}\r\n`;
-            }
-        });
-        postMessage(`print,${debugMsg}`);
+        throw new BrsError("stop-exit", statement.location);
     }
 
     visitAssignment(statement: Stmt.Assignment): BrsType {
@@ -1825,15 +1659,5 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
         let ms = d.getMilliseconds();
         return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
-    }
-
-    private formatLocation(location: any) {
-        let formattedLocation: string;
-        if (location.start.line) {
-            formattedLocation = `pkg:/${location.file}(${location.start.line})`;
-        } else {
-            formattedLocation = `pkg:/${location.file}(??)`;
-        }
-        return formattedLocation;
     }
 }
