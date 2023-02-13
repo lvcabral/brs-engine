@@ -35,7 +35,6 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
 
     const buffer = shared.get("buffer") || new Int32Array([]);
     const prompt = "Brightscript Debugger> ";
-    const loc = statement.location;
 
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
@@ -53,10 +52,10 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
     debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
     debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
 
-    debugMsg += `STOP (runtime error &hf7) in ${formatLocation(loc)}\r\n`;
+    debugMsg += `STOP (runtime error &hf7) in ${formatLocation(statement)}\r\n`;
     debugMsg += "Backtrace: \r\n";
     postMessage(`print,${debugMsg}`);
-    debugBackTrace(loc);
+    debugBackTrace(statement);
     postMessage(`print,Local variables:\r\n`);
     debugLocalVariables(interpreter.environment);
     postMessage(`print,\r\n${prompt}`);
@@ -93,7 +92,7 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
                     break;
                 }
                 debugMsg = "ID    Location                                Source Code\r\n";
-                debugMsg += `0*    ${formatLocation(loc).padEnd(40)}stop\r\n`;
+                debugMsg += `0*    ${formatLocation(statement).padEnd(40)}stop\r\n`;
                 debugMsg += " *selected";
                 postMessage(`print,${debugMsg}\r\n`);
                 break;
@@ -179,8 +178,9 @@ export function debugLocalVariables(environment: Environment) {
     postMessage(`print,${debugMsg}`);
 }
 
-export function formatLocation(location: any, lineOffset: number = 0) {
+export function formatLocation(statement: Stmt.Stop, lineOffset: number = 0) {
     let formattedLocation: string;
+    let location = statement.location;
     if (location.start.line) {
         formattedLocation = `pkg:/${location.file}(${location.start.line + lineOffset})`;
     } else {
