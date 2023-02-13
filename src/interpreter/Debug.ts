@@ -136,7 +136,6 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
     return false;
 }
 
-
 export function debugGetExpr(buffer: Int32Array): string {
     let expr = "";
     buffer.slice(dataBufferIndex).every((char) => {

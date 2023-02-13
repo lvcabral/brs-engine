@@ -585,7 +585,10 @@ export function debug(command: string): boolean {
             ["ths", debugCommand.THREADS],
             ["var", debugCommand.VAR],
         ]);
-        let exprs = command.toString().trim().split(/(?<=^\S+)\s/);
+        let exprs = command
+            .toString()
+            .trim()
+            .split(/(?<=^\S+)\s/);
         let cmd = commandsMap.get(exprs[0].toLowerCase());
         if (cmd !== undefined) {
             Atomics.store(sharedArray, dataType.DBG, cmd);
