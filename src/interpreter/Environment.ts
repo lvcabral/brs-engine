@@ -1,5 +1,5 @@
 import { Identifier, Location } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
+import { BrsType, RoAssociativeArray, Int32, Signature } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -20,7 +20,9 @@ export class NotFound extends Error {
 
 export interface BackTrace {
     functionName: string,
-    location: Location
+    functionLoc: Location,
+    callLoc: Location,
+    signature: Signature
 }
 
 /** Holds a set of values in multiple scopes and provides access operations to them. */
@@ -102,8 +104,8 @@ export class Environment {
         return this.rootM;
     }
 
-    public addBackTrace(name: string, location: Location) {
-        this.backTrace.push({functionName: name, location: location});
+    public addBackTrace(name: string, functionLoc: Location, callLoc: Location, signature: Signature) {
+        this.backTrace.push({functionName: name, functionLoc: functionLoc, callLoc: callLoc, signature: signature});
     }
 
     public getBackTrace() {

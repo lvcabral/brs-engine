@@ -25,11 +25,8 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
     // TODO:
     // - Implement help
     // - Implement support for break with Ctrl+C
-    // - Create a call stack to save position for each Callable call
     // - Create a isDebug flag and allow step by checking every Callable call
     // - Prevent error when exit is called
-    // - Add lines of code to the list
-    // - Show real backtrace or just one level
     // - Check if possible to enable aa.addReplace()
     const env = interpreter.environment
     const lexer = new Lexer();
@@ -111,8 +108,8 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
             case debugCommand.LIST:
                 if (backTrace.length > 0) {
                     const func = backTrace[backTrace.length-1];
-                    let start = func.location.start.line;
-                    let end = Math.min(func.location.end.line, lines.length);
+                    let start = func.functionLoc.start.line;
+                    let end = Math.min(func.functionLoc.end.line, lines.length);
                     for (let index = start; index <= end; index++) {
                         const flag = index === line ? "*" : " ";
                         postMessage(`print,${index.toString().padStart(3, "0")}:${flag} ${lines[index-1]}\r\n`);
@@ -153,11 +150,18 @@ function debugGetExpr(buffer: Int32Array): string {
 function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
     let debugMsg = "";
     let offset = 1;
+    let loc = stmtLoc;
     for (let index = backTrace.length-1; index >= 0; index--) {
         const func = backTrace[index];
-        const loc = offset ? stmtLoc : func.location;
-        debugMsg += `#${index}  Function ${func.functionName}() As ${"Integer"}\r\n`; // TODO: Correct signature
-        debugMsg += `   file/line: ${formatLocation(loc, offset)}\r\n`; // TODO: Correct calling location
+        const kind = ValueKind.toString(func.signature.returns);
+        let args = "";
+        func.signature.args.forEach(arg => {
+            args += args !== "" ? "," : "";
+            args += `${arg.name.text} As ${ ValueKind.toString(arg.type.kind)}`;
+        });
+        debugMsg += `#${index}  Function ${func.functionName}(${args}) As ${kind}\r\n`; // TODO: Correct signature
+        debugMsg += `   file/line: ${formatLocation(loc, offset)}\r\n`;
+        loc = func.callLoc;
         offset = 0;
     }
     postMessage(`print,${debugMsg}`);

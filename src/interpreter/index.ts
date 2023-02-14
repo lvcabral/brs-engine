@@ -26,7 +26,7 @@ import {
 } from "../brsTypes";
 
 import { Lexeme } from "../lexer";
-import { isToken, Location } from "../lexer/Token";
+import { isToken } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
 import { BrsError, TypeMismatch } from "../Error";
 
@@ -139,9 +139,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = this._environment.createSubEnvironment();
-        let btArray = originalEnvironment.getBackTrace()
-        btArray.forEach(bt => {
-            newEnv.addBackTrace(bt.functionName, bt.location);
+        let btArray = originalEnvironment.getBackTrace();
+        btArray.forEach((bt) => {
+            newEnv.addBackTrace(bt.functionName, bt.functionLoc, bt.callLoc, bt.signature);
         });
         try {
             this._environment = newEnv;
@@ -1034,10 +1034,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return this.inSubEnv((subInterpreter) => {
                     subInterpreter.environment.setM(mPointer);
-                    let funcName = callee.name || "";
                     let funcLoc = callee.getLocation();
                     if (funcLoc) {
-                        subInterpreter.environment.addBackTrace(funcName, funcLoc);
+                        let callLoc = expression.callee.location;
+                        let sign = callee.signatures[0].signature;
+                        subInterpreter.environment.addBackTrace(
+                            functionName,
+                            funcLoc,
+                            callLoc,
+                            sign
+                        );
                     }
                     return callee.call(this, ...args);
                 });
