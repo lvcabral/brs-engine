@@ -28,6 +28,7 @@ export { BrsTypes as types };
 export { PP as preprocessor };
 export { _parser as parser };
 export const shared = new Map<string, Int32Array>();
+export const source = new Map<string, string>();
 
 onmessage = function (event) {
     if (event.data.device) {
@@ -110,7 +111,6 @@ onmessage = function (event) {
                 volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
             }
         }
-        const source = new Map<string, string>();
         volume = interpreter.fileSystem.get("pkg:");
         if (volume) {
             for (let filePath of event.data.paths) {

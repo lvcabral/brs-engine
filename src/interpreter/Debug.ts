@@ -1,19 +1,20 @@
 import { Interpreter } from ".";
-import { Environment, Scope } from "./Environment";
-import { shared } from "..";
-import { Lexer } from "../lexer";
+import { BackTrace, Environment, Scope } from "./Environment";
+import { shared, source } from "..";
+import { Lexer, Location } from "../lexer";
 import { Parser, Stmt } from "../parser";
 import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
 import { Assignment, DottedSet, ForEach, Print } from "../parser/Statement";
 
 // Debug Constants
-export enum debugCommand {
+enum debugCommand {
     BT,
     CONT,
     EXIT,
     HELP,
     LAST,
     LIST,
+    NEXT,
     THREADS,
     VAR,
     EXPR,
@@ -30,9 +31,11 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
     // - Add lines of code to the list
     // - Show real backtrace or just one level
     // - Check if possible to enable aa.addReplace()
+    const env = interpreter.environment
     const lexer = new Lexer();
     const parser = new Parser();
-
+    const lines = parseTextFile(source.get(statement.location.file));
+    const backTrace = env.getBackTrace();
     const buffer = shared.get("buffer") || new Int32Array([]);
     const prompt = "Brightscript Debugger> ";
 
@@ -41,101 +44,102 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
 
     debugMsg += "\r\nCurrent Function:\r\n";
     let line: number = statement.location.start.line;
-    for (let index = line - 8; index < line; index++) {
-        debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
-    }
-    debugMsg += `${line.toString().padStart(3, "0")}:*     stop\r\n`;
-    for (let index = line + 1; index < line + 5; index++) {
-        debugMsg += `${index.toString().padStart(3, "0")}:      \r\n`;
+    let start = Math.max(line-8, 0);
+    let end = Math.min(line + 5, lines.length);
+    for (let index = start; index < end; index++) {
+        const flag = index === line ? "*" : " ";
+        debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${lines[index-1]}\r\n`;
     }
     debugMsg += "Source Digest(s):\r\n";
     debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
     debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
 
-    debugMsg += `STOP (runtime error &hf7) in ${formatLocation(statement)}\r\n`;
+    debugMsg += `STOP (runtime error &hf7) in ${formatLocation(statement.location)}\r\n`;
     debugMsg += "Backtrace: \r\n";
     postMessage(`print,${debugMsg}`);
-    debugBackTrace(statement);
+    debugBackTrace(backTrace, statement.location);
     postMessage(`print,Local variables:\r\n`);
-    debugLocalVariables(interpreter.environment);
-    postMessage(`print,\r\n${prompt}`);
-
+    debugLocalVariables(env);
     let inDebug = true;
     while (inDebug) {
+        postMessage(`print,\r\n${prompt}`);
         Atomics.wait(buffer, interpreter.type.DBG, -1);
         let cmd = Atomics.load(buffer, interpreter.type.DBG);
-        let exp = Atomics.load(buffer, interpreter.type.EXP);
+        Atomics.store(buffer, interpreter.type.DBG, -1);
+        if (cmd === debugCommand.EXPR) {
+            let expr = debugGetExpr(buffer);
+            const exprScan = lexer.scan(expr, "debug");
+            const exprParse = parser.parse(exprScan.tokens);
+            if (exprParse.statements.length > 0) {
+                const exprStmt = exprParse.statements[0];
+                try {
+                    if (exprStmt instanceof Assignment) {
+                        interpreter.visitAssignment(exprStmt);
+                    } else if (exprStmt instanceof DottedSet) {
+                        interpreter.visitDottedSet(exprStmt);
+                    } else if (exprStmt instanceof Print) {
+                        interpreter.visitPrint(exprStmt);
+                    } else if (exprStmt instanceof ForEach) {
+                        interpreter.visitForEach(exprStmt);
+                    } else {
+                        postMessage(`print,Debug command/expression not supported!\r\n`);
+                    }
+                } catch (err: any) {
+                    // ignore to avoid crash
+                }
+            } else {
+                postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
+            }
+            continue;
+        }
+        if (Atomics.load(buffer, interpreter.type.EXP)) {
+            postMessage("warning,Unexpected parameter");
+            continue;
+        }
         switch (cmd) {
             case debugCommand.BT:
-                if (exp) {
-                    postMessage("warning,Unexpected parameter");
-                    break;
-                }
-                debugBackTrace(statement.location);
+                debugBackTrace(backTrace, statement.location);
                 break;
             case debugCommand.CONT:
-                if (exp) {
-                    postMessage("warning,Unexpected parameter");
-                    break;
-                }
                 return true;
             case debugCommand.EXIT:
-                if (exp) {
-                    postMessage("warning,Unexpected parameter");
-                    break;
-                }
                 inDebug = false;
                 break;
-            case debugCommand.THREADS:
-                if (exp) {
-                    postMessage("warning,Unexpected parameter");
-                    break;
+            case debugCommand.LAST:
+                postMessage(`print,${line.toString().padStart(3, "0")}: ${lines[line-1]}\r\n`);
+                break;
+            case debugCommand.LIST:
+                if (backTrace.length > 0) {
+                    const func = backTrace[backTrace.length-1];
+                    let start = func.location.start.line;
+                    let end = Math.min(func.location.end.line, lines.length);
+                    for (let index = start; index <= end; index++) {
+                        const flag = index === line ? "*" : " ";
+                        postMessage(`print,${index.toString().padStart(3, "0")}:${flag} ${lines[index-1]}\r\n`);
+                    }
                 }
+                break;
+            case debugCommand.NEXT:
+                postMessage(`print,${(line+1).toString().padStart(3, "0")}: ${lines[line]}\r\n`);
+                break;
+            case debugCommand.THREADS:
                 debugMsg = "ID    Location                                Source Code\r\n";
-                debugMsg += `0*    ${formatLocation(statement).padEnd(40)}stop\r\n`;
+                debugMsg += `0*    ${formatLocation(statement.location).padEnd(40)}${lines[line-1]}\r\n`;
                 debugMsg += " *selected";
                 postMessage(`print,${debugMsg}\r\n`);
                 break;
             case debugCommand.VAR:
-                if (exp) {
-                    postMessage("warning,Unexpected parameter");
-                    break;
-                }
-                debugLocalVariables(interpreter.environment);
+                debugLocalVariables(env);
                 break;
             default:
-                let expr = debugGetExpr(buffer);
-                const exprScan = lexer.scan(expr, "debug");
-                const exprParse = parser.parse(exprScan.tokens);
-                if (exprParse.statements.length > 0) {
-                    const exprStmt = exprParse.statements[0];
-                    try {
-                        if (exprStmt instanceof Assignment) {
-                            interpreter.visitAssignment(exprStmt);
-                        } else if (exprStmt instanceof DottedSet) {
-                            interpreter.visitDottedSet(exprStmt);
-                        } else if (exprStmt instanceof Print) {
-                            interpreter.visitPrint(exprStmt);
-                        } else if (exprStmt instanceof ForEach) {
-                            interpreter.visitForEach(exprStmt);
-                        } else {
-                            postMessage(`print,Debug command/expression not supported!\r\n`);
-                        }
-                    } catch (err: any) {
-                        // ignore to avoid crash
-                    }
-                } else {
-                    postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
-                }
+                postMessage(`warning,Invalid Debug command/expression!\r\n`);
                 break;
         }
-        Atomics.store(buffer, interpreter.type.DBG, -1);
-        postMessage(`print,\r\n${prompt}`);
     }
     return false;
 }
 
-export function debugGetExpr(buffer: Int32Array): string {
+function debugGetExpr(buffer: Int32Array): string {
     let expr = "";
     buffer.slice(dataBufferIndex).every((char) => {
         if (char > 0) {
@@ -146,15 +150,20 @@ export function debugGetExpr(buffer: Int32Array): string {
     return expr;
 }
 
-export function debugBackTrace(location: any) {
-    let debugMsg = `#1  Function ${"startmenu()"} As ${"Integer"}\r\n`;
-    debugMsg += `   file/line: ${formatLocation(location, 1)}\r\n`;
-    debugMsg += `#0  Function ${"main()"} As ${"Void"}\r\n`;
-    debugMsg += `   file/line: ${"pkg:/source/gameMain.brs(90)\r\n"}`;
+function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
+    let debugMsg = "";
+    let offset = 1;
+    for (let index = backTrace.length-1; index >= 0; index--) {
+        const func = backTrace[index];
+        const loc = offset ? stmtLoc : func.location;
+        debugMsg += `#${index}  Function ${func.functionName}() As ${"Integer"}\r\n`; // TODO: Correct signature
+        debugMsg += `   file/line: ${formatLocation(loc, offset)}\r\n`; // TODO: Correct calling location
+        offset = 0;
+    }
     postMessage(`print,${debugMsg}`);
 }
 
-export function debugLocalVariables(environment: Environment) {
+function debugLocalVariables(environment: Environment) {
     let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
     debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
         environment.getM().getElements().length
@@ -178,13 +187,23 @@ export function debugLocalVariables(environment: Environment) {
     postMessage(`print,${debugMsg}`);
 }
 
-export function formatLocation(statement: Stmt.Stop, lineOffset: number = 0) {
+function formatLocation(location: Location, lineOffset: number = 0) {
     let formattedLocation: string;
-    let location = statement.location;
     if (location.start.line) {
         formattedLocation = `pkg:/${location.file}(${location.start.line + lineOffset})`;
     } else {
         formattedLocation = `pkg:/${location.file}(??)`;
     }
     return formattedLocation;
+}
+
+// This function takes a text file content as a string and returns an array of lines
+function parseTextFile(content?: string): Array<string> {
+  // Split the content by newline characters
+  let lines: Array<string> = [];
+  if (content) {
+    lines = content.split("\n");
+  }
+  // Return the array of lines
+  return lines;
 }

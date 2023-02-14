@@ -141,6 +141,8 @@ export class Callable implements Brs.BrsValue {
     /** The signature of this callable within the BrightScript runtime. */
     readonly signatures: SignatureAndImplementation[];
 
+    private _location: Location | undefined;
+
     /**
      * Calls the function this `Callable` represents with the provided `arg`uments using the
      * provided `Interpreter` instance.
@@ -216,6 +218,14 @@ export class Callable implements Brs.BrsValue {
 
     getName(): string {
         return this.name || "";
+    }
+
+    setLocation(location: Location) {
+        this._location = location;
+    }
+
+    getLocation() {
+        return this._location;
     }
 
     /**

@@ -17,10 +17,10 @@ export enum dataType {
     EXP,
 }
 
+// Debug constants
 export const dataBufferIndex = 32;
 export const dataBufferSize = 512;
 
-// Debug commands enumerator
 export enum debugCommand {
     BT,
     CONT,
@@ -28,6 +28,7 @@ export enum debugCommand {
     HELP,
     LAST,
     LIST,
+    NEXT,
     THREADS,
     VAR,
     EXPR,

@@ -1,4 +1,4 @@
-import { Identifier } from "../lexer";
+import { Identifier, Location } from "../lexer";
 import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
@@ -16,6 +16,11 @@ export class NotFound extends Error {
     constructor(reason: string) {
         super(reason);
     }
+}
+
+export interface BackTrace {
+    functionName: string,
+    location: Location
 }
 
 /** Holds a set of values in multiple scopes and provides access operations to them. */
@@ -45,6 +50,9 @@ export class Environment {
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer = new RoAssociativeArray([]);
     private rootM: RoAssociativeArray;
+
+    /** Context properties to support the Debugger */
+    private backTrace = new Array<BackTrace>();
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -92,6 +100,14 @@ export class Environment {
      */
     public getRootM(): RoAssociativeArray {
         return this.rootM;
+    }
+
+    public addBackTrace(name: string, location: Location) {
+        this.backTrace.push({functionName: name, location: location});
+    }
+
+    public getBackTrace() {
+        return this.backTrace;
     }
 
     /**
