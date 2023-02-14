@@ -12,12 +12,12 @@ The repository provides a **Python 3** script to create a simplified web server 
     python ./web-server.py
 ```
 
-By default the server will use the port 8080, if you prefer another port just change it inside the python script (**web-server.py**).
-To run the web application navigate with your Chromium based browser to `http://localhost:8080/index.html` (web app) or `http://localhost:8080/example.html` (simple web example).
+By default the server will use the port 6502, if you prefer another port just change it inside the python script (**web-server.py**).
+To run the web application navigate with your Chromium based browser to `http://localhost:6502/index.html` (web app) or `http://localhost:6502/example.html` (simple example shown below).
 
 ## Simple Web Example
 
-Make sure you get the library files `brsEmu.js` and `brsEmu.worker.js` and place in the folder `lib` under the main folder where you save the files `example.html` and `example.js`. To learn more about the methods and events of the library visit the [API documentation](emulator-api.md). Remember that you need to host these files on a web server like the on described in the section above.
+Make sure you get the library files `brsEmu.js` and `brsEmu.worker.js` and place in the folder `lib` under the main folder where you have the files `example.html` and `example.js`. To learn more about the methods and events of the library visit the [API documentation](emulator-api.md). Remember that you need to host these files on a web server like the on described in the section above.
 
 ### example.html
 
