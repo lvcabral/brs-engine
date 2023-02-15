@@ -27,6 +27,7 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
     // TODO:
     // - Implement help
     // - Implement support for break with Ctrl+C
+    // - Implement stop on error
     // - Prevent error when exit is called
     // - Check if possible to enable aa.addReplace()
     const env = interpreter.environment;

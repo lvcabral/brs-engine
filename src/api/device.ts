@@ -599,6 +599,8 @@ export function debug(command: string): boolean {
             ["list", debugCommand.LIST],
             ["next", debugCommand.NEXT],
             ["n", debugCommand.NEXT],
+            ["over", debugCommand.STEP],
+            ["out", debugCommand.STEP],
             ["step", debugCommand.STEP],
             ["s", debugCommand.STEP],
             ["t", debugCommand.STEP],
