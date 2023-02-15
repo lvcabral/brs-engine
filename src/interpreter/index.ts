@@ -64,6 +64,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
     readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4, DBG: 5, EXP: 6 };
+    readonly sharedArray = shared.get("buffer") || new Int32Array([]);
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -1031,6 +1032,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                 }
 
+                // Check Break Command to enable Micro Debugger
+                const cmd = Atomics.load(this.sharedArray, this.type.DBG);
+                if (cmd === debugCommand.BREAK) {
+                    Atomics.store(this.sharedArray, this.type.DBG, -1);
+                    this.debugMode = true;
+                }
+
                 return this.inSubEnv((subInterpreter) => {
                     subInterpreter.environment.setM(mPointer);
                     let funcLoc = callee.getLocation();
@@ -1643,13 +1651,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
         const result = statement.accept<BrsType>(this);
-        const buffer = shared.get("buffer") || new Int32Array([]); //TODO: Avoid recreate all the time
-        const cmd = Atomics.load(buffer, this.type.DBG)
-        if (cmd === debugCommand.BREAK) {
-            Atomics.store(buffer, this.type.DBG, -1);
-            this.debugMode = true;
-        }
-        if (this.debugMode) { // TODO: This is not the only place to add the runDebugger
+        if (this.debugMode) {
+            // TODO: This is not the only place to add the runDebugger
             if (!runDebugger(this, statement)) {
                 throw new BrsError("debug-exit", statement.location);
             }

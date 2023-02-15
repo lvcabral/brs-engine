@@ -1,6 +1,6 @@
 import { Interpreter } from ".";
 import { BackTrace, Environment, Scope } from "./Environment";
-import { shared, source } from "..";
+import { source } from "..";
 import { Lexer, Location } from "../lexer";
 import { Parser, Stmt } from "../parser";
 import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
@@ -35,7 +35,6 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
     const parser = new Parser();
     const lines = parseTextFile(source.get(statement.location.file));
     const backTrace = env.getBackTrace();
-    const buffer = shared.get("buffer") || new Int32Array([]);
     const prompt = "Brightscript Debugger> ";
 
     let debugMsg = "BrightScript Micro Debugger.\r\n";
@@ -66,12 +65,12 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
     // Debugger Loop
     while (true) {
         postMessage(`print,\r\n${prompt}`);
-        Atomics.wait(buffer, interpreter.type.DBG, -1);
-        let cmd = Atomics.load(buffer, interpreter.type.DBG);
-        Atomics.store(buffer, interpreter.type.DBG, -1);
+        Atomics.wait(interpreter.sharedArray, interpreter.type.DBG, -1);
+        let cmd = Atomics.load(interpreter.sharedArray, interpreter.type.DBG);
+        Atomics.store(interpreter.sharedArray, interpreter.type.DBG, -1);
         if (cmd === debugCommand.EXPR) {
             interpreter.debugMode = false;
-            let expr = debugGetExpr(buffer);
+            let expr = debugGetExpr(interpreter.sharedArray);
             const exprScan = lexer.scan(expr, "debug");
             const exprParse = parser.parse(exprScan.tokens);
             if (exprParse.statements.length > 0) {
@@ -96,7 +95,7 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
             }
             continue;
         }
-        if (Atomics.load(buffer, interpreter.type.EXP)) {
+        if (Atomics.load(interpreter.sharedArray, interpreter.type.EXP)) {
             postMessage("warning,Unexpected parameter");
             continue;
         }
