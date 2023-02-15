@@ -33,6 +33,7 @@ export enum debugCommand {
     THREADS,
     VAR,
     EXPR,
+    BREAK,
 }
 
 // Audio events enumerator

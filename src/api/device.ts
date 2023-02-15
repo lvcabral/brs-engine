@@ -607,6 +607,7 @@ export function debug(command: string): boolean {
             ["threads", debugCommand.THREADS],
             ["ths", debugCommand.THREADS],
             ["var", debugCommand.VAR],
+            ["break", debugCommand.BREAK],
         ]);
         let exprs = command
             .toString()

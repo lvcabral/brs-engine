@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { dataType, subscribeCallback } from "./util";
+import { dataType, debugCommand, subscribeCallback } from "./util";
 
 // Keyboard Mapping
 const preventDefault: Set<string> = new Set([
@@ -48,6 +48,7 @@ keysMap.set("Insert", "info");
 keysMap.set("Ctrl+Digit8", "info");
 keysMap.set("KeyA", "a");
 keysMap.set("KeyZ", "b");
+keysMap.set("Ctrl+KeyC", "break");
 
 const rokuKeys: Map<string, number> = new Map();
 rokuKeys.set("back", 0);
@@ -66,6 +67,7 @@ rokuKeys.set("enter", 15);
 rokuKeys.set("a", 17);
 rokuKeys.set("b", 18);
 rokuKeys.set("stop", 23);
+rokuKeys.set("break", 204);
 
 // Initialize Control Module
 let sharedArray: Int32Array;
@@ -127,6 +129,8 @@ export function sendKey(key: string, mod: number) {
     key = key.toLowerCase();
     if (key === "home" && mod === 0) {
         notifyAll(key);
+    } else if (key === "break") {
+        Atomics.store(sharedArray, dataType.DBG, debugCommand.BREAK);
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {

@@ -24,7 +24,7 @@ import {
     RoXMLElement,
     tryCoerce,
 } from "../brsTypes";
-
+import { shared } from "..";
 import { Lexeme } from "../lexer";
 import { isToken } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -41,7 +41,7 @@ import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
-import { runDebugger } from "./MicroDebugger";
+import { debugCommand, runDebugger } from "./MicroDebugger";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -1643,7 +1643,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
         const result = statement.accept<BrsType>(this);
-        if (this.debugMode) {
+        const buffer = shared.get("buffer") || new Int32Array([]); //TODO: Avoid recreate all the time
+        const cmd = Atomics.load(buffer, this.type.DBG)
+        if (cmd === debugCommand.BREAK) {
+            Atomics.store(buffer, this.type.DBG, -1);
+            this.debugMode = true;
+        }
+        if (this.debugMode) { // TODO: This is not the only place to add the runDebugger
             if (!runDebugger(this, statement)) {
                 throw new BrsError("debug-exit", statement.location);
             }

@@ -7,7 +7,7 @@ import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
 import { Assignment, DottedSet, ForEach, Print } from "../parser/Statement";
 
 // Debug Constants
-enum debugCommand {
+export enum debugCommand {
     BT,
     CONT,
     EXIT,
@@ -19,6 +19,7 @@ enum debugCommand {
     THREADS,
     VAR,
     EXPR,
+    BREAK,
 }
 const dataBufferIndex = 32;
 let stepMode = false;
@@ -26,7 +27,6 @@ let stepMode = false;
 export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement): boolean {
     // TODO:
     // - Implement help
-    // - Implement support for break with Ctrl+C
     // - Implement stop on error
     // - Prevent error when exit is called
     // - Check if possible to enable aa.addReplace()
@@ -70,6 +70,7 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
         let cmd = Atomics.load(buffer, interpreter.type.DBG);
         Atomics.store(buffer, interpreter.type.DBG, -1);
         if (cmd === debugCommand.EXPR) {
+            interpreter.debugMode = false;
             let expr = debugGetExpr(buffer);
             const exprScan = lexer.scan(expr, "debug");
             const exprParse = parser.parse(exprScan.tokens);
