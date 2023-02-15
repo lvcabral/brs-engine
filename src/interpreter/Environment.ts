@@ -19,10 +19,10 @@ export class NotFound extends Error {
 }
 
 export interface BackTrace {
-    functionName: string,
-    functionLoc: Location,
-    callLoc: Location,
-    signature: Signature
+    functionName: string;
+    functionLoc: Location;
+    callLoc: Location;
+    signature: Signature;
 }
 
 /** Holds a set of values in multiple scopes and provides access operations to them. */
@@ -104,8 +104,18 @@ export class Environment {
         return this.rootM;
     }
 
-    public addBackTrace(name: string, functionLoc: Location, callLoc: Location, signature: Signature) {
-        this.backTrace.push({functionName: name, functionLoc: functionLoc, callLoc: callLoc, signature: signature});
+    public addBackTrace(
+        name: string,
+        functionLoc: Location,
+        callLoc: Location,
+        signature: Signature
+    ) {
+        this.backTrace.push({
+            functionName: name,
+            functionLoc: functionLoc,
+            callLoc: callLoc,
+            signature: signature,
+        });
     }
 
     public getBackTrace() {

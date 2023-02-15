@@ -15,20 +15,21 @@ enum debugCommand {
     LAST,
     LIST,
     NEXT,
+    STEP,
     THREADS,
     VAR,
     EXPR,
 }
 const dataBufferIndex = 32;
+let stepMode = false;
 
-export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): boolean {
+export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement): boolean {
     // TODO:
     // - Implement help
     // - Implement support for break with Ctrl+C
-    // - Create a isDebug flag and allow step by checking every Callable call
     // - Prevent error when exit is called
     // - Check if possible to enable aa.addReplace()
-    const env = interpreter.environment
+    const env = interpreter.environment;
     const lexer = new Lexer();
     const parser = new Parser();
     const lines = parseTextFile(source.get(statement.location.file));
@@ -37,28 +38,32 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
     const prompt = "Brightscript Debugger> ";
 
     let debugMsg = "BrightScript Micro Debugger.\r\n";
-    debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
-
-    debugMsg += "\r\nCurrent Function:\r\n";
     let line: number = statement.location.start.line;
-    let start = Math.max(line-8, 0);
-    let end = Math.min(line + 5, lines.length);
-    for (let index = start; index < end; index++) {
-        const flag = index === line ? "*" : " ";
-        debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${lines[index-1]}\r\n`;
-    }
-    debugMsg += "Source Digest(s):\r\n";
-    debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
-    debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
+    if (stepMode) {
+        postMessage(`print,${line.toString().padStart(3, "0")}: ${lines[line - 1]}\r\n`);
+    } else {
+        debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
 
-    debugMsg += `STOP (runtime error &hf7) in ${formatLocation(statement.location)}\r\n`;
-    debugMsg += "Backtrace: \r\n";
-    postMessage(`print,${debugMsg}`);
-    debugBackTrace(backTrace, statement.location);
-    postMessage(`print,Local variables:\r\n`);
-    debugLocalVariables(env);
-    let inDebug = true;
-    while (inDebug) {
+        debugMsg += "\r\nCurrent Function:\r\n";
+        let start = Math.max(line - 8, 1);
+        let end = Math.min(line + 5, lines.length);
+        for (let index = start; index < end; index++) {
+            const flag = index === line ? "*" : " ";
+            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${lines[index - 1]}\r\n`;
+        }
+        debugMsg += "Source Digest(s):\r\n";
+        debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
+        debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
+
+        debugMsg += `STOP (runtime error &hf7) in ${formatLocation(statement.location)}\r\n`;
+        debugMsg += "Backtrace: \r\n";
+        postMessage(`print,${debugMsg}`);
+        debugBackTrace(backTrace, statement.location);
+        postMessage(`print,Local variables:\r\n`);
+        debugLocalVariables(env);
+    }
+    // Debugger Loop
+    while (true) {
         postMessage(`print,\r\n${prompt}`);
         Atomics.wait(buffer, interpreter.type.DBG, -1);
         let cmd = Atomics.load(buffer, interpreter.type.DBG);
@@ -98,30 +103,41 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
                 debugBackTrace(backTrace, statement.location);
                 break;
             case debugCommand.CONT:
+                stepMode = false;
+                interpreter.debugMode = false;
+                return true;
+            case debugCommand.STEP:
+                stepMode = true;
+                interpreter.debugMode = true;
                 return true;
             case debugCommand.EXIT:
-                inDebug = false;
-                break;
+                return false;
             case debugCommand.LAST:
-                postMessage(`print,${line.toString().padStart(3, "0")}: ${lines[line-1]}\r\n`);
+                postMessage(`print,${line.toString().padStart(3, "0")}: ${lines[line - 1]}\r\n`);
                 break;
             case debugCommand.LIST:
                 if (backTrace.length > 0) {
-                    const func = backTrace[backTrace.length-1];
+                    const func = backTrace[backTrace.length - 1];
                     let start = func.functionLoc.start.line;
                     let end = Math.min(func.functionLoc.end.line, lines.length);
                     for (let index = start; index <= end; index++) {
                         const flag = index === line ? "*" : " ";
-                        postMessage(`print,${index.toString().padStart(3, "0")}:${flag} ${lines[index-1]}\r\n`);
+                        postMessage(
+                            `print,${index.toString().padStart(3, "0")}:${flag} ${
+                                lines[index - 1]
+                            }\r\n`
+                        );
                     }
                 }
                 break;
             case debugCommand.NEXT:
-                postMessage(`print,${(line+1).toString().padStart(3, "0")}: ${lines[line]}\r\n`);
+                postMessage(`print,${(line + 1).toString().padStart(3, "0")}: ${lines[line]}\r\n`);
                 break;
             case debugCommand.THREADS:
                 debugMsg = "ID    Location                                Source Code\r\n";
-                debugMsg += `0*    ${formatLocation(statement.location).padEnd(40)}${lines[line-1]}\r\n`;
+                debugMsg += `0*    ${formatLocation(statement.location).padEnd(40)}${
+                    lines[line - 1]
+                }\r\n`;
                 debugMsg += " *selected";
                 postMessage(`print,${debugMsg}\r\n`);
                 break;
@@ -133,7 +149,6 @@ export function startDebugger(interpreter: Interpreter, statement: Stmt.Stop): b
                 break;
         }
     }
-    return false;
 }
 
 function debugGetExpr(buffer: Int32Array): string {
@@ -151,13 +166,13 @@ function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
     let debugMsg = "";
     let offset = 1;
     let loc = stmtLoc;
-    for (let index = backTrace.length-1; index >= 0; index--) {
+    for (let index = backTrace.length - 1; index >= 0; index--) {
         const func = backTrace[index];
         const kind = ValueKind.toString(func.signature.returns);
         let args = "";
-        func.signature.args.forEach(arg => {
+        func.signature.args.forEach((arg) => {
             args += args !== "" ? "," : "";
-            args += `${arg.name.text} As ${ ValueKind.toString(arg.type.kind)}`;
+            args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
         });
         debugMsg += `#${index}  Function ${func.functionName}(${args}) As ${kind}\r\n`; // TODO: Correct signature
         debugMsg += `   file/line: ${formatLocation(loc, offset)}\r\n`;
@@ -203,11 +218,9 @@ function formatLocation(location: Location, lineOffset: number = 0) {
 
 // This function takes a text file content as a string and returns an array of lines
 function parseTextFile(content?: string): Array<string> {
-  // Split the content by newline characters
-  let lines: Array<string> = [];
-  if (content) {
-    lines = content.split("\n");
-  }
-  // Return the array of lines
-  return lines;
+    let lines: Array<string> = [];
+    if (content) {
+        lines = content.split("\n");
+    }
+    return lines;
 }

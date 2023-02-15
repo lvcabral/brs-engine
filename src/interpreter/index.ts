@@ -41,7 +41,7 @@ import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
-import { startDebugger } from "./Debug";
+import { runDebugger } from "./MicroDebugger";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -82,6 +82,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     public audioId: number = 0;
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();
+    public debugMode: boolean = false;
 
     /**
      * Convenience function to subscribe to the `err` events emitted by `interpreter.events`.
@@ -344,10 +345,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitStop(statement: Stmt.Stop): BrsType {
-        if (startDebugger(this, statement)) {
-            return BrsInvalid.Instance;
-        }
-        throw new BrsError("stop-exit", statement.location);
+        this.debugMode = true;
+        return BrsInvalid.Instance;
     }
 
     visitAssignment(statement: Stmt.Assignment): BrsType {
@@ -1643,7 +1642,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
-        return statement.accept<BrsType>(this);
+        const result = statement.accept<BrsType>(this);
+        if (this.debugMode) {
+            if (!runDebugger(this, statement)) {
+                throw new BrsError("debug-exit", statement.location);
+            }
+        }
+        return result;
     }
 
     getChannelVersion(): string {

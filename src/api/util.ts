@@ -29,6 +29,7 @@ export enum debugCommand {
     LAST,
     LIST,
     NEXT,
+    STEP,
     THREADS,
     VAR,
     EXPR,
