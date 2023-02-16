@@ -218,8 +218,8 @@ function formatLocation(location: Location, lineOffset: number = 0) {
 }
 
 // This function takes a text file content as a string and returns an array of lines
-function parseTextFile(content?: string): Array<string> {
-    let lines: Array<string> = [];
+function parseTextFile(content?: string): string[] {
+    let lines: string[] = [];
     if (content) {
         lines = content.split("\n");
     }
