@@ -196,7 +196,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             let result = false;
             let xmlParser = new xml2js.Parser();
             let parsedXML;
-            xmlParser.parseString(xml.value, function (err: Error, parsed: any) {
+            xmlParser.parseString(xml.value, function (err: any, parsed: any) {
                 if (err) {
                     postMessage(`warning,Error parsing XML: ${err.message}`);
                 } else if (parsed) {

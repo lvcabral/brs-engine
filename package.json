@@ -36,7 +36,6 @@
     "app/lib/brsEmu.worker.js"
   ],
   "dependencies": {
-    "babel-loader": "^8.3.0",
     "bowser": "^2.11.0",
     "crc": "^3.8.0",
     "decode-bmp": "^0.1.0",
@@ -73,8 +72,9 @@
     "@types/p-settle": "^2.0.1",
     "@types/path-parse": "^1.0.19",
     "@types/upng-js": "^2.1.1",
-    "@types/url-parse": "^1.4.3",
+    "@types/url-parse": "^1.4.8",
     "@types/xml2js": "^0.4.8",
+    "babel-loader": "^8.3.0",
     "husky": ">=1",
     "jest": "26",
     "jest-junit": "^6.1.0",
@@ -84,6 +84,7 @@
     "prettier": "2",
     "raw-loader": "^3.1.0",
     "rimraf": "^2.6.2",
+    "ts-loader": "^8.4.0",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "4",

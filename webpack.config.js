@@ -27,10 +27,7 @@ module.exports = env => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "babel-loader",
-                        options: {
-                            presets: ["@babel/env", "@babel/preset-typescript"]
-                        },
+                        loader: "ts-loader",
                         exclude: /node_modules/,
                     },
                 ],

@@ -6,20 +6,20 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import * as path from "path";
 import pathParse from "path-parse";
-import URL from "url-parse";
+import URLParse, { QueryParser } from "url-parse";
 
 export class RoPath extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private fullPath: string;
     private parsedPath: any;
-    private parsedUrl: URL;
+    private parsedUrl: URLParse<QueryParser>;
     private valid: boolean;
     private check: RegExp;
 
     constructor(pathName: BrsString) {
         super("roPath"); // TODO: Implement ifString
         // TODO: Validate path
-        this.parsedUrl = new URL(pathName.value);
+        this.parsedUrl = new URLParse<QueryParser>(pathName.value);
         this.check = new RegExp(/^([a-zA-Z]:)?(\/[^<>:"/\/|?*]+)+\/?$/, "i");
         if (!this.check.test(this.parsedUrl.pathname)) {
             this.fullPath = "";
@@ -48,7 +48,7 @@ export class RoPath extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, newPath: BrsString) => {
             let pathName = "";
-            let newUrl = new URL(newPath.value);
+            let newUrl = new URLParse<QueryParser>(newPath.value);
             if (newUrl.protocol === "http:" && newPath.value.slice(0, 5) !== "http:") {
                 // no protocol passed (parser used default)
                 pathName = path.join(this.parsedPath.dir, this.parsedPath.base, newPath.value);
