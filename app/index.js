@@ -158,6 +158,8 @@ function supportedBrowser() {
             browserVersion.major > 88;
     } else if (info.engine.name == "Gecko") {
         supported = browserVersion.major > 104;
+    } else if (info.engine.name == "WebKit") {
+        supported = browserVersion.major >= 16 && browserVersion.minor >= 4;
     }
     if (!supported) {
         console.error(
