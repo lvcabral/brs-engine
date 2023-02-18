@@ -6,6 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { subscribeCallback } from "./util";
+import Stats from "stats.js";
 
 // Emulator Display
 const screenSize = { width: 1280, height: 720 };
@@ -15,6 +16,9 @@ let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
 
 // Performance Variables
+const statsDiv = document.getElementById("stats") as HTMLDivElement;
+const statsCanvas = new Stats();
+let showStats = false;
 let calcFps = false;
 let lastTime = 0;
 let frames = 0;
@@ -27,7 +31,7 @@ export let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 export function initDisplayModule(mode: string, lowRes: boolean) {
     // Initialize Display Canvas
-    if (typeof OffscreenCanvas !== "undefined") {
+    if (typeof OffscreenCanvas !== undefined) {
         display =
             (document.getElementById("display") as HTMLCanvasElement) ||
             new OffscreenCanvas(screenSize.width, screenSize.height);
@@ -37,6 +41,31 @@ export function initDisplayModule(mode: string, lowRes: boolean) {
         bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
         if (bufferCanvas) {
             bufferCtx = bufferCanvas.getContext("2d") as CanvasRenderingContext2D | null;
+        }
+        if (statsDiv) {
+            statsCanvas.dom.style.top = display.style.top;
+            statsCanvas.dom.style.left = display.style.left;
+            const statPanels = statsCanvas.dom.children.length;
+            const newDom = statsCanvas.dom.cloneNode() as HTMLDivElement;
+            console.log(statPanels);
+            for (let index = 0; index < statPanels; index++) {
+                const panel = statsCanvas.dom.children[0] as HTMLCanvasElement;
+                panel.style.cssText = `position:absolute;top:${display.style.top}px;left:${index * 160}px`;
+                console.log(index,panel);
+                newDom.appendChild(panel);
+            }
+            statsCanvas.dom = newDom;
+            statsCanvas.dom.addEventListener(
+                "click",
+                function (event) {
+                    event.preventDefault();
+                    showStats = !showStats;
+                    statsDiv.style.opacity = showStats ? "0.5" : "0";
+                },
+                false
+            );
+            statsDiv.appendChild(statsCanvas.dom);
+            showStats = true;
         }
     } else {
         console.warn(
@@ -83,7 +112,7 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Redraw Display Canvas
-export function redrawDisplay(running: boolean, fullScreen: boolean) {
+export function redrawDisplay(running: boolean, fullScreen: boolean, offsetY: number) {
     notifyAll("redraw", fullScreen);
     if (fullScreen) {
         screenSize.width = window.innerWidth;
@@ -93,27 +122,15 @@ export function redrawDisplay(running: boolean, fullScreen: boolean) {
             screenSize.width = Math.trunc(screenSize.height * aspectRatio);
         }
     } else {
-        const ratio = 0.98;
-        let offset = 25;
-        if (display instanceof HTMLCanvasElement) {
-            if (display.style.bottom !== "0px") {
-                // TODO: Check if this is  effective
-                offset = 30;
-            }
-        }
-        screenSize.width = window.innerWidth * ratio;
+        screenSize.width = window.innerWidth;
         screenSize.height = Math.trunc(screenSize.width / aspectRatio);
-        if (screenSize.height > window.innerHeight * ratio - offset) {
-            screenSize.height = window.innerHeight * ratio - offset;
+        if (screenSize.height > window.innerHeight - offsetY) {
+            screenSize.height = window.innerHeight - offsetY;
             screenSize.width = Math.trunc(screenSize.height * aspectRatio);
         }
     }
     display.width = screenSize.width;
     display.height = screenSize.height;
-    if (display instanceof HTMLCanvasElement) {
-        display.style.width = screenSize.width.toString();
-        display.style.height = screenSize.height.toString();
-    }
     if (running) {
         drawBufferImage();
     } else {
@@ -140,6 +157,9 @@ export function drawSplashScreen(imgData: CanvasImageSource) {
 // Draw Buffer Image to the Display Canvas
 export function drawBufferImage(buffer?: any) {
     if (ctx) {
+        if (showStats) {
+            statsCanvas.end();
+        }
         if (buffer) {
             if (bufferCanvas.width !== buffer.width || bufferCanvas.height !== buffer.height) {
                 notifyAll("resolution", { width: buffer.width, height: buffer.height });
@@ -183,6 +203,9 @@ export function drawBufferImage(buffer?: any) {
             }
             notifyAll("fps", fpsAvg);
         }
+        if (showStats) {
+            statsCanvas.begin();
+        }
     }
 }
 
@@ -192,6 +215,9 @@ export function showDisplay() {
     if (display instanceof HTMLCanvasElement) {
         display.style.opacity = "1";
         display.focus();
+        if (statsDiv && statsDiv.style.visibility === "visible") {
+            showStats = true;
+        }
     }
 }
 

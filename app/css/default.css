@@ -22,16 +22,25 @@ body {
 
 #display{
     position: relative;
-    left: 45px; 
+    left: 45px;
     top: 29px;
 	background-color: black;
 	opacity: 0;
     z-index:20;
 }
 
+#stats{
+    position: absolute;
+    left: 45px;
+    top: 29px;
+	z-index:60;
+	opacity: 0.5;
+	visibility: hidden;
+}
+
 #loading{
     position: absolute;
-    left: 45px; 
+    left: 45px;
     top: 29px;
 	z-index:60;
 	opacity: 0.9;
@@ -40,7 +49,7 @@ body {
 
 #channelInfo{
 	position: absolute;
-	left: 320px; 
+	left: 320px;
 	top: 560px;
 	color: white;
 	z-index: 30;
@@ -48,63 +57,63 @@ body {
 
 #channel1{
     position: absolute;
-    left: 398px; 
+    left: 398px;
     top: 135px;
     z-index:30;
 }
 
 #channel2{
     position: absolute;
-    left: 541px; 
+    left: 541px;
     top: 135px;
     z-index:30;
 }
 
 #channel3{
     position: absolute;
-    left: 683px; 
+    left: 683px;
     top: 135px;
     z-index:30;
 }
 
 #channel4{
     position: absolute;
-    left: 398px; 
+    left: 398px;
     top: 245px;
     z-index:30;
 }
 
 #channel5{
     position: absolute;
-    left: 541px; 
+    left: 541px;
     top: 245px;
     z-index:30;
 }
 
 #channel6{
     position: absolute;
-    left: 683px; 
+    left: 683px;
     top: 245px;
     z-index:30;
 }
 
 #channel7{
     position: absolute;
-    left: 398px; 
+    left: 398px;
     top: 354px;
     z-index:30;
 }
 
 #channel8{
     position: absolute;
-    left: 541px; 
+    left: 541px;
     top: 354px;
     z-index:30;
 }
 
 #channel9{
     position: absolute;
-    left: 683px; 
+    left: 683px;
     top: 354px;
     z-index:30;
 }
@@ -201,9 +210,9 @@ p {
 
 #fileButton {
 	position: absolute;
-	left: 342px; 
-	top: 572px; 
-	z-index: 30;	
+	left: 342px;
+	top: 572px;
+	z-index: 30;
 }
 
 .fileButton {

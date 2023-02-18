@@ -9,6 +9,7 @@ const fileButton = document.getElementById("fileButton");
 const channelInfo = document.getElementById("channelInfo");
 const libVersion = document.getElementById("libVersion");
 const display = document.getElementById("display");
+const stats = document.getElementById("stats");
 const loading = document.getElementById("loading");
 const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
@@ -53,12 +54,14 @@ if (supportedBrowser()) {
             currentChannel = data;
             channelIcons("hidden");
             loading.style.visibility = "hidden";
+            stats.style.visibility = "visible";
         } else if (event === "closed" || event === "error") {
             currentChannel = { id: "", running: false };
             display.style.opacity = 0;
             channelInfo.innerHTML = "<br/>";
             fileButton.style.visibility = "visible";
             loading.style.visibility = "hidden";
+            stats.style.visibility = "hidden";
             channelIcons("visible");
             fileSelector.value = null;
         } else if (event === "fps") {

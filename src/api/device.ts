@@ -539,8 +539,8 @@ export function terminate(reason: string) {
 }
 
 // Display API
-export function redraw(fullScreen: boolean) {
-    redrawDisplay(currentChannel.running, fullScreen);
+export function redraw(fullScreen: boolean, offsetX: number = 0, offsetY: number = 0) {
+    redrawDisplay(currentChannel.running, fullScreen, offsetY);
 }
 export function getDisplayMode() {
     return deviceData.displayMode;
