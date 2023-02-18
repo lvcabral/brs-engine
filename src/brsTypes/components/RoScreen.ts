@@ -19,7 +19,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private currentBuffer: number;
     private width: number;
     private height: number;
-    //private display: HTMLCanvasElement;
     private canvas: OffscreenCanvas[];
     private context: OffscreenCanvasRenderingContext2D[];
     private port?: RoMessagePort;
@@ -55,8 +54,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 this.height = defaultHeight;
             }
         }
-        this.doubleBuffer =
-            (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
+        this.doubleBuffer = doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean();
         this.currentBuffer = 0;
         this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 2 : 1);
         this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
@@ -102,8 +100,12 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     clearCanvas(rgba: number) {
         let ctx = this.context[this.currentBuffer];
-        ctx.fillStyle = rgbaIntToHex(rgba);
-        ctx.fillRect(0, 0, this.width, this.height);
+        if (rgbaToRgb(rgba) === 0) {
+            ctx.clearRect(0, 0, this.width, this.height);
+        } else {
+            ctx.fillStyle = rgbaIntToHex(rgbaToOpaque(rgba));
+            ctx.fillRect(0, 0, this.width, this.height);
+        }
         return BrsInvalid.Instance;
     }
 
@@ -113,12 +115,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
-        for (let index = 0; index < this.canvas.length; index++) {
-            this.context[index] = this.canvas[index].getContext("2d", {
-                alpha: this.alphaEnable,
-                willReadFrequently: true,
-            }) as OffscreenCanvasRenderingContext2D;
-        }
         return BrsInvalid.Instance;
     }
 
@@ -184,8 +180,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
+            if (object instanceof RoBitmap) {
+                let cvs: OffscreenCanvas;
                 if (rgba instanceof Int32) {
                     const alpha = rgba.getValue() & 255;
                     if (alpha < 255) {
@@ -195,18 +191,22 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 } else {
                     cvs = object.getCanvas();
                 }
-            } else {
-                return BrsBoolean.False;
-            }
-            if (object instanceof RoBitmap) {
+                if (cvs.width === 0 || cvs.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.drawImage(cvs, x.getValue(), y.getValue());
-            } else {
+            } else if (object instanceof RoRegion) {
                 let rcv = object.getRegionCanvas();
+                if (rcv.width === 0 || rcv.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.drawImage(
                     rcv,
                     x.getValue() + object.getTransX(),
                     y.getValue() + object.getTransY()
                 );
+            } else {
+                return BrsBoolean.False;
             }
             ctx.globalAlpha = 1.0;
             return BrsBoolean.True;
@@ -244,6 +244,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     cvs = object.getRgbaCanvas(rgba.getValue());
                 } else {
                     cvs = object.getCanvas();
+                }
+                if (cvs.width === 0 || cvs.height === 0) {
+                    return BrsBoolean.False;
                 }
             } else {
                 return BrsBoolean.False;
@@ -298,8 +301,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
+            if (object instanceof RoBitmap) {
+                let cvs: OffscreenCanvas;
                 if (rgba instanceof Int32) {
                     const alpha = rgba.getValue() & 255;
                     if (alpha < 255) {
@@ -309,10 +312,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 } else {
                     cvs = object.getCanvas();
                 }
-            } else {
-                return BrsBoolean.False;
-            }
-            if (object instanceof RoBitmap) {
+                if (cvs.width === 0 || cvs.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.imageSmoothingEnabled = false;
                 ctx.drawImage(
                     cvs,
@@ -323,6 +325,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 );
             } else if (object instanceof RoRegion) {
                 let rcv = object.getRegionCanvas();
+                if (rcv.width === 0 || rcv.height === 0) {
+                    return BrsBoolean.False;
+                }
                 let tx = object.getTransX() * scaleX.getValue();
                 let ty = object.getTransY() * scaleY.getValue();
                 ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
@@ -333,6 +338,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     object.getImageWidth() * scaleX.getValue(),
                     object.getImageHeight() * scaleY.getValue()
                 );
+            } else {
+                return BrsBoolean.False;
             }
             ctx.globalAlpha = 1.0;
             return BrsBoolean.True;
@@ -575,4 +582,18 @@ export class RoScreen extends BrsComponent implements BrsValue {
             return BrsInvalid.Instance;
         },
     });
+}
+
+export function rgbaToRgb(rgba: number): number {
+    const r = (rgba >> 24) & 0xff;
+    const g = (rgba >> 16) & 0xff;
+    const b = (rgba >> 8) & 0xff;
+    return (r << 24) + (g << 16) + (b << 8);
+}
+
+export function rgbaToOpaque(rgba: number): number {
+    const r = (rgba >> 24) & 0xff;
+    const g = (rgba >> 16) & 0xff;
+    const b = (rgba >> 8) & 0xff;
+    return (r << 24) + (g << 16) + (b << 8) + 255;
 }

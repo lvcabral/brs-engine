@@ -678,8 +678,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
+            if (object instanceof RoBitmap) {
+                let cvs: OffscreenCanvas;
                 if (rgba instanceof Int32) {
                     const alpha = rgba.getValue() & 255;
                     if (alpha < 255) {
@@ -689,18 +689,22 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 } else {
                     cvs = object.getCanvas();
                 }
-            } else {
-                return BrsBoolean.False;
-            }
-            if (object instanceof RoBitmap) {
+                if (cvs.width === 0 || cvs.height === 0) {
+                    return BrsBoolean.False;
+                }
                 this.drawImage(cvs, x.getValue(), y.getValue());
             } else if (object instanceof RoRegion) {
                 let rcv = object.getRegionCanvas();
+                if (rcv.width === 0 || rcv.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.drawImage(
                     rcv,
                     this.x + x.getValue() + object.getTransX(),
                     this.y + y.getValue() + object.getTransY()
                 );
+            } else {
+                return BrsBoolean.False;
             }
             this.redrawCanvas();
             ctx.globalAlpha = 1.0;
@@ -729,8 +733,13 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
+            const positionX = x.getValue();
+            const positionY = y.getValue();
+            const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.translate(positionX, positionY);
+            ctx.rotate(angleInRad);
+            if (object instanceof RoBitmap) {
+                let cvs: OffscreenCanvas;
                 if (rgba instanceof Int32) {
                     const alpha = rgba.getValue() & 255;
                     if (alpha < 255) {
@@ -740,18 +749,15 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 } else {
                     cvs = object.getCanvas();
                 }
-            } else {
-                return BrsBoolean.False;
-            }
-            const positionX = x.getValue();
-            const positionY = y.getValue();
-            const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.translate(positionX, positionY);
-            ctx.rotate(angleInRad);
-            if (object instanceof RoBitmap) {
+                if (cvs.width === 0 || cvs.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.drawImage(cvs, 0, 0, cvs.width, cvs.height);
-            } else {
+            } else if (object instanceof RoRegion) {
                 let rcv = object.getRegionCanvas();
+                if (rcv.width === 0 || rcv.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.drawImage(
                     rcv,
                     object.getPosX(),
@@ -763,6 +769,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
                     object.getImageWidth(),
                     object.getImageHeight()
                 );
+            } else {
+                return BrsBoolean.False;
             }
             this.redrawCanvas();
             ctx.rotate(-angleInRad);
@@ -795,8 +803,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
+            if (object instanceof RoBitmap) {
+                let cvs: OffscreenCanvas;
                 if (rgba instanceof Int32) {
                     const alpha = rgba.getValue() & 255;
                     if (alpha < 255) {
@@ -806,10 +814,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 } else {
                     cvs = object.getCanvas();
                 }
-            } else {
-                return BrsBoolean.False;
-            }
-            if (object instanceof RoBitmap) {
+                if (cvs.width === 0 || cvs.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.imageSmoothingEnabled = false;
                 ctx.drawImage(
                     cvs,
@@ -820,6 +827,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 );
             } else if (object instanceof RoRegion) {
                 let rcv = object.getRegionCanvas();
+                if (rcv.width === 0 || rcv.height === 0) {
+                    return BrsBoolean.False;
+                }
                 let tx = object.getTransX() * scaleX.getValue();
                 let ty = object.getTransY() * scaleY.getValue();
                 ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
@@ -830,6 +840,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
                     object.getImageWidth() * scaleX.getValue(),
                     object.getImageHeight() * scaleY.getValue()
                 );
+            } else {
+                return BrsBoolean.False;
             }
             this.redrawCanvas();
             ctx.globalAlpha = 1.0;
