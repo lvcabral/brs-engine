@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { dataType, audioEvent } from "./util";
+import { DataType, AudioEvent } from "./util";
 import { Howl, Howler } from "howler";
 
 // Sound Objects
@@ -61,8 +61,8 @@ export function playSound() {
         } else {
             sound.play();
         }
-        Atomics.store(sharedArray, dataType.IDX, playIndex);
-        Atomics.store(sharedArray, dataType.SND, audioEvent.SELECTED);
+        Atomics.store(sharedArray, DataType.IDX, playIndex);
+        Atomics.store(sharedArray, DataType.SND, AudioEvent.SELECTED);
     } else {
         console.warn(`Can't find audio index: ${playIndex}`);
     }
@@ -82,7 +82,7 @@ export function nextSound() {
         playSound();
     } else {
         playIndex = 0;
-        Atomics.store(sharedArray, dataType.SND, audioEvent.FULL);
+        Atomics.store(sharedArray, DataType.SND, AudioEvent.FULL);
     }
 }
 
@@ -93,7 +93,7 @@ export function stopSound() {
         if (idx) {
             soundsDat[idx].stop();
         }
-        Atomics.store(sharedArray, dataType.SND, audioEvent.PARTIAL);
+        Atomics.store(sharedArray, DataType.SND, AudioEvent.PARTIAL);
     } else if (audio) {
         console.warn(`[stopSound] Can't find audio data: ${playIndex} - ${audio}`);
     }
@@ -106,7 +106,7 @@ export function pauseSound() {
         if (idx) {
             soundsDat[idx].pause();
         }
-        Atomics.store(sharedArray, dataType.SND, audioEvent.PAUSED);
+        Atomics.store(sharedArray, DataType.SND, AudioEvent.PAUSED);
     } else if (audio) {
         console.warn(`[message:pause] Can't find audio data: ${playIndex} - ${audio}`);
     }
@@ -119,7 +119,7 @@ export function resumeSound() {
         if (idx) {
             soundsDat[idx].play();
         }
-        Atomics.store(sharedArray, dataType.SND, audioEvent.RESUMED);
+        Atomics.store(sharedArray, DataType.SND, AudioEvent.RESUMED);
     } else if (audio) {
         console.warn(`[message:resume] Can't find audio data: ${playIndex} - ${audio}`);
     }
@@ -162,10 +162,10 @@ export function triggerWav(wav: string, volume: number, index: number) {
             }
             wavStreams[index] = sound;
             sound.on("end", function () {
-                Atomics.store(sharedArray, dataType.WAV + index, -1);
+                Atomics.store(sharedArray, DataType.WAV + index, -1);
             });
             sound.play();
-            Atomics.store(sharedArray, dataType.WAV + index, soundId);
+            Atomics.store(sharedArray, DataType.WAV + index, soundId);
         }
     }
 }
@@ -181,9 +181,9 @@ export function stopWav(wav: string) {
     if (soundId) {
         const sound = soundsDat[soundId];
         for (let index = 0; index < maxStreams; index++) {
-            const wavId = Atomics.load(sharedArray, dataType.WAV + index);
+            const wavId = Atomics.load(sharedArray, DataType.WAV + index);
             if (wavId === soundId) {
-                Atomics.store(sharedArray, dataType.WAV + index, -1);
+                Atomics.store(sharedArray, DataType.WAV + index, -1);
                 break;
             }
         }

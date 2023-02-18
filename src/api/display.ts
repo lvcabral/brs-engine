@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { subscribeCallback } from "./util";
+import { ExtraSize, SubscribeCallback } from "./util";
 import Stats from "stats.js";
 
 // Emulator Display
@@ -99,7 +99,7 @@ export function initDisplayModule(mode: string, lowRes: boolean) {
 
 // Observers Handling
 const observers = new Map();
-export function subscribeDisplay(observerId: string, observerCallback: subscribeCallback) {
+export function subscribeDisplay(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
 export function unsubscribeDisplay(observerId: string) {
@@ -112,7 +112,7 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Redraw Display Canvas
-export function redrawDisplay(running: boolean, fullScreen: boolean, offsetY: number) {
+export function redrawDisplay(running: boolean, fullScreen: boolean, extraSize: ExtraSize) {
     notifyAll("redraw", fullScreen);
     if (fullScreen) {
         screenSize.width = window.innerWidth;
@@ -122,10 +122,11 @@ export function redrawDisplay(running: boolean, fullScreen: boolean, offsetY: nu
             screenSize.width = Math.trunc(screenSize.height * aspectRatio);
         }
     } else {
+        // TODO: use extraSize.width
         screenSize.width = window.innerWidth;
         screenSize.height = Math.trunc(screenSize.width / aspectRatio);
-        if (screenSize.height > window.innerHeight - offsetY) {
-            screenSize.height = window.innerHeight - offsetY;
+        if (screenSize.height > window.innerHeight - extraSize.height) {
+            screenSize.height = window.innerHeight - extraSize.height;
             screenSize.width = Math.trunc(screenSize.height * aspectRatio);
         }
     }

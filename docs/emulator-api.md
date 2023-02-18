@@ -24,8 +24,9 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
   - `execSource` (string) - The execution source to be send on the input parameters for `sub Main(params)` (See [Roku documentation](https://developer.roku.com/en-gb/docs/developer-program/getting-started/architecture/dev-environment.md#source-parameter))
 - brsEmu.**terminate**(reason) - Terminates the current channel/source execution
   - `reason` (string) - The reason for the termination (showed on console)
-- brsEMu.**redraw**(fullscreen) - Send a remote control key down event to the emulator
+- brsEMu.**redraw**(fullscreen, extraSize) - Send a remote control key down event to the emulator
   - `fullscreen` (boolean) - Request a display redraw informing if the full screen mode is activated
+  - `extraSize` (ExtraSize) - An object containing any additional dimensions to help calculate aspect ratio (similar to [`setAspectRatio` in Electron](https://www.electronjs.org/docs/latest/api/browser-window#winsetaspectratioaspectratio-extrasize))
 - brsEMu.**getDisplayMode**() - Returns the current display mode.
 - brsEMu.**setDisplayMode**(mode) - Configure the display mode. If a channel is running will reset the device
   - `mode` (string) - One of the supported modes: `"480p"` (SD), `"720p"` (HD) or `"1080p"`(FHD)

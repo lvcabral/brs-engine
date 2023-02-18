@@ -7,15 +7,16 @@
  *--------------------------------------------------------------------------------------------*/
 import JSZip from "jszip";
 import {
-    dataType,
+    DataType,
+    DebugCommand,
+    ExtraSize,
+    SubscribeCallback,
     dataBufferIndex,
     dataBufferSize,
-    subscribeCallback,
     getNow,
     getApiPath,
     getEmuPath,
     isElectron,
-    debugCommand,
 } from "./util";
 import {
     subscribeDisplay,
@@ -160,7 +161,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
 
 // Observers Handling
 const observers = new Map();
-export function subscribe(observerId: string, observerCallback: subscribeCallback) {
+export function subscribe(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
 export function unsubscribe(observerId: string) {
@@ -207,12 +208,12 @@ function resetWorker() {
     resetSounds();
 }
 function resetArray() {
-    Atomics.store(sharedArray, dataType.KEY, -1);
-    Atomics.store(sharedArray, dataType.MOD, -1);
-    Atomics.store(sharedArray, dataType.SND, -1);
-    Atomics.store(sharedArray, dataType.IDX, -1);
-    Atomics.store(sharedArray, dataType.DBG, -1);
-    Atomics.store(sharedArray, dataType.EXP, -1);
+    Atomics.store(sharedArray, DataType.KEY, -1);
+    Atomics.store(sharedArray, DataType.MOD, -1);
+    Atomics.store(sharedArray, DataType.SND, -1);
+    Atomics.store(sharedArray, DataType.IDX, -1);
+    Atomics.store(sharedArray, DataType.DBG, -1);
+    Atomics.store(sharedArray, DataType.EXP, -1);
 }
 
 // Open source file
@@ -539,8 +540,8 @@ export function terminate(reason: string) {
 }
 
 // Display API
-export function redraw(fullScreen: boolean, offsetX: number = 0, offsetY: number = 0) {
-    redrawDisplay(currentChannel.running, fullScreen, offsetY);
+export function redraw(fullScreen: boolean, extraSize: ExtraSize = { width: 0, height: 0 }) {
+    redrawDisplay(currentChannel.running, fullScreen, extraSize);
 }
 export function getDisplayMode() {
     return deviceData.displayMode;
@@ -588,26 +589,26 @@ export function debug(command: string): boolean {
     let handled = false;
     if (currentChannel.running && command && command.length > 0) {
         const commandsMap = new Map([
-            ["bt", debugCommand.BT],
-            ["cont", debugCommand.CONT],
-            ["c", debugCommand.CONT],
-            ["exit", debugCommand.EXIT],
-            ["q", debugCommand.EXIT],
-            ["help", debugCommand.HELP],
-            ["last", debugCommand.LAST],
-            ["l", debugCommand.LAST],
-            ["list", debugCommand.LIST],
-            ["next", debugCommand.NEXT],
-            ["n", debugCommand.NEXT],
-            ["over", debugCommand.STEP],
-            ["out", debugCommand.STEP],
-            ["step", debugCommand.STEP],
-            ["s", debugCommand.STEP],
-            ["t", debugCommand.STEP],
-            ["threads", debugCommand.THREADS],
-            ["ths", debugCommand.THREADS],
-            ["var", debugCommand.VAR],
-            ["break", debugCommand.BREAK],
+            ["bt", DebugCommand.BT],
+            ["cont", DebugCommand.CONT],
+            ["c", DebugCommand.CONT],
+            ["exit", DebugCommand.EXIT],
+            ["q", DebugCommand.EXIT],
+            ["help", DebugCommand.HELP],
+            ["last", DebugCommand.LAST],
+            ["l", DebugCommand.LAST],
+            ["list", DebugCommand.LIST],
+            ["next", DebugCommand.NEXT],
+            ["n", DebugCommand.NEXT],
+            ["over", DebugCommand.STEP],
+            ["out", DebugCommand.STEP],
+            ["step", DebugCommand.STEP],
+            ["s", DebugCommand.STEP],
+            ["t", DebugCommand.STEP],
+            ["threads", DebugCommand.THREADS],
+            ["ths", DebugCommand.THREADS],
+            ["var", DebugCommand.VAR],
+            ["break", DebugCommand.BREAK],
         ]);
         let exprs = command
             .toString()
@@ -615,8 +616,8 @@ export function debug(command: string): boolean {
             .split(/(?<=^\S+)\s/);
         let cmd = commandsMap.get(exprs[0].toLowerCase());
         if (cmd !== undefined) {
-            Atomics.store(sharedArray, dataType.DBG, cmd);
-            Atomics.store(sharedArray, dataType.EXP, exprs.length - 1);
+            Atomics.store(sharedArray, DataType.DBG, cmd);
+            Atomics.store(sharedArray, DataType.EXP, exprs.length - 1);
             if (exprs.length > 1) {
                 debugExpression(exprs[1]);
             }
@@ -625,11 +626,11 @@ export function debug(command: string): boolean {
             if (exprs[0].toLowerCase() === "p") {
                 expr = "? " + expr.slice(1);
             }
-            Atomics.store(sharedArray, dataType.DBG, debugCommand.EXPR);
-            Atomics.store(sharedArray, dataType.EXP, 1);
+            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
+            Atomics.store(sharedArray, DataType.EXP, 1);
             debugExpression(expr);
         }
-        handled = Atomics.notify(sharedArray, dataType.DBG) > 0;
+        handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
     }
     return handled;
 }

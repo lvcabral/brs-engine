@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { dataType, debugCommand, subscribeCallback } from "./util";
+import { DataType, DebugCommand, SubscribeCallback } from "./util";
 
 // Keyboard Mapping
 const preventDefault: Set<string> = new Set([
@@ -112,7 +112,7 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
 
 // Observers Handling
 const observers = new Map();
-export function subscribeControl(observerId: string, observerCallback: subscribeCallback) {
+export function subscribeControl(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
 export function unsubscribeControl(observerId: string) {
@@ -130,17 +130,17 @@ export function sendKey(key: string, mod: number) {
     if (key === "home" && mod === 0) {
         notifyAll(key);
     } else if (key === "break") {
-        Atomics.store(sharedArray, dataType.DBG, debugCommand.BREAK);
+        Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
-            Atomics.store(sharedArray, dataType.MOD, mod);
-            Atomics.store(sharedArray, dataType.KEY, code + mod);
+            Atomics.store(sharedArray, DataType.MOD, mod);
+            Atomics.store(sharedArray, DataType.KEY, code + mod);
         }
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
         if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            Atomics.store(sharedArray, dataType.MOD, mod);
-            Atomics.store(sharedArray, dataType.KEY, key.charCodeAt(4) + mod);
+            Atomics.store(sharedArray, DataType.MOD, mod);
+            Atomics.store(sharedArray, DataType.KEY, key.charCodeAt(4) + mod);
         }
     }
 }

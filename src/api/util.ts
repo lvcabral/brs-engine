@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Shared array data types enumerator
-export enum dataType {
+export enum DataType {
     KEY,
     MOD,
     SND,
@@ -21,7 +21,7 @@ export enum dataType {
 export const dataBufferIndex = 32;
 export const dataBufferSize = 512;
 
-export enum debugCommand {
+export enum DebugCommand {
     BT,
     CONT,
     EXIT,
@@ -37,7 +37,7 @@ export enum debugCommand {
 }
 
 // Audio events enumerator
-export enum audioEvent {
+export enum AudioEvent {
     SELECTED,
     FULL,
     PARTIAL,
@@ -46,8 +46,13 @@ export enum audioEvent {
     FAILED,
 }
 
+export interface ExtraSize {
+    width: number,
+    height: number
+}
+
 // Module callback function definition
-export type subscribeCallback = (event: string, data?: any) => void;
+export type SubscribeCallback = (event: string, data?: any) => void;
 
 // Roku beacon date format
 export function getNow(): string {
