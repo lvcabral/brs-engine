@@ -47,11 +47,9 @@ export function initDisplayModule(mode: string, lowRes: boolean) {
             statsCanvas.dom.style.left = display.style.left;
             const statPanels = statsCanvas.dom.children.length;
             const newDom = statsCanvas.dom.cloneNode() as HTMLDivElement;
-            console.log(statPanels);
             for (let index = 0; index < statPanels; index++) {
                 const panel = statsCanvas.dom.children[0] as HTMLCanvasElement;
                 panel.style.cssText = `position:absolute;top:${display.style.top}px;left:${index * 160}px`;
-                console.log(index,panel);
                 newDom.appendChild(panel);
             }
             statsCanvas.dom = newDom;
