@@ -48,8 +48,8 @@ export enum AudioEvent {
 }
 
 export interface ExtraSize {
-    width: number,
-    height: number
+    width: number;
+    height: number;
 }
 
 // Module callback function definition
