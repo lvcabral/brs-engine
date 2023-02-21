@@ -50,8 +50,8 @@ export function initDisplayModule(mode: string, lowRes: boolean) {
             for (let index = 0; index < statPanels; index++) {
                 const panel = statsCanvas.dom.children[0] as HTMLCanvasElement;
                 panel.style.cssText = `position:absolute;top:${display.style.top}px;left:${
-                    index * 160
-                }px`;
+                    index * panel.width
+                }px;`;
                 newDom.appendChild(panel);
             }
             statsCanvas.dom = newDom;
