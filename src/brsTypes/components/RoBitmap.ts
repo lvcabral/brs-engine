@@ -302,8 +302,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             let ctx = this.context;
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
+            const positionX = x.getValue();
+            const positionY = y.getValue();
+            const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.translate(positionX, positionY);
+            ctx.rotate(angleInRad);
+            if (object instanceof RoBitmap) {
+                let cvs: OffscreenCanvas;
                 if (rgba instanceof Int32) {
                     const alpha = rgba.getValue() & 255;
                     if (alpha < 255) {
@@ -316,19 +321,14 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 if (cvs.width === 0 || cvs.height === 0) {
                     return BrsBoolean.False;
                 }
-            } else {
-                return BrsBoolean.False;
-            }
-            const positionX = x.getValue();
-            const positionY = y.getValue();
-            const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.translate(positionX, positionY);
-            ctx.rotate(angleInRad);
-            if (object instanceof RoBitmap) {
                 ctx.drawImage(cvs, 0, 0, cvs.width, cvs.height);
-            } else {
+            } else if (object instanceof RoRegion) {
+                let rcv = object.getRegionCanvas();
+                if (rcv.width === 0 || rcv.height === 0) {
+                    return BrsBoolean.False;
+                }
                 ctx.drawImage(
-                    cvs,
+                    rcv,
                     object.getPosX(),
                     object.getPosY(),
                     object.getImageWidth(),
@@ -338,6 +338,8 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     object.getImageWidth(),
                     object.getImageHeight()
                 );
+            } else {
+                return BrsBoolean.False;
             }
             ctx.rotate(-angleInRad);
             ctx.translate(-positionX, -positionY);
