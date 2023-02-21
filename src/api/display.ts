@@ -35,13 +35,11 @@ export function initDisplayModule(mode: string, lowRes: boolean) {
         display =
             (document.getElementById("display") as HTMLCanvasElement) ||
             new OffscreenCanvas(screenSize.width, screenSize.height);
-        if (display) {
-            ctx = display.getContext("2d", { alpha: false });
-        }
+        ctx = display.getContext("2d", { alpha: false });
         bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
-        if (bufferCanvas) {
-            bufferCtx = bufferCanvas.getContext("2d") as CanvasRenderingContext2D | null;
-        }
+        bufferCtx = bufferCanvas.getContext("2d", {
+            alpha: false,
+        }) as CanvasRenderingContext2D | null;
         if (statsDiv) {
             statsCanvas.dom.style.top = display.style.top;
             statsCanvas.dom.style.left = display.style.left;
@@ -120,8 +118,24 @@ export function redrawDisplay(running: boolean, fullScreen: boolean) {
         screenSize.height = window.innerHeight;
         screenSize.width = Math.trunc(screenSize.height * aspectRatio);
     }
-    display.width = screenSize.width;
-    display.height = screenSize.height;
+
+    if (display instanceof HTMLCanvasElement) {
+        // Get the DPR and size of the canvas
+        const dpr = window.devicePixelRatio;
+
+        // Set the "actual" size of the canvas
+        display.width = screenSize.width * dpr;
+        display.height = screenSize.height * dpr;
+        // Scale the context to ensure correct drawing operations
+        if (ctx) {
+            ctx.scale(dpr, dpr);
+        }
+        display.style.width = `${screenSize.width}px`;
+        display.style.height = `${screenSize.height}px`;
+    } else {
+        display.width = screenSize.width;
+        display.height = screenSize.height;
+    }
     if (running) {
         drawBufferImage();
     } else {

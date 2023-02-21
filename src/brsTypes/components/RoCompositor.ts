@@ -130,26 +130,27 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     drawSprites() {
         let ctx = this.context;
         let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        ctx.fillStyle = rgbaIntToHex(rgba);
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (rgba === 0) {
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        } else {
+            ctx.fillStyle = rgbaIntToHex(rgba);
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
         if (this.destBitmap) {
             this.destBitmap.drawImage(this.canvas, 0, 0);
-        }
-        let layers = [...this.sprites.keys()].sort((a, b) => a - b);
-        layers.forEach((z) => {
-            const layer = this.sprites.get(z);
-            if (layer) {
-                layer.forEach((sprite) => {
-                    if (sprite.visible()) {
-                        ctx.putImageData(sprite.getImageData(), sprite.getPosX(), sprite.getPosY());
-                        if (this.destBitmap) {
-                            this.destBitmap.drawImage(this.canvas, 0, 0);
+            let layers = [...this.sprites.keys()].sort((a, b) => a - b);
+            layers.forEach((z) => {
+                const layer = this.sprites.get(z);
+                if (layer) {
+                    layer.forEach((sprite) => {
+                        if (sprite.visible()) {
+                            ctx.putImageData(sprite.getImageData(), sprite.getPosX(), sprite.getPosY());
+                            this.destBitmap?.drawImage(this.canvas, 0, 0);
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
+        }
     }
 
     toString(parent?: BrsType): string {
