@@ -9,7 +9,6 @@ import JSZip from "jszip";
 import {
     DataType,
     DebugCommand,
-    ExtraSize,
     SubscribeCallback,
     dataBufferIndex,
     dataBufferSize,
@@ -540,8 +539,8 @@ export function terminate(reason: string) {
 }
 
 // Display API
-export function redraw(fullScreen: boolean, extraSize: ExtraSize = { width: 0, height: 0 }) {
-    redrawDisplay(currentChannel.running, fullScreen, extraSize);
+export function redraw(fullScreen: boolean) {
+    redrawDisplay(currentChannel.running, fullScreen);
 }
 export function getDisplayMode() {
     return deviceData.displayMode;

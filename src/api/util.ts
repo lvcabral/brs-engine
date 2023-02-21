@@ -47,11 +47,6 @@ export enum AudioEvent {
     FAILED,
 }
 
-export interface ExtraSize {
-    width: number;
-    height: number;
-}
-
 // Module callback function definition
 export type SubscribeCallback = (event: string, data?: any) => void;
 

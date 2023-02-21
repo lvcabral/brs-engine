@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { ExtraSize, SubscribeCallback } from "./util";
+import { SubscribeCallback } from "./util";
 import Stats from "stats.js";
 
 // Emulator Display
@@ -112,23 +112,13 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Redraw Display Canvas
-export function redrawDisplay(running: boolean, fullScreen: boolean, extraSize: ExtraSize) {
+export function redrawDisplay(running: boolean, fullScreen: boolean) {
     notifyAll("redraw", fullScreen);
-    if (fullScreen) {
-        screenSize.width = window.innerWidth;
-        screenSize.height = Math.trunc(screenSize.width / aspectRatio);
-        if (screenSize.height > window.innerHeight) {
-            screenSize.height = window.innerHeight;
-            screenSize.width = Math.trunc(screenSize.height * aspectRatio);
-        }
-    } else {
-        // TODO: use extraSize.width
-        screenSize.width = window.innerWidth;
-        screenSize.height = Math.trunc(screenSize.width / aspectRatio);
-        if (screenSize.height > window.innerHeight - extraSize.height) {
-            screenSize.height = window.innerHeight - extraSize.height;
-            screenSize.width = Math.trunc(screenSize.height * aspectRatio);
-        }
+    screenSize.width = window.innerWidth;
+    screenSize.height = Math.trunc(screenSize.width / aspectRatio);
+    if (screenSize.height > window.innerHeight) {
+        screenSize.height = window.innerHeight;
+        screenSize.width = Math.trunc(screenSize.height * aspectRatio);
     }
     display.width = screenSize.width;
     display.height = screenSize.height;
