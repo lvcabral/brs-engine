@@ -605,6 +605,8 @@ export function debug(command: string): boolean {
             ["step", DebugCommand.STEP],
             ["s", DebugCommand.STEP],
             ["t", DebugCommand.STEP],
+            ["thread", DebugCommand.THREAD],
+            ["th", DebugCommand.THREAD],
             ["threads", DebugCommand.THREADS],
             ["ths", DebugCommand.THREADS],
             ["var", DebugCommand.VAR],

@@ -30,6 +30,7 @@ export enum DebugCommand {
     LIST,
     NEXT,
     STEP,
+    THREAD,
     THREADS,
     VAR,
     EXPR,

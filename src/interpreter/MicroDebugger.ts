@@ -4,7 +4,15 @@ import { source } from "..";
 import { Lexer, Location } from "../lexer";
 import { Parser, Stmt } from "../parser";
 import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
-import { Assignment, DottedSet, ForEach, Print } from "../parser/Statement";
+import {
+    Assignment,
+    DottedSet,
+    Expression,
+    ForEach,
+    Increment,
+    IndexedSet,
+    Print,
+} from "../parser/Statement";
 
 // Debug Constants
 export enum debugCommand {
@@ -16,6 +24,7 @@ export enum debugCommand {
     LIST,
     NEXT,
     STEP,
+    THREAD,
     THREADS,
     VAR,
     EXPR,
@@ -24,41 +33,45 @@ export enum debugCommand {
 const dataBufferIndex = 32;
 let stepMode = false;
 
-export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement): boolean {
+export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc: Location) {
     // TODO:
-    // - Implement help
-    // - Implement stop on error
     // - Prevent error when exit is called
-    // - Check if possible to enable aa.addReplace()
+    // - Implement stop on error and brkd command
+    // - Implement step over and step out
+    // - Implement classes, bsc(s) and stats
     const env = interpreter.environment;
     const lexer = new Lexer();
     const parser = new Parser();
-    const lines = parseTextFile(source.get(statement.location.file));
+    const lastLines = parseTextFile(source.get(lastLoc.file));
+    const currLines = parseTextFile(source.get(currLoc.file));
     const backTrace = env.getBackTrace();
     const prompt = "Brightscript Debugger> ";
 
     let debugMsg = "BrightScript Micro Debugger.\r\n";
-    let line: number = statement.location.start.line;
+    let lastLine: number = lastLoc.start.line;
+    let currLine: number = currLoc.start.line;
     if (stepMode) {
-        postMessage(`print,${line.toString().padStart(3, "0")}: ${lines[line - 1]}\r\n`);
+        postMessage(
+            `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
+        );
     } else {
         debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
 
         debugMsg += "\r\nCurrent Function:\r\n";
-        let start = Math.max(line - 8, 1);
-        let end = Math.min(line + 5, lines.length);
+        let start = Math.max(lastLine - 8, 1);
+        let end = Math.min(lastLine + 5, lastLines.length);
         for (let index = start; index < end; index++) {
-            const flag = index === line ? "*" : " ";
-            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${lines[index - 1]}\r\n`;
+            const flag = index === lastLine ? "*" : " ";
+            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${lastLines[index - 1]}\r\n`;
         }
         debugMsg += "Source Digest(s):\r\n";
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
         debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
 
-        debugMsg += `STOP (runtime error &hf7) in ${formatLocation(statement.location)}\r\n`;
+        debugMsg += `STOP (runtime error &hf7) in ${formatLocation(lastLoc)}\r\n`;
         debugMsg += "Backtrace: \r\n";
         postMessage(`print,${debugMsg}`);
-        debugBackTrace(backTrace, statement.location);
+        debugBackTrace(backTrace, currLoc);
         postMessage(`print,Local variables:\r\n`);
         debugLocalVariables(env);
     }
@@ -80,11 +93,18 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
                         interpreter.visitAssignment(exprStmt);
                     } else if (exprStmt instanceof DottedSet) {
                         interpreter.visitDottedSet(exprStmt);
+                    } else if (exprStmt instanceof IndexedSet) {
+                        interpreter.visitIndexedSet(exprStmt);
                     } else if (exprStmt instanceof Print) {
                         interpreter.visitPrint(exprStmt);
+                    } else if (exprStmt instanceof Expression) {
+                        interpreter.visitExpression(exprStmt);
+                    } else if (exprStmt instanceof Increment) {
+                        interpreter.visitIncrement(exprStmt);
                     } else if (exprStmt instanceof ForEach) {
                         interpreter.visitForEach(exprStmt);
                     } else {
+                        console.log(exprStmt);
                         postMessage(`print,Debug command/expression not supported!\r\n`);
                     }
                 } catch (err: any) {
@@ -101,12 +121,15 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
         }
         switch (cmd) {
             case debugCommand.BT:
-                debugBackTrace(backTrace, statement.location);
+                debugBackTrace(backTrace, currLoc);
                 break;
             case debugCommand.CONT:
                 stepMode = false;
                 interpreter.debugMode = false;
                 return true;
+            case debugCommand.HELP:
+                debugHelp();
+                break;
             case debugCommand.STEP:
                 stepMode = true;
                 interpreter.debugMode = true;
@@ -114,32 +137,44 @@ export function runDebugger(interpreter: Interpreter, statement: Stmt.Statement)
             case debugCommand.EXIT:
                 return false;
             case debugCommand.LAST:
-                postMessage(`print,${line.toString().padStart(3, "0")}: ${lines[line - 1]}\r\n`);
+                postMessage(
+                    `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
+                );
                 break;
             case debugCommand.LIST:
                 if (backTrace.length > 0) {
                     const func = backTrace[backTrace.length - 1];
+                    const flagLine = currLoc.file === lastLoc.file ? lastLine : currLine;
                     let start = func.functionLoc.start.line;
-                    let end = Math.min(func.functionLoc.end.line, lines.length);
+                    let end = Math.min(func.functionLoc.end.line, currLines.length);
                     for (let index = start; index <= end; index++) {
-                        const flag = index === line ? "*" : " ";
+                        let flag = index === flagLine ? "*" : " ";
                         postMessage(
                             `print,${index.toString().padStart(3, "0")}:${flag} ${
-                                lines[index - 1]
+                                currLines[index - 1]
                             }\r\n`
                         );
                     }
                 }
                 break;
             case debugCommand.NEXT:
-                postMessage(`print,${(line + 1).toString().padStart(3, "0")}: ${lines[line]}\r\n`);
+                postMessage(
+                    `print,${currLine.toString().padStart(3, "0")}: ${currLines[currLine - 1]}\r\n`
+                );
+                break;
+            case debugCommand.THREAD:
+                debugMsg = "Thread selected: ";
+                debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
+                    lastLine - 1
+                ].trim()}`;
+                postMessage(`print,${debugMsg}\r\n`);
                 break;
             case debugCommand.THREADS:
                 debugMsg = "ID    Location                                Source Code\r\n";
-                debugMsg += `0*    ${formatLocation(statement.location).padEnd(40)}${
-                    lines[line - 1]
-                }\r\n`;
-                debugMsg += " *selected";
+                debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
+                    lastLine - 1
+                ].trim()}\r\n`;
+                debugMsg += "  *selected";
                 postMessage(`print,${debugMsg}\r\n`);
                 break;
             case debugCommand.VAR:
@@ -165,7 +200,6 @@ function debugGetExpr(buffer: Int32Array): string {
 
 function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
     let debugMsg = "";
-    let offset = 1;
     let loc = stmtLoc;
     for (let index = backTrace.length - 1; index >= 0; index--) {
         const func = backTrace[index];
@@ -176,9 +210,8 @@ function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
             args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
         });
         debugMsg += `#${index}  Function ${func.functionName}(${args}) As ${kind}\r\n`; // TODO: Correct signature
-        debugMsg += `   file/line: ${formatLocation(loc, offset)}\r\n`;
+        debugMsg += `   file/line: ${formatLocation(loc)}\r\n`;
         loc = func.callLoc;
-        offset = 0;
     }
     postMessage(`print,${debugMsg}`);
 }
@@ -207,10 +240,42 @@ function debugLocalVariables(environment: Environment) {
     postMessage(`print,${debugMsg}`);
 }
 
-function formatLocation(location: Location, lineOffset: number = 0) {
+function debugHelp() {
+    let debugMsg = "";
+
+    debugMsg += "Command List:\r\n";
+    debugMsg += "   bt              Print backtrace of call function context frames\r\n";
+    // debugMsg += "   brkd            Break on BrightScript diagnostics\r\n"
+    // debugMsg += "   classes         List public classes\r\n"
+    debugMsg += "   cont|c          Continue script execution\r\n";
+    // debugMsg += "   down|d          Move down the function context chain one\r\n"
+    debugMsg += "   exit|q          Exit shell\r\n";
+    // debugMsg += "   gc              Run garbage collector\r\n"
+    debugMsg += "   last|l          Show last line that executed\r\n";
+    debugMsg += "   next|n          Show the next line to execute\r\n";
+    debugMsg += "   list            List current function\r\n";
+    // debugMsg += "   bsc             List BrightScript Component instances\r\n"
+    // debugMsg += "   bscs            Summarize BrightScript Component instances\r\n"
+    // debugMsg += "   stats           Shows statistics\r\n"
+    debugMsg += "   step|s|t        Step one program statement\r\n";
+    debugMsg += "   thread|th       Show selected thread\r\n";
+    // debugMsg += "   thread|th <id>  Select one thread for inspection\r\n"
+    debugMsg += "   threads|ths     List all threads of execution\r\n";
+    debugMsg += "   over|v          Step over one program statement (for now act as step)\r\n";
+    debugMsg += "   out|o           Step out from current function (for now act as step)\r\n";
+    // debugMsg += "   up|u            Move up the function context chain one\r\n"
+    debugMsg += "   var             Display local variables and their types/values\r\n";
+    debugMsg += "   print|p|?       Print variable value or expression\r\n\r\n";
+    debugMsg += "   Type any expression for a live compile and run, in the context\r\n";
+    debugMsg += "   of the current function.  Put the 'stop' statement in your code\r\n";
+    debugMsg += "   to trigger a breakpoint.  Then use 'c', 's', or other commands.\r\n";
+    postMessage(`print,${debugMsg}`);
+}
+
+function formatLocation(location: Location) {
     let formattedLocation: string;
     if (location.start.line) {
-        formattedLocation = `pkg:/${location.file}(${location.start.line + lineOffset})`;
+        formattedLocation = `pkg:/${location.file}(${location.start.line})`;
     } else {
         formattedLocation = `pkg:/${location.file}(??)`;
     }

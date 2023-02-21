@@ -26,7 +26,7 @@ import {
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
-import { isToken } from "../lexer/Token";
+import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
 import { BrsError, TypeMismatch } from "../Error";
 
@@ -57,6 +57,11 @@ export const defaultExecutionOptions: ExecutionOptions = {
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _startTime = Date.now();
+    private _prevLoc: Location = {
+        file: "",
+        start: { line: 0, column: 0 },
+        end: { line: 0, column: 0 },
+    };
     readonly options: ExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
@@ -215,8 +220,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const title = this.manifest.get("title") || "No Title";
                 const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
                 const subName = mainVariable.name.text;
-                postMessage(`print,------ Running dev '${title}' ${subName} ------\r\n`);
                 postMessage(`print,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'\r\n`);
+                postMessage(`print,------ Running dev '${title}' ${subName} ------\r\n`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
@@ -1650,14 +1655,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
-        const result = statement.accept<BrsType>(this);
         if (this.debugMode) {
-            // TODO: This is not the only place to add the runDebugger
-            if (!runDebugger(this, statement)) {
-                throw new BrsError("debug-exit", statement.location);
+            if (!(statement instanceof Stmt.Block)) {
+                if (!runDebugger(this, statement.location, this._prevLoc)) {
+                    throw new BrsError("debug-exit", statement.location);
+                }
             }
         }
-        return result;
+        this._prevLoc = statement.location;
+        return statement.accept<BrsType>(this);
     }
 
     getChannelVersion(): string {
