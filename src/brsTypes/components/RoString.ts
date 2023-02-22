@@ -8,7 +8,6 @@ import {
     BrsBoolean,
     BrsInvalid,
     Comparable,
-    Uninitialized,
 } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -16,6 +15,7 @@ import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
+import { vsprintf } from 'sprintf-js';
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;
@@ -480,9 +480,19 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
 
     private toStr = new Callable("toStr", {
         signature: {
-            args: [],
+            args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => this.intrinsic,
+        impl: (_: Interpreter, format: BrsString) => {
+            if (format instanceof BrsString) {
+                const tokens = format.value.split("%").length - 1;
+                if (tokens === 0) {
+                    return new BrsString(format.value);
+                }
+                const params = Array(tokens).fill(this.intrinsic.value);
+                return new BrsString(vsprintf(format.value, params));
+            }
+            return new BrsString(this.intrinsic.toString());
+        },
     });
 }

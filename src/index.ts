@@ -298,7 +298,6 @@ function run(
         interpreter.exec(allStatements, aa);
         return "EXIT_USER_NAV";
     } catch (err: any) {
-        postMessage(`warning,Unhandled Interpreter error: ${err.message}`);
         return "EXIT_BRIGHTSCRIPT_CRASH";
     }
 }
