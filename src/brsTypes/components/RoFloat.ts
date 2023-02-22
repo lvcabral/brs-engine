@@ -77,7 +77,11 @@ export class roFloat extends BrsComponent implements BrsValue, Unboxable {
                     return new BrsString(format.value);
                 }
                 const params = Array(tokens).fill(this.intrinsic.getValue());
-                return new BrsString(vsprintf(format.value, params));
+                try {
+                    return new BrsString(vsprintf(format.value, params));
+                } catch (error: any) {
+                    throw new Error("Invalid Format Specifier (runtime error &h24)")
+                }
             }
             return new BrsString(this.intrinsic.toString());
         },
