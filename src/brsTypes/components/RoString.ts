@@ -1,21 +1,14 @@
 import { BrsComponent } from "./BrsComponent";
 import { RoArray } from "./RoArray";
 import { RoList } from "./RoList";
-import {
-    BrsValue,
-    ValueKind,
-    BrsString,
-    BrsBoolean,
-    BrsInvalid,
-    Comparable,
-} from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BrsType } from "..";
+import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { vsprintf } from 'sprintf-js';
+import { sprintf, vsprintf } from "sprintf-js";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;
@@ -56,7 +49,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 this.decodeUriComponent,
                 this.isEmpty,
             ],
-            ifToStr: [this.toStr],
+            ifToStr: [this.toStr, this.format],
         });
     }
 
@@ -490,9 +483,45 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                     return new BrsString(format.value);
                 }
                 const params = Array(tokens).fill(this.intrinsic.value);
-                return new BrsString(vsprintf(format.value, params));
+                try {
+                    return new BrsString(vsprintf(format.value, params));
+                } catch (error: any) {
+                    throw new Error("Invalid Format Specifier (runtime error &h24)")
+                }
             }
             return new BrsString(this.intrinsic.toString());
+        },
+    });
+
+    private format = new Callable("format", {
+        signature: {
+            args: [
+                new StdlibArgument("arg1", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg2", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg3", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg4", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg5", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg6", ValueKind.Dynamic, BrsInvalid.Instance),
+                new StdlibArgument("arg7", ValueKind.Dynamic, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, ...additionalArgs: BrsType[]) => {
+            let args: any[] = [];
+            if (additionalArgs.length > 0) {
+                additionalArgs.forEach((element) => {
+                    if (isBrsNumber(element)) {
+                        args.push(element.getValue());
+                    } else if (element instanceof BrsString) {
+                        args.push(element.value);
+                    }
+                });
+            }
+            try {
+                return new BrsString(sprintf(this.intrinsic.value, ...args));
+            } catch (err: any) {
+                throw new Error("Type Mismatch. (runtime error &h18)");
+            }
         },
     });
 }
