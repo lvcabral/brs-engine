@@ -132,6 +132,11 @@ export function redrawDisplay(running: boolean, fullScreen: boolean) {
         }
         display.style.width = `${screenSize.width}px`;
         display.style.height = `${screenSize.height}px`;
+        if (fullScreen && window.innerHeight > screenSize.height) {
+            display.style.top = `${Math.trunc((window.innerHeight - screenSize.height)/2)}px`;
+        } else {
+            display.style.top = `0px`;
+        }
     } else {
         display.width = screenSize.width;
         display.height = screenSize.height;
