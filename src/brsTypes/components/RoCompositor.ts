@@ -144,7 +144,11 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (layer) {
                     layer.forEach((sprite) => {
                         if (sprite.visible()) {
-                            ctx.putImageData(sprite.getImageData(), sprite.getPosX(), sprite.getPosY());
+                            ctx.putImageData(
+                                sprite.getImageData(),
+                                sprite.getPosX(),
+                                sprite.getPosY()
+                            );
                             this.destBitmap?.drawImage(this.canvas, 0, 0);
                         }
                     });

@@ -486,7 +486,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 try {
                     return new BrsString(vsprintf(format.value, params));
                 } catch (error: any) {
-                    throw new Error("Invalid Format Specifier (runtime error &h24)")
+                    throw new Error("Invalid Format Specifier (runtime error &h24)");
                 }
             }
             return new BrsString(this.intrinsic.toString());

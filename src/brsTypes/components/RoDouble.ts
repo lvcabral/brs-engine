@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 import { Double } from "../Double";
-import { vsprintf } from 'sprintf-js';
+import { vsprintf } from "sprintf-js";
 
 export class roDouble extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -80,7 +80,7 @@ export class roDouble extends BrsComponent implements BrsValue, Unboxable {
                 try {
                     return new BrsString(vsprintf(format.value, params));
                 } catch (error: any) {
-                    throw new Error("Invalid Format Specifier (runtime error &h24)")
+                    throw new Error("Invalid Format Specifier (runtime error &h24)");
                 }
             }
             return new BrsString(this.intrinsic.toString());
