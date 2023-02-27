@@ -62,10 +62,7 @@ module.exports = env => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "babel-loader",
-                        options: {
-                            presets: ["@babel/env", "@babel/preset-typescript"]
-                        },
+                        loader: "ts-loader",
                         exclude: /node_modules/,
                     },
                 ],
@@ -77,6 +74,8 @@ module.exports = env => {
             output: {
                 filename: outputLib,
                 library: libraryName,
+                libraryTarget: "umd",
+                umdNamedDefine: true,
                 path: path.resolve(__dirname, distPath),
                 globalObject: "typeof self !== 'undefined' ? self : this",
             }

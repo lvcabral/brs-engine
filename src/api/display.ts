@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -15,21 +15,16 @@ let ctx: CanvasRenderingContext2D | null;
 let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
 
-// Performance Variables
-const statsDiv = document.getElementById("stats") as HTMLDivElement;
-const statsCanvas = new Stats();
+// Performance Stats Variables
+let statsDiv: HTMLDivElement;
+let statsCanvas: Stats;
 let showStats = false;
-let calcFps = false;
-let lastTime = 0;
-let frames = 0;
-let fpsSum = 0;
-let fpsAvg = 0;
 
 // Initialize Display Module
 export let displayMode = "720p";
 export let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
-export function initDisplayModule(mode: string, lowRes: boolean) {
+export function initDisplayModule(mode: string, lowRes: boolean, perfStats: boolean) {
     // Initialize Display Canvas
     if (typeof OffscreenCanvas !== undefined) {
         display =
@@ -40,31 +35,8 @@ export function initDisplayModule(mode: string, lowRes: boolean) {
         bufferCtx = bufferCanvas.getContext("2d", {
             alpha: false,
         }) as CanvasRenderingContext2D | null;
-        if (statsDiv) {
-            statsCanvas.dom.style.top = display.style.top;
-            statsCanvas.dom.style.left = display.style.left;
-            const statPanels = statsCanvas.dom.children.length;
-            const newDom = statsCanvas.dom.cloneNode() as HTMLDivElement;
-            for (let index = 0; index < statPanels; index++) {
-                const panel = statsCanvas.dom.children[0] as HTMLCanvasElement;
-                panel.style.cssText = `position:absolute;top:${display.style.top}px;left:${
-                    index * panel.width
-                }px;`;
-                newDom.appendChild(panel);
-            }
-            statsCanvas.dom = newDom;
-            statsCanvas.dom.addEventListener(
-                "click",
-                function (event) {
-                    event.preventDefault();
-                    showStats = !showStats;
-                    statsDiv.style.opacity = showStats ? "0.5" : "0";
-                },
-                false
-            );
-            statsDiv.appendChild(statsCanvas.dom);
-            showStats = true;
-        }
+        // Performance Statistics
+        showPerfStats(perfStats);
     } else {
         console.warn(
             `Your browser does not support OffscreenCanvas, so the emulator will not work properly, ` +
@@ -133,7 +105,7 @@ export function redrawDisplay(running: boolean, fullScreen: boolean) {
         display.style.width = `${screenSize.width}px`;
         display.style.height = `${screenSize.height}px`;
         if (fullScreen && window.innerHeight > screenSize.height) {
-            display.style.top = `${Math.trunc((window.innerHeight - screenSize.height)/2)}px`;
+            display.style.top = `${Math.trunc((window.innerHeight - screenSize.height) / 2)}px`;
         } else {
             display.style.top = `0px`;
         }
@@ -200,19 +172,6 @@ export function drawBufferImage(buffer?: any) {
                 ctx.strokeRect(x, y, w, h);
             }
         }
-        if (calcFps) {
-            const now = performance.now();
-            const fps = 1000 / (now - lastTime);
-            lastTime = now;
-            frames++;
-            fpsSum += fps;
-            if (frames === 15) {
-                fpsAvg = fpsSum / frames;
-                frames = 0;
-                fpsSum = 0;
-            }
-            notifyAll("fps", fpsAvg);
-        }
         if (showStats) {
             statsCanvas.begin();
         }
@@ -250,7 +209,40 @@ export function setOverscan(mode: string) {
     overscanMode = mode;
 }
 
-// Set flag to calculate Frames per Second on Screen
-export function setCalcFps(state: boolean) {
-    calcFps = state;
+export function showPerfStats(show: boolean): boolean {
+    if (statsCanvas instanceof Stats) {
+        showStats = show;
+    } else if (show) {
+        statsDiv = document.getElementById("stats") as HTMLDivElement;
+        if (statsDiv instanceof HTMLDivElement && display instanceof HTMLCanvasElement) {
+            const dispTop = display.style.top;
+            const dispLeft = display.style.left;
+            statsCanvas = new Stats();
+            statsCanvas.dom.style.top = dispTop;
+            statsCanvas.dom.style.left = dispLeft;
+            const statPanels = statsCanvas.dom.children.length;
+            const newDom = statsCanvas.dom.cloneNode() as HTMLDivElement;
+            for (let index = 0; index < statPanels; index++) {
+                const panel = statsCanvas.dom.children[0] as HTMLCanvasElement;
+                const panLeft = index * panel.width;
+                panel.style.cssText = `position:absolute;top:${dispTop}px;left:${panLeft}px;`;
+                newDom.appendChild(panel);
+            }
+            statsCanvas.dom = newDom;
+            statsCanvas.dom.addEventListener(
+                "click",
+                function (event) {
+                    event.preventDefault();
+                    showStats = !showStats;
+                    statsDiv.style.opacity = showStats ? "0.5" : "0";
+                },
+                false
+            );
+            statsDiv.appendChild(statsCanvas.dom);
+            showStats = true;
+        } else {
+            console.warn("[brsEmu] Missing 'Stats' div, can't display Peformance Stats!");
+        }
+    }
+    return showStats;
 }

@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -28,7 +28,7 @@ import {
     setCurrentMode,
     setOverscan,
     overscanMode,
-    setCalcFps,
+    showPerfStats,
 } from "./display";
 import { subscribeControl, initControlModule, sendKey } from "./control";
 import {
@@ -82,6 +82,7 @@ const deviceData = {
     registry: new Map(),
 };
 let debugToConsole: boolean = true;
+let showStats: boolean = false;
 
 // Channel Data
 const defaultSplashTime = 1600;
@@ -112,6 +113,9 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
+    if (typeof options.showStats === "boolean") {
+        showStats = options.showStats;
+    }
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
@@ -134,7 +138,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     resetArray();
 
     // Initialize Display and Control modules
-    initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas);
+    initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas, showStats);
     initControlModule(sharedArray, options);
     // Subscribe Events
     subscribeDisplay("channel", (event: string, data: any) => {
@@ -144,7 +148,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
                 terminate("EXIT_SETTINGS_UPDATE");
             }
             notifyAll("display", data);
-        } else if (["redraw", "resolution", "fps"].includes(event)) {
+        } else if (["redraw", "resolution"].includes(event)) {
             notifyAll(event, data);
         }
     });
@@ -554,8 +558,8 @@ export function getOverscanMode() {
 export function setOverscanMode(mode: string) {
     setOverscan(mode);
 }
-export function enableFps(state: boolean) {
-    setCalcFps(state);
+export function enableStats(state: boolean) {
+    showPerfStats(state);
 }
 
 // Audio API

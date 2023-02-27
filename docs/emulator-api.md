@@ -9,6 +9,7 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
   - `customDeviceInfo` (object): customized device information (see `device.ts` for the valid fields)
   - `options` (object): {debugToConsole: boolean, disableKeys: boolean, customKeys: Map}
     - `debugToConsole` - default true: if `true` all debug messages from the emulator will be sent to the `console`. If disabled use the `debug` event.
+    - `showStats` - default false:  if `true` the performance statistics overlay will be shown over the display when a channel is running.
     - `disableKeys` - default false: if `true` disables the default keyboard handling for remote control emulation
     - `customKeys` - optional: a custom map of keyboard keys to add/remove from the remote control emulation
 - brsEmu.**subscribe**(observerId, observerCallback) - Subscribes to the Emulator events (see list below)
@@ -32,8 +33,8 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 - brsEMu.**getOverscanMode**() - Returns the current overscan mode.
 - brsEMu.**setOverscanMode**(mode) - Configure the overscan mode. Can show guidelines or actually cut the frame
   - `mode` (string) - One of the supported modes: `"disabled"`, `"guidelines"` or `"overscan"`
-- brsEMu.**enableFps**(mode) - Enable or disable calculating the average frames per seconds
-  - `state` (boolean) - If `true` the library will generate an event with the average FPS every 15 frames
+- brsEMu.**enableStats**(mode) - Enable or disable the Performance Stats overlay
+  - `state` (boolean) - If `true` panels with performance statistics will be shown over the display
 - brsEMu.**getAudioMute**() - Return `true` if the audio is muted
 - brsEMu.**setAudioMute**(mute) - Mute or unmute the audio during channel execution
   - `mute` (boolean) - If `true` the audio will be muted

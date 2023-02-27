@@ -20,7 +20,7 @@
   ],
   "license": "MIT",
   "main": "app/lib/brsEmu.js",
-  "typings": "./types/index.d.ts",
+  "typings": "types/src/api/device.d.ts",
   "scripts": {
     "build": "webpack --env.NODE_ENV=development",
     "release": "webpack --env.NODE_ENV=production --env.production",
@@ -33,7 +33,8 @@
   },
   "files": [
     "app/fonts/",
-    "app/lib/brsEmu.worker.js"
+    "app/lib/brsEmu.worker.js",
+    "types/src/api/"
   ],
   "dependencies": {
     "bowser": "^2.11.0",
@@ -59,9 +60,6 @@
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.12",
-    "@babel/preset-env": "^7.20.2",
-    "@babel/preset-typescript": "^7.18.6",
     "@types/crc": "^3.4.0",
     "@types/css-font-loading-module": "^0.0.2",
     "@types/howler": "^2.2.7",
@@ -78,7 +76,6 @@
     "@types/upng-js": "^2.1.1",
     "@types/url-parse": "^1.4.8",
     "@types/xml2js": "^0.4.8",
-    "babel-loader": "^8.3.0",
     "husky": ">=1",
     "jest": "26",
     "jest-junit": "^6.1.0",

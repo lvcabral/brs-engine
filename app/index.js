@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript 2D API Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -40,8 +40,11 @@ if (supportedBrowser()) {
 
     // Initialize Device Emulator and subscribe to events
     libVersion.innerHTML = brsEmu.getVersion();
-    brsEmu.initialize(customDeviceInfo, { debugToConsole: true, customKeys: customKeys });
-    brsEmu.enableFps(true);
+    brsEmu.initialize(customDeviceInfo, {
+        debugToConsole: true,
+        customKeys: customKeys,
+        showStats: true,
+    });
     brsEmu.subscribe("app", (event, data) => {
         if (event === "loaded") {
             currentChannel = data;
@@ -64,8 +67,6 @@ if (supportedBrowser()) {
             stats.style.visibility = "hidden";
             channelIcons("visible");
             fileSelector.value = null;
-        } else if (event === "fps") {
-            channelInfo.innerHTML = `${currentChannel.title}<br/>fps: ${data.toFixed(3)}<br/>`;
         }
     });
 } else {
