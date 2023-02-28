@@ -212,11 +212,9 @@ export function setOverscan(mode: string) {
 export function showPerfStats(show: boolean): boolean {
     if (statsCanvas && statsCanvas.dom) {
         showStats = show;
-        console.log("show no create");
     } else if (show) {
         statsDiv = document.getElementById("stats") as HTMLDivElement;
         if (statsDiv instanceof HTMLDivElement && display instanceof HTMLCanvasElement) {
-            console.log("show and create");
             const dispTop = display.style.top;
             const dispLeft = display.style.left;
             statsCanvas = new Stats();
