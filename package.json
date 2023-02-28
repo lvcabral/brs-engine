@@ -20,7 +20,7 @@
   ],
   "license": "MIT",
   "main": "app/lib/brsEmu.js",
-  "typings": "types/src/api/device.d.ts",
+  "typings": "types/src/api/index.d.ts",
   "scripts": {
     "build": "webpack --env.NODE_ENV=development",
     "release": "webpack --env.NODE_ENV=production --env.production",

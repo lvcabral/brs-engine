@@ -6,7 +6,7 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 ## Methods
 
 - brsEmu.**initialize**(customDeviceInfo?, options?) - Initialize the Emulator device
-  - `customDeviceInfo` (object): customized device information (see `/src/api/device.ts` for the valid fields)
+  - `customDeviceInfo` (object): customized device information (see `/src/api/index.ts` for the valid fields)
   - `options` (object): {debugToConsole: boolean, disableKeys: boolean, customKeys: Map}
     - `debugToConsole` - default `true`: set this option to `false` to prevent messages to be sent to the `console`, you still can get debug messages using the `debug` event (see below)
     - `showStats` - default `false`:  if `true` the performance statistics overlay will be shown over the display when a channel is running.
@@ -25,8 +25,11 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
   - `execSource` (string) - The execution source to be send on the input parameters for `sub Main(params)` (See [Roku documentation](https://developer.roku.com/en-gb/docs/developer-program/getting-started/architecture/dev-environment.md#source-parameter))
 - brsEmu.**terminate**(reason) - Terminates the current channel/source execution
   - `reason` (string) - The reason for the termination (showed on debug)
-- brsEMu.**redraw**(fullscreen) - Request a display redraw
+- brsEMu.**redraw**(fullscreen, width?, height?, dpr?) - Request a display redraw (always keeps the aspect ratio based on display mode)
   - `fullscreen` (boolean) - Flag to inform if the full screen mode is activated
+  - `width` (number) - Width of the canvas, if not passed uses `window.innerWidth`
+  - `height` (number) - Height of the canvas, if not passed uses `window.innerHeight`
+  - `dpr` (number) - Device pixel ration, if not passed uses `window.devicePixelRatio`
 - brsEMu.**getDisplayMode**() - Returns the current display mode.
 - brsEMu.**setDisplayMode**(mode) - Configure the display mode. If a channel is running will reset the device
   - `mode` (string) - One of the supported modes: `"480p"` (SD), `"720p"` (HD) or `"1080p"`(FHD)

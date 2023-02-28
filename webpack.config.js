@@ -55,7 +55,7 @@ module.exports = env => {
             },
         },
         {
-            entry: "./src/api/device.ts",
+            entry: "./src/api/index.ts",
             target: "web",
             mode: mode,
             module: {

@@ -82,19 +82,30 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Redraw Display Canvas
-export function redrawDisplay(running: boolean, fullScreen: boolean) {
-    notifyAll("redraw", fullScreen);
-    screenSize.width = window.innerWidth;
+export function redrawDisplay(
+    running: boolean,
+    fullScreen: boolean,
+    width?: number,
+    height?: number,
+    dpr?: number
+) {
+    if (!width) {
+        width = window.innerWidth;
+    }
+    if (!height) {
+        height = window.innerHeight;
+    }
+    if (!dpr) {
+        dpr = window.devicePixelRatio;
+    }
+    screenSize.width = width;
     screenSize.height = Math.trunc(screenSize.width / aspectRatio);
-    if (screenSize.height > window.innerHeight) {
-        screenSize.height = window.innerHeight;
+    if (screenSize.height > height) {
+        screenSize.height = height;
         screenSize.width = Math.trunc(screenSize.height * aspectRatio);
     }
 
     if (display instanceof HTMLCanvasElement) {
-        // Get the DPR and size of the canvas
-        const dpr = window.devicePixelRatio;
-
         // Set the "actual" size of the canvas
         display.width = screenSize.width * dpr;
         display.height = screenSize.height * dpr;
@@ -104,8 +115,8 @@ export function redrawDisplay(running: boolean, fullScreen: boolean) {
         }
         display.style.width = `${screenSize.width}px`;
         display.style.height = `${screenSize.height}px`;
-        if (fullScreen && window.innerHeight > screenSize.height) {
-            display.style.top = `${Math.trunc((window.innerHeight - screenSize.height) / 2)}px`;
+        if (fullScreen && height > screenSize.height) {
+            display.style.top = `${Math.trunc((height - screenSize.height) / 2)}px`;
         } else {
             display.style.top = `0px`;
         }
@@ -118,6 +129,7 @@ export function redrawDisplay(running: boolean, fullScreen: boolean) {
     } else {
         clearDisplay();
     }
+    notifyAll("redraw", fullScreen);
 }
 
 // Draw Channel Splash

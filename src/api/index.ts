@@ -543,8 +543,8 @@ export function terminate(reason: string) {
 }
 
 // Display API
-export function redraw(fullScreen: boolean) {
-    redrawDisplay(currentChannel.running, fullScreen);
+export function redraw(fullScreen: boolean, width?: number, height?: number, dpr?: number) {
+    redrawDisplay(currentChannel.running, fullScreen, width, height, dpr);
 }
 export function getDisplayMode() {
     return deviceData.displayMode;
