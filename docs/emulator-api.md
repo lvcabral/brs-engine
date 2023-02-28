@@ -6,12 +6,12 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 ## Methods
 
 - brsEmu.**initialize**(customDeviceInfo?, options?) - Initialize the Emulator device
-  - `customDeviceInfo` (object): customized device information (see `device.ts` for the valid fields)
+  - `customDeviceInfo` (object): customized device information (see `/src/api/device.ts` for the valid fields)
   - `options` (object): {debugToConsole: boolean, disableKeys: boolean, customKeys: Map}
-    - `debugToConsole` - default true: if `true` all debug messages from the emulator will be sent to the `console`. If disabled use the `debug` event.
-    - `showStats` - default false:  if `true` the performance statistics overlay will be shown over the display when a channel is running.
-    - `disableKeys` - default false: if `true` disables the default keyboard handling for remote control emulation
-    - `customKeys` - optional: a custom map of keyboard keys to add/remove from the remote control emulation
+    - `debugToConsole` - default `true`: set this option to `false` to prevent messages to be sent to the `console`, you still can get debug messages using the `debug` event (see below)
+    - `showStats` - default `false`:  if `true` the performance statistics overlay will be shown over the display when a channel is running.
+    - `disableKeys` - default `false`: if the emulator is running on a device with no keyboard, set this option to `true` and disable the default keyboard remote control emulation
+    - `customKeys` - optional: a custom map of keyboard keys to add/remove from the remote control emulation (see `/src/api/control.ts` for the default mappings)
 - brsEmu.**subscribe**(observerId, observerCallback) - Subscribes to the Emulator events (see list below)
   - `observerId` (string): Identifier of the subscriber process
   - `observerCallback` (function): Callback function to receive the events from the emulator
@@ -21,11 +21,11 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
   - `filePath` (string) - Path of the loaded file, make sure extension is `.zip` if loading a full channel
   - `fileData` (string/Array/Blob) - Contents of the file or just a string with BrightScript code
   - `clearDisplayOnExit` (boolean) - If set to `false` the display will remain with the last image when channel terminates (default is `true`)
-  - `mute` (boolean) - If `true` the emulator will mute all audio playback but events are still raised
+  - `mute` (boolean) - If `true` the emulator will mute all audio playback but events are still raised (defaut is `false`)
   - `execSource` (string) - The execution source to be send on the input parameters for `sub Main(params)` (See [Roku documentation](https://developer.roku.com/en-gb/docs/developer-program/getting-started/architecture/dev-environment.md#source-parameter))
 - brsEmu.**terminate**(reason) - Terminates the current channel/source execution
-  - `reason` (string) - The reason for the termination (showed on console)
-- brsEMu.**redraw**(fullscreen) - Request a display redraw 
+  - `reason` (string) - The reason for the termination (showed on debug)
+- brsEMu.**redraw**(fullscreen) - Request a display redraw
   - `fullscreen` (boolean) - Flag to inform if the full screen mode is activated
 - brsEMu.**getDisplayMode**() - Returns the current display mode.
 - brsEMu.**setDisplayMode**(mode) - Configure the display mode. If a channel is running will reset the device
@@ -65,7 +65,7 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 - **resolution** - Triggered when the emulated screen resolution changes (controled via BrightScript)
   - `data` (object): Contains screen dimensions: `{width: integer, height: integer}`
 - **fps** - If enabled by the `enableFps()` method (see above) triggered every 15 frames
-  - `data` (number): Contains the average Frames per Seconds of the last 15 frames
+  - `data` (number): Contains the average Frames per Second of the last 15 frames
 - **debug** - Triggered when debug messages arrive from the worker library (BrightScript Interpreter)
   - `data` (object): Contains: `{level: string, content: string}`, levels are: `print`, `warning` and `error`
 - **error** - Triggered when the any execution exception happens on the API library

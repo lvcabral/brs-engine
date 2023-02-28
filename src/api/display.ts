@@ -210,7 +210,7 @@ export function setOverscan(mode: string) {
 }
 
 export function showPerfStats(show: boolean): boolean {
-    if (statsCanvas instanceof Stats) {
+    if (statsCanvas && statsCanvas.dom) {
         showStats = show;
     } else if (show) {
         statsDiv = document.getElementById("stats") as HTMLDivElement;
@@ -218,8 +218,7 @@ export function showPerfStats(show: boolean): boolean {
             const dispTop = display.style.top;
             const dispLeft = display.style.left;
             statsCanvas = new Stats();
-            statsCanvas.dom.style.top = dispTop;
-            statsCanvas.dom.style.left = dispLeft;
+            statsCanvas.dom.style.cssText = `position:absolute;top:${dispTop}px;left:${dispLeft}px;`;
             const statPanels = statsCanvas.dom.children.length;
             const newDom = statsCanvas.dom.cloneNode() as HTMLDivElement;
             for (let index = 0; index < statPanels; index++) {
