@@ -33,6 +33,7 @@
     "prepublishOnly": "npm-run-all --serial clean build lint prettier"
   },
   "files": [
+    "app/audio/",
     "app/fonts/",
     "app/lib/brsEmu.worker.js",
     "types/src/api/"
