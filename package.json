@@ -19,6 +19,7 @@
     "worker"
   ],
   "license": "MIT",
+  "main": "app/lib/brsEmu.js",
   "browser": "app/lib/brsEmu.js",
   "typings": "types/src/api/index.d.ts",
   "scripts": {
