@@ -78,7 +78,6 @@ const deviceData = {
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
-    lowResolutionCanvas: false,
     registry: new Map(),
 };
 let debugToConsole: boolean = true;
@@ -138,7 +137,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     resetArray();
 
     // Initialize Display and Control modules
-    initDisplayModule(deviceData.displayMode, deviceData.lowResolutionCanvas, showStats);
+    initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
     // Subscribe Events
     subscribeDisplay("channel", (event: string, data: any) => {

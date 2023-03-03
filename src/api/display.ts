@@ -24,7 +24,7 @@ let showStats = false;
 export let displayMode = "720p";
 export let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
-export function initDisplayModule(mode: string, lowRes: boolean, perfStats: boolean) {
+export function initDisplayModule(mode: string, perfStats = false) {
     // Initialize Display Canvas
     if (typeof OffscreenCanvas !== "undefined") {
         display =
@@ -43,28 +43,11 @@ export function initDisplayModule(mode: string, lowRes: boolean, perfStats: bool
                 `to know more visit https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas`
         );
     }
+    // Display Dimensions and Aspect Ratio
     displayMode = mode;
-    // Display Aspect Ratio
-    if (lowRes) {
-        const isSD = displayMode === "480p";
-        aspectRatio = isSD ? 4 / 3 : 16 / 9;
-        screenSize.width = isSD ? 640 : 854;
-        screenSize.height = 480;
-    } else {
-        if (displayMode === "1080p") {
-            screenSize.width = 1920;
-            screenSize.height = 1080;
-            aspectRatio = 16 / 9;
-        } else if (displayMode === "480p") {
-            screenSize.width = 720;
-            screenSize.height = 480;
-            aspectRatio = 4 / 3;
-        } else {
-            screenSize.width = 1280;
-            screenSize.height = 720;
-            aspectRatio = 16 / 9;
-        }
-    }
+    aspectRatio = displayMode === "480p" ? 4 / 3 : 16 / 9;
+    screenSize.height = display.height;
+    screenSize.width = Math.trunc(screenSize.height * aspectRatio);
 }
 
 // Observers Handling

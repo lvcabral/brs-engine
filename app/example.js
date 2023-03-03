@@ -1,5 +1,5 @@
 // Initialize Device Emulator
-brsEmu.initialize({ lowResolutionCanvas: true }, { debugToConsole: true, disableKeys: true });
+brsEmu.initialize({}, { debugToConsole: true, disableKeys: true });
 // Subscribe to Events (optional)
 brsEmu.subscribe("myApp", (event, data) => {
     if (event === "loaded") {

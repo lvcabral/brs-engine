@@ -29,7 +29,6 @@ if (supportedBrowser()) {
         displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
         defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
         fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
-        lowResolutionCanvas: true, // Faster display
     };
     const customKeys = new Map();
     customKeys.set("Comma", "rev"); // Keep consistency with older versions
