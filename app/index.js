@@ -35,7 +35,7 @@ if (supportedBrowser()) {
     customKeys.set("Period", "fwd"); // Keep consistency with older versions
     customKeys.set("Space", "play"); // Keep consistency with older versions
     customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions
-    customKeys.set("KeyA", "a");  // Keep consistency with older versions
+    customKeys.set("KeyA", "a"); // Keep consistency with older versions
     customKeys.set("KeyZ", "b"); // Keep consistency with older versions
     customKeys.set("PageUp", "ignore"); // do not handle on browser
     customKeys.set("PageDown", "ignore"); // do not handle on browser
