@@ -8,21 +8,6 @@
 import { DataType, DebugCommand, SubscribeCallback } from "./util";
 
 // Keyboard Mapping
-const preventDefault: Set<string> = new Set([
-    "Enter",
-    "Space",
-    "ArrowLeft",
-    "ArrowUp",
-    "ArrowRight",
-    "ArrowDown",
-    "Home",
-    "End",
-    "PageUp",
-    "PageDown",
-    "Backspace",
-    "Escape",
-]);
-
 const keysMap: Map<string, string> = new Map();
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
@@ -33,22 +18,22 @@ keysMap.set("Escape", "back");
 keysMap.set("Delete", "back");
 keysMap.set("Home", "home");
 keysMap.set("Shift+Escape", "home");
-keysMap.set("Ctrl+Escape", "home");
+keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
-keysMap.set("Ctrl+Backspace", "backspace");
-keysMap.set("Ctrl+Enter", "play");
+keysMap.set("Control+Backspace", "backspace");
+keysMap.set("Control+Enter", "play");
 keysMap.set("End", "play");
-keysMap.set("Ctrl+Enter", "select");
+keysMap.set("Control+Enter", "select");
 keysMap.set("PageDown", "rev");
-keysMap.set("Ctrl+ArrowLeft", "rev");
+keysMap.set("Control+ArrowLeft", "rev");
 keysMap.set("PageUp", "fwd");
-keysMap.set("Ctrl+ArrowRight", "fwd");
+keysMap.set("Control+ArrowRight", "fwd");
 keysMap.set("NumpadMultiply", "info");
 keysMap.set("Insert", "info");
-keysMap.set("Ctrl+Digit8", "info");
+keysMap.set("Control+Digit8", "info");
 keysMap.set("KeyA", "a");
 keysMap.set("KeyZ", "b");
-keysMap.set("Ctrl+KeyC", "break");
+keysMap.set("Control+KeyC", "break");
 
 const rokuKeys: Map<string, number> = new Map();
 rokuKeys.set("back", 0);
@@ -77,6 +62,8 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     if (!options.disableKeys) {
         if (options.customKeys instanceof Map) {
             options.customKeys.forEach(function (value: string, key: string) {
+                key = key.replace(/Windows|Command/gi,"Meta");
+                key = key.replace("Option","Alt");
                 keysMap.set(key, value);
             });
         }
@@ -95,16 +82,16 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
     if (event.shiftKey) {
         keyCode = "Shift+" + keyCode;
     } else if (event.ctrlKey) {
-        keyCode = "Ctrl+" + keyCode;
+        keyCode = "Control+" + keyCode;
     } else if (event.altKey) {
         keyCode = "Alt+" + keyCode;
     } else if (event.metaKey) {
-        keyCode = "Win+" + keyCode;
+        keyCode = "Meta+" + keyCode;
     }
     const key = keysMap.get(keyCode);
     if (key && key.toLowerCase() !== "ignore") {
         sendKey(key, mod);
-        if (mod === 0 && preventDefault.has(event.code)) {
+        if (mod === 0) {
             event.preventDefault();
         }
     }
