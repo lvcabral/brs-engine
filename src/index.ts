@@ -13,15 +13,15 @@ import { Parser } from "./parser";
 import { version } from "../package.json";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
-import * as bslCore from "raw-loader!./common/v30/bslCore.brs";
-import * as bslDefender from "raw-loader!./common/v30/bslDefender.brs";
-import * as Roku_Ads from "raw-loader!./common/Roku_Ads.brs";
-import * as models from "raw-loader!./common/models.csv";
 import * as _lexer from "./lexer";
 import * as BrsTypes from "./brsTypes";
 import * as _parser from "./parser";
 import * as path from "path";
 import * as xml2js from "xml2js";
+import bslCore from "./common/v30/bslCore.brs";
+import bslDefender from "./common/v30/bslDefender.brs";
+import Roku_Ads from "./common/Roku_Ads.brs";
+import models from "./common/models.csv";
 
 export { _lexer as lexer };
 export { BrsTypes as types };
@@ -79,7 +79,7 @@ onmessage = function (event) {
         interpreter.deviceInfo.set("locale", event.data.device.locale);
         interpreter.deviceInfo.set("clockFormat", event.data.device.clockFormat);
         interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
-        interpreter.deviceInfo.set("models", parseCSV(models.default));
+        interpreter.deviceInfo.set("models", parseCSV(models));
         interpreter.deviceInfo.set("defaultFont", fontFamily);
         interpreter.deviceInfo.set("maxSimulStreams", event.data.device.maxSimulStreams);
         interpreter.deviceInfo.set("connectionType", event.data.device.connectionType);
@@ -91,8 +91,8 @@ onmessage = function (event) {
         if (volume) {
             volume.mkdirSync("/LibCore");
             volume.mkdirSync("/LibCore/v30");
-            volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore.default);
-            volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender.default);
+            volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
+            volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
             volume.mkdirSync("/Fonts");
             let fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
             if (fontRegular) {
@@ -280,17 +280,17 @@ function run(
         allStatements.push(...parseResults.statements);
     });
     if (lib.get("v30/bslDefender.brs") === true) {
-        const libScan = lexer.scan(bslDefender.default, "v30/bslDefender.brs");
+        const libScan = lexer.scan(bslDefender, "v30/bslDefender.brs");
         const libParse = parser.parse(libScan.tokens);
         allStatements.push(...libParse.statements);
     }
     if (lib.get("v30/bslCore.brs") === true) {
-        const libScan = lexer.scan(bslCore.default, "v30/bslCore.brs");
+        const libScan = lexer.scan(bslCore, "v30/bslCore.brs");
         const libParse = parser.parse(libScan.tokens);
         allStatements.push(...libParse.statements);
     }
     if (lib.get("Roku_Ads.brs") === true) {
-        const libScan = lexer.scan(Roku_Ads.default, "Roku_Ads.brs");
+        const libScan = lexer.scan(Roku_Ads, "Roku_Ads.brs");
         const libParse = parser.parse(libScan.tokens);
         allStatements.push(...libParse.statements);
     }
