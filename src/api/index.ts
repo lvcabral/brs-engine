@@ -184,7 +184,7 @@ export function execute(
     mute: boolean = false,
     execSource: string = "auto-run-dev"
 ) {
-    const fileName = filePath.split(".").slice(0, -1).join(".");
+    const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop();
     source = [];
     currentChannel.id = filePath.hashCode();

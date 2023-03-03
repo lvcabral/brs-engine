@@ -26,7 +26,7 @@ export let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 export function initDisplayModule(mode: string, lowRes: boolean, perfStats: boolean) {
     // Initialize Display Canvas
-    if (typeof OffscreenCanvas !== undefined) {
+    if (typeof OffscreenCanvas !== "undefined") {
         display =
             (document.getElementById("display") as HTMLCanvasElement) ||
             new OffscreenCanvas(screenSize.width, screenSize.height);
