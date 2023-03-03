@@ -62,8 +62,8 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     if (!options.disableKeys) {
         if (options.customKeys instanceof Map) {
             options.customKeys.forEach(function (value: string, key: string) {
-                key = key.replace(/Windows|Command/gi,"Meta");
-                key = key.replace("Option","Alt");
+                key = key.replace(/Windows|Command/gi, "Meta");
+                key = key.replace("Option", "Alt");
                 keysMap.set(key, value);
             });
         }
