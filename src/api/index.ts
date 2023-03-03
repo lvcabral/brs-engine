@@ -536,6 +536,7 @@ export function terminate(reason: string) {
     currentChannel.id = "";
     currentChannel.file = "";
     currentChannel.title = "";
+    currentChannel.subtitle = "";
     currentChannel.version = "";
     currentChannel.execSource = "";
     currentChannel.running = false;
