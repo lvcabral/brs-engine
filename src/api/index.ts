@@ -492,6 +492,8 @@ function workerCallback(event: MessageEvent) {
         stopWav(event.data.split(",")[1]);
     } else if (event.data.slice(0, 6) === "print,") {
         deviceDebug(event.data);
+    } else if (event.data.slice(0, 7) === "beacon,") {
+        deviceDebug(event.data);
     } else if (event.data.slice(0, 4) === "log,") {
         // for backward compatibility with v0.9.1
         deviceDebug(`${event.data}\r\n`);
@@ -516,6 +518,8 @@ function deviceDebug(data: string) {
             console.error(content);
         } else if (level === "warning") {
             console.warn(content);
+        } else if (level === "beacon") {
+            console.info(content);
         } else {
             console.log(content);
         }
@@ -524,7 +528,7 @@ function deviceDebug(data: string) {
 
 // Restore emulator state and terminate Worker
 export function terminate(reason: string) {
-    deviceDebug(`print,${getNow()} [beacon.report] |AppExitComplete\r\n`);
+    deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
     deviceDebug(`print,------ Finished '${currentChannel.title}' execution [${reason}] ------\r\n`);
     if (currentChannel.clearDisplay) {
         clearDisplay();
@@ -568,7 +572,6 @@ export function setAudioMute(mute: boolean) {
         muteSound(mute);
     }
 }
-
 export function getAudioMute() {
     return isMuted();
 }

@@ -220,7 +220,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const title = this.manifest.get("title") || "No Title";
                 const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
                 const subName = mainVariable.name.text;
-                postMessage(`print,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'\r\n`);
+                postMessage(`beacon,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'\r\n`);
                 postMessage(`print,------ Running dev '${title}' ${subName} ------\r\n`);
                 results = [
                     this.visitCall(
