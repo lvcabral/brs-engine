@@ -28,11 +28,10 @@ keysMap.set("PageDown", "rev");
 keysMap.set("Control+ArrowLeft", "rev");
 keysMap.set("PageUp", "fwd");
 keysMap.set("Control+ArrowRight", "fwd");
-keysMap.set("NumpadMultiply", "info");
 keysMap.set("Insert", "info");
 keysMap.set("Control+Digit8", "info");
-keysMap.set("KeyA", "a");
-keysMap.set("KeyZ", "b");
+keysMap.set("Control+KeyA", "a");
+keysMap.set("Control+KeyZ", "b");
 keysMap.set("Control+KeyC", "break");
 
 const rokuKeys: Map<string, number> = new Map();
