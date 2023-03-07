@@ -6,8 +6,17 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { DataType, DebugCommand, SubscribeCallback } from "./util";
+import { UAParser } from "ua-parser-js";
 
 // Keyboard Mapping
+// References: 
+// https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
+// https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
+
+const ua = new UAParser();
+const os = ua.getOS();
+const isMacOS = os.name?.toLowerCase() === "mac os";
+
 const keysMap: Map<string, string> = new Map();
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
@@ -20,19 +29,29 @@ keysMap.set("Home", "home");
 keysMap.set("Shift+Escape", "home");
 keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
-keysMap.set("Control+Backspace", "backspace");
-keysMap.set("Control+Enter", "play");
 keysMap.set("End", "play");
-keysMap.set("Control+Enter", "select");
+if (isMacOS) {
+    keysMap.set("Command+Backspace", "backspace");
+    keysMap.set("Command+Enter", "play");
+    keysMap.set("Command+ArrowLeft", "rev");
+    keysMap.set("Command+Enter", "select");
+    keysMap.set("Command+ArrowRight", "fwd");
+    keysMap.set("Command+Digit8", "info");
+    keysMap.set("Control+KeyC", "break");
+} else {
+    keysMap.set("Control+Backspace", "backspace");
+    keysMap.set("Control+Enter", "play");
+    keysMap.set("Control+ArrowLeft", "rev");
+    keysMap.set("Control+Enter", "select");
+    keysMap.set("Control+ArrowRight", "fwd");
+    keysMap.set("Control+Digit8", "info");
+    keysMap.set("Control+Pause", "break");
+}
 keysMap.set("PageDown", "rev");
-keysMap.set("Control+ArrowLeft", "rev");
 keysMap.set("PageUp", "fwd");
-keysMap.set("Control+ArrowRight", "fwd");
 keysMap.set("Insert", "info");
-keysMap.set("Control+Digit8", "info");
 keysMap.set("Control+KeyA", "a");
 keysMap.set("Control+KeyZ", "b");
-keysMap.set("Control+KeyC", "break");
 
 const rokuKeys: Map<string, number> = new Map();
 rokuKeys.set("back", 0);
@@ -51,7 +70,6 @@ rokuKeys.set("enter", 15);
 rokuKeys.set("a", 17);
 rokuKeys.set("b", 18);
 rokuKeys.set("stop", 23);
-rokuKeys.set("break", 204);
 
 // Initialize Control Module
 let sharedArray: Int32Array;
