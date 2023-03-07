@@ -871,7 +871,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         ) => {
             let ctx = this.bitmap.getContext();
             ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
+            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
             ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
             ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
             ctx.stroke();
@@ -893,7 +893,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
             let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
             ctx.fillRect(
                 this.x + x.getValue(),
                 this.y + y.getValue(),
@@ -919,7 +919,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
             ctx.fillRect(
                 this.x + x.getValue(),
                 this.y + y.getValue(),
@@ -945,7 +945,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
             const ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(
