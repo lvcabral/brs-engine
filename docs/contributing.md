@@ -2,9 +2,9 @@
 Any contibutions you're willing to make are _super_ appreciated.  That includes a wide variety of things &ndash; not just code!
 
 ## Types of Contributions
-Since this project is still maturing, many of its initial contributions will take the form of new features or bug fixes.  Even if you're not familiar with TypeScript, you can still help make `brs` a more accurate interpreter for the BrightScript language.  You can:
+Since this project is still maturing, many of its initial contributions will take the form of new features or bug fixes.  Even if you're not familiar with TypeScript, you can still help make `brs-emu` a more accurate interpreter for the BrightScript language.  You can:
 
-1. Improve documentation for BrightScript's quirks (even minor typoe fixes are helpful!)
+1. Improve documentation for BrightScript's quirks (even minor typos fixes are helpful!)
 2. File issues demonstrating where this implementation diverges from the reference one (i.e. on a Roku device)
 3. Add end-to-end tests in BrightScript to help exercise find bugs
 4. Use `brs-emu` and tell your friends about it

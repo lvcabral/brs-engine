@@ -12,11 +12,11 @@ Type some Brightscript code: (open Developer Tools console to see <b>print</b> o
 sub main()
   print "starting code execution!"
   purple=&h6F1AB1FF
-  screen=CreateObject("roScreen")
+  screen=CreateObject("roScreen", true, 1920, 1080)
   screen.SetAlphaEnable(true)
   screen.Clear(purple)
   screen.DrawRect(300, 100, 300, 300, &h80)
-  screen.finish()
+  screen.SwapBuffers()
 end sub
 </textarea><br />
 <input id="clickMe" type="button" value="Run Code!" onclick="executeBrs();" />
