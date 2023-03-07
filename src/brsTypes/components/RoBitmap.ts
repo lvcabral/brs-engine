@@ -171,7 +171,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             let imageData = ctc.getImageData(0, 0, image.width, image.height);
             let pixels = imageData.data;
             for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-                pixels[i] = 255
+                pixels[i] = 255;
             }
             ctx.putImageData(imageData, x, y);
         }

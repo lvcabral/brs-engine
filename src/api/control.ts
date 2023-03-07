@@ -9,7 +9,7 @@ import { DataType, DebugCommand, SubscribeCallback } from "./util";
 import { UAParser } from "ua-parser-js";
 
 // Keyboard Mapping
-// References: 
+// References:
 // https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
 // https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
 
