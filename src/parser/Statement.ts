@@ -2,6 +2,7 @@ import * as Expr from "./Expression";
 import { Token, Identifier, Location, Lexeme } from "../lexer";
 import { BrsType, BrsInvalid } from "../brsTypes";
 import { BrsError } from "../Error";
+import { BlockEnd } from "./BlockEndReason";
 
 /** A set of reasons why a `Block` stopped executing. */
 export * from "./BlockEndReason";
@@ -336,8 +337,7 @@ export class End implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        //TODO implement this in the runtime. It should immediately terminate program execution, without error
-        throw new BrsError("End statement not implemented!", this.tokens.end.location);
+        throw new BlockEnd("end-statement", this.tokens.end.location);
     }
 
     get location() {

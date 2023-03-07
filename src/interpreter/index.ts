@@ -1658,7 +1658,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.debugMode) {
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this._prevLoc)) {
-                    throw new BrsError("debug-exit", statement.location);
+                    throw new BlockEnd("debug-exit", statement.location);
                 }
             }
         }
