@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Double } from "..";
+import { BrsType, Double, roInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -15,6 +15,7 @@ import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
 import { GifReader } from "omggif";
 import BMP from "decode-bmp";
+import { drawObjectToContext, getCanvasFromDraw2d, getPreTranslation, getSourceOffset, isCanvasValid, setContextAlpha } from "../draw2d";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -79,6 +80,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         //TODO: Review alpha enable, it should only affect bitmap as destination.
         this.context = this.canvas.getContext("2d", {
             alpha: true,
+            willReadFrequently: true
         }) as OffscreenCanvasRenderingContext2D;
         if (image) {
             try {
@@ -159,22 +161,18 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    drawImage(image: OffscreenCanvas, x: number, y: number) {
+    drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
         this.rgbaRedraw = true;
         const ctx = this.context;
-        if (this.alphaEnable) {
-            ctx.drawImage(image, x, y);
-        } else {
-            const ctc = image.getContext("2d", {
-                alpha: true,
-            }) as OffscreenCanvasRenderingContext2D;
-            let imageData = ctc.getImageData(0, 0, image.width, image.height);
-            let pixels = imageData.data;
-            for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-                pixels[i] = 255;
-            }
-            ctx.putImageData(imageData, x, y);
-        }
+        return drawObjectToContext(ctx, this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
+    }
+
+    getImageWidth(): number {
+        return this.canvas.width;
+    }
+
+    getImageHeight(): number {
+        return this.canvas.height;
     }
 
     getCanvas(): OffscreenCanvas {
@@ -259,36 +257,12 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context;
-            if (object instanceof RoBitmap) {
-                let cvs: OffscreenCanvas;
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-                if (cvs.width === 0 || cvs.height === 0) {
-                    return BrsBoolean.False;
-                }
-                this.drawImage(cvs, x.getValue(), y.getValue());
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                if (rcv.width === 0 || rcv.height === 0) {
-                    return BrsBoolean.False;
-                }
-                this.drawImage(
-                    rcv,
-                    x.getValue() + object.getTransX(),
-                    y.getValue() + object.getTransY()
-                );
-            } else {
-                return BrsBoolean.False;
-            }
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue())
             ctx.globalAlpha = 1.0;
             this.rgbaRedraw = true;
+            if (!didDraw) {
+                return BrsBoolean.False;
+            }
             return BrsBoolean.True;
         },
     });
@@ -319,44 +293,14 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            if (object instanceof RoBitmap) {
-                let cvs: OffscreenCanvas;
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-                if (cvs.width === 0 || cvs.height === 0) {
-                    return BrsBoolean.False;
-                }
-                ctx.drawImage(cvs, 0, 0, cvs.width, cvs.height);
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                if (rcv.width === 0 || rcv.height === 0) {
-                    return BrsBoolean.False;
-                }
-                ctx.drawImage(
-                    rcv,
-                    object.getPosX(),
-                    object.getPosY(),
-                    object.getImageWidth(),
-                    object.getImageHeight(),
-                    object.getTransX(),
-                    object.getTransY(),
-                    object.getImageWidth(),
-                    object.getImageHeight()
-                );
-            } else {
-                return BrsBoolean.False;
-            }
+            const didDraw = this.drawImage(object, rgba, 0, 0)
             ctx.rotate(-angleInRad);
             ctx.translate(-positionX, -positionY);
             ctx.globalAlpha = 1.0;
             this.rgbaRedraw = true;
+            if (!didDraw) {
+                return BrsBoolean.False;
+            }
             return BrsBoolean.True;
         },
     });
@@ -384,48 +328,12 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context;
-            if (object instanceof RoBitmap) {
-                let cvs: OffscreenCanvas;
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-                if (cvs.width === 0 || cvs.height === 0) {
-                    return BrsBoolean.False;
-                }
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(
-                    cvs,
-                    x.getValue(),
-                    y.getValue(),
-                    cvs.width * scaleX.getValue(),
-                    cvs.height * scaleY.getValue()
-                );
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                if (rcv.width === 0 || rcv.height === 0) {
-                    return BrsBoolean.False;
-                }
-                let tx = object.getTransX() * scaleX.getValue();
-                let ty = object.getTransY() * scaleY.getValue();
-                ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
-                ctx.drawImage(
-                    rcv,
-                    x.getValue() + tx,
-                    y.getValue() + ty,
-                    object.getImageWidth() * scaleX.getValue(),
-                    object.getImageHeight() * scaleY.getValue()
-                );
-            } else {
-                return BrsBoolean.False;
-            }
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue(), scaleX.getValue(), scaleY.getValue())
             ctx.globalAlpha = 1.0;
             this.rgbaRedraw = true;
+            if (!didDraw) {
+                return BrsBoolean.False;
+            }
             return BrsBoolean.True;
         },
     });

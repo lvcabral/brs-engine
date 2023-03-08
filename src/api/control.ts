@@ -30,6 +30,7 @@ keysMap.set("Shift+Escape", "home");
 keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
 keysMap.set("End", "play");
+keysMap.set("Digit8", "info");
 if (isMacOS) {
     keysMap.set("Command+Backspace", "backspace");
     keysMap.set("Command+Enter", "play");

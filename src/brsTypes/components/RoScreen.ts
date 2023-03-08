@@ -11,6 +11,7 @@ import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
+import { drawObjectToContext } from "../draw2d";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -62,6 +63,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas[index] = new OffscreenCanvas(this.width, this.height);
             this.context[index] = this.canvas[index].getContext("2d", {
                 alpha: false,
+                willReadFrequently: true,
             }) as OffscreenCanvasRenderingContext2D;
             this.canvas[index].width = this.width;
             this.canvas[index].height = this.height;
@@ -109,21 +111,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    drawImage(image: OffscreenCanvas, x: number, y: number) {
+    drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
         const ctx = this.context[this.currentBuffer];
-        if (this.alphaEnable) {
-            ctx.drawImage(image, x, y);
-        } else {
-            const ctc = image.getContext("2d", {
-                alpha: true,
-            }) as OffscreenCanvasRenderingContext2D;
-            let imageData = ctc.getImageData(0, 0, image.width, image.height);
-            let pixels = imageData.data;
-            for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-                pixels[i] = 255;
-            }
-            ctx.putImageData(imageData, x, y);
-        }
+        return drawObjectToContext(ctx, this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
     }
 
     setCanvasAlpha(enable: boolean) {
@@ -194,35 +184,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            if (object instanceof RoBitmap) {
-                let cvs: OffscreenCanvas;
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-                if (cvs.width === 0 || cvs.height === 0) {
-                    return BrsBoolean.False;
-                }
-                this.drawImage(cvs, x.getValue(), y.getValue());
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                if (rcv.width === 0 || rcv.height === 0) {
-                    return BrsBoolean.False;
-                }
-                this.drawImage(
-                    rcv,
-                    x.getValue() + object.getTransX(),
-                    y.getValue() + object.getTransY()
-                );
-            } else {
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue())
+            ctx.globalAlpha = 1.0;
+            if (!didDraw) {
                 return BrsBoolean.False;
             }
-            ctx.globalAlpha = 1.0;
             return BrsBoolean.True;
         },
     });
@@ -253,43 +219,13 @@ export class RoScreen extends BrsComponent implements BrsValue {
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            if (object instanceof RoBitmap) {
-                let cvs: OffscreenCanvas;
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-                if (cvs.width === 0 || cvs.height === 0) {
-                    return BrsBoolean.False;
-                }
-                ctx.drawImage(cvs, 0, 0, cvs.width, cvs.height);
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                if (rcv.width === 0 || rcv.height === 0) {
-                    return BrsBoolean.False;
-                }
-                ctx.drawImage(
-                    rcv,
-                    object.getPosX(),
-                    object.getPosY(),
-                    object.getImageWidth(),
-                    object.getImageHeight(),
-                    object.getTransX(),
-                    object.getTransY(),
-                    object.getImageWidth(),
-                    object.getImageHeight()
-                );
-            } else {
-                return BrsBoolean.False;
-            }
+            const didDraw = this.drawImage(object, rgba, 0, 0)
             ctx.rotate(-angleInRad);
             ctx.translate(-positionX, -positionY);
             ctx.globalAlpha = 1.0;
+            if (!didDraw) {
+                return BrsBoolean.False;
+            }
             return BrsBoolean.True;
         },
     });
@@ -317,48 +253,12 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            if (object instanceof RoBitmap) {
-                let cvs: OffscreenCanvas;
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-                if (cvs.width === 0 || cvs.height === 0) {
-                    return BrsBoolean.False;
-                }
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(
-                    cvs,
-                    x.getValue(),
-                    y.getValue(),
-                    cvs.width * scaleX.getValue(),
-                    cvs.height * scaleY.getValue()
-                );
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                if (rcv.width === 0 || rcv.height === 0) {
-                    return BrsBoolean.False;
-                }
-                let tx = object.getTransX() * scaleX.getValue();
-                let ty = object.getTransY() * scaleY.getValue();
-                ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
-                ctx.drawImage(
-                    rcv,
-                    x.getValue() + tx,
-                    y.getValue() + ty,
-                    object.getImageWidth() * scaleX.getValue(),
-                    object.getImageHeight() * scaleY.getValue()
-                );
-            } else {
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue(), scaleX.getValue(), scaleY.getValue())
+            ctx.globalAlpha = 1.0;
+            if (!didDraw) {
                 return BrsBoolean.False;
             }
-            ctx.globalAlpha = 1.0;
-            return BrsBoolean.True;
+            return BrsBoolean.True
         },
     });
 
