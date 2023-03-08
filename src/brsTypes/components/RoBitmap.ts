@@ -15,7 +15,7 @@ import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
 import { GifReader } from "omggif";
 import BMP from "decode-bmp";
-import { drawObjectToContext, getCanvasFromDraw2d, getPreTranslation, getSourceOffset, isCanvasValid, setContextAlpha } from "../draw2d";
+import { drawObjectToContext } from "../draw2d";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -80,7 +80,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         //TODO: Review alpha enable, it should only affect bitmap as destination.
         this.context = this.canvas.getContext("2d", {
             alpha: true,
-            willReadFrequently: true
         }) as OffscreenCanvasRenderingContext2D;
         if (image) {
             try {

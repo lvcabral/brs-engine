@@ -9,15 +9,13 @@ import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
-import { drawObjectToContext, getCanvasFromDraw2d, getPreTranslation, getSourceOffset, isCanvasValid, setContextAlpha } from "../draw2d";
+import { drawObjectToContext } from "../draw2d";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private valid: boolean;
     private alphaEnabled: boolean;
     private bitmap: RoBitmap | RoScreen;
-    //private canvas: OffscreenCanvas;
-    //private context: OffscreenCanvasRenderingContext2D;
     private x: number;
     private y: number;
     private width: number;
@@ -60,14 +58,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
         this.alphaEnabled = true;
-        // Create new canvas
-        /*
-        this.canvas = new OffscreenCanvas(this.width, this.height);
-        this.context = this.canvas.getContext("2d", {
-            alpha: true,
-            willReadFrequently: true,
-        }) as OffscreenCanvasRenderingContext2D;
-        */
+
         if (
             this.x + this.width <= bitmap.getCanvas().width &&
             this.y + this.height <= bitmap.getCanvas().height
@@ -151,7 +142,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.y = newY;
             }
         }
-        //this.redrawCanvas();
         // TODO: Check what is the effect on collision parameters
     }
 
@@ -159,7 +149,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
         const ctx = this.bitmap.getContext();
         ctx.fillStyle = rgbaIntToHex(rgba);
         ctx.fillRect(this.x, this.y, this.width, this.height);
-        //this.redrawCanvas();
     }
 
     drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1) {
@@ -174,10 +163,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
     getContext(): OffscreenCanvasRenderingContext2D {
         return this.bitmap.getContext();
     }
-
-    // getRegionCanvas(): OffscreenCanvas {
-    //     return this.canvas;
-    // }
 
     getRgbaCanvas(rgba: number): OffscreenCanvas {
         if (this.bitmap instanceof RoBitmap) {
@@ -234,116 +219,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
     getRegionScaleMode(): number {
         return this.scaleMode;
     }
-
-    /*
-    redrawCanvas(): void {
-        // TODO: Check the impact of translate on this method
-        const bmp = this.bitmap.getCanvas();
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
-        let ctx = this.context;
-        if (
-            this.wrap &&
-            (this.x + this.width > bmp.width ||
-                this.y + this.height > bmp.height ||
-                this.x < 0 ||
-                this.y < 0)
-        ) {
-            let clippedWidth = Math.min(bmp.width - this.x, this.width);
-            let clippedHeight = Math.min(bmp.height - this.y, this.height);
-            // fill top/left part of canvas with (clipped) image.
-            ctx.drawImage(
-                bmp,
-                this.x,
-                this.y,
-                clippedWidth,
-                clippedHeight,
-                0,
-                0,
-                clippedWidth,
-                clippedHeight
-            );
-            if (clippedWidth < this.width && clippedHeight < this.height) {
-                // wrap both horizontal and vertical
-                let diffWidth = this.width - clippedWidth;
-                let diffHeight = this.height - clippedHeight;
-                ctx.drawImage(
-                    bmp,
-                    0,
-                    this.y,
-                    diffWidth,
-                    clippedHeight,
-                    clippedWidth,
-                    0,
-                    diffWidth,
-                    clippedHeight
-                );
-                ctx.drawImage(
-                    bmp,
-                    this.x,
-                    0,
-                    clippedWidth,
-                    diffHeight,
-                    0,
-                    clippedHeight,
-                    clippedWidth,
-                    diffHeight
-                );
-                ctx.drawImage(
-                    bmp,
-                    0,
-                    0,
-                    diffWidth,
-                    diffHeight,
-                    clippedWidth,
-                    clippedHeight,
-                    diffWidth,
-                    diffHeight
-                );
-            } else if (clippedWidth < this.width) {
-                // wrap horizontal
-                let diffWidth = this.width - clippedWidth;
-                ctx.drawImage(
-                    bmp,
-                    0,
-                    this.y,
-                    diffWidth,
-                    this.height,
-                    clippedWidth,
-                    0,
-                    diffWidth,
-                    this.height
-                );
-            } else if (clippedHeight < this.height) {
-                // wrap vertical
-                let diffHeight = this.height - clippedHeight;
-                ctx.drawImage(
-                    bmp,
-                    this.x,
-                    0,
-                    this.width,
-                    diffHeight,
-                    0,
-                    clippedHeight,
-                    this.width,
-                    diffHeight
-                );
-            }
-        } else {
-            ctx.drawImage(
-                bmp,
-                this.x,
-                this.y,
-                this.width,
-                this.height,
-                0,
-                0,
-                this.width,
-                this.height
-            );
-        }
-    }
-    */
 
     getAnimaTime(): number {
         return this.time;
