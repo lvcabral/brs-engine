@@ -104,12 +104,8 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
         for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
             pixels[i] = 255;
         }
-        //ctx.scale(scaleX, scaleY);
         ctx.putImageData(imageData, x, y,);
-        //ctx.scale(1, 1);
     }
-
-
     return true;
 }
 
