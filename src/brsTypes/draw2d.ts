@@ -72,19 +72,22 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
     if (object instanceof RoRegion) {
         ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
     }
-    if (alphaEnable) {
-        ctx.drawImage(
-            image,
-            sx,
-            sy,
-            sw,
-            sh,
-            x + preTrans.x,
-            y + preTrans.y,
-            sw * scaleX,
-            sh * scaleY
-        );
-    } else {
+    if (!alphaEnable) {
+        ctx.clearRect(x + preTrans.x, y + preTrans.y, sw * scaleX, sh * scaleY);
+    }
+    ctx.drawImage(
+        image,
+        sx,
+        sy,
+        sw,
+        sh,
+        x + preTrans.x,
+        y + preTrans.y,
+        sw * scaleX,
+        sh * scaleY
+    );
+
+    /*else {
         const ctc = image.getContext("2d", {
             alpha: true,
         }) as OffscreenCanvasRenderingContext2D;
@@ -96,7 +99,7 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
         ctx.scale(scaleX, scaleY);
         ctx.putImageData(imageData, x, y,);
         ctx.scale(1, 1);
-    }
+    }*/
     return true;
 }
 

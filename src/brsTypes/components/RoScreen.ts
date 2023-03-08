@@ -63,7 +63,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas[index] = new OffscreenCanvas(this.width, this.height);
             this.context[index] = this.canvas[index].getContext("2d", {
                 alpha: false,
-                willReadFrequently: true,
             }) as OffscreenCanvasRenderingContext2D;
             this.canvas[index].width = this.width;
             this.canvas[index].height = this.height;
@@ -217,12 +216,14 @@ export class RoScreen extends BrsComponent implements BrsValue {
             const positionX = x.getValue();
             const positionY = y.getValue();
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.save()
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
             const didDraw = this.drawImage(object, rgba, 0, 0)
-            ctx.rotate(-angleInRad);
-            ctx.translate(-positionX, -positionY);
-            ctx.globalAlpha = 1.0;
+            //ctx.rotate(-angleInRad);
+            //ctx.translate(-positionX, -positionY);
+            //ctx.globalAlpha = 1.0;
+            ctx.restore()
             if (!didDraw) {
                 return BrsBoolean.False;
             }

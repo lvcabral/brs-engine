@@ -709,12 +709,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
             const positionX = x.getValue();
             const positionY = y.getValue();
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.save()
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
             const didDraw = this.drawImage(object, rgba, 0, 0)
-            ctx.rotate(-angleInRad);
-            ctx.translate(-positionX, -positionY);
-            ctx.globalAlpha = 1.0;
+            ctx.restore()
             if (!didDraw) {
                 return BrsBoolean.False;
             }
