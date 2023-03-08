@@ -11,7 +11,7 @@ import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
-import { drawObjectToContext } from "../draw2d";
+import { drawImageToContext, drawObjectToContext } from "../draw2d";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -114,6 +114,12 @@ export class RoScreen extends BrsComponent implements BrsValue {
         const ctx = this.context[this.currentBuffer];
         return drawObjectToContext(ctx, this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
     }
+
+    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
+        const ctx = this.context[this.currentBuffer];
+        return drawImageToContext(ctx, image, this.alphaEnable, x, y)
+    }
+
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;

@@ -15,7 +15,7 @@ import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
 import { GifReader } from "omggif";
 import BMP from "decode-bmp";
-import { drawObjectToContext } from "../draw2d";
+import { drawImageToContext, drawObjectToContext } from "../draw2d";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -164,6 +164,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.rgbaRedraw = true;
         const ctx = this.context;
         return drawObjectToContext(ctx, this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
+    }
+
+    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
+        const ctx = this.context;
+        return drawImageToContext(ctx, image, this.alphaEnable, x, y)
     }
 
     getImageWidth(): number {

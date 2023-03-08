@@ -81,6 +81,10 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return this.region.getImageData();
     }
 
+    getRegionObject(): RoRegion {
+        return this.region;
+    }
+
     getId(): number {
         return this.id;
     }

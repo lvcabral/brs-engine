@@ -7,6 +7,7 @@ import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
+import { drawObjectToContext } from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -23,7 +24,6 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         this.canvas = new OffscreenCanvas(10, 10);
         let context = this.canvas.getContext("2d", {
             alpha: true,
-            willReadFrequently: true,
         }) as OffscreenCanvasRenderingContext2D;
         this.context = context;
         this.spriteId = 0;
@@ -138,21 +138,16 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
         if (this.destBitmap) {
-            const destContext = this.destBitmap.getContext()
-            destContext.drawImage(this.canvas, 0, 0);
+            this.destBitmap.drawImageToContext(this.canvas, 0, 0)
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
             layers.forEach((z) => {
                 const layer = this.sprites.get(z);
                 if (layer) {
                     layer.forEach((sprite) => {
                         if (sprite.visible()) {
-                            ctx.putImageData(
-                                sprite.getImageData(),
-                                sprite.getPosX(),
-                                sprite.getPosY()
-                            );
-                            destContext.drawImage(this.canvas, 0, 0);
+                            drawObjectToContext(ctx, true, sprite.getRegionObject(), BrsInvalid.Instance, sprite.getPosX(), sprite.getPosY())
                         }
+                        this.destBitmap?.drawImageToContext(this.canvas, 0, 0);
                     });
                 }
             });

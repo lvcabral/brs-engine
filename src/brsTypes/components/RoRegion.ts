@@ -9,7 +9,7 @@ import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
-import { drawObjectToContext } from "../draw2d";
+import { drawImageToContext, drawObjectToContext } from "../draw2d";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -58,7 +58,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
         this.alphaEnabled = true;
-
+        // Create new canvas
+        /*
+        this.canvas = new OffscreenCanvas(this.width, this.height);
+        this.context = this.canvas.getContext("2d", {
+            alpha: true,
+            willReadFrequently: true,
+        }) as OffscreenCanvasRenderingContext2D;
+        */
         if (
             this.x + this.width <= bitmap.getCanvas().width &&
             this.y + this.height <= bitmap.getCanvas().height
@@ -156,6 +163,12 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return drawObjectToContext(ctx, this.alphaEnabled, object, rgba, x, y, scaleX, scaleY)
     }
 
+    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
+        const ctx = this.bitmap.getContext();
+        return drawImageToContext(ctx, image, this.alphaEnabled, x, y)
+    }
+
+
     getCanvas(): OffscreenCanvas {
         return this.bitmap.getCanvas();
     }
@@ -212,7 +225,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     getImageData(): ImageData {
-        //let ctx = this.context;
+        console.log("getImageData", this.x, this.y, this.width, this.height)
         return this.bitmap.getContext().getImageData(this.x, this.y, this.width, this.height);
     }
 
