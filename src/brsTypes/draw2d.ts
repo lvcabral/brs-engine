@@ -64,16 +64,19 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
     const preTrans = getPreTranslation(object);
     const tx = preTrans.x * scaleX;
     const ty = preTrans.y * scaleY;
-    const sx = offset.x + tx;
-    const sy = offset.y + ty;
+    const sx = offset.x;
+    const sy = offset.y;
     const sw = object.getImageWidth();
     const sh = object.getImageHeight();
+
+    const dx = x + tx;
+    const dy = y + ty;
 
     if (object instanceof RoRegion) {
         ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
     }
     if (!alphaEnable) {
-        ctx.clearRect(x + preTrans.x, y + preTrans.y, sw * scaleX, sh * scaleY);
+        ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
     }
     ctx.drawImage(
         image,
@@ -81,34 +84,10 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
         sy,
         sw,
         sh,
-        x + preTrans.x,
-        y + preTrans.y,
+        dx,
+        dy,
         sw * scaleX,
         sh * scaleY
     );
-
-    /*else {
-        const ctc = image.getContext("2d", {
-            alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
-        let imageData = ctc.getImageData(sx, sy, sw, sh);
-        let pixels = imageData.data;
-        for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-            pixels[i] = 255;
-        }
-        ctx.scale(scaleX, scaleY);
-        ctx.putImageData(imageData, x, y,);
-        ctx.scale(1, 1);
-    }*/
-    return true;
-}
-
-
-export function drawImageToContext(ctx: OffscreenCanvasRenderingContext2D, image: OffscreenCanvas, x: number, y: number): boolean {
-    if (!isCanvasValid(image)) {
-        return false
-    }
-    ctx.drawImage(image, x, y);
-
     return true;
 }
