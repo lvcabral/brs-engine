@@ -149,9 +149,9 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     }
 
     clearCanvas(rgba: number) {
-        let ctx = this.context;
+        const ctx = this.context;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        if (rgba > 0) {
+        if ((rgba & 255) > 0) {
             ctx.fillStyle = rgbaIntToHex(rgba);
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
@@ -644,13 +644,10 @@ export function rgbaIntToHex(rgba: number, alpha: boolean = true): string {
     return "#" + hex;
 }
 
-export function rgbaToRgb(rgba: number): number {
-    const r = (rgba >> 24) & 0xff;
-    const g = (rgba >> 16) & 0xff;
-    const b = (rgba >> 8) & 0xff;
-    return (r << 24) + (g << 16) + (b << 8);
+export function rgbaToTransparent(rgba: number): number {
+    return rgba - (rgba & 0xff);
 }
 
 export function rgbaToOpaque(rgba: number): number {
-    return rgbaToRgb(rgba) + 0xff;
+    return rgba - (rgba & 0xff) + 0xff;
 }

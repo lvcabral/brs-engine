@@ -16,6 +16,7 @@ Function Main()
   s.swapBuffers()
   ' redraw with the alpha disabled
   Sleep(5000)
+  s.Clear(&hFFFFFFFF)
   s.SetAlphaEnable(false)
   s.DrawObject(0, 300, bm)
   s.swapBuffers()

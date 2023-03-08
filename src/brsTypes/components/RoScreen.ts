@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
+import { RoBitmap, rgbaIntToHex, rgbaToTransparent } from "./RoBitmap";
 import { RoRegion } from "./RoRegion";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
@@ -100,7 +100,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     clearCanvas(rgba: number) {
         let ctx = this.context[this.currentBuffer];
-        if (rgba < 256) {
+        if (rgbaToTransparent(rgba) === 0) {
             ctx.clearRect(0, 0, this.width, this.height);
         } else {
             ctx.fillStyle = rgbaIntToHex(rgba, false);
