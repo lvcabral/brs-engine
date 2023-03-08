@@ -89,5 +89,19 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
         sw * scaleX,
         sh * scaleY
     );
+    // This code seems slower - it is the "original" non-alpha code
+    /*
+    const ctc = image.getContext("2d", {
+        alpha: true,
+    }) as OffscreenCanvasRenderingContext2D;
+    let imageData = ctc.getImageData(sx, sy, sw, sh);
+    let pixels = imageData.data;
+    for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
+        pixels[i] = 255;
+    }
+    ctx.scale(scaleX, scaleY);
+    ctx.putImageData(imageData, x, y,);
+    ctx.scale(1, 1);
+    */
     return true;
 }
