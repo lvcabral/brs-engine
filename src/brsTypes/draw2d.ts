@@ -79,33 +79,34 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
     else {
         ctx.imageSmoothingEnabled = false
     }
-    if (alphaEnable) {
-        // ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
-        // }
-        ctx.drawImage(
-            image,
-            sx,
-            sy,
-            sw,
-            sh,
-            dx,
-            dy,
-            sw * scaleX,
-            sh * scaleY
-        );
-    } else {
-        // This code seems slower - it is the "original" non-alpha code
-
-        const ctc = image.getContext("2d", {
-            alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
-        let imageData = ctc.getImageData(sx, sy, sw, sh);
-        let pixels = imageData.data;
-        for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-            pixels[i] = 255;
-        }
-        ctx.putImageData(imageData, x, y,);
+    if (!alphaEnable) {
+        ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
     }
+
+    ctx.drawImage(
+        image,
+        sx,
+        sy,
+        sw,
+        sh,
+        dx,
+        dy,
+        sw * scaleX,
+        sh * scaleY
+    );
+
+    // This code seems slower - it is the "original" non-alpha code
+    /*
+    const ctc = image.getContext("2d", {
+        alpha: true,
+    }) as OffscreenCanvasRenderingContext2D;
+    let imageData = ctc.getImageData(sx, sy, sw, sh);
+    let pixels = imageData.data;
+    for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
+        pixels[i] = 255;
+    }
+    ctx.putImageData(imageData, x, y,);
+    */
     return true;
 }
 
@@ -114,18 +115,22 @@ export function drawImageToContext(ctx: OffscreenCanvasRenderingContext2D, image
     if (!isCanvasValid(image)) {
         return false;
     }
-    if (alphaEnable) {
-        ctx.drawImage(image, x, y);
-    } else {
-        const ctc = image.getContext("2d", {
-            alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
-        let imageData = ctc.getImageData(0, 0, image.width, image.height);
-        let pixels = imageData.data;
-        for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-            pixels[i] = 255;
-        }
-        ctx.putImageData(imageData, x, y);
+    if (!alphaEnable) {
+        ctx.clearRect(x, y, image.width, image.height);
     }
+    ctx.drawImage(image, x, y);
+
+    //Old Non-Alpha Way (slow)
+    /*const ctc = image.getContext("2d", {
+        alpha: true,
+    }) as OffscreenCanvasRenderingContext2D;
+    let imageData = ctc.getImageData(0, 0, image.width, image.height);
+    let pixels = imageData.data;
+    for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
+        pixels[i] = 255;
+    }
+    ctx.putImageData(imageData, x, y);
+    */
+
     return true;
 }
