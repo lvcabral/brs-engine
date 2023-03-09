@@ -58,14 +58,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
         this.alphaEnabled = true;
-        // Create new canvas
-        /*
-        this.canvas = new OffscreenCanvas(this.width, this.height);
-        this.context = this.canvas.getContext("2d", {
-            alpha: true,
-            willReadFrequently: true,
-        }) as OffscreenCanvasRenderingContext2D;
-        */
+
         if (
             this.x + this.width <= bitmap.getCanvas().width &&
             this.y + this.height <= bitmap.getCanvas().height
@@ -225,7 +218,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     getImageData(): ImageData {
-        console.log("getImageData", this.x, this.y, this.width, this.height)
         return this.bitmap.getContext().getImageData(this.x, this.y, this.width, this.height);
     }
 

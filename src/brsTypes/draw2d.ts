@@ -75,9 +75,8 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
 
     if (object instanceof RoRegion) {
         ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
-    }
-    else {
-        ctx.imageSmoothingEnabled = false
+    } else {
+        ctx.imageSmoothingEnabled = false;
     }
     if (!alphaEnable) {
         ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);

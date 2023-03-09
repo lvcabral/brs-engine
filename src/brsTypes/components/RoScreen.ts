@@ -152,7 +152,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     this.currentBuffer = 0;
                 }
             }
-            this.context[this.currentBuffer].clearRect(0, 0, this.width, this.height);
             return BrsInvalid.Instance;
         },
     });
@@ -226,9 +225,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
             const didDraw = this.drawImage(object, rgba, 0, 0)
-            //ctx.rotate(-angleInRad);
-            //ctx.translate(-positionX, -positionY);
-            //ctx.globalAlpha = 1.0;
             ctx.restore()
             if (!didDraw) {
                 return BrsBoolean.False;
