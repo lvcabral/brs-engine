@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
-import { drawObjectToContext } from "../draw2d";
+import { drawObjectToContext, getDrawOffset } from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -138,17 +138,17 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
         if (this.destBitmap) {
-            this.destBitmap.drawImageToContext(this.canvas, 0, 0)
+            this.destBitmap.drawImageToContext(this.canvas, 0, 0);
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
             layers.forEach((z) => {
                 const layer = this.sprites.get(z);
                 if (layer) {
                     layer.forEach((sprite) => {
                         if (sprite.visible()) {
-                            drawObjectToContext(ctx, true, sprite.getRegionObject(), BrsInvalid.Instance, sprite.getPosX(), sprite.getPosY())
+                            drawObjectToContext(ctx, true, sprite.getRegionObject(), BrsInvalid.Instance, sprite.getPosX(), sprite.getPosY());
                         }
-                        this.destBitmap?.drawImageToContext(this.canvas, 0, 0);
                     });
+                    this.destBitmap?.drawImageToContext(this.canvas, 0, 0);
                 }
             });
         }

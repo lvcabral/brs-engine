@@ -1,6 +1,11 @@
-import { BrsInvalid, RoBitmap, RoRegion } from ".";
+import { BrsInvalid, RoBitmap, RoRegion, RoScreen } from ".";
 import { BrsComponent } from "./components/BrsComponent";
 import { Int32 } from "./Int32";
+
+// In Chrome, when this is enabled, it slows down non-alpha draws. However, when this is true, it behaves the same as Roku
+// Also, in Firefox, draws slow down when this is false. So it's a trade-off
+const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true
+
 
 export function setContextAlpha(ctx: OffscreenCanvasRenderingContext2D, rgba: Int32 | BrsInvalid) {
     if (rgba instanceof Int32) {
@@ -31,7 +36,7 @@ export function isCanvasValid(cvs?: OffscreenCanvas): boolean {
     return sizeOk;
 }
 
-export function getSourceOffset(object: RoBitmap | RoRegion): { x: number, y: number } {
+export function getDrawOffset(object: RoBitmap | RoRegion | RoScreen): { x: number, y: number } {
     let x = 0, y = 0;
     if (object instanceof RoRegion) {
         x = object.getPosX();
@@ -40,7 +45,7 @@ export function getSourceOffset(object: RoBitmap | RoRegion): { x: number, y: nu
     return { x, y }
 }
 
-export function getPreTranslation(object: RoBitmap | RoRegion): { x: number, y: number } {
+export function getPreTranslation(object: RoBitmap | RoRegion | RoScreen): { x: number, y: number } {
     let x = 0, y = 0;
     if (object instanceof RoRegion) {
         x = object.getTransX();
@@ -61,7 +66,7 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
     if (!isCanvasValid(image)) {
         return false
     }
-    const offset = getSourceOffset(object);
+    const offset = getDrawOffset(object);
     const preTrans = getPreTranslation(object);
     const tx = preTrans.x * scaleX;
     const ty = preTrans.y * scaleY;
@@ -78,34 +83,52 @@ export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, alph
     } else {
         ctx.imageSmoothingEnabled = false;
     }
-    if (!alphaEnable) {
-        ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
+
+    if (!USE_IMAGE_DATA_WHEN_ALPHA_DISABLED) {
+        if (!alphaEnable) {
+            ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
+        }
+
+        ctx.drawImage(
+            image,
+            sx,
+            sy,
+            sw,
+            sh,
+            dx,
+            dy,
+            sw * scaleX,
+            sh * scaleY
+        );
+    } else {
+        if (alphaEnable) {
+            ctx.drawImage(
+                image,
+                sx,
+                sy,
+                sw,
+                sh,
+                dx,
+                dy,
+                sw * scaleX,
+                sh * scaleY
+            );
+        } else {
+
+            const ctc = image.getContext("2d", {
+                alpha: true,
+            }) as OffscreenCanvasRenderingContext2D;
+            let imageData = ctc.getImageData(sx, sy, sw, sh);
+            let pixels = imageData.data;
+            for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
+                pixels[i] = 255;
+            }
+            ctx.scale(scaleX, scaleY)
+            ctx.putImageData(imageData, x, y,);
+            ctx.scale(1, 1)
+        }
     }
 
-    ctx.drawImage(
-        image,
-        sx,
-        sy,
-        sw,
-        sh,
-        dx,
-        dy,
-        sw * scaleX,
-        sh * scaleY
-    );
-
-    // This code seems slower - it is the "original" non-alpha code
-    /*
-    const ctc = image.getContext("2d", {
-        alpha: true,
-    }) as OffscreenCanvasRenderingContext2D;
-    let imageData = ctc.getImageData(sx, sy, sw, sh);
-    let pixels = imageData.data;
-    for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-        pixels[i] = 255;
-    }
-    ctx.putImageData(imageData, x, y,);
-    */
     return true;
 }
 
@@ -114,22 +137,26 @@ export function drawImageToContext(ctx: OffscreenCanvasRenderingContext2D, image
     if (!isCanvasValid(image)) {
         return false;
     }
-    if (!alphaEnable) {
-        ctx.clearRect(x, y, image.width, image.height);
+    if (!USE_IMAGE_DATA_WHEN_ALPHA_DISABLED) {
+        if (!alphaEnable) {
+            ctx.clearRect(x, y, image.width, image.height);
+        }
+        ctx.drawImage(image, x, y);
+    } else {
+        if (alphaEnable) {
+            ctx.drawImage(image, x, y);
+        } else {
+            const ctc = image.getContext("2d", {
+                alpha: true,
+            }) as OffscreenCanvasRenderingContext2D;
+            let imageData = ctc.getImageData(0, 0, image.width, image.height);
+            let pixels = imageData.data;
+            for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
+                pixels[i] = 255;
+            }
+            ctx.putImageData(imageData, x, y);
+        }
     }
-    ctx.drawImage(image, x, y);
-
-    //Old Non-Alpha Way (slow)
-    /*const ctc = image.getContext("2d", {
-        alpha: true,
-    }) as OffscreenCanvasRenderingContext2D;
-    let imageData = ctc.getImageData(0, 0, image.width, image.height);
-    let pixels = imageData.data;
-    for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-        pixels[i] = 255;
-    }
-    ctx.putImageData(imageData, x, y);
-    */
 
     return true;
 }

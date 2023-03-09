@@ -153,12 +153,12 @@ export class RoRegion extends BrsComponent implements BrsValue {
 
     drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1) {
         const ctx = this.bitmap.getContext();
-        return drawObjectToContext(ctx, this.alphaEnabled, object, rgba, x, y, scaleX, scaleY)
+        return drawObjectToContext(ctx, this.alphaEnabled, object, rgba, x + this.getPosX(), y + this.getPosY(), scaleX, scaleY)
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
-        return drawImageToContext(ctx, image, this.alphaEnabled, x, y)
+        return drawImageToContext(ctx, image, this.alphaEnabled, x + this.getPosX(), y + this.getPosY())
     }
 
 
