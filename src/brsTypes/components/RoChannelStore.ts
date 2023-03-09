@@ -32,11 +32,12 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 this.doOrder,
                 this.fakeServer,
                 this.getUserData,
+                this.getUserRegionData,
                 this.getPartialUserData,
                 this.storeChannelCredData,
                 this.getChannelCred,
-                // this.requestPartnerOrder,
-                // this.confirmPartnerOrder,
+                this.requestPartnerOrder,
+                this.confirmPartnerOrder,
             ],
             ifSetMessagePort: [this.setMessagePort],
             ifGetMessagePort: [this.getMessagePort],
@@ -191,6 +192,21 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Retrieves the state, zip code, and country associated with the customer's Roku account. */
+    private getUserRegionData = new Callable("getUserRegionData", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            let result = new Array<AAMember>();
+            result.push({ name: new BrsString("state"), value: new BrsString("") });
+            result.push({ name: new BrsString("zip"), value: new BrsString("") });
+            result.push({ name: new BrsString("country"), value: new BrsString("") });
+            return new RoAssociativeArray(result);
+        },
+    });
+
     /** Provides a way to request user authorization to share his account information with the calling channel. */
     private getPartialUserData = new Callable("getPartialUserData", {
         signature: {
@@ -238,6 +254,42 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 value: new BrsString(clientId),
             });
             result.push({ name: new BrsString("status"), value: new Int32(status) });
+            return new RoAssociativeArray(result);
+        },
+    });
+
+    /** Checks the user's billing status and is a prerequisite for ConfirmPartnerOrder() when doing transactional purchases. */
+    private requestPartnerOrder = new Callable("requestPartnerOrder", {
+        signature: {
+            args: [
+                new StdlibArgument("orderInfo", ValueKind.Object),
+                new StdlibArgument("productId", ValueKind.String),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter, orderInfo: RoAssociativeArray, productId: BrsString) => {
+            let result = new Array<AAMember>();
+            result.push({ name: new BrsString("errorCode"), value: new BrsString("-1") });
+            result.push({ name: new BrsString("errorMessage"), value: new BrsString("") });
+            result.push({ name: new BrsString("status"), value: new BrsString("Failure") });
+            return new RoAssociativeArray(result);
+        },
+    });
+
+    /** This function is equivalent to doOrder() for transactional purchases. */
+    private confirmPartnerOrder = new Callable("confirmPartnerOrder", {
+        signature: {
+            args: [
+                new StdlibArgument("confirmOrderInfo", ValueKind.Object),
+                new StdlibArgument("productId", ValueKind.String),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter, confirmOrderInfo: RoAssociativeArray, productId: BrsString) => {
+            let result = new Array<AAMember>();
+            result.push({ name: new BrsString("errorCode"), value: new BrsString("-1") });
+            result.push({ name: new BrsString("errorMessage"), value: new BrsString("") });
+            result.push({ name: new BrsString("status"), value: new BrsString("Failure") });
             return new RoAssociativeArray(result);
         },
     });

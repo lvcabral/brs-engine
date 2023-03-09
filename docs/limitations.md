@@ -38,4 +38,5 @@ This emulator is still in **beta** stage, this way, there are several features f
 
 ## Out of Scope
 *   Roku OS User Interface.
+*   Roku Channel Store features.
 *   SDK 1.0 deprecated components.
