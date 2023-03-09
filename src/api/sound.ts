@@ -38,6 +38,29 @@ export function isMuted() {
     return muted;
 }
 
+export function audioCodecs() {
+    const codecs = [
+        "mp3",
+        "mpeg",
+        "opus",
+        "ogg",
+        "oga",
+        "wav",
+        "aac",
+        "caf",
+        "m4a",
+        "m4b",
+        "mp4",
+        "weba",
+        "webm",
+        "dolby",
+        "flac",
+    ];
+    return codecs.filter((codec) => {
+        return Howler.codecs(codec);
+    });
+}
+
 export function playSound() {
     const audio = playList[playIndex];
     if (audio) {

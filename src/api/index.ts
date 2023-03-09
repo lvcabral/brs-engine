@@ -48,6 +48,7 @@ import {
     seekSound,
     muteSound,
     isMuted,
+    audioCodecs,
 } from "./sound";
 import { version } from "../../package.json";
 
@@ -57,22 +58,25 @@ const brsEmuLib = getEmuPath();
 let brsWorker: Worker;
 
 // Default Device Data
+// Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
 const storage: Storage = window.localStorage;
 const deviceData = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Emulator Library",
     serialNumber: getSerialNumber(),
     deviceModel: "8000X", // Roku TV (Midland)
-    firmwareVersion: "049.10E04111A", // v9.10
+    firmwareVersion: "46A.00E04209A", // v10.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US", // Channel Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     locale: "en_US", // Used if channel supports localization
+    captionLanguage: "eng",
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap",
     fontPath: "../fonts/",
+    audioCodecs: audioCodecs(),
     maxSimulStreams: 2, // Max number of audio resource streams
     connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP

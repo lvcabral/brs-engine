@@ -86,6 +86,7 @@ onmessage = function (event) {
         interpreter.deviceInfo.set("localIps", event.data.device.localIps);
         interpreter.deviceInfo.set("startTime", event.data.device.startTime);
         interpreter.deviceInfo.set("audioVolume", event.data.device.audioVolume);
+        interpreter.deviceInfo.set("audioCodecs", event.data.device.audioCodecs);
         // File System
         let volume = interpreter.fileSystem.get("common:");
         if (volume) {
