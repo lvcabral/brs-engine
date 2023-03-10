@@ -75,7 +75,6 @@ export function getDimensions(object: RoRegion | RoBitmap | RoScreen | RoComposi
     return new Dimensions(object.width, object.height);
 }
 
-
 interface DrawChunk {
     sx: number;
     sy: number;
@@ -87,8 +86,12 @@ interface DrawChunk {
     dh: number;
 }
 
-
-function getDrawChunks(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawOffset, destDimensions: Dimensions, allowWrap: boolean, object: RoBitmap | RoRegion, x: number, y: number, scaleX: number = 1, scaleY: number = 1): DrawChunk[] {
+/**
+ *  Sometimes (eg. with roCompositor) a drawn region might wrap.
+ *  This means there could be multiple canvas draws that are needed for a single object drawn to screen
+ *  This function figures that out, and returns the correct pieces of teh original to draw, and where they should go
+ */
+function getDrawChunks(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawOffset, allowWrap: boolean, object: RoBitmap | RoRegion, x: number, y: number, scaleX: number = 1, scaleY: number = 1): DrawChunk[] {
     const chunks: DrawChunk[] = [];
     const offset = getDrawOffset(object);
     const preTrans = getPreTranslation(object);
@@ -125,7 +128,6 @@ function getDrawChunks(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawO
 
     const sdw = sourceDimensions.width;
     const sdh = sourceDimensions.height;
-
 
     if (missingHorizontal <= 0 && missingVertical <= 0) {
         // region fits over destination - no need to wrap
@@ -168,13 +170,11 @@ export function drawObjectToComponent(component: RoRegion | RoBitmap | RoScreen 
     }
 
     const destOffset = getDrawOffset(component);
-    const destDimensions = getDimensions(component);
 
     // Only Compositor uses wraps
     const allowWrap = component instanceof RoCompositor;
 
-    const chunks = getDrawChunks(ctx, destOffset, destDimensions, allowWrap, object, x, y, scaleX, scaleY);
-    console.log(chunks);
+    const chunks = getDrawChunks(ctx, destOffset, allowWrap, object, x, y, scaleX, scaleY);
     for (const chunk of chunks) {
         const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
 
@@ -224,83 +224,6 @@ export function drawObjectToComponent(component: RoRegion | RoBitmap | RoScreen 
     }
     return true;
 }
-
-
-
-export function drawObjectToContext(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawOffset, destDimensions: Dimensions, alphaEnable: boolean, object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
-    let image: OffscreenCanvas;
-    if (object instanceof RoBitmap || object instanceof RoRegion) {
-        image = getCanvasFromDraw2d(object, rgba)
-        setContextAlpha(ctx, rgba)
-    } else {
-        return false;
-    }
-    if (!isCanvasValid(image)) {
-        return false
-    }
-
-    if (object instanceof RoRegion) {
-        ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
-    } else {
-        ctx.imageSmoothingEnabled = false;
-    }
-
-    const chunks = getDrawChunks(ctx, destOffset, destDimensions, true, object, x, y, scaleX, scaleY);
-    console.log(chunks);
-    for (const chunk of chunks) {
-        const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
-
-        if (!USE_IMAGE_DATA_WHEN_ALPHA_DISABLED) {
-            if (!alphaEnable) {
-                ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
-            }
-            ctx.drawImage(
-                image,
-                sx,
-                sy,
-                sw,
-                sh,
-                dx,
-                dy,
-                dw,
-                dh
-            );
-        } else {
-            if (alphaEnable) {
-                ctx.drawImage(
-                    image,
-                    sx,
-                    sy,
-                    sw,
-                    sh,
-                    dx,
-                    dy,
-                    sw * scaleX,
-                    sh * scaleY
-                );
-            } else {
-
-                const ctc = image.getContext("2d", {
-                    alpha: true,
-                }) as OffscreenCanvasRenderingContext2D;
-                let imageData = ctc.getImageData(sx, sy, sw, sh);
-                let pixels = imageData.data;
-                for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-                    pixels[i] = 255;
-                }
-                ctx.scale(scaleX, scaleY)
-                ctx.putImageData(imageData, x, y,);
-                ctx.scale(1, 1)
-            }
-        }
-    }
-
-    const offset = getDrawOffset(object);
-    const preTrans = getPreTranslation(object);
-
-    return true;
-}
-
 
 export function drawImageToContext(ctx: OffscreenCanvasRenderingContext2D, image: OffscreenCanvas, alphaEnable: boolean, x: number, y: number): boolean {
     if (!isCanvasValid(image)) {

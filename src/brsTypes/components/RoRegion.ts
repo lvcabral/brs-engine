@@ -9,7 +9,7 @@ import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
-import { drawImageToContext, drawObjectToContext, getDimensions, getDrawOffset } from "../draw2d";
+import { drawImageToContext, drawObjectToComponent } from "../draw2d";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -152,8 +152,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1) {
-        const ctx = this.bitmap.getContext();
-        return drawObjectToContext(ctx, getDrawOffset(this), getDimensions(this), this.alphaEnable, object, rgba, x + this.getPosX(), y + this.getPosY(), scaleX, scaleY)
+        return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {

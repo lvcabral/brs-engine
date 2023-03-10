@@ -10,7 +10,7 @@ import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
-import { drawImageToContext, drawObjectToContext, getDimensions, getDrawOffset } from "../draw2d";
+import { drawImageToContext, drawObjectToComponent } from "../draw2d";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -114,8 +114,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     }
 
     drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
-        const ctx = this.context[this.currentBuffer];
-        return drawObjectToContext(ctx, getDrawOffset(this), getDimensions(ctx.canvas), this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
+        return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
@@ -155,6 +154,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     this.currentBuffer = 0;
                 }
             }
+            this.getContext().clearRect(0, 0, this.width, this.height)
             return BrsInvalid.Instance;
         },
     });
