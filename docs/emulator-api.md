@@ -1,7 +1,10 @@
 # BrightScript Emulator API
 
 The emulator library has a programable interface to make it easy to integrate into any web based application.
-The only pre-requisite is to expose a `canvas` object named `display` on the default `document`.
+The only pre-requisites are:
+
+1. Expose a `canvas` object named `display` on the default `document`.
+1. Expose a `div` object named `stats` on the default `document` (optional if you will not show the performance statistics).
 
 ## Methods
 
@@ -21,12 +24,12 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
   - `filePath` (string) - Path of the loaded file, make sure extension is `.zip` if loading a full channel
   - `fileData` (string/Array/Blob) - Contents of the file or just a string with BrightScript code
   - `clearDisplayOnExit` (boolean) - If set to `false` the display will remain with the last image when channel terminates (default is `true`)
-  - `mute` (boolean) - If `true` the emulator will mute all audio playback but events are still raised (defaut is `false`)
+  - `mute` (boolean) - If `true` the emulator will mute all audio playback but events are still raised (default is `false`)
   - `execSource` (string) - The execution source to be send on the input parameters for `sub Main(params)` (See [Roku documentation](https://developer.roku.com/en-gb/docs/developer-program/getting-started/architecture/dev-environment.md#source-parameter))
 - brsEmu.**terminate**(reason) - Terminates the current channel/source execution
   - `reason` (string) - The reason for the termination (showed on debug)
-- brsEMu.**redraw**(fullscreen, width?, height?, dpr?) - Request a display redraw (always keeps the aspect ratio based on display mode)
-  - `fullscreen` (boolean) - Flag to inform if the full screen mode is activated
+- brsEMu.**redraw**(fullScreen, width?, height?, dpr?) - Request a display redraw (always keeps the aspect ratio based on display mode)
+  - `fullScreen` (boolean) - Flag to inform if the full screen mode is activated
   - `width` (number) - Width of the canvas, if not passed uses `window.innerWidth`
   - `height` (number) - Height of the canvas, if not passed uses `window.innerHeight`
   - `dpr` (number) - Device pixel ration, if not passed uses `window.devicePixelRatio`
@@ -39,14 +42,17 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
 - brsEMu.**enableStats**(mode) - Enable or disable the Performance Stats overlay
   - `state` (boolean) - If `true` panels with performance statistics will be shown over the display
 - brsEMu.**getAudioMute**() - Return `true` if the audio is muted
-- brsEMu.**setAudioMute**(mute) - Mute or unmute the audio during channel execution
+- brsEMu.**setAudioMute**(mute) - Mute or un-mute the audio during channel execution
   - `mute` (boolean) - If `true` the audio will be muted
 - brsEMu.**sendKeyDown**(key) - Send a remote control key down event to the emulator
   - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
 - brsEMu.**sendKeyUp**(key) - Send a remote control key up event to the emulator
   - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
-- brsEMu.**sendKeyPress**(key) - Send a remote control key press event to the emulator
+- brsEMu.**sendKeyPress**(key, delay?) - Send a remote control key press event to the emulator
   - `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))
+  - `delay` (number) - The delay (in milliseconds) between sending Key Up and Key Down (default is 300ms)
+- brsEmu.**debug**(command) - Send a debug command to the Micro Debugger
+  - `command` (string) - The Micro Debugger can be enabled sending `break` command, and after that any valid BrightScript expression or [debug commands](https://developer.roku.com/en-gb/docs/developer-program/debugging/debugging-channels.md#brightscript-console-port-8085-commands) can be sent. You can use this method on the browser console to debug your channel.
 - brsEMu.**getVersion**() - Returns the version of the API library
 
 ## Events
@@ -65,7 +71,7 @@ The only pre-requisite is to expose a `canvas` object named `display` on the def
   - `data` (null): Nothing is returned as data
 - **redraw** - Triggered when the display canvas is redrawn/resized
   - `data` (boolean): If `true` the display canvas is in **full screen** mode
-- **resolution** - Triggered when the emulated screen resolution changes (controled via BrightScript)
+- **resolution** - Triggered when the emulated screen resolution changes (controlled via BrightScript)
   - `data` (object): Contains screen dimensions: `{width: integer, height: integer}`
 - **fps** - If enabled by the `enableFps()` method (see above) triggered every 15 frames
   - `data` (number): Contains the average Frames per Second of the last 15 frames

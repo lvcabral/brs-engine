@@ -110,6 +110,7 @@ const currentChannel = {
 };
 const lastChannel = { id: "", exitReason: "EXIT_UNKNOWN" };
 
+// API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
     Object.assign(deviceData, customDeviceInfo);
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
@@ -204,6 +205,142 @@ export function execute(
         openChannelZip(fileData);
     } else {
         openSourceCode(fileName, fileData);
+    }
+}
+
+// Restore emulator state and terminate Worker
+export function terminate(reason: string) {
+    deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
+    deviceDebug(`print,------ Finished '${currentChannel.title}' execution [${reason}] ------\r\n`);
+    if (currentChannel.clearDisplay) {
+        clearDisplay();
+    }
+    resetWorker();
+    lastChannel.id = currentChannel.id;
+    lastChannel.exitReason = reason;
+    currentChannel.id = "";
+    currentChannel.file = "";
+    currentChannel.title = "";
+    currentChannel.subtitle = "";
+    currentChannel.version = "";
+    currentChannel.execSource = "";
+    currentChannel.running = false;
+    notifyAll("closed", reason);
+}
+
+// Display API
+export function redraw(fullScreen: boolean, width?: number, height?: number, dpr?: number) {
+    redrawDisplay(currentChannel.running, fullScreen, width, height, dpr);
+}
+export function getDisplayMode() {
+    return deviceData.displayMode;
+}
+export function setDisplayMode(mode: string) {
+    setCurrentMode(mode);
+}
+export function getOverscanMode() {
+    return overscanMode;
+}
+export function setOverscanMode(mode: string) {
+    setOverscan(mode);
+}
+export function enableStats(state: boolean) {
+    showPerfStats(state);
+}
+
+// Audio API
+export function getAudioMute() {
+    return isMuted();
+}
+export function setAudioMute(mute: boolean) {
+    if (currentChannel.running) {
+        muteSound(mute);
+    }
+}
+
+// Remote Control API
+export function sendKeyDown(key: string) {
+    sendKey(key, 0);
+}
+export function sendKeyUp(key: string) {
+    sendKey(key, 100);
+}
+export function sendKeyPress(key: string, delay = 300) {
+    setTimeout(function () {
+        sendKey(key, 100);
+    }, delay);
+    sendKey(key, 0);
+}
+
+// Telnet Debug API
+export function debug(command: string): boolean {
+    let handled = false;
+    if (currentChannel.running && command && command.length > 0) {
+        const commandsMap = new Map([
+            ["bt", DebugCommand.BT],
+            ["cont", DebugCommand.CONT],
+            ["c", DebugCommand.CONT],
+            ["exit", DebugCommand.EXIT],
+            ["q", DebugCommand.EXIT],
+            ["help", DebugCommand.HELP],
+            ["last", DebugCommand.LAST],
+            ["l", DebugCommand.LAST],
+            ["list", DebugCommand.LIST],
+            ["next", DebugCommand.NEXT],
+            ["n", DebugCommand.NEXT],
+            ["over", DebugCommand.STEP],
+            ["out", DebugCommand.STEP],
+            ["step", DebugCommand.STEP],
+            ["s", DebugCommand.STEP],
+            ["t", DebugCommand.STEP],
+            ["thread", DebugCommand.THREAD],
+            ["th", DebugCommand.THREAD],
+            ["threads", DebugCommand.THREADS],
+            ["ths", DebugCommand.THREADS],
+            ["var", DebugCommand.VAR],
+            ["break", DebugCommand.BREAK],
+        ]);
+        let exprs = command
+            .toString()
+            .trim()
+            .split(/(?<=^\S+)\s/);
+        let cmd = commandsMap.get(exprs[0].toLowerCase());
+        if (cmd !== undefined) {
+            Atomics.store(sharedArray, DataType.DBG, cmd);
+            Atomics.store(sharedArray, DataType.EXP, exprs.length - 1);
+            if (exprs.length > 1) {
+                debugExpression(exprs[1]);
+            }
+        } else {
+            let expr = command.toString().trim();
+            if (exprs[0].toLowerCase() === "p") {
+                expr = "? " + expr.slice(1);
+            }
+            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
+            Atomics.store(sharedArray, DataType.EXP, 1);
+            debugExpression(expr);
+        }
+        handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
+    }
+    return handled;
+}
+
+// API Library version and device Serial Number
+export function getVersion() {
+    return version;
+}
+
+// Helper Functions
+function debugExpression(expr: string) {
+    // Store string on SharedArrayBuffer
+    expr = expr.trim();
+    let len = Math.min(expr.length, dataBufferSize);
+    for (var i = 0; i < len; i++) {
+        Atomics.store(sharedArray, dataBufferIndex + i, expr.charCodeAt(i));
+    }
+    // String terminator
+    if (len < dataBufferSize) {
+        Atomics.store(sharedArray, dataBufferIndex + len, 0);
     }
 }
 
@@ -513,6 +650,8 @@ function workerCallback(event: MessageEvent) {
         notifyAll("version", event.data.slice(8));
     }
 }
+
+// Debug Messages Handler
 function deviceDebug(data: string) {
     const level = data.split(",")[0];
     const content = data.slice(level.length + 1);
@@ -530,139 +669,7 @@ function deviceDebug(data: string) {
     }
 }
 
-// Restore emulator state and terminate Worker
-export function terminate(reason: string) {
-    deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
-    deviceDebug(`print,------ Finished '${currentChannel.title}' execution [${reason}] ------\r\n`);
-    if (currentChannel.clearDisplay) {
-        clearDisplay();
-    }
-    resetWorker();
-    lastChannel.id = currentChannel.id;
-    lastChannel.exitReason = reason;
-    currentChannel.id = "";
-    currentChannel.file = "";
-    currentChannel.title = "";
-    currentChannel.subtitle = "";
-    currentChannel.version = "";
-    currentChannel.execSource = "";
-    currentChannel.running = false;
-    notifyAll("closed", reason);
-}
-
-// Display API
-export function redraw(fullScreen: boolean, width?: number, height?: number, dpr?: number) {
-    redrawDisplay(currentChannel.running, fullScreen, width, height, dpr);
-}
-export function getDisplayMode() {
-    return deviceData.displayMode;
-}
-export function setDisplayMode(mode: string) {
-    setCurrentMode(mode);
-}
-export function getOverscanMode() {
-    return overscanMode;
-}
-export function setOverscanMode(mode: string) {
-    setOverscan(mode);
-}
-export function enableStats(state: boolean) {
-    showPerfStats(state);
-}
-
-// Audio API
-export function setAudioMute(mute: boolean) {
-    if (currentChannel.running) {
-        muteSound(mute);
-    }
-}
-export function getAudioMute() {
-    return isMuted();
-}
-
-// Remote Control API
-export function sendKeyDown(key: string) {
-    sendKey(key, 0);
-}
-export function sendKeyUp(key: string) {
-    sendKey(key, 100);
-}
-export function sendKeyPress(key: string) {
-    setTimeout(function () {
-        sendKey(key, 100);
-    }, 300);
-    sendKey(key, 0);
-}
-
-// Telnet Debug API
-export function debug(command: string): boolean {
-    let handled = false;
-    if (currentChannel.running && command && command.length > 0) {
-        const commandsMap = new Map([
-            ["bt", DebugCommand.BT],
-            ["cont", DebugCommand.CONT],
-            ["c", DebugCommand.CONT],
-            ["exit", DebugCommand.EXIT],
-            ["q", DebugCommand.EXIT],
-            ["help", DebugCommand.HELP],
-            ["last", DebugCommand.LAST],
-            ["l", DebugCommand.LAST],
-            ["list", DebugCommand.LIST],
-            ["next", DebugCommand.NEXT],
-            ["n", DebugCommand.NEXT],
-            ["over", DebugCommand.STEP],
-            ["out", DebugCommand.STEP],
-            ["step", DebugCommand.STEP],
-            ["s", DebugCommand.STEP],
-            ["t", DebugCommand.STEP],
-            ["thread", DebugCommand.THREAD],
-            ["th", DebugCommand.THREAD],
-            ["threads", DebugCommand.THREADS],
-            ["ths", DebugCommand.THREADS],
-            ["var", DebugCommand.VAR],
-            ["break", DebugCommand.BREAK],
-        ]);
-        let exprs = command
-            .toString()
-            .trim()
-            .split(/(?<=^\S+)\s/);
-        let cmd = commandsMap.get(exprs[0].toLowerCase());
-        if (cmd !== undefined) {
-            Atomics.store(sharedArray, DataType.DBG, cmd);
-            Atomics.store(sharedArray, DataType.EXP, exprs.length - 1);
-            if (exprs.length > 1) {
-                debugExpression(exprs[1]);
-            }
-        } else {
-            let expr = command.toString().trim();
-            if (exprs[0].toLowerCase() === "p") {
-                expr = "? " + expr.slice(1);
-            }
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
-            Atomics.store(sharedArray, DataType.EXP, 1);
-            debugExpression(expr);
-        }
-        handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
-    }
-    return handled;
-}
-function debugExpression(expr: string) {
-    // Store string on SharedArrayBuffer
-    expr = expr.trim();
-    let len = Math.min(expr.length, dataBufferSize);
-    for (var i = 0; i < len; i++) {
-        Atomics.store(sharedArray, dataBufferIndex + i, expr.charCodeAt(i));
-    }
-    // String terminator
-    if (len < dataBufferSize) {
-        Atomics.store(sharedArray, dataBufferIndex + len, 0);
-    }
-}
-
-// API Library version and device Serial Number
-export function getVersion() {
-    return version;
-}
+// Device Serial Number
 function getSerialNumber() {
     let verPlain = "";
     version.split(".").forEach((element) => {
