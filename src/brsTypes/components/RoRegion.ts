@@ -9,12 +9,12 @@ import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
-import { drawImageToContext, drawObjectToContext } from "../draw2d";
+import { drawImageToContext, drawObjectToContext, getDimensions, getDrawOffset } from "../draw2d";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private valid: boolean;
-    private alphaEnabled: boolean;
+    private alphaEnable: boolean;
     private bitmap: RoBitmap | RoScreen;
     private x: number;
     private y: number;
@@ -57,7 +57,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.wrap = false;
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
-        this.alphaEnabled = true;
+        this.alphaEnable = true;
 
         if (
             this.x + this.width <= bitmap.getCanvas().width &&
@@ -153,12 +153,12 @@ export class RoRegion extends BrsComponent implements BrsValue {
 
     drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1) {
         const ctx = this.bitmap.getContext();
-        return drawObjectToContext(ctx, this.alphaEnabled, object, rgba, x + this.getPosX(), y + this.getPosY(), scaleX, scaleY)
+        return drawObjectToContext(ctx, getDrawOffset(this), getDimensions(this), this.alphaEnable, object, rgba, x + this.getPosX(), y + this.getPosY(), scaleX, scaleY)
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
-        return drawImageToContext(ctx, image, this.alphaEnabled, x + this.getPosX(), y + this.getPosY())
+        return drawImageToContext(ctx, image, this.alphaEnable, x + this.getPosX(), y + this.getPosY())
     }
 
 
@@ -225,8 +225,20 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.scaleMode;
     }
 
+    getWrapValue(): boolean {
+        return this.wrap;
+    }
+
+    getAlphaEnableValue(): boolean {
+        return this.alphaEnable;
+    }
+
     getAnimaTime(): number {
         return this.time;
+    }
+
+    getSourceBitmap(): RoBitmap | RoScreen {
+        return this.bitmap;
     }
 
     toString(parent?: BrsType): string {
@@ -655,7 +667,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         ) => {
             let ctx = this.bitmap.getContext();
             ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
+            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
             ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
             ctx.stroke();
@@ -676,7 +688,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
             let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(
                 this.x + x.getValue(),
                 this.y + y.getValue(),
@@ -701,7 +713,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(
                 this.x + x.getValue(),
                 this.y + y.getValue(),
@@ -726,7 +738,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
             const ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnabled);
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(
@@ -756,19 +768,19 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.alphaEnabled);
+            return BrsBoolean.from(this.alphaEnable);
         },
     });
 
     /** If enable is true, do alpha blending when this bitmap is the destination */
     private setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
-            args: [new StdlibArgument("alphaEnabled", ValueKind.Boolean)],
+            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
-            this.alphaEnabled = alphaEnabled.toBoolean();
-            return this.bitmap.setCanvasAlpha(alphaEnabled.toBoolean());
+        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
+            this.alphaEnable = alphaEnable.toBoolean();
+            return this.bitmap.setCanvasAlpha(alphaEnable.toBoolean());
         },
     });
 

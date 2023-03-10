@@ -15,7 +15,7 @@ import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
 import { GifReader } from "omggif";
 import BMP from "decode-bmp";
-import { drawImageToContext, drawObjectToContext } from "../draw2d";
+import { drawImageToContext, drawObjectToContext, getDimensions, getDrawOffset } from "../draw2d";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -163,7 +163,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
         this.rgbaRedraw = true;
         const ctx = this.context;
-        return drawObjectToContext(ctx, this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
+        return drawObjectToContext(ctx, getDrawOffset(this), getDimensions(this), this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
@@ -185,6 +185,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
 
     getContext(): OffscreenCanvasRenderingContext2D {
         return this.context;
+    }
+
+    getAlphaEnableValue(): boolean {
+        return this.alphaEnable;
     }
 
     getRgbaCanvas(rgba: number): OffscreenCanvas {
@@ -461,11 +465,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     /** If enable is true, do alpha blending when this bitmap is the destination */
     private setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
-            args: [new StdlibArgument("alphaEnabled", ValueKind.Boolean)],
+            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
-            return this.setCanvasAlpha(alphaEnabled.toBoolean());
+        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
+            return this.setCanvasAlpha(alphaEnable.toBoolean());
         },
     });
 

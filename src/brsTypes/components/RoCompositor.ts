@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
-import { drawObjectToContext, getDrawOffset } from "../draw2d";
+import { drawObjectToComponent, DrawOffset, getDimensions } from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -18,6 +18,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
+    private previousSpriteDraws: Rect[] = []
 
     constructor() {
         super("roCompositor");
@@ -81,6 +82,14 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         }
     }
 
+    getAlphaEnableValue(): boolean {
+        return !!(this.destBitmap?.getAlphaEnableValue());
+    }
+
+    getContext(): OffscreenCanvasRenderingContext2D {
+        return this.context;
+    }
+
     checkCollision(source: RoSprite, multiple: boolean): BrsType {
         const sourceFlags = source.getFlags();
         const sourceCircle = source.getCircle();
@@ -128,16 +137,26 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return collision;
     }
 
-    drawSprites() {
+    clearPreviousSpriteDraws() {
         let ctx = this.context;
         let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
-        if (rgba === 0) {
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        } else {
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (rgba !== 0) {
+            // Only color over where the last drawing happened
             ctx.fillStyle = rgbaIntToHex(rgba);
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            for (const prevDraw of this.previousSpriteDraws) {
+                ctx.fillRect(prevDraw.x, prevDraw.y, prevDraw.w, prevDraw.h);
+            }
         }
+        this.previousSpriteDraws = [];
+    }
+
+    drawSprites() {
+        let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
+        this.clearPreviousSpriteDraws()
         if (this.destBitmap) {
+            const dimensions = getDimensions(this.canvas);
+            const drawOffset = new DrawOffset();
             this.destBitmap.drawImageToContext(this.canvas, 0, 0);
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
             layers.forEach((z) => {
@@ -145,7 +164,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (layer) {
                     layer.forEach((sprite) => {
                         if (sprite.visible()) {
-                            drawObjectToContext(ctx, true, sprite.getRegionObject(), BrsInvalid.Instance, sprite.getPosX(), sprite.getPosY());
+                            drawObjectToComponent(this, sprite.getRegionObject(), BrsInvalid.Instance, sprite.getPosX(), sprite.getPosY());
+                            this.previousSpriteDraws.push(sprite.getRect());
                         }
                     });
                     this.destBitmap?.drawImageToContext(this.canvas, 0, 0);
@@ -177,8 +197,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             rgbaBackground: Int32
         ) => {
             this.destBitmap = destBitmap;
-            this.canvas.width = destBitmap.getCanvas().width;
-            this.canvas.height = destBitmap.getCanvas().height;
+            const destDimensions = getDimensions(destBitmap);
+            this.canvas.width = destDimensions.width;
+            this.canvas.height = destDimensions.height;
             this.rgbaBackground = rgbaBackground.getValue();
             return BrsInvalid.Instance;
         },

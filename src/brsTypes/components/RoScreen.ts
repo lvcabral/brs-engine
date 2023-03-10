@@ -5,13 +5,12 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoBitmap, rgbaIntToHex, rgbaToTransparent } from "./RoBitmap";
-import { RoRegion } from "./RoRegion";
+import { rgbaIntToHex, rgbaToTransparent } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
 import UPNG from "upng-js";
-import { drawImageToContext, drawObjectToContext } from "../draw2d";
+import { drawImageToContext, drawObjectToContext, getDimensions, getDrawOffset } from "../draw2d";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -99,6 +98,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.context[this.currentBuffer];
     }
 
+    getAlphaEnableValue(): boolean {
+        return this.alphaEnable;
+    }
+
     clearCanvas(rgba: number) {
         let ctx = this.context[this.currentBuffer];
         if (rgbaToTransparent(rgba) === 0) {
@@ -112,7 +115,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
         const ctx = this.context[this.currentBuffer];
-        return drawObjectToContext(ctx, this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
+        return drawObjectToContext(ctx, getDrawOffset(this), getDimensions(ctx.canvas), this.alphaEnable, object, rgba, x, y, scaleX, scaleY)
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
@@ -384,11 +387,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
     /** If enable is true, do alpha blending when this bitmap is the destination */
     private setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
-            args: [new StdlibArgument("alphaEnabled", ValueKind.Boolean)],
+            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
-            return this.setCanvasAlpha(alphaEnabled.toBoolean());
+        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
+            return this.setCanvasAlpha(alphaEnable.toBoolean());
         },
     });
 
