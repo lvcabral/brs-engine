@@ -22,7 +22,6 @@ import {
     Float,
     Double,
     RoXMLElement,
-    tryCoerce,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -379,10 +378,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         };
         let requiredType = typeDesignators[name.charAt(name.length - 1)];
 
-        if (requiredType) {
-            let coercedValue = tryCoerce(value, requiredType);
-            if (coercedValue != null) {
-                value = coercedValue;
+        if (requiredType && requiredType !== value.kind) {
+            if (requiredType === ValueKind.Int64 && value.kind === ValueKind.Int32) {
+                value = new Int64(value.getValue());
+            } else if (requiredType === ValueKind.Double && value.kind === ValueKind.Float) {
+                value = new Double(value.getValue());
             } else {
                 return this.addError(
                     new TypeMismatch({
@@ -987,7 +987,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // evaluate the function to call (it could be the result of another function call)
         const callee = this.evaluate(expression.callee);
         // evaluate all of the arguments as well (they could also be function calls)
-        let args = expression.args.map(this.evaluate, this);
+        const args = expression.args.map(this.evaluate, this);
 
         if (!isBrsCallable(callee)) {
             return this.addError(
@@ -1005,16 +1005,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (satisfiedSignature) {
             try {
                 let mPointer = this._environment.getRootM();
-
-                let signature = satisfiedSignature.signature;
-                args = args.map((arg, index) => {
-                    // any arguments of type "object" must be automatically boxed
-                    if (signature.args[index].type.kind === ValueKind.Object && isBoxable(arg)) {
-                        return arg.box();
-                    }
-
-                    return arg;
-                });
 
                 if (
                     expression.callee instanceof Expr.DottedGet ||
@@ -1098,17 +1088,26 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     returnedValue = returnedValue.box();
                 }
 
-                if (returnedValue) {
-                    let coercedValue = tryCoerce(
-                        returnedValue,
-                        satisfiedSignature.signature.returns
-                    );
-                    if (coercedValue != null) {
-                        returnedValue = coercedValue;
-                    }
-                }
-
                 if (
+                    returnedValue &&
+                    this.canAutoCast(returnedValue.kind, satisfiedSignature.signature.returns)
+                ) {
+                    if (
+                        returnedValue instanceof Float ||
+                        returnedValue instanceof Double ||
+                        returnedValue instanceof Int32
+                    ) {
+                        if (satisfiedSignature.signature.returns === ValueKind.Double) {
+                            returnedValue = new Double(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Float) {
+                            returnedValue = new Float(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Int32) {
+                            returnedValue = new Int32(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Int64) {
+                            returnedValue = new Int64(returnedValue.getValue());
+                        }
+                    }
+                } else if (
                     returnedValue &&
                     satisfiedSignature.signature.returns !== ValueKind.Dynamic &&
                     satisfiedSignature.signature.returns !== returnedValue.kind &&
@@ -1133,7 +1132,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 let sig = mismatchedSignature.signature;
                 let mismatches = mismatchedSignature.mismatches;
 
-                let messageParts = [];
+                let messageParts:string[] = [];
 
                 let args = sig.args
                     .map((a) => {
@@ -1692,5 +1691,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
         let ms = d.getMilliseconds();
         return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
+    }
+
+    private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
+        if (fromKind === ValueKind.Float && toKind === ValueKind.Double) {
+            return true;
+        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int32) {
+            return true;
+        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int64) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Float) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int32) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int64) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Float) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Double) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Int64) {
+            return true;
+        }
+        return false;
     }
 }

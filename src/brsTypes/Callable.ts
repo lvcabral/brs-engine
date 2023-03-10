@@ -3,7 +3,10 @@ import * as Brs from ".";
 import * as Expr from "../parser/Expression";
 import { Scope } from "../interpreter/Environment";
 import { Location } from "../lexer";
-import { tryCoerce } from "./coercion";
+import { Int32 } from "./Int32";
+import { Float } from "./Float";
+import { Double } from "./Double";
+import { Int64 } from "./Int64";
 
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
@@ -77,10 +80,6 @@ export type SignatureAndImplementation = {
 };
 
 type SignatureMismatch = AnonymousMismatch | ArgumentMismatch;
-type SignatureSatisfaction = SignatureAndImplementation & {
-    coercedArgs: ReadonlyArray<Brs.BrsType>;
-    mismatches: SignatureMismatch[];
-};
 
 /** A mismatch between a BrightScript function's signature and its received arguments. */
 export interface AnonymousMismatch {
@@ -115,9 +114,9 @@ export enum MismatchReason {
 }
 
 /** A BrightScript function's signature, paired with a set of detected signature mismatches. */
-export type SignatureAndMismatches = SignatureAndImplementation & {
-    /** A copy of the provided arguments, coerced into `signature`'s types if possible. */
-    coercedArgs?: ReadonlyArray<Brs.BrsType>;
+export type SignatureAndMismatches = {
+    /** A BrightScript function's signature. */
+    signature: Signature;
     /** The set of mismatches between `signature` and the detected mismatches. */
     mismatches: SignatureMismatch[];
 };
@@ -163,7 +162,7 @@ export class Callable implements Brs.BrsValue {
 
         let { signature, impl } = satisfiedSignature;
 
-        let mutableArgs = [...satisfiedSignature.coercedArgs];
+        let mutableArgs = args.slice();
 
         return interpreter.inSubEnv((subInterpreter) => {
             // first, we need to evaluate all of the parameter default values
@@ -228,82 +227,123 @@ export class Callable implements Brs.BrsValue {
         return this._location;
     }
 
-    /**
-     * Attempts to satisfy each signature of this Callable using the provided arguments, coercing arguments into other
-     * types where necessary and possible, returning the first satisfied signature and the arguments.
-     * @param args - the arguments to satisfy this Callable with
-     * @returns the signature, implementation, type mismatches, and coerced arguments for the first encountered
-     *          signature satisfied by the provide arguments.
-     */
-    getFirstSatisfiedSignature(args: Brs.BrsType[]): SignatureSatisfaction | undefined {
-        for (let sigAndImpl of this.signatures) {
-            let satisfaction = this.trySatisfySignature(sigAndImpl, args);
-            if (satisfaction.mismatches.length === 0) {
-                return satisfaction;
-            }
-        }
-        return undefined;
+    getFirstSatisfiedSignature(args: Brs.BrsType[]): SignatureAndImplementation | undefined {
+        return this.signatures.filter(
+            (sigAndImpl) => this.getSignatureMismatches(sigAndImpl.signature, args).length === 0
+        )[0];
     }
 
-    /**
-     * Attempts to satisfy each signature of this Callable using the provided arguments, coercing arguments into other
-     * types where necessary and possible.
-     * @param args - the arguments to satisfy this Callable with
-     * @returns the signature, implementation, type mismatches, and coerced arguments for each signature in this
-     *          Callable.
-     */
-    getAllSignatureMismatches(args: Brs.BrsType[]): SignatureSatisfaction[] {
-        return this.signatures.map((sigAndImpl) => this.trySatisfySignature(sigAndImpl, args));
+    getAllSignatureMismatches(args: Brs.BrsType[]): SignatureAndMismatches[] {
+        return this.signatures.map((sigAndImpl) => ({
+            signature: sigAndImpl.signature,
+            mismatches: this.getSignatureMismatches(sigAndImpl.signature, args),
+        }));
     }
 
-    private trySatisfySignature(
-        sigAndImpl: SignatureAndImplementation,
-        args: ReadonlyArray<Brs.BrsType>
-    ): SignatureSatisfaction {
-        let { signature, impl } = sigAndImpl;
+    private getSignatureMismatches(sig: Signature, args: Brs.BrsType[]): SignatureMismatch[] {
         let reasons: SignatureMismatch[] = [];
-        let requiredArgCount = signature.args.filter((arg) => !arg.defaultValue).length;
+        let requiredArgCount = sig.args.filter((arg) => !arg.defaultValue).length;
 
         if (args.length < requiredArgCount) {
             reasons.push({
                 reason: MismatchReason.TooFewArguments,
-                expected: signature.args.length.toString(),
+                expected: sig.args.length.toString(),
                 received: args.length.toString(),
             });
-        } else if (args.length > signature.args.length) {
+        } else if (args.length > sig.args.length) {
             reasons.push({
                 reason: MismatchReason.TooManyArguments,
-                expected: signature.args.length.toString(),
+                expected: sig.args.length.toString(),
                 received: args.length.toString(),
             });
         }
 
-        let coercedArgs = [...args];
-        signature.args
-            .slice(0, Math.min(signature.args.length, args.length))
-            .forEach((_value, index) => {
-                let expected = signature.args[index];
-                let received = args[index];
+        sig.args.slice(0, Math.min(sig.args.length, args.length)).forEach((_value, index) => {
+            let expected = sig.args[index];
+            let received = args[index];
 
-                let coercedValue = tryCoerce(received, expected.type.kind);
-                if (coercedValue != null) {
-                    coercedArgs[index] = coercedValue;
-                } else {
-                    reasons.push({
-                        reason: MismatchReason.ArgumentTypeMismatch,
-                        expected: Brs.ValueKind.toString(expected.type.kind),
-                        received: Brs.ValueKind.toString(received.kind),
-                        argName: expected.name.text,
-                    });
-                }
-            });
+            if (
+                expected.type.kind === Brs.ValueKind.Dynamic ||
+                expected.type.kind === Brs.ValueKind.Object
+            ) {
+                return;
+            }
 
-        return {
-            signature,
-            impl,
-            coercedArgs,
-            mismatches: reasons,
-        };
+            if (
+                expected.type.kind === Brs.ValueKind.Float &&
+                received.kind === Brs.ValueKind.Int32
+            ) {
+                args[index] = new Float(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int32 &&
+                received.kind === Brs.ValueKind.Float
+            ) {
+                args[index] = new Int32(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int32 &&
+                received.kind === Brs.ValueKind.Double
+            ) {
+                args[index] = new Int32(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Double &&
+                received.kind === Brs.ValueKind.Float
+            ) {
+                args[index] = new Double(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Float &&
+                received.kind === Brs.ValueKind.Double
+            ) {
+                args[index] = new Float(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int64 &&
+                received.kind === Brs.ValueKind.Int32
+            ) {
+                args[index] = new Int64(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int64 &&
+                received.kind === Brs.ValueKind.Float
+            ) {
+                args[index] = new Int64(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int64 &&
+                received.kind === Brs.ValueKind.Double
+            ) {
+                args[index] = new Int64(received.getValue());
+                return;
+            }
+
+            if (expected.type.kind !== received.kind) {
+                reasons.push({
+                    reason: MismatchReason.ArgumentTypeMismatch,
+                    expected: Brs.ValueKind.toString(expected.type.kind),
+                    received: Brs.ValueKind.toString(received.kind),
+                    argName: expected.name.text,
+                });
+            }
+        });
+
+        return reasons;
     }
 
     /**
@@ -312,7 +352,7 @@ export class Callable implements Brs.BrsValue {
      *
      * @param signatureAndImpl the base signature and implementation to make variadic
      *
-     * @returns an array containing pseudo-variadic versions of the provided signature and implementation
+     * @returns an array containing psuedo-variadic versions of the provided signature and implementation
      */
     static variadic(signatureAndImpl: SignatureAndImplementation): SignatureAndImplementation[] {
         let { signature, impl } = signatureAndImpl;

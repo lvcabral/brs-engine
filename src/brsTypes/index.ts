@@ -40,7 +40,6 @@ export * from "./components/RoInt";
 export * from "./components/RoLongInteger";
 export * from "./components/RoInvalid";
 export * from "./components/RoAppInfo";
-export * from "./coercion";
 export * from "./Callable";
 /**
  * Determines whether or not the given value is a number.
