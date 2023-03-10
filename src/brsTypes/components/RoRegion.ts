@@ -8,8 +8,8 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
-import UPNG from "upng-js";
 import { drawImageToContext, drawObjectToComponent } from "../draw2d";
+import UPNG from "upng-js";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -63,7 +63,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.x + this.width <= bitmap.getCanvas().width &&
             this.y + this.height <= bitmap.getCanvas().height
         ) {
-
             this.valid = true;
         }
         this.registerMethods({
@@ -151,15 +150,27 @@ export class RoRegion extends BrsComponent implements BrsValue {
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 
-    drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1) {
+    drawImage(
+        object: BrsComponent,
+        rgba: Int32 | BrsInvalid,
+        x: number,
+        y: number,
+        scaleX: number = 1,
+        scaleY: number = 1
+    ) {
         return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
-        return drawImageToContext(ctx, image, this.alphaEnable, x + this.getPosX(), y + this.getPosY())
+        return drawImageToContext(
+            ctx,
+            image,
+            this.alphaEnable,
+            x + this.getPosX(),
+            y + this.getPosY()
+        );
     }
-
 
     getCanvas(): OffscreenCanvas {
         return this.bitmap.getCanvas();
@@ -567,7 +578,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue())
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
             if (!didDraw) {
                 return BrsBoolean.False;
@@ -600,11 +611,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
             const positionX = x.getValue();
             const positionY = y.getValue();
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save()
+            ctx.save();
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            const didDraw = this.drawImage(object, rgba, 0, 0)
-            ctx.restore()
+            const didDraw = this.drawImage(object, rgba, 0, 0);
+            ctx.restore();
             if (!didDraw) {
                 return BrsBoolean.False;
             }
@@ -635,7 +646,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue(), scaleX.getValue(), scaleY.getValue())
+            const didDraw = this.drawImage(
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                scaleX.getValue(),
+                scaleY.getValue()
+            );
             ctx.globalAlpha = 1.0;
             if (!didDraw) {
                 return BrsBoolean.False;
@@ -795,12 +813,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.bitmap.getContext().getImageData(
-                x.getValue() + this.x,
-                y.getValue() + this.y,
-                width.getValue(),
-                height.getValue()
-            );
+            let imgData = this.bitmap
+                .getContext()
+                .getImageData(
+                    x.getValue() + this.x,
+                    y.getValue() + this.y,
+                    width.getValue(),
+                    height.getValue()
+                );
             let byteArray = new Uint8Array(imgData.data.buffer);
             return new RoByteArray(byteArray);
         },
@@ -818,12 +838,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.bitmap.getContext().getImageData(
-                x.getValue() + this.x,
-                y.getValue() + this.y,
-                width.getValue(),
-                height.getValue()
-            );
+            let imgData = this.bitmap
+                .getContext()
+                .getImageData(
+                    x.getValue() + this.x,
+                    y.getValue() + this.y,
+                    width.getValue(),
+                    height.getValue()
+                );
             return new RoByteArray(
                 new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
             );

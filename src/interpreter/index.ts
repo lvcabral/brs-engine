@@ -1132,7 +1132,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 let sig = mismatchedSignature.signature;
                 let mismatches = mismatchedSignature.mismatches;
 
-                let messageParts:string[] = [];
+                let messageParts: string[] = [];
 
                 let args = sig.args
                     .map((a) => {

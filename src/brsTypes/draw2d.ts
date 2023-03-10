@@ -5,8 +5,7 @@ import { Int32 } from "./Int32";
 
 // In Chrome, when this is enabled, it slows down non-alpha draws. However, when this is true, it behaves the same as Roku
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
-const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true
-
+const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
 
 function setContextAlpha(ctx: OffscreenCanvasRenderingContext2D, rgba: Int32 | BrsInvalid) {
     if (rgba instanceof Int32) {
@@ -17,17 +16,18 @@ function setContextAlpha(ctx: OffscreenCanvasRenderingContext2D, rgba: Int32 | B
     }
 }
 
-
-function getCanvasFromDraw2d(object: RoBitmap | RoRegion, rgba: Int32 | BrsInvalid): OffscreenCanvas {
+function getCanvasFromDraw2d(
+    object: RoBitmap | RoRegion,
+    rgba: Int32 | BrsInvalid
+): OffscreenCanvas {
     let cvs: OffscreenCanvas;
     if (rgba instanceof Int32) {
         cvs = object.getRgbaCanvas(rgba.getValue());
     } else {
         cvs = object.getCanvas();
     }
-    return cvs
+    return cvs;
 }
-
 
 function isCanvasValid(cvs?: OffscreenCanvas): boolean {
     if (!cvs) {
@@ -40,10 +40,11 @@ function isCanvasValid(cvs?: OffscreenCanvas): boolean {
 export class DrawOffset {
     x: number = 0;
     y: number = 0;
-};
+}
 
 export function getDrawOffset(object: RoBitmap | RoRegion | RoScreen | RoCompositor): DrawOffset {
-    let x = 0, y = 0;
+    let x = 0,
+        y = 0;
     if (object instanceof RoRegion) {
         x = object.getPosX();
         y = object.getPosY();
@@ -52,7 +53,8 @@ export function getDrawOffset(object: RoBitmap | RoRegion | RoScreen | RoComposi
 }
 
 function getPreTranslation(object: RoBitmap | RoRegion | RoScreen): DrawOffset {
-    let x = 0, y = 0;
+    let x = 0,
+        y = 0;
     if (object instanceof RoRegion) {
         x = object.getTransX();
         y = object.getTransY();
@@ -61,10 +63,12 @@ function getPreTranslation(object: RoBitmap | RoRegion | RoScreen): DrawOffset {
 }
 
 export class Dimensions {
-    constructor(public width: number, public height: number) { }
-};
+    constructor(public width: number, public height: number) {}
+}
 
-export function getDimensions(object: RoRegion | RoBitmap | RoScreen | RoCompositor | OffscreenCanvas): Dimensions {
+export function getDimensions(
+    object: RoRegion | RoBitmap | RoScreen | RoCompositor | OffscreenCanvas
+): Dimensions {
     if (object instanceof RoRegion || object instanceof RoBitmap) {
         return new Dimensions(object.getImageWidth(), object.getImageHeight());
     } else if (object instanceof RoScreen) {
@@ -91,7 +95,16 @@ interface DrawChunk {
  *  This means there could be multiple canvas draws that are needed for a single object drawn to screen
  *  This function figures that out, and returns the correct pieces of teh original to draw, and where they should go
  */
-function getDrawChunks(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawOffset, allowWrap: boolean, object: RoBitmap | RoRegion, x: number, y: number, scaleX: number = 1, scaleY: number = 1): DrawChunk[] {
+function getDrawChunks(
+    ctx: OffscreenCanvasRenderingContext2D,
+    destOffset: DrawOffset,
+    allowWrap: boolean,
+    object: RoBitmap | RoRegion,
+    x: number,
+    y: number,
+    scaleX: number = 1,
+    scaleY: number = 1
+): DrawChunk[] {
     const chunks: DrawChunk[] = [];
     const offset = getDrawOffset(object);
     const preTrans = getPreTranslation(object);
@@ -112,7 +125,7 @@ function getDrawChunks(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawO
         return [];
     }
 
-    chunks.push({ sx, sy, sw, sh, dx, dy, dw, dh })
+    chunks.push({ sx, sy, sw, sh, dx, dy, dw, dh });
 
     if (!allowWrap || object instanceof RoBitmap || !object.getWrapValue()) {
         // No wraps, so just one image chunk to draw
@@ -136,31 +149,66 @@ function getDrawChunks(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawO
 
     if (missingHorizontal > 0) {
         // missing right chunk
-        chunks.push({ sx: 0, sy: offset.y, sw: missingHorizontal, sh: actualDrawHeight, dx: actualDrawWidth + dx, dy, dw: missingHorizontal, dh: actualDrawHeight })
+        chunks.push({
+            sx: 0,
+            sy: offset.y,
+            sw: missingHorizontal,
+            sh: actualDrawHeight,
+            dx: actualDrawWidth + dx,
+            dy,
+            dw: missingHorizontal,
+            dh: actualDrawHeight,
+        });
     }
     if (missingVertical > 0) {
         // missing bottom chunk
-        chunks.push({ sx: offset.x, sy: 0, sw: actualDrawWidth, sh: missingVertical, dx: dx, dy: actualDrawHeight + dy, dw: actualDrawWidth, dh: missingVertical })
+        chunks.push({
+            sx: offset.x,
+            sy: 0,
+            sw: actualDrawWidth,
+            sh: missingVertical,
+            dx: dx,
+            dy: actualDrawHeight + dy,
+            dw: actualDrawWidth,
+            dh: missingVertical,
+        });
     }
     if (missingHorizontal > 0 && missingVertical > 0) {
         // missing bottom/right chunk
-        chunks.push({ sx: 0, sy: 0, sw: missingHorizontal, sh: missingVertical, dx: actualDrawWidth + dx, dy: actualDrawHeight + dy, dw: missingHorizontal, dh: missingVertical });
+        chunks.push({
+            sx: 0,
+            sy: 0,
+            sw: missingHorizontal,
+            sh: missingVertical,
+            dx: actualDrawWidth + dx,
+            dy: actualDrawHeight + dy,
+            dw: missingHorizontal,
+            dh: missingVertical,
+        });
     }
     return chunks;
 }
 
-export function drawObjectToComponent(component: RoRegion | RoBitmap | RoScreen | RoCompositor, object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
-    const ctx = component.getContext()
-    const alphaEnable = component.getAlphaEnableValue()
+export function drawObjectToComponent(
+    component: RoRegion | RoBitmap | RoScreen | RoCompositor,
+    object: BrsComponent,
+    rgba: Int32 | BrsInvalid,
+    x: number,
+    y: number,
+    scaleX: number = 1,
+    scaleY: number = 1
+): boolean {
+    const ctx = component.getContext();
+    const alphaEnable = component.getAlphaEnableValue();
     let image: OffscreenCanvas;
     if (object instanceof RoBitmap || object instanceof RoRegion) {
-        image = getCanvasFromDraw2d(object, rgba)
-        setContextAlpha(ctx, rgba)
+        image = getCanvasFromDraw2d(object, rgba);
+        setContextAlpha(ctx, rgba);
     } else {
         return false;
     }
     if (!isCanvasValid(image)) {
-        return false
+        return false;
     }
 
     if (object instanceof RoRegion) {
@@ -182,32 +230,11 @@ export function drawObjectToComponent(component: RoRegion | RoBitmap | RoScreen 
             if (!alphaEnable) {
                 ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
             }
-            ctx.drawImage(
-                image,
-                sx,
-                sy,
-                sw,
-                sh,
-                dx,
-                dy,
-                dw,
-                dh
-            );
+            ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
         } else {
             if (alphaEnable) {
-                ctx.drawImage(
-                    image,
-                    sx,
-                    sy,
-                    sw,
-                    sh,
-                    dx,
-                    dy,
-                    sw * scaleX,
-                    sh * scaleY
-                );
+                ctx.drawImage(image, sx, sy, sw, sh, dx, dy, sw * scaleX, sh * scaleY);
             } else {
-
                 const ctc = image.getContext("2d", {
                     alpha: true,
                 }) as OffscreenCanvasRenderingContext2D;
@@ -216,16 +243,22 @@ export function drawObjectToComponent(component: RoRegion | RoBitmap | RoScreen 
                 for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
                     pixels[i] = 255;
                 }
-                ctx.scale(scaleX, scaleY)
-                ctx.putImageData(imageData, x, y,);
-                ctx.scale(1, 1)
+                ctx.scale(scaleX, scaleY);
+                ctx.putImageData(imageData, x, y);
+                ctx.scale(1, 1);
             }
         }
     }
     return true;
 }
 
-export function drawImageToContext(ctx: OffscreenCanvasRenderingContext2D, image: OffscreenCanvas, alphaEnable: boolean, x: number, y: number): boolean {
+export function drawImageToContext(
+    ctx: OffscreenCanvasRenderingContext2D,
+    image: OffscreenCanvas,
+    alphaEnable: boolean,
+    x: number,
+    y: number
+): boolean {
     if (!isCanvasValid(image)) {
         return false;
     }

@@ -1,21 +1,20 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Double, roInvalid } from "..";
+import { BrsType, Double } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoRegion } from "./RoRegion";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import { drawImageToContext, drawObjectToComponent } from "../draw2d";
 import URL from "url-parse";
 import { RoByteArray } from "./RoByteArray";
+import { GifReader } from "omggif";
 import fileType from "file-type";
 import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
-import { GifReader } from "omggif";
 import BMP from "decode-bmp";
-import { drawImageToContext, drawObjectToComponent } from "../draw2d";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -160,14 +159,21 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
+    drawImage(
+        object: BrsComponent,
+        rgba: Int32 | BrsInvalid,
+        x: number,
+        y: number,
+        scaleX: number = 1,
+        scaleY: number = 1
+    ): boolean {
         this.rgbaRedraw = true;
         return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.context;
-        return drawImageToContext(ctx, image, this.alphaEnable, x, y)
+        return drawImageToContext(ctx, image, this.alphaEnable, x, y);
     }
 
     getImageWidth(): number {
@@ -264,7 +270,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context;
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue())
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
             this.rgbaRedraw = true;
             if (!didDraw) {
@@ -298,11 +304,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             const positionX = x.getValue();
             const positionY = y.getValue();
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save()
+            ctx.save();
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            const didDraw = this.drawImage(object, rgba, 0, 0)
-            ctx.restore()
+            const didDraw = this.drawImage(object, rgba, 0, 0);
+            ctx.restore();
             this.rgbaRedraw = true;
             if (!didDraw) {
                 return BrsBoolean.False;
@@ -334,7 +340,14 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context;
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue(), scaleX.getValue(), scaleY.getValue())
+            const didDraw = this.drawImage(
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                scaleX.getValue(),
+                scaleY.getValue()
+            );
             ctx.globalAlpha = 1.0;
             this.rgbaRedraw = true;
             if (!didDraw) {

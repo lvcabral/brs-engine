@@ -9,8 +9,8 @@ import { rgbaIntToHex, rgbaToTransparent } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
-import UPNG from "upng-js";
 import { drawImageToContext, drawObjectToComponent } from "../draw2d";
+import UPNG from "upng-js";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -113,15 +113,21 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    drawImage(object: BrsComponent, rgba: Int32 | BrsInvalid, x: number, y: number, scaleX: number = 1, scaleY: number = 1): boolean {
+    drawImage(
+        object: BrsComponent,
+        rgba: Int32 | BrsInvalid,
+        x: number,
+        y: number,
+        scaleX: number = 1,
+        scaleY: number = 1
+    ): boolean {
         return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.context[this.currentBuffer];
-        return drawImageToContext(ctx, image, this.alphaEnable, x, y)
+        return drawImageToContext(ctx, image, this.alphaEnable, x, y);
     }
-
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
@@ -154,7 +160,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     this.currentBuffer = 0;
                 }
             }
-            this.getContext().clearRect(0, 0, this.width, this.height)
+            this.getContext().clearRect(0, 0, this.width, this.height);
             return BrsInvalid.Instance;
         },
     });
@@ -191,7 +197,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue())
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
             if (!didDraw) {
                 return BrsBoolean.False;
@@ -224,11 +230,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
             const positionX = x.getValue();
             const positionY = y.getValue();
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save()
+            ctx.save();
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            const didDraw = this.drawImage(object, rgba, 0, 0)
-            ctx.restore()
+            const didDraw = this.drawImage(object, rgba, 0, 0);
+            ctx.restore();
             if (!didDraw) {
                 return BrsBoolean.False;
             }
@@ -259,12 +265,19 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue(), scaleX.getValue(), scaleY.getValue())
+            const didDraw = this.drawImage(
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                scaleX.getValue(),
+                scaleY.getValue()
+            );
             ctx.globalAlpha = 1.0;
             if (!didDraw) {
                 return BrsBoolean.False;
             }
-            return BrsBoolean.True
+            return BrsBoolean.True;
         },
     });
 

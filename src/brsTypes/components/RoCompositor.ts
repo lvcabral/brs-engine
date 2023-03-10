@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoScreen, RoRegion } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -18,7 +18,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
-    private previousSpriteDraws: Rect[] = []
+    private previousSpriteDraws: Rect[] = [];
 
     constructor() {
         super("roCompositor");
@@ -83,7 +83,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     }
 
     getAlphaEnableValue(): boolean {
-        return !!(this.destBitmap?.getAlphaEnableValue());
+        return !!this.destBitmap?.getAlphaEnableValue();
     }
 
     getContext(): OffscreenCanvasRenderingContext2D {
@@ -153,7 +153,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
 
     drawSprites() {
         let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
-        this.clearPreviousSpriteDraws()
+        this.clearPreviousSpriteDraws();
         if (this.destBitmap) {
             const dimensions = getDimensions(this.canvas);
             const drawOffset = new DrawOffset();
@@ -164,7 +164,13 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (layer) {
                     layer.forEach((sprite) => {
                         if (sprite.visible()) {
-                            drawObjectToComponent(this, sprite.getRegionObject(), BrsInvalid.Instance, sprite.getPosX(), sprite.getPosY());
+                            drawObjectToComponent(
+                                this,
+                                sprite.getRegionObject(),
+                                BrsInvalid.Instance,
+                                sprite.getPosX(),
+                                sprite.getPosY()
+                            );
                             this.previousSpriteDraws.push(sprite.getRect());
                         }
                     });
