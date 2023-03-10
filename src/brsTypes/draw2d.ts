@@ -134,20 +134,16 @@ function getDrawChunks(ctx: OffscreenCanvasRenderingContext2D, destOffset: DrawO
 
     if (missingHorizontal > 0) {
         // missing right chunk
-
-        chunks.push({ sx: 0, sy: offset.y, sw: missingHorizontal, sh: actualDrawHeight, dx: Math.max(actualDrawWidth, dx), dy, dw: missingHorizontal, dh: actualDrawHeight })
+        chunks.push({ sx: 0, sy: offset.y, sw: missingHorizontal, sh: actualDrawHeight, dx: actualDrawWidth + dx, dy, dw: missingHorizontal, dh: actualDrawHeight })
     }
-    /* if (cutOffOnBottom > 0) {
-         // bottom chunk that wrapped to top
-         chunks.push({ sx: 0, sy: offset.y, sw: missingHorizontal, sh: actualDrawHeight, dx: dw, dy, dw: missingHorizontal, dh: actualDrawHeight })
-
-         //chunks.push({ sx, sy: bottomWrapSy, sw: sourceKeepRW, sh: bottomWrapSh, dx, dy: destOffset.y, dw: destKeepRW, dh: cutOffOnBottom })
-     }
-     if (cutOffOnRight > 0 && cutOffOnBottom > 0) {
-         // bottom/right chunk that wrapped to top/left
-         chunks.push({ sx: rightWrapSx, sy: bottomWrapSy, sw: rightWrapSw, sh: bottomWrapSh, dx: destOffset.x, dy: destOffset.y, dw: cutOffOnRight, dh: cutOffOnBottom });
-     }
- */
+    if (missingVertical > 0) {
+        // missing bottom chunk
+        chunks.push({ sx: offset.x, sy: 0, sw: actualDrawWidth, sh: missingVertical, dx: dx, dy: actualDrawHeight + dy, dw: actualDrawWidth, dh: missingVertical })
+    }
+    if (missingHorizontal > 0 && missingVertical > 0) {
+        // missing bottom/right chunk
+        chunks.push({ sx: 0, sy: 0, sw: missingHorizontal, sh: missingVertical, dx: actualDrawWidth + dx, dy: actualDrawHeight + dy, dw: missingHorizontal, dh: missingVertical });
+    }
     return chunks;
 }
 
