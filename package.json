@@ -5,7 +5,8 @@
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "homepage": "https://lvcabral.com/brs/",
   "contributors": [
-    "Sean Barag <sean@barag.org>"
+    "Sean Barag <sean@barag.org>",
+    "Mark Pearce"
   ],
   "repository": {
     "type": "git",
