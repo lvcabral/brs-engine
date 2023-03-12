@@ -811,9 +811,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, certificate: BrsString) => {
-            postMessage(
-                "warning,[roUrlTransfer] SetCertificatesFile() parameter was ignored, default browser client certificate will be used."
-            );
+            // SetCertificatesFile() parameter is ignored, default browser client certificate is be used."
             return BrsBoolean.True;
         },
     });
@@ -826,9 +824,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, depth: Int32) => {
             // This method is mocked for compatibility
-            postMessage(
-                "warning,[roUrlTransfer] SetCertificatesDepth() is not supported, nothing was done."
-            );
             return BrsInvalid.Instance;
         },
     });
@@ -881,9 +876,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             // This method is mocked for compatibility
-            postMessage(
-                "warning,[roUrlTransfer] ClearCookies() is not supported, nothing was done."
-            );
             return BrsInvalid.Instance;
         },
     });
