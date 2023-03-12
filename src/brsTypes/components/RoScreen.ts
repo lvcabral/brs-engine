@@ -22,6 +22,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private canvas: OffscreenCanvas[];
     private context: OffscreenCanvasRenderingContext2D[];
     private port?: RoMessagePort;
+    private isDirty: boolean;
 
     // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(
@@ -40,6 +41,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
+        this.isDirty = true;
         this.width = defaultWidth;
         this.height = defaultHeight;
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
@@ -151,16 +153,19 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            postMessage(
-                this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
-            );
-            if (this.doubleBuffer) {
-                this.currentBuffer++;
-                if (this.currentBuffer === this.canvas.length) {
-                    this.currentBuffer = 0;
+            if (this.isDirty) {
+                postMessage(
+                    this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
+                );
+                if (this.doubleBuffer) {
+                    this.currentBuffer++;
+                    if (this.currentBuffer === this.canvas.length) {
+                        this.currentBuffer = 0;
+                    }
                 }
+                this.getContext().clearRect(0, 0, this.width, this.height);
+                this.isDirty = false;
             }
-            this.getContext().clearRect(0, 0, this.width, this.height);
             return BrsInvalid.Instance;
         },
     });
@@ -174,6 +179,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, rgba: Int32) => {
+            this.isDirty = true;
             return this.clearCanvas(rgba.getValue());
         },
     });
@@ -197,12 +203,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
+            this.isDirty = this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(this.isDirty);
         },
     });
 
@@ -233,12 +236,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.save();
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            const didDraw = this.drawImage(object, rgba, 0, 0);
+            this.isDirty = this.drawImage(object, rgba, 0, 0);
             ctx.restore();
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(this.isDirty);
         },
     });
 
@@ -265,7 +265,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            const didDraw = this.drawImage(
+            this.isDirty = this.drawImage(
                 object,
                 rgba,
                 x.getValue(),
@@ -274,10 +274,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 scaleY.getValue()
             );
             ctx.globalAlpha = 1.0;
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(this.isDirty);
         },
     });
 
@@ -307,6 +304,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.moveTo(xStart.getValue(), yStart.getValue());
             ctx.lineTo(xEnd.getValue(), yEnd.getValue());
             ctx.stroke();
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -326,6 +324,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             let ctx = this.context[this.currentBuffer];
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -346,6 +345,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             let ctx = this.context[this.currentBuffer];
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -368,6 +368,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -379,8 +380,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (!this.doubleBuffer) {
+            if (!this.doubleBuffer && this.isDirty) {
                 postMessage(this.context[0].getImageData(0, 0, this.width, this.height));
+                this.isDirty = false;
             }
             return BrsInvalid.Instance;
         },
