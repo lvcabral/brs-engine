@@ -225,29 +225,10 @@ export function drawObjectToComponent(
     const chunks = getDrawChunks(ctx, destOffset, allowWrap, object, x, y, scaleX, scaleY);
     for (const chunk of chunks) {
         const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
-
-        if (!USE_IMAGE_DATA_WHEN_ALPHA_DISABLED) {
-            if (!alphaEnable) {
-                ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
-            }
-            ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
-        } else {
-            if (alphaEnable) {
-                ctx.drawImage(image, sx, sy, sw, sh, dx, dy, sw * scaleX, sh * scaleY);
-            } else {
-                const ctc = image.getContext("2d", {
-                    alpha: true,
-                }) as OffscreenCanvasRenderingContext2D;
-                let imageData = ctc.getImageData(sx, sy, sw, sh);
-                let pixels = imageData.data;
-                for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-                    pixels[i] = 255;
-                }
-                ctx.scale(scaleX, scaleY);
-                ctx.putImageData(imageData, x, y);
-                ctx.scale(1, 1);
-            }
+        if (!alphaEnable) {
+            ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
         }
+        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     }
     return true;
 }
