@@ -153,7 +153,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = newEnv;
             return func(this);
         } catch (err: any) {
-            if (!(err instanceof BrsError)) {
+            if (!(err instanceof BrsError || err instanceof BlockEnd)) {
                 if (err.message !== "") {
                     postMessage(`error,${err.message}`);
                     err.message = "";
