@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { rgbaIntToHex, rgbaToTransparent } from "./RoBitmap";
+import { rgbaIntToHex } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
@@ -106,12 +106,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     clearCanvas(rgba: number) {
         let ctx = this.context[this.currentBuffer];
-        if (rgbaToTransparent(rgba) === 0) {
-            ctx.clearRect(0, 0, this.width, this.height);
-        } else {
-            ctx.fillStyle = rgbaIntToHex(rgba, false);
-            ctx.fillRect(0, 0, this.width, this.height);
-        }
+        ctx.fillStyle = rgbaIntToHex(rgba, false);
+        ctx.fillRect(0, 0, this.width, this.height);
         this.isDirty = true;
         return BrsInvalid.Instance;
     }
@@ -169,7 +165,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                         this.currentBuffer = 0;
                     }
                 }
-                this.getContext().clearRect(0, 0, this.width, this.height);
+                this.clearCanvas(0xff);
                 this.isDirty = false;
             }
             return BrsInvalid.Instance;
