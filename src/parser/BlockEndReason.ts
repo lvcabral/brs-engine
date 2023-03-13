@@ -5,7 +5,6 @@ import { Location } from "../lexer";
 /** Marker class for errors thrown to exit block execution early. */
 export class BlockEnd {
     constructor(public message: string, public readonly location: Location) {
-        // super(message);
     }
 
     format() {
