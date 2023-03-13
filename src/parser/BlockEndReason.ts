@@ -1,5 +1,5 @@
 import { BrsType } from "../brsTypes";
-import { BrsError } from "../Error";
+import { BrsError, formatMessage } from "../Error";
 import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */
@@ -8,29 +8,8 @@ export class BlockEnd {
         // super(message);
     }
 
-    /**
-     * Formats the error into a human-readable string including filename, starting and ending line
-     * and column, and the message associated with the error, e.g.:
-     *
-     * `lorem.brs(1,1-3): Expected '(' after sub name`
-     * ```
-     */
     format() {
-        let location = this.location;
-
-        let formattedLocation: string;
-
-        if (location.start.line === location.end.line) {
-            let columns = `${location.start.column}`;
-            if (location.start.column !== location.end.column) {
-                columns += `-${location.end.column}`;
-            }
-            formattedLocation = `${location.file}(${location.start.line},${columns})`;
-        } else {
-            formattedLocation = `${location.file}(${location.start.line},${location.start.column},${location.end.line},${location.end.line})`;
-        }
-
-        return `${formattedLocation}: ${this.message}`;
+        return formatMessage(this);
     }
 }
 
