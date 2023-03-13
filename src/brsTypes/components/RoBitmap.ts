@@ -226,6 +226,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
+    makeDirty() {
+        this.rgbaRedraw = true;
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roBitmap>";
     }
@@ -273,10 +277,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
             this.rgbaRedraw = true;
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(didDraw);
         },
     });
 
@@ -310,10 +311,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             const didDraw = this.drawImage(object, rgba, 0, 0);
             ctx.restore();
             this.rgbaRedraw = true;
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(didDraw);
         },
     });
 
@@ -350,10 +348,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             );
             ctx.globalAlpha = 1.0;
             this.rgbaRedraw = true;
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(didDraw);
         },
     });
 

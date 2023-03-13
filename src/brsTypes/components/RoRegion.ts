@@ -141,6 +141,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.y = newY;
             }
         }
+        this.bitmap.makeDirty();
         // TODO: Check what is the effect on collision parameters
     }
 
@@ -148,6 +149,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         const ctx = this.bitmap.getContext();
         ctx.fillStyle = rgbaIntToHex(rgba);
         ctx.fillRect(this.x, this.y, this.width, this.height);
+        this.bitmap.makeDirty();
     }
 
     drawImage(
@@ -158,18 +160,26 @@ export class RoRegion extends BrsComponent implements BrsValue {
         scaleX: number = 1,
         scaleY: number = 1
     ) {
-        return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        const isDirty = drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        if (isDirty) {
+            this.bitmap.makeDirty();
+        }
+        return isDirty;
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
-        return drawImageToContext(
+        const isDirty = drawImageToContext(
             ctx,
             image,
             this.alphaEnable,
             x + this.getPosX(),
             y + this.getPosY()
         );
+        if (isDirty) {
+            this.bitmap.makeDirty();
+        }
+        return isDirty
     }
 
     getCanvas(): OffscreenCanvas {
@@ -435,6 +445,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.wrap = srcRegion.wrap;
             this.collisionCircle = srcRegion.collisionCircle;
             this.collisionRect = srcRegion.collisionRect;
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -505,6 +516,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, translationX: Int32, translationY: Int32) => {
             this.translationX = translationX.getValue();
             this.translationY = translationY.getValue();
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -517,6 +529,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, scaleMode: Int32) => {
             this.scaleMode = scaleMode.getValue();
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -541,6 +554,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, wrap: BrsBoolean) => {
             this.wrap = wrap.toBoolean();
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -580,10 +594,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             const ctx = this.bitmap.getContext();
             const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(didDraw);
         },
     });
 
@@ -616,10 +627,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ctx.rotate(angleInRad);
             const didDraw = this.drawImage(object, rgba, 0, 0);
             ctx.restore();
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(didDraw);
         },
     });
 
@@ -655,10 +663,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 scaleY.getValue()
             );
             ctx.globalAlpha = 1.0;
-            if (!didDraw) {
-                return BrsBoolean.False;
-            }
-            return BrsBoolean.True;
+            return BrsBoolean.from(didDraw);
         },
     });
 
@@ -688,6 +693,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
             ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
             ctx.stroke();
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -712,6 +718,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 size.getValue(),
                 size.getValue()
             );
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -737,6 +744,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 width.getValue(),
                 height.getValue()
             );
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -763,6 +771,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.x + x.getValue(),
                 this.y + y.getValue() + font.getTopAdjust()
             );
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
         },
     });

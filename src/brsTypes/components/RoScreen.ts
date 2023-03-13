@@ -112,6 +112,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.fillStyle = rgbaIntToHex(rgba, false);
             ctx.fillRect(0, 0, this.width, this.height);
         }
+        this.isDirty = true;
         return BrsInvalid.Instance;
     }
 
@@ -123,12 +124,14 @@ export class RoScreen extends BrsComponent implements BrsValue {
         scaleX: number = 1,
         scaleY: number = 1
     ): boolean {
-        return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        this.isDirty = drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        return this.isDirty;
     }
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.context[this.currentBuffer];
-        return drawImageToContext(ctx, image, this.alphaEnable, x, y);
+        this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y)
+        return this.isDirty;
     }
 
     setCanvasAlpha(enable: boolean) {
@@ -144,6 +147,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    makeDirty() {
+        this.isDirty = true;
+    }
     // ifScreen ------------------------------------------------------------------------------------
 
     /** If the screen is double buffered, SwapBuffers swaps the back buffer with the front buffer */
@@ -179,7 +185,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, rgba: Int32) => {
-            this.isDirty = true;
             return this.clearCanvas(rgba.getValue());
         },
     });
@@ -203,7 +208,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            this.isDirty = this.drawImage(object, rgba, x.getValue(), y.getValue());
+            this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
             return BrsBoolean.from(this.isDirty);
         },
@@ -236,7 +241,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.save();
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            this.isDirty = this.drawImage(object, rgba, 0, 0);
+            this.drawImage(object, rgba, 0, 0);
             ctx.restore();
             return BrsBoolean.from(this.isDirty);
         },
@@ -265,7 +270,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            this.isDirty = this.drawImage(
+            this.drawImage(
                 object,
                 rgba,
                 x.getValue(),
