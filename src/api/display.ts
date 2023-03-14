@@ -116,7 +116,7 @@ export function redrawDisplay(
 }
 
 // Draw Channel Splash
-export function drawSplashScreen(imgData: CanvasImageSource) {
+export function drawSplashScreen(imgData: ImageBitmap) {
     if (ctx) {
         if (display instanceof HTMLCanvasElement) {
             display.style.opacity = "1";
@@ -128,6 +128,34 @@ export function drawSplashScreen(imgData: CanvasImageSource) {
         if (bufferCtx) {
             bufferCtx.putImageData(buffer, 0, 0);
         }
+    }
+}
+
+export function drawIconAsSplash(imgData: ImageBitmap) {
+    if (bufferCtx) {
+        if (display instanceof HTMLCanvasElement) {
+            display.style.opacity = "1";
+        }
+        let w = 1280;
+        let h = 720;
+        if (displayMode === "480p") {
+            w = 720;
+            h = 540;
+        } else if (displayMode === "1080p") {
+            w = 1920;
+            h = 1080;
+        }
+        bufferCanvas.width = w;
+        bufferCanvas.height = h;
+        const x = Math.trunc((w - imgData.width) / 2);
+        const y = Math.trunc((h - imgData.height) / 2);
+        bufferCtx.clearRect(0, 0, w, h);
+        bufferCtx.drawImage(imgData, x, y);
+        bufferCtx.textAlign = "center";
+        bufferCtx.fillStyle = "white";
+        bufferCtx.font = "30px sans-serif";
+        bufferCtx.fillText("Loading...", w / 2, y + imgData.height + 45);
+        drawBufferImage();
     }
 }
 

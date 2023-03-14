@@ -29,6 +29,7 @@ import {
     setOverscan,
     overscanMode,
     showPerfStats,
+    drawIconAsSplash,
 } from "./display";
 import { subscribeControl, initControlModule, sendKey } from "./control";
 import {
@@ -421,6 +422,23 @@ function openChannelZip(f: any) {
                                 }
                             }
                         }
+                        let icon = manifestMap.get("mm_icon_focus_hd");
+                        if (!icon) {
+                            icon = manifestMap.get("mm_icon_focus_fhd");
+                            if (!icon) {
+                                icon = manifestMap.get("mm_icon_focus_sd");
+                            }
+                        }
+                        let iconFile;
+                        if (icon && icon.slice(0, 5) === "pkg:/") {
+                            iconFile = zip.file(icon.slice(5));
+                            if (iconFile) {
+                                iconFile.async("base64").then((content) => {
+                                    notifyAll("icon", content);
+                                });
+                            }
+                        }
+                        // Display Splash or Icon
                         clearDisplay();
                         if (splash && splash.slice(0, 5) === "pkg:/") {
                             const splashFile = zip.file(splash.slice(5));
@@ -429,22 +447,10 @@ function openChannelZip(f: any) {
                                     createImageBitmap(blob).then(drawSplashScreen);
                                 });
                             }
-                        }
-                        let icon;
-                        icon = manifestMap.get("mm_icon_focus_hd");
-                        if (!icon) {
-                            icon = manifestMap.get("mm_icon_focus_fhd");
-                            if (!icon) {
-                                icon = manifestMap.get("mm_icon_focus_sd");
-                            }
-                        }
-                        if (icon && icon.slice(0, 5) === "pkg:/") {
-                            const iconFile = zip.file(icon.slice(5));
-                            if (iconFile) {
-                                iconFile.async("base64").then((content) => {
-                                    notifyAll("icon", content);
-                                });
-                            }
+                        } else if (iconFile) {
+                            iconFile.async("blob").then((blob) => {
+                                createImageBitmap(blob).then(drawIconAsSplash);
+                            });
                         }
                         notifyAll("loaded", currentChannel);
                     },

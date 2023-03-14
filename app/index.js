@@ -56,10 +56,10 @@ if (supportedBrowser()) {
             infoHtml += data.subtitle + "<br/>";
             infoHtml += data.version;
             channelInfo.innerHTML = infoHtml;
-        } else if (event === "started") {
-            currentChannel = data;
             channelIcons("hidden");
             loading.style.visibility = "hidden";
+        } else if (event === "started") {
+            currentChannel = data;
             stats.style.visibility = "visible";
         } else if (event === "closed" || event === "error") {
             currentChannel = { id: "", running: false };
