@@ -70,6 +70,9 @@ if (supportedBrowser()) {
             stats.style.visibility = "hidden";
             channelIcons("visible");
             fileSelector.value = null;
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
         }
     });
 } else {
