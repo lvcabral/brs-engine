@@ -126,7 +126,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.context[this.currentBuffer];
-        this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y)
+        this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y);
         return this.isDirty;
     }
 

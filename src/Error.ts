@@ -1,7 +1,6 @@
 import { BrsType, ValueKind } from "./brsTypes";
 import { Location } from "./lexer";
 
-
 /**
  * Formats the error into a human-readable string including filename, starting and ending line
  * and column, and the message associated with the error, e.g.:
@@ -9,7 +8,7 @@ import { Location } from "./lexer";
  * `lorem.brs(1,1-3): Expected '(' after sub name`
  * ```
  */
-export function formatMessage(obj: { message: string, location: Location }): string {
+export function formatMessage(obj: { message: string; location: Location }): string {
     let location = obj.location;
 
     let formattedLocation: string;
@@ -26,8 +25,6 @@ export function formatMessage(obj: { message: string, location: Location }): str
 
     return `${formattedLocation}: ${obj.message}`;
 }
-
-
 
 export class BrsError extends Error {
     constructor(message: string, readonly location: Location) {

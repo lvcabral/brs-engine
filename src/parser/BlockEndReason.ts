@@ -4,15 +4,12 @@ import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */
 export class BlockEnd {
-    constructor(public message: string, public readonly location: Location) {
-    }
+    constructor(public message: string, public readonly location: Location) {}
 
     format() {
         return formatMessage(this);
     }
 }
-
-
 
 //
 /** An error thrown to exit a for loop early. */
@@ -37,4 +34,4 @@ export class ReturnValue extends BlockEnd {
 }
 
 /** An error thrown when a BrightScript runtime error is encountered. */
-export class Runtime extends BrsError { }
+export class Runtime extends BrsError {}

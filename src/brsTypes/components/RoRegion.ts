@@ -179,7 +179,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         if (isDirty) {
             this.bitmap.makeDirty();
         }
-        return isDirty
+        return isDirty;
     }
 
     getCanvas(): OffscreenCanvas {
