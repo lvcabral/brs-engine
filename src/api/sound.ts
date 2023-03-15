@@ -71,7 +71,7 @@ export function playSound() {
         } else if (audio.slice(0, 4).toLowerCase() === "http") {
             sound = addWebSound(audio);
         } else {
-            console.warn(`[playSound] Can't find audio data: ${audio}`);
+            console.warn(`[sound] Can't find audio to play: ${audio}`);
             return;
         }
         sound.seek(0);
@@ -87,7 +87,7 @@ export function playSound() {
         Atomics.store(sharedArray, DataType.IDX, playIndex);
         Atomics.store(sharedArray, DataType.SND, AudioEvent.SELECTED);
     } else {
-        console.warn(`Can't find audio index: ${playIndex}`);
+        console.warn(`[sound] Can't find audio index: ${playIndex}`);
     }
 }
 
@@ -114,11 +114,16 @@ export function stopSound() {
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
         if (idx) {
-            soundsDat[idx].stop();
+            if (soundsDat[idx].state() !== "loading" ) {
+                soundsDat[idx].stop();
+            }
+            else {
+                soundsDat[idx].unload();
+            }
         }
         Atomics.store(sharedArray, DataType.SND, AudioEvent.PARTIAL);
     } else if (audio) {
-        console.warn(`[stopSound] Can't find audio data: ${playIndex} - ${audio}`);
+        console.warn(`[audio] Can't find audio to stop: ${playIndex} - ${audio}`);
     }
 }
 
@@ -131,7 +136,7 @@ export function pauseSound() {
         }
         Atomics.store(sharedArray, DataType.SND, AudioEvent.PAUSED);
     } else if (audio) {
-        console.warn(`[message:pause] Can't find audio data: ${playIndex} - ${audio}`);
+        console.warn(`[audio] Can't find audio to pause: ${playIndex} - ${audio}`);
     }
 }
 
@@ -144,7 +149,7 @@ export function resumeSound() {
         }
         Atomics.store(sharedArray, DataType.SND, AudioEvent.RESUMED);
     } else if (audio) {
-        console.warn(`[message:resume] Can't find audio data: ${playIndex} - ${audio}`);
+        console.warn(`[audio] Can't find audio to resume: ${playIndex} - ${audio}`);
     }
 }
 
@@ -156,7 +161,7 @@ export function seekSound(position: number) {
             soundsDat[idx].seek(position);
         }
     } else if (audio) {
-        console.warn(`[message:seek] Can't find audio data: ${playIndex} - ${audio}`);
+        console.warn(`[audio] Can't find audio to seek: ${playIndex} - ${audio}`);
     }
 }
 
@@ -168,7 +173,7 @@ export function setNext(index: number) {
     playNext = index;
     if (playNext >= playList.length) {
         playNext = -1;
-        console.warn(`Next index out of range: ${index}`);
+        console.warn(`[audio] Next index out of range: ${index}`);
     }
 }
 
@@ -212,7 +217,7 @@ export function stopWav(wav: string) {
         }
         sound.stop();
     } else {
-        console.warn(`Can't find wav sound: ${wav}`);
+        console.warn(`[audio] Can't find wav sound: ${wav}`);
     }
 }
 
@@ -233,10 +238,10 @@ export function addSound(path: string, format: string, data: any) {
             format: format,
             preload: format === "wav",
             onloaderror: function (id, message) {
-                console.warn(`Error loading ${path}: ${message}`);
+                console.warn(`[audio] Error loading wav ${path}: ${message}`);
             },
             onplayerror: function (id, message) {
-                console.warn(`Error playing ${path}: ${message}`);
+                console.warn(`[audio] Error playing wav ${path}: ${message}`);
             },
         })
     );
@@ -272,10 +277,10 @@ function addWebSound(url: string) {
         src: [url],
         preload: true,
         onloaderror: function (id, message) {
-            console.warn(`Error loading ${url}: ${message}`);
+            console.warn(`[audio] Error loading sound ${url}: ${message}`);
         },
         onplayerror: function (id, message) {
-            console.warn(`Error playing ${url}: ${message}`);
+            console.warn(`[audio] Error playing sound ${url}: ${message}`);
         },
     });
     soundsDat.push(sound);
