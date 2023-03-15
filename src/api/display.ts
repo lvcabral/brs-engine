@@ -39,7 +39,7 @@ export function initDisplayModule(mode: string, perfStats = false) {
         showPerfStats(perfStats);
     } else {
         console.warn(
-            `Your browser does not support OffscreenCanvas, so the emulator will not work properly, ` +
+            `[display] Your browser does not support OffscreenCanvas, so the emulator will not work properly, ` +
                 `to know more visit https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas`
         );
     }
@@ -263,7 +263,8 @@ export function showPerfStats(show: boolean): boolean {
             statsDiv.appendChild(statsCanvas.dom);
             showStats = true;
         } else {
-            console.warn("[brsEmu] Missing 'Stats' div, can't display Peformance Stats!");
+            console.warn("[display] Missing 'Stats' div, can't display Peformance Stats!");
+            showStats = false;
         }
     }
     return showStats;

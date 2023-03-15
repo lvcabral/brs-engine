@@ -21,11 +21,10 @@ let currentChannel = { id: "", running: false };
 // Start the emulator
 if (supportedBrowser()) {
     channelInfo.innerHTML = "<br/>";
-    // Custom DeviceConfiguration
+    // Custom Device Configuration (see /api/index.ts for all fields)
     const customDeviceInfo = {
         developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
         locale: "en_US", // Used if channel supports localization
-        clockFormat: "12h",
         displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
         defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
         fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"

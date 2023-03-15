@@ -135,7 +135,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     } else {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
         console.warn(
-            `Remote control emulation will not work as SharedArrayBuffer is not enabled, ` +
+            `[api] Remote control emulation will not work as SharedArrayBuffer is not enabled, ` +
                 `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
         );
     }
@@ -455,7 +455,7 @@ function openChannelZip(f: any) {
                         notifyAll("loaded", currentChannel);
                     },
                     function error(e) {
-                        const msg = `Error uncompressing manifest: ${e.message}`;
+                        const msg = `[api] Error uncompressing manifest: ${e.message}`;
                         console.error(msg);
                         currentChannel.running = false;
                         notifyAll("error", msg);
@@ -463,7 +463,7 @@ function openChannelZip(f: any) {
                     }
                 );
             } else {
-                const msg = "Invalid Channel Package: missing manifest.";
+                const msg = "[api] Invalid Channel Package: missing manifest.";
                 console.error(msg);
                 currentChannel.running = false;
                 notifyAll("error", msg);
@@ -541,14 +541,14 @@ function openChannelZip(f: any) {
                     setTimeout(runChannel, splashTimeout);
                 },
                 function error(e) {
-                    const msg = `Error uncompressing file ${e.message}`;
+                    const msg = `[api] Error uncompressing file ${e.message}`;
                     console.error(msg);
                     notifyAll("error", msg);
                 }
             );
         },
         function (e) {
-            const msg = `Error reading ${f.name}: ${e.message}`;
+            const msg = `[api] Error reading ${f.name}: ${e.message}`;
             console.error(msg);
             notifyAll("error", msg);
             currentChannel.running = false;
@@ -586,7 +586,7 @@ function runChannel() {
     notifyAll("started", currentChannel);
 }
 
-// Receive Messages from Web Worker
+// Receive Messages from the Interpreter (Web Worker)
 function workerCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         drawBufferImage(event.data);
@@ -612,28 +612,28 @@ function workerCallback(event: MessageEvent) {
         if (loop) {
             setLoop(loop === "true");
         } else {
-            console.warn(`Missing loop parameter: ${event.data}`);
+            console.warn(`[api] Missing loop parameter: ${event.data}`);
         }
     } else if (event.data.slice(0, 4) === "next") {
         const newIndex = event.data.split(",")[1];
         if (newIndex && !isNaN(parseInt(newIndex))) {
             setNext(parseInt(newIndex));
         } else {
-            console.warn(`Invalid next index: ${event.data}`);
+            console.warn(`[api] Invalid next index: ${event.data}`);
         }
     } else if (event.data.slice(0, 4) === "seek") {
         const position = event.data.split(",")[1];
         if (position && !isNaN(parseInt(position))) {
             seekSound(parseInt(position));
         } else {
-            console.warn(`Invalid seek position: ${event.data}`);
+            console.warn(`[api] Invalid seek position: ${event.data}`);
         }
     } else if (event.data.slice(0, 7) === "trigger") {
         const trigger: string[] = event.data.split(",");
         if (trigger.length >= 4) {
             triggerWav(trigger[1], parseInt(trigger[2]), parseInt(trigger[3]));
         } else {
-            console.warn(`Missing Trigger parameters: ${event.data}`);
+            console.warn(`[api] Missing Trigger parameters: ${event.data}`);
         }
     } else if (event.data.slice(0, 5) === "stop,") {
         stopWav(event.data.split(",")[1]);
