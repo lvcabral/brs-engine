@@ -55,6 +55,7 @@ export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc
             `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
         );
     } else {
+        postMessage("debug,stop");
         debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
 
         debugMsg += "\r\nCurrent Function:\r\n";
@@ -126,6 +127,7 @@ export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc
             case debugCommand.CONT:
                 stepMode = false;
                 interpreter.debugMode = false;
+                postMessage("debug,continue");
                 return true;
             case debugCommand.HELP:
                 debugHelp();

@@ -648,6 +648,8 @@ function workerCallback(event: MessageEvent) {
         deviceDebug(`${event.data}\r\n`);
     } else if (event.data.slice(0, 6) === "error,") {
         deviceDebug(`${event.data}\r\n`);
+    } else if (event.data.slice(0, 6) === "debug,") {
+        notifyAll("debug", { level: event.data.slice(6) });
     } else if (event.data.slice(0, 4) === "end,") {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {

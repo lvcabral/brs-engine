@@ -114,10 +114,9 @@ export function stopSound() {
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
         if (idx) {
-            if (soundsDat[idx].state() !== "loading" ) {
+            if (soundsDat[idx].state() !== "loading") {
                 soundsDat[idx].stop();
-            }
-            else {
+            } else {
                 soundsDat[idx].unload();
             }
         }
