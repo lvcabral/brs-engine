@@ -73,44 +73,19 @@ rokuKeys.set("stop", 23);
 
 // Initialize Control Module
 let sharedArray: Int32Array;
+let disableKeys: boolean = false;
 
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
-    if (!options.disableKeys) {
-        if (options.customKeys instanceof Map) {
-            options.customKeys.forEach(function (value: string, key: string) {
-                key = key.replace(/Windows|Command/gi, "Meta");
-                key = key.replace("Option", "Alt");
-                keysMap.set(key, value);
-            });
-        }
-        // Keyboard handlers
-        document.addEventListener("keydown", function (event: KeyboardEvent) {
-            handleKeyboardEvent(event, 0);
-        });
-        document.addEventListener("keyup", function keyUpHandler(event: KeyboardEvent) {
-            handleKeyboardEvent(event, 100);
+    if (options.customKeys instanceof Map) {
+        options.customKeys.forEach(function (value: string, key: string) {
+            key = key.replace(/Windows|Command/gi, "Meta");
+            key = key.replace("Option", "Alt");
+            keysMap.set(key, value);
         });
     }
-}
-
-function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
-    let keyCode: string = event.code;
-    if (event.shiftKey) {
-        keyCode = "Shift+" + keyCode;
-    } else if (event.ctrlKey) {
-        keyCode = "Control+" + keyCode;
-    } else if (event.altKey) {
-        keyCode = "Alt+" + keyCode;
-    } else if (event.metaKey) {
-        keyCode = "Meta+" + keyCode;
-    }
-    const key = keysMap.get(keyCode);
-    if (key && key.toLowerCase() !== "ignore") {
-        sendKey(key, mod);
-        if (mod === 0) {
-            event.preventDefault();
-        }
+    if (typeof options.disableKeys === "boolean") {
+        disableKeys = options.disableKeys;
     }
 }
 
@@ -128,7 +103,18 @@ function notifyAll(eventName: string, eventData?: any) {
     });
 }
 
-// Keyboard Handler
+// Keyboard handlers
+export function enableControl(enable: boolean) {
+    if (!disableKeys) {
+        if (enable) {
+            document.addEventListener("keydown", keyDownHandler);
+            document.addEventListener("keyup", keyUpHandler);
+        } else {
+            document.removeEventListener("keydown", keyDownHandler);
+            document.removeEventListener("keyup", keyUpHandler);
+        }
+    }
+}
 export function sendKey(key: string, mod: number) {
     key = key.toLowerCase();
     if (key === "home" && mod === 0) {
@@ -145,6 +131,31 @@ export function sendKey(key: string, mod: number) {
         if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
             Atomics.store(sharedArray, DataType.MOD, mod);
             Atomics.store(sharedArray, DataType.KEY, key.charCodeAt(4) + mod);
+        }
+    }
+}
+function keyDownHandler(event: KeyboardEvent) {
+    handleKeyboardEvent(event, 0);
+}
+function keyUpHandler(event: KeyboardEvent) {
+    handleKeyboardEvent(event, 100);
+}
+function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
+    let keyCode: string = event.code;
+    if (event.shiftKey) {
+        keyCode = "Shift+" + keyCode;
+    } else if (event.ctrlKey) {
+        keyCode = "Control+" + keyCode;
+    } else if (event.altKey) {
+        keyCode = "Alt+" + keyCode;
+    } else if (event.metaKey) {
+        keyCode = "Meta+" + keyCode;
+    }
+    const key = keysMap.get(keyCode);
+    if (key && key.toLowerCase() !== "ignore") {
+        sendKey(key, mod);
+        if (mod === 0) {
+            event.preventDefault();
         }
     }
 }

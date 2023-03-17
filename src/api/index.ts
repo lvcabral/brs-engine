@@ -31,7 +31,7 @@ import {
     showPerfStats,
     drawIconAsSplash,
 } from "./display";
-import { subscribeControl, initControlModule, sendKey } from "./control";
+import { subscribeControl, initControlModule, enableControl, sendKey } from "./control";
 import {
     initSoundModule,
     addSound,
@@ -226,6 +226,7 @@ export function terminate(reason: string) {
     currentChannel.version = "";
     currentChannel.execSource = "";
     currentChannel.running = false;
+    enableControl(false);
     notifyAll("closed", reason);
 }
 
@@ -583,6 +584,7 @@ function runChannel() {
     };
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
+    enableControl(true);
     notifyAll("started", currentChannel);
 }
 
@@ -649,7 +651,9 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data.slice(0, 6) === "error,") {
         deviceDebug(`${event.data}\r\n`);
     } else if (event.data.slice(0, 6) === "debug,") {
-        notifyAll("debug", { level: event.data.slice(6) });
+        const level = event.data.slice(6);
+        enableControl(level === "continue");
+        notifyAll("debug", { level: level });
     } else if (event.data.slice(0, 4) === "end,") {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {

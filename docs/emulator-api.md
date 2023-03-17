@@ -76,6 +76,6 @@ The only pre-requisites are:
 - **fps** - If enabled by the `enableFps()` method (see above) triggered every 15 frames
   - `data` (number): Contains the average Frames per Second of the last 15 frames
 - **debug** - Triggered when debug messages arrive from the worker library (BrightScript Interpreter)
-  - `data` (object): Contains: `{level: string, content: string}`, levels are: `print`, `beacon`, `warning` and `error`
+  - `data` (object): Contains: `{level: string, content: string}`, levels are: `print`, `beacon`, `warning`, `error`, `stop`, `continue`
 - **error** - Triggered when the any execution exception happens on the API library
   - `data` (string): Contains the message describing the error
