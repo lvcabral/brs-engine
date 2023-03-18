@@ -182,6 +182,9 @@ export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc
             case debugCommand.VAR:
                 debugLocalVariables(env);
                 break;
+            case debugCommand.BREAK:
+                postMessage(`warning,Micro Debugger already running!\r\n`);
+                break;
             default:
                 postMessage(`warning,Invalid Debug command/expression!\r\n`);
                 break;
