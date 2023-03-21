@@ -148,7 +148,12 @@ function debugGetExpr(buffer: Int32Array): string {
     return expr;
 }
 
-function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc: Location, cmd: number) {
+function debugHandleCommand(
+    interpreter: Interpreter,
+    currLoc: Location,
+    lastLoc: Location,
+    cmd: number
+) {
     const env = interpreter.environment;
     const backTrace = env.getBackTrace();
     const lastLines = parseTextFile(source.get(lastLoc.file));
@@ -230,8 +235,7 @@ function debugList(backTrace: BackTrace[], currLines: string[], flagLine: number
         for (let index = start; index <= end; index++) {
             let flag = index === flagLine ? "*" : " ";
             postMessage(
-                `print,${index.toString().padStart(3, "0")}:${flag} ${currLines[index - 1]
-                }\r\n`
+                `print,${index.toString().padStart(3, "0")}:${flag} ${currLines[index - 1]}\r\n`
             );
         }
     }
@@ -239,8 +243,9 @@ function debugList(backTrace: BackTrace[], currLines: string[], flagLine: number
 
 function debugLocalVariables(environment: Environment) {
     let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
-    debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${environment.getM().getElements().length
-        }\r\n`;
+    debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
+        environment.getM().getElements().length
+    }\r\n`;
     let fnc = environment.getList(Scope.Function);
     fnc.forEach((value, key) => {
         if (PrimitiveKinds.has(value.kind)) {
@@ -248,8 +253,9 @@ function debugLocalVariables(environment: Environment) {
                 value.kind
             )} val:${value.toString()}\r\n`;
         } else if (isIterable(value)) {
-            debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${value.getElements().length
-                }\r\n`;
+            debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
+                value.getElements().length
+            }\r\n`;
         } else if (value.kind === ValueKind.Object) {
             debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
         } else {
