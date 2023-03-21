@@ -120,7 +120,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
                 // for each line
                 .split("\n")
                 // remove leading/trailing whitespace
-                .map(line => line.trim())
+                .map((line) => line.trim())
                 // separate keys and values
                 .map((line, index) => {
                     // skip empty and invalid headers
@@ -154,7 +154,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
                 // for each line
                 .split("\n")
                 // remove leading/trailing whitespace
-                .map(line => line.trim())
+                .map((line) => line.trim())
                 // separate keys and values
                 .map((line, index) => {
                     // skip empty and invalid headers

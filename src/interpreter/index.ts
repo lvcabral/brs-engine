@@ -19,14 +19,13 @@ import {
     MismatchReason,
     Callable,
     BrsNumber,
-    Comparable,
     Float,
     Double,
     RoXMLElement,
 } from "../brsTypes";
-
+import { shared } from "..";
 import { Lexeme } from "../lexer";
-import { isToken } from "../lexer/Token";
+import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
 import { BrsError, TypeMismatch } from "../Error";
 
@@ -41,6 +40,7 @@ import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
+import { debugCommand, runDebugger } from "./MicroDebugger";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -55,13 +55,21 @@ export const defaultExecutionOptions: ExecutionOptions = {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
-    private _title = "";
     private _startTime = Date.now();
+    private _prevLoc: Location = {
+        file: "",
+        start: { line: 0, column: 0 },
+        end: { line: 0, column: 0 },
+    };
     readonly options: ExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
+    readonly manifest: Map<string, any> = new Map<string, any>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
+    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4, DBG: 5, EXP: 6 };
+    readonly sharedArray = shared.get("buffer") || new Int32Array([]);
+
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
 
@@ -76,13 +84,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._startTime;
     }
 
-    set title(value: string) {
-        this._title = value;
-    }
-
     public audioId: number = 0;
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();
+    public debugMode: boolean = false;
 
     /**
      * Convenience function to subscribe to the `err` events emitted by `interpreter.events`.
@@ -117,8 +122,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.fileSystem.set("tmp:", new FileSystem());
         this.fileSystem.set("cachefs:", new FileSystem());
         Object.keys(StdLib)
-            .map(name => (StdLib as any)[name])
-            .filter(func => func instanceof Callable)
+            .map((name) => (StdLib as any)[name])
+            .filter((func) => func instanceof Callable)
             .filter((func: Callable) => {
                 if (!func.name) {
                     throw new Error("Unnamed standard library function detected!");
@@ -140,11 +145,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = this._environment.createSubEnvironment();
+        let btArray = originalEnvironment.getBackTrace();
+        btArray.forEach((bt) => {
+            newEnv.addBackTrace(bt.functionName, bt.functionLoc, bt.callLoc, bt.signature);
+        });
         try {
             this._environment = newEnv;
             return func(this);
-        } catch (err) {
-            if (!(err instanceof BrsError)) {
+        } catch (err: any) {
+            if (!(err instanceof BrsError || err instanceof BlockEnd)) {
                 if (err.message !== "") {
                     postMessage(`error,${err.message}`);
                     err.message = "";
@@ -162,7 +171,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     exec(statements: ReadonlyArray<Stmt.Statement>, ...args: BrsType[]) {
-        let results = statements.map(statement => this.execute(statement));
+        let results = statements.map((statement) => this.execute(statement));
         try {
             let mainVariable = new Expr.Variable({
                 kind: Lexeme.Identifier,
@@ -207,13 +216,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (maybeMain.signatures[0].signature.args.length === 0) {
                     args = [];
                 }
-                postMessage(`log,------ Running '${this._title}' ${mainVariable.name.text} ------`);
+                const title = this.manifest.get("title") || "No Title";
+                const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
+                const subName = mainVariable.name.text;
+                postMessage(`beacon,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'\r\n`);
+                postMessage(`print,------ Running dev '${title}' ${subName} ------\r\n`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
                             mainVariable,
                             mainVariable.name,
-                            args.map(arg => new Expr.Literal(arg, mainVariable.location))
+                            args.map((arg) => new Expr.Literal(arg, mainVariable.location))
                         )
                     ),
                 ];
@@ -222,7 +235,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     "warning,No entry point found! You must define a function Main() or RunUserInterface()"
                 );
             }
-        } catch (err) {
+        } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value || BrsInvalid.Instance];
             } else if (!(err instanceof BrsError)) {
@@ -311,15 +324,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        printStream += " ";
+                        printStream += "\t";
                         break;
                     case Lexeme.Semicolon:
-                        if (index === statement.expressions.length - 1) {
-                            // Don't write an extra space for trailing `;` in print lists.
-                            // They're used to suppress trailing newlines in `print` statements
-                            break;
-                        }
-                        printStream += " ";
                         break;
                     default:
                         this.addError(
@@ -330,10 +337,20 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                 }
             } else {
-                printStream += this.evaluate(printable).toString();
+                let toPrint = this.evaluate(printable);
+                if (isBrsNumber(toPrint) && toPrint.getValue() >= 0) {
+                    printStream += " " + toPrint.toString();
+                } else {
+                    printStream += toPrint.toString();
+                }
             }
         });
-        postMessage(`log,${printStream}`);
+        postMessage(`print,${printStream}\r\n`);
+        return BrsInvalid.Instance;
+    }
+
+    visitStop(statement: Stmt.Stop): BrsType {
+        this.debugMode = true;
         return BrsInvalid.Instance;
     }
 
@@ -398,12 +415,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return BrsInvalid.Instance;
         }
 
-        // NOTE: Roku's dim implementation creates a resizeable, empty array for the
-        //   bottom children. Resizeable arrays aren't implemented yet (issue #530),
+        // NOTE: Roku's dim implementation creates a resizable, empty array for the
+        //   bottom children. Resizable arrays aren't implemented yet (issue #530),
         //   so when that's added this code should be updated so the bottom-level arrays
-        //   are resizeable, but empty
+        //   are resizable, but empty
         let dimensionValues: number[] = [];
-        statement.dimensions.forEach(expr => {
+        statement.dimensions.forEach((expr) => {
             let val = this.evaluate(expr);
             if (val.kind !== ValueKind.Int32) {
                 this.addError(
@@ -593,7 +610,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: "Attempting to exponentiate non-numeric values.",
+                            message: "Attempting to potentiate non-numeric values.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -775,6 +792,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.Equal:
                 if (canCheckEquality(left, lexeme, right)) {
+                    if (left.kind === ValueKind.Invalid) {
+                        return right.equalTo(left);
+                    }
                     return left.equalTo(right);
                 }
 
@@ -793,6 +813,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.LessGreater:
                 if (canCheckEquality(left, lexeme, right)) {
+                    if (left.kind === ValueKind.Invalid) {
+                        return right.equalTo(left).not();
+                    }
                     return left.equalTo(right).not();
                 }
 
@@ -843,7 +866,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     // TODO: figure out how to handle 32-bit int AND 64-bit int
                     return this.addError(
                         new TypeMismatch({
-                            message: "Attempting to bitwise 'and' number with non-numberic value",
+                            message: "Attempting to bitwise 'and' number with non-numeric value",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -939,7 +962,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitBlock(block: Stmt.Block): BrsType {
-        block.statements.forEach(statement => this.execute(statement));
+        block.statements.forEach((statement) => this.execute(statement));
         return BrsInvalid.Instance;
     }
 
@@ -1004,8 +1027,26 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                 }
 
-                return this.inSubEnv(subInterpreter => {
+                // Check Break Command to enable Micro Debugger
+                const cmd = Atomics.load(this.sharedArray, this.type.DBG);
+                if (cmd === debugCommand.BREAK) {
+                    Atomics.store(this.sharedArray, this.type.DBG, -1);
+                    this.debugMode = true;
+                }
+
+                return this.inSubEnv((subInterpreter) => {
                     subInterpreter.environment.setM(mPointer);
+                    let funcLoc = callee.getLocation();
+                    if (funcLoc) {
+                        let callLoc = expression.callee.location;
+                        let sign = callee.signatures[0].signature;
+                        subInterpreter.environment.addBackTrace(
+                            functionName,
+                            funcLoc,
+                            callLoc,
+                            sign
+                        );
+                    }
                     return callee.call(this, ...args);
                 });
             } catch (reason) {
@@ -1041,6 +1082,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (
                     returnedValue &&
                     isBoxable(returnedValue) &&
+                    returnedValue.kind !== ValueKind.Invalid &&
                     satisfiedSignature.signature.returns === ValueKind.Object
                 ) {
                     returnedValue = returnedValue.box();
@@ -1048,8 +1090,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (
                     returnedValue &&
+                    this.canAutoCast(returnedValue.kind, satisfiedSignature.signature.returns)
+                ) {
+                    if (
+                        returnedValue instanceof Float ||
+                        returnedValue instanceof Double ||
+                        returnedValue instanceof Int32
+                    ) {
+                        if (satisfiedSignature.signature.returns === ValueKind.Double) {
+                            returnedValue = new Double(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Float) {
+                            returnedValue = new Float(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Int32) {
+                            returnedValue = new Int32(returnedValue.getValue());
+                        } else if (satisfiedSignature.signature.returns === ValueKind.Int64) {
+                            returnedValue = new Int64(returnedValue.getValue());
+                        }
+                    }
+                } else if (
+                    returnedValue &&
                     satisfiedSignature.signature.returns !== ValueKind.Dynamic &&
-                    satisfiedSignature.signature.returns !== returnedValue.kind
+                    satisfiedSignature.signature.returns !== returnedValue.kind &&
+                    returnedValue.kind !== ValueKind.Invalid
                 ) {
                     this.addError(
                         new Stmt.Runtime(
@@ -1070,10 +1132,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 let sig = mismatchedSignature.signature;
                 let mismatches = mismatchedSignature.mismatches;
 
-                let messageParts = [];
+                let messageParts: string[] = [];
 
                 let args = sig.args
-                    .map(a => {
+                    .map((a) => {
                         let requiredArg = `${a.name.text} as ${ValueKind.toString(a.type.kind)}`;
                         if (a.defaultValue) {
                             return `[${requiredArg}]`;
@@ -1087,7 +1149,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
                 messageParts.push(
                     ...mismatches
-                        .map(mm => {
+                        .map((mm) => {
                             switch (mm.reason) {
                                 case MismatchReason.TooFewArguments:
                                     return `* ${functionName} requires at least ${mm.expected} arguments, but received ${mm.received}.`;
@@ -1097,10 +1159,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                                     return `* Argument '${mm.argName}' must be of type ${mm.expected}, but received ${mm.received}.`;
                             }
                         })
-                        .map(line => `    ${line}`)
+                        .map((line) => `    ${line}`)
                 );
 
-                return messageParts.map(line => `    ${line}`).join("\n");
+                return messageParts.map((line) => `    ${line}`).join("\n");
             }
 
             let mismatchedSignatures = callee.getAllSignatureMismatches(args);
@@ -1127,7 +1189,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (isIterable(source) && (source instanceof RoXMLElement || source instanceof RoXMLList)) {
             try {
                 return source.getAttribute(new BrsString(expression.name.text));
-            } catch (err) {
+            } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
         } else {
@@ -1150,7 +1212,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (isIterable(source)) {
             try {
                 return source.get(new BrsString(expression.name.text));
-            } catch (err) {
+            } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
         }
@@ -1159,7 +1221,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (boxedSource instanceof BrsComponent) {
             try {
                 return boxedSource.getMethod(expression.name.text) || BrsInvalid.Instance;
-            } catch (err) {
+            } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
         } else {
@@ -1208,8 +1270,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         try {
-            return source.get(index);
-        } catch (err) {
+            return source.get(index, true);
+        } catch (err: any) {
             return this.addError(new BrsError(err.message, expression.closingSquare.location));
         }
     }
@@ -1317,16 +1379,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitForEach(statement: Stmt.ForEach): BrsType {
         let target = this.evaluate(statement.target);
         if (!isIterable(target)) {
-            return this.addError(
-                new BrsError(
-                    `Attempting to iterate across values of non-iterable type ` +
-                        ValueKind.toString(target.kind),
-                    statement.item.location
-                )
-            );
+            // Roku device does not crash if the value is not iterable, just send a console message
+            const message = `BRIGHTSCRIPT: ERROR: Runtime: FOR EACH value is ${ValueKind.toString(
+                target.kind
+            )}`;
+            const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
+            postMessage(`warning,${message}: ${location}`);
+            return BrsInvalid.Instance;
         }
 
-        target.getElements().every(element => {
+        target.getElements().every((element) => {
             this.environment.define(Scope.Function, statement.item.text!, element);
 
             // execute the block
@@ -1350,11 +1412,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitWhile(statement: Stmt.While): BrsType {
-        while (
-            this.evaluate(statement.condition)
-                .equalTo(BrsBoolean.True)
-                .toBoolean()
-        ) {
+        while (this.evaluate(statement.condition).equalTo(BrsBoolean.True).toBoolean()) {
             try {
                 this.execute(statement.body);
             } catch (reason) {
@@ -1371,20 +1429,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitIf(statement: Stmt.If): BrsType {
-        if (
-            this.evaluate(statement.condition)
-                .equalTo(BrsBoolean.True)
-                .toBoolean()
-        ) {
+        if (this.evaluate(statement.condition).equalTo(BrsBoolean.True).toBoolean()) {
             this.execute(statement.thenBranch);
             return BrsInvalid.Instance;
         } else {
             for (const elseIf of statement.elseIfs || []) {
-                if (
-                    this.evaluate(elseIf.condition)
-                        .equalTo(BrsBoolean.True)
-                        .toBoolean()
-                ) {
+                if (this.evaluate(elseIf.condition).equalTo(BrsBoolean.True).toBoolean()) {
                     this.execute(elseIf.thenBranch);
                     return BrsInvalid.Instance;
                 }
@@ -1407,12 +1457,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
-        return new RoArray(expression.elements.map(expr => this.evaluate(expr)));
+        return new RoArray(expression.elements.map((expr) => this.evaluate(expr)));
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {
         return new RoAssociativeArray(
-            expression.elements.map(member => ({
+            expression.elements.map((member) => ({
                 name: member.name,
                 value: this.evaluate(member.value),
             }))
@@ -1437,7 +1487,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         try {
             source.set(new BrsString(statement.name.text), value);
-        } catch (err) {
+        } catch (err: any) {
             return this.addError(new BrsError(err.message, statement.name.location));
         }
 
@@ -1479,8 +1529,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let value = this.evaluate(statement.value);
 
         try {
-            source.set(index, value);
-        } catch (err) {
+            source.set(index, value, true);
+        } catch (err: any) {
             return this.addError(new BrsError(err.message, statement.closingSquare.location));
         }
 
@@ -1585,7 +1635,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitVariable(expression: Expr.Variable) {
         try {
             return this.environment.get(expression.name);
-        } catch (err) {
+        } catch (err: any) {
             if (err instanceof NotFound) {
                 return Uninitialized.Instance;
             }
@@ -1604,7 +1654,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
+        if (this.debugMode) {
+            if (!(statement instanceof Stmt.Block)) {
+                if (!runDebugger(this, statement.location, this._prevLoc)) {
+                    throw new BlockEnd("debug-exit", statement.location);
+                }
+            }
+        }
+        this._prevLoc = statement.location;
         return statement.accept<BrsType>(this);
+    }
+
+    getChannelVersion(): string {
+        let majorVersion = parseInt(this.manifest.get("major_version")) || 0;
+        let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
+        let buildVersion = parseInt(this.manifest.get("build_version")) || 0;
+        return `${majorVersion}.${minorVersion}.${buildVersion}`;
     }
 
     /**
@@ -1615,5 +1680,39 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.errors.push(err);
         this.events.emit("err", err);
         throw err;
+    }
+
+    private getNow(): string {
+        let d = new Date();
+        let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
+        let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
+        let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
+        let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
+        let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
+        let ms = d.getMilliseconds();
+        return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
+    }
+
+    private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
+        if (fromKind === ValueKind.Float && toKind === ValueKind.Double) {
+            return true;
+        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int32) {
+            return true;
+        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int64) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Float) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int32) {
+            return true;
+        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int64) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Float) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Double) {
+            return true;
+        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Int64) {
+            return true;
+        }
+        return false;
     }
 }

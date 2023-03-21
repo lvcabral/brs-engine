@@ -256,7 +256,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
 
             this.elements = [
                 ...this.elements,
-                ...array.elements.filter(element => !!element), // don't copy "holes" where no value exists
+                ...array.elements.filter((element) => !!element), // don't copy "holes" where no value exists
             ];
 
             return BrsInvalid.Instance;
@@ -270,7 +270,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, separator: BrsString) => {
             if (
-                this.elements.some(function(element) {
+                this.elements.some(function (element) {
                     return !(element instanceof BrsString);
                 })
             ) {

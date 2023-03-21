@@ -6,6 +6,7 @@ import { Int64 } from "./Int64";
 import { Float } from "./Float";
 import { roDouble } from "./components/RoDouble";
 import { Boxable } from "./Boxing";
+import Long from "long";
 
 export class Double implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Double;
@@ -20,8 +21,8 @@ export class Double implements Numeric, Comparable, Boxable {
      * @param value the value to store in the BrightScript double, rounded to 64-bit (double)
      *              precision.
      */
-    constructor(value: number) {
-        this.value = value;
+    constructor(value: number | Long) {
+        this.value = value instanceof Long ? value.toNumber() : value;
     }
 
     /**

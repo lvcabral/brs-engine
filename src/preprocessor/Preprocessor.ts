@@ -47,7 +47,7 @@ export class Preprocessor implements CC.Visitor {
         this.constants = new Map();
         return {
             processedTokens: chunks
-                .map(chunk => chunk.accept(this))
+                .map((chunk) => chunk.accept(this))
                 .reduce(
                     (allTokens: Token[], chunkTokens: Token[]) => [...allTokens, ...chunkTokens],
                     []
@@ -132,13 +132,13 @@ export class Preprocessor implements CC.Visitor {
     visitIf(chunk: CC.If): Token[] {
         if (this.evaluateCondition(chunk.condition)) {
             return chunk.thenChunks
-                .map(chunk => chunk.accept(this))
+                .map((chunk) => chunk.accept(this))
                 .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
         } else {
             for (const elseIf of chunk.elseIfs) {
                 if (this.evaluateCondition(elseIf.condition)) {
                     return elseIf.thenChunks
-                        .map(chunk => chunk.accept(this))
+                        .map((chunk) => chunk.accept(this))
                         .reduce(
                             (allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens],
                             []
@@ -149,7 +149,7 @@ export class Preprocessor implements CC.Visitor {
 
         if (chunk.elseChunks) {
             return chunk.elseChunks
-                .map(chunk => chunk.accept(this))
+                .map((chunk) => chunk.accept(this))
                 .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
         }
 

@@ -75,7 +75,7 @@ export class AstPrinter implements Expr.Visitor<string> {
         this.indent++;
         let out = [
             `(${name}\n`,
-            expressions.map(e => `${"  ".repeat(this.indent)}${e.accept(this)}\n`).join(""),
+            expressions.map((e) => `${"  ".repeat(this.indent)}${e.accept(this)}\n`).join(""),
             `${"  ".repeat(this.indent - 1)})`,
         ].join("");
         this.indent--;

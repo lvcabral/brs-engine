@@ -50,7 +50,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         try {
             let knownFiles = volume.readdirSync(pathName);
             let matchedFiles: BrsString[] = [];
-            knownFiles.forEach(fileName => {
+            knownFiles.forEach((fileName) => {
                 if (jsRegex.test(fileName)) {
                     matchedFiles.push(new BrsString(fileName));
                     let fullPath = path.join(pathName, fileName);
@@ -62,7 +62,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
             });
             return matchedFiles;
-        } catch (err) {
+        } catch (err: any) {
             return [];
         }
     }
@@ -77,7 +77,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             let volumes = new Array<BrsString>();
-            [...interpreter.fileSystem.keys()].forEach(key => {
+            [...interpreter.fileSystem.keys()].forEach((key) => {
                 volumes.push(new BrsString(key));
             });
             return new RoList(volumes);
@@ -115,9 +115,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             const volume = interpreter.fileSystem.get(url.protocol);
             if (volume) {
                 try {
-                    let subPaths = volume.readdirSync(url.pathname).map(s => new BrsString(s));
+                    let subPaths = volume.readdirSync(url.pathname).map((s) => new BrsString(s));
                     return new RoList(subPaths);
-                } catch (err) {
+                } catch (err: any) {
                     return new RoList([]);
                 }
             }
@@ -138,7 +138,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 try {
                     volume.mkdirSync(url.pathname);
                     return BrsBoolean.True;
-                } catch (err) {
+                } catch (err: any) {
                     return BrsBoolean.False;
                 }
             }
@@ -163,7 +163,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                         volume.rmfileSync(url.pathname);
                     }
                     return BrsBoolean.True;
-                } catch (err) {
+                } catch (err: any) {
                     return BrsBoolean.False;
                 }
             }
@@ -195,7 +195,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 let contents = srcVolume.readFileSync(srcUrl.pathname);
                 dstVolume.writeFileSync(dstUrl.pathname, contents);
                 return BrsBoolean.True;
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
         },
@@ -230,7 +230,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 dstVolume.writeFileSync(dstUrl.pathname, contents);
                 srcVolume.rmfileSync(srcUrl.pathname);
                 return BrsBoolean.True;
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
         },
@@ -248,7 +248,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             if (volume) {
                 try {
                     return BrsBoolean.from(volume.existsSync(url.pathname));
-                } catch (err) {
+                } catch (err: any) {
                     return BrsBoolean.False;
                 }
             }
@@ -273,13 +273,13 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 try {
                     let knownFiles = volume.readdirSync(url.pathname);
                     let matchedFiles: BrsString[] = [];
-                    knownFiles.forEach(fileName => {
+                    knownFiles.forEach((fileName) => {
                         if (jsRegex.test(fileName)) {
                             matchedFiles.push(new BrsString(fileName));
                         }
                     });
                     return new RoList(matchedFiles);
-                } catch (err) {
+                } catch (err: any) {
                     return new RoList([]);
                 }
             }
@@ -334,7 +334,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                     );
 
                     return new RoList(matchedFiles);
-                } catch (err) {
+                } catch (err: any) {
                     return new RoList([]);
                 }
             }
@@ -374,7 +374,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                         new BrsString("type"),
                         new BrsString(stat.isFile() ? "file" : "directory")
                     );
-                } catch (err) {
+                } catch (err: any) {
                     return result;
                 }
             }

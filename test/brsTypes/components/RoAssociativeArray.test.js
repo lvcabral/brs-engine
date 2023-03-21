@@ -1,13 +1,6 @@
 const brs = require("brs");
-const {
-    RoAssociativeArray,
-    RoArray,
-    BrsBoolean,
-    BrsString,
-    Int32,
-    BrsInvalid,
-    ValueKind,
-} = brs.types;
+const { RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } =
+    brs.types;
 const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoAssociativeArray", () => {
@@ -369,6 +362,45 @@ describe("RoAssociativeArray", () => {
 
                 result2 = aa.get(new BrsString("KeY2"));
                 expect(result2).toBe(v2);
+            });
+        });
+
+        describe("lookupCI", () => {
+            it("changes lookups to case sensitive mode", () => {
+                let v1 = new BrsString("value1");
+                let v2 = new BrsString("value2");
+                let v3 = new BrsString("value3");
+
+                let aa = new RoAssociativeArray([{ name: new BrsString("key1"), value: v1 }]);
+
+                let setModeCaseSensitive = aa.getMethod("setmodecasesensitive");
+                expect(setModeCaseSensitive).toBeTruthy();
+                setModeCaseSensitive.call(interpreter);
+
+                let addreplace = aa.getMethod("addreplace");
+                expect(addreplace).toBeTruthy();
+                addreplace.call(interpreter, new BrsString("KEY1"), v2);
+
+                let lookup = aa.getMethod("lookup");
+                expect(lookup).toBeTruthy();
+
+                // check lookupCI method
+                let lookupCI = aa.getMethod("lookupCI");
+
+                addreplace.call(interpreter, new BrsString("Key1"), v3);
+                expect(lookupCI).toBeTruthy();
+
+                let result = lookup.call(interpreter, new BrsString("key1"));
+                expect(result).toBe(v1);
+
+                result = lookup.call(interpreter, new BrsString("KEY1"));
+                expect(result).toBe(v2);
+
+                result = lookupCI.call(interpreter, new BrsString("kEy1"));
+                expect(result).toBe(v1);
+
+                result = lookupCI.call(interpreter, new BrsString("KeY1"));
+                expect(result).toBe(v1);
             });
         });
     });

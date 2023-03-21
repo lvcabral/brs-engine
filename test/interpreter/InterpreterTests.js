@@ -10,7 +10,7 @@ const Stmt = require("../../lib/parser/Statement");
  *
  * @returns An AST representing the expression `${left} ${operator} ${right}`.
  */
-exports.binary = function(left, operator, right) {
+exports.binary = function (left, operator, right) {
     return new Stmt.Expression(
         new Expr.Binary(
             new Expr.Literal(left),

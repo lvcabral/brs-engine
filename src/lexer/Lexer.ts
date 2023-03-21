@@ -623,10 +623,7 @@ export class Lexer {
                 } // read the next word
 
                 // replace all of the whitespace with a single space character so we can properly match keyword token types
-                let twoWords = source
-                    .slice(start, current)
-                    .replace(whitespace, " ")
-                    .toLowerCase();
+                let twoWords = source.slice(start, current).replace(whitespace, " ").toLowerCase();
                 if (KeyWords.hasOwnProperty(twoWords)) {
                     addToken(KeyWords[twoWords]);
                     return;

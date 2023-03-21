@@ -140,7 +140,7 @@ describe("interpreter comparisons", () => {
                 ).toEqual([BrsBoolean.False, BrsBoolean.False, BrsBoolean.True, BrsBoolean.True]);
 
                 [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach(
-                    operator => {
+                    (operator) => {
                         expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow(
                             /Attempting to compare non-primitive values/
                         );

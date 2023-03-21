@@ -4,13 +4,11 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { shared } from "../..";
 import URL from "url-parse";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
-    private buffer: Int32Array;
     private audioName: string;
     private audioId?: number;
     private currentIndex: number;
@@ -23,9 +21,8 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         Object.freeze(this.type);
         this.maxStreams = interpreter.deviceInfo.get("maxSimulStreams");
         this.valid = true;
-        this.buffer = shared.get("buffer") || new Int32Array([]);
         const systemwav = ["select", "navsingle", "navmulti", "deadend"];
-        const sysIndex = systemwav.findIndex(wav => wav === name.value.toLowerCase());
+        const sysIndex = systemwav.findIndex((wav) => wav === name.value.toLowerCase());
         if (sysIndex > -1) {
             this.audioId = sysIndex;
         } else {
@@ -37,7 +34,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
                     if (id && id >= 0) {
                         this.audioId = id + systemwav.length;
                     }
-                } catch (err) {
+                } catch (err: any) {
                     postMessage(
                         `warning,Error loading audio file: ${url.pathname} - ${err.message}`
                     );
@@ -92,9 +89,13 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.audioId) {
-                this.playing = this.buffer[this.type.WAV + this.currentIndex] === this.audioId;
+                const currentWav = Atomics.load(
+                    interpreter.sharedArray,
+                    this.type.WAV + this.currentIndex
+                );
+                this.playing = currentWav === this.audioId;
             }
             return BrsBoolean.from(this.playing);
         },

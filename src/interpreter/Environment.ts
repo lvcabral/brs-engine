@@ -1,5 +1,5 @@
-import { Identifier } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
+import { Identifier, Location } from "../lexer";
+import { BrsType, RoAssociativeArray, Int32, Signature } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -16,6 +16,13 @@ export class NotFound extends Error {
     constructor(reason: string) {
         super(reason);
     }
+}
+
+export interface BackTrace {
+    functionName: string;
+    functionLoc: Location;
+    callLoc: Location;
+    signature: Signature;
 }
 
 /** Holds a set of values in multiple scopes and provides access operations to them. */
@@ -45,6 +52,9 @@ export class Environment {
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer = new RoAssociativeArray([]);
     private rootM: RoAssociativeArray;
+
+    /** Context properties to support the Debugger */
+    private backTrace = new Array<BackTrace>();
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -94,6 +104,24 @@ export class Environment {
         return this.rootM;
     }
 
+    public addBackTrace(
+        name: string,
+        functionLoc: Location,
+        callLoc: Location,
+        signature: Signature
+    ) {
+        this.backTrace.push({
+            functionName: name,
+            functionLoc: functionLoc,
+            callLoc: callLoc,
+            signature: signature,
+        });
+    }
+
+    public getBackTrace() {
+        return this.backTrace;
+    }
+
     /**
      * Removes a variable from this environment's function scope.
      * @param name the name of the variable to remove (in the form of an `Identifier`)
@@ -132,7 +160,7 @@ export class Environment {
             return this.mPointer;
         }
 
-        let source = [this.function, this.module, this.global].find(scope =>
+        let source = [this.function, this.module, this.global].find((scope) =>
             scope.has(lowercaseName)
         );
 
@@ -160,7 +188,7 @@ export class Environment {
         let lowercaseName = name.text.toLowerCase();
         return (
             scopeFilter
-                .map(scopeName => {
+                .map((scopeName) => {
                     switch (scopeName) {
                         case Scope.Global:
                             return this.global;
@@ -170,8 +198,24 @@ export class Environment {
                             return this.function;
                     }
                 })
-                .find(scope => scope.has(lowercaseName)) != null
+                .find((scope) => scope.has(lowercaseName)) != null
         );
+    }
+
+    /**
+     * Returns list of variables of a specific in this environment.
+     * @param scope the scope to return variables map
+     * @returns the map of variables for the requested scope
+     */
+    public getList(scope: Scope): Map<string, BrsType> {
+        switch (scope) {
+            case Scope.Global:
+                return this.global;
+            case Scope.Module:
+                return this.module;
+            case Scope.Function:
+                return this.function;
+        }
     }
 
     /**

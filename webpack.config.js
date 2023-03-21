@@ -1,16 +1,21 @@
+const webpack = require('webpack');
 const path = require("path");
-const JavaScriptObfuscator = require("webpack-obfuscator");
+const WebpackObfuscator = require('webpack-obfuscator');
 
 module.exports = env => {
-    const isProduction = env.NODE_ENV === "production";
-    let outputFile, mode;
+    let outputLib, outputWrk, mode, distPath;
     let libraryName = "brsEmu";
-    if (isProduction) {
+    let workerName = "brsEmu.worker";
+    if (env.production) {
         mode = "production";
-        outputFile = libraryName + ".min.js";
+        outputWrk = libraryName + ".worker.min.js";
+        outputLib = libraryName + ".min.js";
+        distPath = "app/lib"
     } else {
         mode = "development";
-        outputFile = libraryName + ".js";
+        outputWrk = libraryName + ".worker.js";
+        outputLib = libraryName + ".js";
+        distPath = "app/lib"
     }
     return [
         {
@@ -25,29 +30,75 @@ module.exports = env => {
                         loader: "ts-loader",
                         exclude: /node_modules/,
                     },
+                    {
+                        test: /\.brs$/,
+                        type: "asset/source",
+                    },
+                    {
+                        test: /\.csv$/,
+                        type: "asset/source",
+                    },
+                ],
+            },
+            resolve: {
+                fallback: {
+                    fs: false,
+                    readline: false,
+                    path: require.resolve("path-browserify"),
+                    stream: require.resolve("stream-browserify"),
+                    timers: false,
+                },
+                modules: [path.resolve("./node_modules"), path.resolve("./src")],
+                extensions: [".tsx", ".ts", ".js"],
+            },
+            plugins: [
+                new webpack.ProvidePlugin({
+                    process: "process/browser",
+                }),
+                new webpack.ProvidePlugin({
+                    Buffer: ["buffer", "Buffer"],
+                }),
+                new WebpackObfuscator(
+                    {
+                        rotateUnicodeArray: true,
+                    },
+                    ["brsEmu.js", "brsEmu.worker.js"]
+                ),
+            ],
+            output: {
+                path: path.join(__dirname, distPath),
+                filename: outputWrk,
+                library: workerName,
+                libraryTarget: "umd",
+                umdNamedDefine: true,
+                globalObject: "typeof self !== 'undefined' ? self : this",
+            },
+        },
+        {
+            entry: "./src/api/index.ts",
+            target: "web",
+            mode: mode,
+            module: {
+                rules: [
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ts-loader",
+                        exclude: /node_modules/,
+                    },
                 ],
             },
             resolve: {
                 modules: [path.resolve("./node_modules"), path.resolve("./src")],
                 extensions: [".tsx", ".ts", ".js"],
             },
-            plugins: [
-                new JavaScriptObfuscator(
-                    {
-                        rotateUnicodeArray: true,
-                    },
-                    ["brsEmu.js"]
-                ),
-            ],
-            node: { fs: "empty", readline: "empty" },
             output: {
-                path: path.join(__dirname, "app/lib"),
-                filename: outputFile,
+                filename: outputLib,
                 library: libraryName,
                 libraryTarget: "umd",
                 umdNamedDefine: true,
+                path: path.resolve(__dirname, distPath),
                 globalObject: "typeof self !== 'undefined' ? self : this",
-            },
-        },
+            }
+        }
     ];
 };

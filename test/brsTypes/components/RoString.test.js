@@ -432,7 +432,9 @@ describe("RoString", () => {
                 let result = split.call(interpreter, new BrsString(""));
                 expect(result).toBeInstanceOf(RoArray);
                 expect(result.elements).toEqual(
-                    ["🐶", "g", "o", "o", "d", " ", "d", "o", "g", "🐶"].map(c => new BrsString(c))
+                    ["🐶", "g", "o", "o", "d", " ", "d", "o", "g", "🐶"].map(
+                        (c) => new BrsString(c)
+                    )
                 );
             });
 

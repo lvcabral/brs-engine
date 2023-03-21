@@ -230,7 +230,7 @@ describe("global JSON functions", () => {
             expect(actual).toBeInstanceOf(RoAssociativeArray);
             actualKeys = actual.getElements();
             expect(actualKeys).toEqual(expected.getElements());
-            actualKeys.forEach(key => {
+            actualKeys.forEach((key) => {
                 expect(actual.get(key)).toEqual(expected.get(key));
             });
         });

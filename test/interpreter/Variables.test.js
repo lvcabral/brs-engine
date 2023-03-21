@@ -67,7 +67,7 @@ describe("interpreter variables", () => {
         expect(() => interpreter.exec(assign)).not.toThrow();
 
         let retrieve = ["str$", "int32%", "float!", "double#", "int64&"].map(
-            name => new Stmt.Expression(new Expr.Variable(identifier(name)))
+            (name) => new Stmt.Expression(new Expr.Variable(identifier(name)))
         );
 
         let stored = interpreter.exec(retrieve);
@@ -110,7 +110,7 @@ describe("interpreter variables", () => {
             },
         ].forEach(({ lhs, values }) => {
             test(lhs, () => {
-                values.forEach(value => {
+                values.forEach((value) => {
                     let assign = new Stmt.Assignment(
                         tokens,
                         identifier(lhs),

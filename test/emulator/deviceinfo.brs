@@ -20,4 +20,12 @@ sub main()
     print di.getUIResolution()
     print di.getGraphicsPlatform()
     print di.getIPAddrs()
+    print di.getLinkStatus()
+    print di.CanDecodeVideo({"codec": "mpeg4 avc"})
+    print di.CanDecodeAudio({"codec": "mp3"})
+    codecs = di.CanDecodeAudio({})
+    print codecs
+    if not codecs.result
+        print codecs.codec
+    end if
 end sub

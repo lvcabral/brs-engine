@@ -24,13 +24,13 @@ describe("end to end conditional compilation", () => {
             })
         );
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "I'm ipsum!",
         ]);
     });
 
     describe("(with sterr captured)", () => {
-        test("conditional-compilation/compile-error.brs", async done => {
+        test("conditional-compilation/compile-error.brs", async (done) => {
             // make console.error empty so we don't clutter test output
             let stderr = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -43,7 +43,7 @@ describe("end to end conditional compilation", () => {
                 stderr.mockRestore();
                 done.fail("execute() should have rejected");
             } catch (err) {
-                expect(allArgs(stderr).filter(arg => arg !== "\n")).toEqual([
+                expect(allArgs(stderr).filter((arg) => arg !== "\n")).toEqual([
                     expect.stringContaining("I'm a compile-time error!"),
                 ]);
 

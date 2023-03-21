@@ -2,6 +2,7 @@ import * as Expr from "./Expression";
 import { Token, Identifier, Location, Lexeme } from "../lexer";
 import { BrsType, BrsInvalid } from "../brsTypes";
 import { BrsError } from "../Error";
+import { BlockEnd } from "./BlockEndReason";
 
 /** A set of reasons why a `Block` stopped executing. */
 export * from "./BlockEndReason";
@@ -22,6 +23,7 @@ export interface Visitor<T> {
     visitReturn(statement: Return): never;
     visitDottedSet(statement: DottedSet): BrsType;
     visitIndexedSet(statement: IndexedSet): BrsType;
+    visitStop(statement: Stop): BrsType;
     visitIncrement(expression: Increment): BrsInvalid;
     visitLibrary(expression: Library): BrsInvalid;
 }
@@ -335,8 +337,7 @@ export class End implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        //TODO implement this in the runtime. It should immediately terminate program execution, without error
-        throw new BrsError("End statement not implemented!", this.tokens.end.location);
+        throw new BlockEnd("end-statement", this.tokens.end.location);
     }
 
     get location() {
@@ -356,8 +357,7 @@ export class Stop implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        //TODO implement this in the runtime. It should pause code execution until a `c` command is issued from the console
-        throw new BrsError("Stop statement not implemented!", this.tokens.stop.location);
+        return visitor.visitStop(this);
     }
 
     get location() {

@@ -26,7 +26,7 @@ describe("interpreter for-each loops", () => {
         const receivedElements = [];
         const emptyBlockSpy = jest
             .spyOn(emptyBlock, "accept")
-            .mockImplementation(_interpreter =>
+            .mockImplementation((_interpreter) =>
                 receivedElements.push(_interpreter.environment.get(identifier("element")))
             );
 
@@ -34,7 +34,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(arrayMembers.map(member => new Expr.Literal(member)))
+                new Expr.ArrayLiteral(arrayMembers.map((member) => new Expr.Literal(member)))
             ),
             new Stmt.ForEach(
                 {
@@ -88,7 +88,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(arrayMembers.map(member => new Expr.Literal(member)))
+                new Expr.ArrayLiteral(arrayMembers.map((member) => new Expr.Literal(member)))
             ),
             new Stmt.ForEach(
                 {
@@ -119,7 +119,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(arrayMembers.map(member => new Expr.Literal(member)))
+                new Expr.ArrayLiteral(arrayMembers.map((member) => new Expr.Literal(member)))
             ),
             new Stmt.ForEach(
                 {

@@ -143,7 +143,7 @@ export const FormatJson = new Callable("FormatJson", {
     impl: (interpreter: Interpreter, x: BrsType, _flags: Int32) => {
         try {
             return new BrsString(jsonOf(interpreter, x));
-        } catch (err) {
+        } catch (err: any) {
             // example RBI error:
             // "BRIGHTSCRIPT: ERROR: FormatJSON: Value type not supported: roFunction: pkg:/source/main.brs(14)"
             logBrsErr("FormatJSON", err);
@@ -166,7 +166,7 @@ export const ParseJson = new Callable("ParseJson", {
             }
 
             return brsValueOf(JSON.parse(s));
-        } catch (err) {
+        } catch (err: any) {
             // example RBI error:
             // "BRIGHTSCRIPT: ERROR: ParseJSON: Unknown identifier 'x': pkg:/source/main.brs(25)"
             logBrsErr("ParseJSON", err);

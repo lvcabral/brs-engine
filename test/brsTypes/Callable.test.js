@@ -14,7 +14,7 @@ describe("Callable", () => {
             LCase,
         ];
 
-        brsValues.forEach(other => expect(UCase.lessThan(other)).toBe(BrsTypes.BrsBoolean.False));
+        brsValues.forEach((other) => expect(UCase.lessThan(other)).toBe(BrsTypes.BrsBoolean.False));
     });
 
     it("is greater than nothing", () => {
@@ -29,7 +29,7 @@ describe("Callable", () => {
             LCase,
         ];
 
-        brsValues.forEach(other =>
+        brsValues.forEach((other) =>
             expect(UCase.greaterThan(other)).toBe(BrsTypes.BrsBoolean.False)
         );
     });
@@ -46,7 +46,7 @@ describe("Callable", () => {
             LCase,
         ];
 
-        notEqual.forEach(other => expect(UCase.equalTo(other)).toBe(BrsTypes.BrsBoolean.False));
+        notEqual.forEach((other) => expect(UCase.equalTo(other)).toBe(BrsTypes.BrsBoolean.False));
 
         expect(UCase.equalTo(UCase)).toBe(BrsTypes.BrsBoolean.True);
     });
@@ -62,7 +62,7 @@ describe("Callable", () => {
             });
 
             expect(
-                hasArgs.getAllSignatureMismatches([]).map(mm => mm.mismatches)[0]
+                hasArgs.getAllSignatureMismatches([]).map((mm) => mm.mismatches)[0]
             ).toContainEqual({
                 reason: BrsTypes.MismatchReason.TooFewArguments,
                 expected: "1",
@@ -82,7 +82,7 @@ describe("Callable", () => {
             expect(
                 noArgs
                     .getAllSignatureMismatches([new BrsTypes.BrsString("foo")])
-                    .map(mm => mm.mismatches)[0]
+                    .map((mm) => mm.mismatches)[0]
             ).toContainEqual({
                 reason: BrsTypes.MismatchReason.TooManyArguments,
                 expected: "0",
@@ -105,7 +105,7 @@ describe("Callable", () => {
                 impl: () => {},
             });
 
-            expect(hasArgs.getAllSignatureMismatches([]).map(mm => mm.mismatches)[0]).toEqual([]);
+            expect(hasArgs.getAllSignatureMismatches([]).map((mm) => mm.mismatches)[0]).toEqual([]);
         });
 
         it("detects argument mismatches", () => {
@@ -120,7 +120,7 @@ describe("Callable", () => {
             expect(
                 hasArgs
                     .getAllSignatureMismatches([BrsTypes.BrsBoolean.False])
-                    .map(mm => mm.mismatches)[0]
+                    .map((mm) => mm.mismatches)[0]
             ).toContainEqual({
                 reason: BrsTypes.MismatchReason.ArgumentTypeMismatch,
                 expected: "String",
@@ -141,7 +141,7 @@ describe("Callable", () => {
             expect(
                 hasArgs
                     .getAllSignatureMismatches([new BrsTypes.Float(1.5)])
-                    .map(mm => mm.mismatches)[0]
+                    .map((mm) => mm.mismatches)[0]
             ).toEqual([]);
         });
 
@@ -157,7 +157,7 @@ describe("Callable", () => {
             expect(
                 hasArgs
                     .getAllSignatureMismatches([new BrsTypes.Float(1.5)])
-                    .map(mm => mm.mismatches)[0]
+                    .map((mm) => mm.mismatches)[0]
             ).toEqual([]);
         });
 
@@ -173,7 +173,7 @@ describe("Callable", () => {
             expect(
                 hasArgs
                     .getAllSignatureMismatches([new BrsTypes.Int32(4)])
-                    .map(mm => mm.mismatches)[0]
+                    .map((mm) => mm.mismatches)[0]
             ).toEqual([]);
         });
 
@@ -195,7 +195,7 @@ describe("Callable", () => {
                         BrsTypes.BrsBoolean.False,
                         BrsTypes.BrsInvalid.Instance,
                     ])
-                    .map(mm => mm.mismatches)[0]
+                    .map((mm) => mm.mismatches)[0]
             ).toEqual([]);
         });
     });

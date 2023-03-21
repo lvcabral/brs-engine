@@ -204,7 +204,7 @@ export class Parser {
 
         function consume(message: string, ...lexemes: Lexeme[]): Token {
             let foundLexeme = lexemes
-                .map(lexeme => peek().kind === lexeme)
+                .map((lexeme) => peek().kind === lexeme)
                 .reduce((foundAny, foundCurrent) => foundAny || foundCurrent, false);
 
             if (foundLexeme) {
@@ -225,7 +225,7 @@ export class Parser {
                 return false;
             }
 
-            return lexemes.some(lexeme => peek().kind === lexeme);
+            return lexemes.some((lexeme) => peek().kind === lexeme);
         }
 
         function isAtEnd() {

@@ -81,6 +81,10 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return this.region.getImageData();
     }
 
+    getRegionObject(): RoRegion {
+        return this.region;
+    }
+
     getId(): number {
         return this.id;
     }
@@ -303,7 +307,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
             if (this.regions) {
                 // TODO: Double check if Roku does apply offset to all regions
-                this.regions.getElements().forEach(element => {
+                this.regions.getElements().forEach((element) => {
                     if (element instanceof RoRegion) {
                         element.applyOffset(
                             x.getValue(),

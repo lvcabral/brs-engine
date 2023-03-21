@@ -1,10 +1,17 @@
 import { BrsType } from "../brsTypes";
-import { BrsError } from "../Error";
+import { BrsError, formatMessage } from "../Error";
 import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */
-export class BlockEnd extends BrsError {}
+export class BlockEnd {
+    constructor(public message: string, public readonly location: Location) {}
 
+    format() {
+        return formatMessage(this);
+    }
+}
+
+//
 /** An error thrown to exit a for loop early. */
 export class ExitForReason extends BlockEnd {
     constructor(location: Location) {
@@ -27,4 +34,4 @@ export class ReturnValue extends BlockEnd {
 }
 
 /** An error thrown when a BrightScript runtime error is encountered. */
-export class Runtime extends BlockEnd {}
+export class Runtime extends BrsError {}
