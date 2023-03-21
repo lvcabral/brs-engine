@@ -165,6 +165,8 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
             }
         }
     });
+    // Force library download during initialization
+    brsWorker = new Worker(brsEmuLib);
 }
 
 // Observers Handling
