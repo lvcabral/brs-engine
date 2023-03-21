@@ -42,12 +42,22 @@
             <input type="button" id="fileButton" class="fileButton" value="Open Channel ZIP or BRS file..." />
         </div>
         <br /><br /><br /><br /><br /><br />
-        <h3>Note for BrightScript Developers</h3>
-        You can see the debug messages from <code>print</code> statements in your code using the <em>browser
-            console</em>,
-        just right click anywhere in the page and select <em>Inspect (Ctrl+Shift+i)</em>. Exceptions from the emulator
-        will be shown there too. Download the desktop app to use it integrated with <b>Visual Studio Code</b>, you will
-        find more details in the links below.
+
+        <h3>How to Use the BrightScript Emulator</h3>
+        <p>&ndash;&nbsp;Click on a Channel icon in the BrightScript TV menu screen or load your own code using the purple button above.</p>
+        <p>&ndash;&nbsp;When a channel is running, you can make it <b>full screen</b> by double-clicking on the emulator display.</p>
+        <p>&ndash;&nbsp;Use your keyboard to navigate on the games and channels, the image you see on the right side, shows what keys 
+            that are mapped to the Roku remote control buttons.</p>
+
+        <h3>Notes for BrightScript Developers</h3>
+        <p>You can see the debug messages from <code>print</code> statements in your code using the <em>browser
+            console</em>, just right click anywhere in the page and select <em>Inspect (Ctrl+Shift+i)</em>. 
+            Exceptions from the emulator will be shown there too.</p>
+        <p>If you added a break point (<b>stop</b>) in your code, you can also debug using the <em>browser console</em>, 
+            just send the commands using: <code>brsEmu.debug("help")</code></p>
+        <p>The Roku `registry` data is stored on the browser Local Storage and you can inspect it using the Developer Tools.</p>
+        <p>For a better debugging experience, is recommended to use the emulator desktop app integrated with <b>Visual Studio Code</b>, you will
+        find more details in the links below.</p>
 
         <h3>Documentation and Downloads</h3>
         <p>To learn more about the project visit the repository at:

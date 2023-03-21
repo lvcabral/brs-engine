@@ -4,11 +4,13 @@ This emulator is still in **beta** stage, this way, there are several features f
 
 ## In Scope (to be developed/fixed in future releases)
 
-Statements `Goto`, `Try..Catch` and `Throw` are not supported.
-
+* RSG (Roku SceneGraph) SDK components are not yet supported.
+* Video playback or streaming are not yet supported.
+* Statements `Goto`, `Try..Catch` and `Throw` are not supported.
+* Conditional compilation using `#IF..#ELSE..#ENDIF` is not supported.
+* Call methods using the interface like `obj.ifDraw2d.getPng()` is not supported, call it directly `obj.getPng()`.
 * It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
 * Do not use the same `roMessagePort` instance with different objects (`roScreen`, `roAudioPlayer` etc.) create one per object type.
-* Reserved words like `Mod` cannot be used as function parameters (Roku does allow that).
 * Multi-dimensional arrays cannot be accessed as `array[x,y]` use the notation `array[x][y]` instead.
 * Send `Invalid` as a function parameter when it explicitly defines the type, generates an error. If `Invalid` is possible remove type declaration.
 * In a `for...next` loop the usage of the notation `next <variable>` is not supported.
@@ -28,8 +30,7 @@ Statements `Goto`, `Try..Catch` and `Throw` are not supported.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
   * The method `GetTargetIpAddress` from `roUrlEvent` always returns an empty string.
-* RSG (Roku SceneGraph) SDK components are not yet supported.
-* Video playback or streaming are not yet supported.
+* Reserved words like `Mod` cannot be used as function parameters (Roku does allow that).
 * SDK 1.0 deprecated components are not implemented, but could be done in the future for legacy channel support.
 
 ## In Scope (mocked)

@@ -4,7 +4,7 @@ The emulator library has a programable interface to make it easy to integrate in
 The only pre-requisites are:
 
 1. Expose a `canvas` object named `display` on the default `document`.
-1. Expose a `div` object named `stats` on the default `document` (optional if you will not show the performance statistics).
+1. Expose a `div` object named `stats` on the default `document` (optional if you want to show the performance statistics).
 
 ## Methods
 
