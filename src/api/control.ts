@@ -34,7 +34,6 @@ if (isMacOS) {
     keysMap.set("Command+Backspace", "backspace");
     keysMap.set("Command+Enter", "play");
     keysMap.set("Command+ArrowLeft", "rev");
-    keysMap.set("Command+Enter", "select");
     keysMap.set("Command+ArrowRight", "fwd");
     keysMap.set("Command+Digit8", "info");
     keysMap.set("Control+KeyC", "break");
@@ -42,7 +41,6 @@ if (isMacOS) {
     keysMap.set("Control+Backspace", "backspace");
     keysMap.set("Control+Enter", "play");
     keysMap.set("Control+ArrowLeft", "rev");
-    keysMap.set("Control+Enter", "select");
     keysMap.set("Control+ArrowRight", "fwd");
     keysMap.set("Control+Digit8", "info");
     keysMap.set("Control+Pause", "break");
