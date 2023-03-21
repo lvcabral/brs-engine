@@ -2,7 +2,7 @@ import { Interpreter } from ".";
 import { BackTrace, Environment, Scope } from "./Environment";
 import { source } from "..";
 import { Lexer, Location } from "../lexer";
-import { Parser, Stmt } from "../parser";
+import { Parser } from "../parser";
 import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
 import {
     Assignment,
@@ -35,21 +35,15 @@ let stepMode = false;
 
 export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc: Location) {
     // TODO:
-    // - Prevent error when exit is called
     // - Implement stop on error and brkd command
     // - Implement step over and step out
     // - Implement classes, bsc(s) and stats
     const env = interpreter.environment;
-    const lexer = new Lexer();
-    const parser = new Parser();
     const lastLines = parseTextFile(source.get(lastLoc.file));
-    const currLines = parseTextFile(source.get(currLoc.file));
     const backTrace = env.getBackTrace();
     const prompt = "Brightscript Debugger> ";
-
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
-    let currLine: number = currLoc.start.line;
     if (stepMode) {
         postMessage(
             `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
@@ -83,37 +77,7 @@ export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc
         let cmd = Atomics.load(interpreter.sharedArray, interpreter.type.DBG);
         Atomics.store(interpreter.sharedArray, interpreter.type.DBG, -1);
         if (cmd === debugCommand.EXPR) {
-            interpreter.debugMode = false;
-            let expr = debugGetExpr(interpreter.sharedArray);
-            const exprScan = lexer.scan(expr, "debug");
-            const exprParse = parser.parse(exprScan.tokens);
-            if (exprParse.statements.length > 0) {
-                const exprStmt = exprParse.statements[0];
-                try {
-                    if (exprStmt instanceof Assignment) {
-                        interpreter.visitAssignment(exprStmt);
-                    } else if (exprStmt instanceof DottedSet) {
-                        interpreter.visitDottedSet(exprStmt);
-                    } else if (exprStmt instanceof IndexedSet) {
-                        interpreter.visitIndexedSet(exprStmt);
-                    } else if (exprStmt instanceof Print) {
-                        interpreter.visitPrint(exprStmt);
-                    } else if (exprStmt instanceof Expression) {
-                        interpreter.visitExpression(exprStmt);
-                    } else if (exprStmt instanceof Increment) {
-                        interpreter.visitIncrement(exprStmt);
-                    } else if (exprStmt instanceof ForEach) {
-                        interpreter.visitForEach(exprStmt);
-                    } else {
-                        console.log(exprStmt);
-                        postMessage(`print,Debug command/expression not supported!\r\n`);
-                    }
-                } catch (err: any) {
-                    // ignore to avoid crash
-                }
-            } else {
-                postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
-            }
+            debugHandleExpr(interpreter);
             continue;
         }
         if (Atomics.load(interpreter.sharedArray, interpreter.type.EXP)) {
@@ -121,74 +85,55 @@ export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc
             continue;
         }
         switch (cmd) {
-            case debugCommand.BT:
-                debugBackTrace(backTrace, currLoc);
-                break;
             case debugCommand.CONT:
                 stepMode = false;
                 interpreter.debugMode = false;
                 postMessage("debug,continue");
                 return true;
-            case debugCommand.HELP:
-                debugHelp();
-                break;
             case debugCommand.STEP:
                 stepMode = true;
                 interpreter.debugMode = true;
                 return true;
             case debugCommand.EXIT:
                 return false;
-            case debugCommand.LAST:
-                postMessage(
-                    `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
-                );
-                break;
-            case debugCommand.LIST:
-                if (backTrace.length > 0) {
-                    const func = backTrace[backTrace.length - 1];
-                    const flagLine = currLoc.file === lastLoc.file ? lastLine : currLine;
-                    let start = func.functionLoc.start.line;
-                    let end = Math.min(func.functionLoc.end.line, currLines.length);
-                    for (let index = start; index <= end; index++) {
-                        let flag = index === flagLine ? "*" : " ";
-                        postMessage(
-                            `print,${index.toString().padStart(3, "0")}:${flag} ${
-                                currLines[index - 1]
-                            }\r\n`
-                        );
-                    }
-                }
-                break;
-            case debugCommand.NEXT:
-                postMessage(
-                    `print,${currLine.toString().padStart(3, "0")}: ${currLines[currLine - 1]}\r\n`
-                );
-                break;
-            case debugCommand.THREAD:
-                debugMsg = "Thread selected: ";
-                debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
-                    lastLine - 1
-                ].trim()}`;
-                postMessage(`print,${debugMsg}\r\n`);
-                break;
-            case debugCommand.THREADS:
-                debugMsg = "ID    Location                                Source Code\r\n";
-                debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
-                    lastLine - 1
-                ].trim()}\r\n`;
-                debugMsg += "  *selected";
-                postMessage(`print,${debugMsg}\r\n`);
-                break;
-            case debugCommand.VAR:
-                debugLocalVariables(env);
-                break;
-            case debugCommand.BREAK:
-                postMessage(`warning,Micro Debugger already running!\r\n`);
-                break;
-            default:
-                postMessage(`warning,Invalid Debug command/expression!\r\n`);
-                break;
         }
+        debugHandleCommand(interpreter, currLoc, lastLoc, cmd);
+    }
+}
+
+function debugHandleExpr(interpreter: Interpreter) {
+    const lexer = new Lexer();
+    const parser = new Parser();
+    interpreter.debugMode = false;
+    let expr = debugGetExpr(interpreter.sharedArray);
+    const exprScan = lexer.scan(expr, "debug");
+    const exprParse = parser.parse(exprScan.tokens);
+    if (exprParse.statements.length > 0) {
+        const exprStmt = exprParse.statements[0];
+        try {
+            if (exprStmt instanceof Assignment) {
+                interpreter.visitAssignment(exprStmt);
+            } else if (exprStmt instanceof DottedSet) {
+                interpreter.visitDottedSet(exprStmt);
+            } else if (exprStmt instanceof IndexedSet) {
+                interpreter.visitIndexedSet(exprStmt);
+            } else if (exprStmt instanceof Print) {
+                interpreter.visitPrint(exprStmt);
+            } else if (exprStmt instanceof Expression) {
+                interpreter.visitExpression(exprStmt);
+            } else if (exprStmt instanceof Increment) {
+                interpreter.visitIncrement(exprStmt);
+            } else if (exprStmt instanceof ForEach) {
+                interpreter.visitForEach(exprStmt);
+            } else {
+                console.log(exprStmt);
+                postMessage(`print,Debug command/expression not supported!\r\n`);
+            }
+        } catch (err: any) {
+            // ignore to avoid crash
+        }
+    } else {
+        postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
     }
 }
 
@@ -201,6 +146,62 @@ function debugGetExpr(buffer: Int32Array): string {
         return char; // if \0 stops decoding
     });
     return expr;
+}
+
+function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc: Location, cmd: number) {
+    const env = interpreter.environment;
+    const backTrace = env.getBackTrace();
+    const lastLines = parseTextFile(source.get(lastLoc.file));
+    const currLines = parseTextFile(source.get(currLoc.file));
+    let lastLine: number = lastLoc.start.line;
+    let currLine: number = currLoc.start.line;
+    let debugMsg: string;
+    switch (cmd) {
+        case debugCommand.BT:
+            debugBackTrace(backTrace, currLoc);
+            break;
+        case debugCommand.HELP:
+            debugHelp();
+            break;
+        case debugCommand.LAST:
+            postMessage(
+                `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
+            );
+            break;
+        case debugCommand.LIST:
+            const flagLine = currLoc.file === lastLoc.file ? lastLine : currLine;
+            debugList(backTrace, currLines, flagLine);
+            break;
+        case debugCommand.NEXT:
+            postMessage(
+                `print,${currLine.toString().padStart(3, "0")}: ${currLines[currLine - 1]}\r\n`
+            );
+            break;
+        case debugCommand.THREAD:
+            debugMsg = "Thread selected: ";
+            debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
+                lastLine - 1
+            ].trim()}`;
+            postMessage(`print,${debugMsg}\r\n`);
+            break;
+        case debugCommand.THREADS:
+            debugMsg = "ID    Location                                Source Code\r\n";
+            debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
+                lastLine - 1
+            ].trim()}\r\n`;
+            debugMsg += "  *selected";
+            postMessage(`print,${debugMsg}\r\n`);
+            break;
+        case debugCommand.VAR:
+            debugLocalVariables(env);
+            break;
+        case debugCommand.BREAK:
+            postMessage(`warning,Micro Debugger already running!\r\n`);
+            break;
+        default:
+            postMessage(`warning,Invalid Debug command/expression!\r\n`);
+            break;
+    }
 }
 
 function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
@@ -221,11 +222,25 @@ function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
     postMessage(`print,${debugMsg}`);
 }
 
+function debugList(backTrace: BackTrace[], currLines: string[], flagLine: number) {
+    if (backTrace.length > 0) {
+        const func = backTrace[backTrace.length - 1];
+        const start = func.functionLoc.start.line;
+        const end = Math.min(func.functionLoc.end.line, currLines.length);
+        for (let index = start; index <= end; index++) {
+            let flag = index === flagLine ? "*" : " ";
+            postMessage(
+                `print,${index.toString().padStart(3, "0")}:${flag} ${currLines[index - 1]
+                }\r\n`
+            );
+        }
+    }
+}
+
 function debugLocalVariables(environment: Environment) {
     let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
-    debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
-        environment.getM().getElements().length
-    }\r\n`;
+    debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${environment.getM().getElements().length
+        }\r\n`;
     let fnc = environment.getList(Scope.Function);
     fnc.forEach((value, key) => {
         if (PrimitiveKinds.has(value.kind)) {
@@ -233,9 +248,8 @@ function debugLocalVariables(environment: Environment) {
                 value.kind
             )} val:${value.toString()}\r\n`;
         } else if (isIterable(value)) {
-            debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
-                value.getElements().length
-            }\r\n`;
+            debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${value.getElements().length
+                }\r\n`;
         } else if (value.kind === ValueKind.Object) {
             debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
         } else {
