@@ -70,8 +70,8 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, format: BrsString) => {
-            var date = new Date(this.markTime);
-            var dateString = "";
+            const date = new Date(this.markTime);
+            let dateString = "";
             switch (format.toString()) {
                 case "short-weekday": {
                     dateString = date
@@ -128,7 +128,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                     break;
                 }
                 case "short-date": {
-                    var dateArray = date
+                    const dateArray = date
                         .toLocaleDateString("en-US", {
                             year: "2-digit",
                             month: "numeric",
@@ -141,7 +141,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                     break;
                 }
                 case "short-date-dashes": {
-                    var dateArray = date
+                    const dateArray = date
                         .toLocaleDateString("en-US", {
                             year: "2-digit",
                             month: "numeric",
@@ -178,8 +178,8 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
-            var dtoptions = {
+            const date = new Date(this.markTime);
+            const dtoptions = {
                 weekday: "long",
                 year: "numeric",
                 month: "long",
@@ -208,7 +208,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, dateString: BrsString) => {
-            let dateToParse = luxon.DateTime.fromISO(dateString.value, { zone: "utc" });
+            const dateToParse = luxon.DateTime.fromISO(dateString.value, { zone: "utc" });
             if (dateToParse.isValid) {
                 this.markTime = Date.parse(dateToParse.toISO());
             } else {
@@ -237,7 +237,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCDate());
         },
     });
@@ -249,7 +249,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCDay());
         },
     });
@@ -261,7 +261,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCHours());
         },
     });
@@ -273,7 +273,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(
                 new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0).getUTCDate()
             );
@@ -287,7 +287,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCMilliseconds());
         },
     });
@@ -299,7 +299,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCMinutes());
         },
     });
@@ -311,7 +311,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCMonth() + 1);
         },
     });
@@ -323,7 +323,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCSeconds());
         },
     });
@@ -335,7 +335,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getTimezoneOffset());
         },
     });
@@ -347,7 +347,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new BrsString(
                 date.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" })
             );
@@ -361,7 +361,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new Int32(date.getUTCFullYear());
         },
     });
@@ -373,7 +373,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            var date = new Date(this.markTime);
+            const date = new Date(this.markTime);
             return new BrsString(date.toISOString().split(".")[0] + "Z");
         },
     });

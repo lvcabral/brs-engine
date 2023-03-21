@@ -1707,7 +1707,7 @@ export class Parser {
                 return false;
             } else {
                 current--;
-                var result = check(...lexemes);
+                const result = check(...lexemes);
                 current++;
                 return result;
             }

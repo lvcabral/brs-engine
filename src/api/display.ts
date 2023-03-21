@@ -201,7 +201,7 @@ function drawBufferImage() {
 }
 function statsUpdate(start: boolean) {
     if (showStats) {
-        if (start)  {
+        if (start) {
             statsCanvas.begin();
         } else {
             statsCanvas.end();

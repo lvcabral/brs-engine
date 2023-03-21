@@ -339,7 +339,7 @@ function debugExpression(expr: string) {
     // Store string on SharedArrayBuffer
     expr = expr.trim();
     let len = Math.min(expr.length, dataBufferSize);
-    for (var i = 0; i < len; i++) {
+    for (let i = 0; i < len; i++) {
         Atomics.store(sharedArray, dataBufferIndex + i, expr.charCodeAt(i));
     }
     // String terminator

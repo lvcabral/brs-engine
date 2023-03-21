@@ -331,9 +331,9 @@ function parseCSV(csv: string): Map<string, string[]> {
  * @param directory the path to be created
  */
 function mkdirTreeSync(fs: FileSystem, directory: string) {
-    var pathArray = directory.replace(/\/$/, "").split("/");
-    for (var i = 1; i <= pathArray.length; i++) {
-        var segment = pathArray.slice(0, i).join("/");
+    const pathArray = directory.replace(/\/$/, "").split("/");
+    for (let i = 1; i <= pathArray.length; i++) {
+        const segment = pathArray.slice(0, i).join("/");
         if (fs.normalize(segment) !== "" && !fs.existsSync(segment)) {
             fs.mkdirSync(segment);
         }
@@ -347,7 +347,7 @@ function mkdirTreeSync(fs: FileSystem, directory: string) {
  */
 function download(url: string, type: XMLHttpRequestResponseType) {
     try {
-        var xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Note: synchronous
         xhr.responseType = type;
         xhr.send();

@@ -343,8 +343,8 @@ function RectRect(rect1: Rect, rect2: Rect): boolean {
 // return true if the rectangle and circle are colliding
 // from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
 function RectCircle(rect: Rect, circle: Circle): boolean {
-    var distX = Math.abs(circle.x - rect.x - rect.w / 2);
-    var distY = Math.abs(circle.y - rect.y - rect.h / 2);
+    const distX = Math.abs(circle.x - rect.x - rect.w / 2);
+    const distY = Math.abs(circle.y - rect.y - rect.h / 2);
 
     if (distX > rect.w / 2 + circle.r) {
         return false;
@@ -360,15 +360,15 @@ function RectCircle(rect: Rect, circle: Circle): boolean {
         return true;
     }
 
-    var dx = distX - rect.w / 2;
-    var dy = distY - rect.h / 2;
+    const dx = distX - rect.w / 2;
+    const dy = distY - rect.h / 2;
     return dx * dx + dy * dy <= circle.r * circle.r;
 }
 
 // ported from: https://github.com/Romans-I-XVI/monoEngine/blob/master/MonoEngine/CollisionChecking.cs
 function CircleCircle(circle1: Circle, circle2: Circle): boolean {
-    let distanceX = circle1.x - circle2.x;
-    let distanceY = circle1.y - circle2.y;
-    var dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    const distanceX = circle1.x - circle2.x;
+    const distanceY = circle1.y - circle2.y;
+    const dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
     return dist <= circle1.r + circle2.r;
 }
