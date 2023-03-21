@@ -1,15 +1,15 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, Double } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
-import { RoRegion } from "./RoRegion";
+import { rgbaIntToHex } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
+import { drawImageToContext, drawObjectToComponent } from "../draw2d";
 import UPNG from "upng-js";
 
 export class RoScreen extends BrsComponent implements BrsValue {
@@ -19,10 +19,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private currentBuffer: number;
     private width: number;
     private height: number;
-    //private display: HTMLCanvasElement;
     private canvas: OffscreenCanvas[];
     private context: OffscreenCanvasRenderingContext2D[];
     private port?: RoMessagePort;
+    private isDirty: boolean;
 
     // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(
@@ -32,31 +32,34 @@ export class RoScreen extends BrsComponent implements BrsValue {
         height?: Int32
     ) {
         super("roScreen");
-        let defaultWidth, defaultHeight;
+        let defaultWidth = 854;
+        let defaultHeight = 480;
         if (interpreter.deviceInfo.get("displayMode") === "1080p") {
             defaultWidth = 1920;
             defaultHeight = 1080;
         } else if (interpreter.deviceInfo.get("displayMode") === "720p") {
             defaultWidth = 1280;
             defaultHeight = 720;
-        } else {
-            defaultWidth = 720;
-            defaultHeight = 480;
         }
-        this.width =
-            (width instanceof Int32 && width.getValue() && width.getValue()) || defaultWidth;
-        this.height = (height instanceof Int32 && height.getValue()) || defaultHeight;
-        if (this.width <= 0) {
-            this.width = defaultWidth;
+        this.isDirty = true;
+        this.width = defaultWidth;
+        this.height = defaultHeight;
+        if (width instanceof Float || width instanceof Double || width instanceof Int32) {
+            this.width = Math.trunc(width.getValue());
+            if (this.width <= 0) {
+                this.width = defaultWidth;
+            }
         }
-        if (this.height <= 0) {
-            this.height = defaultHeight;
+        if (height instanceof Float || height instanceof Double || height instanceof Int32) {
+            this.height = Math.trunc(height.getValue());
+            if (this.height <= 0) {
+                this.height = defaultHeight;
+            }
         }
-        this.doubleBuffer =
-            (doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean()) || false;
+        this.doubleBuffer = doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean();
         this.currentBuffer = 0;
-        this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 3 : 1);
-        this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 3 : 1);
+        this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 2 : 1);
+        this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
         for (let index = 0; index < this.canvas.length; index++) {
             this.canvas[index] = new OffscreenCanvas(this.width, this.height);
             this.context[index] = this.canvas[index].getContext("2d", {
@@ -66,7 +69,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas[index].height = this.height;
         }
         this.alphaEnable = false;
-        // , ["", "", "ifGetMessagePort", "ifSetMessagePort"]
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
@@ -98,24 +100,38 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.context[this.currentBuffer];
     }
 
+    getAlphaEnableValue(): boolean {
+        return this.alphaEnable;
+    }
+
     clearCanvas(rgba: number) {
         let ctx = this.context[this.currentBuffer];
-        ctx.fillStyle = rgbaIntToHex(rgba);
+        ctx.fillStyle = rgbaIntToHex(rgba, false);
         ctx.fillRect(0, 0, this.width, this.height);
+        this.isDirty = true;
         return BrsInvalid.Instance;
     }
 
-    drawImage(image: OffscreenCanvas, x: number, y: number) {
-        this.context[this.currentBuffer].drawImage(image, x, y);
+    drawImage(
+        object: BrsComponent,
+        rgba: Int32 | BrsInvalid,
+        x: number,
+        y: number,
+        scaleX: number = 1,
+        scaleY: number = 1
+    ): boolean {
+        this.isDirty = drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        return this.isDirty;
+    }
+
+    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
+        const ctx = this.context[this.currentBuffer];
+        this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y);
+        return this.isDirty;
     }
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
-        for (let index = 0; index < this.canvas.length; index++) {
-            this.context[index] = this.canvas[index].getContext("2d", {
-                alpha: this.alphaEnable,
-            }) as OffscreenCanvasRenderingContext2D;
-        }
         return BrsInvalid.Instance;
     }
 
@@ -127,6 +143,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    makeDirty() {
+        this.isDirty = true;
+    }
     // ifScreen ------------------------------------------------------------------------------------
 
     /** If the screen is double buffered, SwapBuffers swaps the back buffer with the front buffer */
@@ -136,14 +155,18 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            postMessage(
-                this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
-            );
-            if (this.doubleBuffer) {
-                this.currentBuffer++;
-                if (this.currentBuffer === this.canvas.length) {
-                    this.currentBuffer = 0;
+            if (this.isDirty) {
+                postMessage(
+                    this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
+                );
+                if (this.doubleBuffer) {
+                    this.currentBuffer++;
+                    if (this.currentBuffer === this.canvas.length) {
+                        this.currentBuffer = 0;
+                    }
                 }
+                this.clearCanvas(0xff);
+                this.isDirty = false;
             }
             return BrsInvalid.Instance;
         },
@@ -181,32 +204,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-            } else {
-                return BrsBoolean.False;
-            }
-            if (object instanceof RoBitmap) {
-                ctx.drawImage(cvs, x.getValue(), y.getValue());
-            } else {
-                let rcv = object.getRegionCanvas();
-                ctx.drawImage(
-                    rcv,
-                    x.getValue() + object.getTransX(),
-                    y.getValue() + object.getTransY()
-                );
-            }
+            this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
-            return BrsBoolean.True;
+            return BrsBoolean.from(this.isDirty);
         },
     });
 
@@ -231,48 +231,19 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-            } else {
-                return BrsBoolean.False;
-            }
             const positionX = x.getValue();
             const positionY = y.getValue();
             const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.save();
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            if (object instanceof RoBitmap) {
-                ctx.drawImage(cvs, 0, 0, cvs.width, cvs.height);
-            } else {
-                ctx.drawImage(
-                    cvs,
-                    object.getPosX(),
-                    object.getPosY(),
-                    object.getImageWidth(),
-                    object.getImageHeight(),
-                    object.getTransX(),
-                    object.getTransY(),
-                    object.getImageWidth(),
-                    object.getImageHeight()
-                );
-            }
-            ctx.rotate(-angleInRad);
-            ctx.translate(-positionX, -positionY);
-            ctx.globalAlpha = 1.0;
-            return BrsBoolean.True;
+            this.drawImage(object, rgba, 0, 0);
+            ctx.restore();
+            return BrsBoolean.from(this.isDirty);
         },
     });
 
-    /** Draw the source object, at position x,y, scaled horizotally by scaleX and vertically by scaleY. */
+    /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
     private drawScaledObject = new Callable("drawScaledObject", {
         signature: {
             args: [
@@ -295,43 +266,16 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            ctx.imageSmoothingEnabled = false;
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-            } else {
-                return BrsBoolean.False;
-            }
-            if (object instanceof RoBitmap) {
-                ctx.drawImage(
-                    cvs,
-                    x.getValue(),
-                    y.getValue(),
-                    cvs.width * scaleX.getValue(),
-                    cvs.height * scaleY.getValue()
-                );
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                let tx = object.getTransX() * scaleX.getValue();
-                let ty = object.getTransY() * scaleY.getValue();
-                ctx.drawImage(
-                    rcv,
-                    x.getValue() + tx,
-                    y.getValue() + ty,
-                    object.getImageWidth() * scaleX.getValue(),
-                    object.getImageHeight() * scaleY.getValue()
-                );
-            }
+            this.drawImage(
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                scaleX.getValue(),
+                scaleY.getValue()
+            );
             ctx.globalAlpha = 1.0;
-            return BrsBoolean.True;
+            return BrsBoolean.from(this.isDirty);
         },
     });
 
@@ -357,10 +301,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
         ) => {
             let ctx = this.context[this.currentBuffer];
             ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
+            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.moveTo(xStart.getValue(), yStart.getValue());
             ctx.lineTo(xEnd.getValue(), yEnd.getValue());
             ctx.stroke();
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -378,8 +323,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
             let ctx = this.context[this.currentBuffer];
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -398,8 +344,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             let ctx = this.context[this.currentBuffer];
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -418,10 +365,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
             const ctx = this.context[this.currentBuffer];
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
+            this.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -433,8 +381,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (!this.doubleBuffer) {
+            if (!this.doubleBuffer && this.isDirty) {
                 postMessage(this.context[0].getImageData(0, 0, this.width, this.height));
+                this.isDirty = false;
             }
             return BrsInvalid.Instance;
         },
@@ -454,11 +403,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
     /** If enable is true, do alpha blending when this bitmap is the destination */
     private setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
-            args: [new StdlibArgument("alphaEnabled", ValueKind.Boolean)],
+            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
-            return this.setCanvasAlpha(alphaEnabled.toBoolean());
+        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
+            return this.setCanvasAlpha(alphaEnable.toBoolean());
         },
     });
 

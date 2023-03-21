@@ -12,7 +12,7 @@ describe("Boolean", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        notTrue.forEach(other =>
+        notTrue.forEach((other) =>
             expect(BrsTypes.BrsBoolean.True.equalTo(other)).toBe(BrsTypes.BrsBoolean.False)
         );
 
@@ -32,7 +32,7 @@ describe("Boolean", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        notFalse.forEach(other =>
+        notFalse.forEach((other) =>
             expect(BrsTypes.BrsBoolean.False.equalTo(other)).toBe(BrsTypes.BrsBoolean.False)
         );
 
@@ -53,7 +53,7 @@ describe("Boolean", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        allTypes.forEach(other => {
+        allTypes.forEach((other) => {
             expect(BrsTypes.BrsBoolean.True.lessThan(other)).toBe(BrsTypes.BrsBoolean.False);
             expect(BrsTypes.BrsBoolean.False.lessThan(other)).toBe(BrsTypes.BrsBoolean.False);
         });
@@ -71,7 +71,7 @@ describe("Boolean", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        allTypes.forEach(other => {
+        allTypes.forEach((other) => {
             expect(BrsTypes.BrsBoolean.True.greaterThan(other)).toBe(BrsTypes.BrsBoolean.False);
             expect(BrsTypes.BrsBoolean.False.greaterThan(other)).toBe(BrsTypes.BrsBoolean.False);
         });

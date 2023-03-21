@@ -23,7 +23,7 @@ export class FileSystem {
         const files = this.fs.readdirSync(path.toLowerCase());
         const paths = this.paths;
         if (files.length > 0) {
-            files.forEach(function(file: string, index: number) {
+            files.forEach(function (file: string, index: number) {
                 let fullPath = Path.join(path.toLowerCase(), file);
                 if (paths.has(fullPath)) {
                     files[index] = Path.basename(paths.get(fullPath) as string);

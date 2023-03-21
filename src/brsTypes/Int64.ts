@@ -86,11 +86,7 @@ export class Int64 implements Numeric, Comparable, Boxable {
         switch (rhs.kind) {
             case ValueKind.Int32:
             case ValueKind.Int64:
-                return new Float(
-                    this.getValue()
-                        .divide(rhs.getValue())
-                        .toNumber()
-                );
+                return new Float(this.getValue().divide(rhs.getValue()).toNumber());
             case ValueKind.Float:
                 return new Float(this.getValue().toNumber() / rhs.getValue());
             case ValueKind.Double:

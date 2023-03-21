@@ -20,6 +20,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getModelDetails,
                 this.getFriendlyName,
                 this.getVersion,
+                this.getOSVersion,
                 this.getDisplayType,
                 this.getDisplayMode,
                 this.getVideoMode,
@@ -30,20 +31,32 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getUIResolution,
                 this.getGraphicsPlatform,
                 this.getSoundEffectsVolume,
+                this.getClientTrackingId,
                 this.getChannelClientId,
                 this.getRIDA,
                 this.isRIDADisabled,
+                this.isStoreDemoMode,
                 this.getCountryCode,
                 this.getUserCountryCode,
+                this.getPreferredCaptionLanguage,
                 this.getTimeZone,
                 this.getCurrentLocale,
                 this.getClockFormat,
                 this.timeSinceLastKeypress,
                 this.hasFeature,
+                this.getDrmInfoEx,
+                this.canDecodeAudio,
+                this.getAudioOutputChannel,
+                this.canDecodeVideo,
+                this.enableCodecCapChangedEvent,
+                this.IsAudioGuideEnabled,
                 this.getRandomUUID,
+                this.getConnectionInfo,
                 this.getConnectionType,
                 this.getLinkStatus,
                 this.getInternetStatus,
+                this.enableInternetStatusEvent,
+                this.forceInternetStatusCheck,
                 this.getIPAddrs,
                 this.getGeneralMemoryLevel,
                 this.getMessagePort,
@@ -78,10 +91,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            let name = interpreter.deviceInfo
+            const device = interpreter.deviceInfo
                 .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[0];
-            return new BrsString(name);
+                .get(interpreter.deviceInfo.get("deviceModel"));
+            return new BrsString(device ? device[0] : "Roku 3");
         },
     });
 
@@ -92,10 +105,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            let type = interpreter.deviceInfo
+            const device = interpreter.deviceInfo
                 .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[1];
-            return new BrsString(type);
+                .get(interpreter.deviceInfo.get("deviceModel"));
+            return new BrsString(device ? device[1] : "STB");
         },
     });
 
@@ -127,7 +140,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns device model details. */
+    /** Returns the version number of the device's firmware. */
     private getVersion = new Callable("getVersion", {
         signature: {
             args: [],
@@ -135,6 +148,38 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(interpreter.deviceInfo.get("firmwareVersion"));
+        },
+    });
+
+    /** Returns an roAssociativeArray containing the major, minor, revision, and build numbers of the Roku OS running on the device. */
+    private getOSVersion = new Callable("getOSVersion", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let result = new Array<AAMember>();
+            let firmware = interpreter.deviceInfo.get("firmwareVersion");
+            if (firmware.length > 0) {
+                const versions = "0123456789ACDEFGHJKLMNPRSTUVWXY";
+                result.push({
+                    name: new BrsString("major"),
+                    value: new BrsString(versions.indexOf(firmware.charAt(2)).toString()),
+                });
+                result.push({
+                    name: new BrsString("minor"),
+                    value: new BrsString(firmware.slice(4, 5)),
+                });
+                result.push({
+                    name: new BrsString("revision"),
+                    value: new BrsString(firmware.slice(7, 8)),
+                });
+                result.push({
+                    name: new BrsString("build"),
+                    value: new BrsString(firmware.slice(8, 12)),
+                });
+            }
+            return new RoAssociativeArray(result);
         },
     });
 
@@ -146,6 +191,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new Int32(interpreter.deviceInfo.get("audioVolume"));
+        },
+    });
+
+    /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId() */
+    private getClientTrackingId = new Callable("getClientTrackingId", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.deviceInfo.get("clientId"));
         },
     });
 
@@ -182,6 +238,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Checks whether the device is in demo mode. */
+    private isStoreDemoMode = new Callable("isStoreDemoMode", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.False;
+        },
+    });
+
     /** Returns a value that designates the Roku Channel Store associated with a user’s Roku account. */
     private getCountryCode = new Callable("getCountryCode", {
         signature: {
@@ -201,6 +268,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(interpreter.deviceInfo.get("countryCode"));
+        },
+    });
+
+    /** Returns the three-letter ISO 639-2 language terminology code of the preferred caption language set on the Roku device. */
+    private getPreferredCaptionLanguage = new Callable("getPreferredCaptionLanguage", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.deviceInfo.get("captionLanguage"));
         },
     });
 
@@ -246,7 +324,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let display = interpreter.deviceInfo.get("displayMode");
             let result = "HDTV";
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result = "4:3 standard";
             }
             return new BrsString(result);
@@ -284,7 +362,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let display = interpreter.deviceInfo.get("displayMode");
             let result = "16x9";
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result = "4x3";
             }
             return new BrsString(result);
@@ -300,10 +378,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let result = new Array<AAMember>();
             let display = interpreter.deviceInfo.get("displayMode");
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result.push({ name: new BrsString("h"), value: new Int32(480) });
                 result.push({ name: new BrsString("w"), value: new Int32(720) });
-            } else if (display.substr(0, 3) === "720") {
+            } else if (display.slice(0, 3) === "720") {
                 result.push({ name: new BrsString("h"), value: new Int32(720) });
                 result.push({ name: new BrsString("w"), value: new Int32(1280) });
             } else {
@@ -328,10 +406,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             result.push({ name: new BrsString("Hdr10Plus"), value: BrsBoolean.False });
             result.push({ name: new BrsString("HdrSeamless"), value: BrsBoolean.False });
             result.push({ name: new BrsString("internal"), value: BrsBoolean.True });
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result.push({ name: new BrsString("height"), value: new Int32(3) });
                 result.push({ name: new BrsString("width"), value: new Int32(4) });
-            } else if (display.substr(0, 3) === "720") {
+            } else if (display.slice(0, 3) === "720") {
                 result.push({ name: new BrsString("height"), value: new Int32(9) });
                 result.push({ name: new BrsString("width"), value: new Int32(16) });
             } else {
@@ -356,7 +434,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             mode.push({ name: new BrsString("height"), value: new Int32(480) });
             mode.push({ name: new BrsString("width"), value: new Int32(720) });
             mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
             } else {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
@@ -367,7 +445,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             mode.push({ name: new BrsString("height"), value: new Int32(720) });
             mode.push({ name: new BrsString("width"), value: new Int32(1280) });
             mode.push({ name: new BrsString("preferred"), value: BrsBoolean.True });
-            if (display.substr(0, 3) === "720") {
+            if (display.slice(0, 3) === "720") {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
             } else {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
@@ -378,7 +456,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             mode.push({ name: new BrsString("height"), value: new Int32(1080) });
             mode.push({ name: new BrsString("width"), value: new Int32(1920) });
             mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
-            if (display.substr(0, 4) === "1080") {
+            if (display.slice(0, 4) === "1080") {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
             } else {
                 mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
@@ -397,19 +475,20 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             let result = new Array<AAMember>();
             let display = interpreter.deviceInfo.get("displayMode");
-            if (display.substr(0, 3) === "480") {
+            if (display.slice(0, 3) === "480") {
                 result.push({ name: new BrsString("height"), value: new Int32(480) });
                 result.push({ name: new BrsString("width"), value: new Int32(720) });
-            } else if (display.substr(0, 3) === "720") {
+            } else if (display.slice(0, 3) === "720") {
                 result.push({ name: new BrsString("height"), value: new Int32(720) });
                 result.push({ name: new BrsString("width"), value: new Int32(1280) });
             } else {
                 result.push({ name: new BrsString("height"), value: new Int32(1080) });
                 result.push({ name: new BrsString("width"), value: new Int32(1920) });
             }
-            let model = interpreter.deviceInfo
+            const device = interpreter.deviceInfo
                 .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[3];
+                .get(interpreter.deviceInfo.get("deviceModel"));
+            let model = device ? device[3] : "HD";
             result.push({
                 name: new BrsString("name"),
                 value: new BrsString(model.toUpperCase()),
@@ -425,10 +504,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            let platform = interpreter.deviceInfo
+            const device = interpreter.deviceInfo
                 .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"))[2];
-            return new BrsString(platform);
+                .get(interpreter.deviceInfo.get("deviceModel"));
+            return new BrsString(device ? device[2] : "opengl");
         },
     });
 
@@ -443,6 +522,95 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Checks for the DRM system used by the channel. */
+    private getDrmInfoEx = new Callable("getDrmInfoEx", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            const result = new Array<AAMember>();
+            return new RoAssociativeArray(result);
+        },
+    });
+
+    /** Checks if the device can decode and play the specified audio format. */
+    private canDecodeAudio = new Callable("canDecodeAudio", {
+        signature: {
+            args: [new StdlibArgument("options", ValueKind.Dynamic)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
+            if (options instanceof RoAssociativeArray) {
+                const codecs = interpreter.deviceInfo.get("audioCodecs") as string[];
+                const codec = options.get(new BrsString("codec"));
+                const result = new Array<AAMember>();
+                if (codec instanceof BrsString && codecs.includes(codec.value.toLowerCase())) {
+                    result.push({ name: new BrsString("result"), value: BrsBoolean.True });
+                } else {
+                    result.push({ name: new BrsString("result"), value: BrsBoolean.False });
+                    result.push({ name: new BrsString("updated"), value: new BrsString("codec") });
+                    const roCodecs = new RoArray(codecs.map((c: string) => new BrsString(c)));
+                    result.push({ name: new BrsString("codec"), value: roCodecs });
+                }
+                return new RoAssociativeArray(result);
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Checks for the type of audio output. */
+    private getAudioOutputChannel = new Callable("getAudioOutputChannel", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString("Stereo");
+        },
+    });
+
+    /** Checks if the device can decode and play the specified video format. */
+    private canDecodeVideo = new Callable("canDecodeVideo", {
+        signature: {
+            args: [new StdlibArgument("options", ValueKind.Dynamic)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
+            if (options instanceof RoAssociativeArray) {
+                const result = new Array<AAMember>();
+                result.push({ name: new BrsString("result"), value: BrsBoolean.False });
+                result.push({ name: new BrsString("updated"), value: new BrsString("codec") });
+                const roCodecs = new RoArray([]);
+                result.push({ name: new BrsString("codec"), value: roCodecs });
+                return new RoAssociativeArray(result);
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Notifies the channel when the audio or video codec changes. */
+    private enableCodecCapChangedEvent = new Callable("enableCodecCapChangedEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, enable: BrsBoolean) => {
+            return enable;
+        },
+    });
+
+    /** Checks if the screen reader is enabled. */
+    private IsAudioGuideEnabled = new Callable("IsAudioGuideEnabled", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.False;
+        },
+    });
+
     /** Checks for the number of seconds passed since the last remote keypress. */
     private timeSinceLastKeypress = new Callable("timeSinceLastKeypress", {
         signature: {
@@ -454,7 +622,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns a randomly generated unique identifier.. */
+    /** Returns a randomly generated unique identifier. */
     private getRandomUUID = new Callable("getRandomUUID", {
         signature: {
             args: [],
@@ -473,6 +641,33 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(interpreter.deviceInfo.get("connectionType"));
+        },
+    });
+
+    /** Checks for the information associated with the hardware's connection. */
+    private getConnectionInfo = new Callable("getConnectionInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            const result = new Array<AAMember>();
+            result.push({
+                name: new BrsString("type"),
+                value: new BrsString(interpreter.deviceInfo.get("connectionType")),
+            });
+            const ips = interpreter.deviceInfo.get("localIps") as string[];
+            if (ips.length > 0) {
+                result.push({
+                    name: new BrsString("name"),
+                    value: new BrsString(ips[0].split(",")[0]),
+                });
+                result.push({
+                    name: new BrsString("ip"),
+                    value: new BrsString(ips[0].split(",")[1]),
+                });
+            }
+            return new RoAssociativeArray(result);
         },
     });
 
@@ -498,6 +693,30 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Notifies the channel when an internet connection status event occurs. */
+    private enableInternetStatusEvent = new Callable("enableInternetStatusEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter, enable: BrsBoolean) => {
+            return enable;
+        },
+    });
+
+    // this.,
+
+    /** Forces a new internet connection check. */
+    private forceInternetStatusCheck = new Callable("forceInternetStatusCheck", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.True;
+        },
+    });
+
     /** Returns an AA that each key is the name of a network interface and the value is the IP-address of the interface. */
     private getIPAddrs = new Callable("getIPAddrs", {
         signature: {
@@ -507,7 +726,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             const ips = interpreter.deviceInfo.get("localIps") as string[];
             const result = new Array<AAMember>();
-            ips.forEach(function(iface: string) {
+            ips.forEach(function (iface: string) {
                 let name: string = iface.split(",")[0];
                 let ip: string = iface.split(",")[1];
                 result.push({ name: new BrsString(name), value: new BrsString(ip) });
@@ -555,8 +774,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
 }
 // Helper Functions
 function generateUUID(): string {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-        var r = (Math.random() * 16) | 0,
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0,
             v = c === "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });

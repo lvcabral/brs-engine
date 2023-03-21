@@ -11,7 +11,7 @@ export class BrsInterface implements BrsValue {
     readonly methodNames: Set<string>;
 
     constructor(readonly name: string, methods: Callable[]) {
-        this.methodNames = new Set(methods.filter(m => m.name).map(m => m.name!));
+        this.methodNames = new Set(methods.filter((m) => m.name).map((m) => m.name!));
     }
 
     toString(): string {

@@ -128,7 +128,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     }
                     return BrsBoolean.True;
                 }
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
             return BrsBoolean.False;
@@ -163,7 +163,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                         return BrsBoolean.True;
                     }
                 }
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
             return BrsBoolean.False;
@@ -203,7 +203,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                         return BrsBoolean.True;
                     }
                 }
-            } catch (err) {
+            } catch (err: any) {
                 return BrsBoolean.False;
             }
             return BrsBoolean.False;
@@ -295,8 +295,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter, index: Int32) => {
-            var dataView = new DataView(this.elements.buffer, index.getValue(), 4);
-            var long = dataView.getInt32(0, true);
+            const dataView = new DataView(this.elements.buffer, index.getValue(), 4);
+            const long = dataView.getInt32(0, true);
             return new Int32(long);
         },
     });

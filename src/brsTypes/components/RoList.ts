@@ -307,7 +307,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
                 // TODO: validate against RBI
                 return BrsInvalid.Instance;
             }
-            array.getElements().forEach(element => {
+            array.getElements().forEach((element) => {
                 if (element) {
                     // don't copy "holes" where no value exists
                     this.elements.append(element);

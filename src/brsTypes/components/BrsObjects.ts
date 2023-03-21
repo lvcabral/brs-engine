@@ -10,6 +10,7 @@ import { RoList } from "./RoList";
 import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
+import { RoInput } from "./RoInput";
 import { RoFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
@@ -23,6 +24,7 @@ import { createAudioResource } from "./RoAudioResource";
 import { RoLocalization } from "./RoLocalization";
 import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
+import { RoAppInfo } from "./RoAppInfo";
 import { RoDeviceInfo } from "./RoDeviceInfo";
 import { RoFileSystem } from "./RoFileSystem";
 import { Interpreter } from "../../interpreter";
@@ -65,6 +67,7 @@ export const BrsObjects = new Map<string, Function>([
         (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
     ],
     ["romessageport", (interpreter: Interpreter) => new RoMessagePort()],
+    ["roinput", (interpreter: Interpreter) => new RoInput()],
     ["rofilesystem", (interpreter: Interpreter) => new RoFileSystem()],
     ["rolocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],
     ["rofontregistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
@@ -74,6 +77,7 @@ export const BrsObjects = new Map<string, Function>([
         (interpreter: Interpreter, section: BrsString) =>
             new RoRegistrySection(interpreter, section),
     ],
+    ["roappinfo", (interpreter: Interpreter) => new RoAppInfo()],
     ["rodeviceinfo", (interpreter: Interpreter) => new RoDeviceInfo()],
     ["roaudioplayer", (interpreter: Interpreter) => new RoAudioPlayer()],
     [

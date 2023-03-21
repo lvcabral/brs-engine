@@ -1,19 +1,21 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Float, RoFont } from "..";
+import { BrsType, Double, Float, RoFont } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
+import { RoByteArray } from "./RoByteArray";
+import { drawImageToContext, drawObjectToComponent } from "../draw2d";
+import UPNG from "upng-js";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private valid: boolean;
+    private alphaEnable: boolean;
     private bitmap: RoBitmap | RoScreen;
-    private canvas: OffscreenCanvas;
-    private context: OffscreenCanvasRenderingContext2D;
     private x: number;
     private y: number;
     private width: number;
@@ -32,10 +34,22 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.valid = false;
         this.bitmap = bitmap;
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
-        this.x = x.getValue();
-        this.y = y.getValue();
-        this.width = width.getValue();
-        this.height = height.getValue();
+        this.x = 0;
+        if (x instanceof Float || x instanceof Double || x instanceof Int32) {
+            this.x = Math.trunc(x.getValue());
+        }
+        this.y = 0;
+        if (y instanceof Float || y instanceof Double || y instanceof Int32) {
+            this.y = Math.trunc(y.getValue());
+        }
+        this.width = bitmap.getCanvas().width;
+        if (width instanceof Float || width instanceof Double || width instanceof Int32) {
+            this.width = Math.trunc(width.getValue());
+        }
+        this.height = bitmap.getCanvas().height;
+        if (height instanceof Float || height instanceof Double || height instanceof Int32) {
+            this.height = Math.trunc(height.getValue());
+        }
         this.translationX = 0;
         this.translationY = 0;
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
@@ -43,16 +57,12 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.wrap = false;
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
-        // Create new canvas
-        this.canvas = new OffscreenCanvas(this.width, this.height);
-        this.context = this.canvas.getContext("2d", {
-            alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
+        this.alphaEnable = true;
+
         if (
             this.x + this.width <= bitmap.getCanvas().width &&
             this.y + this.height <= bitmap.getCanvas().height
         ) {
-            this.redrawCanvas();
             this.valid = true;
         }
         this.registerMethods({
@@ -82,17 +92,17 @@ export class RoRegion extends BrsComponent implements BrsValue {
             ifDraw2D: [
                 this.clear,
                 this.drawObject,
-                // this.drawRotatedObject,
-                // this.drawScaledObject,
+                this.drawRotatedObject,
+                this.drawScaledObject,
                 this.drawLine,
                 this.drawPoint,
                 this.drawRect,
                 this.drawText,
-                // this.finish,
-                // this.getAlphaEnable,
+                this.finish,
+                this.getAlphaEnable,
                 this.setAlphaEnable,
-                // this.getByteArray,
-                // this.getPng,
+                this.getByteArray,
+                this.getPng,
             ],
         });
     }
@@ -107,7 +117,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         let newY = this.y + y;
         this.width += width;
         this.height += height;
-        //TODO: Check the edge cases when both positions and dimentions are changed
+        //TODO: Check the edge cases when both positions and dimensions are changed
         if (this.wrap) {
             if (newX > 0 && x !== 0) {
                 this.x = newX % bmp.width;
@@ -131,7 +141,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.y = newY;
             }
         }
-        this.redrawCanvas();
+        this.bitmap.makeDirty();
         // TODO: Check what is the effect on collision parameters
     }
 
@@ -139,29 +149,45 @@ export class RoRegion extends BrsComponent implements BrsValue {
         const ctx = this.bitmap.getContext();
         ctx.fillStyle = rgbaIntToHex(rgba);
         ctx.fillRect(this.x, this.y, this.width, this.height);
+        this.bitmap.makeDirty();
     }
 
-    drawImage(image: OffscreenCanvas, x: number, y: number) {
+    drawImage(
+        object: BrsComponent,
+        rgba: Int32 | BrsInvalid,
+        x: number,
+        y: number,
+        scaleX: number = 1,
+        scaleY: number = 1
+    ) {
+        const isDirty = drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        if (isDirty) {
+            this.bitmap.makeDirty();
+        }
+        return isDirty;
+    }
+
+    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
-        ctx.drawImage(
+        const isDirty = drawImageToContext(
+            ctx,
             image,
-            0,
-            0,
-            image.width,
-            image.height,
-            this.x + x,
-            this.y + y,
-            image.width,
-            image.height
+            this.alphaEnable,
+            x + this.getPosX(),
+            y + this.getPosY()
         );
+        if (isDirty) {
+            this.bitmap.makeDirty();
+        }
+        return isDirty;
     }
 
     getCanvas(): OffscreenCanvas {
         return this.bitmap.getCanvas();
     }
 
-    getRegionCanvas(): OffscreenCanvas {
-        return this.canvas;
+    getContext(): OffscreenCanvasRenderingContext2D {
+        return this.bitmap.getContext();
     }
 
     getRgbaCanvas(rgba: number): OffscreenCanvas {
@@ -212,120 +238,27 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     getImageData(): ImageData {
-        let ctx = this.context;
-        return ctx.getImageData(0, 0, this.width, this.height);
+        return this.bitmap.getContext().getImageData(this.x, this.y, this.width, this.height);
     }
 
-    redrawCanvas(): void {
-        // TODO: Check the impact of translate on this method
-        const bmp = this.bitmap.getCanvas();
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
-        let ctx = this.context;
-        if (
-            this.wrap &&
-            (this.x + this.width > bmp.width ||
-                this.y + this.height > bmp.height ||
-                this.x < 0 ||
-                this.y < 0)
-        ) {
-            let clippedWidth = Math.min(bmp.width - this.x, this.width);
-            let clippedHeight = Math.min(bmp.height - this.y, this.height);
-            // fill top/left part of canvas with (clipped) image.
-            ctx.drawImage(
-                bmp,
-                this.x,
-                this.y,
-                clippedWidth,
-                clippedHeight,
-                0,
-                0,
-                clippedWidth,
-                clippedHeight
-            );
-            if (clippedWidth < this.width && clippedHeight < this.height) {
-                // wrap both horizontal and vertical
-                let diffWidth = this.width - clippedWidth;
-                let diffHeight = this.height - clippedHeight;
-                ctx.drawImage(
-                    bmp,
-                    0,
-                    this.y,
-                    diffWidth,
-                    clippedHeight,
-                    clippedWidth,
-                    0,
-                    diffWidth,
-                    clippedHeight
-                );
-                ctx.drawImage(
-                    bmp,
-                    this.x,
-                    0,
-                    clippedWidth,
-                    diffHeight,
-                    0,
-                    clippedHeight,
-                    clippedWidth,
-                    diffHeight
-                );
-                ctx.drawImage(
-                    bmp,
-                    0,
-                    0,
-                    diffWidth,
-                    diffHeight,
-                    clippedWidth,
-                    clippedHeight,
-                    diffWidth,
-                    diffHeight
-                );
-            } else if (clippedWidth < this.width) {
-                // wrap horizontal
-                let diffWidth = this.width - clippedWidth;
-                ctx.drawImage(
-                    bmp,
-                    0,
-                    this.y,
-                    diffWidth,
-                    this.height,
-                    clippedWidth,
-                    0,
-                    diffWidth,
-                    this.height
-                );
-            } else if (clippedHeight < this.height) {
-                // wrap vertical
-                let diffHeight = this.height - clippedHeight;
-                ctx.drawImage(
-                    bmp,
-                    this.x,
-                    0,
-                    this.width,
-                    diffHeight,
-                    0,
-                    clippedHeight,
-                    this.width,
-                    diffHeight
-                );
-            }
-        } else {
-            ctx.drawImage(
-                bmp,
-                this.x,
-                this.y,
-                this.width,
-                this.height,
-                0,
-                0,
-                this.width,
-                this.height
-            );
-        }
+    getRegionScaleMode(): number {
+        return this.scaleMode;
+    }
+
+    getWrapValue(): boolean {
+        return this.wrap;
+    }
+
+    getAlphaEnableValue(): boolean {
+        return this.alphaEnable;
     }
 
     getAnimaTime(): number {
         return this.time;
+    }
+
+    getSourceBitmap(): RoBitmap | RoScreen {
+        return this.bitmap;
     }
 
     toString(parent?: BrsType): string {
@@ -512,6 +445,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.wrap = srcRegion.wrap;
             this.collisionCircle = srcRegion.collisionCircle;
             this.collisionRect = srcRegion.collisionRect;
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -582,6 +516,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, translationX: Int32, translationY: Int32) => {
             this.translationX = translationX.getValue();
             this.translationY = translationY.getValue();
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -594,6 +529,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, scaleMode: Int32) => {
             this.scaleMode = scaleMode.getValue();
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -618,6 +554,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, wrap: BrsBoolean) => {
             this.wrap = wrap.toBoolean();
+            this.bitmap.makeDirty();
             return BrsInvalid.Instance;
         },
     });
@@ -655,32 +592,78 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            let cvs: OffscreenCanvas;
-            if (object instanceof RoBitmap || object instanceof RoRegion) {
-                if (rgba instanceof Int32) {
-                    const alpha = rgba.getValue() & 255;
-                    if (alpha < 255) {
-                        ctx.globalAlpha = alpha / 255;
-                    }
-                    cvs = object.getRgbaCanvas(rgba.getValue());
-                } else {
-                    cvs = object.getCanvas();
-                }
-            } else {
-                return BrsBoolean.False;
-            }
-            if (object instanceof RoBitmap) {
-                this.drawImage(cvs, x.getValue(), y.getValue());
-            } else if (object instanceof RoRegion) {
-                let rcv = object.getRegionCanvas();
-                ctx.drawImage(
-                    rcv,
-                    this.x + x.getValue() + object.getTransX(),
-                    this.y + y.getValue() + object.getTransY()
-                );
-            }
+            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
             ctx.globalAlpha = 1.0;
-            return BrsBoolean.True;
+            return BrsBoolean.from(didDraw);
+        },
+    });
+
+    /** Draw the source object at position x,y rotated by angle theta degrees. */
+    private drawRotatedObject = new Callable("drawRotatedObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("theta", ValueKind.Float),
+                new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            theta: Float,
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
+        ) => {
+            const ctx = this.bitmap.getContext();
+            const positionX = x.getValue();
+            const positionY = y.getValue();
+            const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.save();
+            ctx.translate(positionX, positionY);
+            ctx.rotate(angleInRad);
+            const didDraw = this.drawImage(object, rgba, 0, 0);
+            ctx.restore();
+            return BrsBoolean.from(didDraw);
+        },
+    });
+
+    /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
+    private drawScaledObject = new Callable("drawScaledObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("scaleX", ValueKind.Float),
+                new StdlibArgument("scaleY", ValueKind.Float),
+                new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance), // TODO: add support to rgba
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            scaleX: Float,
+            scaleY: Float,
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
+        ) => {
+            const ctx = this.bitmap.getContext();
+            const didDraw = this.drawImage(
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                scaleX.getValue(),
+                scaleY.getValue()
+            );
+            ctx.globalAlpha = 1.0;
+            return BrsBoolean.from(didDraw);
         },
     });
 
@@ -706,10 +689,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
         ) => {
             let ctx = this.bitmap.getContext();
             ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue());
+            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
             ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
             ctx.stroke();
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -727,13 +711,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
             let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(
                 this.x + x.getValue(),
                 this.y + y.getValue(),
                 size.getValue(),
                 size.getValue()
             );
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -752,13 +737,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(
                 this.x + x.getValue(),
                 this.y + y.getValue(),
                 width.getValue(),
                 height.getValue()
             );
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -777,7 +763,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
             const ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue());
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(
@@ -785,18 +771,93 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.x + x.getValue(),
                 this.y + y.getValue() + font.getTopAdjust()
             );
+            this.bitmap.makeDirty();
             return BrsBoolean.True;
+        },
+    });
+
+    /** Realize the bitmap by finishing all queued draw calls. */
+    private finish = new Callable("finish", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns true if alpha blending is enabled */
+    private getAlphaEnable = new Callable("getAlphaEnable", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.alphaEnable);
         },
     });
 
     /** If enable is true, do alpha blending when this bitmap is the destination */
     private setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
-            args: [new StdlibArgument("alphaEnabled", ValueKind.Boolean)],
+            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, alphaEnabled: BrsBoolean) => {
-            return this.bitmap.setCanvasAlpha(alphaEnabled.toBoolean());
+        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
+            this.alphaEnable = alphaEnable.toBoolean();
+            return this.bitmap.setCanvasAlpha(alphaEnable.toBoolean());
+        },
+    });
+
+    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
+    private getByteArray = new Callable("getByteArray", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            let imgData = this.bitmap
+                .getContext()
+                .getImageData(
+                    x.getValue() + this.x,
+                    y.getValue() + this.y,
+                    width.getValue(),
+                    height.getValue()
+                );
+            let byteArray = new Uint8Array(imgData.data.buffer);
+            return new RoByteArray(byteArray);
+        },
+    });
+
+    /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
+    private getPng = new Callable("getPng", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            let imgData = this.bitmap
+                .getContext()
+                .getImageData(
+                    x.getValue() + this.x,
+                    y.getValue() + this.y,
+                    width.getValue(),
+                    height.getValue()
+                );
+            return new RoByteArray(
+                new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
+            );
         },
     });
 }

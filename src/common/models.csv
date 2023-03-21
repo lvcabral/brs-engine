@@ -22,10 +22,10 @@ N1101,Roku HD-XR Classic,STB,directfb,hd
 4230X,Roku 3 (US),STB,opengl,hd
 4400X,Roku 4,STB,opengl,hd
 4500SK,Sky Now TV (UK),STB,opengl,hd
-3400X,Roku Stick,STB,opengl,hd
-3420X,Roku Stick,STB,opengl,hd
-3500X,Roku Stick (HDMI),STB,opengl,hd
-3600X,Roku Stick (2016),STB,opengl,hd
+3400X,Roku Stick,STICK,opengl,hd
+3420X,Roku Stick,STICK,opengl,hd
+3500X,Roku Stick (HDMI),STICK,opengl,hd
+3600X,Roku Stick (2016),STICK,opengl,hd
 5000X,Roku TV (MIPS),TV,directfb,hd
 6000X,4K Roku TV,TV,opengl,fhd
 7000X,4K Roku TV (TCL),TV,opengl,fhd
@@ -33,14 +33,25 @@ N1101,Roku HD-XR Classic,STB,directfb,hd
 3710X,Roku Express+,STB,directfb,hd
 4620X,Roku Premiere,STB,opengl,fhd
 4630X,Roku Premiere+,STB,opengl,fhd
-4640X,Roku Ultra,STB,opengl,fhd
-3800X,Roku Stick (2017),STB,opengl,hd
-3810X,Roku Stick+,STB,opengl,fhd
+3920X,Roku Premiere (2018),STB,opengl,fhd
+3921X,Roku Premiere+ (2018),STB,opengl,fhd
+3800X,Roku Stick (2017),STICK,opengl,hd
+3810X,Roku Stick+,STICK,opengl,fhd
 3900X,Roku Express (2017),STB,opengl,hd
 3900EU,Roku Express EU (2017),STB,opengl,hd
 3910X,Roku Express+ (2017),STB,opengl,hd
+3930X,Roku Express (2019),STB,opengl,hd
+3931X,Roku Express+ (2019),STB,opengl,hd
+3940X,Roku Express 4K,STB,opengl,fhd
+3941X,Roku Express 4K+,STB,opengl,fhd
+4640X,Roku Ultra,STB,opengl,fhd
 4660X,Roku Ultra (2017),STB,opengl,fhd
 4661X,Roku Ultra (2018),STB,opengl,fhd
+4662X,Roku Ultra LT,STB,opengl,fhd
+4670X,Roku Ultra (2019),STB,opengl,fhd
+4800X,Roku Ultra (2020),STB,opengl,fhd
 8000X,Roku TV (ARM),TV,opengl,hd
-3920X,Roku Premiere (2018),STB,opengl,fhd
-3921X,Roku Premiere+ (2018),STB,opengl,fhd
+9100X,Roku Smart Soundbar,BAR,,opengl,fhd
+9102X,Roku Streambar,BAR,opengl,fhd
+A000X,Roku TV 4K,TV,opengl,fhd
+C000X,Roku TV 4K,TV,opengl,fhd

@@ -85,7 +85,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 } else {
                     this.fontRegistry.set(fontFamily, [fontMetrics]);
                 }
-            } catch (err) {
+            } catch (err: any) {
                 postMessage(`warning,Error loading font:${url.pathname} - ${err.message}`);
             }
         } else {
@@ -113,7 +113,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             const families: BrsString[] = [];
-            [...this.fontRegistry.keys()].forEach(family => {
+            [...this.fontRegistry.keys()].forEach((family) => {
                 families.push(new BrsString(family));
             });
             return new RoArray(families);
@@ -145,7 +145,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             const style = italic.toBoolean() ? "italic" : "normal";
             if (array) {
                 let metrics;
-                array.some(element => {
+                array.some((element) => {
                     if (element.weight === weight && element.style === style) {
                         metrics = element;
                         return true;
@@ -185,7 +185,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             const style = italic.toBoolean() ? "italic" : "normal";
             if (array) {
                 let metrics;
-                array.some(element => {
+                array.some((element) => {
                     if (element.weight === weight && element.style === style) {
                         metrics = element;
                         return true;

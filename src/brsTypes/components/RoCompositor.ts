@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoScreen, RoRegion } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -7,6 +7,7 @@ import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
+import { drawObjectToComponent, DrawOffset, getDimensions } from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -17,6 +18,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
+    private previousSpriteDraws: Rect[] = [];
 
     constructor() {
         super("roCompositor");
@@ -43,7 +45,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         let layer = this.sprites.get(currentZ);
         if (layer) {
             let sprite;
-            layer.some(function(element, index, object) {
+            layer.some(function (element, index, object) {
                 if (element.getId() === id) {
                     object.splice(index, 1);
                     sprite = element;
@@ -60,8 +62,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     }
 
     removeSprite(id: number, animation: boolean) {
-        this.sprites.forEach(function(layer) {
-            layer.some(function(sprite, index, object) {
+        this.sprites.forEach(function (layer) {
+            layer.some(function (sprite, index, object) {
                 if (sprite.getId() === id) {
                     object.splice(index, 1);
                     return true; // break
@@ -70,7 +72,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             });
         });
         if (animation) {
-            this.animations.some(function(sprite, index, object) {
+            this.animations.some(function (sprite, index, object) {
                 if (sprite.getId() === id) {
                     object.splice(index, 1);
                     return true; // break
@@ -78,6 +80,14 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 return false;
             });
         }
+    }
+
+    getAlphaEnableValue(): boolean {
+        return !!this.destBitmap?.getAlphaEnableValue();
+    }
+
+    getContext(): OffscreenCanvasRenderingContext2D {
+        return this.context;
     }
 
     checkCollision(source: RoSprite, multiple: boolean): BrsType {
@@ -89,7 +99,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         let collisions: RoSprite[] = [];
         collision = BrsInvalid.Instance;
         for (let [z, layer] of this.sprites) {
-            layer.some(function(target, index, object) {
+            layer.some(function (target, index, object) {
                 if (source.getId() !== target.getId()) {
                     let targetFlags = target.getFlags();
                     let targetType = target.getType();
@@ -127,29 +137,47 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return collision;
     }
 
-    drawSprites() {
+    clearPreviousSpriteDraws() {
         let ctx = this.context;
         let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        ctx.fillStyle = rgbaIntToHex(rgba);
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        if (this.destBitmap) {
-            this.destBitmap.drawImage(this.canvas, 0, 0);
-        }
-        let layers = [...this.sprites.keys()].sort((a, b) => a - b);
-        layers.forEach(z => {
-            const layer = this.sprites.get(z);
-            if (layer) {
-                layer.forEach(sprite => {
-                    if (sprite.visible()) {
-                        ctx.putImageData(sprite.getImageData(), sprite.getPosX(), sprite.getPosY());
-                        if (this.destBitmap) {
-                            this.destBitmap.drawImage(this.canvas, 0, 0);
-                        }
-                    }
-                });
+        if (rgba !== 0) {
+            // Only color over where the last drawing happened
+            ctx.fillStyle = rgbaIntToHex(rgba);
+            for (const prevDraw of this.previousSpriteDraws) {
+                ctx.fillRect(prevDraw.x, prevDraw.y, prevDraw.w, prevDraw.h);
             }
-        });
+        }
+        this.previousSpriteDraws = [];
+    }
+
+    drawSprites() {
+        let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
+        this.clearPreviousSpriteDraws();
+        if (this.destBitmap) {
+            const dimensions = getDimensions(this.canvas);
+            const drawOffset = new DrawOffset();
+            this.destBitmap.drawImageToContext(this.canvas, 0, 0);
+            let layers = [...this.sprites.keys()].sort((a, b) => a - b);
+            layers.forEach((z) => {
+                const layer = this.sprites.get(z);
+                if (layer) {
+                    layer.forEach((sprite) => {
+                        if (sprite.visible()) {
+                            drawObjectToComponent(
+                                this,
+                                sprite.getRegionObject(),
+                                BrsInvalid.Instance,
+                                sprite.getPosX(),
+                                sprite.getPosY()
+                            );
+                            this.previousSpriteDraws.push(sprite.getRect());
+                        }
+                    });
+                    this.destBitmap?.drawImageToContext(this.canvas, 0, 0);
+                }
+            });
+        }
     }
 
     toString(parent?: BrsType): string {
@@ -175,8 +203,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             rgbaBackground: Int32
         ) => {
             this.destBitmap = destBitmap;
-            this.canvas.width = destBitmap.getCanvas().width;
-            this.canvas.height = destBitmap.getCanvas().height;
+            const destDimensions = getDimensions(destBitmap);
+            this.canvas.width = destDimensions.width;
+            this.canvas.height = destDimensions.height;
             this.rgbaBackground = rgbaBackground.getValue();
             return BrsInvalid.Instance;
         },
@@ -194,11 +223,18 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
-            let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
-            let layer = this.sprites.get(z.getValue());
-            layer ? layer.push(sprite) : (layer = [sprite]);
-            this.sprites.set(z.getValue(), layer);
-            return sprite;
+            if (region instanceof RoRegion) {
+                let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
+                let layer = this.sprites.get(z.getValue());
+                layer ? layer.push(sprite) : (layer = [sprite]);
+                this.sprites.set(z.getValue(), layer);
+                return sprite;
+            } else {
+                postMessage(
+                    "warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid:"
+                ); // TODO: add location
+            }
+            return BrsInvalid.Instance;
         },
     });
 
@@ -208,19 +244,38 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
                 new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("regions", ValueKind.Object),
+                new StdlibArgument("regionArray", ValueKind.Object),
                 new StdlibArgument("z", ValueKind.Int32, new Int32(0)),
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, regions: RoArray, z: Int32) => {
-            // TODO: Verify if there is at least one RoRegion in the regions array
-            let sprite = new RoSprite(x, y, regions, z, this.spriteId++, this);
-            let layer = this.sprites.get(z.getValue());
-            layer ? layer.push(sprite) : (layer = [sprite]);
-            this.sprites.set(z.getValue(), layer);
-            this.animations.push(sprite);
-            return sprite;
+        impl: (_: Interpreter, x: Int32, y: Int32, regionArray: RoArray, z: Int32) => {
+            if (regionArray instanceof RoArray) {
+                const regions = regionArray.getElements();
+                if (regions && regions.length > 0) {
+                    if (regions[0] instanceof RoRegion) {
+                        let sprite = new RoSprite(x, y, regionArray, z, this.spriteId++, this);
+                        let layer = this.sprites.get(z.getValue());
+                        layer ? layer.push(sprite) : (layer = [sprite]);
+                        this.sprites.set(z.getValue(), layer);
+                        this.animations.push(sprite);
+                        return sprite;
+                    } else {
+                        postMessage(
+                            "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray item type is roInvalid:"
+                        ); // TODO: add location
+                    }
+                } else {
+                    postMessage(
+                        "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray is empty:"
+                    ); // TODO: add location
+                }
+            } else {
+                postMessage(
+                    "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray parameter type roInvalid:"
+                ); // TODO: add location
+            }
+            return BrsInvalid.Instance;
         },
     });
 
@@ -231,7 +286,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, duration: Int32) => {
-            this.animations.forEach(sprite => {
+            this.animations.forEach((sprite) => {
                 sprite.nextFrame(duration.getValue());
             });
             return BrsInvalid.Instance;
@@ -288,8 +343,8 @@ function RectRect(rect1: Rect, rect2: Rect): boolean {
 // return true if the rectangle and circle are colliding
 // from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
 function RectCircle(rect: Rect, circle: Circle): boolean {
-    var distX = Math.abs(circle.x - rect.x - rect.w / 2);
-    var distY = Math.abs(circle.y - rect.y - rect.h / 2);
+    const distX = Math.abs(circle.x - rect.x - rect.w / 2);
+    const distY = Math.abs(circle.y - rect.y - rect.h / 2);
 
     if (distX > rect.w / 2 + circle.r) {
         return false;
@@ -305,15 +360,15 @@ function RectCircle(rect: Rect, circle: Circle): boolean {
         return true;
     }
 
-    var dx = distX - rect.w / 2;
-    var dy = distY - rect.h / 2;
+    const dx = distX - rect.w / 2;
+    const dy = distY - rect.h / 2;
     return dx * dx + dy * dy <= circle.r * circle.r;
 }
 
 // ported from: https://github.com/Romans-I-XVI/monoEngine/blob/master/MonoEngine/CollisionChecking.cs
 function CircleCircle(circle1: Circle, circle2: Circle): boolean {
-    let distanceX = circle1.x - circle2.x;
-    let distanceY = circle1.y - circle2.y;
-    var dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    const distanceX = circle1.x - circle2.x;
+    const distanceY = circle1.y - circle2.y;
+    const dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
     return dist <= circle1.r + circle2.r;
 }

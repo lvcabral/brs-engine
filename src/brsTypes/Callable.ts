@@ -140,6 +140,8 @@ export class Callable implements Brs.BrsValue {
     /** The signature of this callable within the BrightScript runtime. */
     readonly signatures: SignatureAndImplementation[];
 
+    private _location: Location | undefined;
+
     /**
      * Calls the function this `Callable` represents with the provided `arg`uments using the
      * provided `Interpreter` instance.
@@ -162,7 +164,7 @@ export class Callable implements Brs.BrsValue {
 
         let mutableArgs = args.slice();
 
-        return interpreter.inSubEnv(subInterpreter => {
+        return interpreter.inSubEnv((subInterpreter) => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
             signature.args.forEach((param, index) => {
@@ -217,14 +219,22 @@ export class Callable implements Brs.BrsValue {
         return this.name || "";
     }
 
+    setLocation(location: Location) {
+        this._location = location;
+    }
+
+    getLocation() {
+        return this._location;
+    }
+
     getFirstSatisfiedSignature(args: Brs.BrsType[]): SignatureAndImplementation | undefined {
         return this.signatures.filter(
-            sigAndImpl => this.getSignatureMismatches(sigAndImpl.signature, args).length === 0
+            (sigAndImpl) => this.getSignatureMismatches(sigAndImpl.signature, args).length === 0
         )[0];
     }
 
     getAllSignatureMismatches(args: Brs.BrsType[]): SignatureAndMismatches[] {
-        return this.signatures.map(sigAndImpl => ({
+        return this.signatures.map((sigAndImpl) => ({
             signature: sigAndImpl.signature,
             mismatches: this.getSignatureMismatches(sigAndImpl.signature, args),
         }));
@@ -232,7 +242,7 @@ export class Callable implements Brs.BrsValue {
 
     private getSignatureMismatches(sig: Signature, args: Brs.BrsType[]): SignatureMismatch[] {
         let reasons: SignatureMismatch[] = [];
-        let requiredArgCount = sig.args.filter(arg => !arg.defaultValue).length;
+        let requiredArgCount = sig.args.filter((arg) => !arg.defaultValue).length;
 
         if (args.length < requiredArgCount) {
             reasons.push({
@@ -276,6 +286,14 @@ export class Callable implements Brs.BrsValue {
             }
 
             if (
+                expected.type.kind === Brs.ValueKind.Int32 &&
+                received.kind === Brs.ValueKind.Double
+            ) {
+                args[index] = new Int32(received.getValue());
+                return;
+            }
+
+            if (
                 expected.type.kind === Brs.ValueKind.Double &&
                 received.kind === Brs.ValueKind.Float
             ) {
@@ -284,8 +302,32 @@ export class Callable implements Brs.BrsValue {
             }
 
             if (
+                expected.type.kind === Brs.ValueKind.Float &&
+                received.kind === Brs.ValueKind.Double
+            ) {
+                args[index] = new Float(received.getValue());
+                return;
+            }
+
+            if (
                 expected.type.kind === Brs.ValueKind.Int64 &&
                 received.kind === Brs.ValueKind.Int32
+            ) {
+                args[index] = new Int64(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int64 &&
+                received.kind === Brs.ValueKind.Float
+            ) {
+                args[index] = new Int64(received.getValue());
+                return;
+            }
+
+            if (
+                expected.type.kind === Brs.ValueKind.Int64 &&
+                received.kind === Brs.ValueKind.Double
             ) {
                 args[index] = new Int64(received.getValue());
                 return;

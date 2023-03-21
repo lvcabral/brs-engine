@@ -35,8 +35,8 @@ export class Preprocessor {
 
     constructor() {
         // plumb errors from the internal parser and preprocessor out to the public interface for convenience
-        this.parser.events.on("err", err => this.events.emit("err", err));
-        this._preprocessor.events.on("err", err => this.events.emit("err", err));
+        this.parser.events.on("err", (err) => this.events.emit("err", err));
+        this._preprocessor.events.on("err", (err) => this.events.emit("err", err));
     }
 
     /**

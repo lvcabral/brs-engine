@@ -20,7 +20,7 @@ describe("end to end iterables", () => {
     test("arrays.brs", async () => {
         await execute([resourceFile("arrays.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             "1",
             "4",
             "9", // squared values, via for-each
@@ -33,11 +33,11 @@ describe("end to end iterables", () => {
     test("associative-arrays.brs", async () => {
         await execute([resourceFile("associative-arrays.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter(arg => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
             // iterate through keys
             "has-second-layer",
             "level",
-            "secondlayer",
+            "secondLayer",
 
             // twoDimensional.secondLayer.level
             "2",

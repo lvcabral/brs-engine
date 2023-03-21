@@ -68,7 +68,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             let devId = interpreter.deviceInfo.get("developerId");
             let keys = keysArray.getElements() as BrsString[];
             let result = new RoAssociativeArray([]);
-            keys.forEach(key => {
+            keys.forEach((key) => {
                 let fullKey = `${devId}.${this.section}.${key.value}`;
                 let value = interpreter.registry.get(fullKey);
                 if (value) {
@@ -106,7 +106,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, roAA: RoAssociativeArray) => {
             let elements = roAA.getElements();
             let devSection = `${this.devId}.${this.section}.`;
-            elements.forEach(function(value, key) {
+            elements.forEach(function (value, key) {
                 interpreter.registry.set(`${devSection}${key}`, value.value);
             });
             return BrsBoolean.True;
@@ -160,10 +160,10 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             let keys = new Array<BrsString>();
-            [...interpreter.registry.keys()].forEach(key => {
+            [...interpreter.registry.keys()].forEach((key) => {
                 let regSection = this.devId + "." + this.section;
-                if (key.substr(0, regSection.length) === regSection) {
-                    keys.push(new BrsString(key.substr(regSection.length + 1)));
+                if (key.slice(0, regSection.length) === regSection) {
+                    keys.push(new BrsString(key.slice(regSection.length + 1)));
                 }
             });
             return new RoList(keys);

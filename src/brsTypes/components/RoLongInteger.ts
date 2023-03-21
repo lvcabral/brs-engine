@@ -1,10 +1,10 @@
 import { BrsComponent } from "./BrsComponent";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
-import { Interpreter } from "../../interpreter";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
+import { vsprintf } from "sprintf-js";
 
 export class roLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -49,7 +49,7 @@ export class roLongInteger extends BrsComponent implements BrsValue, Unboxable {
             args: [],
             returns: ValueKind.Int64,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_interpreter) => {
             return this.intrinsic;
         },
     });
@@ -69,10 +69,22 @@ export class roLongInteger extends BrsComponent implements BrsValue, Unboxable {
 
     private toStr = new Callable("toStr", {
         signature: {
-            args: [],
+            args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_interpreter, format: BrsString) => {
+            if (format instanceof BrsString) {
+                const tokens = format.value.split("%").length - 1;
+                if (tokens === 0) {
+                    return new BrsString(format.value);
+                }
+                const params = Array(tokens).fill(this.intrinsic.getValue());
+                try {
+                    return new BrsString(vsprintf(format.value, params));
+                } catch (error: any) {
+                    throw new Error("Invalid Format Specifier (runtime error &h24)");
+                }
+            }
             return new BrsString(this.intrinsic.toString());
         },
     });

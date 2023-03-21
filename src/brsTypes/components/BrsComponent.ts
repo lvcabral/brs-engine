@@ -29,7 +29,7 @@ export class BrsComponent {
                 new BrsInterface(interfaceName, methods)
             );
 
-            methods.forEach(m => this.methods.set((m.name || "").toLowerCase(), m));
+            methods.forEach((m) => this.methods.set((m.name || "").toLowerCase(), m));
         });
     }
 
@@ -49,9 +49,10 @@ export interface BrsIterable {
     /**
      * Retrieves an element from this component at the provided `index`.
      * @param index the index in this component from which to retrieve the desired element.
+     * @param isCaseSensitive determinate whether operation of getting should be case sensitive or not.
      * @returns the element at `index` if one exists, otherwise throws an Error.
      */
-    get(index: BrsType): BrsType;
+    get(index: BrsType, isCaseSensitive?: boolean): BrsType;
 
-    set(index: BrsType, value: BrsType): BrsInvalid;
+    set(index: BrsType, value: BrsType, isCaseSensitive?: boolean): BrsInvalid;
 }
