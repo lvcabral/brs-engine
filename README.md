@@ -1,6 +1,6 @@
 # BRS-EMU: BrightScript Emulator
 
-An emulator for the Roku BrightScript language that runs on Firefox or Chrome browsers and Electron applications.
+An emulator for the Roku BrightScript language that runs on modern browsers and Electron applications.
 
 [![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
 
@@ -33,7 +33,7 @@ Note: The **BrightScript Emulator** is a full client-side library, nothing needs
 If you just want to use the emulator, not installing or downloading anything, try the applications below:
 
 * BrightScript TV - Run full emulated games and channels in your browser: https://lvcabral.com/brs
-* brsFiddle - BrightScript playground to test and share code with others: https://brsFiddle.net
+* brsFiddle - BrightScript playground to test and share code with others: http://brsFiddle.net
 
 ### Desktop Application
 
