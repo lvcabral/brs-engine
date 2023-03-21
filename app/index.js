@@ -185,7 +185,7 @@ function parseVersionString(str) {
     if (typeof str != "string") {
         return {};
     }
-    var vArray = str.split(".");
+    const vArray = str.split(".");
     return {
         major: parseInt(vArray[0]) || 0,
         minor: parseInt(vArray[1]) || 0,

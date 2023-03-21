@@ -159,22 +159,23 @@ export function drawIconAsSplash(imgData: ImageBitmap) {
     }
 }
 
+// Update Buffer Image
+export function updateBuffer(buffer: ImageData) {
+    if (bufferCtx) {
+        if (bufferCanvas.width !== buffer.width || bufferCanvas.height !== buffer.height) {
+            notifyAll("resolution", { width: buffer.width, height: buffer.height });
+            bufferCanvas.width = buffer.width;
+            bufferCanvas.height = buffer.height;
+        }
+        bufferCtx.putImageData(buffer, 0, 0);
+        drawBufferImage();
+    }
+}
+
 // Draw Buffer Image to the Display Canvas
-export function drawBufferImage(buffer?: any) {
+function drawBufferImage() {
     if (ctx) {
-        if (showStats) {
-            statsCanvas.end();
-        }
-        if (buffer) {
-            if (bufferCanvas.width !== buffer.width || bufferCanvas.height !== buffer.height) {
-                notifyAll("resolution", { width: buffer.width, height: buffer.height });
-                bufferCanvas.width = buffer.width;
-                bufferCanvas.height = buffer.height;
-            }
-            if (bufferCtx) {
-                bufferCtx.putImageData(buffer, 0, 0);
-            }
-        }
+        statsUpdate(false);
         let overscan = 0.04;
         if (overscanMode === "overscan") {
             let x = Math.round(bufferCanvas.width * overscan);
@@ -195,8 +196,15 @@ export function drawBufferImage(buffer?: any) {
                 ctx.strokeRect(x, y, w, h);
             }
         }
-        if (showStats) {
+        statsUpdate(true);
+    }
+}
+function statsUpdate(start: boolean) {
+    if (showStats) {
+        if (start)  {
             statsCanvas.begin();
+        } else {
+            statsCanvas.end();
         }
     }
 }

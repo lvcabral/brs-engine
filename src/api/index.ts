@@ -20,7 +20,7 @@ import {
 import {
     subscribeDisplay,
     initDisplayModule,
-    drawBufferImage,
+    updateBuffer,
     drawSplashScreen,
     showDisplay,
     redrawDisplay,
@@ -593,7 +593,7 @@ function runChannel() {
 // Receive Messages from the Interpreter (Web Worker)
 function workerCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
-        drawBufferImage(event.data);
+        updateBuffer(event.data);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
         deviceData.registry.forEach(function (value: string, key: string) {
