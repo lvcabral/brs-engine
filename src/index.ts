@@ -279,13 +279,13 @@ function run(
         }
         allStatements.push(...parseResults.statements);
     });
-    lib.forEach((value:string, key:string) => {
+    lib.forEach((value: string, key: string) => {
         if (value !== "") {
             const libScan = lexer.scan(value, key);
             const libParse = parser.parse(libScan.tokens);
             allStatements.push(...libParse.statements);
         }
-    })
+    });
     try {
         interpreter.exec(allStatements, aa);
         return "EXIT_USER_NAV";
