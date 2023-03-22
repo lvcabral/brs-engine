@@ -3,6 +3,7 @@
 An emulator for the Roku BrightScript language that runs on modern browsers and Electron applications.
 
 [![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
+[![Build](https://github.com/lvcabral/brs-emu/actions/workflows/webpack.yml/badge.svg)](https://github.com/lvcabral/brs-emu/actions/workflows/webpack.yml)
 
 ## The Library
 
