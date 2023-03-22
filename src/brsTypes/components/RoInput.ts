@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoMessagePort } from "..";
 import { Callable, StdlibArgument } from "../Callable";

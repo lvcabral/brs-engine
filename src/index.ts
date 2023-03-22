@@ -250,10 +250,10 @@ function run(
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
-    const lib = new Map<string, boolean>();
-    lib.set("v30/bslDefender.brs", false);
-    lib.set("v30/bslCore.brs", false);
-    lib.set("Roku_Ads.brs", false);
+    const lib = new Map<string, string>();
+    lib.set("v30/bslDefender.brs", "");
+    lib.set("v30/bslCore.brs", "");
+    lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
     source.forEach(function (code, path) {
@@ -269,32 +269,23 @@ function run(
             return;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-            lib.set("v30/bslDefender.brs", true);
-            lib.set("v30/bslCore.brs", true);
-        }
-        if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-            lib.set("v30/bslCore.brs", true);
+            lib.set("v30/bslDefender.brs", bslDefender);
+            lib.set("v30/bslCore.brs", bslCore);
+        } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
+            lib.set("v30/bslCore.brs", bslCore);
         }
         if (parseResults.libraries.get("Roku_Ads.brs") === true) {
-            lib.set("Roku_Ads.brs", true);
+            lib.set("Roku_Ads.brs", Roku_Ads);
         }
         allStatements.push(...parseResults.statements);
     });
-    if (lib.get("v30/bslDefender.brs") === true) {
-        const libScan = lexer.scan(bslDefender, "v30/bslDefender.brs");
-        const libParse = parser.parse(libScan.tokens);
-        allStatements.push(...libParse.statements);
-    }
-    if (lib.get("v30/bslCore.brs") === true) {
-        const libScan = lexer.scan(bslCore, "v30/bslCore.brs");
-        const libParse = parser.parse(libScan.tokens);
-        allStatements.push(...libParse.statements);
-    }
-    if (lib.get("Roku_Ads.brs") === true) {
-        const libScan = lexer.scan(Roku_Ads, "Roku_Ads.brs");
-        const libParse = parser.parse(libScan.tokens);
-        allStatements.push(...libParse.statements);
-    }
+    lib.forEach((value: string, key: string) => {
+        if (value !== "") {
+            const libScan = lexer.scan(value, key);
+            const libParse = parser.parse(libScan.tokens);
+            allStatements.push(...libParse.statements);
+        }
+    });
     try {
         interpreter.exec(allStatements, aa);
         return "EXIT_USER_NAV";

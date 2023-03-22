@@ -22,6 +22,7 @@ import {
     Float,
     Double,
     RoXMLElement,
+    isNumberKind,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -1694,25 +1695,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
-        if (fromKind === ValueKind.Float && toKind === ValueKind.Double) {
-            return true;
-        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int32) {
-            return true;
-        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int64) {
-            return true;
-        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Float) {
-            return true;
-        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int32) {
-            return true;
-        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int64) {
-            return true;
-        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Float) {
-            return true;
-        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Double) {
-            return true;
-        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Int64) {
-            return true;
-        }
-        return false;
+        return isNumberKind(fromKind) && isNumberKind(toKind);
     }
 }
