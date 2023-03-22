@@ -152,11 +152,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     }
 
     drawSprites() {
-        let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
         this.clearPreviousSpriteDraws();
         if (this.destBitmap) {
-            const dimensions = getDimensions(this.canvas);
-            const drawOffset = new DrawOffset();
             this.destBitmap.drawImageToContext(this.canvas, 0, 0);
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
             layers.forEach((z) => {

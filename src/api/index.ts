@@ -402,7 +402,6 @@ function openChannelZip(f: any) {
                     console.error(msg);
                     currentChannel.running = false;
                     notifyAll("error", msg);
-                    return;
                 });
             } else {
                 const msg = "[api] Invalid Channel Package: missing manifest.";
