@@ -33,7 +33,6 @@ The only pre-requisites are:
 
 | Event      | Description                                      | Data Type                         |
 |------------|--------------------------------------------------|-----------------------------------|
-| version    | Triggered during the initialization of the emulator. | string: The version of the worker library.                        |
 | loaded     | Triggered when the source code data has finished loading | object: `{id: string, file: string, title: string, subtitle: string, version: string, running: boolean}`|
 | icon       | Triggered when the zip file is loaded and manifest links to a valid icon for the channel | base64: A base64 string of the channel icon, extracted from the zip file. |
 | started    | Triggered when the emulator started running the source code | object: `{id: string, file: string, title: string, subtitle: string, version: string, running: boolean}` |
