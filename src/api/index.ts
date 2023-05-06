@@ -124,7 +124,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
-        if (key && key.startsWith(deviceData.developerId)) {
+        if (key?.startsWith(deviceData.developerId)) {
             deviceData.registry.set(key, storage.getItem(key));
         }
     }
