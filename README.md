@@ -2,8 +2,11 @@
 
 An emulator for the Roku BrightScript language that runs on modern browsers and Electron applications.
 
+![GitHub](https://img.shields.io/github/license/lvcabral/brs-emu)
 [![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
 [![Build](https://github.com/lvcabral/brs-emu/actions/workflows/webpack.yml/badge.svg)](https://github.com/lvcabral/brs-emu/actions/workflows/webpack.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 
 ## The Library
 
@@ -25,7 +28,7 @@ It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/do
 1. [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/) and [Edge](https://www.microsoft.com/en-us/edge).
 1. [Electron](https://electronjs.org/) applications.
 1. [Firefox](https://firefox.com), version 105 or higher.
-1. [Safari](https://www.apple.com/safari/) (soon), version [16.4 Beta](https://developer.apple.com/safari/resources/) already supported. 
+1. [Safari](https://www.apple.com/safari/), version 16.4 or higher. 
 
 Note: The **BrightScript Emulator** is a full client-side library, nothing needs to be sent or processed in the server side.
 
