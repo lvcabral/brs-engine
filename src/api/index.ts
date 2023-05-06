@@ -31,7 +31,7 @@ import {
     showPerfStats,
     drawIconAsSplash,
 } from "./display";
-import { subscribeControl, initControlModule, enableControl, sendKey } from "./control";
+import { subscribeControl, initControlModule, enableControl, sendKey, addControlKeys } from "./control";
 import {
     initSoundModule,
     addSound,
@@ -124,7 +124,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
-        if (key && key.slice(0, deviceData.developerId.length) === deviceData.developerId) {
+        if (key?.startsWith(deviceData.developerId)) {
             deviceData.registry.set(key, storage.getItem(key));
         }
     }
@@ -263,6 +263,9 @@ export function setAudioMute(mute: boolean) {
 }
 
 // Remote Control API
+export function setCustomKeys(keys: Map<string, string>) {
+    addControlKeys(keys);
+}
 export function sendKeyDown(key: string) {
     sendKey(key, 0);
 }
@@ -383,88 +386,26 @@ function openSourceCode(fileName: string, fileData: any) {
 }
 
 // Decompress Zip and execute
+let currentZip: JSZip;
+let assetPaths: any[];
+let assetsEvents: any[];
+let binId: number;
+let txtId: number;
+let srcId: number;
+let audId: number;
+
 function openChannelZip(f: any) {
     JSZip.loadAsync(f).then(
         function (zip) {
+            currentZip = zip;
             const manifest = zip.file("manifest");
             if (manifest) {
-                manifest.async("string").then(
-                    function success(content: string) {
-                        manifestMap.clear();
-                        const manifestLines = content.match(/[^\r\n]+/g) ?? [];
-                        manifestLines.map(function (ln: string) {
-                            const line: string[] = ln.split("=");
-                            manifestMap.set(line[0].toLowerCase(), line[1]);
-                        });
-                        currentChannel.title = manifestMap.get("title") || "No Title";
-                        currentChannel.subtitle = manifestMap.get("subtitle") || "";
-                        const majorVersion = parseInt(manifestMap.get("major_version")) || 0;
-                        const minorVersion = parseInt(manifestMap.get("minor_version")) || 0;
-                        const buildVersion = parseInt(manifestMap.get("build_version")) || 0;
-                        currentChannel.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
-                        const splashMinTime = manifestMap.get("splash_min_time");
-                        splashTimeout = defaultSplashTime;
-                        if (splashMinTime && !isNaN(parseInt(splashMinTime))) {
-                            splashTimeout = parseInt(splashMinTime);
-                        }
-                        let splash;
-                        if (deviceData.displayMode === "480p") {
-                            splash = manifestMap.get("splash_screen_sd");
-                            if (!splash) {
-                                splash = manifestMap.get("splash_screen_hd");
-                                if (!splash) {
-                                    splash = manifestMap.get("splash_screen_fhd");
-                                }
-                            }
-                        } else {
-                            splash = manifestMap.get("splash_screen_hd");
-                            if (!splash) {
-                                splash = manifestMap.get("splash_screen_fhd");
-                                if (!splash) {
-                                    splash = manifestMap.get("splash_screen_sd");
-                                }
-                            }
-                        }
-                        let icon = manifestMap.get("mm_icon_focus_hd");
-                        if (!icon) {
-                            icon = manifestMap.get("mm_icon_focus_fhd");
-                            if (!icon) {
-                                icon = manifestMap.get("mm_icon_focus_sd");
-                            }
-                        }
-                        let iconFile;
-                        if (icon && icon.slice(0, 5) === "pkg:/") {
-                            iconFile = zip.file(icon.slice(5));
-                            if (iconFile) {
-                                iconFile.async("base64").then((content) => {
-                                    notifyAll("icon", content);
-                                });
-                            }
-                        }
-                        // Display Splash or Icon
-                        clearDisplay();
-                        if (splash && splash.slice(0, 5) === "pkg:/") {
-                            const splashFile = zip.file(splash.slice(5));
-                            if (splashFile) {
-                                splashFile.async("blob").then((blob) => {
-                                    createImageBitmap(blob).then(drawSplashScreen);
-                                });
-                            }
-                        } else if (iconFile) {
-                            iconFile.async("blob").then((blob) => {
-                                createImageBitmap(blob).then(drawIconAsSplash);
-                            });
-                        }
-                        notifyAll("loaded", currentChannel);
-                    },
-                    function error(e) {
-                        const msg = `[api] Error uncompressing manifest: ${e.message}`;
-                        console.error(msg);
-                        currentChannel.running = false;
-                        notifyAll("error", msg);
-                        return;
-                    }
-                );
+                manifest.async("string").then(processManifest, function error(e) {
+                    const msg = `[api] Error uncompressing manifest: ${e.message}`;
+                    console.error(msg);
+                    currentChannel.running = false;
+                    notifyAll("error", msg);
+                });
             } else {
                 const msg = "[api] Invalid Channel Package: missing manifest.";
                 console.error(msg);
@@ -472,54 +413,13 @@ function openChannelZip(f: any) {
                 notifyAll("error", msg);
                 return;
             }
-            let assetPaths: any[] = [];
-            let assetsEvents: any[] = [];
-            let binId: number = 0;
-            let txtId: number = 0;
-            let srcId: number = 0;
-            let audId: number = 0;
-            zip.forEach(function (relativePath: string, zipEntry: JSZip.JSZipObject) {
-                const lcasePath: string = relativePath.toLowerCase();
-                const ext = lcasePath.split(".").pop();
-                if (!zipEntry.dir && lcasePath.slice(0, 6) === "source" && ext === "brs") {
-                    assetPaths.push({ url: relativePath, id: srcId, type: "source" });
-                    assetsEvents.push(zipEntry.async("string"));
-                    srcId++;
-                } else if (
-                    !zipEntry.dir &&
-                    (lcasePath === "manifest" ||
-                        ext === "csv" ||
-                        ext === "xml" ||
-                        ext === "json" ||
-                        ext === "txt" ||
-                        ext === "ts")
-                ) {
-                    assetPaths.push({ url: relativePath, id: txtId, type: "text" });
-                    assetsEvents.push(zipEntry.async("string"));
-                    txtId++;
-                } else if (
-                    !zipEntry.dir &&
-                    (ext === "wav" ||
-                        ext === "mp2" ||
-                        ext === "mp3" ||
-                        ext === "mp4" ||
-                        ext === "m4a" ||
-                        ext === "aac" ||
-                        ext === "ogg" ||
-                        ext === "oga" ||
-                        ext === "ac3" ||
-                        ext === "wma" ||
-                        ext === "flac")
-                ) {
-                    assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
-                    assetsEvents.push(zipEntry.async("blob"));
-                    audId++;
-                } else if (!zipEntry.dir) {
-                    assetPaths.push({ url: relativePath, id: binId, type: "binary" });
-                    assetsEvents.push(zipEntry.async("arraybuffer"));
-                    binId++;
-                }
-            });
+            assetPaths = [];
+            assetsEvents = [];
+            binId = 0;
+            txtId = 0;
+            srcId = 0;
+            audId = 0;
+            zip.forEach(processFile);
             Promise.all(assetsEvents).then(
                 function success(assets) {
                     paths = [];
@@ -557,6 +457,99 @@ function openChannelZip(f: any) {
             currentChannel.running = false;
         }
     );
+}
+
+function processFile(relativePath: string, zipEntry: JSZip.JSZipObject) {
+    const lcasePath: string = relativePath.toLowerCase();
+    const ext = lcasePath.split(".").pop();
+    if (!zipEntry.dir && lcasePath.startsWith("source") && ext === "brs") {
+        assetPaths.push({ url: relativePath, id: srcId, type: "source" });
+        assetsEvents.push(zipEntry.async("string"));
+        srcId++;
+    } else if (
+        !zipEntry.dir &&
+        (lcasePath === "manifest" ||
+            ext === "csv" ||
+            ext === "xml" ||
+            ext === "json" ||
+            ext === "txt" ||
+            ext === "ts")
+    ) {
+        assetPaths.push({ url: relativePath, id: txtId, type: "text" });
+        assetsEvents.push(zipEntry.async("string"));
+        txtId++;
+    } else if (
+        !zipEntry.dir &&
+        (ext === "wav" ||
+            ext === "mp2" ||
+            ext === "mp3" ||
+            ext === "mp4" ||
+            ext === "m4a" ||
+            ext === "aac" ||
+            ext === "ogg" ||
+            ext === "oga" ||
+            ext === "ac3" ||
+            ext === "wma" ||
+            ext === "flac")
+    ) {
+        assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
+        assetsEvents.push(zipEntry.async("blob"));
+        audId++;
+    } else if (!zipEntry.dir) {
+        assetPaths.push({ url: relativePath, id: binId, type: "binary" });
+        assetsEvents.push(zipEntry.async("arraybuffer"));
+        binId++;
+    }
+}
+
+function processManifest(content: string) {
+    manifestMap.clear();
+
+    content.split(/\r?\n/).forEach((line: string) => {
+        const [key, value] = line.split("=");
+        manifestMap.set(key.toLowerCase(), value);
+    });
+
+    currentChannel.title = manifestMap.get("title") || "No Title";
+    currentChannel.subtitle = manifestMap.get("subtitle") || "";
+
+    const majorVersion = parseInt(manifestMap.get("major_version")) || 0;
+    const minorVersion = parseInt(manifestMap.get("minor_version")) || 0;
+    const buildVersion = parseInt(manifestMap.get("build_version")) || 0;
+    currentChannel.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
+
+    const splashMinTime = parseInt(manifestMap.get("splash_min_time") || "");
+    splashTimeout = isNaN(splashMinTime) ? defaultSplashTime : splashMinTime;
+
+    const splashKeys = ["splash_screen_sd", "splash_screen_hd", "splash_screen_fhd"];
+    const iconKeys = ["mm_icon_focus_sd", "mm_icon_focus_hd", "mm_icon_focus_fhd"];
+    if (deviceData.displayMode !== "480p") {
+        splashKeys.push(splashKeys.shift() || "");
+        iconKeys.push(iconKeys.shift() || "");
+    }
+    const splash = manifestMap.get(splashKeys.find((key) => manifestMap.has(key)));
+    const icon = manifestMap.get(iconKeys.find((key) => manifestMap.has(key)));
+
+    let iconFile;
+    if (icon && icon.slice(0, 5) === "pkg:/") {
+        iconFile = currentZip.file(icon.slice(5));
+        iconFile?.async("base64").then((content: any) => {
+            notifyAll("icon", content);
+        });
+    }
+    // Display Splash or Icon
+    clearDisplay();
+    if (splash && splash.slice(0, 5) === "pkg:/") {
+        const splashFile = currentZip.file(splash.slice(5));
+        splashFile?.async("blob").then((blob: any) => {
+            createImageBitmap(blob).then(drawSplashScreen);
+        });
+    } else {
+        iconFile?.async("blob").then((blob: any) => {
+            createImageBitmap(blob).then(drawIconAsSplash);
+        });
+    }
+    notifyAll("loaded", currentChannel);
 }
 
 // Execute Emulator Web Worker

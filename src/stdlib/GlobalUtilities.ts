@@ -75,32 +75,33 @@ export const GetInterface = new Callable("GetInterface", {
         returns: ValueKind.Dynamic,
     },
     impl: (interpreter: Interpreter, object: BrsType, ifname: BrsString) => {
-        if (object instanceof BrsComponent) {
-            if (object.interfaces.has(ifname.value.toLowerCase())) {
-                return object;
-            }
-        } else {
-            if (ifname.value.toLowerCase() === "ifstring" && object instanceof BrsString) {
-                return new RoString(object);
-            } else if (ifname.value.toLowerCase() === "ifboolean" && object instanceof BrsBoolean) {
-                return new roBoolean(object);
-            } else if (ifname.value.toLowerCase() === "ifint" && object instanceof Int32) {
-                return new roInt(object);
-            } else if (ifname.value.toLowerCase() === "iffloat" && object instanceof Float) {
-                return new roFloat(object);
-            } else if (ifname.value.toLowerCase() === "ifdouble" && object instanceof Double) {
-                return new roDouble(object);
-            } else if (
-                ifname.value.toLowerCase() === "iftostr" &&
-                (object instanceof BrsString ||
+        if (object instanceof BrsComponent && object.interfaces.has(ifname.value.toLowerCase())) {
+            return object;
+        }
+        const lowerIfname = ifname.value.toLowerCase();
+        switch (lowerIfname) {
+            case "ifstring":
+                return object instanceof BrsString ? new RoString(object) : BrsInvalid.Instance;
+            case "ifboolean":
+                return object instanceof BrsBoolean ? new roBoolean(object) : BrsInvalid.Instance;
+            case "ifint":
+                return object instanceof Int32 ? new roInt(object) : BrsInvalid.Instance;
+            case "iffloat":
+                return object instanceof Float ? new roFloat(object) : BrsInvalid.Instance;
+            case "ifdouble":
+                return object instanceof Double ? new roDouble(object) : BrsInvalid.Instance;
+            case "iftostr":
+                if (
+                    object instanceof BrsString ||
                     object instanceof BrsBoolean ||
                     object instanceof Int32 ||
                     object instanceof Int64 ||
                     object instanceof Float ||
-                    object instanceof Double)
-            ) {
-                return object;
-            }
+                    object instanceof Double
+                ) {
+                    return object;
+                }
+                break;
         }
         return BrsInvalid.Instance;
     },

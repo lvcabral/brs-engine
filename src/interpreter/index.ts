@@ -22,6 +22,7 @@ import {
     Float,
     Double,
     RoXMLElement,
+    isNumberKind,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -132,7 +133,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 return !!func.name;
             })
             .forEach((func: Callable) =>
-                this._environment.define(Scope.Global, func.name || "", func)
+                this._environment.define(Scope.Global, func.name ?? "", func)
             );
     }
 
@@ -237,7 +238,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
-                results = [err.value || BrsInvalid.Instance];
+                results = [err.value ?? BrsInvalid.Instance];
             } else if (!(err instanceof BrsError)) {
                 // Swallow BrsErrors, because they should have been exposed to the user downstream.
                 throw err;
@@ -1125,7 +1126,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
 
-                return returnedValue || BrsInvalid.Instance;
+                return returnedValue ?? BrsInvalid.Instance;
             }
         } else {
             function formatMismatch(mismatchedSignature: SignatureAndMismatches) {
@@ -1220,7 +1221,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let boxedSource = isBoxable(source) ? source.box() : source;
         if (boxedSource instanceof BrsComponent) {
             try {
-                return boxedSource.getMethod(expression.name.text) || BrsInvalid.Instance;
+                return boxedSource.getMethod(expression.name.text) ?? BrsInvalid.Instance;
             } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
@@ -1694,25 +1695,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
-        if (fromKind === ValueKind.Float && toKind === ValueKind.Double) {
-            return true;
-        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int32) {
-            return true;
-        } else if (fromKind === ValueKind.Float && toKind === ValueKind.Int64) {
-            return true;
-        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Float) {
-            return true;
-        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int32) {
-            return true;
-        } else if (fromKind === ValueKind.Double && toKind === ValueKind.Int64) {
-            return true;
-        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Float) {
-            return true;
-        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Double) {
-            return true;
-        } else if (fromKind === ValueKind.Int32 && toKind === ValueKind.Int64) {
-            return true;
-        }
-        return false;
+        return isNumberKind(fromKind) && isNumberKind(toKind);
     }
 }
