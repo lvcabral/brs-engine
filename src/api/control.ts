@@ -76,15 +76,18 @@ let disableKeys: boolean = false;
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
     if (options.customKeys instanceof Map) {
-        options.customKeys.forEach(function (value: string, key: string) {
-            key = key.replace(/Windows|Command/gi, "Meta");
-            key = key.replace("Option", "Alt");
-            keysMap.set(key, value);
-        });
+        addControlKeys(options.customKeys);
     }
     if (typeof options.disableKeys === "boolean") {
         disableKeys = options.disableKeys;
     }
+}
+export function addControlKeys(newKeys: Map<string, string>) {
+    newKeys.forEach(function (value: string, key: string) {
+        key = key.replace(/Windows|Command/gi, "Meta");
+        key = key.replace("Option", "Alt");
+        keysMap.set(key, value);
+    });
 }
 
 // Observers Handling

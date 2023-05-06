@@ -31,7 +31,7 @@ import {
     showPerfStats,
     drawIconAsSplash,
 } from "./display";
-import { subscribeControl, initControlModule, enableControl, sendKey } from "./control";
+import { subscribeControl, initControlModule, enableControl, sendKey, addControlKeys } from "./control";
 import {
     initSoundModule,
     addSound,
@@ -263,6 +263,9 @@ export function setAudioMute(mute: boolean) {
 }
 
 // Remote Control API
+export function setCustomKeys(keys: Map<string, string>) {
+    addControlKeys(keys);
+}
 export function sendKeyDown(key: string) {
     sendKey(key, 0);
 }
