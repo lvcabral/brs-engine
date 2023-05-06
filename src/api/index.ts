@@ -124,7 +124,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     // Load Registry
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
-        if (key && key.slice(0, deviceData.developerId.length) === deviceData.developerId) {
+        if (key && key.startsWith(deviceData.developerId)) {
             deviceData.registry.set(key, storage.getItem(key));
         }
     }
@@ -462,7 +462,7 @@ function openChannelZip(f: any) {
 function processFile(relativePath: string, zipEntry: JSZip.JSZipObject) {
     const lcasePath: string = relativePath.toLowerCase();
     const ext = lcasePath.split(".").pop();
-    if (!zipEntry.dir && lcasePath.slice(0, 6) === "source" && ext === "brs") {
+    if (!zipEntry.dir && lcasePath.startsWith("source") && ext === "brs") {
         assetPaths.push({ url: relativePath, id: srcId, type: "source" });
         assetsEvents.push(zipEntry.async("string"));
         srcId++;

@@ -133,7 +133,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 return !!func.name;
             })
             .forEach((func: Callable) =>
-                this._environment.define(Scope.Global, func.name || "", func)
+                this._environment.define(Scope.Global, func.name ?? "", func)
             );
     }
 
@@ -238,7 +238,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
-                results = [err.value || BrsInvalid.Instance];
+                results = [err.value ?? BrsInvalid.Instance];
             } else if (!(err instanceof BrsError)) {
                 // Swallow BrsErrors, because they should have been exposed to the user downstream.
                 throw err;
@@ -1126,7 +1126,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
 
-                return returnedValue || BrsInvalid.Instance;
+                return returnedValue ?? BrsInvalid.Instance;
             }
         } else {
             function formatMismatch(mismatchedSignature: SignatureAndMismatches) {
@@ -1221,7 +1221,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let boxedSource = isBoxable(source) ? source.box() : source;
         if (boxedSource instanceof BrsComponent) {
             try {
-                return boxedSource.getMethod(expression.name.text) || BrsInvalid.Instance;
+                return boxedSource.getMethod(expression.name.text) ?? BrsInvalid.Instance;
             } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
             }
