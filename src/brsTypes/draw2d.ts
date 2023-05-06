@@ -139,9 +139,6 @@ function getDrawChunks(
     const missingHorizontal = sw - actualDrawWidth;
     const missingVertical = sh - actualDrawHeight;
 
-    const sdw = sourceDimensions.width;
-    const sdh = sourceDimensions.height;
-
     if (missingHorizontal <= 0 && missingVertical <= 0) {
         // region fits over destination - no need to wrap
         return chunks;

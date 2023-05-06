@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
-import { drawObjectToComponent, DrawOffset, getDimensions } from "../draw2d";
+import { drawObjectToComponent, getDimensions } from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -152,11 +152,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     }
 
     drawSprites() {
-        let rgba = this.rgbaBackground ? this.rgbaBackground : 0;
         this.clearPreviousSpriteDraws();
         if (this.destBitmap) {
-            const dimensions = getDimensions(this.canvas);
-            const drawOffset = new DrawOffset();
             this.destBitmap.drawImageToContext(this.canvas, 0, 0);
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
             layers.forEach((z) => {

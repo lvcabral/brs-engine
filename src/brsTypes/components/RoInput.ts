@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoMessagePort } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -62,7 +62,7 @@ export class RoInput extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return this.port === undefined ? BrsInvalid.Instance : this.port;
+            return this.port ?? BrsInvalid.Instance;
         },
     });
 
