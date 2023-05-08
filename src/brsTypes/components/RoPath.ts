@@ -49,7 +49,7 @@ export class RoPath extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, newPath: BrsString) => {
             let pathName = "";
             let newUrl = new URLParse<QueryParser>(newPath.value);
-            if (newUrl.protocol === "http:" && newPath.value.slice(0, 5) !== "http:") {
+            if (newUrl.protocol === "http:" && newPath.value.startsWith("http:")) {
                 // no protocol passed (parser used default)
                 pathName = path.join(this.parsedPath.dir, this.parsedPath.base, newPath.value);
             } else {
