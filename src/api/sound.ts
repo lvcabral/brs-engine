@@ -184,7 +184,7 @@ export function triggerWav(wav: string, volume: number, index: number) {
             sound.volume(volume / 100);
         }
         if (index >= 0 && index < maxStreams) {
-            if (wavStreams[index] && wavStreams[index].playing()) {
+            if (wavStreams[index]?.playing()) {
                 wavStreams[index].stop();
             }
             wavStreams[index] = sound;

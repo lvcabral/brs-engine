@@ -241,7 +241,7 @@ export function setOverscan(mode: string) {
 }
 
 export function showPerfStats(show: boolean): boolean {
-    if (statsCanvas && statsCanvas.dom) {
+    if (statsCanvas?.dom) {
         showStats = show;
     } else if (show) {
         statsDiv = document.getElementById("stats") as HTMLDivElement;
@@ -271,7 +271,7 @@ export function showPerfStats(show: boolean): boolean {
             statsDiv.appendChild(statsCanvas.dom);
             showStats = true;
         } else {
-            console.warn("[display] Missing 'Stats' div, can't display Peformance Stats!");
+            console.warn("[display] Missing 'Stats' div, can't display Performance Stats!");
             showStats = false;
         }
     }
