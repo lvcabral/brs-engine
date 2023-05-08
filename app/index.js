@@ -70,7 +70,11 @@ if (supportedBrowser()) {
             channelIcons("visible");
             fileSelector.value = null;
             if (document.fullscreenElement) {
-                document.exitFullscreen();
+                document.exitFullscreen().catch((err) => {
+                    console.error(
+                        `Error attempting to exit fullscreen mode: ${err.message} (${err.name})`
+                    );
+                });
             }
         }
     });
@@ -118,15 +122,19 @@ function loadZip(zip) {
     loading.style.visibility = "visible";
     channelIcons("visible");
     fileSelector.value = null;
-    fetch(zip).then(function (response) {
-        if (response.status === 200 || response.status === 0) {
-            brsEmu.execute(zip, response.blob(), true, false, "homescreen");
-            display.focus();
-        } else {
-            loading.style.visibility = "hidden";
-            return Promise.reject(new Error(response.statusText));
-        }
-    });
+    fetch(zip)
+        .then(function (response) {
+            if (response.status === 200 || response.status === 0) {
+                brsEmu.execute(zip, response.blob(), true, false, "homescreen");
+                display.focus();
+            } else {
+                loading.style.visibility = "hidden";
+                return Promise.reject(new Error(response.statusText));
+            }
+        })
+        .catch((err) => {
+            console.error(`Error attempting to load zip: ${err.message} (${err.name})`);
+        });
 }
 
 // Display Fullscreen control
@@ -134,9 +142,17 @@ display.addEventListener("dblclick", function (event) {
     event.preventDefault();
     if (currentChannel.running) {
         if (document.fullscreenElement) {
-            document.exitFullscreen();
+            document.exitFullscreen().catch((err) => {
+                console.error(
+                    `Error attempting to exit fullscreen mode: ${err.message} (${err.name})`
+                );
+            });
         } else {
-            display.requestFullscreen();
+            display.requestFullscreen().catch((err) => {
+                console.error(
+                    `Error attempting to start fullscreen mode: ${err.message} (${err.name})`
+                );
+            });
         }
     }
 });
