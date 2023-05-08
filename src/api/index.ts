@@ -31,7 +31,13 @@ import {
     showPerfStats,
     drawIconAsSplash,
 } from "./display";
-import { subscribeControl, initControlModule, enableControl, sendKey, addControlKeys } from "./control";
+import {
+    subscribeControl,
+    initControlModule,
+    enableControl,
+    sendKey,
+    addControlKeys,
+} from "./control";
 import {
     initSoundModule,
     addSound,
