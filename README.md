@@ -4,7 +4,7 @@ An emulator for the Roku BrightScript language that runs on modern browsers and 
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-emu)
 [![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
-[![Build](https://github.com/lvcabral/brs-emu/actions/workflows/webpack.yml/badge.svg)](https://github.com/lvcabral/brs-emu/actions/workflows/webpack.yml)
+[![Build](https://github.com/lvcabral/brs-emu/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-emu/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 
