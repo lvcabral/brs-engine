@@ -45,7 +45,7 @@ You can also run the emulator as a multi-platform **desktop application** (Windo
 
 #### Download Links
 
-- Installation packages: [release page](https://github.com/lvcabral/brs-emu/releases). 
+- Installation packages: [release page](https://github.com/lvcabral/brs-emu-app/releases). 
 - Source code and documentation: [app repository](https://github.com/lvcabral/brs-emu-app).
 
 ## How to Integrate to my App
