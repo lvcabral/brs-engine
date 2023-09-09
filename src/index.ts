@@ -29,183 +29,203 @@ export { PP as preprocessor };
 export { _parser as parser };
 export const shared = new Map<string, Int32Array>();
 export const source = new Map<string, string>();
+declare global {
+    function postMessage(message: any, options?: any): void;
+}
 
-onmessage = function (event) {
-    if (event.data.device) {
-        const interpreter = new Interpreter();
-        interpreter.onError(logError);
-        // Input Parameters / Deep Link
-        const inputArray = new Array<AAMember>();
-        const inputMap = new Map([
-            ["instant_on_run_mode", "foreground"],
-            ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
-            ["source", "auto-run-dev"],
-            ["splashTime", "0"],
-        ]);
-        let input = event.data.input;
-        if (input instanceof Map) {
-            input.forEach((value, key) => {
-                inputMap.set(key, value);
+if (typeof onmessage === "undefined") {
+    globalThis.postMessage = function (message, options) {
+        if (typeof message === "string") {
+            if (message.slice(0, 6) === "print,") {
+                console.log(message.slice(6));
+            } else if (message.slice(0, 6) === "error,") {
+                console.error(message.slice(6));
+            } else {
+                console.log(message);
+            }
+        }
+    };
+} else {
+    onmessage = function (event) {
+        if (event.data.device) {
+            const interpreter = new Interpreter();
+            interpreter.onError(logError);
+            // Input Parameters / Deep Link
+            const inputArray = new Array<AAMember>();
+            const inputMap = new Map([
+                ["instant_on_run_mode", "foreground"],
+                ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+                ["source", "auto-run-dev"],
+                ["splashTime", "0"],
+            ]);
+            let input = event.data.input;
+            if (input instanceof Map) {
+                input.forEach((value, key) => {
+                    inputMap.set(key, value);
+                });
+            }
+            inputMap.forEach((value, key) => {
+                inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
             });
-        }
-        inputMap.forEach((value, key) => {
-            inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
-        });
-        // Manifest
-        let manifest = event.data.manifest;
-        if (manifest instanceof Map) {
-            manifest.forEach(function (value: string, key: string) {
-                interpreter.manifest.set(key, value);
-            });
-        }
-        // Registry
-        let registry = event.data.device.registry;
-        if (registry instanceof Map) {
-            registry.forEach(function (value: string, key: string) {
-                interpreter.registry.set(key, value);
-            });
-        }
-        // DeviceInfo
-        let fontFamily = event.data.device.defaultFont || "Asap";
-        let fontPath = event.data.device.fontPath || "../fonts/";
-        interpreter.deviceInfo.set("developerId", event.data.device.developerId);
-        interpreter.deviceInfo.set("friendlyName", event.data.device.friendlyName);
-        interpreter.deviceInfo.set("deviceModel", event.data.device.deviceModel);
-        interpreter.deviceInfo.set("firmwareVersion", event.data.device.firmwareVersion);
-        interpreter.deviceInfo.set("clientId", event.data.device.clientId);
-        interpreter.deviceInfo.set("RIDA", event.data.device.RIDA);
-        interpreter.deviceInfo.set("countryCode", event.data.device.countryCode);
-        interpreter.deviceInfo.set("timeZone", event.data.device.timeZone);
-        interpreter.deviceInfo.set("locale", event.data.device.locale);
-        interpreter.deviceInfo.set("clockFormat", event.data.device.clockFormat);
-        interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
-        interpreter.deviceInfo.set("models", parseCSV(models));
-        interpreter.deviceInfo.set("defaultFont", fontFamily);
-        interpreter.deviceInfo.set("maxSimulStreams", event.data.device.maxSimulStreams);
-        interpreter.deviceInfo.set("connectionType", event.data.device.connectionType);
-        interpreter.deviceInfo.set("localIps", event.data.device.localIps);
-        interpreter.deviceInfo.set("startTime", event.data.device.startTime);
-        interpreter.deviceInfo.set("audioVolume", event.data.device.audioVolume);
-        interpreter.deviceInfo.set("audioCodecs", event.data.device.audioCodecs);
-        // File System
-        let volume = interpreter.fileSystem.get("common:");
-        if (volume) {
-            volume.mkdirSync("/LibCore");
-            volume.mkdirSync("/LibCore/v30");
-            volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
-            volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
-            volume.mkdirSync("/Fonts");
-            let fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
-            if (fontRegular) {
-                volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
+            // Manifest
+            let manifest = event.data.manifest;
+            if (manifest instanceof Map) {
+                manifest.forEach(function (value: string, key: string) {
+                    interpreter.manifest.set(key, value);
+                });
             }
-            let fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
-            if (fontBold) {
-                volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
+            // Registry
+            let registry = event.data.device.registry;
+            if (registry instanceof Map) {
+                registry.forEach(function (value: string, key: string) {
+                    interpreter.registry.set(key, value);
+                });
             }
-            let fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
-            if (fontItalic) {
-                volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
+            // DeviceInfo
+            let fontFamily = event.data.device.defaultFont || "Asap";
+            let fontPath = event.data.device.fontPath || "../fonts/";
+            interpreter.deviceInfo.set("developerId", event.data.device.developerId);
+            interpreter.deviceInfo.set("friendlyName", event.data.device.friendlyName);
+            interpreter.deviceInfo.set("deviceModel", event.data.device.deviceModel);
+            interpreter.deviceInfo.set("firmwareVersion", event.data.device.firmwareVersion);
+            interpreter.deviceInfo.set("clientId", event.data.device.clientId);
+            interpreter.deviceInfo.set("RIDA", event.data.device.RIDA);
+            interpreter.deviceInfo.set("countryCode", event.data.device.countryCode);
+            interpreter.deviceInfo.set("timeZone", event.data.device.timeZone);
+            interpreter.deviceInfo.set("locale", event.data.device.locale);
+            interpreter.deviceInfo.set("clockFormat", event.data.device.clockFormat);
+            interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
+            interpreter.deviceInfo.set("models", parseCSV(models));
+            interpreter.deviceInfo.set("defaultFont", fontFamily);
+            interpreter.deviceInfo.set("maxSimulStreams", event.data.device.maxSimulStreams);
+            interpreter.deviceInfo.set("connectionType", event.data.device.connectionType);
+            interpreter.deviceInfo.set("localIps", event.data.device.localIps);
+            interpreter.deviceInfo.set("startTime", event.data.device.startTime);
+            interpreter.deviceInfo.set("audioVolume", event.data.device.audioVolume);
+            interpreter.deviceInfo.set("audioCodecs", event.data.device.audioCodecs);
+            // File System
+            let volume = interpreter.fileSystem.get("common:");
+            if (volume) {
+                volume.mkdirSync("/LibCore");
+                volume.mkdirSync("/LibCore/v30");
+                volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
+                volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
+                volume.mkdirSync("/Fonts");
+                let fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
+                if (fontRegular) {
+                    volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
+                }
+                let fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
+                if (fontBold) {
+                    volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
+                }
+                let fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
+                if (fontItalic) {
+                    volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
+                }
+                let fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
+                if (fontBoldIt) {
+                    volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
+                }
             }
-            let fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
-            if (fontBoldIt) {
-                volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
-            }
-        }
-        volume = interpreter.fileSystem.get("pkg:");
-        if (volume) {
-            for (let filePath of event.data.paths) {
-                if (!volume.existsSync(path.dirname(`/${filePath.url}`))) {
+            volume = interpreter.fileSystem.get("pkg:");
+            if (volume) {
+                for (let filePath of event.data.paths) {
+                    if (!volume.existsSync(path.dirname(`/${filePath.url}`))) {
+                        try {
+                            mkdirTreeSync(volume, path.dirname(`/${filePath.url}`));
+                        } catch (err: any) {
+                            postMessage(
+                                `warning,Error creating directory ${path.dirname(
+                                    `/${filePath.url}`
+                                )} - ${err.message}`
+                            );
+                        }
+                    }
                     try {
-                        mkdirTreeSync(volume, path.dirname(`/${filePath.url}`));
+                        if (filePath.type === "binary") {
+                            volume.writeFileSync(
+                                `/${filePath.url}`,
+                                event.data.binaries[filePath.id]
+                            );
+                        } else if (filePath.type === "audio") {
+                            // As the audio files are played on the renderer process we need to
+                            // save a mock file to allow file exist checking and save the index
+                            volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
+                            interpreter.audioId = filePath.id;
+                        } else if (filePath.type === "text") {
+                            volume.writeFileSync(`/${filePath.url}`, event.data.texts[filePath.id]);
+                        } else if (filePath.type === "source") {
+                            source.set(filePath.url, event.data.brs[filePath.id]);
+                            volume.writeFileSync(`/${filePath.url}`, event.data.brs[filePath.id]);
+                        }
                     } catch (err: any) {
-                        postMessage(
-                            `warning,Error creating directory ${path.dirname(
-                                `/${filePath.url}`
-                            )} - ${err.message}`
-                        );
+                        postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
                     }
                 }
+                // Load Translations
+                let xmlText = "";
+                let trType = "";
+                let trTarget = "";
+                const locale = event.data.device.locale;
                 try {
-                    if (filePath.type === "binary") {
-                        volume.writeFileSync(`/${filePath.url}`, event.data.binaries[filePath.id]);
-                    } else if (filePath.type === "audio") {
-                        // As the audio files are played on the renderer process we need to
-                        // save a mock file to allow file exist checking and save the index
-                        volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
-                        interpreter.audioId = filePath.id;
-                    } else if (filePath.type === "text") {
-                        volume.writeFileSync(`/${filePath.url}`, event.data.texts[filePath.id]);
-                    } else if (filePath.type === "source") {
-                        source.set(filePath.url, event.data.brs[filePath.id]);
-                        volume.writeFileSync(`/${filePath.url}`, event.data.brs[filePath.id]);
+                    if (volume.existsSync(`/locale/${locale}/translations.ts`)) {
+                        xmlText = volume.readFileSync(`/locale/${locale}/translations.ts`);
+                        trType = "TS";
+                        trTarget = "translation";
+                    } else if (volume.existsSync(`/locale/${locale}/translations.xml`)) {
+                        xmlText = volume.readFileSync(`/locale/${locale}/translations.xml`);
+                        trType = "xliff";
+                        trTarget = "target";
+                    }
+                    if (trType !== "") {
+                        let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
+                        let xmlParser = new xml2js.Parser(xmlOptions);
+                        xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
+                            if (err) {
+                                postMessage(`warning,Error parsing XML: ${err.message}`);
+                            } else if (parsed) {
+                                if (Object.keys(parsed).length > 0) {
+                                    let trArray;
+                                    if (trType === "TS") {
+                                        trArray = parsed["TS"]["context"]["message"];
+                                    } else {
+                                        trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
+                                    }
+                                    if (trArray instanceof Array) {
+                                        trArray.forEach((item) => {
+                                            if (item["source"]) {
+                                                interpreter.translations.set(
+                                                    item["source"],
+                                                    item[trTarget]
+                                                );
+                                            }
+                                        });
+                                    }
+                                }
+                            } else {
+                                postMessage("warning,Error parsing translation XML: Empty input");
+                            }
+                        });
                     }
                 } catch (err: any) {
-                    postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
+                    const badPath = `pkg:/locale/${locale}/`;
+                    postMessage(`warning,Invalid path: ${badPath} - ${err.message}`);
                 }
             }
-            // Load Translations
-            let xmlText = "";
-            let trType = "";
-            let trTarget = "";
-            const locale = event.data.device.locale;
-            try {
-                if (volume.existsSync(`/locale/${locale}/translations.ts`)) {
-                    xmlText = volume.readFileSync(`/locale/${locale}/translations.ts`);
-                    trType = "TS";
-                    trTarget = "translation";
-                } else if (volume.existsSync(`/locale/${locale}/translations.xml`)) {
-                    xmlText = volume.readFileSync(`/locale/${locale}/translations.xml`);
-                    trType = "xliff";
-                    trTarget = "target";
-                }
-                if (trType !== "") {
-                    let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
-                    let xmlParser = new xml2js.Parser(xmlOptions);
-                    xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
-                        if (err) {
-                            postMessage(`warning,Error parsing XML: ${err.message}`);
-                        } else if (parsed) {
-                            if (Object.keys(parsed).length > 0) {
-                                let trArray;
-                                if (trType === "TS") {
-                                    trArray = parsed["TS"]["context"]["message"];
-                                } else {
-                                    trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
-                                }
-                                if (trArray instanceof Array) {
-                                    trArray.forEach((item) => {
-                                        if (item["source"]) {
-                                            interpreter.translations.set(
-                                                item["source"],
-                                                item[trTarget]
-                                            );
-                                        }
-                                    });
-                                }
-                            }
-                        } else {
-                            postMessage("warning,Error parsing translation XML: Empty input");
-                        }
-                    });
-                }
-            } catch (err: any) {
-                const badPath = `pkg:/locale/${locale}/`;
-                postMessage(`warning,Invalid path: ${badPath} - ${err.message}`);
-            }
+            // Run Channel
+            const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
+            postMessage(`end,${exitReason}`);
+        } else if (typeof event.data === "string" && event.data === "getVersion") {
+            postMessage(`version,${version}`);
+        } else if (event.data instanceof SharedArrayBuffer || event.data instanceof ArrayBuffer) {
+            // Setup Control Shared Array
+            shared.set("buffer", new Int32Array(event.data));
+        } else {
+            console.warn("Invalid message received!", event.data);
         }
-        // Run Channel
-        const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
-        postMessage(`end,${exitReason}`);
-    } else if (typeof event.data === "string" && event.data === "getVersion") {
-        postMessage(`version,${version}`);
-    } else if (event.data instanceof SharedArrayBuffer || event.data instanceof ArrayBuffer) {
-        // Setup Control Shared Array
-        shared.set("buffer", new Int32Array(event.data));
-    } else {
-        console.warn("Invalid message received!", event.data);
-    }
-};
+    };
+}
 
 /**
  * A synchronous version of the lexer-parser flow.
@@ -296,6 +316,61 @@ function run(
         return "EXIT_USER_NAV";
     } catch (err: any) {
         return "EXIT_BRIGHTSCRIPT_CRASH";
+    }
+}
+
+/**
+ * Returns an instance of the interpreter
+ *
+ */
+export function getInterpreter() {
+    const replInterpreter = new Interpreter();
+    replInterpreter.onError(logError);
+    return replInterpreter;
+}
+
+/**
+ * Runs an arbitrary string of BrightScript code.
+ * @param contents the BrightScript code to lex, parse, and interpret.
+ * @param interpreter an interpreter to use when executing `contents`. Required
+ *                    for `repl` to have persistent state between user inputs.
+ * @returns an array of statement execution results, indicating why each
+ *          statement exited and what its return value was, or `undefined` if
+ *          `interpreter` threw an Error.
+ */
+export function runLine(contents: string, interpreter: Interpreter) {
+    const lexer = new Lexer();
+    const parser = new Parser();
+    lexer.onError(logError);
+    parser.onError(logError);
+
+    const scanResults = lexer.scan(contents, "REPL");
+    if (scanResults.errors.length > 0) {
+        return;
+    }
+
+    const parseResults = parser.parse(scanResults.tokens);
+    if (parseResults.errors.length > 0) {
+        return;
+    }
+
+    if (parseResults.statements.length === 0) {
+        return;
+    }
+
+    try {
+        const results = interpreter.exec(parseResults.statements);
+        if (results) {
+            results.map((result) => {
+                if (result !== BrsTypes.BrsInvalid.Instance) {
+                    console.log(result.toString());
+                }
+                return;
+            });
+        }
+    } catch (e: any) {
+        console.error("Interpreter execution error: ", e.message);
+        return;
     }
 }
 
