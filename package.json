@@ -23,6 +23,9 @@
   "main": "app/lib/brsEmu.js",
   "browser": "app/lib/brsEmu.js",
   "typings": "types/src/api/index.d.ts",
+  "bin": {
+    "brs-cli": "./bin/cli.mjs"
+  },
   "scripts": {
     "build": "webpack --env development",
     "release": "webpack --env production",
@@ -40,6 +43,7 @@
     "types/src/api/"
   ],
   "dependencies": {
+    "commander": "^2.12.2",
     "crc": "^3.8.0",
     "decode-bmp": "^0.1.0",
     "file-type": "^12.4.2",
