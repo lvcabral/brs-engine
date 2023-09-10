@@ -8,9 +8,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 import { getInterpreter, runLine } from "../app/lib/brsEmu.worker.js";
-
 const replInterpreter = getInterpreter();
 
 // read current version from package.json

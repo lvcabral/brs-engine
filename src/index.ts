@@ -34,6 +34,13 @@ declare global {
 }
 
 if (typeof onmessage === "undefined") {
+    // Library is not running as a Worker
+    const dataBufferIndex = 32;
+    const dataBufferSize = 512;
+    const length = dataBufferIndex + dataBufferSize;
+    let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+    shared.set("buffer", new Int32Array(sharedBuffer));
+
     globalThis.postMessage = function (message, options) {
         if (typeof message === "string") {
             if (message.slice(0, 6) === "print,") {
@@ -46,173 +53,27 @@ if (typeof onmessage === "undefined") {
         }
     };
 } else {
+    // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event) {
         if (event.data.device) {
             const interpreter = new Interpreter();
             interpreter.onError(logError);
             // Input Parameters / Deep Link
-            const inputArray = new Array<AAMember>();
-            const inputMap = new Map([
-                ["instant_on_run_mode", "foreground"],
-                ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
-                ["source", "auto-run-dev"],
-                ["splashTime", "0"],
-            ]);
-            let input = event.data.input;
-            if (input instanceof Map) {
-                input.forEach((value, key) => {
-                    inputMap.set(key, value);
-                });
-            }
-            inputMap.forEach((value, key) => {
-                inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
-            });
+            const inputArray = setupInputArray(event.data.input);
             // Manifest
-            let manifest = event.data.manifest;
-            if (manifest instanceof Map) {
-                manifest.forEach(function (value: string, key: string) {
-                    interpreter.manifest.set(key, value);
-                });
-            }
+            setupManifest(event.data.manifest, interpreter);
             // Registry
-            let registry = event.data.device.registry;
-            if (registry instanceof Map) {
-                registry.forEach(function (value: string, key: string) {
-                    interpreter.registry.set(key, value);
-                });
-            }
-            // DeviceInfo
-            let fontFamily = event.data.device.defaultFont || "Asap";
-            let fontPath = event.data.device.fontPath || "../fonts/";
-            interpreter.deviceInfo.set("developerId", event.data.device.developerId);
-            interpreter.deviceInfo.set("friendlyName", event.data.device.friendlyName);
-            interpreter.deviceInfo.set("deviceModel", event.data.device.deviceModel);
-            interpreter.deviceInfo.set("firmwareVersion", event.data.device.firmwareVersion);
-            interpreter.deviceInfo.set("clientId", event.data.device.clientId);
-            interpreter.deviceInfo.set("RIDA", event.data.device.RIDA);
-            interpreter.deviceInfo.set("countryCode", event.data.device.countryCode);
-            interpreter.deviceInfo.set("timeZone", event.data.device.timeZone);
-            interpreter.deviceInfo.set("locale", event.data.device.locale);
-            interpreter.deviceInfo.set("clockFormat", event.data.device.clockFormat);
-            interpreter.deviceInfo.set("displayMode", event.data.device.displayMode);
-            interpreter.deviceInfo.set("models", parseCSV(models));
-            interpreter.deviceInfo.set("defaultFont", fontFamily);
-            interpreter.deviceInfo.set("maxSimulStreams", event.data.device.maxSimulStreams);
-            interpreter.deviceInfo.set("connectionType", event.data.device.connectionType);
-            interpreter.deviceInfo.set("localIps", event.data.device.localIps);
-            interpreter.deviceInfo.set("startTime", event.data.device.startTime);
-            interpreter.deviceInfo.set("audioVolume", event.data.device.audioVolume);
-            interpreter.deviceInfo.set("audioCodecs", event.data.device.audioCodecs);
-            // File System
-            let volume = interpreter.fileSystem.get("common:");
-            if (volume) {
-                volume.mkdirSync("/LibCore");
-                volume.mkdirSync("/LibCore/v30");
-                volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
-                volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
-                volume.mkdirSync("/Fonts");
-                let fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
-                if (fontRegular) {
-                    volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
-                }
-                let fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
-                if (fontBold) {
-                    volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
-                }
-                let fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
-                if (fontItalic) {
-                    volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
-                }
-                let fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
-                if (fontBoldIt) {
-                    volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
-                }
-            }
-            volume = interpreter.fileSystem.get("pkg:");
-            if (volume) {
-                for (let filePath of event.data.paths) {
-                    if (!volume.existsSync(path.dirname(`/${filePath.url}`))) {
-                        try {
-                            mkdirTreeSync(volume, path.dirname(`/${filePath.url}`));
-                        } catch (err: any) {
-                            postMessage(
-                                `warning,Error creating directory ${path.dirname(
-                                    `/${filePath.url}`
-                                )} - ${err.message}`
-                            );
-                        }
-                    }
-                    try {
-                        if (filePath.type === "binary") {
-                            volume.writeFileSync(
-                                `/${filePath.url}`,
-                                event.data.binaries[filePath.id]
-                            );
-                        } else if (filePath.type === "audio") {
-                            // As the audio files are played on the renderer process we need to
-                            // save a mock file to allow file exist checking and save the index
-                            volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
-                            interpreter.audioId = filePath.id;
-                        } else if (filePath.type === "text") {
-                            volume.writeFileSync(`/${filePath.url}`, event.data.texts[filePath.id]);
-                        } else if (filePath.type === "source") {
-                            source.set(filePath.url, event.data.brs[filePath.id]);
-                            volume.writeFileSync(`/${filePath.url}`, event.data.brs[filePath.id]);
-                        }
-                    } catch (err: any) {
-                        postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
-                    }
-                }
-                // Load Translations
-                let xmlText = "";
-                let trType = "";
-                let trTarget = "";
-                const locale = event.data.device.locale;
-                try {
-                    if (volume.existsSync(`/locale/${locale}/translations.ts`)) {
-                        xmlText = volume.readFileSync(`/locale/${locale}/translations.ts`);
-                        trType = "TS";
-                        trTarget = "translation";
-                    } else if (volume.existsSync(`/locale/${locale}/translations.xml`)) {
-                        xmlText = volume.readFileSync(`/locale/${locale}/translations.xml`);
-                        trType = "xliff";
-                        trTarget = "target";
-                    }
-                    if (trType !== "") {
-                        let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
-                        let xmlParser = new xml2js.Parser(xmlOptions);
-                        xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
-                            if (err) {
-                                postMessage(`warning,Error parsing XML: ${err.message}`);
-                            } else if (parsed) {
-                                if (Object.keys(parsed).length > 0) {
-                                    let trArray;
-                                    if (trType === "TS") {
-                                        trArray = parsed["TS"]["context"]["message"];
-                                    } else {
-                                        trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
-                                    }
-                                    if (trArray instanceof Array) {
-                                        trArray.forEach((item) => {
-                                            if (item["source"]) {
-                                                interpreter.translations.set(
-                                                    item["source"],
-                                                    item[trTarget]
-                                                );
-                                            }
-                                        });
-                                    }
-                                }
-                            } else {
-                                postMessage("warning,Error parsing translation XML: Empty input");
-                            }
-                        });
-                    }
-                } catch (err: any) {
-                    const badPath = `pkg:/locale/${locale}/`;
-                    postMessage(`warning,Invalid path: ${badPath} - ${err.message}`);
-                }
-            }
+            setupRegistry(event.data.device.registry, interpreter);
+            // DeviceInfo, Libraries and Fonts
+            setupDeviceData(event.data.device, interpreter);
+            // Package Files
+            setupPackageFiles(
+                event.data.paths,
+                event.data.binaries,
+                event.data.texts,
+                event.data.brs,
+                interpreter
+            );
             // Run Channel
             const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
             postMessage(`end,${exitReason}`);
@@ -225,6 +86,221 @@ if (typeof onmessage === "undefined") {
             console.warn("Invalid message received!", event.data);
         }
     };
+}
+
+/**
+ * Process the application input parameters including deep links
+ *
+ * @param input Map with parameters.
+ *
+ * @returns an array of parameters in AA member format.
+ */
+function setupInputArray(input: any): Array<AAMember> {
+    const inputArray = new Array<AAMember>();
+    const inputMap = new Map([
+        ["instant_on_run_mode", "foreground"],
+        ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+        ["source", "auto-run-dev"],
+        ["splashTime", "0"],
+    ]);
+    if (input instanceof Map) {
+        input.forEach((value, key) => {
+            inputMap.set(key, value);
+        });
+    }
+    inputMap.forEach((value, key) => {
+        inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
+    });
+    return inputArray;
+}
+
+/**
+ * Updates the interpreter manifest with the provided data
+ *
+ * @param manifest Map with manifest content.
+ * @param interpreter the Interpreter instance to update.
+ *
+ */
+function setupManifest(manifest: any, interpreter: Interpreter) {
+    if (manifest instanceof Map) {
+        manifest.forEach(function (value: string, key: string) {
+            interpreter.manifest.set(key, value);
+        });
+    }
+}
+
+/**
+ * Updates the interpreter registry with the provided data
+ *
+ * @param registry Map with registry content.
+ * @param interpreter the Interpreter instance to update.
+ *
+ */
+function setupRegistry(registry: any, interpreter: Interpreter) {
+    if (registry instanceof Map) {
+        registry.forEach(function (value: string, key: string) {
+            interpreter.registry.set(key, value);
+        });
+    }
+}
+
+/**
+ * Updates the interpreter DeviceInfo Map with the provided data and
+ * initializes the common: file system with device internal libraries.
+ *
+ * @param device object with device info data
+ * @param interpreter the Interpreter instance to update
+ *
+ */
+function setupDeviceData(device: any, interpreter: Interpreter) {
+    let fontFamily = device.defaultFont ?? "Asap";
+    let fontPath = device.fontPath ?? "../fonts/";
+    interpreter.deviceInfo.set("developerId", device.developerId);
+    interpreter.deviceInfo.set("friendlyName", device.friendlyName);
+    interpreter.deviceInfo.set("deviceModel", device.deviceModel);
+    interpreter.deviceInfo.set("firmwareVersion", device.firmwareVersion);
+    interpreter.deviceInfo.set("clientId", device.clientId);
+    interpreter.deviceInfo.set("RIDA", device.RIDA);
+    interpreter.deviceInfo.set("countryCode", device.countryCode);
+    interpreter.deviceInfo.set("timeZone", device.timeZone);
+    interpreter.deviceInfo.set("locale", device.locale);
+    interpreter.deviceInfo.set("clockFormat", device.clockFormat);
+    interpreter.deviceInfo.set("displayMode", device.displayMode);
+    interpreter.deviceInfo.set("models", parseCSV(models));
+    interpreter.deviceInfo.set("defaultFont", fontFamily);
+    interpreter.deviceInfo.set("maxSimulStreams", device.maxSimulStreams);
+    interpreter.deviceInfo.set("connectionType", device.connectionType);
+    interpreter.deviceInfo.set("localIps", device.localIps);
+    interpreter.deviceInfo.set("startTime", device.startTime);
+    interpreter.deviceInfo.set("audioVolume", device.audioVolume);
+    interpreter.deviceInfo.set("audioCodecs", device.audioCodecs);
+    // Libraries and Fonts
+    let volume = interpreter.fileSystem.get("common:");
+    if (volume) {
+        volume.mkdirSync("/LibCore");
+        volume.mkdirSync("/LibCore/v30");
+        volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
+        volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
+        volume.mkdirSync("/Fonts");
+        let fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
+        if (fontRegular) {
+            volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
+        }
+        let fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
+        if (fontBold) {
+            volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
+        }
+        let fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
+        if (fontItalic) {
+            volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
+        }
+        let fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
+        if (fontBoldIt) {
+            volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
+        }
+    }
+}
+
+/**
+ * Updates the interpreter pkg: file system with the provided package files and
+ * loads the translation data based on the configured locale.
+ *
+ * @param paths Map with package paths
+ * @param binaries Map with binary files data
+ * @param text Map with text files data
+ * @param brs Map with source code files data
+ * @param interpreter the Interpreter instance to update
+ *
+ */
+function setupPackageFiles(
+    paths: any,
+    binaries: any,
+    texts: any,
+    brs: any,
+    interpreter: Interpreter
+) {
+    let volume = interpreter.fileSystem.get("pkg:");
+    if (volume && Array.isArray(paths)) {
+        for (let filePath of paths) {
+            if (!volume.existsSync(path.dirname(`/${filePath.url}`))) {
+                try {
+                    mkdirTreeSync(volume, path.dirname(`/${filePath.url}`));
+                } catch (err: any) {
+                    postMessage(
+                        `warning,Error creating directory ${path.dirname(`/${filePath.url}`)} - ${
+                            err.message
+                        }`
+                    );
+                }
+            }
+            try {
+                if (filePath.type === "binary" && Array.isArray(binaries)) {
+                    volume.writeFileSync(`/${filePath.url}`, binaries[filePath.id]);
+                } else if (filePath.type === "audio") {
+                    // As the audio files are played on the renderer process we need to
+                    // save a mock file to allow file exist checking and save the index
+                    volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
+                    interpreter.audioId = filePath.id;
+                } else if (filePath.type === "text" && Array.isArray(texts)) {
+                    volume.writeFileSync(`/${filePath.url}`, texts[filePath.id]);
+                } else if (filePath.type === "source" && Array.isArray(brs)) {
+                    source.set(filePath.url, brs[filePath.id]);
+                    volume.writeFileSync(`/${filePath.url}`, brs[filePath.id]);
+                }
+            } catch (err: any) {
+                postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
+            }
+        }
+        // Load Translations
+        let xmlText = "";
+        let trType = "";
+        let trTarget = "";
+        const locale = interpreter.deviceInfo.get("locale") || "en_US";
+        try {
+            if (volume.existsSync(`/locale/${locale}/translations.ts`)) {
+                xmlText = volume.readFileSync(`/locale/${locale}/translations.ts`);
+                trType = "TS";
+                trTarget = "translation";
+            } else if (volume.existsSync(`/locale/${locale}/translations.xml`)) {
+                xmlText = volume.readFileSync(`/locale/${locale}/translations.xml`);
+                trType = "xliff";
+                trTarget = "target";
+            }
+            if (trType !== "") {
+                let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
+                let xmlParser = new xml2js.Parser(xmlOptions);
+                xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
+                    if (err) {
+                        postMessage(`warning,Error parsing XML: ${err.message}`);
+                    } else if (parsed) {
+                        if (Object.keys(parsed).length > 0) {
+                            let trArray;
+                            if (trType === "TS") {
+                                trArray = parsed["TS"]["context"]["message"];
+                            } else {
+                                trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
+                            }
+                            if (trArray instanceof Array) {
+                                trArray.forEach((item) => {
+                                    if (item["source"]) {
+                                        interpreter.translations.set(
+                                            item["source"],
+                                            item[trTarget]
+                                        );
+                                    }
+                                });
+                            }
+                        }
+                    } else {
+                        postMessage("warning,Error parsing translation XML: Empty input");
+                    }
+                });
+            }
+        } catch (err: any) {
+            const badPath = `pkg:/locale/${locale}/`;
+            postMessage(`warning,Invalid path: ${badPath} - ${err.message}`);
+        }
+    }
 }
 
 /**
@@ -320,7 +396,7 @@ function run(
 }
 
 /**
- * Returns an instance of the interpreter
+ * Returns a new instance of the Interpreter
  *
  */
 export function getInterpreter() {
@@ -331,7 +407,7 @@ export function getInterpreter() {
 
 /**
  * Runs an arbitrary string of BrightScript code.
- * @param contents the BrightScript code to lex, parse, and interpret.
+ * @param contents the BrightScript code to lex, parse and interpret.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  * @returns an array of statement execution results, indicating why each

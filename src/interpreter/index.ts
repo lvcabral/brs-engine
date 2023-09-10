@@ -1048,6 +1048,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 });
             } catch (reason) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
+                    if (process.env.NODE_ENV === "development") {
+                        console.error(reason);
+                    }
                     throw new Error(
                         `--> Function ${functionName}() called at:\n   file/line: ${expression.location.file}(${expression.location.start.line})`
                     );
