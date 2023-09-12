@@ -7,7 +7,6 @@ This emulator is still in **beta** stage, this way, there are several features f
 * RSG (Roku SceneGraph) SDK components are not yet supported.
 * Video playback or streaming are not yet supported.
 * Statements `Goto`, `Try..Catch` and `Throw` are not supported.
-* Conditional compilation using `#IF..#ELSE..#ENDIF` is not supported.
 * Call methods using the interface like `obj.ifDraw2d.getPng()` is not supported, call it directly `obj.getPng()`.
 * It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
 * Do not use the same `roMessagePort` instance with different objects (`roScreen`, `roAudioPlayer` etc.) create one per object type.
