@@ -1,8 +1,14 @@
-import { BrsType, Callable, ValueKind, BrsString, Int32, Float, StdlibArgument } from "../brsTypes";
-import * as Expr from "../parser/Expression";
+import {
+    Callable,
+    ValueKind,
+    BrsString,
+    Int32,
+    Float,
+    StdlibArgument,
+    BrsInvalid,
+} from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
-import { Lexeme } from "../lexer";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable("UCase", {
@@ -247,20 +253,25 @@ export const Val = new Callable("Val", {
     signature: {
         args: [
             new StdlibArgument("s", ValueKind.String),
-            new StdlibArgument("radix", ValueKind.Int32, new Int32(10)),
+            new StdlibArgument("radix", ValueKind.Int32, BrsInvalid.Instance),
         ],
         returns: ValueKind.Dynamic,
     },
-    impl: (interpreter: Interpreter, s: BrsString, brsRadix: Int32): BrsNumber => {
-        function isBrsStrFloat(str: BrsString): boolean {
-            return str.value.includes(".");
+    impl: (interpreter: Interpreter, s: BrsString, brsRadix: Int32 | BrsInvalid): BrsNumber => {
+        const isFloat = s.value.includes(".");
+
+        let retNumber = 0;
+        if (isFloat || brsRadix instanceof BrsInvalid) {
+            retNumber = Number(s.value);
+        } else {
+            retNumber = parseInt(s.value, brsRadix.getValue());
         }
 
-        if (isBrsStrFloat(s)) {
-            return new Float(Number(s.value));
-        } else {
-            return new Int32(parseInt(s.value, brsRadix.getValue()));
+        if (Number.isNaN(retNumber)) {
+            return new Int32(0);
         }
+
+        return isFloat ? new Float(retNumber) : new Int32(retNumber);
     },
 });
 
