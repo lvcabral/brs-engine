@@ -103,8 +103,8 @@ let txts: any[] = [];
 let bins: any[] = [];
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
 let sharedArray: Int32Array;
+let manifestMap = new Map();
 
-const manifestMap = new Map();
 const currentChannel = {
     id: "",
     file: "",
@@ -509,12 +509,7 @@ function processFile(relativePath: string, zipEntry: JSZip.JSZipObject) {
 }
 
 function processManifest(content: string) {
-    manifestMap.clear();
-
-    content.split(/\r?\n/).forEach((line: string) => {
-        const [key, value] = line.split("=");
-        manifestMap.set(key.toLowerCase(), value);
-    });
+    manifestMap = parseManifest(content);
 
     currentChannel.title = manifestMap.get("title") || "No Title";
     currentChannel.subtitle = manifestMap.get("subtitle") || "";
@@ -556,6 +551,41 @@ function processManifest(content: string) {
         });
     }
     notifyAll("loaded", currentChannel);
+}
+
+function parseManifest(contents: string) {
+    let keyValuePairs = contents
+        // for each line
+        .split("\n")
+        // remove leading/trailing whitespace
+        .map((line) => line.trim())
+        // separate keys and values
+        .map((line, index) => {
+            // skip empty lines and comments
+            if (line === "" || line.startsWith("#")) {
+                return ["", ""];
+            }
+
+            let equals = line.indexOf("=");
+            if (equals === -1) {
+                console.error(
+                    `[manifest:${
+                        index + 1
+                    }] No '=' detected.  Manifest attributes must be of the form 'key=value'.`
+                );
+            }
+            return [line.slice(0, equals), line.slice(equals + 1)];
+        })
+        // keep only non-empty keys and values
+        .filter(([key, value]) => key && value)
+        // remove leading/trailing whitespace from keys and values
+        .map(([key, value]) => [key.trim(), value.trim()])
+        // convert value to boolean, integer, or leave as string
+        .map(([key, value]): [string, string] => {
+            return [key, value];
+        });
+
+    return new Map<string, string>(keyValuePairs);
 }
 
 // Execute Emulator Web Worker

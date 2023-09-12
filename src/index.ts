@@ -226,7 +226,10 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
             let contents = volume.readFileSync(filename, "utf8");
             let scanResults = Lexer.scan(contents, filename);
             let preprocessor = new PP.Preprocessor();
-            let preprocessorResults = preprocessor.preprocess(scanResults.tokens);
+            let preprocessorResults = preprocessor.preprocess(
+                scanResults.tokens,
+                interpreter.manifest
+            );
             return Parser.parse(preprocessorResults.processedTokens).statements;
         })
         .reduce((allStatements, statements) => [...allStatements, ...statements], []);
@@ -249,6 +252,7 @@ function run(
 ): string {
     const lexer = new Lexer();
     const parser = new Parser();
+    const preprocessor = new PP.Preprocessor();
     const allStatements = new Array<_parser.Stmt.Statement>();
     const lib = new Map<string, string>();
     lib.set("v30/bslDefender.brs", "");
@@ -261,7 +265,8 @@ function run(
         if (scanResults.errors.length > 0) {
             return;
         }
-        const parseResults = parser.parse(scanResults.tokens);
+        let preprocessorResults = preprocessor.preprocess(scanResults.tokens, interpreter.manifest);
+        const parseResults = parser.parse(preprocessorResults.processedTokens);
         if (parseResults.errors.length > 0) {
             return;
         }
