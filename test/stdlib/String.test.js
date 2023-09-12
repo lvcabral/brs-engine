@@ -302,7 +302,21 @@ describe("global string functions", () => {
             expect(Val.call(interpreter, new BrsString("0.0"))).toEqual(new Float(0.0));
         });
 
-        it("returns an integer from a string an radix", () => {
+        it("returns zero if the string is not a number", () => {
+            expect(Val.call(interpreter, new BrsString(""))).toEqual(new Int32(0));
+
+            expect(Val.call(interpreter, new BrsString("Not a Number"))).toEqual(new Int32(0));
+
+            expect(Val.call(interpreter, new BrsString("10+2"))).toEqual(new Int32(0));
+        });
+
+        it("returns an integer from a string", () => {
+            expect(Val.call(interpreter, new BrsString("65535"))).toEqual(new Int32(65535));
+
+            expect(Val.call(interpreter, new BrsString("0xFA"))).toEqual(new Int32(250));
+        });
+
+        it("returns an integer from a string and radix", () => {
             expect(Val.call(interpreter, new BrsString("7"), new Int32(10))).toEqual(new Int32(7));
 
             expect(Val.call(interpreter, new BrsString("0x80"), new Int32(0))).toEqual(

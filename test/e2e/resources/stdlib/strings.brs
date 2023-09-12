@@ -15,6 +15,9 @@ print Instr(6, mixedCase, "e") ' 10
 print Str(3.4) ' " 3.4"
 print StrI(-3) ' "-3"
 print Val("12.34") ' 12.34
+print Val("") ' 0
+print Val("0xFF") ' 255
+print Val("0xAA") ' 170
 print Substitute("{0} and {1}", "Mary", "Bob")
 print StrToI("252")
 print String(4, "ab") ' abababab
