@@ -105,11 +105,17 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                             let aWidth = [0];
                             // Get only the first frame (animations not supported)
                             let frame = imgArray.frames[0];
-                            data = webpDecoder.WebPDecodeRGBA(imgBuffer, frame['src_off'], frame['src_size'], aWidth, aHeight);
+                            data = webpDecoder.WebPDecodeRGBA(
+                                imgBuffer,
+                                frame["src_off"],
+                                frame["src_size"],
+                                aWidth,
+                                aHeight
+                            );
                             if (data) {
-                                height = aHeight[0]; 
+                                height = aHeight[0];
                                 width = aWidth[0];
-                            }    
+                            }
                         }
                     } else if (type && type.mime === "image/gif") {
                         let gif = new GifReader(Buffer.from(image));
