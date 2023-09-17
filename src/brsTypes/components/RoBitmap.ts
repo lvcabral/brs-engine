@@ -15,6 +15,7 @@ import fileType from "file-type";
 import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
 import BMP from "decode-bmp";
+import { WebPRiffParser, WebPDecoder } from "libwebpjs";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -95,6 +96,21 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         data = jpg.data;
                         width = jpg.width;
                         height = jpg.height;
+                    } else if (type && type.mime === "image/webp") {
+                        const webpDecoder = new WebPDecoder();
+                        const imgBuffer = Buffer.from(image);
+                        const imgArray = WebPRiffParser(imgBuffer, 0);
+                        if (imgArray?.frames && imgArray.frames.length) {
+                            let aHeight = [0];
+                            let aWidth = [0];
+                            // Get only the first frame (animations not supported)
+                            let frame = imgArray.frames[0];
+                            data = webpDecoder.WebPDecodeRGBA(imgBuffer, frame['src_off'], frame['src_size'], aWidth, aHeight);
+                            if (data) {
+                                height = aHeight[0]; 
+                                width = aWidth[0];
+                            }    
+                        }
                     } else if (type && type.mime === "image/gif") {
                         let gif = new GifReader(Buffer.from(image));
                         data = new Uint8Array(gif.width * gif.height * 4);
@@ -114,7 +130,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         imageData.data.set(new Uint8Array(data));
                         this.context.putImageData(imageData, 0, 0);
                     } else {
-                        postMessage(`warning,Invalid image format: ${type}`);
+                        postMessage(`warning,Invalid image format: ${type?.mime}`);
                         this.valid = false;
                     }
                 } else {
