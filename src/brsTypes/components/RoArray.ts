@@ -1,9 +1,8 @@
+import { BrsType, isBrsString, isBrsNumber, Int32 } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
-import { BrsType, isBrsString, isBrsNumber, isBrsBoolean } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 
 /**
@@ -28,7 +27,7 @@ function getTypeSortIndex(a: BrsType): number {
 }
 
 /**
- * Sorts two BrsTypes in the order that ROku would sort them
+ * Sorts two BrsTypes in the order that Roku would sort them
  * @param originalArray A copy of the original array. Used to get the order of items
  * @param a
  * @param b
@@ -82,7 +81,7 @@ function sortCompare(
 
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private elements: BrsType[];
+    elements: BrsType[];
 
     constructor(elements: BrsType[]) {
         super("roArray");
@@ -99,6 +98,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.clear,
                 this.append,
             ],
+            ifArrayGet: [this.getEntry],
+            ifArraySet: [this.setEntry],
             ifArrayJoin: [this.join],
             ifArraySort: [this.sort, this.sortBy, this.reverse],
             ifEnum: [this.isEmpty],
@@ -139,20 +140,45 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             case ValueKind.String:
                 return this.getMethod(index.value) || BrsInvalid.Instance;
             default:
-                throw new Error(
-                    "Array indexes must be 32-bit integers, or method names must be strings"
+                postMessage(
+                    "warning,Array indexes must be 32-bit integers, or method names must be strings."
                 );
+                return BrsInvalid.Instance;
         }
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
-            throw new Error("Array indexes must be 32-bit integers");
+        if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+            this.elements[Math.trunc(index.getValue())] = value;
+        } else {
+            postMessage("warning,Array indexes must be 32-bit integers.");
         }
-
-        this.elements[Math.trunc(index.getValue())] = value;
-
         return BrsInvalid.Instance;
+    }
+
+    aaCompare(
+        fieldName: BrsString,
+        flags: BrsString,
+        a: RoAssociativeArray,
+        b: RoAssociativeArray
+    ) {
+        let compare = 0;
+        const originalArrayCopy = [...this.elements];
+        const caseInsensitive = flags.toString().indexOf("i") > -1;
+        const aHasField = a.elements.has(fieldName.toString().toLowerCase());
+        const bHasField = b.elements.has(fieldName.toString().toLowerCase());
+        if (aHasField && bHasField) {
+            const valueA = a.get(fieldName);
+            const valueB = b.get(fieldName);
+            compare = sortCompare(originalArrayCopy, valueA, valueB, caseInsensitive);
+        } else if (aHasField) {
+            // assocArray with fields come before assocArrays without
+            compare = -1;
+        } else if (bHasField) {
+            // assocArray with fields come before assocArrays without
+            compare = 1;
+        }
+        return compare;
     }
 
     private peek = new Callable("peek", {
@@ -262,6 +288,35 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             return BrsInvalid.Instance;
         },
     });
+
+    // ifArrayGet
+    private getEntry = new Callable("getEntry", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, index: BrsType) => {
+            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+                return this.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    // ifArraySet
+    private setEntry = new Callable("setEntry", {
+        signature: {
+            args: [
+                new StdlibArgument("index", ValueKind.Dynamic),
+                new StdlibArgument("tvalue", ValueKind.Dynamic),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+            return this.set(index, tvalue);
+        },
+    });
+
     // ifArrayJoin
     private join = new Callable("join", {
         signature: {
@@ -315,29 +370,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             if (flags.toString().match(/([^ir])/g) != null) {
                 postMessage("warning,roArray.SortBy: Flags contains invalid option(s).");
             } else {
-                const caseInsensitive = flags.toString().indexOf("i") > -1;
                 const originalArrayCopy = [...this.elements];
                 this.elements = this.elements.sort((a, b) => {
                     let compare = 0;
                     if (a instanceof RoAssociativeArray && b instanceof RoAssociativeArray) {
-                        const aHasField = a.elements.has(fieldName.toString().toLowerCase());
-                        const bHasField = b.elements.has(fieldName.toString().toLowerCase());
-                        if (aHasField && bHasField) {
-                            const valueA = a.get(fieldName);
-                            const valueB = b.get(fieldName);
-                            compare = sortCompare(
-                                originalArrayCopy,
-                                valueA,
-                                valueB,
-                                caseInsensitive
-                            );
-                        } else if (aHasField) {
-                            // assocArray with fields come before assocArrays without
-                            compare = -1;
-                        } else if (bHasField) {
-                            // assocArray with fields come before assocArrays without
-                            compare = 1;
-                        }
+                        compare = this.aaCompare(fieldName, flags, a, b);
                     } else if (a !== undefined && b !== undefined) {
                         compare = sortCompare(originalArrayCopy, a, b, false, false);
                     }

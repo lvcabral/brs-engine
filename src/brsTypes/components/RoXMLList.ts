@@ -1,20 +1,19 @@
+import { BrsType, Int32 } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
-import { BrsType } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
-import { LinkedList } from "linked-list-typescript";
+import { RoList } from "./RoList";
 import { RoArray } from "./RoArray";
 import { RoXMLElement } from "./RoXMLElement";
 
 export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private elements: LinkedList<RoXMLElement>;
+    private roList: RoList;
 
     constructor() {
         super("roXMLList");
-        this.elements = new LinkedList<RoXMLElement>();
+        this.roList = new RoList();
         this.registerMethods({
             ifXMLList: [
                 this.getAttributes,
@@ -33,8 +32,12 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
                 this.removeTail,
                 this.count,
                 this.clear,
-                // this.resetIndex,
+                this.resetIndex,
+                this.getIndex,
+                this.removeIndex,
             ],
+            ifArrayGet: [this.getEntry],
+            ifArraySet: [this.setEntry],
             ifEnum: [this.isEmpty],
             ifListToArray: [this.toArray],
         });
@@ -48,7 +51,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         return [
             "<Component: roXMLList> =",
             "(",
-            ...this.elements.toArray().map((el: BrsValue) => `    ${el.toString(this)}`),
+            ...this.roList.elements.map((el: BrsValue) => `    ${el.toString(this)}`),
             ")",
         ].join("\n");
     }
@@ -58,19 +61,19 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     getValue() {
-        return this.elements;
+        return this.roList.elements;
     }
 
     getElements() {
-        return this.elements.toArray().slice();
+        return this.roList.elements.slice();
     }
 
     getAttribute(index: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element attribute must be strings");
         }
-        if (this.elements.length === 1) {
-            let xmlElm = this.elements.head;
+        if (this.length() === 1) {
+            let xmlElm = this.roList.elements[0];
             if (xmlElm instanceof RoXMLElement) {
                 return xmlElm.getAttribute(index);
             }
@@ -87,33 +90,28 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             case ValueKind.String:
                 return this.getMethod(index.value) || this.namedElements(index.value, true);
             default:
-                throw new Error(
-                    "List indexes must be 32-bit integers, or method names must be strings"
+                postMessage(
+                    "warning,List indexes must be 32-bit integers, or method names must be strings."
                 );
+                return BrsInvalid.Instance;
         }
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
-            throw new Error("List indexes must be 32-bit integers");
-        }
-        let current = 0;
-        for (let item of this.elements) {
-            if (Math.trunc(index.getValue()) === current) {
-                item = value as RoXMLElement;
-                break;
-            }
-            current++;
+        if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+            this.roList.elements[Math.trunc(index.getValue())] = value;
+        } else {
+            postMessage("warning,List indexes must be 32-bit integers.");
         }
         return BrsInvalid.Instance;
     }
 
     add(element: RoXMLElement) {
-        this.elements.append(element);
+        this.roList.add(element);
     }
 
     length() {
-        return this.elements.length;
+        return this.roList.length();
     }
 
     namedElements(name: string, ci: boolean) {
@@ -121,11 +119,11 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             name = name.toLocaleLowerCase();
         }
         let elements = new RoXMLList();
-        let xmlElm = this.elements.head;
+        let xmlElm = this.roList.elements[0];
         if (xmlElm instanceof RoXMLElement) {
             let childElm = xmlElm.childElements();
             for (let index = 0; index < childElm.length(); index++) {
-                const element = childElm.getElements()[index];
+                const element = childElm.getElements()[index] as RoXMLElement;
                 let key: string;
                 if (ci) {
                     key = element.name().value.toLocaleLowerCase();
@@ -147,9 +145,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
-            if (this.elements.length === 1) {
-                let xmlElm = this.elements.head;
+        impl: (_: Interpreter) => {
+            if (this.length() === 1) {
+                let xmlElm = this.roList.elements[0];
                 if (xmlElm instanceof RoXMLElement) {
                     return xmlElm.attributes();
                 }
@@ -164,9 +162,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
-            if (this.elements.length === 1) {
-                let xmlElm = this.elements.head;
+        impl: (_: Interpreter) => {
+            if (this.length() === 1) {
+                let xmlElm = this.roList.elements[0];
                 if (xmlElm instanceof RoXMLElement) {
                     return xmlElm.text();
                 }
@@ -181,9 +179,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
-            if (this.elements.length === 1) {
-                let xmlElm = this.elements.head;
+        impl: (_: Interpreter) => {
+            if (this.length() === 1) {
+                let xmlElm = this.roList.elements[0];
                 if (xmlElm instanceof RoXMLElement) {
                     return xmlElm.childElements();
                 }
@@ -198,7 +196,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             return this.namedElements(name.value, false);
         },
     });
@@ -209,7 +207,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             return this.namedElements(name.value, true);
         },
     });
@@ -220,9 +218,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
-            if (this.elements.length === 1) {
-                return this.elements.head;
+        impl: (_: Interpreter) => {
+            if (this.length() === 1) {
+                return this.roList.elements[0];
             }
             return this;
         },
@@ -236,8 +234,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: RoXMLElement) => {
-            this.elements.prepend(tvalue);
+        impl: (_: Interpreter, tvalue: RoXMLElement) => {
+            this.roList.add(tvalue, false);
             return BrsInvalid.Instance;
         },
     });
@@ -248,8 +246,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("talue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, tvalue: RoXMLElement) => {
-            this.elements.append(tvalue);
+        impl: (_: Interpreter, tvalue: RoXMLElement) => {
+            this.roList.add(tvalue, true);
             return BrsInvalid.Instance;
         },
     });
@@ -260,8 +258,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
-            return this.elements.head || BrsInvalid.Instance;
+        impl: (_: Interpreter) => {
+            return this.roList.elements[0] || BrsInvalid.Instance;
         },
     });
 
@@ -271,8 +269,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
-            return this.elements.tail || BrsInvalid.Instance;
+        impl: (_: Interpreter) => {
+            return this.roList.elements[this.roList.tail()] || BrsInvalid.Instance;
         },
     });
 
@@ -282,8 +280,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
-            return this.elements.removeHead() || BrsInvalid.Instance;
+        impl: (_: Interpreter) => {
+            return this.roList.remove(0) || BrsInvalid.Instance;
         },
     });
 
@@ -293,8 +291,42 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
-            return this.elements.removeTail() || BrsInvalid.Instance;
+        impl: (_: Interpreter) => {
+            return this.roList.remove(this.roList.tail()) || BrsInvalid.Instance;
+        },
+    });
+
+    /** Resets the current index or position in list to the head element */
+    private resetIndex = new Callable("resetIndex", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            this.roList.currentIndex = this.length() > 0 ? 0 : -1;
+            return BrsBoolean.from(this.roList.currentIndex === 0);
+        },
+    });
+
+    /** Gets the entry at current index or position from the list and increments the index or position in the list */
+    private getIndex = new Callable("getIndex", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return this.roList.getCurrent() ?? BrsInvalid.Instance;
+        },
+    });
+
+    /** Removes the entry at the current index or position from the list and increments the index or position in the list */
+    private removeIndex = new Callable("removeIndex", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return this.roList.remove(this.roList.currentIndex) || BrsInvalid.Instance;
         },
     });
 
@@ -304,8 +336,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
-            return new Int32(this.elements.length);
+        impl: (_: Interpreter) => {
+            return new Int32(this.length());
         },
     });
 
@@ -315,22 +347,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
-            this.elements = new LinkedList<RoXMLElement>();
+        impl: (_: Interpreter) => {
+            this.roList = new RoList();
             return BrsInvalid.Instance;
-        },
-    });
-
-    //--------------------------------- ifEnum ---------------------------------
-
-    /** Returns true if enumeration contains no elements, false otherwise	 */
-    private isEmpty = new Callable("isEmpty", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter) => {
-            return BrsBoolean.from(this.elements.length === 0);
         },
     });
 
@@ -342,8 +361,52 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
-            return new RoArray(this.elements.toArray());
+        impl: (_: Interpreter) => {
+            return new RoArray(this.roList.elements);
+        },
+    });
+
+    //------------------------------- ifArrayGet --------------------------------
+
+    /** Returns an array entry based on the provided index. */
+    private getEntry = new Callable("getEntry", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, index: BrsType) => {
+            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+                return this.roList.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    //------------------------------- ifArraySet --------------------------------
+
+    private setEntry = new Callable("setEntry", {
+        signature: {
+            args: [
+                new StdlibArgument("index", ValueKind.Dynamic),
+                new StdlibArgument("tvalue", ValueKind.Dynamic),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+            return this.set(index, tvalue);
+        },
+    });
+
+    //--------------------------------- ifEnum ---------------------------------
+
+    /** Returns true if enumeration contains no elements, false otherwise	 */
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.length() === 0);
         },
     });
 }
