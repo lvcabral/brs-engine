@@ -237,7 +237,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, hexStr: BrsString) => {
-            const regex = new RegExp("[^a-fA-F0-9]", "gi");
+            const regex = new RegExp("[^a-f0-9]", "gi");
             const value = hexStr.value.replace(regex, "0");
             if (value.length % 2 === 0) {
                 this.elements = new Uint8Array(Buffer.from(value, "hex"));
