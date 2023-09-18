@@ -76,7 +76,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             });
         });
         if (animation) {
-            this.animations.some( (sprite, index, object) => {
+            this.animations.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
                     object.splice(index, 1);
                     return true; // break

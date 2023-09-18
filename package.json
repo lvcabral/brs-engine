@@ -47,7 +47,6 @@
     "jpeg-js": "^0.4.4",
     "jszip": "^3.10.1",
     "libwebpjs": "lvcabral/libwebpjs",
-    "linked-list-typescript": "^1.0.15",
     "long": "^3.2.0",
     "luxon": "^1.8.3",
     "memory-fs": "^0.5.0",
