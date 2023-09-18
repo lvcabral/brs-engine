@@ -1,5 +1,5 @@
 import { BrsType, Int32, RoArray } from "..";
-import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -41,8 +41,8 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
                 this.clear,
                 this.append,
             ],
-            // ifArrayGet: [this.getEntry],
-            // ifArraySet: [this.setEntry],
+            ifArrayGet: [this.getEntry],
+            ifArraySet: [this.setEntry],
             ifEnum: [this.isEmpty],
         });
     }
@@ -81,18 +81,19 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             case ValueKind.String:
                 return this.getMethod(index.value) || BrsInvalid.Instance;
             default:
-                throw new Error(
-                    "List indexes must be 32-bit integers, or method names must be strings"
+                postMessage(
+                    "warning,List indexes must be 32-bit integers, or method names must be strings."
                 );
+                return BrsInvalid.Instance;
         }
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
-            throw new Error("List indexes must be 32-bit integers");
+        if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+            this.elements[Math.trunc(index.getValue())] = value;
+        } else {
+            postMessage("warning,List indexes must be 32-bit integers.");
         }
-        this.elements[Math.trunc(index.getValue())] = value;
-
         return BrsInvalid.Instance;
     }
 
@@ -285,7 +286,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     private push = new Callable("push", {
         signature: {
-            args: [new StdlibArgument("talue", ValueKind.Dynamic)],
+            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, tvalue: BrsType) => {
@@ -317,11 +318,14 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     private delete = new Callable("delete", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32)],
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, index: Int32) => {
-            return this.remove(index.getValue()) ? BrsBoolean.True : BrsBoolean.False;
+        impl: (_: Interpreter, index: BrsType) => {
+            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+                return this.remove(index.getValue()) ? BrsBoolean.True : BrsBoolean.False;
+            }
+            return BrsBoolean.False;
         },
     });
 
@@ -367,7 +371,38 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    // ifEnum
+    //------------------------------- ifArrayGet --------------------------------
+
+    /** Returns an array entry based on the provided index. */
+    private getEntry = new Callable("getEntry", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, index: BrsType) => {
+            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+                return this.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    //------------------------------- ifArraySet --------------------------------
+
+    private setEntry = new Callable("setEntry", {
+        signature: {
+            args: [
+                new StdlibArgument("index", ValueKind.Dynamic),
+                new StdlibArgument("tvalue", ValueKind.Dynamic),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+            return this.set(index, tvalue);
+        },
+    });
+
+    //--------------------------------- ifEnum ---------------------------------
     private isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
