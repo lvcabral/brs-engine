@@ -82,7 +82,7 @@ function sortCompare(
 
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private elements: BrsType[];
+    elements: BrsType[];
 
     constructor(elements: BrsType[]) {
         super("roArray");
@@ -99,6 +99,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.clear,
                 this.append,
             ],
+            // ifArrayGet: [this.getEntry],
+            // ifArraySet: [this.setEntry],
             ifArrayJoin: [this.join],
             ifArraySort: [this.sort, this.sortBy, this.reverse],
             ifEnum: [this.isEmpty],

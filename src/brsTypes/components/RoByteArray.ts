@@ -44,6 +44,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.clear,
                 this.append,
             ],
+            // ifArrayGet: [this.getEntry],
+            // ifArraySet: [this.setEntry],
             ifEnum: [this.isEmpty],
         });
     }
