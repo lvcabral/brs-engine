@@ -245,21 +245,18 @@ export function drawImageToContext(
             ctx.clearRect(x, y, image.width, image.height);
         }
         ctx.drawImage(image, x, y);
+    } else if (alphaEnable) {
+        ctx.drawImage(image, x, y);
     } else {
-        if (alphaEnable) {
-            ctx.drawImage(image, x, y);
-        } else {
-            const ctc = image.getContext("2d", {
-                alpha: true,
-            }) as OffscreenCanvasRenderingContext2D;
-            let imageData = ctc.getImageData(0, 0, image.width, image.height);
-            let pixels = imageData.data;
-            for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
-                pixels[i] = 255;
-            }
-            ctx.putImageData(imageData, x, y);
+        const ctc = image.getContext("2d", {
+            alpha: true,
+        }) as OffscreenCanvasRenderingContext2D;
+        let imageData = ctc.getImageData(0, 0, image.width, image.height);
+        let pixels = imageData.data;
+        for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
+            pixels[i] = 255;
         }
+        ctx.putImageData(imageData, x, y);
     }
-
     return true;
 }

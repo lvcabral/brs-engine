@@ -44,26 +44,30 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     setSpriteZ(id: number, currentZ: number, newZ: number) {
         let layer = this.sprites.get(currentZ);
         if (layer) {
-            let sprite;
-            layer.some(function (element, index, object) {
+            layer.some((element, index, object) => {
                 if (element.getId() === id) {
                     object.splice(index, 1);
-                    sprite = element;
+                    this.setSpriteLayer(element, newZ);
                     return true; // break
                 }
                 return false;
             });
-            if (sprite) {
-                let newLayer = this.sprites.get(newZ);
-                newLayer ? newLayer.push(sprite) : (newLayer = [sprite]);
-                this.sprites.set(newZ, newLayer);
-            }
         }
+    }
+
+    setSpriteLayer(sprite: RoSprite, z: number) {
+        let newLayer = this.sprites.get(z);
+        if (newLayer) {
+            newLayer.push(sprite);
+        } else {
+            newLayer = [sprite];
+        }
+        this.sprites.set(z, newLayer);
     }
 
     removeSprite(id: number, animation: boolean) {
         this.sprites.forEach(function (layer) {
-            layer.some(function (sprite, index, object) {
+            layer.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
                     object.splice(index, 1);
                     return true; // break
@@ -72,7 +76,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             });
         });
         if (animation) {
-            this.animations.some(function (sprite, index, object) {
+            this.animations.some( (sprite, index, object) => {
                 if (sprite.getId() === id) {
                     object.splice(index, 1);
                     return true; // break
@@ -98,8 +102,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         let collision: BrsType;
         let collisions: RoSprite[] = [];
         collision = BrsInvalid.Instance;
-        for (let [z, layer] of this.sprites) {
-            layer.some(function (target, index, object) {
+        for (let [, layer] of this.sprites) {
+            layer.some((target, _index, _object) => {
                 if (source.getId() !== target.getId()) {
                     let targetFlags = target.getFlags();
                     let targetType = target.getType();
@@ -177,11 +181,11 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         }
     }
 
-    toString(parent?: BrsType): string {
+    toString(_parent?: BrsType): string {
         return "<Component: roCompositor>";
     }
 
-    equalTo(other: BrsType) {
+    equalTo(_other: BrsType) {
         return BrsBoolean.False;
     }
 
@@ -222,9 +226,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
             if (region instanceof RoRegion) {
                 let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
-                let layer = this.sprites.get(z.getValue());
-                layer ? layer.push(sprite) : (layer = [sprite]);
-                this.sprites.set(z.getValue(), layer);
+                this.setSpriteLayer(sprite, z.getValue());
                 return sprite;
             } else {
                 postMessage(
@@ -252,9 +254,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (regions && regions.length > 0) {
                     if (regions[0] instanceof RoRegion) {
                         let sprite = new RoSprite(x, y, regionArray, z, this.spriteId++, this);
-                        let layer = this.sprites.get(z.getValue());
-                        layer ? layer.push(sprite) : (layer = [sprite]);
-                        this.sprites.set(z.getValue(), layer);
+                        this.setSpriteLayer(sprite, z.getValue());
                         this.animations.push(sprite);
                         return sprite;
                     } else {
