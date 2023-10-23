@@ -60,14 +60,21 @@ import {
 import { version } from "../../package.json";
 
 // Interpreter Library
-const brsApiLib = getApiPath().split("/").pop();
-const brsEmuLib = getEmuPath();
+let brsApiLib = "brsEmu.js";
+let brsEmuLib = "brsEmu.worker.js";
+if (typeof document !== "undefined") {
+    const lib = getApiPath().split("/").pop();
+    if (lib) {
+        brsApiLib = lib;
+    }
+    brsEmuLib = getEmuPath();   
+}
 let brsWorker: Worker;
 
 // Default Device Data
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
-const storage: Storage = window.localStorage;
-const deviceData = {
+
+export const deviceData = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Emulator Library",
     serialNumber: getSerialNumber(),
@@ -83,6 +90,7 @@ const deviceData = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap",
     fontPath: "../fonts/",
+    fonts: new Map(),
     audioCodecs: audioCodecs(),
     maxSimulStreams: 2, // Max number of audio resource streams
     connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
@@ -119,6 +127,7 @@ const lastChannel = { id: "", exitReason: "EXIT_UNKNOWN" };
 
 // API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
+    const storage: Storage = window.localStorage;
     Object.assign(deviceData, customDeviceInfo);
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
     if (typeof options.debugToConsole === "boolean") {
@@ -624,6 +633,7 @@ function workerCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
+        const storage: Storage = window.localStorage;
         deviceData.registry = event.data;
         deviceData.registry.forEach(function (value: string, key: string) {
             storage.setItem(key, value);

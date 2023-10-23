@@ -41,7 +41,7 @@ if (typeof onmessage === "undefined") {
     let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     shared.set("buffer", new Int32Array(sharedBuffer));
 
-    globalThis.postMessage = function (message, options) {
+    globalThis.postMessage = function (message: any, options: any) {
         if (typeof message === "string") {
             if (message.slice(0, 6) === "print,") {
                 console.log(message.slice(6));
@@ -54,29 +54,9 @@ if (typeof onmessage === "undefined") {
     };
 } else {
     // Worker event that is triggered by postMessage() calls from the API library
-    onmessage = function (event) {
+    onmessage = function (event: any) {
         if (event.data.device) {
-            const interpreter = new Interpreter();
-            interpreter.onError(logError);
-            // Input Parameters / Deep Link
-            const inputArray = setupInputArray(event.data.input);
-            // Manifest
-            setupManifest(event.data.manifest, interpreter);
-            // Registry
-            setupRegistry(event.data.device.registry, interpreter);
-            // DeviceInfo, Libraries and Fonts
-            setupDeviceData(event.data.device, interpreter);
-            // Package Files
-            setupPackageFiles(
-                event.data.paths,
-                event.data.binaries,
-                event.data.texts,
-                event.data.brs,
-                interpreter
-            );
-            // Run Channel
-            const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
-            postMessage(`end,${exitReason}`);
+            executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${version}`);
         } else if (event.data instanceof SharedArrayBuffer || event.data instanceof ArrayBuffer) {
@@ -86,6 +66,89 @@ if (typeof onmessage === "undefined") {
             console.warn("Invalid message received!", event.data);
         }
     };
+}
+
+/**
+ * Runs a Brightscript app with full zip folder structure.
+ * @param payload with the source code and all the assets of the app.
+ * @returns void.
+ */
+
+export function executeFile(payload: any) {
+    const interpreter = new Interpreter();
+    interpreter.onError(logError);
+    // Input Parameters / Deep Link
+    const inputArray = setupInputArray(payload.input);
+    // Manifest
+    setupManifest(payload.manifest, interpreter);
+    // Registry
+    setupRegistry(payload.device.registry, interpreter);
+    // DeviceInfo, Libraries and Fonts
+    setupDeviceData(payload.device, interpreter);
+    // Package Files
+    setupPackageFiles(
+        payload.paths,
+        payload.binaries,
+        payload.texts,
+        payload.brs,
+        interpreter
+    );
+    // Run Channel
+    const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
+    postMessage(`end,${exitReason}`);
+}
+
+/**
+ * Returns a new instance of the Interpreter
+ *
+ */
+export function getInterpreter() {
+    const replInterpreter = new Interpreter();
+    replInterpreter.onError(logError);
+    return replInterpreter;
+}
+
+/**
+ * Runs an arbitrary string of BrightScript code.
+ * @param contents the BrightScript code to lex, parse and interpret.
+ * @param interpreter an interpreter to use when executing `contents`. Required
+ *                    for `repl` to have persistent state between user inputs.
+ * @returns void.
+ */
+export function executeLine(contents: string, interpreter: Interpreter) {
+    const lexer = new Lexer();
+    const parser = new Parser();
+    lexer.onError(logError);
+    parser.onError(logError);
+
+    const scanResults = lexer.scan(contents, "REPL");
+    if (scanResults.errors.length > 0) {
+        return;
+    }
+
+    const parseResults = parser.parse(scanResults.tokens);
+    if (parseResults.errors.length > 0) {
+        return;
+    }
+
+    if (parseResults.statements.length === 0) {
+        return;
+    }
+
+    try {
+        const results = interpreter.exec(parseResults.statements);
+        if (results) {
+            results.map((result) => {
+                if (result !== BrsTypes.BrsInvalid.Instance) {
+                    console.log(result.toString());
+                }
+                return;
+            });
+        }
+    } catch (e: any) {
+        console.error("Interpreter execution error: ", e.message);
+        return;
+    }
 }
 
 /**
@@ -155,25 +218,12 @@ function setupRegistry(registry: any, interpreter: Interpreter) {
 function setupDeviceData(device: any, interpreter: Interpreter) {
     let fontFamily = device.defaultFont ?? "Asap";
     let fontPath = device.fontPath ?? "../fonts/";
-    interpreter.deviceInfo.set("developerId", device.developerId);
-    interpreter.deviceInfo.set("friendlyName", device.friendlyName);
-    interpreter.deviceInfo.set("deviceModel", device.deviceModel);
-    interpreter.deviceInfo.set("firmwareVersion", device.firmwareVersion);
-    interpreter.deviceInfo.set("clientId", device.clientId);
-    interpreter.deviceInfo.set("RIDA", device.RIDA);
-    interpreter.deviceInfo.set("countryCode", device.countryCode);
-    interpreter.deviceInfo.set("timeZone", device.timeZone);
-    interpreter.deviceInfo.set("locale", device.locale);
-    interpreter.deviceInfo.set("clockFormat", device.clockFormat);
-    interpreter.deviceInfo.set("displayMode", device.displayMode);
+    Object.keys(device).forEach((key) => {
+        if (key !== "registry" && key !== "fonts") {
+            interpreter.deviceInfo.set(key, device[key]);
+        }
+    });
     interpreter.deviceInfo.set("models", parseCSV(models));
-    interpreter.deviceInfo.set("defaultFont", fontFamily);
-    interpreter.deviceInfo.set("maxSimulStreams", device.maxSimulStreams);
-    interpreter.deviceInfo.set("connectionType", device.connectionType);
-    interpreter.deviceInfo.set("localIps", device.localIps);
-    interpreter.deviceInfo.set("startTime", device.startTime);
-    interpreter.deviceInfo.set("audioVolume", device.audioVolume);
-    interpreter.deviceInfo.set("audioCodecs", device.audioCodecs);
     // Libraries and Fonts
     let volume = interpreter.fileSystem.get("common:");
     if (volume) {
@@ -182,19 +232,29 @@ function setupDeviceData(device: any, interpreter: Interpreter) {
         volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
         volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
         volume.mkdirSync("/Fonts");
-        let fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
+        let fontRegular, fontBold, fontItalic, fontBoldIt;
+        if (typeof XMLHttpRequest !== "undefined") {
+            // Running as a Worker in the browser
+            fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
+            fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
+            fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
+            fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
+        } else {
+            // Running locally as CLI
+            fontRegular = device.fonts.get("regular");
+            fontBold = device.fonts.get("bold");
+            fontItalic = device.fonts.get("italic");
+            fontBoldIt = device.fonts.get("bold-italic");
+        }
         if (fontRegular) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
         }
-        let fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
         if (fontBold) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
         }
-        let fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
         if (fontItalic) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
         }
-        let fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
         if (fontBoldIt) {
             volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
         }
@@ -392,61 +452,6 @@ function run(
         return "EXIT_USER_NAV";
     } catch (err: any) {
         return "EXIT_BRIGHTSCRIPT_CRASH";
-    }
-}
-
-/**
- * Returns a new instance of the Interpreter
- *
- */
-export function getInterpreter() {
-    const replInterpreter = new Interpreter();
-    replInterpreter.onError(logError);
-    return replInterpreter;
-}
-
-/**
- * Runs an arbitrary string of BrightScript code.
- * @param contents the BrightScript code to lex, parse and interpret.
- * @param interpreter an interpreter to use when executing `contents`. Required
- *                    for `repl` to have persistent state between user inputs.
- * @returns an array of statement execution results, indicating why each
- *          statement exited and what its return value was, or `undefined` if
- *          `interpreter` threw an Error.
- */
-export function runLine(contents: string, interpreter: Interpreter) {
-    const lexer = new Lexer();
-    const parser = new Parser();
-    lexer.onError(logError);
-    parser.onError(logError);
-
-    const scanResults = lexer.scan(contents, "REPL");
-    if (scanResults.errors.length > 0) {
-        return;
-    }
-
-    const parseResults = parser.parse(scanResults.tokens);
-    if (parseResults.errors.length > 0) {
-        return;
-    }
-
-    if (parseResults.statements.length === 0) {
-        return;
-    }
-
-    try {
-        const results = interpreter.exec(parseResults.statements);
-        if (results) {
-            results.map((result) => {
-                if (result !== BrsTypes.BrsInvalid.Instance) {
-                    console.log(result.toString());
-                }
-                return;
-            });
-        }
-    } catch (e: any) {
-        console.error("Interpreter execution error: ", e.message);
-        return;
     }
 }
 

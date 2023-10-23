@@ -15,7 +15,9 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import { getInterpreter, runLine } from "../app/lib/brsEmu.worker.js";
+import brsEmu from "../app/lib/brsEmu.js";
+const { deviceData } = brsEmu;
+import { getInterpreter, executeLine, executeFile } from "../app/lib/brsEmu.worker.js";
 const replInterpreter = getInterpreter();
 
 // read current version from package.json
@@ -38,7 +40,7 @@ function repl() {
         if (line.toLowerCase() === "quit" || line.toLowerCase() === "exit") {
             process.exit();
         }
-        runLine(line, replInterpreter);
+        executeLine(line, replInterpreter);
         rl.prompt();
     });
 
@@ -62,10 +64,31 @@ program
     .action(async (brsFiles, program) => {
         if (brsFiles.length > 0) {
             try {
-                await brs.execute(brsFiles, {
-                    root: program.root,
-                    componentDirs: program.componentDirs,
-                });
+                // TODO: Support multiple files, support zip file
+                const paths = [];
+                const source = [];
+                const fileName = brsFiles[0];
+                const sourceCode = fs.readFileSync(fileName);
+                if (sourceCode) {
+                    source.push(sourceCode.toString());
+                    paths.push({ url: `source/${fileName}`, id: 0, type: "source" });   
+                }
+                const fontPath = "../app/fonts";
+                const fontFamily = deviceData.defaultFont;
+                deviceData.fonts.set("regular", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`)));
+                deviceData.fonts.set("bold", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`)));
+                deviceData.fonts.set("italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`)));
+                deviceData.fonts.set("bold-italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`)));
+                const payload = {
+                    device: deviceData,
+                    manifest: new Map(),
+                    input: [],
+                    paths: paths,
+                    brs: source,
+                    texts: [],
+                    binaries: [],
+                };
+                executeFile(payload);
             } catch (err) {
                 if (err.messages && err.messages.length) {
                     err.messages.forEach((message) => console.error(message));
