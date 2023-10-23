@@ -1,9 +1,8 @@
+import { BrsType, Int32 } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
-import { BrsType } from "..";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
 import { crc32 } from "crc";
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
@@ -44,6 +43,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.clear,
                 this.append,
             ],
+            ifArrayGet: [this.getEntry],
+            ifArraySet: [this.setEntry],
             ifEnum: [this.isEmpty],
         });
     }
@@ -81,24 +82,28 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     get(index: BrsType) {
         switch (index.kind) {
+            case ValueKind.Float:
+                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
             case ValueKind.Int32:
                 return this.getElements()[index.getValue()] || BrsInvalid.Instance;
             case ValueKind.String:
                 return this.getMethod(index.value) || BrsInvalid.Instance;
             default:
-                throw new Error(
-                    "Array indexes must be 32-bit integers, or method names must be strings"
+                postMessage(
+                    "warning,Array indexes must be 32-bit integers, or method names must be strings"
                 );
+                return BrsInvalid.Instance;
         }
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32) {
-            throw new Error("Array indexes must be 32-bit integers");
+        if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
+            postMessage("warning,Array indexes must be 32-bit integers.");
         } else if (value.kind !== ValueKind.Int32) {
-            throw new Error("Byte array values must be 32-bit integers");
+            postMessage("warning,Byte array values must be 32-bit integers");
+        } else {
+            this.elements[Math.trunc(index.getValue())] = value.getValue();
         }
-        this.elements[index.getValue()] = value.getValue();
         return BrsInvalid.Instance;
     }
 
@@ -215,7 +220,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("asciiStr", ValueKind.String)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, asciiStr: BrsString) => {
+        impl: (_: Interpreter, asciiStr: BrsString) => {
             this.elements = new Uint8Array(Buffer.from(asciiStr.value, "utf8"));
             return BrsInvalid.Instance;
         },
@@ -226,7 +231,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new BrsString(Buffer.from(this.elements).toString("utf8"));
         },
     });
@@ -236,8 +241,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("hexStr", ValueKind.String)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, hexStr: BrsString) => {
-            const regex = new RegExp("[^a-fA-F0-9]", "gi");
+        impl: (_: Interpreter, hexStr: BrsString) => {
+            const regex = new RegExp("[^a-f0-9]", "gi");
             const value = hexStr.value.replace(regex, "0");
             if (value.length % 2 === 0) {
                 this.elements = new Uint8Array(Buffer.from(value, "hex"));
@@ -251,7 +256,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             const hex = Buffer.from(this.elements).toString("hex");
             return new BrsString(hex.toUpperCase());
         },
@@ -262,7 +267,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("hexStr", ValueKind.String)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, hexStr: BrsString) => {
+        impl: (_: Interpreter, hexStr: BrsString) => {
             this.elements = new Uint8Array(Buffer.from(hexStr.value, "base64"));
             return BrsInvalid.Instance;
         },
@@ -273,7 +278,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new BrsString(Buffer.from(this.elements).toString("base64"));
         },
     });
@@ -283,7 +288,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter, index: Int32) => {
+        impl: (_: Interpreter, index: Int32) => {
             let byte = (this.elements[index.getValue()] << 24) >> 24;
             return new Int32(byte);
         },
@@ -294,7 +299,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter, index: Int32) => {
+        impl: (_: Interpreter, index: Int32) => {
             const dataView = new DataView(this.elements.buffer, index.getValue(), 4);
             const long = dataView.getInt32(0, true);
             return new Int32(long);
@@ -309,7 +314,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter, index: Int32, length: Int32) => {
+        impl: (_: Interpreter, index: Int32, length: Int32) => {
             if (index.getValue() > 0 || length.getValue() > 0) {
                 let start = index.getValue();
                 let end = length.getValue() < 1 ? undefined : start + length.getValue();
@@ -327,7 +332,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, minSize: Int32, autoResize: BrsBoolean) => {
+        impl: (_: Interpreter, minSize: Int32, autoResize: BrsBoolean) => {
             this.resize = autoResize.toBoolean();
             // TODO: Resize byte array if length < minSize
             return BrsInvalid.Instance;
@@ -339,7 +344,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return BrsBoolean.True;
         },
     });
@@ -351,7 +356,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new Int32(this.elements[this.elements.length - 1]) || BrsInvalid.Instance;
         },
     });
@@ -361,7 +366,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             const pop = new Int32(this.elements[this.elements.length - 1]) || BrsInvalid.Instance;
             // TODO: Remove last item from byte array (check how to behave with resize=true)
             return pop;
@@ -373,7 +378,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("byte", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, byte: Int32) => {
+        impl: (_: Interpreter, byte: Int32) => {
             let array = new Uint8Array(this.elements.length + 1);
             array.set(this.elements, 0);
             array[this.elements.length] = byte.getValue();
@@ -387,7 +392,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             const shift = new Int32(this.elements[0]) || BrsInvalid.Instance;
             // TODO: Remove first item from byte array (check how to behave with resize=true)
             return shift;
@@ -399,7 +404,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, byte: Int32) => {
+        impl: (_: Interpreter, byte: Int32) => {
             let array = new Uint8Array(this.elements.length + 1);
             array[0] = byte.getValue();
             array.set(this.elements, 1);
@@ -413,7 +418,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, index: Int32) => {
+        impl: (_: Interpreter, index: Int32) => {
             if (index.lessThan(new Int32(0)).toBoolean()) {
                 return BrsBoolean.False;
             }
@@ -427,7 +432,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new Int32(this.elements.length);
         },
     });
@@ -437,7 +442,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             this.elements = new Uint8Array();
             return BrsInvalid.Instance;
         },
@@ -448,7 +453,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("array", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, array: BrsComponent) => {
+        impl: (_: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoByteArray)) {
                 // TODO: validate against RBI
                 return BrsInvalid.Instance;
@@ -465,6 +470,36 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
+    // ifArrayGet -------------------------------------------------------------------------
+
+    private getEntry = new Callable("getEntry", {
+        signature: {
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, index: BrsType) => {
+            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
+                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    // ifArraySet  -------------------------------------------------------------------------
+
+    private setEntry = new Callable("setEntry", {
+        signature: {
+            args: [
+                new StdlibArgument("index", ValueKind.Dynamic),
+                new StdlibArgument("tvalue", ValueKind.Dynamic),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+            return this.set(index, tvalue);
+        },
+    });
+
     // ifEnum -------------------------------------------------------------------------
 
     private isEmpty = new Callable("isEmpty", {
@@ -472,7 +507,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return BrsBoolean.from(this.elements.length === 0);
         },
     });

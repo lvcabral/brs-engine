@@ -169,14 +169,12 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         if (Object.keys(this.parsedXML).length > 0) {
             let root = Object.keys(this.parsedXML)[0];
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
-                if (ci) {
-                    key = key.toLocaleLowerCase();
-                }
-                if (key === name) {
+                let cKey = ci ? key.toLocaleLowerCase() : key;
+                if (cKey === name) {
                     if (value instanceof Array) {
                         value.forEach((item) => {
                             let element = new RoXMLElement();
-                            element.parsedXML = { [key]: item };
+                            element.parsedXML = { [cKey]: item };
                             elements.add(element);
                         });
                     }
