@@ -86,14 +86,8 @@ export function executeFile(payload: any) {
     // DeviceInfo, Libraries and Fonts
     setupDeviceData(payload.device, interpreter);
     // Package Files
-    setupPackageFiles(
-        payload.paths,
-        payload.binaries,
-        payload.texts,
-        payload.brs,
-        interpreter
-    );
-    // Run Channel
+    setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
+    // Run App
     const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
     postMessage(`end,${exitReason}`);
 }

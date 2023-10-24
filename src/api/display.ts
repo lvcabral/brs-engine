@@ -115,7 +115,7 @@ export function redrawDisplay(
     notifyAll("redraw", fullScreen);
 }
 
-// Draw Channel Splash
+// Draw App Splash
 export function drawSplashScreen(imgData: ImageBitmap) {
     if (ctx) {
         if (display instanceof HTMLCanvasElement) {

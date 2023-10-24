@@ -16,7 +16,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import brsEmu from "../app/lib/brsEmu.js";
-const { deviceData } = brsEmu;
+const { deviceData, loadAppZip } = brsEmu;
 import { getInterpreter, executeLine, executeFile } from "../app/lib/brsEmu.worker.js";
 const replInterpreter = getInterpreter();
 
@@ -47,38 +47,46 @@ function repl() {
     rl.prompt();
 }
 
+function runApp(payload) {
+    const fontPath = "../app/fonts";
+    const fontFamily = payload.device.defaultFont;
+    payload.device.fonts.set("regular", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`)));
+    payload.device.fonts.set("bold", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`)));
+    payload.device.fonts.set("italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`)));
+    payload.device.fonts.set("bold-italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`)));
+    executeFile(payload);
+}
+
 program
     .description("BrightScript interpreter CLI")
-    .arguments("brs [brsFiles...]")
-    .option(
-        "-r, --root <directory>",
-        "The root directory from which `pkg:` paths will be resolved.",
-        process.cwd()
-    )
-    .option(
-        "-c, --component-dirs <directories>",
-        "Comma-separated list of additional directories beyond `components` to search for XML components",
-        (value) => value.split(","),
-        []
-    )
+    .arguments("brs-cli [brsFiles...]")
     .action(async (brsFiles, program) => {
         if (brsFiles.length > 0) {
             try {
-                // TODO: Support multiple files, support zip file
+                // Run App Zip file
+                const filePath = brsFiles[0];
+                const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
+                const fileExt = fileName.split(".").pop();
+                if (fileExt?.toLowerCase() === "zip") {
+                    loadAppZip(fs.readFileSync(fileName), runApp);
+                    return;
+                }
+                // Run list of Brs files
                 const paths = [];
                 const source = [];
-                const fileName = brsFiles[0];
-                const sourceCode = fs.readFileSync(fileName);
-                if (sourceCode) {
-                    source.push(sourceCode.toString());
-                    paths.push({ url: `source/${fileName}`, id: 0, type: "source" });   
-                }
-                const fontPath = "../app/fonts";
-                const fontFamily = deviceData.defaultFont;
-                deviceData.fonts.set("regular", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`)));
-                deviceData.fonts.set("bold", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`)));
-                deviceData.fonts.set("italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`)));
-                deviceData.fonts.set("bold-italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`)));
+                let id = 0;
+                brsFiles.map((filePath) => {
+                    const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
+                    const fileExt = fileName.split(".").pop();
+                    if (fileExt?.toLowerCase() === "brs") {
+                        const sourceCode = fs.readFileSync(filePath);
+                        if (sourceCode) {
+                            source.push(sourceCode.toString());
+                            paths.push({ url: `source/${fileName}`, id: id, type: "source" });
+                            id++;
+                        }   
+                    }
+                })
                 const payload = {
                     device: deviceData,
                     manifest: new Map(),
@@ -88,7 +96,7 @@ program
                     texts: [],
                     binaries: [],
                 };
-                executeFile(payload);
+                runApp(payload);
             } catch (err) {
                 if (err.messages && err.messages.length) {
                     err.messages.forEach((message) => console.error(message));
