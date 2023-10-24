@@ -68,7 +68,7 @@ program
                 const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
                 const fileExt = fileName.split(".").pop();
                 if (fileExt?.toLowerCase() === "zip") {
-                    loadAppZip(fs.readFileSync(fileName), runApp);
+                    loadAppZip(fs.readFileSync(filePath), runApp);
                     return;
                 }
                 // Run list of Brs files
