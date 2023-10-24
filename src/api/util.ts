@@ -5,6 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { main } from "../../package.json";
 
 // Shared array data types enumerator
 export enum DataType {
@@ -64,12 +65,15 @@ export function getNow(): string {
 
 // Libraries Path
 export function getApiPath(): string {
-    const scripts = document.getElementsByTagName("script");
-    return scripts[scripts.length - 1].src;
+    if (typeof document !== "undefined") {
+        const scripts = document.getElementsByTagName("script");
+        return scripts[scripts.length - 1].src;
+    }
+    return main;
 }
 export function getEmuPath(): string {
     const apiPath = getApiPath();
-    return apiPath.replace("brsEmu.", "brsEmu.worker.");
+    return apiPath.replace(".js", ".worker.js");
 }
 
 // Check if the library is running inside Electron

@@ -66,8 +66,8 @@ let brsWorker: Worker;
 
 // Default Device Data
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
-const storage: Storage = window.localStorage;
-const deviceData = {
+
+export const deviceData = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Emulator Library",
     serialNumber: getSerialNumber(),
@@ -75,14 +75,15 @@ const deviceData = {
     firmwareVersion: "46A.00E04209A", // v10.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
-    countryCode: "US", // Channel Store Country
+    countryCode: "US", // App Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    locale: "en_US", // Used if channel supports localization
+    locale: "en_US", // Used if app supports localization
     captionLanguage: "eng",
     clockFormat: "12h",
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap",
     fontPath: "../fonts/",
+    fonts: new Map(),
     audioCodecs: audioCodecs(),
     maxSimulStreams: 2, // Max number of audio resource streams
     connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
@@ -94,7 +95,7 @@ const deviceData = {
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
 
-// Channel Data
+// App Data
 const defaultSplashTime = 1600;
 let splashTimeout = 0;
 let source: any[] = [];
@@ -105,7 +106,7 @@ let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
 let sharedArray: Int32Array;
 let manifestMap = new Map();
 
-const currentChannel = {
+const currentApp = {
     id: "",
     file: "",
     title: "",
@@ -115,10 +116,11 @@ const currentChannel = {
     clearDisplay: true,
     running: false,
 };
-const lastChannel = { id: "", exitReason: "EXIT_UNKNOWN" };
+const lastApp = { id: "", exitReason: "EXIT_UNKNOWN" };
 
 // API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
+    const storage: Storage = window.localStorage;
     Object.assign(deviceData, customDeviceInfo);
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
     if (typeof options.debugToConsole === "boolean") {
@@ -152,10 +154,10 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
     // Subscribe Events
-    subscribeDisplay("channel", (event: string, data: any) => {
+    subscribeDisplay("app", (event: string, data: any) => {
         if (event === "mode") {
             deviceData.displayMode = data;
-            if (currentChannel.running) {
+            if (currentApp.running) {
                 terminate("EXIT_SETTINGS_UPDATE");
             }
             notifyAll("display", data);
@@ -163,9 +165,9 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
             notifyAll(event, data);
         }
     });
-    subscribeControl("channel", (event: string) => {
+    subscribeControl("app", (event: string) => {
         if (event === "home") {
-            if (currentChannel.running) {
+            if (currentApp.running) {
                 terminate("EXIT_USER_NAV");
                 playWav(0);
             }
@@ -189,7 +191,7 @@ function notifyAll(eventName: string, eventData?: any) {
     });
 }
 
-// Execute Channel/Source File
+// Execute App Zip or Source File
 export function execute(
     filePath: string,
     fileData: any,
@@ -200,47 +202,47 @@ export function execute(
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop();
     source = [];
-    currentChannel.id = filePath.hashCode();
-    currentChannel.file = filePath;
-    currentChannel.clearDisplay = clearDisplayOnExit;
-    currentChannel.execSource = execSource;
+    currentApp.id = filePath.hashCode();
+    currentApp.file = filePath;
+    currentApp.clearDisplay = clearDisplayOnExit;
+    currentApp.execSource = execSource;
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
     console.info(`Loading ${filePath}...`);
     initSoundModule(sharedArray, deviceData.maxSimulStreams, mute);
 
-    if (fileExt === "zip") {
-        openChannelZip(fileData);
+    if (fileExt?.toLowerCase() === "zip") {
+        loadAppZip(fileData, runApp);
     } else {
-        openSourceCode(fileName, fileData);
+        loadSourceCode(fileName, fileData);
     }
 }
 
 // Restore emulator state and terminate Worker
 export function terminate(reason: string) {
     deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
-    deviceDebug(`print,------ Finished '${currentChannel.title}' execution [${reason}] ------\r\n`);
-    if (currentChannel.clearDisplay) {
+    deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
+    if (currentApp.clearDisplay) {
         clearDisplay();
     }
     resetWorker();
-    lastChannel.id = currentChannel.id;
-    lastChannel.exitReason = reason;
-    currentChannel.id = "";
-    currentChannel.file = "";
-    currentChannel.title = "";
-    currentChannel.subtitle = "";
-    currentChannel.version = "";
-    currentChannel.execSource = "";
-    currentChannel.running = false;
+    lastApp.id = currentApp.id;
+    lastApp.exitReason = reason;
+    currentApp.id = "";
+    currentApp.file = "";
+    currentApp.title = "";
+    currentApp.subtitle = "";
+    currentApp.version = "";
+    currentApp.execSource = "";
+    currentApp.running = false;
     enableControl(false);
     notifyAll("closed", reason);
 }
 
 // Display API
 export function redraw(fullScreen: boolean, width?: number, height?: number, dpr?: number) {
-    redrawDisplay(currentChannel.running, fullScreen, width, height, dpr);
+    redrawDisplay(currentApp.running, fullScreen, width, height, dpr);
 }
 export function getDisplayMode() {
     return deviceData.displayMode;
@@ -263,7 +265,7 @@ export function getAudioMute() {
     return isMuted();
 }
 export function setAudioMute(mute: boolean) {
-    if (currentChannel.running) {
+    if (currentApp.running) {
         muteSound(mute);
     }
 }
@@ -288,7 +290,7 @@ export function sendKeyPress(key: string, delay = 300) {
 // Telnet Debug API
 export function debug(command: string): boolean {
     let handled = false;
-    if (currentChannel.running && command && command.length > 0) {
+    if (currentApp.running && command && command.length > 0) {
         const commandsMap = new Map([
             ["bt", DebugCommand.BT],
             ["cont", DebugCommand.CONT],
@@ -373,11 +375,12 @@ function resetArray() {
 }
 
 // Open source file
-function openSourceCode(fileName: string, fileData: any) {
+function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
     reader.onload = function (progressEvent) {
-        currentChannel.id = "brs";
-        currentChannel.title = fileName;
+        manifestMap = new Map();
+        currentApp.id = "brs";
+        currentApp.title = fileName;
         paths = [];
         bins = [];
         txts = [];
@@ -385,8 +388,8 @@ function openSourceCode(fileName: string, fileData: any) {
         paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
         splashTimeout = 0;
         clearDisplay();
-        notifyAll("loaded", currentChannel);
-        runChannel();
+        notifyAll("loaded", currentApp);
+        runApp(createPayload());
     };
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
@@ -400,8 +403,8 @@ let txtId: number;
 let srcId: number;
 let audId: number;
 
-function openChannelZip(f: any) {
-    JSZip.loadAsync(f).then(
+export function loadAppZip(file: any, callback: Function) {
+    JSZip.loadAsync(file).then(
         function (zip) {
             currentZip = zip;
             const manifest = zip.file("manifest");
@@ -409,13 +412,13 @@ function openChannelZip(f: any) {
                 manifest.async("string").then(processManifest, function error(e) {
                     const msg = `[api] Error uncompressing manifest: ${e.message}`;
                     console.error(msg);
-                    currentChannel.running = false;
+                    currentApp.running = false;
                     notifyAll("error", msg);
                 });
             } else {
-                const msg = "[api] Invalid Channel Package: missing manifest.";
+                const msg = "[api] Invalid App Package: missing manifest.";
                 console.error(msg);
-                currentChannel.running = false;
+                currentApp.running = false;
                 notifyAll("error", msg);
                 return;
             }
@@ -447,7 +450,7 @@ function openChannelZip(f: any) {
                             txts.push(assets[index]);
                         }
                     }
-                    setTimeout(runChannel, splashTimeout);
+                    setTimeout(callback, splashTimeout, createPayload());
                 },
                 function error(e) {
                     const msg = `[api] Error uncompressing file ${e.message}`;
@@ -457,10 +460,10 @@ function openChannelZip(f: any) {
             );
         },
         function (e) {
-            const msg = `[api] Error reading ${f.name}: ${e.message}`;
+            const msg = `[api] Error reading ${file.name}: ${e.message}`;
             console.error(msg);
             notifyAll("error", msg);
-            currentChannel.running = false;
+            currentApp.running = false;
         }
     );
 }
@@ -511,13 +514,13 @@ function processFile(relativePath: string, zipEntry: JSZip.JSZipObject) {
 function processManifest(content: string) {
     manifestMap = parseManifest(content);
 
-    currentChannel.title = manifestMap.get("title") || "No Title";
-    currentChannel.subtitle = manifestMap.get("subtitle") || "";
+    currentApp.title = manifestMap.get("title") || "No Title";
+    currentApp.subtitle = manifestMap.get("subtitle") || "";
 
     const majorVersion = parseInt(manifestMap.get("major_version")) || 0;
     const minorVersion = parseInt(manifestMap.get("minor_version")) || 0;
     const buildVersion = parseInt(manifestMap.get("build_version")) || 0;
-    currentChannel.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
+    currentApp.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
 
     const splashMinTime = parseInt(manifestMap.get("splash_min_time") || "");
     splashTimeout = isNaN(splashMinTime) ? defaultSplashTime : splashMinTime;
@@ -538,19 +541,21 @@ function processManifest(content: string) {
             notifyAll("icon", content);
         });
     }
-    // Display Splash or Icon
-    clearDisplay();
-    if (splash && splash.slice(0, 5) === "pkg:/") {
-        const splashFile = currentZip.file(splash.slice(5));
-        splashFile?.async("blob").then((blob: any) => {
-            createImageBitmap(blob).then(drawSplashScreen);
-        });
-    } else {
-        iconFile?.async("blob").then((blob: any) => {
-            createImageBitmap(blob).then(drawIconAsSplash);
-        });
+    if (typeof createImageBitmap !== "undefined") {
+        // Display Splash or Icon
+        clearDisplay();
+        if (splash && splash.slice(0, 5) === "pkg:/") {
+            const splashFile = currentZip.file(splash.slice(5));
+            splashFile?.async("blob").then((blob: any) => {
+                createImageBitmap(blob).then(drawSplashScreen);
+            });
+        } else {
+            iconFile?.async("blob").then((blob: any) => {
+                createImageBitmap(blob).then(drawIconAsSplash);
+            });
+        }
     }
-    notifyAll("loaded", currentChannel);
+    notifyAll("loaded", currentApp);
 }
 
 function parseManifest(contents: string) {
@@ -587,24 +592,19 @@ function parseManifest(contents: string) {
 
     return new Map<string, string>(keyValuePairs);
 }
-
-// Execute Emulator Web Worker
-function runChannel() {
-    showDisplay();
-    currentChannel.running = true;
+// Create App Payload
+function createPayload() {
     const input = new Map([
         ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
         ["splashTime", splashTimeout.toString()],
     ]);
-    if (currentChannel.id === lastChannel.id) {
-        input.set("lastExitOrTerminationReason", lastChannel.exitReason);
+    if (currentApp.id === lastApp.id) {
+        input.set("lastExitOrTerminationReason", lastApp.exitReason);
     }
-    if (currentChannel.execSource !== "") {
-        input.set("source", currentChannel.execSource);
+    if (currentApp.execSource !== "") {
+        input.set("source", currentApp.execSource);
     }
-    brsWorker = new Worker(brsEmuLib);
-    brsWorker.addEventListener("message", workerCallback);
-    const payload = {
+    return {
         device: deviceData,
         manifest: manifestMap,
         input: input,
@@ -613,10 +613,18 @@ function runChannel() {
         texts: txts,
         binaries: bins,
     };
+}
+
+// Execute Emulator Web Worker
+function runApp(payload: object) {
+    showDisplay();
+    currentApp.running = true;
+    brsWorker = new Worker(brsEmuLib);
+    brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
     enableControl(true);
-    notifyAll("started", currentChannel);
+    notifyAll("started", currentApp);
 }
 
 // Receive Messages from the Interpreter (Web Worker)
@@ -624,6 +632,7 @@ function workerCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
+        const storage: Storage = window.localStorage;
         deviceData.registry = event.data;
         deviceData.registry.forEach(function (value: string, key: string) {
             storage.setItem(key, value);
