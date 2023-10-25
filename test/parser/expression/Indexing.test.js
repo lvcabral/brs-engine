@@ -1,6 +1,6 @@
 const brs = require("brs");
 const { Lexeme } = brs.lexer;
-const { Int32 } = brs.types;
+const { Int32, BrsInvalid } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
 
@@ -26,6 +26,36 @@ describe("parser indexing", () => {
             expect(statements).toBeDefined();
             expect(statements).not.toBeNull();
             expect(statements).toMatchSnapshot();
+        });
+
+        test("Expression with identifier", () => {
+            let { statements, errors } = parser.parse([
+                identifier("_"),
+                token(Lexeme.Equal, "="),
+                identifier("bar"),
+                token(Lexeme.Print, "?"),
+                token(Lexeme.Dot, "."),
+                identifier("foo"),
+                EOF,
+            ]);
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
+        });
+
+        test("Expression with invalid", () => {
+            let { statements, errors } = parser.parse([
+                identifier("_"),
+                token(Lexeme.Equal, "="),
+                token(Lexeme.Invalid, "invalid", BrsInvalid.Instance),
+                token(Lexeme.Print, "?"),
+                token(Lexeme.Dot, "."),
+                identifier("bar"),
+                EOF,
+            ]);
+            expect(errors).toEqual([]);
+            expect(statements).toBeDefined();
+            expect(statements).not.toBeNull();
         });
 
         test("bracketed", () => {
