@@ -545,6 +545,7 @@ export class Parser {
                     Lexeme.Newline,
                     Lexeme.Colon,
                     Lexeme.Eof,
+                    Lexeme.Identifier,
                     ...additionalterminators
                 );
             }
@@ -1442,6 +1443,8 @@ export class Parser {
             while (true) {
                 if (match(Lexeme.LeftParen)) {
                     expr = finishCall(expr);
+                } else if (match(Lexeme.Print)) {
+                    // doing nothing as invalid check was before
                 } else if (match(Lexeme.LeftSquare)) {
                     indexedGet();
                 } else if (match(Lexeme.AtSymbol)) {
