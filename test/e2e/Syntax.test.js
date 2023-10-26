@@ -201,9 +201,8 @@ describe("end to end syntax", () => {
             "run",
             "stop",
             "then",
-            "promise-like resolved to 'foo'",
             "Hello from line ",
-            "18",
+            "14",
         ]);
     });
 
@@ -216,4 +215,15 @@ describe("end to end syntax", () => {
             "14", // arr = [13]: arr[0]++
         ]);
     });
+
+    test("dot-chaining.brs", async () => {
+        await execute([resourceFile("dot-chaining.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "removed number '3' from array, remaining 2",
+            "promise-like resolved to 'foo'",
+            "optional chaining works"
+        ]);
+    });
+
 });

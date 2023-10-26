@@ -56,6 +56,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
+    private _lastDotGetAA: RoAssociativeArray = this._environment.getRootM();
     private _startTime = Date.now();
     private _prevLoc: Location = {
         file: "",
@@ -1007,21 +1008,27 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     expression.callee instanceof Expr.DottedGet ||
                     expression.callee instanceof Expr.IndexedGet
                 ) {
-                    let maybeM = this.evaluate(expression.callee.obj);
-                    maybeM = isBoxable(maybeM) ? maybeM.box() : maybeM;
-
-                    if (maybeM.kind === ValueKind.Object) {
-                        if (maybeM instanceof RoAssociativeArray) {
-                            mPointer = maybeM;
-                        }
+                    if (expression.callee.obj instanceof Expr.Call) {
+                        mPointer = this._lastDotGetAA;
                     } else {
-                        return this.addError(
-                            new BrsError(
-                                "Attempted to retrieve a function from a primitive value",
-                                expression.closingParen.location
-                            )
-                        );
+                        let maybeM = this.evaluate(expression.callee.obj);
+                        maybeM = isBoxable(maybeM) ? maybeM.box() : maybeM;
+
+                        if (maybeM.kind === ValueKind.Object) {
+                            if (maybeM instanceof RoAssociativeArray) {
+                                mPointer = maybeM;
+                            }
+                        } else {
+                            return this.addError(
+                                new BrsError(
+                                    "Attempted to retrieve a function from a primitive value",
+                                    expression.closingParen.location
+                                )
+                            );
+                        }
                     }
+                } else {
+                    this._lastDotGetAA = this.environment.getRootM();
                 }
 
                 // Check Break Command to enable Micro Debugger
@@ -1211,6 +1218,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (isIterable(source)) {
             try {
+                if (source instanceof RoAssociativeArray) {
+                    this._lastDotGetAA = source;
+                }
                 return source.get(new BrsString(expression.name.text));
             } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
