@@ -632,11 +632,13 @@ function workerCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
-        const storage: Storage = window.localStorage;
         deviceData.registry = event.data;
-        deviceData.registry.forEach(function (value: string, key: string) {
-            storage.setItem(key, value);
-        });
+        if (typeof window !== "undefined") {
+            const storage: Storage = window.localStorage;
+            deviceData.registry.forEach(function (value: string, key: string) {
+                storage.setItem(key, value);
+            });    
+        }
     } else if (event.data instanceof Array) {
         addPlaylist(event.data);
     } else if (event.data.audioPath) {

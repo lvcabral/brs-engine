@@ -233,7 +233,7 @@ export function addSound(path: string, format: string, data: any) {
     soundsIdx.set(path.toLowerCase(), soundsDat.length);
     soundsDat.push(
         new Howl({
-            src: [window.URL.createObjectURL(data)],
+            src: [URL.createObjectURL(data)],
             format: format,
             preload: format === "wav",
             onloaderror: function (id, message) {
