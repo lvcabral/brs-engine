@@ -17,6 +17,10 @@ module.exports = env => {
         outputLib = libraryName + ".js";
         distPath = "app/lib"
     }
+    const ifdef_opts = {
+        DEBUG: (mode === "development"),
+        "ifdef-verbose": true,
+    }
     return [
         {
             entry: "./src/index.ts",
@@ -28,6 +32,12 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
+                        exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ifdef-loader",
+                        options: ifdef_opts,
                         exclude: /node_modules/,
                     },
                     {
@@ -44,8 +54,10 @@ module.exports = env => {
                 fallback: {
                     fs: false,
                     readline: false,
+                    crypto: require.resolve('crypto-browserify'),
                     path: require.resolve("path-browserify"),
                     stream: require.resolve("stream-browserify"),
+                    'process/browser': require.resolve('process/browser'),
                     timers: false,
                 },
                 modules: [path.resolve("./node_modules"), path.resolve("./src")],
@@ -83,6 +95,12 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
+                        exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ifdef-loader",
+                        options: ifdef_opts,
                         exclude: /node_modules/,
                     },
                 ],

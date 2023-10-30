@@ -96,6 +96,7 @@ let debugToConsole: boolean = true;
 let showStats: boolean = false;
 
 // App Data
+const inBrowser = typeof window !== "undefined";
 const defaultSplashTime = 1600;
 let splashTimeout = 0;
 let source: any[] = [];
@@ -106,16 +107,7 @@ let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
 let sharedArray: Int32Array;
 let manifestMap = new Map();
 
-const currentApp = {
-    id: "",
-    file: "",
-    title: "",
-    subtitle: "",
-    version: "",
-    execSource: "",
-    clearDisplay: true,
-    running: false,
-};
+const currentApp = createCurrentApp();
 const lastApp = { id: "", exitReason: "EXIT_UNKNOWN" };
 
 // API Methods
@@ -197,22 +189,24 @@ export function execute(
     fileData: any,
     clearDisplayOnExit: boolean = true,
     mute: boolean = false,
+    password: string = "",
     execSource: string = "auto-run-dev"
 ) {
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
-    const fileExt = filePath.split(".").pop();
+    const fileExt = filePath.split(".").pop()?.toLowerCase();
     source = [];
     currentApp.id = filePath.hashCode();
     currentApp.file = filePath;
     currentApp.clearDisplay = clearDisplayOnExit;
     currentApp.execSource = execSource;
+    currentApp.password = password;
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
     console.info(`Loading ${filePath}...`);
     initSoundModule(sharedArray, deviceData.maxSimulStreams, mute);
 
-    if (fileExt?.toLowerCase() === "zip") {
+    if (fileExt === "zip" || fileExt === "bpk") {
         loadAppZip(fileData, runApp);
     } else {
         loadSourceCode(fileName, fileData);
@@ -229,13 +223,7 @@ export function terminate(reason: string) {
     resetWorker();
     lastApp.id = currentApp.id;
     lastApp.exitReason = reason;
-    currentApp.id = "";
-    currentApp.file = "";
-    currentApp.title = "";
-    currentApp.subtitle = "";
-    currentApp.version = "";
-    currentApp.execSource = "";
-    currentApp.running = false;
+    Object.assign(currentApp, createCurrentApp());
     enableControl(false);
     notifyAll("closed", reason);
 }
@@ -436,17 +424,18 @@ export function loadAppZip(file: any, callback: Function) {
                     bins = [];
                     for (let index = 0; index < assets.length; index++) {
                         paths.push(assetPaths[index]);
-                        if (assetPaths[index].type === "binary") {
+                        const type = assetPaths[index].type;
+                        if (type === "binary" || type === "pcode") {
                             bins.push(assets[index]);
-                        } else if (assetPaths[index].type === "source") {
+                        } else if (type === "source") {
                             source.push(assets[index]);
-                        } else if (assetPaths[index].type === "audio") {
+                        } else if (type === "audio" && inBrowser) {
                             addSound(
                                 `pkg:/${assetPaths[index].url}`,
                                 assetPaths[index].format,
                                 assets[index]
                             );
-                        } else if (assetPaths[index].type === "text") {
+                        } else if (type === "text") {
                             txts.push(assets[index]);
                         }
                     }
@@ -505,7 +494,8 @@ function processFile(relativePath: string, zipEntry: JSZip.JSZipObject) {
         assetsEvents.push(zipEntry.async("blob"));
         audId++;
     } else if (!zipEntry.dir) {
-        assetPaths.push({ url: relativePath, id: binId, type: "binary" });
+        const binType = lcasePath === "source" ? "pcode" : "binary";
+        assetPaths.push({ url: relativePath, id: binId, type: binType });
         assetsEvents.push(zipEntry.async("arraybuffer"));
         binId++;
     }
@@ -592,6 +582,14 @@ function parseManifest(contents: string) {
 
     return new Map<string, string>(keyValuePairs);
 }
+
+// Remove the source code and replace by encrypted pcode returning new zip
+export function updateAppZip(source: Uint8Array) {
+    currentZip.remove("source");
+    currentZip.file("source", source, { binary: true });
+    return currentZip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+}
+
 // Create App Payload
 function createPayload() {
     const input = new Map([
@@ -612,6 +610,22 @@ function createPayload() {
         brs: source,
         texts: txts,
         binaries: bins,
+        password: currentApp.password,
+    };
+}
+
+// Create Current App object
+function createCurrentApp() {
+    return {
+        id: "",
+        file: "",
+        title: "",
+        subtitle: "",
+        version: "",
+        execSource: "",
+        password: "",
+        clearDisplay: true,
+        running: false,
     };
 }
 
@@ -633,15 +647,15 @@ function workerCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
-        if (typeof window !== "undefined") {
+        if (inBrowser) {
             const storage: Storage = window.localStorage;
             deviceData.registry.forEach(function (value: string, key: string) {
                 storage.setItem(key, value);
-            });    
+            });
         }
     } else if (event.data instanceof Array) {
         addPlaylist(event.data);
-    } else if (event.data.audioPath) {
+    } else if (event.data.audioPath && inBrowser) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
     } else if (event.data === "play") {
         playSound();

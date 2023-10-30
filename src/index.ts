@@ -6,9 +6,9 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { Interpreter, defaultExecutionOptions } from "./interpreter";
-import { RoAssociativeArray, AAMember, BrsString } from "./brsTypes";
+import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import { FileSystem } from "./interpreter/FileSystem";
-import { Lexer } from "./lexer";
+import { Lexer, Token } from "./lexer";
 import { Parser } from "./parser";
 import { version } from "../package.json";
 import * as PP from "./preprocessor";
@@ -18,6 +18,9 @@ import * as BrsTypes from "./brsTypes";
 import * as _parser from "./parser";
 import * as path from "path";
 import * as xml2js from "xml2js";
+import * as crypto from "crypto";
+import { encode, decode } from "@msgpack/msgpack";
+import { zlibSync, unzlibSync } from "fflate";
 import bslCore from "./common/v30/bslCore.brs";
 import bslDefender from "./common/v30/bslDefender.brs";
 import Roku_Ads from "./common/Roku_Ads.brs";
@@ -29,6 +32,9 @@ export { PP as preprocessor };
 export { _parser as parser };
 export const shared = new Map<string, Int32Array>();
 export const source = new Map<string, string>();
+const algorithm = "aes-256-ctr";
+let pcode: Buffer;
+
 declare global {
     function postMessage(message: any, options?: any): void;
 }
@@ -74,7 +80,7 @@ if (typeof onmessage === "undefined") {
  * @returns void.
  */
 
-export function executeFile(payload: any) {
+export function executeFile(payload: any): string | Buffer {
     const interpreter = new Interpreter();
     interpreter.onError(logError);
     // Input Parameters / Deep Link
@@ -88,8 +94,43 @@ export function executeFile(payload: any) {
     // Package Files
     setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
     // Run App
-    const exitReason = run(source, interpreter, new RoAssociativeArray(inputArray));
-    postMessage(`end,${exitReason}`);
+    const password = payload.password ?? "";
+    let result = "";
+    let input = new RoAssociativeArray(inputArray);
+    if (pcode instanceof Buffer) {
+        try {
+            if (password.length > 0) {
+                const decipher = crypto.createDecipher(algorithm, password);
+                const inflated = unzlibSync(
+                    Buffer.concat([decipher.update(pcode), decipher.final()])
+                );
+                const spcode = decode(inflated) as serializedPCode;
+                if (spcode) {
+                    const tokens = new Map(Object.entries(spcode.pcode));
+                    pcode = new Buffer([]);
+                    result = runBinary(tokens, interpreter, input);
+                } else {
+                    result = "EXIT_INVALID_PCODE";
+                }
+            } else {
+                result = "EXIT_MISSING_PASSWORD";
+            }
+        } catch (e: any) {
+            result = "EXIT_UNPACK_ERROR";
+            console.error(e.message);
+        }
+    } else {
+        result = runSource(source, interpreter, input, password);
+        if (result === "EXIT_PACKAGER_DONE") {
+            return pcode;
+        }
+    }
+    postMessage(`end,${result}`);
+    return result;
+}
+
+interface serializedPCode {
+    [pcode: string]: Token[];
 }
 
 /**
@@ -290,6 +331,8 @@ function setupPackageFiles(
             try {
                 if (filePath.type === "binary" && Array.isArray(binaries)) {
                     volume.writeFileSync(`/${filePath.url}`, binaries[filePath.id]);
+                } else if (filePath.type === "pcode" && Array.isArray(binaries)) {
+                    pcode = Buffer.from(binaries[filePath.id]);
                 } else if (filePath.type === "audio") {
                     // As the audio files are played on the renderer process we need to
                     // save a mock file to allow file exist checking and save the index
@@ -390,21 +433,24 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
  * @param source array of BrightScript code to lex, parse, and interpret.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
- * @param aa associative array with the input parameters
+ * @param input associative array with the input parameters
+ * @param password string with the encryption password (optional)
  * @returns an array of statement execution results, indicating why each
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function run(
+function runSource(
     source: Map<string, string>,
     interpreter: Interpreter,
-    aa: RoAssociativeArray
+    input: RoAssociativeArray,
+    password: string = ""
 ): string {
     const lexer = new Lexer();
     const parser = new Parser();
     const preprocessor = new PP.Preprocessor();
     const allStatements = new Array<_parser.Stmt.Statement>();
     const lib = new Map<string, string>();
+    let tokens: Token[] = [];
     lib.set("v30/bslDefender.brs", "");
     lib.set("v30/bslCore.brs", "");
     lib.set("Roku_Ads.brs", "");
@@ -416,6 +462,13 @@ function run(
             return;
         }
         let preprocessorResults = preprocessor.preprocess(scanResults.tokens, interpreter.manifest);
+        if (preprocessorResults.errors.length > 0) {
+            return;
+        }
+        if (password.length > 0) {
+            tokens = tokens.concat(preprocessorResults.processedTokens);
+            return;
+        }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
         if (parseResults.errors.length > 0) {
             return;
@@ -434,6 +487,14 @@ function run(
         }
         allStatements.push(...parseResults.statements);
     });
+    if (password.length > 0) {
+        const cipher = crypto.createCipher(algorithm, password);
+        const deflated = zlibSync(encode({ pcode: tokens }));
+        const source = Buffer.from(deflated);
+        // const source = Buffer.from(BSON.serialize({ pcode: pack }));
+        pcode = Buffer.concat([cipher.update(source), cipher.final()]);
+        return "EXIT_PACKAGER_DONE";
+    }
     lib.forEach((value: string, key: string) => {
         if (value !== "") {
             const libScan = lexer.scan(value, key);
@@ -442,7 +503,89 @@ function run(
         }
     });
     try {
-        interpreter.exec(allStatements, aa);
+        interpreter.exec(allStatements, input);
+        return "EXIT_USER_NAV";
+    } catch (err: any) {
+        return "EXIT_BRIGHTSCRIPT_CRASH";
+    }
+}
+
+/**
+ * Runs a binarty package of BrightScript code.
+ * @param source map of BrightScript tokens to parse, and interpret.
+ * @param interpreter an interpreter to use when executing `contents`. Required
+ *                    for `repl` to have persistent state between user inputs.
+ * @param input associative array with the input parameters
+ * @returns an array of statement execution results, indicating why each
+ *          statement exited and what its return value was, or `undefined` if
+ *          `interpreter` threw an Error.
+ */
+function runBinary(
+    source: Map<string, any>,
+    interpreter: Interpreter,
+    input: RoAssociativeArray
+): string {
+    const lexer = new Lexer();
+    const parser = new Parser();
+    const allStatements = new Array<_parser.Stmt.Statement>();
+    const lib = new Map<string, string>();
+    lib.set("v30/bslDefender.brs", "");
+    lib.set("v30/bslCore.brs", "");
+    lib.set("Roku_Ads.brs", "");
+    lexer.onError(logError);
+    parser.onError(logError);
+    let tokens: Token[] = [];
+    for (let [key, value] of source) {
+        const token: any = value;
+        if (token.literal) {
+            if (token.kind === "Integer") {
+                const literal: number = token.literal.value;
+                token.literal = new Int32(literal);
+            } else if (token.kind === "LongInteger") {
+                const literal: number = token.literal.value;
+                token.literal = new Int64(literal);
+            } else if (token.kind === "Double") {
+                const literal: number = token.literal.value;
+                token.literal = new Double(literal);
+            } else if (token.kind === "Float") {
+                const literal: number = token.literal.value;
+                token.literal = new Float(literal);
+            } else if (token.kind === "String") {
+                const literal: string = token.literal.value;
+                token.literal = new BrsString(literal);
+            }
+        }
+        tokens.push(token);
+        if (token.kind === "Eof") {
+            const parseResults = parser.parse(tokens);
+            if (parseResults.errors.length > 0) {
+                return "EXIT_BRIGHTSCRIPT_CRASH";
+            }
+            if (parseResults.statements.length === 0) {
+                return "EXIT_BRIGHTSCRIPT_CRASH";
+            }
+            if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
+                lib.set("v30/bslDefender.brs", bslDefender);
+                lib.set("v30/bslCore.brs", bslCore);
+            } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
+                lib.set("v30/bslCore.brs", bslCore);
+            }
+            if (parseResults.libraries.get("Roku_Ads.brs") === true) {
+                lib.set("Roku_Ads.brs", Roku_Ads);
+            }
+            allStatements.push(...parseResults.statements);
+            tokens = [];
+        }
+    }
+    lib.forEach((value: string, key: string) => {
+        if (value !== "") {
+            const libScan = lexer.scan(value, key);
+            const libParse = parser.parse(libScan.tokens);
+            allStatements.push(...libParse.statements);
+        }
+    });
+    try {
+        interpreter.exec(allStatements, input);
         return "EXIT_USER_NAV";
     } catch (err: any) {
         return "EXIT_BRIGHTSCRIPT_CRASH";
