@@ -193,7 +193,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  *
  * @returns an array of parameters in AA member format.
  */
-function setupInputArray(input: any): Array<AAMember> {
+function setupInputArray(input: any): AAMember[] {
     const inputArray = new Array<AAMember>();
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],

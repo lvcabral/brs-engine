@@ -184,27 +184,26 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute App Zip or Source File
-export function execute(
-    filePath: string,
-    fileData: any,
-    clearDisplayOnExit: boolean = true,
-    mute: boolean = false,
-    password: string = "",
-    execSource: string = "auto-run-dev"
-) {
+export function execute(filePath: string, fileData: any, options: any = {}) {
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
     source = [];
     currentApp.id = filePath.hashCode();
     currentApp.file = filePath;
-    currentApp.clearDisplay = clearDisplayOnExit;
-    currentApp.execSource = execSource;
-    currentApp.password = password;
+    if (typeof options.clearDisplay === "boolean") {
+        currentApp.clearDisplay = options.clearDisplayOnExit;
+    }
+    if (typeof options.execSource === "string") {
+        currentApp.execSource = options.execSource;
+    }
+    if (typeof options.password === "string") {
+        currentApp.password = options.password;
+    }
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
     console.info(`Loading ${filePath}...`);
-    initSoundModule(sharedArray, deviceData.maxSimulStreams, mute);
+    initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
         loadAppZip(fileData, runApp);
@@ -584,7 +583,7 @@ function parseManifest(contents: string) {
 }
 
 // Remove the source code and replace by encrypted pcode returning new zip
-export function updateAppZip(source: Uint8Array) {
+export async function updateAppZip(source: Uint8Array) {
     currentZip.remove("source");
     currentZip.file("source", source, { binary: true });
     return currentZip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
@@ -622,7 +621,7 @@ function createCurrentApp() {
         title: "",
         subtitle: "",
         version: "",
-        execSource: "",
+        execSource: "auto-run-dev",
         password: "",
         clearDisplay: true,
         running: false,

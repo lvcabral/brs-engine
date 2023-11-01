@@ -88,12 +88,23 @@ fileSelector.onclick = function () {
 fileSelector.onchange = function () {
     const file = this.files[0];
     const reader = new FileReader();
-    const fileExt = file.name.split(".").pop();
-    if (fileExt === "zip" || fileExt === "brs") {
+    const fileExt = file.name.split(".").pop()?.toLowerCase();
+    if (fileExt === "zip" || fileExt === "bpk" || fileExt === "brs") {
         reader.onload = function (evt) {
             // file is loaded
-            brsEmu.execute(file.name, evt.target.result);
-            channelIcons("hidden");
+            let password = "";
+            if (fileExt === "bpk") {
+                password = prompt("Please enter the password to decrypt the package.");
+            }
+            if (password !== null) {
+                brsEmu.execute(file.name, evt.target.result, {
+                    clearDisplayOnExit: true,
+                    muteSound: false,
+                    execSource: "open_app_button",
+                    password: password,
+                });
+                channelIcons("hidden");
+            }
         };
         reader.onerror = function (evt) {
             console.error(`Error opening ${file.name}:${reader.error}`);
@@ -115,7 +126,7 @@ function loadZip(zip) {
     fetch(zip)
         .then(function (response) {
             if (response.status === 200 || response.status === 0) {
-                brsEmu.execute(zip, response.blob(), true, false, "homescreen");
+                brsEmu.execute(zip, response.blob(), { execSource: "homescreen" });
                 display.focus();
             } else {
                 loading.style.visibility = "hidden";
