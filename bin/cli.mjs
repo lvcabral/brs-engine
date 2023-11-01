@@ -15,14 +15,41 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import brsEmu from "../app/lib/brsEmu.js";
-const { deviceData, loadAppZip } = brsEmu;
-import { getInterpreter, executeLine, executeFile } from "../app/lib/brsEmu.worker.js";
-const replInterpreter = getInterpreter();
-
-// read current version from package.json
-// I'll _definitely_ forget to do this one day
+import brsEmu from "../app/lib/brsEmu.min.js";
+const { deviceData, loadAppZip, updateAppZip } = brsEmu;
+import brsInterpreter from "../app/lib/brsEmu.worker.min.js";
+const  { getInterpreter, executeLine, executeFile } = brsInterpreter;
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json")));
+let zipFileName = "";
+
+/**
+ * Execute the app payload or generate an encrypted app package
+ * if a password is passed with parameter --pack.
+ * 
+ */
+function runApp(payload) {
+    const fontPath = "../app/fonts";
+    const fontFamily = payload.device.defaultFont;
+    payload.device.fonts.set("regular", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`)));
+    payload.device.fonts.set("bold", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`)));
+    payload.device.fonts.set("italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`)));
+    payload.device.fonts.set("bold-italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`)));
+    payload.password = program.pack;
+    const pkg = executeFile(payload);
+    if (pkg instanceof Uint8Array && pkg.length > 0) {
+        const regEx = new RegExp(".zip", "ig");
+        const filePath = path.join(program.out, zipFileName.replace(regEx, ".bpk"));
+        updateAppZip(pkg).then(function (buffer) {
+            try {
+                fs.writeFileSync(filePath, buffer);
+                console.log(`Package file created as ${filePath} with ${Math.round(buffer.length / 1024)} KB.\n`);
+            } catch (err) {
+                console.error(`Error generating the file ${filePath}: ${err.message}`);
+                process.exitCode = 1;
+            }
+        });
+    }
+}
 
 /**
  * Launches an interactive read-execute-print loop, which reads input from
@@ -31,6 +58,7 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "packa
  * **NOTE:** Currently limited to single-line inputs :(
  */
 function repl() {
+    const replInterpreter = getInterpreter();
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -47,27 +75,40 @@ function repl() {
     rl.prompt();
 }
 
-function runApp(payload) {
-    const fontPath = "../app/fonts";
-    const fontFamily = payload.device.defaultFont;
-    payload.device.fonts.set("regular", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`)));
-    payload.device.fonts.set("bold", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`)));
-    payload.device.fonts.set("italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`)));
-    payload.device.fonts.set("bold-italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`)));
-    executeFile(payload);
-}
-
+/**
+ * CLI program, params definition and action processing.
+ * 
+ */
 program
-    .description("BrightScript interpreter CLI")
-    .arguments("brs-cli [brsFiles...]")
+    .description(`${packageJson.description} CLI`)
+    .arguments(`brs-cli [brsFiles...]`)
+    .option(
+        "-p, --pack <password>",
+        "The password to generate the encrypted package.",
+        ""
+    )
+    .option(
+        "-o, --out <directory>",
+        "The directory to save the encrypted package file.",
+        "./"
+    )
     .action(async (brsFiles, program) => {
         if (brsFiles.length > 0) {
             try {
                 // Run App Zip file
                 const filePath = brsFiles[0];
                 const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
-                const fileExt = fileName.split(".").pop();
-                if (fileExt?.toLowerCase() === "zip") {
+                const fileExt = fileName.split(".").pop()?.toLowerCase();
+                zipFileName = "";
+                if (fileExt === "zip" || fileExt === "bpk") {
+                    console.log(`\n${packageJson.description} CLI [Version ${packageJson.version}]\n`);
+                    if (program.pack.length > 0 && fileExt === "zip") {
+                        console.log(`Packaging ${filePath}...\n`);
+                    } else {
+                        console.log(`Executing ${filePath}...\n`);
+                    }
+                    
+                    zipFileName = fileName;
                     loadAppZip(fs.readFileSync(filePath), runApp);
                     return;
                 }
@@ -84,7 +125,7 @@ program
                             source.push(sourceCode.toString());
                             paths.push({ url: `source/${fileName}`, id: id, type: "source" });
                             id++;
-                        }   
+                        }
                     }
                 })
                 const payload = {
@@ -106,8 +147,7 @@ program
                 process.exitCode = 1;
             }
         } else {
-            console.log(`BrightScript interpreter CLI [Version ${packageJson.version}]`);
-            console.log("");
+            console.log(`\n${packageJson.description} CLI [Version ${packageJson.version}]\n`);
             repl();
         }
     })

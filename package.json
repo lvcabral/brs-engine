@@ -1,6 +1,6 @@
 {
   "name": "brs-emu",
-  "version": "0.10.23",
+  "version": "0.11.1",
   "description": "BrightScript Emulator",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "homepage": "https://lvcabral.com/brs/",
@@ -34,18 +34,23 @@
     "lint": "tslint --project .",
     "prettier:write": "prettier --write \"{app,src,test}/**/*.{js,ts}\"",
     "prettier": "prettier --check \"{app,src,test}/**/*.{js,ts}\"",
-    "prepublishOnly": "npm-run-all --serial clean build lint prettier"
+    "prepublishOnly": "npm-run-all --serial clean lint prettier build release"
   },
   "files": [
     "app/audio/",
     "app/fonts/",
+    "app/lib/brsEmu.min.js",
     "app/lib/brsEmu.worker.js",
+    "app/lib/brsEmu.worker.min.js",
     "types/src/api/"
   ],
   "dependencies": {
+    "@msgpack/msgpack": "^2.8.0",
     "commander": "^2.12.2",
     "crc": "^3.8.0",
+    "crypto-browserify": "^3.12.0",
     "decode-bmp": "^0.1.0",
+    "fflate": "^0.8.1",
     "file-type": "^12.4.2",
     "howler": "^2.2.3",
     "jpeg-js": "^0.4.4",
@@ -85,6 +90,7 @@
     "@types/xml2js": "^0.4.8",
     "buffer": "^6.0.3",
     "husky": ">=1",
+    "ifdef-loader": "^2.3.2",
     "javascript-obfuscator": "^4.0.2",
     "jest": "^29.4.3",
     "jest-junit": "^6.1.0",
