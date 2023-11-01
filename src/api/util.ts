@@ -72,8 +72,13 @@ export function getApiPath(): string {
     return main;
 }
 export function getEmuPath(): string {
-    const apiPath = getApiPath();
-    return apiPath.replace(".js", ".worker.js");
+    let libPath = getApiPath();
+    /// #if DEBUG
+    libPath = libPath.replace(".js", ".worker.js");
+    /// #else
+    libPath = libPath.replace(".min.js", ".worker.min.js");
+    /// #endif
+    return libPath;
 }
 
 // Check if the library is running inside Electron
