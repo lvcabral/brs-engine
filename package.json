@@ -1,6 +1,6 @@
 {
   "name": "brs-emu",
-  "version": "0.10.23",
+  "version": "0.11.1",
   "description": "BrightScript Emulator",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "homepage": "https://lvcabral.com/brs/",
@@ -34,12 +34,14 @@
     "lint": "tslint --project .",
     "prettier:write": "prettier --write \"{app,src,test}/**/*.{js,ts}\"",
     "prettier": "prettier --check \"{app,src,test}/**/*.{js,ts}\"",
-    "prepublishOnly": "npm-run-all --serial clean build lint prettier"
+    "prepublishOnly": "npm-run-all --serial clean lint prettier build release"
   },
   "files": [
     "app/audio/",
     "app/fonts/",
+    "app/lib/brsEmu.min.js",
     "app/lib/brsEmu.worker.js",
+    "app/lib/brsEmu.worker.min.js",
     "types/src/api/"
   ],
   "dependencies": {
