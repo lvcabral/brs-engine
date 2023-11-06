@@ -134,12 +134,13 @@ interface serializedPCode {
 }
 
 /**
- * Returns a new instance of the Interpreter
+ * Returns a new instance of the Interpreter for REPL
  *
  */
-export function getInterpreter() {
+export function getInterpreter(payload: any) {
     const replInterpreter = new Interpreter();
     replInterpreter.onError(logError);
+    setupDeviceData(payload.device, replInterpreter);
     return replInterpreter;
 }
 
