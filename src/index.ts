@@ -182,7 +182,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
             });
         }
     } catch (e: any) {
-        if(!(e instanceof BrsError.BrsError)) {
+        if (!(e instanceof BrsError.BrsError)) {
             console.error("Interpreter execution error: ", e.message);
         }
         return;
