@@ -37,6 +37,8 @@ N1101,Roku HD-XR Classic,STB,directfb,hd
 3921X,Roku Premiere+ (2018),STB,opengl,fhd
 3800X,Roku Stick (2017),STICK,opengl,hd
 3810X,Roku Stick+,STICK,opengl,fhd
+3820X,Roku Streaming Stick 4K (2021),STICK,opengl,fhd
+3821X,Roku Streaming Stick 4K+ (2021),STICK,opengl,fhd
 3900X,Roku Express (2017),STB,opengl,hd
 3900EU,Roku Express EU (2017),STB,opengl,hd
 3910X,Roku Express+ (2017),STB,opengl,hd
@@ -50,8 +52,14 @@ N1101,Roku HD-XR Classic,STB,directfb,hd
 4662X,Roku Ultra LT,STB,opengl,fhd
 4670X,Roku Ultra (2019),STB,opengl,fhd
 4800X,Roku Ultra (2020),STB,opengl,fhd
+4801X,Roku Ultra LT (2021),STB,opengl,fhd
 8000X,Roku TV (ARM),TV,opengl,hd
 9100X,Roku Smart Soundbar,BAR,,opengl,fhd
+9101X,Roku Streambar,BAR,opengl,fhd
 9102X,Roku Streambar,BAR,opengl,fhd
 A000X,Roku TV 4K,TV,opengl,fhd
 C000X,Roku TV 4K,TV,opengl,fhd
+D000X,Roku TV,TV,opengl,hd
+E000X,Roku TV 8K,TV,opengl,fhd
+G000X,Roku TV 4K,TV,opengl,fhd
+H000X,Roku TV 2K,TV,opengl,hd

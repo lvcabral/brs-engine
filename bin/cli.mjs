@@ -15,9 +15,9 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import brsEmu from "../app/lib/brsEmu.min.js";
+import brsEmu from "../app/lib/brsEmu.js";
 const { deviceData, loadAppZip, updateAppZip } = brsEmu;
-import brsInterpreter from "../app/lib/brsEmu.worker.min.js";
+import brsInterpreter from "../app/lib/brsEmu.worker.js";
 const  { getInterpreter, executeLine, executeFile } = brsInterpreter;
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json")));
 let zipFileName = "";
@@ -58,7 +58,7 @@ function runApp(payload) {
  * **NOTE:** Currently limited to single-line inputs :(
  */
 function repl() {
-    const replInterpreter = getInterpreter();
+    const replInterpreter = getInterpreter({ device: deviceData });
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
