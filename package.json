@@ -57,7 +57,7 @@
     "jszip": "^3.10.1",
     "libwebpjs": "lvcabral/libwebpjs",
     "long": "^3.2.0",
-    "luxon": "^1.8.3",
+    "luxon": "^3.4.3",
     "memory-fs": "^0.5.0",
     "nanomatch": "^1.2.13",
     "omggif": "^1.0.10",
