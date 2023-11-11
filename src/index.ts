@@ -50,11 +50,13 @@ if (typeof onmessage === "undefined") {
     globalThis.postMessage = function (message: any, options: any) {
         if (typeof message === "string") {
             if (message.slice(0, 6) === "print,") {
-                console.log(message.slice(6));
+                console.log(message.slice(6).trimRight());
+            } else if (message.slice(0, 8) === "warning,") {
+                console.warn(message.slice(8).trimRight());
             } else if (message.slice(0, 6) === "error,") {
-                console.error(message.slice(6));
+                console.error(message.slice(6).trimRight());
             } else {
-                console.log(message);
+                console.info(message.trimRight());
             }
         }
     };
