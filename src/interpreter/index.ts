@@ -157,7 +157,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } catch (err: any) {
             if (!((err instanceof BrsError) || (err instanceof BlockEnd))) {
                 if (err.message !== "") {
-                    postMessage(`error,${err.format()}`);
+                    postMessage(`error,${err.message}`);
                 }
             }
             throw err;
