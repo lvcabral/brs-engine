@@ -38,7 +38,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             ],
             ifArrayGet: [this.getEntry],
             ifArraySet: [this.setEntry],
-            ifEnum: [this.isEmpty],
+            ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
             ifListToArray: [this.toArray],
         });
     }
@@ -303,8 +303,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.roList.currentIndex = this.length() > 0 ? 0 : -1;
-            return BrsBoolean.from(this.roList.currentIndex === 0);
+            this.roList.listIndex = this.length() > 0 ? 0 : -1;
+            return BrsBoolean.from(this.roList.listIndex === 0);
         },
     });
 
@@ -326,7 +326,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.roList.remove(this.roList.currentIndex) || BrsInvalid.Instance;
+            return this.roList.remove(this.roList.listIndex) || BrsInvalid.Instance;
         },
     });
 
@@ -407,6 +407,41 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.length() === 0);
+        },
+    });
+
+    /** Checks whether the current position is not past the end of the enumeration. */
+    private isNext = new Callable("isNext", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.roList.enumIndex >= 0);
+        },
+    });
+
+    /** Resets the current position to the first element of the enumeration. */
+    private reset = new Callable("reset", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            this.roList.enumIndex = this.length() > 0 ? 0 : -1;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Increments the position of an enumeration. If the last element of the enumeration is returned,
+     * this method sets the current position to indicate that it is now past the end. */
+    private next = new Callable("next", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return this.roList.getNext() ?? BrsInvalid.Instance;
         },
     });
 }
