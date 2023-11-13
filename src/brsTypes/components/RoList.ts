@@ -7,7 +7,8 @@ import { Interpreter } from "../../interpreter";
 export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     elements: BrsType[];
-    currentIndex: number;
+    listIndex: number;
+    enumIndex: number;
 
     constructor(elements?: BrsType[]) {
         super("roList");
@@ -16,7 +17,8 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         } else {
             this.elements = new Array<BrsType>();
         }
-        this.currentIndex = -1;
+        this.listIndex = -1;
+        this.enumIndex = -1;
         this.registerMethods({
             ifList: [
                 this.addHead,
@@ -43,7 +45,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             ],
             ifArrayGet: [this.getEntry],
             ifArraySet: [this.setEntry],
-            ifEnum: [this.isEmpty],
+            ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
         });
     }
 
@@ -102,8 +104,11 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             this.elements.push(element);
         } else {
             this.elements.unshift(element);
-            if (this.currentIndex >= 0) {
-                this.currentIndex++;
+            if (this.listIndex >= 0) {
+                this.listIndex++;
+            }
+            if (this.enumIndex >= 0) {
+                this.enumIndex++;
             }
         }
     }
@@ -117,21 +122,38 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         } else {
             removed = this.elements.splice(index, 1)[0];
         }
-        if (removed && this.currentIndex > index) {
-            this.currentIndex--;
+        if (removed && this.listIndex > index) {
+            this.listIndex--;
         }
-        if (this.currentIndex >= this.elements.length) {
-            this.currentIndex = -1;
+        if (this.listIndex >= this.elements.length) {
+            this.listIndex = -1;
+        }
+        if (removed && this.enumIndex > index) {
+            this.enumIndex--;
+        }
+        if (this.enumIndex >= this.elements.length) {
+            this.enumIndex = -1;
         }
         return removed;
     }
 
     getCurrent() {
-        const index = this.currentIndex;
+        const index = this.listIndex;
         if (index >= 0) {
-            this.currentIndex++;
-            if (this.currentIndex >= this.elements.length) {
-                this.currentIndex = -1;
+            this.listIndex++;
+            if (this.listIndex >= this.elements.length) {
+                this.listIndex = -1;
+            }
+        }
+        return this.elements[index];
+    }
+
+    getNext() {
+        const index = this.enumIndex;
+        if (index >= 0) {
+            this.enumIndex++;
+            if (this.enumIndex >= this.elements.length) {
+                this.enumIndex = -1;
             }
         }
         return this.elements[index];
@@ -222,8 +244,8 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.currentIndex = this.elements.length > 0 ? 0 : -1;
-            return BrsBoolean.from(this.currentIndex === 0);
+            this.listIndex = this.elements.length > 0 ? 0 : -1;
+            return BrsBoolean.from(this.listIndex === 0);
         },
     });
 
@@ -245,7 +267,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.remove(this.currentIndex) || BrsInvalid.Instance;
+            return this.remove(this.listIndex) || BrsInvalid.Instance;
         },
     });
 
@@ -346,7 +368,8 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             this.elements = new Array<BrsType>();
-            this.currentIndex = -1;
+            this.listIndex = -1;
+            this.enumIndex = -1;
             return BrsInvalid.Instance;
         },
     });
@@ -357,8 +380,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, array: BrsComponent) => {
-            if (!(array instanceof RoArray || array instanceof RoList)) {
-                // TODO: validate against RBI
+            if (!(array instanceof RoList)) {
                 return BrsInvalid.Instance;
             }
 
@@ -403,6 +425,8 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     //--------------------------------- ifEnum ---------------------------------
+
+    /** Checks whether the enumeration contains no elements. */
     private isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
@@ -410,6 +434,41 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.elements.length === 0);
+        },
+    });
+
+    /** Checks whether the current position is not past the end of the enumeration. */
+    private isNext = new Callable("isNext", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.enumIndex >= 0);
+        },
+    });
+
+    /** Resets the current position to the first element of the enumeration. */
+    private reset = new Callable("reset", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            this.enumIndex = this.elements.length > 0 ? 0 : -1;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Increments the position of an enumeration. If the last element of the enumeration is returned,
+     * this method sets the current position to indicate that it is now past the end. */
+    private next = new Callable("next", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return this.getNext() ?? BrsInvalid.Instance;
         },
     });
 }
