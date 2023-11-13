@@ -17,6 +17,7 @@ export interface AAMember {
 export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     elements = new Map<string, BrsType>();
+    enumIndex: number;
     /** Maps lowercased element name to original name used in this.elements.
      * Main benefit of it is fast, case-insensitive access.
      */
@@ -26,6 +27,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     constructor(elements: AAMember[]) {
         super("roAssociativeArray");
         elements.forEach((member) => this.set(member.name, member.value, true));
+        this.enumIndex = elements.length ? 0 : -1;
 
         this.registerMethods({
             ifAssociativeArray: [
@@ -41,7 +43,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
                 this.lookupCI,
                 this.setmodecasesensitive,
             ],
-            ifEnum: [this.isEmpty],
+            ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
         });
     }
 
@@ -53,9 +55,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return [
             "<Component: roAssociativeArray> =",
             "{",
-            ...Array.from(this.elements.entries()).map(
-                ([key, value]) => `    ${key}: ${value.toString(this)}`
-            ),
+            ...Array.from(this.elements.entries())
+                .sort()
+                .map(([key, value]) => `    ${key}: ${value.toString(this)}`),
             "}",
         ].join("\n");
     }
@@ -126,6 +128,28 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return BrsInvalid.Instance;
     }
 
+    getNext() {
+        const keys = Array.from(this.elements.keys());
+        const index = this.enumIndex;
+        if (index >= 0) {
+            this.enumIndex++;
+            if (this.enumIndex >= keys.length) {
+                this.enumIndex = -1;
+            }
+        }
+        return keys[index];
+    }
+
+    updateNext() {
+        const keys = Array.from(this.elements.keys());
+        const hasItems = keys.length > 0;
+        if (this.enumIndex === -1 && hasItems) {
+            this.enumIndex = 0;
+        } else if (this.enumIndex >= keys.length || !hasItems) {
+            this.enumIndex = -1;
+        }
+    }
+
     /** if AA is in insensitive mode, it means that we should do insensitive search of real key */
     private findElementKey(elementKey: string, isCaseSensitiveFind = false) {
         if (this.modeCaseSensitive && isCaseSensitiveFind) {
@@ -146,9 +170,10 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             this.elements.clear();
             this.keyMap.clear();
+            this.enumIndex = -1;
             return BrsInvalid.Instance;
         },
     });
@@ -159,7 +184,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             let key = this.findElementKey(str.value, this.modeCaseSensitive);
             let deleted = key ? this.elements.delete(key) : false;
 
@@ -173,6 +198,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             } else {
                 this.keyMap.delete(lKey);
             }
+            this.updateNext();
             return BrsBoolean.from(deleted);
         },
     });
@@ -188,8 +214,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             ],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
+        impl: (_: Interpreter, key: BrsString, value: BrsType) => {
             this.set(key, value, /* isCaseSensitive */ true);
+            this.updateNext();
             return BrsInvalid.Instance;
         },
     });
@@ -200,7 +227,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new Int32(this.elements.size);
         },
     });
@@ -211,7 +238,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             let key = this.findElementKey(str.value, this.modeCaseSensitive);
             return key && this.elements.has(key) ? BrsBoolean.True : BrsBoolean.False;
         },
@@ -223,7 +250,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, obj: BrsType) => {
+        impl: (_: Interpreter, obj: BrsType) => {
             if (!(obj instanceof RoAssociativeArray)) {
                 // TODO: validate against RBI
                 return BrsInvalid.Instance;
@@ -232,6 +259,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             obj.elements.forEach((value, key) => {
                 this.set(new BrsString(key), value, true);
             });
+            this.updateNext();
 
             return BrsInvalid.Instance;
         },
@@ -243,7 +271,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new RoArray(this.getElements());
         },
     });
@@ -254,7 +282,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new RoArray(
                 this.getElements().map((key: BrsString) => {
                     return new RoAssociativeArray([
@@ -280,7 +308,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, key: BrsString) => {
+        impl: (_: Interpreter, key: BrsString) => {
             return this.get(key, true);
         },
     });
@@ -291,7 +319,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, key: BrsString) => {
+        impl: (_: Interpreter, key: BrsString) => {
             return this.get(key);
         },
     });
@@ -302,7 +330,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             this.modeCaseSensitive = true;
             return BrsInvalid.Instance;
         },
@@ -310,14 +338,53 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     //--------------------------------- ifEnum ---------------------------------
 
+    // TODO: The way Roku devices handle the order of elements internally for AA is not clear,
+    // not possible to reproduce for now, this implementation follows the same logic used in roArray.
+
     /** Returns true if enumeration contains no elements, false otherwise	 */
     private isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return BrsBoolean.from(this.elements.size === 0);
+        },
+    });
+
+    /** Checks whether the current position is not past the end of the enumeration. */
+    private isNext = new Callable("isNext", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.enumIndex >= 0);
+        },
+    });
+
+    /** Resets the current position to the first element of the enumeration. */
+    private reset = new Callable("reset", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            this.enumIndex = this.elements.size > 0 ? 0 : -1;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Increments the position of an enumeration. If the last element of the enumeration is returned,
+     * this method sets the current position to indicate that it is now past the end. */
+    private next = new Callable("next", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            const item = this.getNext();
+            return item ? new BrsString(item) : BrsInvalid.Instance;
         },
     });
 }

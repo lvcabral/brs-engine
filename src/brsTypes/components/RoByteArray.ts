@@ -9,12 +9,14 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private elements: Uint8Array;
     private resize = true;
+    enumIndex: number;
 
     constructor();
     constructor(elementsParam: Uint8Array);
     constructor(elementsParam?: Uint8Array) {
         super("roByteArray");
         this.elements = elementsParam ? elementsParam : new Uint8Array();
+        this.enumIndex = this.elements.length ? 0 : -1;
         this.registerMethods({
             ifByteArray: [
                 this.readFile,
@@ -45,7 +47,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             ifArrayGet: [this.getEntry],
             ifArraySet: [this.setEntry],
-            ifEnum: [this.isEmpty],
+            ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
         });
     }
 
@@ -107,6 +109,26 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
+    getNext() {
+        const index = this.enumIndex;
+        if (index >= 0) {
+            this.enumIndex++;
+            if (this.enumIndex >= this.elements.length) {
+                this.enumIndex = -1;
+            }
+        }
+        return new Int32(this.elements[this.enumIndex]);
+    }
+
+    updateNext() {
+        const hasItems = this.elements.length > 0;
+        if (this.enumIndex === -1 && hasItems) {
+            this.enumIndex = 0;
+        } else if (this.enumIndex >= this.elements.length || !hasItems) {
+            this.enumIndex = -1;
+        }
+    }
+
     // ifByteArray ---------------------------------------------------------------------
 
     private readFile = new Callable("readFile", {
@@ -131,6 +153,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     } else {
                         this.elements = array;
                     }
+                    this.updateNext();
                     return BrsBoolean.True;
                 }
             } catch (err: any) {
@@ -222,6 +245,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, asciiStr: BrsString) => {
             this.elements = new Uint8Array(Buffer.from(asciiStr.value, "utf8"));
+            this.updateNext();
             return BrsInvalid.Instance;
         },
     });
@@ -247,6 +271,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             if (value.length % 2 === 0) {
                 this.elements = new Uint8Array(Buffer.from(value, "hex"));
             }
+            this.updateNext();
             return BrsInvalid.Instance;
         },
     });
@@ -269,6 +294,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, hexStr: BrsString) => {
             this.elements = new Uint8Array(Buffer.from(hexStr.value, "base64"));
+            this.updateNext();
             return BrsInvalid.Instance;
         },
     });
@@ -383,6 +409,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             array.set(this.elements, 0);
             array[this.elements.length] = byte.getValue();
             this.elements = array;
+            this.updateNext();
             return BrsInvalid.Instance;
         },
     });
@@ -409,6 +436,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             array[0] = byte.getValue();
             array.set(this.elements, 1);
             this.elements = array;
+            this.updateNext();
             return BrsInvalid.Instance;
         },
     });
@@ -444,6 +472,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             this.elements = new Uint8Array();
+            this.enumIndex = -1;
             return BrsInvalid.Instance;
         },
     });
@@ -509,6 +538,41 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.elements.length === 0);
+        },
+    });
+
+    /** Checks whether the current position is not past the end of the enumeration. */
+    private isNext = new Callable("isNext", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.enumIndex >= 0);
+        },
+    });
+
+    /** Resets the current position to the first element of the enumeration. */
+    private reset = new Callable("reset", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            this.enumIndex = this.elements.length > 0 ? 0 : -1;
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Increments the position of an enumeration. If the last element of the enumeration is returned,
+     * this method sets the current position to indicate that it is now past the end. */
+    private next = new Callable("next", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return this.getNext() ?? BrsInvalid.Instance;
         },
     });
 }
