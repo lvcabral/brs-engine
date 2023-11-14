@@ -74,7 +74,7 @@ program
                 } 
                 runBrsFiles(brsFiles);
             } catch (err) {
-                if (err.messages && err.messages.length) {
+                if (err.messages?.length) {
                     err.messages.forEach((message) => console.error(message));
                 } else {
                     console.error(err.message);

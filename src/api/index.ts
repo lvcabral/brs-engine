@@ -511,20 +511,20 @@ function processManifest(content: string) {
     const buildVersion = parseInt(manifestMap.get("build_version")) || 0;
     currentApp.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
 
-    const splashMinTime = parseInt(manifestMap.get("splash_min_time") || "");
+    const splashMinTime = parseInt(manifestMap.get("splash_min_time"));
     splashTimeout = isNaN(splashMinTime) ? defaultSplashTime : splashMinTime;
 
-    const splashKeys = ["splash_screen_sd", "splash_screen_hd", "splash_screen_fhd"];
-    const iconKeys = ["mm_icon_focus_sd", "mm_icon_focus_hd", "mm_icon_focus_fhd"];
-    if (deviceData.displayMode !== "480p") {
-        splashKeys.push(splashKeys.shift() || "");
-        iconKeys.push(iconKeys.shift() || "");
+    const resKeys = ["hd", "fhd"];
+    if (deviceData.displayMode === "480p") {
+        resKeys.unshift("sd");
     }
-    const splash = manifestMap.get(splashKeys.find((key) => manifestMap.has(key)));
-    const icon = manifestMap.get(iconKeys.find((key) => manifestMap.has(key)));
+    const splashKey = resKeys.find((key) => manifestMap.has(`splash_screen_${key}`));
+    const splash = manifestMap.get(`splash_screen_${splashKey}`);
+    const iconKey = resKeys.find((key) => manifestMap.has(`mm_icon_focus_${key}`));
+    const icon = manifestMap.get(`mm_icon_focus_${iconKey}`);
 
     let iconFile;
-    if (icon && icon.slice(0, 5) === "pkg:/") {
+    if (icon?.slice(0, 5) === "pkg:/") {
         iconFile = currentZip.file(icon.slice(5));
         iconFile?.async("base64").then((content: any) => {
             notifyAll("icon", content);
@@ -533,7 +533,7 @@ function processManifest(content: string) {
     if (typeof createImageBitmap !== "undefined") {
         // Display Splash or Icon
         clearDisplay();
-        if (splash && splash.slice(0, 5) === "pkg:/") {
+        if (splash?.slice(0, 5) === "pkg:/") {
             const splashFile = currentZip.file(splash.slice(5));
             splashFile?.async("blob").then((blob: any) => {
                 createImageBitmap(blob).then(drawSplashScreen);
