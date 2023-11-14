@@ -383,7 +383,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.elements[this.elements.length - 1]) || BrsInvalid.Instance;
+            const item = this.elements[this.elements.length - 1];
+            return item ? new Int32(item) : BrsInvalid.Instance;
         },
     });
 
@@ -393,9 +394,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            const pop = new Int32(this.elements[this.elements.length - 1]) || BrsInvalid.Instance;
+            const item = this.elements[this.elements.length - 1];
             // TODO: Remove last item from byte array (check how to behave with resize=true)
-            return pop;
+            return item ? new Int32(item) : BrsInvalid.Instance;
         },
     });
 
@@ -420,9 +421,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            const shift = new Int32(this.elements[0]) || BrsInvalid.Instance;
+            const item = this.elements[0];
             // TODO: Remove first item from byte array (check how to behave with resize=true)
-            return shift;
+            return item ? new Int32(item) : BrsInvalid.Instance;
         },
     });
 
