@@ -6,20 +6,23 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as fs from 'fs';
 import { Command } from 'commander';
-const program = new Command();
-import * as path from 'path';
-import readline from "readline";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import chalk from "chalk";
+import stripAnsi from 'strip-ansi';
+import * as fs from 'fs';
+import * as path from 'path';
+import readline from "readline";
+import brsApi from "../app/lib/brsEmu.js";
+import brsLib from "../app/lib/brsEmu.worker.js";
+const program = new Command();
+const { deviceData, loadAppZip, updateAppZip } = brsApi;
+const { registerCallback, getInterpreter, executeLine, executeFile } = brsLib;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-import brsEmu from "../app/lib/brsEmu.js";
-const { deviceData, loadAppZip, updateAppZip } = brsEmu;
-import brsInterpreter from "../app/lib/brsEmu.worker.js";
-const  { getInterpreter, executeLine, executeFile } = brsInterpreter;
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json")));
+const defaultLevel = chalk.level.toString();
 let zipFileName = "";
 
 /**
@@ -63,7 +66,7 @@ function repl() {
         input: process.stdin,
         output: process.stdout,
     });
-    rl.setPrompt("brs> ");
+    rl.setPrompt(`${chalk.magenta("brs")}> `);
     rl.on("line", (line) => {
         if (line.toLowerCase() === "quit" || line.toLowerCase() === "exit") {
             process.exit();
@@ -92,7 +95,18 @@ program
         "The directory to save the encrypted package file.",
         "./"
     )
+    .option(
+        "-c, --colors <color-level>",
+        "Define the console color level (0 disable colors).",
+        defaultLevel
+    )
     .action(async (brsFiles, program) => {
+        if (program.colors.length === 1 && program.colors.match(/[0-3]/)?.length) {
+            chalk.level = Number(program.colors);
+        } else {
+            console.error(`Invalid color level! Keeping the default: ${defaultLevel}`);
+        }
+        registerCallback(messageCallback);
         if (brsFiles.length > 0) {
             try {
                 // Run App Zip file
@@ -107,7 +121,6 @@ program
                     } else {
                         console.log(`Executing ${filePath}...\n`);
                     }
-                    
                     zipFileName = fileName;
                     loadAppZip(fs.readFileSync(filePath), runApp);
                     return;
@@ -147,9 +160,56 @@ program
                 process.exitCode = 1;
             }
         } else {
-            console.log(`\n${packageJson.description} CLI [Version ${packageJson.version}]\n`);
+            console.log(`\n${packageJson.description} CLI [version ${chalk.gray(packageJson.version)}]\n`);
             repl();
         }
     })
     .version(packageJson.version, "-v, --version")
     .parse(process.argv);
+
+/**
+ * Callback function to receive the messages from the Interpreter.
+ * 
+ */
+function messageCallback(message, options) {
+    if (typeof message === "string") {
+        const mType = message.split(",")[0];
+        if (!mType) {
+            console.info(chalk.green(message.trimRight()));
+        } else if (mType === "print") {
+            console.log(colorize(message.slice(6).trimRight()));
+        } else if (mType === "warning") {
+            console.warn(chalk.yellow(message.slice(8).trimRight()));
+        } else if (mType === "error") {
+            console.error(chalk.red(message.slice(6).trimRight()));
+        } else {
+            console.info(chalk.green(message.slice(mType.length + 1).trimRight()));
+        }
+    }
+};
+
+/**
+ * Colorizes the console messages.
+ * 
+ */
+function colorize(log) {
+    return log
+        .replace(/\b(down|error|failure|fail|fatal|false)(\:|\b)/gi, chalk.red("$1$2"))
+        .replace(/\b(warning|warn|test|null|undefined|invalid)(\:|\b)/gi, chalk.yellow("$1$2"))
+        .replace(/\b(hint|info|information|true|log)(\:|\b)/gi, chalk.cyan("$1$2"))
+        .replace(/\b(running|success|successfully)(\:|\b)/gi, chalk.green("$1$2"))
+        .replace(/\b(debug|roku|brs|brightscript)(\:|\b)/gi, chalk.magenta("$1$2"))
+        .replace(/(\b\d+\.?\d*?\b)/g, chalk.ansi256(122)(`$1`)) // Numeric
+        .replace(/\S+@\S+\.\S+/g, (match) => {
+            return chalk.blueBright(stripAnsi(match)); // E-Mail
+        })
+        .replace(/\b([a-z])+\:((\/\/)|((\/\/)?(\S)))+/gi, (match) => {
+            return chalk.blue.underline(stripAnsi(match)); // URL
+        })
+        .replace(/<(.*?)>/g, (match) => {
+            return chalk.greenBright(stripAnsi(match)); // Delimiters < >
+        })
+        .replace(/"(.*?)"/g, (match) => {
+            return chalk.ansi256(222)(stripAnsi(match)); // Quotes
+        });
+};
