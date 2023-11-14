@@ -90,6 +90,7 @@ export function executeFile(payload: any): string | Buffer {
     setupRegistry(payload.device.registry, interpreter);
     // DeviceInfo, Libraries and Fonts
     setupDeviceData(payload.device, interpreter);
+    setupDeviceFonts(payload.device, interpreter);
     // Package Files
     setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
     // Run App
@@ -140,6 +141,7 @@ export function getInterpreter(payload: any) {
     const replInterpreter = new Interpreter();
     replInterpreter.onError(logError);
     setupDeviceData(payload.device, replInterpreter);
+    setupDeviceFonts(payload.device, replInterpreter);
     return replInterpreter;
 }
 
@@ -177,14 +179,12 @@ export function executeLine(contents: string, interpreter: Interpreter) {
                 if (result !== BrsTypes.BrsInvalid.Instance) {
                     console.log(result.toString());
                 }
-                return;
             });
         }
     } catch (e: any) {
         if (!(e instanceof BrsError.BrsError)) {
             console.error("Interpreter execution error: ", e.message);
         }
-        return;
     }
 }
 
@@ -253,21 +253,36 @@ function setupRegistry(registry: any, interpreter: Interpreter) {
  *
  */
 function setupDeviceData(device: any, interpreter: Interpreter) {
-    let fontFamily = device.defaultFont ?? "Asap";
-    let fontPath = device.fontPath ?? "../fonts/";
     Object.keys(device).forEach((key) => {
         if (key !== "registry" && key !== "fonts") {
             interpreter.deviceInfo.set(key, device[key]);
         }
     });
     interpreter.deviceInfo.set("models", parseCSV(models));
-    // Libraries and Fonts
+    // Internal Libraries
     let volume = interpreter.fileSystem.get("common:");
     if (volume) {
         volume.mkdirSync("/LibCore");
         volume.mkdirSync("/LibCore/v30");
         volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
         volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
+    }
+}
+
+/**
+ * Updates the interpreter common: file system with
+ * device internal fonts.
+ *
+ * @param device object with device info data
+ * @param interpreter the Interpreter instance to update
+ *
+ */
+function setupDeviceFonts(device: any, interpreter: Interpreter) {
+    let fontFamily = device.defaultFont ?? "Asap";
+    let fontPath = device.fontPath ?? "../fonts/";
+
+    let volume = interpreter.fileSystem.get("common:");
+    if (volume) {
         volume.mkdirSync("/Fonts");
         let fontRegular, fontBold, fontItalic, fontBoldIt;
         if (typeof XMLHttpRequest !== "undefined") {
@@ -276,7 +291,7 @@ function setupDeviceData(device: any, interpreter: Interpreter) {
             fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
             fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
             fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
-        } else {
+        } else if (device.fonts) {
             // Running locally as CLI
             fontRegular = device.fonts.get("regular");
             fontBold = device.fonts.get("bold");
@@ -319,15 +334,12 @@ function setupPackageFiles(
     let volume = interpreter.fileSystem.get("pkg:");
     if (volume && Array.isArray(paths)) {
         for (let filePath of paths) {
-            if (!volume.existsSync(path.dirname(`/${filePath.url}`))) {
+            const pathDirName = path.dirname(`/${filePath.url}`);
+            if (!volume.existsSync(pathDirName)) {
                 try {
-                    mkdirTreeSync(volume, path.dirname(`/${filePath.url}`));
+                    mkdirTreeSync(volume, pathDirName);
                 } catch (err: any) {
-                    postMessage(
-                        `warning,Error creating directory ${path.dirname(`/${filePath.url}`)} - ${
-                            err.message
-                        }`
-                    );
+                    postMessage(`warning,Error creating directory ${pathDirName} - ${err.message}`);
                 }
             }
             try {
@@ -472,10 +484,7 @@ function runSource(
             return;
         }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
-        if (parseResults.errors.length > 0) {
-            return;
-        }
-        if (parseResults.statements.length === 0) {
+        if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
             return;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
@@ -493,7 +502,6 @@ function runSource(
         const cipher = crypto.createCipher(algorithm, password);
         const deflated = zlibSync(encode({ pcode: tokens }));
         const source = Buffer.from(deflated);
-        // const source = Buffer.from(BSON.serialize({ pcode: pack }));
         pcode = Buffer.concat([cipher.update(source), cipher.final()]);
         return "EXIT_PACKAGER_DONE";
     }
@@ -537,7 +545,7 @@ function runBinary(
     lexer.onError(logError);
     parser.onError(logError);
     let tokens: Token[] = [];
-    for (let [key, value] of source) {
+    for (let [, value] of source) {
         const token: any = value;
         if (token.literal) {
             if (token.kind === "Integer") {

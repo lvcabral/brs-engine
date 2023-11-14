@@ -26,6 +26,105 @@ const defaultLevel = chalk.level.toString();
 let zipFileName = "";
 
 /**
+ * CLI program, params definition and action processing.
+ * 
+ */
+program
+    .description(`${packageJson.description} CLI`)
+    .arguments(`brs-cli [brsFiles...]`)
+    .option(
+        "-p, --pack <password>",
+        "The password to generate the encrypted package.",
+        ""
+    )
+    .option(
+        "-o, --out <directory>",
+        "The directory to save the encrypted package file.",
+        "./"
+    )
+    .option(
+        "-c, --colors <color-level>",
+        "Define the console color level (0 disable colors).",
+        defaultLevel
+    )
+    .action(async (brsFiles, program) => {
+        if (program.colors.length === 1 && program.colors.match(/[0-3]/)?.length) {
+            chalk.level = Number(program.colors);
+        } else {
+            console.error(`Invalid color level! Keeping the default: ${defaultLevel}`);
+        }
+        registerCallback(messageCallback);
+        if (brsFiles.length > 0) {
+            try {
+                // Run App Zip file
+                const filePath = brsFiles[0];
+                const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
+                const fileExt = fileName.split(".").pop()?.toLowerCase();
+                zipFileName = "";
+                if (fileExt === "zip" || fileExt === "bpk") {
+                    console.log(`\n${packageJson.description} CLI [Version ${packageJson.version}]\n`);
+                    if (program.pack.length > 0 && fileExt === "zip") {
+                        console.log(`Packaging ${filePath}...\n`);
+                    } else {
+                        console.log(`Executing ${filePath}...\n`);
+                    }
+                    zipFileName = fileName;
+                    loadAppZip(fs.readFileSync(filePath), runApp);
+                    return;
+                } 
+                runBrsFiles(brsFiles);
+            } catch (err) {
+                if (err.messages && err.messages.length) {
+                    err.messages.forEach((message) => console.error(message));
+                } else {
+                    console.error(err.message);
+                }
+                process.exitCode = 1;
+            }
+        } else {
+            console.log(`\n${packageJson.description} CLI [version ${chalk.gray(packageJson.version)}]\n`);
+            repl();
+        }
+    })
+    .version(packageJson.version, "-v, --version")
+    .parse(process.argv);
+
+/**
+ * Execute the a list of Brs files passed via
+ * the command line.
+ * 
+ */
+
+function runBrsFiles(files) {
+    // Run list of Brs files
+    const paths = [];
+    const source = [];
+    let id = 0;
+    files.map((filePath) => {
+        const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
+        const fileExt = fileName.split(".").pop();
+        if (fileExt?.toLowerCase() === "brs") {
+            const sourceCode = fs.readFileSync(filePath);
+            if (sourceCode) {
+                source.push(sourceCode.toString());
+                paths.push({ url: `source/${fileName}`, id: id, type: "source" });
+                id++;
+            }
+        }
+    })
+    const payload = {
+        device: deviceData,
+        manifest: new Map(),
+        input: [],
+        paths: paths,
+        brs: source,
+        texts: [],
+        binaries: [],
+    };
+    runApp(payload);    
+}
+
+/**
  * Execute the app payload or generate an encrypted app package
  * if a password is passed with parameter --pack.
  * 
@@ -40,8 +139,7 @@ function runApp(payload) {
     payload.password = program.pack;
     const pkg = executeFile(payload);
     if (pkg instanceof Uint8Array && pkg.length > 0) {
-        const regEx = new RegExp(".zip", "ig");
-        const filePath = path.join(program.out, zipFileName.replace(regEx, ".bpk"));
+        const filePath = path.join(program.out, zipFileName.replace(/.zip/gi, ".bpk"));
         updateAppZip(pkg).then(function (buffer) {
             try {
                 fs.writeFileSync(filePath, buffer);
@@ -79,95 +177,6 @@ function repl() {
 }
 
 /**
- * CLI program, params definition and action processing.
- * 
- */
-program
-    .description(`${packageJson.description} CLI`)
-    .arguments(`brs-cli [brsFiles...]`)
-    .option(
-        "-p, --pack <password>",
-        "The password to generate the encrypted package.",
-        ""
-    )
-    .option(
-        "-o, --out <directory>",
-        "The directory to save the encrypted package file.",
-        "./"
-    )
-    .option(
-        "-c, --colors <color-level>",
-        "Define the console color level (0 disable colors).",
-        defaultLevel
-    )
-    .action(async (brsFiles, program) => {
-        if (program.colors.length === 1 && program.colors.match(/[0-3]/)?.length) {
-            chalk.level = Number(program.colors);
-        } else {
-            console.error(`Invalid color level! Keeping the default: ${defaultLevel}`);
-        }
-        registerCallback(messageCallback);
-        if (brsFiles.length > 0) {
-            try {
-                // Run App Zip file
-                const filePath = brsFiles[0];
-                const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
-                const fileExt = fileName.split(".").pop()?.toLowerCase();
-                zipFileName = "";
-                if (fileExt === "zip" || fileExt === "bpk") {
-                    console.log(`\n${packageJson.description} CLI [Version ${packageJson.version}]\n`);
-                    if (program.pack.length > 0 && fileExt === "zip") {
-                        console.log(`Packaging ${filePath}...\n`);
-                    } else {
-                        console.log(`Executing ${filePath}...\n`);
-                    }
-                    zipFileName = fileName;
-                    loadAppZip(fs.readFileSync(filePath), runApp);
-                    return;
-                }
-                // Run list of Brs files
-                const paths = [];
-                const source = [];
-                let id = 0;
-                brsFiles.map((filePath) => {
-                    const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
-                    const fileExt = fileName.split(".").pop();
-                    if (fileExt?.toLowerCase() === "brs") {
-                        const sourceCode = fs.readFileSync(filePath);
-                        if (sourceCode) {
-                            source.push(sourceCode.toString());
-                            paths.push({ url: `source/${fileName}`, id: id, type: "source" });
-                            id++;
-                        }
-                    }
-                })
-                const payload = {
-                    device: deviceData,
-                    manifest: new Map(),
-                    input: [],
-                    paths: paths,
-                    brs: source,
-                    texts: [],
-                    binaries: [],
-                };
-                runApp(payload);
-            } catch (err) {
-                if (err.messages && err.messages.length) {
-                    err.messages.forEach((message) => console.error(message));
-                } else {
-                    console.error(err.message);
-                }
-                process.exitCode = 1;
-            }
-        } else {
-            console.log(`\n${packageJson.description} CLI [version ${chalk.gray(packageJson.version)}]\n`);
-            repl();
-        }
-    })
-    .version(packageJson.version, "-v, --version")
-    .parse(process.argv);
-
-/**
  * Callback function to receive the messages from the Interpreter.
  * 
  */
@@ -194,16 +203,16 @@ function messageCallback(message, options) {
  */
 function colorize(log) {
     return log
-        .replace(/\b(down|error|failure|fail|fatal|false)(\:|\b)/gi, chalk.red("$1$2"))
-        .replace(/\b(warning|warn|test|null|undefined|invalid)(\:|\b)/gi, chalk.yellow("$1$2"))
-        .replace(/\b(hint|info|information|true|log)(\:|\b)/gi, chalk.cyan("$1$2"))
-        .replace(/\b(running|success|successfully)(\:|\b)/gi, chalk.green("$1$2"))
-        .replace(/\b(debug|roku|brs|brightscript)(\:|\b)/gi, chalk.magenta("$1$2"))
+        .replace(/\b(down|error|failure|fail|fatal|false)(:|\b)/gi, chalk.red("$1$2"))
+        .replace(/\b(warning|warn|test|null|undefined|invalid)(:|\b)/gi, chalk.yellow("$1$2"))
+        .replace(/\b(hint|info|information|true|log)(:|\b)/gi, chalk.cyan("$1$2"))
+        .replace(/\b(running|success|successfully)(:|\b)/gi, chalk.green("$1$2"))
+        .replace(/\b(debug|roku|brs|brightscript)(:|\b)/gi, chalk.magenta("$1$2"))
         .replace(/(\b\d+\.?\d*?\b)/g, chalk.ansi256(122)(`$1`)) // Numeric
         .replace(/\S+@\S+\.\S+/g, (match) => {
             return chalk.blueBright(stripAnsi(match)); // E-Mail
         })
-        .replace(/\b([a-z])+\:((\/\/)|((\/\/)?(\S)))+/gi, (match) => {
+        .replace(/\b([a-z])+:((\/\/)|((\/\/)?(\S)))+/gi, (match) => {
             return chalk.blue.underline(stripAnsi(match)); // URL
         })
         .replace(/<(.*?)>/g, (match) => {
