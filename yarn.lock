@@ -1643,6 +1643,11 @@ concat-map@0.0.1:
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
   integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
 
+console-log-colors@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/console-log-colors/-/console-log-colors-0.4.0.tgz#35ebaa439416e6be069c4b08cc66c9a08d023f79"
+  integrity sha512-XX0qO0MUzbREpPrutavmOLML8h8IokzKTzJqMwvykBcL9D7bMbj5P17+driOjy4RaA99aIAkMDo8holIxYbbpQ==
+
 convert-source-map@^1.6.0, convert-source-map@^1.7.0:
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/convert-source-map/-/convert-source-map-1.9.0.tgz#7faae62353fb4213366d0ca98358d22e8368b05f"

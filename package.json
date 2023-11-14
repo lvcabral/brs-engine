@@ -47,6 +47,7 @@
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
     "commander": "^2.12.2",
+    "console-log-colors": "^0.4.0",
     "crc": "^3.8.0",
     "crypto-browserify": "^3.12.0",
     "decode-bmp": "^0.1.0",

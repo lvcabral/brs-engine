@@ -21,6 +21,7 @@ import * as xml2js from "xml2js";
 import * as crypto from "crypto";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
+import { color, strip } from "console-log-colors";
 import bslCore from "./common/v30/bslCore.brs";
 import bslDefender from "./common/v30/bslDefender.brs";
 import Roku_Ads from "./common/Roku_Ads.brs";
@@ -44,19 +45,43 @@ if (typeof onmessage === "undefined") {
     const dataBufferIndex = 32;
     const dataBufferSize = 512;
     const length = dataBufferIndex + dataBufferSize;
+    const colorize = function (log: string): string {
+        return log
+            .replace(/\b(down|error|failure|fail|fatal|false)(\:|\b)/gi, color.red("$1$2"))
+            .replace(/\b(warning|warn|test|null|undefined|invalid)(\:|\b)/gi, color.yellow("$1$2"))
+            .replace(/\b(hint|info|information|true|log)(\:|\b)/gi, color.cyan("$1$2"))
+            .replace(/\b(running|success|successfully)(\:|\b)/gi, color.green("$1$2"))
+            .replace(/\b(debug|roku|brs|brightscript)(\:|\b)/gi, color.magenta("$1$2"))
+            .replace(/(\b\d+\.?\d*?\b)/g, color.c122(`$1`)) // Numeric
+            .replace(/\S+@\S+\.\S+/g, (match) => {
+                return color.blueBright(strip(match)); // E-Mail
+            })
+            .replace(/\b([a-z])+\:((\/\/)|((\/\/)?(\S)))+/gi, (match) => {
+                return color.blue.underline(strip(match)); // URL
+            })
+            .replace(/<(.*?)>/g, (_, group) => {
+                return color.greenBright(`<${strip(group)}>`); // Delimiters < >
+            })
+            .replace(/"(.*?)"/g, (_, group) => {
+                return color.c222(`"${strip(group)}"`); // Quotes
+            });
+    };
     let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     shared.set("buffer", new Int32Array(sharedBuffer));
 
     globalThis.postMessage = function (message: any, options: any) {
         if (typeof message === "string") {
-            if (message.slice(0, 6) === "print,") {
-                console.log(message.slice(6).trimRight());
-            } else if (message.slice(0, 8) === "warning,") {
-                console.warn(message.slice(8).trimRight());
-            } else if (message.slice(0, 6) === "error,") {
-                console.error(message.slice(6).trimRight());
+            const mType = message.split(",")[0];
+            if (!mType) {
+                console.info(color.green(message.trimRight()));
+            } else if (mType === "print") {
+                console.log(colorize(message.slice(6).trimRight()));
+            } else if (mType === "warning") {
+                console.warn(color.yellow(message.slice(8).trimRight()));
+            } else if (mType === "error") {
+                console.error(color.red(message.slice(6).trimRight()));
             } else {
-                console.info(message.trimRight());
+                console.info(color.green(message.slice(mType.length + 1).trimRight()));
             }
         }
     };
