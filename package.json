@@ -46,8 +46,8 @@
   ],
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
+    "chalk": "^5.3.0",
     "commander": "^2.12.2",
-    "console-log-colors": "^0.4.0",
     "crc": "^3.8.0",
     "crypto-browserify": "^3.12.0",
     "decode-bmp": "^0.1.0",
@@ -69,6 +69,7 @@
     "sprintf-js": "^1.1.2",
     "stats.js": "^0.17.0",
     "stream-browserify": "^3.0.0",
+    "strip-ansi": "^7.1.0",
     "ua-parser-js": "^1.0.34",
     "upng-js": "^2.1.0",
     "url-parse": "^1.5.10",
