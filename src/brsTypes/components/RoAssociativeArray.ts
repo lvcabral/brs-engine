@@ -375,8 +375,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
     });
 
-    /** Increments the position of an enumeration. If the last element of the enumeration is returned,
-     * this method sets the current position to indicate that it is now past the end. */
+    /** Increments the position of an enumeration. */
     private next = new Callable("next", {
         signature: {
             args: [],
