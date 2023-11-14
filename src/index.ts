@@ -46,20 +46,6 @@ if (typeof onmessage === "undefined") {
     const length = dataBufferIndex + dataBufferSize;
     let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     shared.set("buffer", new Int32Array(sharedBuffer));
-
-    globalThis.postMessage = function (message: any, options: any) {
-        if (typeof message === "string") {
-            if (message.slice(0, 6) === "print,") {
-                console.log(message.slice(6).trimRight());
-            } else if (message.slice(0, 8) === "warning,") {
-                console.warn(message.slice(8).trimRight());
-            } else if (message.slice(0, 6) === "error,") {
-                console.error(message.slice(6).trimRight());
-            } else {
-                console.info(message.trimRight());
-            }
-        }
-    };
 } else {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: any) {
@@ -74,6 +60,17 @@ if (typeof onmessage === "undefined") {
             console.warn("Invalid message received!", event.data);
         }
     };
+}
+
+/**
+ * Support postMessage when not running as Worker.
+ * @param messageCallback function that will receive and process the messages.
+ * @returns void.
+ */
+export function registerCallback(messageCallback: any) {
+    if (typeof onmessage === "undefined") {
+        globalThis.postMessage = messageCallback;
+    }
 }
 
 /**

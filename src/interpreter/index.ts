@@ -155,7 +155,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = newEnv;
             return func(this);
         } catch (err: any) {
-            if (!((err instanceof BrsError) || (err instanceof BlockEnd))) {
+            if (!(err instanceof BrsError || err instanceof BlockEnd)) {
                 if (err.message !== "") {
                     postMessage(`error,${err.message}`);
                 }
@@ -215,8 +215,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const title = this.manifest.get("title") || "No Title";
                 const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
                 const subName = mainVariable.name.text;
-                postMessage(`beacon,${this.getNow()} ${beaconMsg} '${title}', id '${subName}'\r\n`);
                 postMessage(`print,------ Running dev '${title}' ${subName} ------\r\n`);
+                postMessage(`beacon,${this.getNow()} ${beaconMsg} '${title}', id 'dev'\r\n`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
