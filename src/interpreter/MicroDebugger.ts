@@ -173,10 +173,11 @@ function debugHandleCommand(
                 `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
             );
             break;
-        case debugCommand.LIST:
+        case debugCommand.LIST: {
             const flagLine = currLoc.file === lastLoc.file ? lastLine : currLine;
             debugList(backTrace, currLines, flagLine);
             break;
+        }
         case debugCommand.NEXT:
             postMessage(
                 `print,${currLine.toString().padStart(3, "0")}: ${currLines[currLine - 1]}\r\n`
