@@ -2,7 +2,7 @@
 .idea/
 app/lib/brsEmu*
 types/
-node_modules/
+node_modules*/
 dist/
 out/
 /channels/

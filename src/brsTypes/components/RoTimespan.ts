@@ -1,10 +1,12 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, ValidDateFormats } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import * as luxon from "luxon";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
 export class RoTimespan extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -17,6 +19,8 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         } else {
             this.markTime = Date.now();
         }
+        dayjs.extend(utc);
+        dayjs.extend(customParseFormat);
         this.registerMethods({
             ifTimespan: [
                 this.mark,
@@ -82,16 +86,12 @@ export class RoTimespan extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, date: BrsString) => {
-            let dateAsSeconds;
-            let now = Date.now();
-            let dateToParse = luxon.DateTime.fromISO(date.value, { zone: "utc" });
-
-            if (dateToParse.isValid) {
-                dateAsSeconds = Math.round((Date.parse(dateToParse.toISO()) - now) / 1000);
-            } else {
-                dateAsSeconds = 2077252342;
+            let dateAsSeconds = 2077252342;
+            const now = Date.now();
+            const dateParsed = dayjs(date.value, ValidDateFormats, true).utc(true);
+            if (dateParsed.isValid()) {
+                dateAsSeconds = Math.round((dateParsed.toDate().valueOf() - now) / 1000);
             }
-
             return new Int32(dateAsSeconds);
         },
     });
