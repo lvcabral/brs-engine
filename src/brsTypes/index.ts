@@ -122,3 +122,22 @@ export type AllComponents = { kind: ValueKind.Object } & BrsComponent & BrsValue
 
 /** The set of all supported types in BrightScript. */
 export type BrsType = BrsPrimitive | Iterable | Callable | AllComponents | Uninitialized;
+
+/** The valid ISO Date formats for roDateTime and roTimeSpan parsing */
+export const ValidDateFormats = [
+    "YYYY-MM-DDTHH:mm:ss.SSS[Z]",
+    "YYYY-MM-DDTHH:mm:ss.SSS",
+    "YYYY-MM-DDTHH:mm:ss[Z]",
+    "YYYY-MM-DDTHH:mm:ss",
+    "YYYY-MM-DDTHH:mm[Z]",
+    "YYYY-MM-DDTHH:mm",
+    "YYYY-MM-DDTHH[Z]",
+    "YYYY-MM-DDTHH",
+    "YYYY-MM-DDT",
+    "YYYY-MM-DD[Z]",
+    "YYYY-MM-DD",
+    "YYYY-MM[Z]",
+    "YYYY-MM",
+    "YYYY[Z]",
+    "YYYY",
+];
