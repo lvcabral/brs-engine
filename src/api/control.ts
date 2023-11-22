@@ -6,16 +6,13 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { DataType, DebugCommand, SubscribeCallback } from "./util";
-import { UAParser } from "ua-parser-js";
 
 // Keyboard Mapping
 // References:
 // https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
 // https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
 
-const ua = new UAParser();
-const os = ua.getOS();
-const isMacOS = os.name?.toLowerCase() === "mac os";
+const isApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
 
 const keysMap: Map<string, string> = new Map();
 keysMap.set("ArrowUp", "up");
@@ -30,7 +27,7 @@ keysMap.set("Shift+Escape", "home");
 keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
 keysMap.set("End", "play");
-if (isMacOS) {
+if (isApple) {
     keysMap.set("Command+Backspace", "backspace");
     keysMap.set("Command+Enter", "play");
     keysMap.set("Command+ArrowLeft", "rev");

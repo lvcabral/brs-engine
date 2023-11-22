@@ -120,6 +120,16 @@ module.exports = (env) => {
                 modules: [path.resolve("./node_modules"), path.resolve("./src")],
                 extensions: [".tsx", ".ts", ".js"],
             },
+            plugins: [
+                // Write out stats file to build directory.
+                new StatsWriterPlugin({
+                    filename: "stats-api.json", // Default
+                    stats: {
+                        assets: true,
+                        chunkModules: true
+                    }
+                }),
+            ],
             output: {
                 filename: outputLib,
                 library: libraryName,

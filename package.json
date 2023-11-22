@@ -30,6 +30,7 @@
     "build": "webpack --env development",
     "release": "webpack --env production",
     "stats": "webpack-bundle-analyzer ./app/lib/stats.json",
+    "stats:api": "webpack-bundle-analyzer ./app/lib/stats-api.json",
     "clean": "rimraf ./app/lib ./types",
     "test": "jest",
     "lint": "tslint --project .",
@@ -71,7 +72,6 @@
     "stats.js": "^0.17.0",
     "stream-browserify": "^3.0.0",
     "strip-ansi": "^7.1.0",
-    "ua-parser-js": "^1.0.34",
     "upng-js": "lvcabral/UPNG.js",
     "url-parse": "^1.5.10",
     "xml2js": "^0.5.0"
@@ -86,7 +86,6 @@
     "@types/path-parse": "^1.0.19",
     "@types/sprintf-js": "^1.1.2",
     "@types/stats.js": "^0.17.0",
-    "@types/ua-parser-js": "^0.7.36",
     "@types/upng-js": "^2.1.1",
     "@types/url-parse": "^1.4.8",
     "@types/xml2js": "^0.4.8",
