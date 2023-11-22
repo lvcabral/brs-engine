@@ -1,32 +1,35 @@
-const webpack = require('webpack');
+const webpack = require("webpack");
 const path = require("path");
-const WebpackObfuscator = require('webpack-obfuscator');
+const WebpackObfuscator = require("webpack-obfuscator");
+const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
-module.exports = env => {
-    let outputLib, outputWrk, mode, distPath;
+module.exports = (env) => {
+    let outputLib, outputWrk, mode, distPath, sourceMap;
     let libraryName = "brsEmu";
     let workerName = "brsEmu.worker";
     if (env.production) {
         mode = "production";
         outputWrk = libraryName + ".worker.min.js";
         outputLib = libraryName + ".min.js";
-        distPath = "app/lib"
+        distPath = "app/lib";
+        sourceMap = false;
     } else {
         mode = "development";
         outputWrk = libraryName + ".worker.js";
         outputLib = libraryName + ".js";
-        distPath = "app/lib"
+        distPath = "app/lib";
+        sourceMap = "inline-cheap-module-source-map";
     }
     const ifdef_opts = {
-        DEBUG: (mode === "development"),
-        "ifdef-verbose": true,
-    }
+        DEBUG: mode === "development",
+        "ifdef-verbose": false,
+    };
     return [
         {
             entry: "./src/index.ts",
             target: "web",
             mode: mode,
-            devtool: "inline-source-map",
+            devtool: sourceMap,
             module: {
                 rules: [
                     {
@@ -54,10 +57,10 @@ module.exports = env => {
                 fallback: {
                     fs: false,
                     readline: false,
-                    crypto: require.resolve('crypto-browserify'),
+                    crypto: require.resolve("crypto-browserify"),
                     path: require.resolve("path-browserify"),
                     stream: require.resolve("stream-browserify"),
-                    'process/browser': require.resolve('process/browser'),
+                    "process/browser": require.resolve("process/browser"),
                     timers: false,
                 },
                 modules: [path.resolve("./node_modules"), path.resolve("./src")],
@@ -76,6 +79,14 @@ module.exports = env => {
                     },
                     ["brsEmu.js", "brsEmu.worker.js"]
                 ),
+                // Write out stats file to build directory.
+                new StatsWriterPlugin({
+                    filename: "stats.json", // Default
+                    stats: {
+                        assets: true,
+                        chunkModules: true
+                    }
+                }),
             ],
             output: {
                 path: path.join(__dirname, distPath),
@@ -116,7 +127,7 @@ module.exports = env => {
                 umdNamedDefine: true,
                 path: path.resolve(__dirname, distPath),
                 globalObject: "typeof self !== 'undefined' ? self : this",
-            }
-        }
+            },
+        },
     ];
 };

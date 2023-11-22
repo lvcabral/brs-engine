@@ -29,7 +29,8 @@
   "scripts": {
     "build": "webpack --env development",
     "release": "webpack --env production",
-    "clean": "rimraf ./app/lib/brsEmu* ./types",
+    "stats": "webpack-bundle-analyzer ./app/lib/stats.json",
+    "clean": "rimraf ./app/lib ./types",
     "test": "jest",
     "lint": "tslint --project .",
     "prettier:write": "prettier --write \"{app,src,test}/**/*.{js,ts}\"",
@@ -71,7 +72,7 @@
     "stream-browserify": "^3.0.0",
     "strip-ansi": "^7.1.0",
     "ua-parser-js": "^1.0.34",
-    "upng-js": "^2.1.0",
+    "upng-js": "lvcabral/UPNG.js",
     "url-parse": "^1.5.10",
     "xml2js": "^0.5.0"
   },
@@ -106,8 +107,10 @@
     "tslint-config-prettier": "^1.18.0",
     "typescript": "4",
     "webpack": "^5.75.0",
+    "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.0.1",
-    "webpack-obfuscator": "^3.5.1"
+    "webpack-obfuscator": "^3.5.1",
+    "webpack-stats-plugin": "^1.1.3"
   },
   "jest": {
     "testEnvironment": "node"
