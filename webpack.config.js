@@ -101,6 +101,7 @@ module.exports = (env) => {
             entry: "./src/api/index.ts",
             target: "web",
             mode: mode,
+            devtool: sourceMap,
             module: {
                 rules: [
                     {

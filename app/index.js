@@ -126,8 +126,12 @@ function loadZip(zip) {
     fetch(zip)
         .then(function (response) {
             if (response.status === 200 || response.status === 0) {
-                brsEmu.execute(zip, response.blob(), { execSource: "homescreen" });
-                display.focus();
+                return response.blob().then(function (zipBlob) {
+                    zipBlob.arrayBuffer().then(function (zipData) {
+                        brsEmu.execute(zip, zipData, { execSource: "homescreen" });
+                        display.focus();
+                    });
+                });
             } else {
                 loading.style.visibility = "hidden";
                 return Promise.reject(new Error(response.statusText));

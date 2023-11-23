@@ -6,13 +6,13 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Command } from 'commander';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { Command } from "commander";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import chalk from "chalk";
-import stripAnsi from 'strip-ansi';
-import * as fs from 'fs';
-import * as path from 'path';
+import stripAnsi from "strip-ansi";
+import * as fs from "fs";
+import * as path from "path";
 import readline from "readline";
 import brsApi from "../app/lib/brsEmu.js";
 import brsLib from "../app/lib/brsEmu.worker.js";
@@ -27,21 +27,13 @@ let zipFileName = "";
 
 /**
  * CLI program, params definition and action processing.
- * 
+ *
  */
 program
     .description(`${packageJson.description} CLI`)
     .arguments(`brs-cli [brsFiles...]`)
-    .option(
-        "-p, --pack <password>",
-        "The password to generate the encrypted package.",
-        ""
-    )
-    .option(
-        "-o, --out <directory>",
-        "The directory to save the encrypted package file.",
-        "./"
-    )
+    .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
+    .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option(
         "-c, --colors <color-level>",
         "Define the console color level (0 disable colors).",
@@ -62,16 +54,18 @@ program
                 const fileExt = fileName.split(".").pop()?.toLowerCase();
                 zipFileName = "";
                 if (fileExt === "zip" || fileExt === "bpk") {
-                    console.log(`\n${packageJson.description} CLI [Version ${packageJson.version}]\n`);
+                    console.log(
+                        `\n${packageJson.description} CLI [Version ${packageJson.version}]\n`
+                    );
                     if (program.pack.length > 0 && fileExt === "zip") {
                         console.log(`Packaging ${filePath}...\n`);
                     } else {
                         console.log(`Executing ${filePath}...\n`);
                     }
                     zipFileName = fileName;
-                    loadAppZip(fs.readFileSync(filePath), runApp);
+                    loadAppZip(fileName, fs.readFileSync(filePath), runApp);
                     return;
-                } 
+                }
                 runBrsFiles(brsFiles);
             } catch (err) {
                 if (err.messages?.length) {
@@ -82,7 +76,9 @@ program
                 process.exitCode = 1;
             }
         } else {
-            console.log(`\n${packageJson.description} CLI [version ${chalk.gray(packageJson.version)}]\n`);
+            console.log(
+                `\n${packageJson.description} CLI [version ${chalk.gray(packageJson.version)}]\n`
+            );
             repl();
         }
     })
@@ -92,7 +88,7 @@ program
 /**
  * Execute the a list of Brs files passed via
  * the command line.
- * 
+ *
  */
 
 function runBrsFiles(files) {
@@ -111,7 +107,7 @@ function runBrsFiles(files) {
                 id++;
             }
         }
-    })
+    });
     const payload = {
         device: deviceData,
         manifest: new Map(),
@@ -121,34 +117,47 @@ function runBrsFiles(files) {
         texts: [],
         binaries: [],
     };
-    runApp(payload);    
+    runApp(payload);
 }
 
 /**
  * Execute the app payload or generate an encrypted app package
  * if a password is passed with parameter --pack.
- * 
+ *
  */
 function runApp(payload) {
     const fontPath = "../app/fonts";
     const fontFamily = payload.device.defaultFont;
-    payload.device.fonts.set("regular", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`)));
-    payload.device.fonts.set("bold", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`)));
-    payload.device.fonts.set("italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`)));
-    payload.device.fonts.set("bold-italic", fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`)));
+    payload.device.fonts.set(
+        "regular",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`))
+    );
+    payload.device.fonts.set(
+        "bold",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`))
+    );
+    payload.device.fonts.set(
+        "italic",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`))
+    );
+    payload.device.fonts.set(
+        "bold-italic",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`))
+    );
     payload.password = program.pack;
     const pkg = executeFile(payload);
     if (pkg instanceof Uint8Array && pkg.length > 0) {
         const filePath = path.join(program.out, zipFileName.replace(/.zip/gi, ".bpk"));
-        updateAppZip(pkg).then(function (buffer) {
-            try {
-                fs.writeFileSync(filePath, buffer);
-                console.log(`Package file created as ${filePath} with ${Math.round(buffer.length / 1024)} KB.\n`);
-            } catch (err) {
-                console.error(`Error generating the file ${filePath}: ${err.message}`);
-                process.exitCode = 1;
-            }
-        });
+        const buffer = updateAppZip(pkg);
+        try {
+            fs.writeFileSync(filePath, buffer);
+            console.log(
+                `Package file created as ${filePath} with ${Math.round(buffer.length / 1024)} KB.\n`
+            );
+        } catch (err) {
+            console.error(`Error generating the file ${filePath}: ${err.message}`);
+            process.exitCode = 1;
+        }
     }
 }
 
@@ -178,7 +187,7 @@ function repl() {
 
 /**
  * Callback function to receive the messages from the Interpreter.
- * 
+ *
  */
 function messageCallback(message, options) {
     if (typeof message === "string") {
@@ -195,11 +204,11 @@ function messageCallback(message, options) {
             console.info(chalk.green(message.slice(mType.length + 1).trimRight()));
         }
     }
-};
+}
 
 /**
  * Colorizes the console messages.
- * 
+ *
  */
 function colorize(log) {
     return log
@@ -221,4 +230,4 @@ function colorize(log) {
         .replace(/"(.*?)"/g, (match) => {
             return chalk.ansi256(222)(stripAnsi(match)); // Quotes
         });
-};
+}
