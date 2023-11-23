@@ -12,7 +12,13 @@ import { DataType, DebugCommand, SubscribeCallback } from "./util";
 // https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
 // https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
 
-const isApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
+let isApple = false;
+
+if (typeof navigator !== "undefined") {
+    isApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
+} else {
+    isApple = process.platform === "darwin";
+}
 
 const keysMap: Map<string, string> = new Map();
 keysMap.set("ArrowUp", "up");

@@ -5,7 +5,6 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import JSZip from "jszip";
 import {
     DataType,
     DebugCommand,
@@ -16,6 +15,7 @@ import {
     getApiPath,
     getEmuPath,
     isElectron,
+    bufferToBase64,
 } from "./util";
 import {
     subscribeDisplay,
@@ -58,6 +58,7 @@ import {
     audioCodecs,
 } from "./sound";
 import { version } from "../../package.json";
+import { unzipSync, zipSync, strFromU8, Zippable, Unzipped } from "fflate";
 
 // Interpreter Library
 const brsApiLib = getApiPath().split("/").pop();
@@ -206,7 +207,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
-        loadAppZip(fileData, runApp);
+        loadAppZip(fileName, fileData, runApp);
     } else {
         loadSourceCode(fileName, fileData);
     }
@@ -382,120 +383,97 @@ function loadSourceCode(fileName: string, fileData: any) {
 }
 
 // Decompress Zip and execute
-let currentZip: JSZip;
-let assetPaths: any[];
-let assetsEvents: any[];
+let currentZip: Unzipped;
 let binId: number;
 let txtId: number;
 let srcId: number;
 let audId: number;
 
-export function loadAppZip(file: any, callback: Function) {
-    JSZip.loadAsync(file).then(
-        function (zip) {
-            currentZip = zip;
-            const manifest = zip.file("manifest");
-            if (manifest) {
-                manifest.async("string").then(processManifest, function error(e) {
-                    const msg = `[api] Error uncompressing manifest: ${e.message}`;
-                    console.error(msg);
-                    currentApp.running = false;
-                    notifyAll("error", msg);
-                });
-            } else {
-                const msg = "[api] Invalid App Package: missing manifest.";
-                console.error(msg);
-                currentApp.running = false;
-                notifyAll("error", msg);
-                return;
-            }
-            assetPaths = [];
-            assetsEvents = [];
-            binId = 0;
-            txtId = 0;
-            srcId = 0;
-            audId = 0;
-            zip.forEach(processFile);
-            Promise.all(assetsEvents).then(
-                function success(assets) {
-                    paths = [];
-                    txts = [];
-                    bins = [];
-                    for (let index = 0; index < assets.length; index++) {
-                        paths.push(assetPaths[index]);
-                        const type = assetPaths[index].type;
-                        if (type === "binary" || type === "pcode") {
-                            bins.push(assets[index]);
-                        } else if (type === "source") {
-                            source.push(assets[index]);
-                        } else if (type === "audio" && inBrowser) {
-                            addSound(
-                                `pkg:/${assetPaths[index].url}`,
-                                assetPaths[index].format,
-                                assets[index]
-                            );
-                        } else if (type === "text") {
-                            txts.push(assets[index]);
-                        }
-                    }
-                    setTimeout(callback, splashTimeout, createPayload());
-                },
-                function error(e) {
-                    const msg = `[api] Error uncompressing file ${e.message}`;
-                    console.error(msg);
-                    notifyAll("error", msg);
-                }
-            );
-        },
-        function (e) {
-            const msg = `[api] Error reading ${file.name}: ${e.message}`;
+export function loadAppZip(fileName: string, file: any, callback: Function) {
+    try {
+        currentZip = unzipSync(new Uint8Array(file));
+    } catch (e: any) {
+        const msg = `[api] Error reading ${fileName}: ${e.message}`;
+        console.error(msg);
+        notifyAll("error", msg);
+        currentApp.running = false;
+        return;
+    }
+    const manifest = currentZip["manifest"];
+    if (manifest) {
+        try {
+            processManifest(strFromU8(manifest));
+        } catch (e: any) {
+            const msg = `[api] Error uncompressing manifest: ${e.message}`;
             console.error(msg);
-            notifyAll("error", msg);
             currentApp.running = false;
+            notifyAll("error", msg);
         }
-    );
+    } else {
+        const msg = "[api] Invalid App Package: missing manifest.";
+        console.error(msg);
+        currentApp.running = false;
+        notifyAll("error", msg);
+        return;
+    }
+    binId = 0;
+    txtId = 0;
+    srcId = 0;
+    audId = 0;
+    source = [];
+    paths = [];
+    txts = [];
+    bins = [];
+
+    for (const filePath in currentZip) {
+        processFile(filePath, currentZip[filePath]);
+    }
+
+    setTimeout(callback, splashTimeout, createPayload());
 }
 
-function processFile(relativePath: string, zipEntry: JSZip.JSZipObject) {
+function processFile(relativePath: string, fileData: Uint8Array) {
     const lcasePath: string = relativePath.toLowerCase();
     const ext = lcasePath.split(".").pop();
-    if (!zipEntry.dir && lcasePath.startsWith("source") && ext === "brs") {
-        assetPaths.push({ url: relativePath, id: srcId, type: "source" });
-        assetsEvents.push(zipEntry.async("string"));
+    if (relativePath.endsWith("/")) {
+        // ignore
+    } else if (lcasePath.startsWith("source") && ext === "brs") {
+        paths.push({ url: relativePath, id: srcId, type: "source" });
+        source.push(strFromU8(fileData));
         srcId++;
     } else if (
-        !zipEntry.dir &&
-        (lcasePath === "manifest" ||
-            ext === "csv" ||
-            ext === "xml" ||
-            ext === "json" ||
-            ext === "txt" ||
-            ext === "ts")
+        lcasePath === "manifest" ||
+        ext === "csv" ||
+        ext === "xml" ||
+        ext === "json" ||
+        ext === "txt" ||
+        ext === "ts"
     ) {
-        assetPaths.push({ url: relativePath, id: txtId, type: "text" });
-        assetsEvents.push(zipEntry.async("string"));
+        paths.push({ url: relativePath, id: txtId, type: "text" });
+        txts.push(strFromU8(fileData));
         txtId++;
     } else if (
-        !zipEntry.dir &&
-        (ext === "wav" ||
-            ext === "mp2" ||
-            ext === "mp3" ||
-            ext === "mp4" ||
-            ext === "m4a" ||
-            ext === "aac" ||
-            ext === "ogg" ||
-            ext === "oga" ||
-            ext === "ac3" ||
-            ext === "wma" ||
-            ext === "flac")
+        ext === "wav" ||
+        ext === "mp2" ||
+        ext === "mp3" ||
+        ext === "mp4" ||
+        ext === "m4a" ||
+        ext === "aac" ||
+        ext === "ogg" ||
+        ext === "oga" ||
+        ext === "ac3" ||
+        ext === "wma" ||
+        ext === "flac"
     ) {
-        assetPaths.push({ url: relativePath, id: audId, type: "audio", format: ext });
-        assetsEvents.push(zipEntry.async("blob"));
+        paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
+        if (inBrowser) {
+            addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
+        }
         audId++;
-    } else if (!zipEntry.dir) {
+    } else {
         const binType = lcasePath === "source" ? "pcode" : "binary";
-        assetPaths.push({ url: relativePath, id: binId, type: binType });
-        assetsEvents.push(zipEntry.async("arraybuffer"));
+        paths.push({ url: relativePath, id: binId, type: binType });
+        bins.push(fileData.buffer);
         binId++;
     }
 }
@@ -525,23 +503,27 @@ function processManifest(content: string) {
 
     let iconFile;
     if (icon?.slice(0, 5) === "pkg:/") {
-        iconFile = currentZip.file(icon.slice(5));
-        iconFile?.async("base64").then((content: any) => {
-            notifyAll("icon", content);
-        });
+        iconFile = currentZip[icon.slice(5)];
+        if (iconFile) {
+            if (inBrowser) {
+                bufferToBase64(iconFile).then(function (iconBase64: string) {
+                    notifyAll("icon", iconBase64);
+                });
+            } else {
+                notifyAll("icon", Buffer.from(iconFile).toString("base64"));
+            }
+        }
     }
     if (typeof createImageBitmap !== "undefined") {
         // Display Splash or Icon
         clearDisplay();
         if (splash?.slice(0, 5) === "pkg:/") {
-            const splashFile = currentZip.file(splash.slice(5));
-            splashFile?.async("blob").then((blob: any) => {
-                createImageBitmap(blob).then(drawSplashScreen);
-            });
-        } else {
-            iconFile?.async("blob").then((blob: any) => {
-                createImageBitmap(blob).then(drawIconAsSplash);
-            });
+            const splashFile = currentZip[splash.slice(5)];
+            if (splashFile) {
+                createImageBitmap(new Blob([splashFile])).then(drawSplashScreen);
+            }
+        } else if (iconFile) {
+            createImageBitmap(new Blob([iconFile])).then(drawIconAsSplash);
         }
     }
     notifyAll("loaded", currentApp);
@@ -583,10 +565,15 @@ function parseManifest(contents: string) {
 }
 
 // Remove the source code and replace by encrypted pcode returning new zip
-export async function updateAppZip(source: Uint8Array) {
-    currentZip.remove("source");
-    currentZip.file("source", source, { binary: true });
-    return currentZip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+export function updateAppZip(source: Uint8Array) {
+    let newZip: Zippable = {};
+    for (const filePath in currentZip) {
+        if (!filePath.toLowerCase().startsWith("source")) {
+            newZip[filePath] = currentZip[filePath];
+        }
+        newZip["source"] = [source, { level: 0 }];
+    }
+    return zipSync(newZip, { level: 6 });
 }
 
 // Create App Payload

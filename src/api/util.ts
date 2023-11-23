@@ -94,6 +94,17 @@ export function isElectron() {
     return false;
 }
 
+export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
+    // use a FileReader to generate a base64 data URI:
+    const base64url: any = await new Promise((r) => {
+        const reader = new FileReader();
+        reader.onload = () => r(reader.result);
+        reader.readAsDataURL(new Blob([buffer]));
+    });
+    // remove the `data:...;base64,` part from the start
+    return base64url.slice(base64url.indexOf(",") + 1);
+}
+
 // Generate short Hash
 declare global {
     interface String {
