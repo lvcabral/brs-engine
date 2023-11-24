@@ -191,7 +191,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     source = [];
     currentApp.id = filePath.hashCode();
     currentApp.file = filePath;
-    if (typeof options.clearDisplay === "boolean") {
+    if (typeof options.clearDisplayOnExit === "boolean") {
         currentApp.clearDisplay = options.clearDisplayOnExit;
     }
     if (typeof options.execSource === "string") {
