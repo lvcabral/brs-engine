@@ -33,8 +33,7 @@ describe("parser indexing", () => {
                 identifier("_"),
                 token(Lexeme.Equal, "="),
                 identifier("bar"),
-                token(Lexeme.Print, "?"),
-                token(Lexeme.Dot, "."),
+                token(Lexeme.Dot, "?."),
                 identifier("foo"),
                 EOF,
             ]);
@@ -48,8 +47,7 @@ describe("parser indexing", () => {
                 identifier("_"),
                 token(Lexeme.Equal, "="),
                 token(Lexeme.Invalid, "invalid", BrsInvalid.Instance),
-                token(Lexeme.Print, "?"),
-                token(Lexeme.Dot, "."),
+                token(Lexeme.Dot, "?."),
                 identifier("bar"),
                 EOF,
             ]);

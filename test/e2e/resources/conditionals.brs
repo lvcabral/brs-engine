@@ -123,13 +123,22 @@ sub main()
         print "foo is not < 2 and not > 2"
     end if
 
-    test_481()
+    test_issue_481()
+    test_issue_30()
 end sub
 
 ' MWE from https://github.com/sjbarag/brs/issues/481
-sub test_481()
+sub test_issue_481()
     nop = sub() : end sub
 
     if false then nop(): print "#481 still repro's": return
     print "#481 fixed"
 end sub
+
+' Test for https://github.com/rokucommunity/brs/issues/30
+function test_issue_30()
+    testA = ["apple", 2, "banana", "orange", 5, "grape", "pear"]
+    for fruit = 0 to testA.count()-1
+        if type(testA[fruit]).inStr(0,"String") = -1 ? testA[fruit]
+    next
+end function
