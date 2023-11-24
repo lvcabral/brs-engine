@@ -237,7 +237,27 @@ export class Lexer {
                     addToken(Lexeme.Semicolon);
                     break;
                 case "?":
-                    addToken(Lexeme.Print);
+                    switch (peek()) {
+                        case ".":
+                            advance();
+                            addToken(Lexeme.Dot);
+                            break;
+                        case "(":
+                            advance();
+                            addToken(Lexeme.LeftParen);
+                            break;
+                        case "[":
+                            advance();
+                            addToken(Lexeme.LeftBrace);
+                            break;
+                        case "@":
+                            advance();
+                            addToken(Lexeme.AtSymbol);
+                            break;
+                        default:
+                            addToken(Lexeme.Print);
+                            break;
+                    }
                     break;
                 case "<":
                     switch (peek()) {
@@ -298,7 +318,7 @@ export class Lexer {
                 case " ":
                 case "\r":
                 case "\t":
-                    // ignore whitespace; indentation isn't signficant in BrightScript
+                    // ignore whitespace; indentation isn't significant in BrightScript
                     break;
                 case "\n":
                     // consecutive newlines aren't significant, because they're just blank lines
