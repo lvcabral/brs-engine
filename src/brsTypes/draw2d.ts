@@ -93,7 +93,7 @@ interface DrawChunk {
 /**
  *  Sometimes (eg. with roCompositor) a drawn region might wrap.
  *  This means there could be multiple canvas draws that are needed for a single object drawn to screen
- *  This function figures that out, and returns the correct pieces of teh original to draw, and where they should go
+ *  This function figures that out, and returns the correct pieces of the original to draw, and where they should go
  */
 function getDrawChunks(
     ctx: OffscreenCanvasRenderingContext2D,
@@ -216,8 +216,8 @@ export function drawObjectToComponent(
 
     const destOffset = getDrawOffset(component);
 
-    // Only Compositor uses wraps
-    const allowWrap = component instanceof RoCompositor;
+    // Only Compositor and Region uses wraps
+    const allowWrap = (component instanceof RoCompositor) || (object instanceof RoRegion);
 
     const chunks = getDrawChunks(ctx, destOffset, allowWrap, object, x, y, scaleX, scaleY);
     for (const chunk of chunks) {
