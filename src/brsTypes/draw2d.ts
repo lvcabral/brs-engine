@@ -217,7 +217,7 @@ export function drawObjectToComponent(
     const destOffset = getDrawOffset(component);
 
     // Only Compositor and Region uses wraps
-    const allowWrap = (component instanceof RoCompositor) || (object instanceof RoRegion);
+    const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
 
     const chunks = getDrawChunks(ctx, destOffset, allowWrap, object, x, y, scaleX, scaleY);
     for (const chunk of chunks) {
