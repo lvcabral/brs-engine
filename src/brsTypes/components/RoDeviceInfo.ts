@@ -91,10 +91,11 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            const device = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"));
-            return new BrsString(device ? device[0] : "Roku 3");
+            const model = interpreter.deviceInfo.get("deviceModel");
+            const device = interpreter.deviceInfo.get("models").get(model);
+            return new BrsString(
+                device ? device[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`
+            );
         },
     });
 

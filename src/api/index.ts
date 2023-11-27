@@ -16,6 +16,7 @@ import {
     getEmuPath,
     isElectron,
     bufferToBase64,
+    parseCSV,
 } from "./util";
 import {
     subscribeDisplay,
@@ -59,6 +60,7 @@ import {
 } from "./sound";
 import { version } from "../../package.json";
 import { unzipSync, zipSync, strFromU8, Zippable, Unzipped } from "fflate";
+import models from "../common/models.csv";
 
 // Interpreter Library
 const brsApiLib = getApiPath().split("/").pop();
@@ -67,11 +69,9 @@ let brsWorker: Worker;
 
 // Default Device Data
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
-
 export const deviceData = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Emulator Library",
-    serialNumber: getSerialNumber(),
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "BSC.00E04193A", // v11.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
@@ -91,6 +91,7 @@ export const deviceData = {
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
+    models: parseCSV(models),
     registry: new Map(),
 };
 let debugToConsole: boolean = true;
@@ -226,6 +227,17 @@ export function terminate(reason: string) {
     Object.assign(currentApp, createCurrentApp());
     enableControl(false);
     notifyAll("closed", reason);
+}
+
+// Returns Device Serial Number based on Device Model and library version
+export function getSerialNumber() {
+    const device = deviceData.models.get(deviceData.deviceModel);
+    const prefix = device ? device[4] : "X0";
+    let verPlain = "";
+    version.split(".").forEach((element) => {
+        verPlain += element.replace(/\D/g, "").padStart(2, "0");
+    });
+    return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }
 
 // Display API
@@ -434,36 +446,19 @@ export function loadAppZip(fileName: string, file: any, callback: Function) {
 
 function processFile(relativePath: string, fileData: Uint8Array) {
     const lcasePath: string = relativePath.toLowerCase();
-    const ext = lcasePath.split(".").pop();
+    const ext = lcasePath.split(".").pop() ?? "";
     if (relativePath.endsWith("/")) {
-        // ignore
+        // ignore directory
     } else if (lcasePath.startsWith("source") && ext === "brs") {
         paths.push({ url: relativePath, id: srcId, type: "source" });
         source.push(strFromU8(fileData));
         srcId++;
-    } else if (
-        lcasePath === "manifest" ||
-        ext === "csv" ||
-        ext === "xml" ||
-        ext === "json" ||
-        ext === "txt" ||
-        ext === "ts"
-    ) {
+    } else if (lcasePath === "manifest" || ["csv", "xml", "json", "txt", "ts"].includes(ext)) {
         paths.push({ url: relativePath, id: txtId, type: "text" });
         txts.push(strFromU8(fileData));
         txtId++;
     } else if (
-        ext === "wav" ||
-        ext === "mp2" ||
-        ext === "mp3" ||
-        ext === "mp4" ||
-        ext === "m4a" ||
-        ext === "aac" ||
-        ext === "ogg" ||
-        ext === "oga" ||
-        ext === "ac3" ||
-        ext === "wma" ||
-        ext === "flac"
+        ["wav", "mp2", "mp3", "mp4", "m4a", "aac", "ogg", "oga", "ac3", "wma", "flac"].includes(ext)
     ) {
         paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
         if (inBrowser) {
@@ -721,13 +716,4 @@ function deviceDebug(data: string) {
             console.log(content);
         }
     }
-}
-
-// Device Serial Number
-function getSerialNumber() {
-    let verPlain = "";
-    version.split(".").forEach((element) => {
-        verPlain += element.padStart(2, "0");
-    });
-    return `BRSEMU${verPlain}`;
 }
