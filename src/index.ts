@@ -24,7 +24,6 @@ import { zlibSync, unzlibSync } from "fflate";
 import bslCore from "./common/v30/bslCore.brs";
 import bslDefender from "./common/v30/bslDefender.brs";
 import Roku_Ads from "./common/Roku_Ads.brs";
-import models from "./common/models.csv";
 
 export { _lexer as lexer };
 export { BrsTypes as types };
@@ -258,7 +257,6 @@ function setupDeviceData(device: any, interpreter: Interpreter) {
             interpreter.deviceInfo.set(key, device[key]);
         }
     });
-    interpreter.deviceInfo.set("models", parseCSV(models));
     // Internal Libraries
     let volume = interpreter.fileSystem.get("common:");
     if (volume) {
@@ -608,21 +606,6 @@ function runBinary(
  */
 function logError(err: BrsError.BrsError) {
     postMessage(`error,${err.format()}`);
-}
-
-/** Parse CSV string into a Map with first column as the key and the value contains the other columns into an array
- * @param csv the string containing the comma-separated values
- */
-function parseCSV(csv: string): Map<string, string[]> {
-    let result = new Map<string, string[]>();
-    let lines = csv.match(/[^\r\n]+/g);
-    if (lines) {
-        lines.forEach((line) => {
-            let fields = line.split(",");
-            result.set(fields[0], [fields[1], fields[2], fields[3], fields[4]]);
-        });
-    }
-    return result;
 }
 
 /**

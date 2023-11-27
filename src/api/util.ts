@@ -109,6 +109,21 @@ export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
     return base64url.slice(base64url.indexOf(",") + 1);
 }
 
+/** Parse CSV string into a Map with first column as the key and the value contains the other columns into an array
+ * @param csv the string containing the comma-separated values
+ */
+export function parseCSV(csv: string): Map<string, string[]> {
+    let result = new Map<string, string[]>();
+    let lines = csv.match(/[^\r\n]+/g);
+    if (lines) {
+        lines.forEach((line) => {
+            let fields = line.split(",");
+            result.set(fields[0], fields.slice(1));
+        });
+    }
+    return result;
+}
+
 // Generate short Hash
 declare global {
     interface String {

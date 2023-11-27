@@ -23,6 +23,7 @@ The only pre-requisites are:
 |`enableStats(state)`<br>Enable or disable the Performance Stats overlay | `state` (boolean) - If `true` performance statistics will be shown over the display
 |`getAudioMute()`<br>Return `true` if the audio is muted ||
 |`setAudioMute(mute)`<br>Mute or un-mute the audio during app execution | `mute` (boolean) - If `true` the audio will be muted |
+|`getSerialNumber()`<br>Return the device serial number | This returned value changes when the `deviceData.deviceModel` is updated |
 |`setCustomKeys(keysMap)`<br>Send a custom map of keyboard keys to add/remove from the remote control emulation  | `keysMap` (Map) - See `/src/api/control.ts` for the default mappings |
 |`sendKeyDown(key)`<br>Send a remote control key down event to the emulator | `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md)) |
 |`sendKeyUp(key)`<br>Send a remote control key up event to the emulator| `key` (string) - One of valid key codes (see [Roku documentation](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md))|

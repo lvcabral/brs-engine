@@ -47,10 +47,6 @@ module.exports = (env) => {
                         test: /\.brs$/,
                         type: "asset/source",
                     },
-                    {
-                        test: /\.csv$/,
-                        type: "asset/source",
-                    },
                 ],
             },
             resolve: {
@@ -114,6 +110,10 @@ module.exports = (env) => {
                         loader: "ifdef-loader",
                         options: ifdef_opts,
                         exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.csv$/,
+                        type: "asset/source",
                     },
                 ],
             },
