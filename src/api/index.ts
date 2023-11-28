@@ -634,6 +634,7 @@ function workerCallback(event: MessageEvent) {
                 storage.setItem(key, value);
             });
         }
+        notifyAll("registry", event.data);
     } else if (event.data instanceof Array) {
         addPlaylist(event.data);
     } else if (event.data.audioPath && inBrowser) {

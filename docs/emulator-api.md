@@ -37,6 +37,7 @@ The only pre-requisites are:
 |------------|--------------------------------------------------|-----------------------------------|
 | loaded     | Triggered when the source code data has finished loading | object: `{id: string, file: string, title: string, subtitle: string, version: string, running: boolean}`|
 | icon       | Triggered when the zip file is loaded and manifest links to a valid icon for the app | base64: A base64 string of the app icon, extracted from the zip file. |
+| registry   | Triggered when the app updates the registry | Map: the registry with all recent recent updates. |
 | started    | Triggered when the emulator started running the source code | object: `{id: string, file: string, title: string, subtitle: string, version: string, running: boolean}` |
 | closed     | Triggered when the emulator terminated the execution of the source code | string: the exit reason based on [Roku documentation](https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter) |
 | reset      | Triggered when the `RebootSystem()` function is executed from the emulator | null: Nothing is returned as data |
