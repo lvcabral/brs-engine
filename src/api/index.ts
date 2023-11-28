@@ -114,8 +114,16 @@ const lastApp = { id: "", exitReason: "EXIT_UNKNOWN" };
 
 // API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
+    if (customDeviceInfo) {
+        const invalidKeys = ["registry", "models", "audioCodecs", "fonts"];
+        invalidKeys.forEach((key) => {
+            if (key in customDeviceInfo) {
+                delete customDeviceInfo[key];
+            }
+        });
+        Object.assign(deviceData, customDeviceInfo);
+    }
     const storage: Storage = window.localStorage;
-    Object.assign(deviceData, customDeviceInfo);
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
