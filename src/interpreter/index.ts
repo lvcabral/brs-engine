@@ -953,6 +953,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
+    visitTryCatch(statement: Stmt.TryCatch): BrsInvalid {
+        this.visitBlock(statement.tryBlock);
+        return BrsInvalid.Instance;
+    }
+
     visitBlock(block: Stmt.Block): BrsType {
         block.statements.forEach((statement) => this.execute(statement));
         return BrsInvalid.Instance;

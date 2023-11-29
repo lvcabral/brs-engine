@@ -1,0 +1,980 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser try/catch statements accepts try/catch/end try 1`] = `
+Array [
+  TryCatch {
+    "catchBlock": Block {
+      "location": Object {
+        "end": Object {
+          "column": 0,
+          "line": 6,
+        },
+        "file": "",
+        "start": Object {
+          "column": 7,
+          "line": 4,
+        },
+      },
+      "statements": Array [
+        Print {
+          "expressions": Array [
+            Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 20,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 10,
+                  "line": 5,
+                },
+              },
+              "type": "Literal",
+              "value": BrsString {
+                "kind": 3,
+                "value": "in catch",
+              },
+            },
+          ],
+          "tokens": Object {
+            "print": Object {
+              "isReserved": true,
+              "kind": "Print",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 9,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 4,
+                  "line": 5,
+                },
+              },
+              "text": "print",
+            },
+          },
+          "type": "Print",
+        },
+      ],
+      "type": "Block",
+    },
+    "errorBinding": Variable {
+      "name": Object {
+        "isReserved": false,
+        "kind": "Identifier",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 7,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 6,
+            "line": 4,
+          },
+        },
+        "text": "e",
+      },
+      "type": "Variable",
+    },
+    "tokens": Object {
+      "catch": Object {
+        "isReserved": false,
+        "kind": "Catch",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 5,
+            "line": 4,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 4,
+          },
+        },
+        "text": "catch",
+      },
+      "endtry": Object {
+        "isReserved": false,
+        "kind": "EndTry",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 7,
+            "line": 6,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 6,
+          },
+        },
+        "text": "end try",
+      },
+      "try": Object {
+        "isReserved": false,
+        "kind": "Try",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 3,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 2,
+          },
+        },
+        "text": "try",
+      },
+    },
+    "tryBlock": Block {
+      "location": Object {
+        "end": Object {
+          "column": 0,
+          "line": 4,
+        },
+        "file": "",
+        "start": Object {
+          "column": 3,
+          "line": 2,
+        },
+      },
+      "statements": Array [
+        Print {
+          "expressions": Array [
+            Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 18,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 10,
+                  "line": 3,
+                },
+              },
+              "type": "Literal",
+              "value": BrsString {
+                "kind": 3,
+                "value": "in try",
+              },
+            },
+          ],
+          "tokens": Object {
+            "print": Object {
+              "isReserved": true,
+              "kind": "Print",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 9,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 4,
+                  "line": 3,
+                },
+              },
+              "text": "print",
+            },
+          },
+          "type": "Print",
+        },
+      ],
+      "type": "Block",
+    },
+    "type": "TryCatch",
+  },
+]
+`;
+
+exports[`parser try/catch statements accepts try/catch/endtry 1`] = `
+Array [
+  Function {
+    "func": Function {
+      "body": Block {
+        "location": Object {
+          "end": Object {
+            "column": 0,
+            "line": 8,
+          },
+          "file": "",
+          "start": Object {
+            "column": 10,
+            "line": 2,
+          },
+        },
+        "statements": Array [
+          TryCatch {
+            "catchBlock": Block {
+              "location": Object {
+                "end": Object {
+                  "column": 4,
+                  "line": 7,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 11,
+                  "line": 5,
+                },
+              },
+              "statements": Array [
+                Print {
+                  "expressions": Array [
+                    Literal {
+                      "_location": Object {
+                        "end": Object {
+                          "column": 24,
+                          "line": 6,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 14,
+                          "line": 6,
+                        },
+                      },
+                      "type": "Literal",
+                      "value": BrsString {
+                        "kind": 3,
+                        "value": "in catch",
+                      },
+                    },
+                  ],
+                  "tokens": Object {
+                    "print": Object {
+                      "isReserved": true,
+                      "kind": "Print",
+                      "literal": undefined,
+                      "location": Object {
+                        "end": Object {
+                          "column": 13,
+                          "line": 6,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 8,
+                          "line": 6,
+                        },
+                      },
+                      "text": "print",
+                    },
+                  },
+                  "type": "Print",
+                },
+              ],
+              "type": "Block",
+            },
+            "errorBinding": Variable {
+              "name": Object {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 11,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 10,
+                    "line": 5,
+                  },
+                },
+                "text": "e",
+              },
+              "type": "Variable",
+            },
+            "tokens": Object {
+              "catch": Object {
+                "isReserved": false,
+                "kind": "Catch",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 9,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 4,
+                    "line": 5,
+                  },
+                },
+                "text": "catch",
+              },
+              "endtry": Object {
+                "isReserved": false,
+                "kind": "EndTry",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 10,
+                    "line": 7,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 4,
+                    "line": 7,
+                  },
+                },
+                "text": "endtry",
+              },
+              "try": Object {
+                "isReserved": false,
+                "kind": "Try",
+                "literal": undefined,
+                "location": Object {
+                  "end": Object {
+                    "column": 7,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": Object {
+                    "column": 4,
+                    "line": 3,
+                  },
+                },
+                "text": "try",
+              },
+            },
+            "tryBlock": Block {
+              "location": Object {
+                "end": Object {
+                  "column": 4,
+                  "line": 5,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 7,
+                  "line": 3,
+                },
+              },
+              "statements": Array [
+                Print {
+                  "expressions": Array [
+                    Literal {
+                      "_location": Object {
+                        "end": Object {
+                          "column": 22,
+                          "line": 4,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 14,
+                          "line": 4,
+                        },
+                      },
+                      "type": "Literal",
+                      "value": BrsString {
+                        "kind": 3,
+                        "value": "in try",
+                      },
+                    },
+                  ],
+                  "tokens": Object {
+                    "print": Object {
+                      "isReserved": true,
+                      "kind": "Print",
+                      "literal": undefined,
+                      "location": Object {
+                        "end": Object {
+                          "column": 13,
+                          "line": 4,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 8,
+                          "line": 4,
+                        },
+                      },
+                      "text": "print",
+                    },
+                  },
+                  "type": "Print",
+                },
+              ],
+              "type": "Block",
+            },
+            "type": "TryCatch",
+          },
+        ],
+        "type": "Block",
+      },
+      "endKeyword": Object {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 7,
+            "line": 8,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 8,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": Object {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 3,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": Array [],
+      "returns": 11,
+      "type": "Expr_Function",
+    },
+    "name": Object {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 8,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 4,
+          "line": 2,
+        },
+      },
+      "text": "main",
+    },
+    "type": "Stmt_Function",
+  },
+]
+`;
+
+exports[`parser try/catch statements allows try and catch as variable names 1`] = `
+Array [
+  Assignment {
+    "name": Object {
+      "isReserved": false,
+      "kind": "Try",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 3,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 0,
+          "line": 2,
+        },
+      },
+      "text": "try",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": "Equal",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 5,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 4,
+            "line": 2,
+          },
+        },
+        "text": "=",
+      },
+    },
+    "type": "Assignment",
+    "value": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": 15,
+          "line": 2,
+        },
+        "file": "",
+        "start": Object {
+          "column": 6,
+          "line": 2,
+        },
+      },
+      "type": "Literal",
+      "value": BrsString {
+        "kind": 3,
+        "value": "attempt",
+      },
+    },
+  },
+  Assignment {
+    "name": Object {
+      "isReserved": false,
+      "kind": "Catch",
+      "literal": undefined,
+      "location": Object {
+        "end": Object {
+          "column": 5,
+          "line": 3,
+        },
+        "file": "",
+        "start": Object {
+          "column": 0,
+          "line": 3,
+        },
+      },
+      "text": "catch",
+    },
+    "tokens": Object {
+      "equals": Object {
+        "isReserved": false,
+        "kind": "Equal",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 7,
+            "line": 3,
+          },
+          "file": "",
+          "start": Object {
+            "column": 6,
+            "line": 3,
+          },
+        },
+        "text": "=",
+      },
+    },
+    "type": "Assignment",
+    "value": Literal {
+      "_location": Object {
+        "end": Object {
+          "column": 28,
+          "line": 3,
+        },
+        "file": "",
+        "start": Object {
+          "column": 8,
+          "line": 3,
+        },
+      },
+      "type": "Literal",
+      "value": BrsString {
+        "kind": 3,
+        "value": "whoops, dropped it",
+      },
+    },
+  },
+]
+`;
+
+exports[`parser try/catch statements allows try/catch to nest in try 1`] = `
+Array [
+  TryCatch {
+    "catchBlock": Block {
+      "location": Object {
+        "end": Object {
+          "column": 0,
+          "line": 11,
+        },
+        "file": "",
+        "start": Object {
+          "column": 7,
+          "line": 9,
+        },
+      },
+      "statements": Array [
+        Print {
+          "expressions": Array [
+            Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 20,
+                  "line": 10,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 10,
+                  "line": 10,
+                },
+              },
+              "type": "Literal",
+              "value": BrsString {
+                "kind": 3,
+                "value": "in catch",
+              },
+            },
+          ],
+          "tokens": Object {
+            "print": Object {
+              "isReserved": true,
+              "kind": "Print",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 9,
+                  "line": 10,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 4,
+                  "line": 10,
+                },
+              },
+              "text": "print",
+            },
+          },
+          "type": "Print",
+        },
+      ],
+      "type": "Block",
+    },
+    "errorBinding": Variable {
+      "name": Object {
+        "isReserved": false,
+        "kind": "Identifier",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 7,
+            "line": 9,
+          },
+          "file": "",
+          "start": Object {
+            "column": 6,
+            "line": 9,
+          },
+        },
+        "text": "e",
+      },
+      "type": "Variable",
+    },
+    "tokens": Object {
+      "catch": Object {
+        "isReserved": false,
+        "kind": "Catch",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 5,
+            "line": 9,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 9,
+          },
+        },
+        "text": "catch",
+      },
+      "endtry": Object {
+        "isReserved": false,
+        "kind": "EndTry",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 6,
+            "line": 11,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 11,
+          },
+        },
+        "text": "endtry",
+      },
+      "try": Object {
+        "isReserved": false,
+        "kind": "Try",
+        "literal": undefined,
+        "location": Object {
+          "end": Object {
+            "column": 3,
+            "line": 2,
+          },
+          "file": "",
+          "start": Object {
+            "column": 0,
+            "line": 2,
+          },
+        },
+        "text": "try",
+      },
+    },
+    "tryBlock": Block {
+      "location": Object {
+        "end": Object {
+          "column": 0,
+          "line": 9,
+        },
+        "file": "",
+        "start": Object {
+          "column": 3,
+          "line": 2,
+        },
+      },
+      "statements": Array [
+        Print {
+          "expressions": Array [
+            Literal {
+              "_location": Object {
+                "end": Object {
+                  "column": 21,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 10,
+                  "line": 3,
+                },
+              },
+              "type": "Literal",
+              "value": BrsString {
+                "kind": 3,
+                "value": "outer try",
+              },
+            },
+          ],
+          "tokens": Object {
+            "print": Object {
+              "isReserved": true,
+              "kind": "Print",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 9,
+                  "line": 3,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 4,
+                  "line": 3,
+                },
+              },
+              "text": "print",
+            },
+          },
+          "type": "Print",
+        },
+        TryCatch {
+          "catchBlock": Block {
+            "location": Object {
+              "end": Object {
+                "column": 4,
+                "line": 8,
+              },
+              "file": "",
+              "start": Object {
+                "column": 11,
+                "line": 6,
+              },
+            },
+            "statements": Array [
+              Print {
+                "expressions": Array [
+                  Literal {
+                    "_location": Object {
+                      "end": Object {
+                        "column": 30,
+                        "line": 7,
+                      },
+                      "file": "",
+                      "start": Object {
+                        "column": 14,
+                        "line": 7,
+                      },
+                    },
+                    "type": "Literal",
+                    "value": BrsString {
+                      "kind": 3,
+                      "value": "in upper catch",
+                    },
+                  },
+                ],
+                "tokens": Object {
+                  "print": Object {
+                    "isReserved": true,
+                    "kind": "Print",
+                    "literal": undefined,
+                    "location": Object {
+                      "end": Object {
+                        "column": 13,
+                        "line": 7,
+                      },
+                      "file": "",
+                      "start": Object {
+                        "column": 8,
+                        "line": 7,
+                      },
+                    },
+                    "text": "print",
+                  },
+                },
+                "type": "Print",
+              },
+            ],
+            "type": "Block",
+          },
+          "errorBinding": Variable {
+            "name": Object {
+              "isReserved": false,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 11,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 10,
+                  "line": 6,
+                },
+              },
+              "text": "e",
+            },
+            "type": "Variable",
+          },
+          "tokens": Object {
+            "catch": Object {
+              "isReserved": false,
+              "kind": "Catch",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 9,
+                  "line": 6,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 4,
+                  "line": 6,
+                },
+              },
+              "text": "catch",
+            },
+            "endtry": Object {
+              "isReserved": false,
+              "kind": "EndTry",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 11,
+                  "line": 8,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 4,
+                  "line": 8,
+                },
+              },
+              "text": "end try",
+            },
+            "try": Object {
+              "isReserved": false,
+              "kind": "Try",
+              "literal": undefined,
+              "location": Object {
+                "end": Object {
+                  "column": 7,
+                  "line": 4,
+                },
+                "file": "",
+                "start": Object {
+                  "column": 4,
+                  "line": 4,
+                },
+              },
+              "text": "try",
+            },
+          },
+          "tryBlock": Block {
+            "location": Object {
+              "end": Object {
+                "column": 4,
+                "line": 6,
+              },
+              "file": "",
+              "start": Object {
+                "column": 7,
+                "line": 4,
+              },
+            },
+            "statements": Array [
+              Print {
+                "expressions": Array [
+                  Variable {
+                    "name": Object {
+                      "isReserved": false,
+                      "kind": "Identifier",
+                      "literal": undefined,
+                      "location": Object {
+                        "end": Object {
+                          "column": 24,
+                          "line": 5,
+                        },
+                        "file": "",
+                        "start": Object {
+                          "column": 23,
+                          "line": 5,
+                        },
+                      },
+                      "text": "y",
+                    },
+                    "type": "Variable",
+                  },
+                ],
+                "tokens": Object {
+                  "print": Object {
+                    "isReserved": true,
+                    "kind": "Print",
+                    "literal": undefined,
+                    "location": Object {
+                      "end": Object {
+                        "column": 13,
+                        "line": 5,
+                      },
+                      "file": "",
+                      "start": Object {
+                        "column": 8,
+                        "line": 5,
+                      },
+                    },
+                    "text": "print",
+                  },
+                },
+                "type": "Print",
+              },
+            ],
+            "type": "Block",
+          },
+          "type": "TryCatch",
+        },
+      ],
+      "type": "Block",
+    },
+    "type": "TryCatch",
+  },
+]
+`;

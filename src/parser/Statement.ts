@@ -25,7 +25,8 @@ export interface Visitor<T> {
     visitIndexedSet(statement: IndexedSet): BrsType;
     visitStop(statement: Stop): BrsType;
     visitIncrement(expression: Increment): BrsInvalid;
-    visitLibrary(expression: Library): BrsInvalid;
+    visitLibrary(statement: Library): BrsInvalid;
+    visitTryCatch(statement: TryCatch): BrsInvalid;
 }
 
 /** A BrightScript statement */
@@ -503,6 +504,31 @@ export class Library implements Statement {
             end: this.tokens.filePath
                 ? this.tokens.filePath.location.end
                 : this.tokens.library.location.end,
+        };
+    }
+}
+
+export class TryCatch implements Statement {
+    constructor(
+        readonly tryBlock: Block,
+        readonly catchBlock: Block,
+        readonly errorBinding: Expr.Variable,
+        readonly tokens: {
+            try: Token;
+            catch: Token;
+            endtry: Token;
+        }
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitTryCatch(this);
+    }
+
+    get location() {
+        return {
+            file: this.tokens.try.location.file,
+            start: this.tokens.endtry.location.start,
+            end: this.tokens.endtry.location.end,
         };
     }
 }
