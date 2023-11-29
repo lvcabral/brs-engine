@@ -126,27 +126,31 @@ export function stopSound() {
     }
 }
 
-export function pauseSound() {
+export function pauseSound(notify = true) {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
         if (idx) {
             soundsDat[idx].pause();
         }
-        Atomics.store(sharedArray, DataType.SND, AudioEvent.PAUSED);
+        if (notify) {
+            Atomics.store(sharedArray, DataType.SND, AudioEvent.PAUSED);
+        }
     } else if (audio) {
         console.warn(`[audio] Can't find audio to pause: ${playIndex} - ${audio}`);
     }
 }
 
-export function resumeSound() {
+export function resumeSound(notify = true) {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
         if (idx) {
             soundsDat[idx].play();
         }
-        Atomics.store(sharedArray, DataType.SND, AudioEvent.RESUMED);
+        if (notify) {
+            Atomics.store(sharedArray, DataType.SND, AudioEvent.RESUMED);
+        }
     } else if (audio) {
         console.warn(`[audio] Can't find audio to resume: ${playIndex} - ${audio}`);
     }

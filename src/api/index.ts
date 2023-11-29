@@ -699,6 +699,11 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data.slice(0, 6) === "debug,") {
         const level = event.data.slice(6);
         enableControl(level === "continue");
+        if (level === "stop") {
+            pauseSound(false);
+        } else {
+            resumeSound(false);
+        }
         notifyAll("debug", { level: level });
     } else if (event.data.slice(0, 4) === "end,") {
         terminate(event.data.slice(4));
