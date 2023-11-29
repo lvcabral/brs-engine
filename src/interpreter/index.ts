@@ -1025,12 +1025,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this._lastDotGetAA = this.environment.getRootM();
                 }
 
-                // Check Break Command to enable Micro Debugger
-                const cmd = Atomics.load(this.sharedArray, this.type.DBG);
-                if (cmd === debugCommand.BREAK) {
-                    Atomics.store(this.sharedArray, this.type.DBG, -1);
-                    this.debugMode = true;
-                }
+                this.checkBreakCommand();
 
                 return this.inSubEnv((subInterpreter) => {
                     subInterpreter.environment.setM(mPointer);
@@ -1676,6 +1671,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
     }
 
+    checkBreakCommand(): boolean {
+        const cmd = Atomics.load(this.sharedArray, this.type.DBG);
+        if (cmd === debugCommand.BREAK) {
+            Atomics.store(this.sharedArray, this.type.DBG, -1);
+            this.debugMode = true;
+        }
+        return this.debugMode;
+    }
     /**
      * Emits an error via this processor's `events` property, then throws it.
      * @param err the ParseError to emit then throw
