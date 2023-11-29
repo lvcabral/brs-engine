@@ -65,6 +65,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     const key = Atomics.load(interpreter.sharedArray, this.type.KEY);
                     if (key !== this.lastKey) {
                         return this.newControlEvent(interpreter, key);
+                    } else if (interpreter.checkBreakCommand()) {
+                        return BrsInvalid.Instance;
                     }
                 }
             } else {
@@ -73,6 +75,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     const key = Atomics.load(interpreter.sharedArray, this.type.KEY);
                     if (key !== this.lastKey) {
                         return this.newControlEvent(interpreter, key);
+                    } else if (interpreter.checkBreakCommand()) {
+                        return BrsInvalid.Instance;
                     }
                 }
             }
@@ -88,6 +92,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                                 Atomics.load(interpreter.sharedArray, this.type.IDX)
                             );
                         }
+                    } else if (interpreter.checkBreakCommand()) {
+                        return BrsInvalid.Instance;
                     }
                 }
             } else {
@@ -102,6 +108,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                                 Atomics.load(interpreter.sharedArray, this.type.IDX)
                             );
                         }
+                    } else if (interpreter.checkBreakCommand()) {
+                        return BrsInvalid.Instance;
                     }
                 }
             }
@@ -123,12 +131,18 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 );
                 while (true) {
                     // Loop forever
+                    if (interpreter.checkBreakCommand()) {
+                        return BrsInvalid.Instance;
+                    }                    
                 }
             } else {
                 postMessage("warning,[roMessagePort] No message in the queue!");
                 ms += new Date().getTime();
                 while (new Date().getTime() < ms) {
                     //wait the timeout time
+                    if (interpreter.checkBreakCommand()) {
+                        return BrsInvalid.Instance;
+                    }                    
                 }
             }
         }
