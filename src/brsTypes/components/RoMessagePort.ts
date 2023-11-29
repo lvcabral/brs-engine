@@ -133,7 +133,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     // Loop forever
                     if (interpreter.checkBreakCommand()) {
                         return BrsInvalid.Instance;
-                    }                    
+                    }
                 }
             } else {
                 postMessage("warning,[roMessagePort] No message in the queue!");
@@ -142,7 +142,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     //wait the timeout time
                     if (interpreter.checkBreakCommand()) {
                         return BrsInvalid.Instance;
-                    }                    
+                    }
                 }
             }
         }
