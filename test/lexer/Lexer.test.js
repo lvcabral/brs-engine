@@ -260,8 +260,8 @@ describe("lexer", () => {
     describe("identifiers", () => {
         it("matches single-word keywords", () => {
             // test just a sample of single-word reserved words for now.
-            // if we find any that we've missed
-            let { tokens } = Lexer.scan("and or if else endif return true false line_num");
+            // if we find any that we've missed, add them here
+            let { tokens } = Lexer.scan("and or if else endif return true false line_num throw");
             expect(tokens.map((w) => w.kind)).toEqual([
                 Lexeme.And,
                 Lexeme.Or,
@@ -272,13 +272,16 @@ describe("lexer", () => {
                 Lexeme.True,
                 Lexeme.False,
                 Lexeme.Identifier,
+                Lexeme.Throw,
                 Lexeme.Eof,
             ]);
             expect(tokens.filter((w) => !!w.literal).length).toBe(0);
         });
 
         it("matches multi-word keywords", () => {
-            let { tokens } = Lexer.scan("else if end if end while End Sub end Function Exit wHILe");
+            let { tokens } = Lexer.scan(
+                "else if end if end while End Sub end Function Exit wHILe end try"
+            );
             expect(tokens.map((w) => w.kind)).toEqual([
                 Lexeme.ElseIf,
                 Lexeme.EndIf,
@@ -286,6 +289,7 @@ describe("lexer", () => {
                 Lexeme.EndSub,
                 Lexeme.EndFunction,
                 Lexeme.ExitWhile,
+                Lexeme.EndTry,
                 Lexeme.Eof,
             ]);
             expect(tokens.filter((w) => !!w.literal).length).toBe(0);
@@ -296,6 +300,18 @@ describe("lexer", () => {
             expect(tokens.map((w) => w.kind)).toEqual([
                 Lexeme.ExitFor,
                 Lexeme.Identifier,
+                Lexeme.Eof,
+            ]);
+        });
+
+        it("reads try/catch/throw properly", () => {
+            let { tokens } = Lexer.scan("try catch throw end try endtry");
+            expect(tokens.map((w) => w.kind)).toEqual([
+                Lexeme.Try,
+                Lexeme.Catch,
+                Lexeme.Throw,
+                Lexeme.EndTry,
+                Lexeme.EndTry,
                 Lexeme.Eof,
             ]);
         });
