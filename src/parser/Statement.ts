@@ -518,9 +518,7 @@ export class TryCatch implements Statement {
             catch: Token;
             endtry: Token;
         }
-    ) {
-        super("TryCatch");
-    }
+    ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitTryCatch(this);
