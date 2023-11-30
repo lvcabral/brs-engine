@@ -77,7 +77,7 @@ module.exports = (env) => {
                 ),
                 // Write out stats file to build directory.
                 new StatsWriterPlugin({
-                    filename: "stats.json", // Default
+                    filename: "stats.json",
                     stats: {
                         assets: true,
                         chunkModules: true
@@ -124,7 +124,7 @@ module.exports = (env) => {
             plugins: [
                 // Write out stats file to build directory.
                 new StatsWriterPlugin({
-                    filename: "stats-api.json", // Default
+                    filename: "stats-api.json",
                     stats: {
                         assets: true,
                         chunkModules: true
