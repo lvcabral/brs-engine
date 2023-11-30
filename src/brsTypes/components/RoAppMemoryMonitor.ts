@@ -69,8 +69,8 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            // Returning 5% until proper memory management is implemented
-            return new Int32(5);
+            // Returning 486400kb until proper memory management is implemented
+            return new Int32(486400);
         },
     });
 
