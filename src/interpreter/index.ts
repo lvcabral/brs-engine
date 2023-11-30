@@ -1025,8 +1025,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this._lastDotGetAA = this.environment.getRootM();
                 }
 
-                this.checkBreakCommand();
-
                 return this.inSubEnv((subInterpreter) => {
                     subInterpreter.environment.setM(mPointer);
                     let funcLoc = callee.getLocation();
@@ -1657,7 +1655,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
-        if (this.debugMode) {
+        if (this.checkBreakCommand()) {
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this._prevLoc)) {
                     throw new BlockEnd("debug-exit", statement.location);
@@ -1676,10 +1674,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     checkBreakCommand(): boolean {
-        const cmd = Atomics.load(this.sharedArray, this.type.DBG);
-        if (cmd === debugCommand.BREAK) {
-            Atomics.store(this.sharedArray, this.type.DBG, -1);
-            this.debugMode = true;
+        if (!this.debugMode) {
+            const cmd = Atomics.load(this.sharedArray, this.type.DBG);
+            if (cmd === debugCommand.BREAK) {
+                Atomics.store(this.sharedArray, this.type.DBG, -1);
+                this.debugMode = true;
+            }
         }
         return this.debugMode;
     }
