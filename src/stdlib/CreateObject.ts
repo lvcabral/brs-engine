@@ -1,3 +1,4 @@
+import { BrsError } from "../Error";
 import { Callable, ValueKind, BrsInvalid, BrsString, BrsType, StdlibArgument } from "../brsTypes";
 import { BrsObjects } from "../brsTypes/components/BrsObjects";
 import { Interpreter } from "../interpreter";
@@ -18,6 +19,13 @@ export const CreateObject = new Callable("CreateObject", {
     },
     impl: (interpreter: Interpreter, objName: BrsString, ...additionalArgs: BrsType[]) => {
         let ctor = BrsObjects.get(objName.value.toLowerCase());
+        if (ctor === undefined) {
+            if (["rosgscreen", "rosgnode"].includes(objName.value.toLowerCase())) {
+                postMessage(`warning,WARNING: Attempt to create object "${objName.value}". "SceneGraph" components are still not supported!`);
+            } else {
+                postMessage(`warning,WARNING: Attempt to create object "${objName.value}" that is invalid or not supported!`);
+            }
+        }
         return ctor ? ctor(interpreter, ...additionalArgs) : BrsInvalid.Instance;
     },
 });

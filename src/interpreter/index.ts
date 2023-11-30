@@ -155,11 +155,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = newEnv;
             return func(this);
         } catch (err: any) {
-            if (!(err instanceof BrsError || err instanceof BlockEnd)) {
-                if (err.message !== "") {
-                    postMessage(`error,${err.message}`);
-                }
-            }
             throw err;
         } finally {
             this._environment = originalEnvironment;
@@ -1049,12 +1044,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 });
             } catch (reason) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
-                    if (process.env.NODE_ENV === "development") {
-                        console.error(reason);
+                    let message = "";
+                    if (reason instanceof Error && reason.message.startsWith("-->")) {
+                        message = reason.message + "\n";
                     }
-                    throw new Error(
-                        `--> Function ${functionName}() called at:\n   file/line: ${expression.location.file}(${expression.location.start.line})`
-                    );
+                    if (expression.location.start.line > 0) {
+                        message += `--> Function ${functionName}() called at:\n   file/line: ${expression.location.file}(${expression.location.start.line})`;
+                    } else {
+                        message += `--> Function ${functionName}()`;
+                    }
+                    throw new Error(message);
                 }
 
                 let returnedValue = (reason as Stmt.ReturnValue).value;
