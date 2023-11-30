@@ -33,6 +33,7 @@ export const shared = new Map<string, Int32Array>();
 export const source = new Map<string, string>();
 const algorithm = "aes-256-ctr";
 let pcode: Buffer;
+let exitReason: string;
 
 declare global {
     function postMessage(message: any, options?: any): void;
@@ -511,15 +512,17 @@ function runSource(
         }
     });
     try {
+        exitReason =  "EXIT_USER_NAV";
         interpreter.exec(allStatements, input);
-        return "EXIT_USER_NAV";
     } catch (err: any) {
-        return "EXIT_BRIGHTSCRIPT_CRASH";
+        postMessage(`error,${err.message}`);
+        exitReason = "EXIT_BRIGHTSCRIPT_CRASH";
     }
+    return exitReason;
 }
 
 /**
- * Runs a binarty package of BrightScript code.
+ * Runs a binary package of BrightScript code.
  * @param source map of BrightScript tokens to parse, and interpret.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
@@ -593,11 +596,13 @@ function runBinary(
         }
     });
     try {
+        exitReason =  "EXIT_USER_NAV";
         interpreter.exec(allStatements, input);
-        return "EXIT_USER_NAV";
     } catch (err: any) {
-        return "EXIT_BRIGHTSCRIPT_CRASH";
+        postMessage(`error,${err.message}`);
+        exitReason = "EXIT_BRIGHTSCRIPT_CRASH";
     }
+    return exitReason;
 }
 
 /**
@@ -606,6 +611,7 @@ function runBinary(
  */
 function logError(err: BrsError.BrsError) {
     postMessage(`error,${err.format()}`);
+    exitReason = "EXIT_BRIGHTSCRIPT_CRASH";
 }
 
 /**
