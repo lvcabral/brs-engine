@@ -512,7 +512,7 @@ function runSource(
         }
     });
     try {
-        exitReason =  "EXIT_USER_NAV";
+        exitReason = "EXIT_USER_NAV";
         interpreter.exec(allStatements, input);
     } catch (err: any) {
         postMessage(`error,${err.message}`);
@@ -596,7 +596,7 @@ function runBinary(
         }
     });
     try {
-        exitReason =  "EXIT_USER_NAV";
+        exitReason = "EXIT_USER_NAV";
         interpreter.exec(allStatements, input);
     } catch (err: any) {
         postMessage(`error,${err.message}`);
