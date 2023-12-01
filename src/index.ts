@@ -423,8 +423,6 @@ function setupPackageFiles(
  * @returns the AST produced from lexing and parsing the provided files
  */
 export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
-    const executionOptions = Object.assign(defaultExecutionOptions, interpreter.options);
-
     let volume = interpreter.fileSystem.get("pkg:") as FileSystem;
 
     return filenames
