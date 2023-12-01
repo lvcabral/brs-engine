@@ -303,7 +303,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return this.port === undefined ? BrsInvalid.Instance : this.port;
+            return this.port ?? BrsInvalid.Instance;
         },
     });
 

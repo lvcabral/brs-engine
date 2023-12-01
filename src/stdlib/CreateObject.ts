@@ -1,4 +1,3 @@
-import { BrsError } from "../Error";
 import { Callable, ValueKind, BrsInvalid, BrsString, BrsType, StdlibArgument } from "../brsTypes";
 import { BrsObjects } from "../brsTypes/components/BrsObjects";
 import { Interpreter } from "../interpreter";
