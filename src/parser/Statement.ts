@@ -325,7 +325,7 @@ export class Return implements Statement {
         return {
             file: this.tokens.return.location.file,
             start: this.tokens.return.location.start,
-            end: (this.value && this.value.location.end) || this.tokens.return.location.end,
+            end: (this.value?.location.end) || this.tokens.return.location.end,
         };
     }
 }

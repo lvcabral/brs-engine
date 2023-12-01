@@ -1475,8 +1475,6 @@ export class Parser {
                 expr = new Expr.IndexedGet(expr, index, closingSquare);
             }
 
-            function dottedGet() {}
-
             while (true) {
                 if (match(Lexeme.LeftParen)) {
                     expr = finishCall(expr);
