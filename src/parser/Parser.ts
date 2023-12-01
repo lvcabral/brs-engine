@@ -1561,7 +1561,7 @@ export class Parser {
                     return new Expr.Literal(previous().literal!, previous().location);
                 case match(Lexeme.Identifier):
                     return new Expr.Variable(previous() as Identifier);
-                case match(Lexeme.LeftParen):
+                case match(Lexeme.LeftParen): {
                     let left = previous();
                     let expr = expression();
                     let right = consume(
@@ -1569,7 +1569,8 @@ export class Parser {
                         Lexeme.RightParen
                     );
                     return new Expr.Grouping({ left, right }, expr);
-                case match(Lexeme.LeftSquare):
+                }
+                case match(Lexeme.LeftSquare): {
                     let elements: Expression[] = [];
                     let openingSquare = previous();
 
@@ -1598,7 +1599,8 @@ export class Parser {
 
                     //consume("Expected newline or ':' after array literal", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
                     return new Expr.ArrayLiteral(elements, openingSquare, closingSquare);
-                case match(Lexeme.LeftBrace):
+                }
+                case match(Lexeme.LeftBrace): {
                     let openingBrace = previous();
                     let members: Expr.AAMember[] = [];
 
@@ -1654,11 +1656,13 @@ export class Parser {
                     let closingBrace = previous();
 
                     return new Expr.AALiteral(members, openingBrace, closingBrace);
-                case match(Lexeme.Pos, Lexeme.Tab):
+                }
+                case match(Lexeme.Pos, Lexeme.Tab): {
                     let token = Object.assign(previous(), {
                         kind: Lexeme.Identifier,
                     }) as Identifier;
                     return new Expr.Variable(token);
+                }
                 case check(Lexeme.Function, Lexeme.Sub):
                     return anonymousFunction();
                 default:
