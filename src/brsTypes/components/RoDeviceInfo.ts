@@ -58,6 +58,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.enableInternetStatusEvent,
                 this.forceInternetStatusCheck,
                 this.getIPAddrs,
+                this.enableLowGeneralMemoryEvent,
                 this.getGeneralMemoryLevel,
                 this.getMessagePort,
                 this.setMessagePort,
@@ -234,7 +235,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return BrsBoolean.False;
         },
     });
@@ -245,7 +246,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return BrsBoolean.False;
         },
     });
@@ -518,7 +519,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("feature", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, feature: BrsString) => {
+        impl: (_: Interpreter, feature: BrsString) => {
             return BrsBoolean.from(feature.value.toLocaleLowerCase() === "gaming_hardware");
         },
     });
@@ -529,7 +530,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             const result = new Array<AAMember>();
             return new RoAssociativeArray(result);
         },
@@ -566,7 +567,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new BrsString("Stereo");
         },
     });
@@ -577,7 +578,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("options", ValueKind.Dynamic)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
+        impl: (_: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
                 const result = new Array<AAMember>();
                 result.push({ name: new BrsString("result"), value: BrsBoolean.False });
@@ -596,7 +597,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, enable: BrsBoolean) => {
+        impl: (_: Interpreter, enable: BrsBoolean) => {
             return enable;
         },
     });
@@ -607,7 +608,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return BrsBoolean.False;
         },
     });
@@ -629,7 +630,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new BrsString(generateUUID());
         },
     });
@@ -678,7 +679,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let status = true;
             if (typeof navigator === "object") {
                 status = navigator.onLine;
@@ -693,7 +694,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let status = true;
             if (typeof navigator === "object") {
                 status = navigator.onLine;
@@ -708,12 +709,11 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, enable: BrsBoolean) => {
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
             return enable;
         },
     });
-
-    // this.,
 
     /** Forces a new internet connection check. */
     private forceInternetStatusCheck = new Callable("forceInternetStatusCheck", {
@@ -721,7 +721,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return BrsBoolean.True;
         },
     });
@@ -744,13 +744,26 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    //** Checks the general memory levels of the device. */
     private getGeneralMemoryLevel = new Callable("getGeneralMemoryLevel", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new BrsString("normal");
+        },
+    });
+
+    /** Notifies the channel when a lowGeneralMemoryLevel event occurs. */
+    private enableLowGeneralMemoryEvent = new Callable("enableLowGeneralMemoryEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
+            return enable;
         },
     });
 
