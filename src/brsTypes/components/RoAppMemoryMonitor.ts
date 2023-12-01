@@ -6,17 +6,11 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
 export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
-    private id: number;
-    private order: BrsType[];
-    private credData: string;
     private port?: RoMessagePort;
     readonly kind = ValueKind.Object;
 
     constructor() {
         super("roAppMemoryMonitor");
-        this.id = Math.floor(Math.random() * 100) + 1;
-        this.order = [];
-        this.credData = "";
         this.registerMethods({
             ifAppMemoryMonitor: [
                 this.enableMemoryWarningEvent,
