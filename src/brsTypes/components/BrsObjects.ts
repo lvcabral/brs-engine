@@ -4,6 +4,7 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { RoByteArray } from "./RoByteArray";
 import { RoChannelStore } from "./RoChannelStore";
+import { RoAppMemoryMonitor } from "./RoAppMemoryMonitor";
 import { RoDateTime } from "./RoDateTime";
 import { RoTimespan } from "./RoTimespan";
 import { RoList } from "./RoList";
@@ -79,6 +80,7 @@ export const BrsObjects = new Map<string, Function>([
     ],
     ["roappinfo", (interpreter: Interpreter) => new RoAppInfo()],
     ["rodeviceinfo", (interpreter: Interpreter) => new RoDeviceInfo()],
+    ["roappmemorymonitor", (interpreter: Interpreter) => new RoAppMemoryMonitor()],
     ["roaudioplayer", (interpreter: Interpreter) => new RoAudioPlayer()],
     [
         "roaudioresource",
