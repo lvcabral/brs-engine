@@ -94,6 +94,10 @@ export function isElectron() {
     return false;
 }
 
+// Check if the library is running in the Browser
+export const inBrowser = typeof window !== "undefined";
+
+// Convert Buffer to Base 64 string
 export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
     // use a FileReader to generate a base64 data URI:
     const base64url: string = await new Promise((r) => {
