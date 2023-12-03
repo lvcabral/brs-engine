@@ -8,7 +8,7 @@
 import { addSound, audioCodecs } from "./sound";
 import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
 import { inBrowser, bufferToBase64, parseCSV, SubscribeCallback } from "./util";
-import { unzipSync, zipSync, strFromU8, Zippable, Unzipped } from "fflate";
+import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import models from "../common/models.csv";
 
 // Default Device Data
@@ -123,6 +123,10 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ url: relativePath, id: srcId, type: "source" });
         source.push(strFromU8(fileData));
         srcId++;
+    } else if (lcasePath === "source/var") {
+        paths.push({ url: relativePath, id: srcId, type: "text" });
+        txts.push(strFromU8(fileData));
+        txtId++;
     } else if (lcasePath === "manifest" || ["csv", "xml", "json", "txt", "ts"].includes(ext)) {
         paths.push({ url: relativePath, id: txtId, type: "text" });
         txts.push(strFromU8(fileData));
@@ -136,7 +140,7 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         }
         audId++;
     } else {
-        const binType = lcasePath === "source" ? "pcode" : "binary";
+        const binType = lcasePath === "source/data" ? "pcode" : "binary";
         paths.push({ url: relativePath, id: binId, type: binType });
         bins.push(fileData.buffer);
         binId++;
@@ -230,13 +234,14 @@ function parseManifest(contents: string) {
 }
 
 // Remove the source code and replace by encrypted pcode returning new zip
-export function updateAppZip(source: Uint8Array) {
+export function updateAppZip(source: Uint8Array, iv: string) {
     let newZip: Zippable = {};
     for (const filePath in currentZip) {
         if (!filePath.toLowerCase().startsWith("source")) {
             newZip[filePath] = currentZip[filePath];
         }
-        newZip["source"] = [source, { level: 0 }];
+        newZip["source/data"] = [source, { level: 0 }];
+        newZip["source/var"] = [strToU8(iv), { level: 0 }];
     }
     return zipSync(newZip, { level: 6 });
 }

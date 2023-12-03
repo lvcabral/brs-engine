@@ -30,14 +30,17 @@ $ npm install -g yarn
 
 ### Build
 
-This project is written in TypeScript, so it needs to be compiled before it can be executed.  `yarn build` compiles files in `src/` into JavaScript and TypeScript declarations, and puts them in `lib/` and `types/` respectively.
+This project is written in TypeScript, so it needs to be compiled before it can be executed. `yarn build` compiles files in `src/` into JavaScript and TypeScript declarations, and puts them in `lib/`, `bin/` and `types/`.
 
 ```shell
 $ yarn build
 
 $ ls app/lib/
-brsEmu.js
-brsEmu.worker.js
+brs.api.js
+brs.worker.js
+
+$ ls bin/
+brs.cli.js
 
 $ ls types/
 index.d.ts (and friends)
@@ -45,17 +48,11 @@ index.d.ts (and friends)
 
 ### Release
 
-To release a smaller library Webpack can create a *minified* version by running `yarn release`.
+To release a smaller version of the libraries Webpack can create a *minified* version by running `yarn release`.
 
-```shell
-$ yarn release
+### Running the Example Web Application
 
-$ ls app/lib/
-brsEmu.min.js
-brsEmu.worker.min.js
-```
-
-If you want to use this release version, remember to update `app/index.js` to use `brsEmu.min.js` instead of `brsEmu.js`.
+To build and start the web application on your default browser just execute `yarn start`.
 
 ### Testing
 
@@ -63,13 +60,16 @@ Tests are currently broken, the ones we have in the repository came with the for
 
 ### Cleaning
 
-Compiled output in `lib/` and `types/` can be removed with the `clean` target:
+Compiled output in `lib/`, `bin/` and `types/` can be removed with the `clean` target:
 
 ```shell
 $ yarn clean
 
 $ ls lib/
 ls: cannot access 'lib': No such file or directory
+
+$ ls bin/
+ls: cannot access 'bin': No such file or directory
 
 $ ls types/
 ls: cannot access 'types': No such file or directory

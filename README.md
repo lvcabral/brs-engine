@@ -20,9 +20,10 @@ This library extends [**brs**](https://github.com/sjbarag/brs), a _command line 
 
 ## Technology and Compatibility
 
-This emulator is bundled as a couple of **[Webpack](https://webpack.js.org/)** Javascript libraries: 
-- `brsEmu.js` the **[emulator API](docs/emulator-api.md)** to be used by the client application.
-- `brsEmu.worker.js` the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter in a background thread on the browser platform.
+This emulator is bundled as a collection of **[Webpack](https://webpack.js.org/)** Javascript libraries: 
+- `app/lib/brs.api.js` the **[emulator API](docs/emulator-api.md)** to be used by the client application.
+- `app/lib/brs.worker.js` the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter in a background thread on the browser platform.
+- `bin/brs.cli.js` the **CLI** application that can be executed from the terminal.
 
 It uses features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _bleeding edge_ in the browser engines, because of that, at this moment, it can only be executed in:
 1. [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/) and [Edge](https://www.microsoft.com/en-us/edge).
@@ -79,7 +80,7 @@ There are many ways in which you can use and/or participate in the project, read
 
 You can see the debug messages from `print` statements in your code using the _browser or desktop app console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your channel package or brs file. Exceptions from the emulator will be shown there too. 
 
-If you added a break point (stop) in your code, you can also debug using the _browser console_, just send the commands using: `brsEmu.debug("help")`. For a better debugging experience, is recommended to use the emulator desktop app integrated with [VSCode](https://marketplace.visualstudio.com/items?itemName=celsoaf.brightscript).
+If you added a break point (stop) in your code, you can also debug using the _browser console_, just send the commands using: `brs.debug("help")`. For a better debugging experience, is recommended to use the emulator desktop app integrated with [VSCode](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript).
 
 The Roku `registry` data is stored on the browser Local Storage and you can inspect it using the Developer Tools.
 

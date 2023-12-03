@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Interpreter, defaultExecutionOptions } from "./interpreter";
+import { Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
@@ -33,7 +33,8 @@ export const shared = new Map<string, Int32Array>();
 export const source = new Map<string, string>();
 const algorithm = "aes-256-ctr";
 let pcode: Buffer;
-let exitReason: string;
+let iv: string;
+let endReason: string;
 
 declare global {
     function postMessage(message: any, options?: any): void;
@@ -79,7 +80,7 @@ export function registerCallback(messageCallback: any) {
  * @returns void.
  */
 
-export function executeFile(payload: any): string | Buffer {
+export function executeFile(payload: any): RunResult {
     const interpreter = new Interpreter();
     interpreter.onError(logError);
     // Input Parameters / Deep Link
@@ -95,38 +96,18 @@ export function executeFile(payload: any): string | Buffer {
     setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
     // Run App
     const password = payload.password ?? "";
-    let result = "";
     let input = new RoAssociativeArray(inputArray);
     if (pcode instanceof Buffer) {
-        try {
-            if (password.length > 0) {
-                const decipher = crypto.createDecipher(algorithm, password);
-                const inflated = unzlibSync(
-                    Buffer.concat([decipher.update(pcode), decipher.final()])
-                );
-                const spcode = decode(inflated) as serializedPCode;
-                if (spcode) {
-                    const tokens = new Map(Object.entries(spcode.pcode));
-                    pcode = new Buffer([]);
-                    result = runBinary(tokens, interpreter, input);
-                } else {
-                    result = "EXIT_INVALID_PCODE";
-                }
-            } else {
-                result = "EXIT_MISSING_PASSWORD";
-            }
-        } catch (e: any) {
-            result = "EXIT_UNPACK_ERROR";
-            console.error(e.message);
-        }
+        runBinary(password, interpreter, input);
     } else {
-        result = runSource(source, interpreter, input, password);
-        if (result === "EXIT_PACKAGER_DONE") {
-            return pcode;
+        const result = runSource(source, interpreter, input, password);
+        if (result?.cipherText) {
+            return result;
         }
+        endReason = result.endReason;
     }
-    postMessage(`end,${result}`);
-    return result;
+    postMessage(`end,${endReason}`);
+    return { endReason: endReason };
 }
 
 interface serializedPCode {
@@ -352,7 +333,11 @@ function setupPackageFiles(
                     volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
                     interpreter.audioId = filePath.id;
                 } else if (filePath.type === "text" && Array.isArray(texts)) {
-                    volume.writeFileSync(`/${filePath.url}`, texts[filePath.id]);
+                    if (filePath.url === "source/var") {
+                        iv = texts[filePath.id];
+                    } else {
+                        volume.writeFileSync(`/${filePath.url}`, texts[filePath.id]);
+                    }
                 } else if (filePath.type === "source" && Array.isArray(brs)) {
                     source.set(filePath.url, brs[filePath.id]);
                     volume.writeFileSync(`/${filePath.url}`, brs[filePath.id]);
@@ -446,16 +431,19 @@ export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
  *                    for `repl` to have persistent state between user inputs.
  * @param input associative array with the input parameters
  * @param password string with the encryption password (optional)
- * @returns an array of statement execution results, indicating why each
- *          statement exited and what its return value was, or `undefined` if
- *          `interpreter` threw an Error.
+ * @returns interface RunResult.
  */
+export interface RunResult {
+    endReason: string;
+    cipherText?: Uint8Array;
+    iv?: string;
+}
 function runSource(
     source: Map<string, string>,
     interpreter: Interpreter,
     input: RoAssociativeArray,
     password: string = ""
-): string {
+): RunResult {
     const lexer = new Lexer();
     const parser = new Parser();
     const preprocessor = new PP.Preprocessor();
@@ -496,11 +484,12 @@ function runSource(
         allStatements.push(...parseResults.statements);
     });
     if (password.length > 0) {
-        const cipher = crypto.createCipher(algorithm, password);
+        const iv = crypto.randomBytes(12).toString("base64");
+        const cipher = crypto.createCipheriv(algorithm, password, iv);
         const deflated = zlibSync(encode({ pcode: tokens }));
         const source = Buffer.from(deflated);
-        pcode = Buffer.concat([cipher.update(source), cipher.final()]);
-        return "EXIT_PACKAGER_DONE";
+        const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
+        return { endReason: "EXIT_PACKAGER_DONE", cipherText: cipherText, iv: iv };
     }
     lib.forEach((value: string, key: string) => {
         if (value !== "") {
@@ -510,18 +499,18 @@ function runSource(
         }
     });
     try {
-        exitReason = "EXIT_USER_NAV";
+        endReason = "EXIT_USER_NAV";
         interpreter.exec(allStatements, input);
     } catch (err: any) {
         postMessage(`error,${err.message}`);
-        exitReason = "EXIT_BRIGHTSCRIPT_CRASH";
+        endReason = "EXIT_BRIGHTSCRIPT_CRASH";
     }
-    return exitReason;
+    return { endReason: endReason };
 }
 
 /**
  * Runs a binary package of BrightScript code.
- * @param source map of BrightScript tokens to parse, and interpret.
+ * @param password decryption password.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  * @param input associative array with the input parameters
@@ -529,11 +518,31 @@ function runSource(
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function runBinary(
-    source: Map<string, any>,
-    interpreter: Interpreter,
-    input: RoAssociativeArray
-): string {
+function runBinary(password: string, interpreter: Interpreter, input: RoAssociativeArray) {
+    let decodedTokens: Map<string, any>;
+    // Decode Source PCode
+    try {
+        if (password.length > 0) {
+            const decipher = crypto.createDecipheriv(algorithm, password, iv);
+            const inflated = unzlibSync(Buffer.concat([decipher.update(pcode), decipher.final()]));
+            const spcode = decode(inflated) as serializedPCode;
+            if (spcode) {
+                decodedTokens = new Map(Object.entries(spcode.pcode));
+                pcode = Buffer.from([]);
+            } else {
+                endReason = "EXIT_INVALID_PCODE";
+                return;
+            }
+        } else {
+            endReason = "EXIT_MISSING_PASSWORD";
+            return;
+        }
+    } catch (e: any) {
+        console.error(e.message);
+        endReason = "EXIT_UNPACK_ERROR";
+        return;
+    }
+    // Execute the decrypted source code
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<_parser.Stmt.Statement>();
@@ -544,7 +553,7 @@ function runBinary(
     lexer.onError(logError);
     parser.onError(logError);
     let tokens: Token[] = [];
-    for (let [, value] of source) {
+    for (let [, value] of decodedTokens) {
         const token: any = value;
         if (token.literal) {
             if (token.kind === "Integer") {
@@ -594,13 +603,13 @@ function runBinary(
         }
     });
     try {
-        exitReason = "EXIT_USER_NAV";
+        endReason = "EXIT_USER_NAV";
         interpreter.exec(allStatements, input);
     } catch (err: any) {
         postMessage(`error,${err.message}`);
-        exitReason = "EXIT_BRIGHTSCRIPT_CRASH";
+        endReason = "EXIT_BRIGHTSCRIPT_CRASH";
     }
-    return exitReason;
+    return;
 }
 
 /**
@@ -609,7 +618,7 @@ function runBinary(
  */
 function logError(err: BrsError.BrsError) {
     postMessage(`error,${err.format()}`);
-    exitReason = "EXIT_BRIGHTSCRIPT_CRASH";
+    endReason = "EXIT_BRIGHTSCRIPT_CRASH";
 }
 
 /**

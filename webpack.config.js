@@ -1,23 +1,18 @@
 const webpack = require("webpack");
 const path = require("path");
-const WebpackObfuscator = require("webpack-obfuscator");
+const ShebangPlugin = require('webpack-shebang-plugin');
 const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
 module.exports = (env) => {
-    let outputLib, outputWrk, mode, distPath, sourceMap;
-    let libraryName = "brsEmu";
-    let workerName = "brsEmu.worker";
+    let mode, sourceMap;
+    let libName = "brs";
+    let distPath = "app/lib";
+    let cliPath = "bin";
     if (env.production) {
         mode = "production";
-        outputWrk = libraryName + ".worker.min.js";
-        outputLib = libraryName + ".min.js";
-        distPath = "app/lib";
         sourceMap = false;
     } else {
         mode = "development";
-        outputWrk = libraryName + ".worker.js";
-        outputLib = libraryName + ".js";
-        distPath = "app/lib";
         sourceMap = "inline-cheap-module-source-map";
     }
     const ifdef_opts = {
@@ -69,12 +64,6 @@ module.exports = (env) => {
                 new webpack.ProvidePlugin({
                     Buffer: ["buffer", "Buffer"],
                 }),
-                new WebpackObfuscator(
-                    {
-                        rotateUnicodeArray: true,
-                    },
-                    ["brsEmu.js", "brsEmu.worker.js"]
-                ),
                 // Write out stats file to build directory.
                 new StatsWriterPlugin({
                     filename: "stats.json",
@@ -86,8 +75,8 @@ module.exports = (env) => {
             ],
             output: {
                 path: path.join(__dirname, distPath),
-                filename: outputWrk,
-                library: workerName,
+                filename: libName + ".worker.js",
+                library: libName + "-worker",
                 libraryTarget: "umd",
                 umdNamedDefine: true,
                 globalObject: "typeof self !== 'undefined' ? self : this",
@@ -98,6 +87,14 @@ module.exports = (env) => {
             target: "web",
             mode: mode,
             devtool: sourceMap,
+            devServer: {
+                static: "./app",
+                port: 6502,
+                headers: {
+                    "cross-origin-embedder-policy": "require-corp",
+                    "cross-origin-opener-policy": "same-origin",
+                }
+            },
             module: {
                 rules: [
                     {
@@ -118,7 +115,7 @@ module.exports = (env) => {
                 ],
             },
             resolve: {
-                modules: [path.resolve("./node_modules"), path.resolve("./src")],
+                modules: [path.resolve("./node_modules"), path.resolve("./src/api")],
                 extensions: [".tsx", ".ts", ".js"],
             },
             plugins: [
@@ -132,12 +129,52 @@ module.exports = (env) => {
                 }),
             ],
             output: {
-                filename: outputLib,
-                library: libraryName,
+                filename: libName + ".api.js",
+                library: libName,
                 libraryTarget: "umd",
                 umdNamedDefine: true,
                 path: path.resolve(__dirname, distPath),
                 globalObject: "typeof self !== 'undefined' ? self : this",
+            },
+        },
+        {
+            entry: "./src/cli/index.ts",
+            target: "node",
+            mode: mode,
+            devtool: sourceMap,
+            module: {
+                rules: [
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ts-loader",
+                        exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ifdef-loader",
+                        options: ifdef_opts,
+                        exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.csv$/,
+                        type: "asset/source",
+                    },
+                    {
+                        test: /\.brs$/,
+                        type: "asset/source",
+                    },
+                ],
+            },
+            resolve: {
+                modules: [path.resolve("./node_modules"), path.resolve("./src")],
+                extensions: [".tsx", ".ts", ".js"],
+            },
+            plugins: [
+                new ShebangPlugin(),
+            ],
+            output: {
+                filename: libName + ".cli.js",
+                path: path.resolve(__dirname, cliPath),
             },
         },
     ];

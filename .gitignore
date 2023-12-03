@@ -1,12 +1,14 @@
 .vscode/
 .idea/
 app/lib/
+bin/
 types/
 node_modules*/
 dist/
 out/
 /channels/
 *.pkg
+*.bpk
 desktop.ini
 .DS_Store
 .husky

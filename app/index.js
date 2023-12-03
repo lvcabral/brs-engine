@@ -40,13 +40,13 @@ customKeys.set("PageDown", "ignore"); // do not handle on browser
 customKeys.set("Digit8", "info");
 
 // Initialize Device Emulator and subscribe to events
-libVersion.innerHTML = brsEmu.getVersion();
-brsEmu.initialize(customDeviceInfo, {
+libVersion.innerHTML = brs.getVersion();
+brs.initialize(customDeviceInfo, {
     debugToConsole: true,
     customKeys: customKeys,
     showStats: true,
 });
-brsEmu.subscribe("app", (event, data) => {
+brs.subscribe("app", (event, data) => {
     if (event === "loaded") {
         currentChannel = data;
         fileButton.style.visibility = "hidden";
@@ -97,7 +97,7 @@ fileSelector.onchange = function () {
                 password = prompt("Please enter the password to decrypt the package.");
             }
             if (password !== null) {
-                brsEmu.execute(file.name, evt.target.result, {
+                brs.execute(file.name, evt.target.result, {
                     clearDisplayOnExit: true,
                     muteSound: false,
                     execSource: "open_app_button",
@@ -128,7 +128,7 @@ function loadZip(zip) {
             if (response.status === 200 || response.status === 0) {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
-                        brsEmu.execute(zip, zipData, { execSource: "homescreen" });
+                        brs.execute(zip, zipData, { execSource: "homescreen" });
                         display.focus();
                     });
                 });

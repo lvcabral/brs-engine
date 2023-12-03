@@ -16,22 +16,24 @@
     "brightscript",
     "roku",
     "emulator",
-    "webworker",
+    "simulator",
+    "interpreter",
     "worker"
   ],
   "license": "MIT",
-  "main": "app/lib/brsEmu.js",
-  "browser": "app/lib/brsEmu.js",
+  "main": "app/lib/brs.api.js",
+  "browser": "app/lib/brs.api.js",
   "typings": "types/src/api/index.d.ts",
   "bin": {
-    "brs-cli": "./bin/cli.mjs"
+    "brs-cli": "./bin/brs.cli.js"
   },
   "scripts": {
     "build": "webpack --env development",
     "release": "webpack --env production",
+    "start": "webpack serve --open",
     "stats": "webpack-bundle-analyzer ./app/lib/stats.json",
     "stats:api": "webpack-bundle-analyzer ./app/lib/stats-api.json",
-    "clean": "rimraf ./app/lib ./types",
+    "clean": "rimraf ./app/lib ./bin ./types",
     "test": "jest",
     "lint": "tslint --project .",
     "prettier:write": "prettier --write \"{app,src,test}/**/*.{js,ts}\"",
@@ -41,9 +43,8 @@
   "files": [
     "app/audio/",
     "app/fonts/",
-    "app/lib/brsEmu.min.js",
-    "app/lib/brsEmu.worker.js",
-    "app/lib/brsEmu.worker.min.js",
+    "app/lib/brs.worker.js",
+    "bin/",
     "types/src/api/"
   ],
   "dependencies": {
@@ -60,7 +61,7 @@
     "jpeg-js": "^0.4.4",
     "libwebpjs": "lvcabral/libwebpjs",
     "long": "^3.2.0",
-    "memory-fs": "^0.5.0",
+    "memory-fs": "lvcabral/memory-fs",
     "nanomatch": "^1.2.13",
     "omggif": "^1.0.10",
     "opentype.js": "^1.3.4",
@@ -107,7 +108,8 @@
     "webpack": "^5.75.0",
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.0.1",
-    "webpack-obfuscator": "^3.5.1",
+    "webpack-dev-server": "^4.15.1",
+    "webpack-shebang-plugin": "^1.1.8",
     "webpack-stats-plugin": "^1.1.3"
   },
   "jest": {

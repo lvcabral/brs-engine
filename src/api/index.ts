@@ -13,7 +13,7 @@ import {
     dataBufferSize,
     getNow,
     getApiPath,
-    getEmuPath,
+    getWorkerLibPath,
     isElectron,
     inBrowser,
 } from "./util";
@@ -72,7 +72,7 @@ import { version } from "../../package.json";
 
 // Interpreter Library
 const brsApiLib = getApiPath().split("/").pop();
-const brsEmuLib = getEmuPath();
+const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
 
 // Package API
@@ -97,7 +97,11 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         Object.assign(deviceData, customDeviceInfo);
     }
     const storage: Storage = window.localStorage;
+    /// #if DEBUG
+    console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version} - debug mode`);
+    /// #else
     console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
+    /// #endif
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
@@ -153,7 +157,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     });
 
     // Force library download during initialization
-    brsWorker = new Worker(brsEmuLib);
+    brsWorker = new Worker(brsWrkLib);
 }
 
 // Observers Handling
@@ -382,7 +386,7 @@ function loadSourceCode(fileName: string, fileData: any) {
 function runApp(payload: object) {
     showDisplay();
     currentApp.running = true;
-    brsWorker = new Worker(brsEmuLib);
+    brsWorker = new Worker(brsWrkLib);
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);

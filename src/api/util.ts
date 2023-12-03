@@ -71,13 +71,9 @@ export function getApiPath(): string {
     }
     return main;
 }
-export function getEmuPath(): string {
+export function getWorkerLibPath(): string {
     let libPath = getApiPath();
-    /// #if DEBUG
-    libPath = libPath.replace(".js", ".worker.js");
-    /// #else
-    libPath = libPath.replace(".min.js", ".worker.min.js");
-    /// #endif
+    libPath = libPath.replace(".api.js", ".worker.js");
     return libPath;
 }
 
