@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -18,9 +18,9 @@ const channel3 = document.getElementById("channel3");
 // Channel status object
 let currentChannel = { id: "", running: false };
 
-// Start the emulator
+// Start the engine
 channelInfo.innerHTML = "<br/>";
-// Custom Device Configuration (see /api/index.ts for all fields)
+// Custom device configuration (see /api/index.ts for all fields)
 const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
     locale: "en_US", // Used if channel supports localization
@@ -39,7 +39,7 @@ customKeys.set("PageUp", "ignore"); // do not handle on browser
 customKeys.set("PageDown", "ignore"); // do not handle on browser
 customKeys.set("Digit8", "info");
 
-// Initialize Device Emulator and subscribe to events
+// Initialize device and subscribe to events
 libVersion.innerHTML = brs.getVersion();
 brs.initialize(customDeviceInfo, {
     debugToConsole: true,

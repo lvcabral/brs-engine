@@ -1,7 +1,7 @@
 {
   "name": "brs-emu",
   "version": "1.0.0",
-  "description": "BrightScript Emulator",
+  "description": "BrightScript Engine",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "homepage": "https://lvcabral.com/brs/",
   "contributors": [

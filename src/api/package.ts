@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -15,7 +15,7 @@ import models from "../common/models.csv";
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
 export const deviceData = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
-    friendlyName: "BrightScript Emulator Library",
+    friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "BSC.00E04193A", // v11.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",

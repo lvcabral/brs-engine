@@ -127,7 +127,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             }
             if (ms === 0) {
                 postMessage(
-                    "warning,[roMessagePort] No message in the queue, emulator will loop forever!"
+                    "warning,[roMessagePort] No message in the queue, engine will loop forever!"
                 );
                 while (true) {
                     // Loop forever

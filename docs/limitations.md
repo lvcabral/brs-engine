@@ -1,6 +1,6 @@
-# BrightScript Emulator Limitations
+# BrightScript Engine Current Limitations
 
-This emulator is still in **beta** stage, this way, there are several features from the **BrightScript** language and components that are not supported, or partially supported, some are planned to be implemented, others will stay as mock objects (for compatibility), and some are considered out of scope of this project. Below is the current list of those limitations:
+There are several features from the **BrightScript** language and components that are still not supported, or just partially supported, some are planned to be implemented, others will stay as mock objects (for compatibility), and some are considered out of scope of this project. Below is the current list of those limitations:
 
 ## In Scope (to be developed/fixed in future releases)
 
@@ -23,14 +23,14 @@ This emulator is still in **beta** stage, this way, there are several features f
   * The configuration above requires the web server called to respond with the proper header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
   * The _async_ methods are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
   * If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
-  * Custom/Self-Signed SSL certificates are not supported, the emulator will use default browser client certificate.
+  * Custom/Self-Signed SSL certificates are not supported, the engine will use default browser client certificate.
   * As custom certificates are not supported these methods are just mocked and do nothing: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
   * The method `GetTargetIpAddress` from `roUrlEvent` always returns an empty string.
 * Reserved words like `Mod` cannot be used as function parameters (Roku does allow that).
-* SDK 1.0 deprecated components are not implemented, but could be done in the future for legacy channel support.
+* SDK 1.0 deprecated components are not implemented, but could be done in the future for legacy apps support.
 
 ## In Scope (mocked)
 

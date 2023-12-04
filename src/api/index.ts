@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -203,7 +203,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     }
 }
 
-// Restore emulator state and terminate Worker
+// Restore engine state and terminate Worker
 export function terminate(reason: string) {
     deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
     deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
@@ -382,7 +382,7 @@ function loadSourceCode(fileName: string, fileData: any) {
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
-// Execute Emulator Web Worker
+// Execute Engine Web Worker
 function runApp(payload: object) {
     showDisplay();
     currentApp.running = true;
