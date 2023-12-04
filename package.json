@@ -1,5 +1,5 @@
 {
-  "name": "brs-emu",
+  "name": "brs-engine",
   "version": "1.0.0",
   "description": "BrightScript Engine",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
@@ -10,7 +10,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/lvcabral/brs-emu"
+    "url": "https://github.com/lvcabral/brs-engine"
   },
   "keywords": [
     "brightscript",
@@ -44,6 +44,7 @@
     "app/audio/",
     "app/fonts/",
     "app/lib/brs.worker.js",
+    "app/lib/*.LICENSE.txt",
     "bin/",
     "types/src/api/"
   ],

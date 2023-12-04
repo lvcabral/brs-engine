@@ -1,8 +1,8 @@
 # How add the BrightScript Engine to a Web Application
 
-This repository provides a sample web application for testing the engine, located under the `app/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-emu/releases) with the libraries already integrated, or you can try the simpler example listed below.
+This repository provides a sample web application for testing the engine, located under the `app/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
 
-To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](emulator-api.md).
+To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](engine-api.md).
 
 **Important Notes:**
 

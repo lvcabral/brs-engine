@@ -53,9 +53,6 @@ if (typeof onmessage !== "undefined") {
     };
 }
 /// #else
-declare global {
-    function postMessage(message: any, options?: any): void;
-}
 if (typeof onmessage === "undefined") {
     // Library is not running as a Worker
     const dataBufferIndex = 32;
@@ -63,12 +60,15 @@ if (typeof onmessage === "undefined") {
     const length = dataBufferIndex + dataBufferSize;
     let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     shared.set("buffer", new Int32Array(sharedBuffer));
-} 
+}
 /**
  * Support postMessage when not running as Worker.
  * @param messageCallback function that will receive and process the messages.
  * @returns void.
  */
+declare global {
+    function postMessage(message: any, options?: any): void;
+}
 export function registerCallback(messageCallback: any) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;

@@ -23,7 +23,7 @@ This project was created as a fork from [**brs**](https://github.com/sjbarag/brs
 
 This engine is bundled as a collection of **[Webpack](https://webpack.js.org/)** Javascript libraries:
 
-- `app/lib/brs.api.js`: Is the **[Engine API](docs/emulator-api.md)** to be used by the client application.
+- `app/lib/brs.api.js`: Is the **[Engine API](docs/engine-api.md)** to be used by the client application.
 - `app/lib/brs.worker.js`: Is the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter in a background thread on the browser platform.
 - `bin/brs.cli.js`: Is the **[CLI](https://en.wikipedia.org/wiki/Command-line_interface)** application that can be executed from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) or running and packaging apps.
 
@@ -61,13 +61,13 @@ You can also run the engine as a multi-platform **desktop application** (Windows
 The **brs-engine** project is published as a `node` package, so you can use `npm`:
 
 ```shell
-$ npm install brs-emu
+$ npm install brs-engine
 ```
 
 or `yarn` if that's your preference:
 
 ```shell
-$ yarn add brs-emu
+$ yarn add brs-engine
 ```
 
 ### Documentation
@@ -91,7 +91,7 @@ If you added a break point (`stop`) in your code, you can also debug using the _
 
 The Roku `registry` data is stored on the browser **Local Storage** and you can inspect it also using the Developer Tools (Application tab).
 
-If your code does show an error in some scenario not listed on the [limitations documentation](docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-emu/issues).
+If your code does show an error in some scenario not listed on the [limitations documentation](docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-engine/issues).
 
 ## Games and Demos
 

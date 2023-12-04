@@ -17,7 +17,7 @@ $ npm install -g yarn
 1. Clone this repo:
 
    ```shell
-   $ git clone https://github.com/lvcabral/brs-emu.git
+   $ git clone https://github.com/lvcabral/brs-engine.git
    ```
 
 2. Install dependencies:
