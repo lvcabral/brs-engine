@@ -9,7 +9,7 @@ import { addSound, audioCodecs } from "./sound";
 import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
 import { inBrowser, bufferToBase64, parseCSV, SubscribeCallback } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
-import models from "../common/models.csv";
+import models from "../worker/common/models.csv";
 
 // Default Device Data
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md

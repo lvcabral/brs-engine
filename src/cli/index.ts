@@ -12,7 +12,7 @@ import stripAnsi from "strip-ansi";
 import * as fs from "fs";
 import * as path from "path";
 import readline from "readline";
-import * as brsLib from "../";
+import * as brsLib from "../worker";
 const program = new Command();
 import { deviceData, loadAppZip, updateAppZip } from "../api/package";
 const { registerCallback, getInterpreter, executeLine, executeFile } = brsLib;

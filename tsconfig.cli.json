@@ -7,11 +7,10 @@
         // "allowJs": true,                       /* Allow javascript files to be compiled. */
         // "checkJs": true,                       /* Report errors in .js files. */
         // "jsx": "preserve",                     /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
-        "declaration": true                       /* Generates corresponding '.d.ts' file. */,
-        "declarationDir": "./types"               /* Output '.d.ts' files to the directory. */,
+        "declaration": false                       /* Generates corresponding '.d.ts' file. */,
         // "sourceMap": true,                     /* Generates corresponding '.map' file. */
         // "outFile": "./",                       /* Concatenate and emit output to single file. */
-        "outDir": "app/lib"                       /* Redirect output structure to the directory. */,
+        "outDir": "bin"                       /* Redirect output structure to the directory. */,
         // "rootDir": "./",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
         // "removeComments": true,                /* Do not emit comments to output. */
         // "noEmit": true,                        /* Do not emit outputs. */
@@ -56,5 +55,4 @@
         "plugins": []
     },
     "include": ["./src/"],
-    "exclude": ["./src/cli/"]
 }

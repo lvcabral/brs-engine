@@ -28,8 +28,8 @@
     "brs-cli": "./bin/brs.cli.js"
   },
   "scripts": {
-    "build": "webpack --env development",
-    "release": "webpack --env production",
+    "build": "webpack --env development && webpack --config webpack.cli.config.js --env development",
+    "release": "webpack --env production && webpack --config webpack.cli.config.js --env production",
     "start": "webpack serve --open",
     "stats": "webpack-bundle-analyzer ./app/lib/stats.json",
     "stats:api": "webpack-bundle-analyzer ./app/lib/stats-api.json",

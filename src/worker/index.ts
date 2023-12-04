@@ -10,7 +10,7 @@ import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } 
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
 import { Parser } from "./parser";
-import { version } from "../package.json";
+import { version } from "../../package.json";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
 import * as _lexer from "./lexer";
@@ -36,18 +36,8 @@ let pcode: Buffer;
 let iv: string;
 let endReason: string;
 
-declare global {
-    function postMessage(message: any, options?: any): void;
-}
-
-if (typeof onmessage === "undefined") {
-    // Library is not running as a Worker
-    const dataBufferIndex = 32;
-    const dataBufferSize = 512;
-    const length = dataBufferIndex + dataBufferSize;
-    let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-    shared.set("buffer", new Int32Array(sharedBuffer));
-} else {
+/// #if WORKER
+if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: any) {
         if (event.data.device) {
@@ -62,7 +52,18 @@ if (typeof onmessage === "undefined") {
         }
     };
 }
-
+/// #else
+declare global {
+    function postMessage(message: any, options?: any): void;
+}
+if (typeof onmessage === "undefined") {
+    // Library is not running as a Worker
+    const dataBufferIndex = 32;
+    const dataBufferSize = 512;
+    const length = dataBufferIndex + dataBufferSize;
+    let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+    shared.set("buffer", new Int32Array(sharedBuffer));
+} 
 /**
  * Support postMessage when not running as Worker.
  * @param messageCallback function that will receive and process the messages.
@@ -73,47 +74,6 @@ export function registerCallback(messageCallback: any) {
         globalThis.postMessage = messageCallback;
     }
 }
-
-/**
- * Runs a Brightscript app with full zip folder structure.
- * @param payload with the source code and all the assets of the app.
- * @returns void.
- */
-
-export function executeFile(payload: any): RunResult {
-    const interpreter = new Interpreter();
-    interpreter.onError(logError);
-    // Input Parameters / Deep Link
-    const inputArray = setupInputArray(payload.input);
-    // Manifest
-    setupManifest(payload.manifest, interpreter);
-    // Registry
-    setupRegistry(payload.device.registry, interpreter);
-    // DeviceInfo, Libraries and Fonts
-    setupDeviceData(payload.device, interpreter);
-    setupDeviceFonts(payload.device, interpreter);
-    // Package Files
-    setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
-    // Run App
-    const password = payload.password ?? "";
-    let input = new RoAssociativeArray(inputArray);
-    if (pcode instanceof Buffer) {
-        runBinary(password, interpreter, input);
-    } else {
-        const result = runSource(source, interpreter, input, password);
-        if (result?.cipherText) {
-            return result;
-        }
-        endReason = result.endReason;
-    }
-    postMessage(`end,${endReason}`);
-    return { endReason: endReason };
-}
-
-interface serializedPCode {
-    [pcode: string]: Token[];
-}
-
 /**
  * Returns a new instance of the Interpreter for REPL
  *
@@ -167,6 +127,47 @@ export function executeLine(contents: string, interpreter: Interpreter) {
             console.error("Interpreter execution error: ", e.message);
         }
     }
+}
+/// #endif
+
+/**
+ * Runs a Brightscript app with full zip folder structure.
+ * @param payload with the source code and all the assets of the app.
+ * @returns void.
+ */
+
+export function executeFile(payload: any): RunResult {
+    const interpreter = new Interpreter();
+    interpreter.onError(logError);
+    // Input Parameters / Deep Link
+    const inputArray = setupInputArray(payload.input);
+    // Manifest
+    setupManifest(payload.manifest, interpreter);
+    // Registry
+    setupRegistry(payload.device.registry, interpreter);
+    // DeviceInfo, Libraries and Fonts
+    setupDeviceData(payload.device, interpreter);
+    setupDeviceFonts(payload.device, interpreter);
+    // Package Files
+    setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
+    // Run App
+    const password = payload.password ?? "";
+    let input = new RoAssociativeArray(inputArray);
+    if (pcode instanceof Buffer) {
+        runBinary(password, interpreter, input);
+    } else {
+        const result = runSource(source, interpreter, input, password);
+        if (result?.cipherText) {
+            return result;
+        }
+        endReason = result.endReason;
+    }
+    postMessage(`end,${endReason}`);
+    return { endReason: endReason };
+}
+
+interface serializedPCode {
+    [pcode: string]: Token[];
 }
 
 /**
