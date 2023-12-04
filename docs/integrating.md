@@ -9,10 +9,11 @@ To learn more about the _methods_ and _events_ exposed by the library visit the 
 Your web application cannot be executed as pure HTML page, because some functionalities used by the engine have security restrictions on the browser platform, so you will need a web server to run it. For that you can use `Apache`, `IIS` or any other simpler web server, but please make sure that your web application is hosted with [COOP and COEP custom headers](https://developer.chrome.com/blog/enabling-shared-array-buffer/) to allow isolation and enable the browser to support **ShareArrayBuffer**. More information visit: <https://developer.chrome.com/blog/enabling-shared-array-buffer/>.
 
 ## Using Webpack DevServer
+
 The repository provides a script to run the Webpack DevServer, with COOP and COEP headers, to help testing the web application on development environment. In order to start the web server, execute:
 
 ```shell
-    yarn start
+yarn start
 ```
 
 By default the server will use the port `6502`, if you prefer another port just change it inside the file `webpack.config.js`. The command above, will open a new tab in the default browser, directly on the address: `http://localhost:6502/`. It may take a few seconds to the web page to show up, as the script will build the API library first.
@@ -37,19 +38,19 @@ Type some BrightScript code: (open Developer Tools console to see <b>print</b> o
 <textarea id="source-code" name="source-code" rows="15" cols="100">
 ' BrightScript Hello World
 sub main()
-	text = "Hello World"
-	purple=&h6F1AB1FF
-	white = &hFFFFFFFF
-	screen = createObject("roScreen")
-	screen.clear(purple)
-	font = createObject("roFontRegistry").getDefaultFont()
-	w = font.getOneLineWidth(text, screen.getWidth())
-	h = font.getOneLineHeight()
-	x = cInt((screen.getWidth() - w) / 2)
-	y = cInt((screen.getHeight() - h) / 2)
-	screen.drawText(text, x, y, white, font)
-	print text
-	screen.swapBuffers()
+    text = "Hello World"
+    purple=&h6F1AB1FF
+    white = &hFFFFFFFF
+    screen = createObject("roScreen")
+    screen.clear(purple)
+    font = createObject("roFontRegistry").getDefaultFont()
+    w = font.getOneLineWidth(text, screen.getWidth())
+    h = font.getOneLineHeight()
+    x = cInt((screen.getWidth() - w) / 2)
+    y = cInt((screen.getHeight() - h) / 2)
+    screen.drawText(text, x, y, white, font)
+    print text
+    screen.swapBuffers()
 end sub
 </textarea><br />
 <input id="clickMe" type="button" value="Run Code!" onclick="executeBrs();" />

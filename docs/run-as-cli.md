@@ -69,10 +69,10 @@ $ brs-cli ../tests/test-sandbox.zip
 
 If you want to protect your BrightScript application source code, you can create an encrypted package using the CLI, using the parameters:
 
-1. ` -p, --pack <password>`:  The password to generate the encrypted package (32 characters long). (default: "")
+1. `-p, --pack <password>`:  The password to generate the encrypted package (32 characters long). (default: "")
 2. `-o, --out <directory>`:  The directory to save the encrypted package file. (default: "./")
 
-If no password is provided the app will be executed and no encryption happens, below an example of how to encrypt a package
+If no password is provided the app will be executed and no encryption happens, below an example of how to encrypt a package:
 
 ```shell
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
