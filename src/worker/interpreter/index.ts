@@ -42,6 +42,7 @@ import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
 import { debugCommand, runDebugger } from "./MicroDebugger";
+import Long from "long";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -325,7 +326,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 let toPrint = this.evaluate(printable);
-                if (isBrsNumber(toPrint) && toPrint.getValue() >= 0) {
+                if (isBrsNumber(toPrint) && this.isPositive(toPrint.getValue())) {
                     printStream += " " + toPrint.toString();
                 } else {
                     printStream += toPrint.toString();
@@ -480,8 +481,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (
                     isBrsNumber(left) &&
                     isBrsNumber(right) &&
-                    right.getValue() >= 0 &&
-                    right.getValue() < 32
+                    this.isPositive(right.getValue()) &&
+                    this.lessThan(right.getValue(), 32)
                 ) {
                     return left.leftShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
@@ -519,8 +520,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (
                     isBrsNumber(left) &&
                     isBrsNumber(right) &&
-                    right.getValue() >= 0 &&
-                    right.getValue() < 32
+                    this.isPositive(right.getValue()) &&
+                    this.lessThan(right.getValue(), 32)
                 ) {
                     return left.rightShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
@@ -1043,8 +1044,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } catch (reason) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
                     let message = "";
-                    if (reason instanceof Error && reason.message.startsWith("-->")) {
-                        message = reason.message + "\n";
+                    if (reason instanceof Error) {
+                        if (reason.message.startsWith("-->")) {
+                            message = `${reason.message}\n`;
+                        } else {
+                            if (process.env.NODE_ENV === "development") {
+                                console.error(reason);
+                            } else {
+                                message = `--> Engine Error: ${reason.message}\n`;
+                            }
+                        }
                     }
                     if (expression.location.start.line > 0) {
                         message += `--> Function ${functionName}() called at:\n   file/line: ${expression.location.file}(${expression.location.start.line})`;
@@ -1706,5 +1715,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
         return isNumberKind(fromKind) && isNumberKind(toKind);
+    }
+
+    private isPositive(value: number | Long): boolean {
+        if (value instanceof Long) {
+            return value.isPositive();
+        }
+        return value >= 0;
+    }
+
+    private lessThan(value: number | Long, compare: number): boolean {
+        if (value instanceof Long) {
+            return value.lessThan(compare);
+        }
+        return value < compare;
     }
 }
