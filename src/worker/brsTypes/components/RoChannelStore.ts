@@ -25,6 +25,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 this.getCatalog,
                 this.getStoreCatalog,
                 this.getPurchases,
+                this.getAllPurchases,
                 this.setOrder,
                 this.clearOrder,
                 this.deltaOrder,
@@ -93,8 +94,22 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Requests the list of purchases associated with the current user account. */
+    /** Requests the list of active purchases associated with the current user account. */
     private getPurchases = new Callable("getPurchases", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            if (this.port) {
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+            }
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Requests the list of all purchases associated with the current user account, including expired. */
+    private getAllPurchases = new Callable("getAllPurchases", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -166,7 +181,9 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.True;
+            // TODO: when there is a Catalog list this should return `true`
+            // when the order list contain valid product, and added to Purchased list.
+            return BrsBoolean.False;
         },
     });
 
