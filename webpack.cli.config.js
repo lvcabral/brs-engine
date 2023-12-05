@@ -16,7 +16,7 @@ module.exports = (env) => {
     const ifdef_opts = {
         DEBUG: mode === "development",
         WORKER: false,
-        "ifdef-verbose": true,
+        "ifdef-verbose": false,
     };
     return [
         {
