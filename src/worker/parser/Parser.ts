@@ -845,7 +845,7 @@ export class Parser {
                 } else {
                     addErrorAtLocation(
                         libraryStatement.location,
-                        'Invalid library! Valid options are "v30/bslCore.brs", "v30/bslDefender.brs" or "Roku_Ads.brs"'
+                        `Invalid library "${key}"! Supported: "v30/bslCore.brs", "v30/bslDefender.brs" or "Roku_Ads.brs"`
                     );
                 }
             }

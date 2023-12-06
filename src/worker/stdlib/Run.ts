@@ -28,7 +28,7 @@ import { BrsComponent } from "../brsTypes/components/BrsComponent";
 function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
     let volumes = filenames.map((filename) => getVolumeByPath(interpreter, filename.value));
     let pathsToFiles = filenames.map((filename) =>
-        path.join(interpreter.options.root, getPath(filename.value))
+        path.join(interpreter.options.root ?? process.cwd(), getPath(filename.value))
     );
 
     // if the file-to-run doesn't exist, RBI returns invalid

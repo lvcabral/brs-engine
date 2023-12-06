@@ -46,13 +46,14 @@ import Long from "long";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
-    /** The base path for  */
-    root: string;
+    root?: string;
+    needEntryPoint?: boolean
 }
 
 /** The default set of execution options.  */
 export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
+    needEntryPoint: false
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -64,7 +65,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         start: { line: 0, column: 0 },
         end: { line: 0, column: 0 },
     };
-    readonly options: ExecutionOptions;
+    readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
@@ -118,8 +119,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param options configuration for the execution
      */
-    constructor(options: ExecutionOptions = defaultExecutionOptions) {
-        this.options = options;
+    constructor(options?: ExecutionOptions) {
+        Object.assign(this.options, options);
         this.fileSystem.set("common:", new FileSystem());
         this.fileSystem.set("pkg:", new FileSystem());
         this.fileSystem.set("tmp:", new FileSystem());
@@ -222,6 +223,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     ),
                 ];
+            } else if (this.options.needEntryPoint) {
+                throw new Error(
+                    "No entry point found! You must define a function Main() or RunUserInterface()"
+                );  
             }
         } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
@@ -1045,10 +1050,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (!(reason instanceof Stmt.BlockEnd)) {
                     let message = "";
                     if (reason instanceof Error) {
-                        if (reason.message.startsWith("-->")) {
+                        if (reason.message.startsWith("Backtrace:")) {
                             message = `${reason.message}\n`;
                         } else {
-                            if (process.env.NODE_ENV === "development") {
+                            if (reason instanceof BrsError) {
+                                message = "Backtrace:\n";
+                            } else if (process.env.NODE_ENV === "development") {
                                 console.error(reason);
                             } else {
                                 message = `--> Engine Error: ${reason.message}\n`;

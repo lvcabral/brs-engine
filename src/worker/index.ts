@@ -137,7 +137,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  */
 
 export function executeFile(payload: any): RunResult {
-    const interpreter = new Interpreter();
+    const interpreter = new Interpreter({needEntryPoint: true});
     interpreter.onError(logError);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
@@ -456,22 +456,25 @@ function runSource(
     lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
-    source.forEach(function (code, path) {
+    for (let [path, code] of source) {
         const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
-            return;
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH"
+            break;
         }
         let preprocessorResults = preprocessor.preprocess(scanResults.tokens, interpreter.manifest);
         if (preprocessorResults.errors.length > 0) {
-            return;
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH"
+            break;
         }
         if (password.length > 0) {
             tokens = tokens.concat(preprocessorResults.processedTokens);
-            return;
+            break;
         }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
         if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
-            return;
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH"
+            break;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
             lib.set("v30/bslDefender.brs", bslDefender);
@@ -483,7 +486,7 @@ function runSource(
             lib.set("Roku_Ads.brs", Roku_Ads);
         }
         allStatements.push(...parseResults.statements);
-    });
+    };
     if (password.length > 0) {
         const iv = crypto.randomBytes(12).toString("base64");
         const cipher = crypto.createCipheriv(algorithm, password, iv);
@@ -500,8 +503,10 @@ function runSource(
         }
     });
     try {
-        endReason = "EXIT_USER_NAV";
-        interpreter.exec(allStatements, input);
+        if (endReason !== "EXIT_BRIGHTSCRIPT_CRASH") {
+            endReason = "EXIT_USER_NAV";
+            interpreter.exec(allStatements, input);   
+        }
     } catch (err: any) {
         postMessage(`error,${err.message}`);
         endReason = "EXIT_BRIGHTSCRIPT_CRASH";
@@ -578,10 +583,12 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
         if (token.kind === "Eof") {
             const parseResults = parser.parse(tokens);
             if (parseResults.errors.length > 0) {
-                return "EXIT_BRIGHTSCRIPT_CRASH";
+                endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+                return;
             }
             if (parseResults.statements.length === 0) {
-                return "EXIT_BRIGHTSCRIPT_CRASH";
+                endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+                return;
             }
             if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
                 lib.set("v30/bslDefender.brs", bslDefender);
