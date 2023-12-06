@@ -137,7 +137,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  */
 
 export function executeFile(payload: any): RunResult {
-    const interpreter = new Interpreter({needEntryPoint: true});
+    const interpreter = new Interpreter({ entryPoint: payload.entryPoint ?? true });
     interpreter.onError(logError);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
@@ -459,12 +459,12 @@ function runSource(
     for (let [path, code] of source) {
         const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH"
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
             break;
         }
         let preprocessorResults = preprocessor.preprocess(scanResults.tokens, interpreter.manifest);
         if (preprocessorResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH"
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
             break;
         }
         if (password.length > 0) {
@@ -473,7 +473,7 @@ function runSource(
         }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
         if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH"
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
             break;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
@@ -486,7 +486,7 @@ function runSource(
             lib.set("Roku_Ads.brs", Roku_Ads);
         }
         allStatements.push(...parseResults.statements);
-    };
+    }
     if (password.length > 0) {
         const iv = crypto.randomBytes(12).toString("base64");
         const cipher = crypto.createCipheriv(algorithm, password, iv);
@@ -505,7 +505,7 @@ function runSource(
     try {
         if (endReason !== "EXIT_BRIGHTSCRIPT_CRASH") {
             endReason = "EXIT_USER_NAV";
-            interpreter.exec(allStatements, input);   
+            interpreter.exec(allStatements, input);
         }
     } catch (err: any) {
         postMessage(`error,${err.message}`);

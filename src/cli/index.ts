@@ -12,7 +12,7 @@ import stripAnsi from "strip-ansi";
 import * as fs from "fs";
 import * as path from "path";
 import readline from "readline";
-import { deviceData, loadAppZip, updateAppZip } from "../api/package";
+import { deviceData, loadAppZip, updateAppZip, subscribePackage } from "../api/package";
 import { registerCallback, getInterpreter, executeLine, executeFile } from "../worker";
 import { description, version } from "../../package.json";
 
@@ -38,8 +38,13 @@ program
         if (program.colors.length === 1 && program.colors.match(/[0-3]/)?.length) {
             chalk.level = Number(program.colors) as ColorSupportLevel;
         } else {
-            console.error(`Invalid color level! Keeping the default: ${defaultLevel}`);
+            console.warn(
+                chalk.yellow(
+                    `Invalid color level! Valid levels are 0-3, keeping the default: ${defaultLevel}`
+                )
+            );
         }
+        subscribePackage("cli", packageCallback);
         registerCallback(messageCallback);
         if (brsFiles.length > 0) {
             try {
@@ -49,11 +54,11 @@ program
                 const fileExt = fileName.split(".").pop()?.toLowerCase();
                 zipFileName = "";
                 if (fileExt === "zip" || fileExt === "bpk") {
-                    console.log(`\n${description} CLI [Version ${version}]\n`);
+                    showAppTitle();
                     if (program.pack.length > 0 && fileExt === "zip") {
-                        console.log(`Packaging ${filePath}...\n`);
+                        console.log(chalk.blueBright(`Packaging ${filePath}...\n`));
                     } else {
-                        console.log(`Executing ${filePath}...\n`);
+                        console.log(chalk.blueBright(`Executing ${filePath}...\n`));
                     }
                     zipFileName = fileName;
                     loadAppZip(fileName, fs.readFileSync(filePath), runApp);
@@ -62,22 +67,14 @@ program
                 runBrsFiles(brsFiles);
             } catch (err: any) {
                 if (err.messages?.length) {
-                    err.messages.forEach((message: string) => console.error(message));
+                    err.messages.forEach((message: string) => console.error(chalk.red(message)));
                 } else {
-                    console.error(err.message);
+                    console.error(chalk.red(err.message));
                 }
                 process.exitCode = 1;
             }
         } else {
-            /// #if DEBUG
-            console.log(
-                `\n${description} CLI [version ${chalk.gray(version)}] - ${chalk.cyanBright(
-                    "debug mode"
-                )}\n`
-            );
-            /// #else
-            console.log(`\n${description} CLI [version ${chalk.gray(version)}]\n`);
-            /// #endif
+            showAppTitle();
             repl();
         }
     })
@@ -85,11 +82,24 @@ program
     .parse(process.argv);
 
 /**
+ * Display the CLI application title on the console
+ *
+ */
+function showAppTitle() {
+    const appTitle = `${description} CLI`;
+    const appVersion = `v${version}`;
+    /// #if DEBUG
+    console.log(`\n${appTitle} [${chalk.cyanBright(appVersion)} ${chalk.gray("dev")}]\n`);
+    /// #else
+    console.log(`\n${appTitle} [${chalk.cyanBright(appVersion)}]\n`);
+    /// #endif
+}
+
+/**
  * Execute the a list of Brs files passed via
  * the command line.
  *
  */
-
 function runBrsFiles(files: any[]) {
     // Run list of Brs files
     const paths: Object[] = [];
@@ -115,6 +125,7 @@ function runBrsFiles(files: any[]) {
         brs: source,
         texts: [],
         binaries: [],
+        entryPoint: false,
     };
     runApp(payload);
 }
@@ -151,10 +162,14 @@ function runApp(payload: any) {
             const buffer = updateAppZip(pkg.cipherText, pkg.iv);
             fs.writeFileSync(filePath, buffer);
             console.log(
-                `Package file created as ${filePath} with ${Math.round(buffer.length / 1024)} KB.\n`
+                chalk.blueBright(
+                    `Package file created as ${filePath} with ${Math.round(
+                        buffer.length / 1024
+                    )} KB.\n`
+                )
             );
         } catch (err: any) {
-            console.error(`Error generating the file ${filePath}: ${err.message}`);
+            console.error(chalk.red(`Error generating the file ${filePath}: ${err.message}`));
             process.exitCode = 1;
         }
     }
@@ -185,6 +200,20 @@ function repl() {
 }
 
 /**
+ * Callback function to receive the messages from the packager.
+ *
+ */
+function packageCallback(event: string, data: any) {
+    if (["error", "warning"].includes(event)) {
+        if (event === "error") {
+            console.error(chalk.red(data));
+        } else {
+            console.warn(chalk.yellow(data));
+        }
+    }
+}
+
+/**
  * Callback function to receive the messages from the Interpreter.
  *
  */
@@ -199,8 +228,13 @@ function messageCallback(message: any, _: any) {
             console.warn(chalk.yellow(message.slice(8).trimRight()));
         } else if (mType === "error") {
             console.error(chalk.red(message.slice(6).trimRight()));
+            process.exitCode = 1;
         } else {
-            console.info(chalk.green(message.slice(mType.length + 1).trimRight()));
+            const msg = message.slice(mType.length + 1).trimRight();
+            if (msg.endsWith("CRASH")) {
+                console.info(chalk.redBright(msg));
+                process.exitCode = 1;
+            }
         }
     }
 }

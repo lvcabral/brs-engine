@@ -75,9 +75,7 @@ export function loadAppZip(fileName: string, file: any, callback: Function) {
     try {
         currentZip = unzipSync(new Uint8Array(file));
     } catch (e: any) {
-        const msg = `[api] Error reading ${fileName}: ${e.message}`;
-        console.error(msg);
-        notifyAll("error", msg);
+        notifyAll("error", `[package] Error reading ${fileName}: ${e.message}`);
         currentApp.running = false;
         return;
     }
@@ -86,16 +84,12 @@ export function loadAppZip(fileName: string, file: any, callback: Function) {
         try {
             processManifest(strFromU8(manifest));
         } catch (e: any) {
-            const msg = `[api] Error uncompressing manifest: ${e.message}`;
-            console.error(msg);
             currentApp.running = false;
-            notifyAll("error", msg);
+            notifyAll("error", `[package] Error uncompressing manifest: ${e.message}`);
         }
     } else {
-        const msg = "[api] Invalid App Package: missing manifest.";
-        console.error(msg);
         currentApp.running = false;
-        notifyAll("error", msg);
+        notifyAll("error", "[package] Invalid App Package: missing manifest.");
         return;
     }
     binId = 0;
@@ -213,10 +207,10 @@ function parseManifest(contents: string) {
 
             let equals = line.indexOf("=");
             if (equals === -1) {
-                console.error(
-                    `[manifest:${
-                        index + 1
-                    }] No '=' detected.  Manifest attributes must be of the form 'key=value'.`
+                const pos = `${index + 1},0-${line.length}`;
+                notifyAll(
+                    "warning",
+                    `manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`
                 );
             }
             return [line.slice(0, equals), line.slice(equals + 1)];

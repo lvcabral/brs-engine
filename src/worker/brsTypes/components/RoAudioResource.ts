@@ -76,7 +76,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, volume: Int32, index: Int32) => {
             // TODO: Check behavior when index > maxSimulStreams
-            postMessage(`trigger,${this.audioName},${volume.toString()},${index.toString()}`);
+            postMessage(`audio,trigger,${this.audioName},${volume.toString()},${index.toString()}`);
             this.currentIndex = index.getValue();
             this.playing = true;
             return BrsInvalid.Instance;
@@ -108,7 +108,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            postMessage(`stop,${this.audioName}`);
+            postMessage(`audio,stop,${this.audioName}`);
             this.playing = false;
             return BrsInvalid.Instance;
         },

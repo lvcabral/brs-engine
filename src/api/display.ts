@@ -38,7 +38,8 @@ export function initDisplayModule(mode: string, perfStats = false) {
         // Performance Statistics
         showPerfStats(perfStats);
     } else {
-        console.warn(
+        notifyAll(
+            "warning",
             `[display] Your browser does not support OffscreenCanvas, so the engine will not work properly, ` +
                 `to know more visit https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas`
         );
@@ -271,7 +272,7 @@ export function showPerfStats(show: boolean): boolean {
             statsDiv.appendChild(statsCanvas.dom);
             showStats = true;
         } else {
-            console.warn("[display] Missing 'Stats' div, can't display Performance Stats!");
+            notifyAll("warning", "[display] Missing 'Stats' div, can't display Performance Stats!");
             showStats = false;
         }
     }

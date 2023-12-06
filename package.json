@@ -29,6 +29,8 @@
   },
   "scripts": {
     "build": "webpack --env development && webpack --config webpack.cli.config.js --env development",
+    "build:libs": "webpack --env development && webpack --config webpack.cli.config.js --env development",
+    "build:cli": "webpack --env development && webpack --config webpack.cli.config.js --env development",
     "release": "webpack --env production && webpack --config webpack.cli.config.js --env production",
     "start": "webpack serve --open",
     "stats": "webpack-bundle-analyzer ./app/lib/stats.json",

@@ -47,13 +47,13 @@ import Long from "long";
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
     root?: string;
-    needEntryPoint?: boolean
+    entryPoint?: boolean;
 }
 
 /** The default set of execution options.  */
 export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
-    needEntryPoint: false
+    entryPoint: false,
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -209,11 +209,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (maybeMain.signatures[0].signature.args.length === 0) {
                     args = [];
                 }
-                const title = this.manifest.get("title") || "No Title";
-                const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
-                const subName = mainVariable.name.text;
-                postMessage(`print,------ Running dev '${title}' ${subName} ------\r\n`);
-                postMessage(`beacon,${this.getNow()} ${beaconMsg} '${title}', id 'dev'\r\n`);
+                postMessage(`start,${mainVariable.name.text}`);
                 results = [
                     this.visitCall(
                         new Expr.Call(
@@ -223,10 +219,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     ),
                 ];
-            } else if (this.options.needEntryPoint) {
+            } else if (this.options.entryPoint) {
+                // Generate an exception when Entry Point is required
                 throw new Error(
                     "No entry point found! You must define a function Main() or RunUserInterface()"
-                );  
+                );
             }
         } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
@@ -1050,7 +1047,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (!(reason instanceof Stmt.BlockEnd)) {
                     let message = "";
                     if (reason instanceof Error) {
-                        if (reason.message.startsWith("Backtrace:")) {
+                        if (
+                            reason.message.startsWith("Backtrace:") ||
+                            reason.message.startsWith("-->")
+                        ) {
                             message = `${reason.message}\n`;
                         } else {
                             if (reason instanceof BrsError) {

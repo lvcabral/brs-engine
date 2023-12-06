@@ -67,6 +67,7 @@ import {
     seekSound,
     muteSound,
     isMuted,
+    subscribeSound,
 } from "./sound";
 import { version } from "../../package.json";
 
@@ -97,11 +98,11 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         Object.assign(deviceData, customDeviceInfo);
     }
     const storage: Storage = window.localStorage;
+    let initMsg = `${deviceData.friendlyName} - v${version}`;
     /// #if DEBUG
-    console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version} - debug mode`);
-    /// #else
-    console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
+    initMsg += " - dev";
     /// #endif
+    console.info(initMsg);
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
@@ -121,7 +122,8 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-        console.warn(
+        apiException(
+            "warning",
             `[api] Remote control emulation will not work as SharedArrayBuffer is not enabled, ` +
                 `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
         );
@@ -133,7 +135,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
     // Subscribe Events
-    subscribeDisplay("app", (event: string, data: any) => {
+    subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
             deviceData.displayMode = data;
             if (currentApp.running) {
@@ -142,18 +144,31 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
             notifyAll("display", data);
         } else if (["redraw", "resolution"].includes(event)) {
             notifyAll(event, data);
+        } else if (["error", "warning"].includes(event)) {
+            apiException(event, data);
         }
     });
-    subscribeControl("app", (event: string) => {
+    subscribeControl("api", (event: string, data: any) => {
         if (event === "home") {
             if (currentApp.running) {
                 terminate("EXIT_USER_NAV");
                 playWav(0);
             }
+        } else if (["error", "warning"].includes(event)) {
+            apiException(event, data);
         }
     });
-    subscribePackage("app", (event: string, data: any) => {
-        notifyAll(event, data);
+    subscribeSound("api", (event: string, data: any) => {
+        if (["error", "warning"].includes(event)) {
+            apiException(event, data);
+        }
+    });
+    subscribePackage("api", (event: string, data: any) => {
+        if (["error", "warning"].includes(event)) {
+            apiException(event, data);
+        } else {
+            notifyAll(event, data);
+        }
     });
 
     // Force library download during initialization
@@ -205,8 +220,10 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
 
 // Restore engine state and terminate Worker
 export function terminate(reason: string) {
-    deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
-    deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
+    if (currentApp.running) {
+        deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
+        deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
+    }
     if (currentApp.clearDisplay) {
         clearDisplay();
     }
@@ -411,51 +428,54 @@ function workerCallback(event: MessageEvent) {
         addPlaylist(event.data);
     } else if (event.data.audioPath && inBrowser) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
-    } else if (event.data === "play") {
-        playSound();
-    } else if (event.data === "stop") {
-        stopSound();
-    } else if (event.data === "pause") {
-        pauseSound();
-    } else if (event.data === "resume") {
-        resumeSound();
-    } else if (event.data.slice(0, 4) === "loop") {
-        const loop = event.data.split(",")[1];
-        if (loop) {
-            setLoop(loop === "true");
-        } else {
-            console.warn(`[api] Missing loop parameter: ${event.data}`);
+    } else if (typeof event.data !== "string") {
+        // All messages beyond this point must be csv string
+        apiException("warning", `[api] Invalid worker message: ${event.data}`);
+    } else if (event.data.slice(0, 6) === "audio,") {
+        const data = event.data.split(",");
+        if (data[1] === "play") {
+            playSound();
+        } else if (data[1] === "stop") {
+            if (data[2]) {
+                stopWav(data[2]);
+            } else {
+                stopSound();
+            }
+        } else if (data[1] === "pause") {
+            pauseSound();
+        } else if (data[1] === "resume") {
+            resumeSound();
+        } else if (data[1] === "loop") {
+            if (data[2]) {
+                setLoop(data[2] === "true");
+            } else {
+                apiException("warning", `[api] Missing loop parameter: ${event.data}`);
+            }
+        } else if (data[1] === "next") {
+            const newIndex = data[2];
+            if (newIndex && !isNaN(parseInt(newIndex))) {
+                setNext(parseInt(newIndex));
+            } else {
+                apiException("warning", `[api] Invalid next index: ${event.data}`);
+            }
+        } else if (data[1] === "seek") {
+            const position = data[2];
+            if (position && !isNaN(parseInt(position))) {
+                seekSound(parseInt(position));
+            } else {
+                apiException("warning", `[api] Invalid seek position: ${event.data}`);
+            }
+        } else if (data[1] === "trigger") {
+            if (data.length >= 5) {
+                triggerWav(data[2], parseInt(data[3]), parseInt(data[4]));
+            } else {
+                apiException("warning", `[api] Missing Trigger parameters: ${event.data}`);
+            }
         }
-    } else if (event.data.slice(0, 4) === "next") {
-        const newIndex = event.data.split(",")[1];
-        if (newIndex && !isNaN(parseInt(newIndex))) {
-            setNext(parseInt(newIndex));
-        } else {
-            console.warn(`[api] Invalid next index: ${event.data}`);
-        }
-    } else if (event.data.slice(0, 4) === "seek") {
-        const position = event.data.split(",")[1];
-        if (position && !isNaN(parseInt(position))) {
-            seekSound(parseInt(position));
-        } else {
-            console.warn(`[api] Invalid seek position: ${event.data}`);
-        }
-    } else if (event.data.slice(0, 7) === "trigger") {
-        const trigger: string[] = event.data.split(",");
-        if (trigger.length >= 4) {
-            triggerWav(trigger[1], parseInt(trigger[2]), parseInt(trigger[3]));
-        } else {
-            console.warn(`[api] Missing Trigger parameters: ${event.data}`);
-        }
-    } else if (event.data.slice(0, 5) === "stop,") {
-        stopWav(event.data.split(",")[1]);
     } else if (event.data.slice(0, 6) === "print,") {
         deviceDebug(event.data);
     } else if (event.data.slice(0, 7) === "beacon,") {
         deviceDebug(event.data);
-    } else if (event.data.slice(0, 4) === "log,") {
-        // for backward compatibility with v0.9.1
-        deviceDebug(`${event.data}\r\n`);
     } else if (event.data.slice(0, 8) === "warning,") {
         deviceDebug(`${event.data}\r\n`);
     } else if (event.data.slice(0, 6) === "error,") {
@@ -469,6 +489,12 @@ function workerCallback(event: MessageEvent) {
             resumeSound(false);
         }
         notifyAll("debug", { level: level });
+    } else if (event.data.slice(0, 6) === "start,") {
+        const title = currentApp.title;
+        const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
+        const subName = event.data.split(",")[1];
+        deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
+        deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id 'dev'\r\n`);
     } else if (event.data.slice(0, 4) === "end,") {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {
@@ -493,5 +519,15 @@ function deviceDebug(data: string) {
         } else {
             console.log(content);
         }
+    }
+}
+
+// API Exceptions Handler
+function apiException(level: string, message: string) {
+    if (level === "error") {
+        console.error(message);
+        notifyAll("error", message);
+    } else {
+        console.warn(message);
     }
 }
