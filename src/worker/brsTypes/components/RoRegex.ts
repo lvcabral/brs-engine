@@ -48,7 +48,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
 
         for (const flag of inputFlags) {
             if (flag === "x") {
-                console.warn("'x' flag is not implemented yet, ignoring flag.");
+                postMessage("warning,'x' flag is not implemented yet, ignoring flag.");
             } else if (!this.supportedFlags.includes(flag)) {
                 throw new Error(`${flag} is not supported.`);
             } else {

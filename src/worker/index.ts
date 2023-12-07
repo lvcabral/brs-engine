@@ -48,7 +48,7 @@ if (typeof onmessage !== "undefined") {
             // Setup Control Shared Array
             shared.set("buffer", new Int32Array(event.data));
         } else {
-            console.warn("Invalid message received!", event.data);
+            postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
     };
 }
@@ -118,13 +118,13 @@ export function executeLine(contents: string, interpreter: Interpreter) {
         if (results) {
             results.map((result) => {
                 if (result !== BrsTypes.BrsInvalid.Instance) {
-                    console.log(result.toString());
+                    postMessage(`print,${result.toString()}`);
                 }
             });
         }
-    } catch (e: any) {
-        if (!(e instanceof BrsError.BrsError)) {
-            console.error("Interpreter execution error: ", e.message);
+    } catch (err: any) {
+        if (!(err instanceof BrsError.BrsError)) {
+            postMessage(`error,Interpreter execution error: ${err.message}`);
         }
     }
 }
@@ -141,14 +141,11 @@ export function executeFile(payload: any): RunResult {
     interpreter.onError(logError);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
-    // Manifest
+    // Process Payload Content
     setupManifest(payload.manifest, interpreter);
-    // Registry
     setupRegistry(payload.device.registry, interpreter);
-    // DeviceInfo, Libraries and Fonts
     setupDeviceData(payload.device, interpreter);
     setupDeviceFonts(payload.device, interpreter);
-    // Package Files
     setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
     // Run App
     const password = payload.password ?? "";
@@ -469,7 +466,7 @@ function runSource(
         }
         if (password.length > 0) {
             tokens = tokens.concat(preprocessorResults.processedTokens);
-            break;
+            continue;
         }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
         if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
@@ -543,8 +540,8 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
             endReason = "EXIT_MISSING_PASSWORD";
             return;
         }
-    } catch (e: any) {
-        console.error(e.message);
+    } catch (err: any) {
+        postMessage(`error,Error unpacking the app: ${err.message}`);
         endReason = "EXIT_UNPACK_ERROR";
         return;
     }

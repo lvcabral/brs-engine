@@ -126,7 +126,7 @@ function debugHandleExpr(interpreter: Interpreter) {
             } else if (exprStmt instanceof ForEach) {
                 interpreter.visitForEach(exprStmt);
             } else {
-                console.log(exprStmt);
+                postMessage(`print,${exprStmt}`);
                 postMessage(`print,Debug command/expression not supported!\r\n`);
             }
         } catch (err: any) {

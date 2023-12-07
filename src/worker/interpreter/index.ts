@@ -1056,6 +1056,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             if (reason instanceof BrsError) {
                                 message = "Backtrace:\n";
                             } else if (process.env.NODE_ENV === "development") {
+                                // Expose the Javascript error stack trace on `development` mode
                                 console.error(reason);
                             } else {
                                 message = `--> Engine Error: ${reason.message}\n`;
