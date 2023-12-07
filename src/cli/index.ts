@@ -231,7 +231,7 @@ function messageCallback(message: any, _: any) {
             process.exitCode = 1;
         } else {
             const msg = message.slice(mType.length + 1).trimRight();
-            if (msg.endsWith("CRASH")) {
+            if (msg !== "EXIT_USER_NAV") {
                 console.info(chalk.redBright(msg));
                 process.exitCode = 1;
             }
