@@ -103,7 +103,6 @@ fileSelector.onchange = function () {
                     execSource: "open_app_button",
                     password: password,
                 });
-                channelIcons("hidden");
             }
         };
         reader.onerror = function (evt) {
