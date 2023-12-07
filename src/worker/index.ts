@@ -469,7 +469,7 @@ function runSource(
             continue;
         }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
-        if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
+        if (parseResults.errors.length > 0) {
             endReason = "EXIT_BRIGHTSCRIPT_CRASH";
             break;
         }
