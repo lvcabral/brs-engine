@@ -229,7 +229,7 @@ function messageCallback(message: any, _: any) {
         } else if (mType === "error") {
             console.error(chalk.red(message.slice(6).trimRight()));
             process.exitCode = 1;
-        } else {
+        } else if (mType === "end") {
             const msg = message.slice(mType.length + 1).trimRight();
             if (msg !== "EXIT_USER_NAV") {
                 console.info(chalk.redBright(msg));
