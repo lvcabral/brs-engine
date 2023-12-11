@@ -52,7 +52,7 @@ This repository has has a sample web application you can build and install ([lea
 
 ### Desktop Application
 
-You can also run the simulator as a multi-platform **desktop application** (Windows, Linux & macOS) that uses the package published by this project. The application, introduces several aditional Roku device features, such as the **ECP** (External Control Protocol) and **Remote Console** servers to allow integration with development tools like the Terminal or [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript). It also allows you to control the device configuration like screen resolution, keyboard control customization, localization, among others. You cand download it and find more information in the links below:
+The simulator is also available as a multi-platform **desktop application** (Windows, Linux & macOS) that uses the package published by this project. The application, introduces several aditional Roku features, such as the **ECP** (External Control Protocol) and **Remote Console** servers to allow integration with dev tools like the Terminal or [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript). It also allows you to control the device configurations such as screen resolution, keyboard control customization, localization, among others. You can download the installers and find more information in the links below:
 
 - Source code and documentation: [app repository](https://github.com/lvcabral/brs-emu-app).
 - Installation packages: [release page](https://github.com/lvcabral/brs-emu-app/releases).
