@@ -1,5 +1,19 @@
 # How add the BrightScript Engine to a Web Application
 
+The **brs-engine** project is published as a `node` package, so you can use `npm`:
+
+```shell
+$ npm install brs-engine
+```
+
+or `yarn` if that's your preference:
+
+```shell
+$ yarn add brs-engine
+```
+
+## Sample Application
+
 This repository provides a sample web application for testing the engine, located under the `app/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
 
 To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](engine-api.md).
