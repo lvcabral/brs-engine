@@ -66,28 +66,7 @@ There are many ways in which you can use and/or participate in the project, read
 - [BrightScript Engine API reference](docs/emulator-api.md)
 - [How to contribute to this Project](docs/contributing.md)
 
-## Notes for BrightScript Developers
-
-You can see the debug messages from `print` statements in your code using the _browser or desktop application console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your app `.zip` package or `.brs` file. Exceptions from the engine library will be shown there too.
-
-If you added a break point (`stop`) in your code, you can also debug using the _browser console_, just send the commands using: `brs.debug("help")`, but for a better debugging experience, is recommended to use the desktop application integrated with:
-
-- [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript)
-- Telnet connected on port 8085.
-
-The Roku `registry` data is stored on the browser **Local Storage** and you can inspect it also using the Developer Tools (Application tab).
-
-If your code does show an error in some scenario not listed on the [limitations documentation](docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-engine/issues).
-
-## Games and Demos
-
-You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `app/index.html`. In addition to those, you can load your own code, either as a single **.brs** file or a channel **.zip package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
-
-- [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.18.3778/Prince-of-Persia-Roku-018.zip)
-- [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.18.707/Lode-Runner-Roku-018.zip)
-- [Retaliate](https://github.com/lvcabral/retaliate-roku) game by Romans I XVI - Download [zip file](https://github.com/lvcabral/retaliate-roku/releases/download/v1.7.0-emu/retaliate-brs-emu.zip)
-
-## Author Links
+## Developer Links
 
 - My website is [https://lvcabral.com](https://lvcabral.com)
 - My threads is [@lvcabral](https://www.threads.net/@lvcabral)
