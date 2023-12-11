@@ -1,6 +1,6 @@
-# Roku BrightScript Simulation Engine
+# BrightScript Simulation Engine
 
-Implements an intepreter for the Roku BrightScript language that runs games and apps on modern browser platforms, including Electron applications.
+An intepreter for the Roku BrightScript language that runs games and apps on modern browser platforms.
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-emu)
 [![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
