@@ -58,7 +58,7 @@ You can also run the engine as a multi-platform **desktop application** (Windows
 
 ### Documentation
 
-There are many ways you can use and/or participate in the project, read documents below to learn more:
+There are many ways you can use and/or participate in the project, read the documents below to learn more:
 
 - [How to build from source](docs/build-from-source.md)
 - [How to run as Command Line Interface](docs/run-as-cli.md)
