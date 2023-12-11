@@ -1,4 +1,4 @@
-# BRS-ENGINE: Roku BrightScript Simulation Engine
+# Roku BrightScript Simulation Engine
 
 Implements an intepreter for the Roku BrightScript language that runs games and apps on modern browser platforms, including Electron applications.
 
@@ -7,6 +7,7 @@ Implements an intepreter for the Roku BrightScript language that runs games and 
 [![Build](https://github.com/lvcabral/brs-emu/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-emu/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
+[![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
 
 ## The Project
 
@@ -56,7 +57,7 @@ You can also run the engine as a multi-platform **desktop application** (Windows
 - Source code and documentation: [app repository](https://github.com/lvcabral/brs-emu-app).
 - Installation packages: [release page](https://github.com/lvcabral/brs-emu-app/releases).
 
-### Documentation
+## Project Documentation
 
 There are many ways you can use and/or participate in the project, read the documents below to learn more:
 
