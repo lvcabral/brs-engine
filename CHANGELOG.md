@@ -95,7 +95,7 @@ This release brings the integration of improvements and fixes from the `brs` int
 
 <a name="v0.8.1-emu"></a>
 
-# [v0.8.1 - Fixes and Security Patches)](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.1-emu) - 09 Jun 2021
+# [v0.8.1 - Fixes and Security Patches](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.1-emu) - 09 Jun 2021
 
 This release brings bug fixes, support for new Chrome security policies and the desktop application has upgraded dependencies including Electron's bump to v9.
 
@@ -110,7 +110,7 @@ This release brings bug fixes, support for new Chrome security policies and the 
 
 <a name="v0.8.0-emu"></a>
 
-# [v0.8.0 - Localization Support)](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.0-emu) - 11 Mar 2020
+# [v0.8.0 - Localization Support](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.0-emu) - 11 Mar 2020
 
 This release brings full support for channel localization. The desktop application has a new menu with the locales with the same options available on Roku devices.
 
@@ -134,7 +134,7 @@ This release brings full support for channel localization. The desktop applicati
 
 <a name="v0.7.2-emu"></a>
 
-# [v0.7.2 - First Beta Release)](https://github.com/lvcabral/brs-emu/releases/tag/v0.7.2-emu) - 17 Nov 2019
+# [v0.7.2 - First Beta Release](https://github.com/lvcabral/brs-emu/releases/tag/v0.7.2-emu) - 17 Nov 2019
 
 * (brs) Library now supports `roUrlTransfer` and `roUrlEvent`
 * (brs) Added support to **bmp** images, and better file type detection
@@ -189,7 +189,7 @@ This version brings the first release of the desktop application and several fix
 * (web) Reduced the app html to be simple, adding links to documentation on the repository
 * (web) Detect and inform user about unsupported browser [#40](https://github.com/lvcabral/brs-emu/issues/40)
 * (doc) Reorganized repository folders and documentation for v0.5.0 [#43](https://github.com/lvcabral/brs-emu/issues/43)
-* Merged BRS v0.15.0 
+* Merged BRS v0.15.0
   * fix(types): Return `true` for invalid values on `RoAssociativeArray#doesExist` ([#323](https://github.com/sjbarag/brs/issues/323))
   * fix(types,interp): Automatically convert between Int and Float ([#291](https://github.com/sjbarag/brs/issues/291))
   * feat(extension): Add _brs_.runInScope ([#326](https://github.com/sjbarag/brs/issues/326))
@@ -229,7 +229,7 @@ This release has the following changes:
 This releases adds a few font related features as follows:
 
 * Updated website and added new demo channels
-* Added parameter rgba to `roScreen.DrawObject()` (only alpha opacity supported) [#27](https://github.com/lvcabral/brs-emu/issues/27)
+* Added parameter `rgba`` to `roScreen.DrawObject()` (only alpha opacity supported) [#27](https://github.com/lvcabral/brs-emu/issues/27)
 * Fixed `for loop` to correctly handle `steps` sjbarag#315
 * Fixed issue that `roCompositor` was not clearing the canvas properly
 * Implemented channel close detection
