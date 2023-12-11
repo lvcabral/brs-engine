@@ -41,7 +41,7 @@ This release was a result of months of refactoring work and performance improvem
 * [sonar] Code smell and complexity fixes [#153](https://github.com/lvcabral/brs-emu/issues/153)
 * Merged [**brs**](https://github.com/sjbarag/brs) v0.45.0 below cherry picked commits:
   * feat(stdlib): Add lookupCI for assocarray ([#639](https://github.com/sjbarag/brs/issues/639)) resolves [#629](https://github.com/sjbarag/brs/issues/629) 
-  * fix(interp): allow functions to be typed as objects ([#659](https://github.com/lvcabral/sjbarag/brs/659))
+  * fix(interp): allow functions to be typed as objects ([#659](https://github.com/sjbarag/brs/659))
 
 **Full Changelog**: https://github.com/lvcabral/brs-emu/compare/v0.9.0-emu...v0.10.22
 
