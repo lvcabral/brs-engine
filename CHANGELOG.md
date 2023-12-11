@@ -2,8 +2,6 @@
 
 # [v0.10.22 - New API and Boosted Performance](https://github.com/lvcabral/brs-emu/releases/tag/v0.10.22) - 10 Sep 2023
 
-## Release Notes
-
 This release was a result of months of refactoring work and performance improvements. 
 
 * Implemented new API to simplify usage of the `brs-emu` package, see [new documentation](https://github.com/lvcabral/brs-emu/blob/master/docs/integrating.md) [@lvcabral](https://github.com/lvcabral) 
@@ -42,8 +40,8 @@ This release was a result of months of refactoring work and performance improvem
 * Upgraded to TypeScript 4, Webpack 5 and several other dependencies
 * [sonar] Code smell and complexity fixes [#153](https://github.com/lvcabral/brs-emu/issues/153)
 * Merged [**brs**](https://github.com/sjbarag/brs) v0.45.0 below cherry picked commits:
-  * feat(stdlib): Add lookupCI for assocarray ([#639](https://github.com/lvcabral/brs-emu/issues/639)) resolves [#629](https://github.com/lvcabral/brs-emu/issues/629) 
-  * fix(interp): allow functions to be typed as objects ([#659](https://github.com/lvcabral/brs-emu/issues/659))
+  * feat(stdlib): Add lookupCI for assocarray ([#639](https://github.com/sjbarag/brs/issues/639)) resolves [#629](https://github.com/sjbarag/brs/issues/629) 
+  * fix(interp): allow functions to be typed as objects ([#659](https://github.com/lvcabral/sjbarag/brs/659))
 
 **Full Changelog**: https://github.com/lvcabral/brs-emu/compare/v0.9.0-emu...v0.10.22
 
@@ -52,8 +50,6 @@ This release was a result of months of refactoring work and performance improvem
 <a name="v0.9.0-emu"></a>
 
 # [v0.9.0 - Improvements on ECP and BrightScript support (v0.9.0-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.9.0-emu) - 28 Jun 2021
-
-## Release Notes
 
 This release brings the integration of improvements and fixes from the `brs` interpreter up to their **v0.43**. Also several improvements
 
@@ -101,8 +97,6 @@ This release brings the integration of improvements and fixes from the `brs` int
 
 # [v0.8.1 - Fixes and Security Patches (v0.8.1-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.1-emu) - 09 Jun 2021
 
-## Release Notes
-
 This release brings bug fixes, support for new Chrome security policies and the desktop application has upgraded dependencies including Electron's bump to v9.
 
 * (brs)Added new message "getVersion" to allow request library version to the WebWorker
@@ -117,8 +111,6 @@ This release brings bug fixes, support for new Chrome security policies and the 
 <a name="v0.8.0-emu"></a>
 
 # [v0.8 - Localization Support (v0.8.0-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.0-emu) - 11 Mar 2020
-
-## Release Notes
 
 This release brings full support for channel localization. The desktop application has a new menu with the locales with the same options available on Roku devices.
 
@@ -143,8 +135,6 @@ This release brings full support for channel localization. The desktop applicati
 <a name="v0.7.2-emu"></a>
 
 # [v0.7 - First Beta Release (v0.7.2-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.7.2-emu) - 17 Nov 2019
-
-## Release Notes
 
 * (brs) Library now supports `roUrlTransfer` and `roUrlEvent`
 * (brs) Added support to **bmp** images, and better file type detection
@@ -173,8 +163,6 @@ This release brings full support for channel localization. The desktop applicati
 
 # [v0.6 - Audio Playback and new Display Modes (v0.6.0-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.6.0-emu) - 24 Oct 2019
 
-## Release Notes
-
 * (app,web) Support for audio playback from `roAudioResource` and `roAudioPlayer`
 * (app,web) Support for **SD** and **FHD** display modes
 * (app) Added TV over-scan emulation options: disabled, only guide lines, enabled
@@ -189,8 +177,6 @@ This release brings full support for channel localization. The desktop applicati
 <a name="v0.5.0-emu"></a>
 
 # [v0.5 - Desktop Applications and Library Fixes (v0.5.0-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.5.0-emu) - 05 Oct 2019
-
-## Release Notes
 
 This version brings the first release of the desktop application and several fixes and improvements:
 
@@ -214,8 +200,6 @@ This version brings the first release of the desktop application and several fix
 <a name="v0.4.0-emu"></a>
 
 # [v0.4 - Support for rgba on Draw Object methods (v0.4.0-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.4.0-emu) - 25 Sep 2019
-
-## Release Notes
 
 This release has the following changes:
 
@@ -242,8 +226,6 @@ This release has the following changes:
 
 # [v0.3 - Several fixes and improvements (v0.3.0-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.3.0-emu) - 16 Sep 2019
 
-## Release Notes
-
 This releases adds a few font related features as follows:
 
 * Updated website and added new demo channels
@@ -269,8 +251,6 @@ This releases adds a few font related features as follows:
 <a name="v0.2.0-emu"></a>
 
 # [v0.2 - Custom Fonts and Metrics (v0.2.0-emu)](https://github.com/lvcabral/brs-emu/releases/tag/v0.2.0-emu) - 09 Sep 2019
-
-## Release Notes
 
 This releases adds a few font related features as follows:
 
