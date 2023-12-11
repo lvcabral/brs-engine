@@ -49,7 +49,7 @@ This release was a result of months of refactoring work and performance improvem
 
 <a name="v0.9.0-emu"></a>
 
-# [v0.9.0 - Improvements on ECP and BrightScript support](https://github.com/lvcabral/brs-emu/releases/tag/v0.9.0-emu) - 28 Jun 2021
+# [v0.9.0 - Improved ECP and BrightScript support](https://github.com/lvcabral/brs-emu/releases/tag/v0.9.0-emu) - 28 Jun 2021
 
 This release brings the integration of improvements and fixes from the `brs` interpreter up to their **v0.43**. Also several improvements
 
