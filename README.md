@@ -58,12 +58,13 @@ You can also run the engine as a multi-platform **desktop application** (Windows
 
 ### Documentation
 
-There are many ways in which you can use and/or participate in the project, read documents below to know the details:
+There are many ways to use and/or participate in the project, read documents below to learn more:
 
 - [How to build from source](docs/build-from-source.md)
 - [How to run as Command Line Interface](docs/run-as-cli.md)
 - [How add the Engine to a Web Application](docs/integrating.md)
 - [BrightScript Engine API reference](docs/emulator-api.md)
+- [BrightScript Engine Limitations](docs/limitations.md)
 - [How to contribute to this Project](docs/contributing.md)
 
 ## Developer Links
