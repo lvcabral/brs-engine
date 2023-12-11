@@ -30,10 +30,10 @@ This engine is developed in [TypeScript](https://www.typescriptlang.org/) and bu
 
 The worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
 
-1. [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome/), [Brave](https://brave.com/download/), [Opera](https://www.opera.com/) and [Edge](https://www.microsoft.com/en-us/edge), version 79 or newer.
-1. [Electron](https://electronjs.org/), version 6.0 or newer.
+1. [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome), [Brave](https://brave.com), [Opera](https://www.opera.com) and [Edge](https://www.microsoft.com/en-us/edge), version 79 or newer.
+1. [Electron](https://electronjs.org), version 6.0 or newer.
 1. [Firefox](https://firefox.com), version 105 or newer.
-1. [Safari](https://www.apple.com/safari/), version 16.4 or newer.
+1. [Safari](https://www.apple.com/safari), version 16.4 or newer.
 
 **Note:** The **BrightScript Engine** is a full client-side library, nothing needs to be sent or processed in the server side.
 
