@@ -21,11 +21,11 @@ This project was created as a fork from [**brs**](https://github.com/sjbarag/brs
 
 ## Technology and Compatibility
 
-This engine is bundled as a collection of **[Webpack](https://webpack.js.org/)** Javascript libraries:
+This engine is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries:
 
-- `app/lib/brs.api.js`: Is the **[Engine API](docs/engine-api.md)** to be used by the client application.
+- `app/lib/brs.api.js`: Is the **[Engine API](docs/engine-api.md)** to be used by the client application to run the Simulator.
 - `app/lib/brs.worker.js`: Is the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter in a background thread on the browser platform.
-- `bin/brs.cli.js`: Is the **[CLI](https://en.wikipedia.org/wiki/Command-line_interface)** application that can be executed from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) or running and packaging apps.
+- `bin/brs.cli.js`: Is the **[CLI](https://en.wikipedia.org/wiki/Command-line_interface)** application that can be executed from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), running `brs` files or packaging encrypted apps.
 
 The worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
 
