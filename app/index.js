@@ -187,3 +187,18 @@ function parseVersionString(str) {
         patch: parseInt(vArray[2]) || 0,
     };
 }
+
+function toggleDiv(divId) {
+    const objDiv = document.getElementById(divId);
+    const butExp = document.getElementById("expand");
+    const butCol = document.getElementById("collapse");
+    if (objDiv.style.display == "") {
+        objDiv.style.display = "none";
+        butExp.style.display = "";
+        butCol.style.display = "none";
+    } else {
+        objDiv.style.display = "";
+        butExp.style.display = "none";
+        butCol.style.display = "";
+    }
+}
