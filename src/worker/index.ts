@@ -137,7 +137,10 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  */
 
 export function executeFile(payload: any): RunResult {
-    const interpreter = new Interpreter({ entryPoint: payload.entryPoint ?? true });
+    const interpreter = new Interpreter({
+        entryPoint: payload.entryPoint ?? true,
+        stopOnCrash: payload.stopOnCrash ?? false,
+    });
     interpreter.onError(logError);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);

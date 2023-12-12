@@ -126,6 +126,7 @@ function runBrsFiles(files: any[]) {
         texts: [],
         binaries: [],
         entryPoint: false,
+        stopOnCrash: false,
     };
     runApp(payload);
 }

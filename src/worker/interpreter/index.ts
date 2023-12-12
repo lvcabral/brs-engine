@@ -48,12 +48,14 @@ import Long from "long";
 export interface ExecutionOptions {
     root?: string;
     entryPoint?: boolean;
+    stopOnCrash?: boolean;
 }
 
 /** The default set of execution options.  */
 export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
     entryPoint: false,
+    stopOnCrash: false,
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -156,6 +158,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = newEnv;
             return func(this);
         } catch (err: any) {
+            if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
+                // Keep environment for Micro Debugger in case of a crash
+                originalEnvironment = this._environment;
+            }
             throw err;
         } finally {
             this._environment = originalEnvironment;
@@ -1014,26 +1020,29 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             sign
                         );
                     }
-                    return callee.call(this, ...args);
+                    try {
+                        return callee.call(this, ...args);
+                    } catch (err: any) {
+                        if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
+                            // Enable Micro Debugger on app crash
+                            runDebugger(this, this._prevLoc, this._prevLoc, err.message);
+                            this.options.stopOnCrash = false;
+                        }
+                        throw err;
+                    }
                 });
-            } catch (reason) {
+            } catch (reason: any) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
-                    let message = "";
-                    if (reason instanceof Error) {
-                        if (
-                            reason.message.startsWith("Backtrace:") ||
-                            reason.message.startsWith("-->")
-                        ) {
-                            message = `${reason.message}\n`;
+                    let message = `${reason.message}\n`;
+                    if (!message.startsWith("Backtrace:") && !message.startsWith("-->")) {
+                        if (reason instanceof BrsError) {
+                            message = "Backtrace:\n";
+                        } else if (process.env.NODE_ENV === "development") {
+                            message = "";
+                            // Expose the Javascript error stack trace on `development` mode
+                            console.error(reason);
                         } else {
-                            if (reason instanceof BrsError) {
-                                message = "Backtrace:\n";
-                            } else if (process.env.NODE_ENV === "development") {
-                                // Expose the Javascript error stack trace on `development` mode
-                                console.error(reason);
-                            } else {
-                                message = `--> Engine Error: ${reason.message}\n`;
-                            }
+                            message = `--> Engine Error: ${reason.message}\n`;
                         }
                     }
                     if (expression.location.start.line > 0) {

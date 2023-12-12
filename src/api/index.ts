@@ -12,7 +12,6 @@ import {
     dataBufferIndex,
     dataBufferSize,
     getNow,
-    getApiPath,
     getWorkerLibPath,
     isElectron,
     inBrowser,
@@ -72,7 +71,6 @@ import {
 import { version } from "../../package.json";
 
 // Interpreter Library
-const brsApiLib = getApiPath().split("/").pop();
 const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
 
@@ -89,7 +87,7 @@ let sharedArray: Int32Array;
 // API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
     if (customDeviceInfo) {
-        const invalidKeys = ["registry", "models", "audioCodecs", "fonts"];
+        const invalidKeys = ["registry", "models", "audioCodecs", "fonts", "password"];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {
                 delete customDeviceInfo[key];
@@ -204,6 +202,9 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     }
     if (typeof options.password === "string") {
         currentApp.password = options.password;
+    }
+    if (typeof options.debugOnCrash === "boolean") {
+        currentApp.debugOnCrash = options.debugOnCrash;
     }
     if (typeof brsWorker !== "undefined") {
         resetWorker();

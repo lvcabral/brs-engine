@@ -33,9 +33,13 @@ export enum debugCommand {
 const dataBufferIndex = 32;
 let stepMode = false;
 
-export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc: Location) {
+export function runDebugger(
+    interpreter: Interpreter,
+    currLoc: Location,
+    lastLoc: Location,
+    error?: string
+) {
     // TODO:
-    // - Implement stop on error and brkd command
     // - Implement step over and step out
     // - Implement classes, bsc(s) and stats
     const env = interpreter.environment;
@@ -63,7 +67,11 @@ export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
         debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
 
-        debugMsg += `STOP (runtime error &hf7) in ${formatLocation(lastLoc)}\r\n`;
+        if (error) {
+            debugMsg += `${error} (runtime error &hf3) in ${formatLocation(lastLoc)}\r\n`;
+        } else {
+            debugMsg += `STOP (runtime error &hf7) in ${formatLocation(lastLoc)}\r\n`;
+        }
         debugMsg += "Backtrace: \r\n";
         postMessage(`print,${debugMsg}`);
         debugBackTrace(backTrace, currLoc);
@@ -86,11 +94,19 @@ export function runDebugger(interpreter: Interpreter, currLoc: Location, lastLoc
         }
         switch (cmd) {
             case debugCommand.CONT:
+                if (error) {
+                    postMessage("print,Can't continue");
+                    continue;
+                }
                 stepMode = false;
                 interpreter.debugMode = false;
                 postMessage("debug,continue");
                 return true;
             case debugCommand.STEP:
+                if (error) {
+                    postMessage("print,Can't continue");
+                    continue;
+                }
                 stepMode = true;
                 interpreter.debugMode = true;
                 return true;

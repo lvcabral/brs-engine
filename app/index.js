@@ -102,6 +102,7 @@ fileSelector.onchange = function () {
                     muteSound: false,
                     execSource: "open_app_button",
                     password: password,
+                    debugOnCrash: true,
                 });
             }
         };

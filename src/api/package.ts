@@ -264,6 +264,7 @@ export function createPayload(timeOut?: number) {
         texts: txts,
         binaries: bins,
         password: currentApp.password,
+        stopOnCrash: currentApp.debugOnCrash,
     };
 }
 
@@ -282,6 +283,7 @@ function createCurrentApp() {
         execSource: "auto-run-dev",
         password: "",
         clearDisplay: true,
+        debugOnCrash: false,
         running: false,
     };
 }
