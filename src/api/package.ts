@@ -241,7 +241,7 @@ export function updateAppZip(source: Uint8Array, iv: string) {
 }
 
 // Create App Payload
-export function createPayload(timeOut?: number) {
+export function createPayload(timeOut?: number, entryPoint?: boolean) {
     if (!timeOut) {
         timeOut = splashTimeout;
     }
@@ -264,6 +264,7 @@ export function createPayload(timeOut?: number) {
         texts: txts,
         binaries: bins,
         password: currentApp.password,
+        entryPoint: entryPoint,
         stopOnCrash: currentApp.debugOnCrash,
     };
 }

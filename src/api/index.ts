@@ -384,7 +384,7 @@ function resetArray() {
 // Open source file
 function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
-    reader.onload = function (progressEvent) {
+    reader.onload = function (_) {
         manifestMap.clear();
         currentApp.id = "brs";
         currentApp.title = fileName;
@@ -395,7 +395,7 @@ function loadSourceCode(fileName: string, fileData: any) {
         paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
         clearDisplay();
         notifyAll("loaded", currentApp);
-        runApp(createPayload(0));
+        runApp(createPayload(1, false));
     };
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
