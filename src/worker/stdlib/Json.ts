@@ -125,11 +125,11 @@ function jsonOf(
     throw new Error(`jsonOf not implemented for: ${x}`);
 }
 
-function logBrsErr(functionName: string, err: Error): void {
+function logBrsErr(functionName: string, err: Error, location: string): void {
     if (process.env.NODE_ENV === "test") {
         return;
     }
-    postMessage(`warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${err.message}`);
+    postMessage(`warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${err.message}: ${location}`);
 }
 
 export const FormatJson = new Callable("FormatJson", {
@@ -146,7 +146,7 @@ export const FormatJson = new Callable("FormatJson", {
         } catch (err: any) {
             // example RBI error:
             // "BRIGHTSCRIPT: ERROR: FormatJSON: Value type not supported: roFunction: pkg:/source/main.brs(14)"
-            logBrsErr("FormatJSON", err);
+            logBrsErr("FormatJSON", err, interpreter.formatLocation());
             return new BrsString("");
         }
     },
@@ -157,7 +157,7 @@ export const ParseJson = new Callable("ParseJson", {
         returns: ValueKind.Dynamic,
         args: [new StdlibArgument("jsonString", ValueKind.String)],
     },
-    impl: (_: Interpreter, jsonString: BrsString) => {
+    impl: (interpreter: Interpreter, jsonString: BrsString) => {
         try {
             let s: string = jsonString.toString().trim();
 
@@ -169,7 +169,7 @@ export const ParseJson = new Callable("ParseJson", {
         } catch (err: any) {
             // example RBI error:
             // "BRIGHTSCRIPT: ERROR: ParseJSON: Unknown identifier 'x': pkg:/source/main.brs(25)"
-            logBrsErr("ParseJSON", err);
+            logBrsErr("ParseJSON", err, interpreter.formatLocation());
             return BrsInvalid.Instance;
         }
     },

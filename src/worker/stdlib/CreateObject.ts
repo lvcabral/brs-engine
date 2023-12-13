@@ -19,11 +19,11 @@ export const CreateObject = new Callable("CreateObject", {
     impl: (interpreter: Interpreter, objName: BrsString, ...additionalArgs: BrsType[]) => {
         let ctor = BrsObjects.get(objName.value.toLowerCase());
         if (ctor === undefined) {
-            let msg = `warning,WARNING: Attempt to create object "${objName.value}" that is invalid or not supported!`;
+            let msg = `BRIGHTSCRIPT: ERROR: Runtime: unknown classname "${objName.value}": ${interpreter.formatLocation()}`;
             if (["rosgscreen", "rosgnode"].includes(objName.value.toLowerCase())) {
-                msg = `warning,WARNING: Attempt to create object "${objName.value}". SceneGraph components are still not supported!`;
+                msg = `WARNING: Attempt to create object "${objName.value}". SceneGraph components are still not supported!`;
             }
-            postMessage(msg);
+            postMessage(`warning,${msg}`);
         }
         return ctor ? ctor(interpreter, ...additionalArgs) : BrsInvalid.Instance;
     },

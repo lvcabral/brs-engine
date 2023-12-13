@@ -35,7 +35,7 @@ let stepMode = false;
 
 export function runDebugger(
     interpreter: Interpreter,
-    currLoc: Location,
+    nextLoc: Location,
     lastLoc: Location,
     error?: string
 ) {
@@ -68,13 +68,13 @@ export function runDebugger(
         debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
 
         if (error) {
-            debugMsg += `${error} (runtime error &hf3) in ${formatLocation(lastLoc)}\r\n`;
+            debugMsg += `${error} (runtime error &hf3) in ${interpreter.formatLocation(lastLoc)}\r\n`;
         } else {
-            debugMsg += `STOP (runtime error &hf7) in ${formatLocation(lastLoc)}\r\n`;
+            debugMsg += `STOP (runtime error &hf7) in ${interpreter.formatLocation(lastLoc)}\r\n`;
         }
         debugMsg += "Backtrace: \r\n";
         postMessage(`print,${debugMsg}`);
-        debugBackTrace(backTrace, currLoc);
+        debugBackTrace(interpreter, nextLoc);
         postMessage(`print,Local variables:\r\n`);
         debugLocalVariables(env);
     }
@@ -113,7 +113,7 @@ export function runDebugger(
             case debugCommand.EXIT:
                 return false;
         }
-        debugHandleCommand(interpreter, currLoc, lastLoc, cmd);
+        debugHandleCommand(interpreter, nextLoc, lastLoc, cmd);
     }
 }
 
@@ -179,7 +179,7 @@ function debugHandleCommand(
     let debugMsg: string;
     switch (cmd) {
         case debugCommand.BT:
-            debugBackTrace(backTrace, currLoc);
+            debugBackTrace(interpreter, currLoc);
             break;
         case debugCommand.HELP:
             debugHelp();
@@ -201,14 +201,14 @@ function debugHandleCommand(
             break;
         case debugCommand.THREAD:
             debugMsg = "Thread selected: ";
-            debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
+            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
                 lastLine - 1
             ].trim()}`;
             postMessage(`print,${debugMsg}\r\n`);
             break;
         case debugCommand.THREADS:
             debugMsg = "ID    Location                                Source Code\r\n";
-            debugMsg += ` 0*   ${formatLocation(currLoc).padEnd(40)}${lastLines[
+            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
                 lastLine - 1
             ].trim()}\r\n`;
             debugMsg += "  *selected";
@@ -226,7 +226,8 @@ function debugHandleCommand(
     }
 }
 
-function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
+function debugBackTrace(interpreter: Interpreter, stmtLoc: Location) {
+    const backTrace = interpreter.environment.getBackTrace();
     let debugMsg = "";
     let loc = stmtLoc;
     for (let index = backTrace.length - 1; index >= 0; index--) {
@@ -238,7 +239,7 @@ function debugBackTrace(backTrace: BackTrace[], stmtLoc: Location) {
             args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
         });
         debugMsg += `#${index}  Function ${func.functionName}(${args}) As ${kind}\r\n`; // TODO: Correct signature
-        debugMsg += `   file/line: ${formatLocation(loc)}\r\n`;
+        debugMsg += `   file/line: ${interpreter.formatLocation(loc)}\r\n`;
         loc = func.callLoc;
     }
     postMessage(`print,${debugMsg}`);
@@ -312,16 +313,6 @@ function debugHelp() {
     debugMsg += "   of the current function.  Put the 'stop' statement in your code\r\n";
     debugMsg += "   to trigger a breakpoint.  Then use 'c', 's', or other commands.\r\n";
     postMessage(`print,${debugMsg}`);
-}
-
-function formatLocation(location: Location) {
-    let formattedLocation: string;
-    if (location.start.line) {
-        formattedLocation = `pkg:/${location.file}(${location.start.line})`;
-    } else {
-        formattedLocation = `pkg:/${location.file}(??)`;
-    }
-    return formattedLocation;
 }
 
 // This function takes a text file content as a string and returns an array of lines

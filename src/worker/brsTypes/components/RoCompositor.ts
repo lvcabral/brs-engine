@@ -223,15 +223,15 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
+        impl: (interpreter: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
             if (region instanceof RoRegion) {
                 let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
                 this.setSpriteLayer(sprite, z.getValue());
                 return sprite;
             } else {
                 postMessage(
-                    "warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid:"
-                ); // TODO: add location
+                    `warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid: ${interpreter.formatLocation()}`
+                );
             }
             return BrsInvalid.Instance;
         },
@@ -248,7 +248,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, x: Int32, y: Int32, regionArray: RoArray, z: Int32) => {
+        impl: (interpreter: Interpreter, x: Int32, y: Int32, regionArray: RoArray, z: Int32) => {
+            let warning = "";
             if (regionArray instanceof RoArray) {
                 const regions = regionArray.getElements();
                 if (regions && regions.length > 0) {
@@ -258,19 +259,16 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                         this.animations.push(sprite);
                         return sprite;
                     } else {
-                        postMessage(
-                            "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray item type is roInvalid:"
-                        ); // TODO: add location
+                        warning = "invalid regionArray item type is roInvalid";
                     }
                 } else {
-                    postMessage(
-                        "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray is empty:"
-                    ); // TODO: add location
+                    warning = "invalid regionArray is empty";
                 }
             } else {
-                postMessage(
-                    "warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: invalid regionArray parameter type roInvalid:"
-                ); // TODO: add location
+                warning = "invalid regionArray parameter type roInvalid";
+            }
+            if (warning.length) {
+                postMessage(`warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: ${warning}: ${interpreter.formatLocation()}`);
             }
             return BrsInvalid.Instance;
         },

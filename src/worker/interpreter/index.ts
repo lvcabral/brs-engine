@@ -61,7 +61,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _startTime = Date.now();
-    private _prevLoc: Location = {
+    private _currLoc: Location = {
         file: "",
         start: { line: 0, column: 0 },
         end: { line: 0, column: 0 },
@@ -1025,7 +1025,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     } catch (err: any) {
                         if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                             // Enable Micro Debugger on app crash
-                            runDebugger(this, this._prevLoc, this._prevLoc, err.message);
+                            runDebugger(this, this._currLoc, this._currLoc, err.message);
                             this.options.stopOnCrash = false;
                         }
                         throw err;
@@ -1657,13 +1657,23 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
         if (this.checkBreakCommand()) {
             if (!(statement instanceof Stmt.Block)) {
-                if (!runDebugger(this, statement.location, this._prevLoc)) {
+                if (!runDebugger(this, statement.location, this._currLoc)) {
                     throw new BlockEnd("debug-exit", statement.location);
                 }
             }
         }
-        this._prevLoc = statement.location;
+        this._currLoc = statement.location;
         return statement.accept<BrsType>(this);
+    }
+
+    formatLocation(location: Location = this._currLoc) {
+        let formattedLocation: string;
+        if (location.start.line) {
+            formattedLocation = `pkg:/${location.file}(${location.start.line})`;
+        } else {
+            formattedLocation = `pkg:/${location.file}(??)`;
+        }
+        return formattedLocation;
     }
 
     getChannelVersion(): string {
@@ -1691,17 +1701,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.errors.push(err);
         this.events.emit("err", err);
         throw err;
-    }
-
-    private getNow(): string {
-        let d = new Date();
-        let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
-        let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
-        let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
-        let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
-        let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
-        let ms = d.getMilliseconds();
-        return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
     }
 
     private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
