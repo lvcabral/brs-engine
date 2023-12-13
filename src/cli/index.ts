@@ -14,7 +14,7 @@ import * as path from "path";
 import readline from "readline";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage } from "../api/package";
 import { registerCallback, getInterpreter, executeLine, executeFile } from "../worker";
-import { description, version } from "../../package.json";
+import packageInfo from "../../package.json";
 
 const program = new Command();
 const defaultLevel = chalk.level.toString();
@@ -25,7 +25,7 @@ let zipFileName = "";
  *
  */
 program
-    .description(`${description} CLI`)
+    .description(`${packageInfo.description} CLI`)
     .arguments(`brs-cli [brsFiles...]`)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
@@ -78,7 +78,7 @@ program
             repl();
         }
     })
-    .version(version, "-v, --version")
+    .version(packageInfo.version, "-v, --version")
     .parse(process.argv);
 
 /**
@@ -86,8 +86,8 @@ program
  *
  */
 function showAppTitle() {
-    const appTitle = `${description} CLI`;
-    const appVersion = `v${version}`;
+    const appTitle = `${packageInfo.description} CLI`;
+    const appVersion = `v${packageInfo.version}`;
     /// #if DEBUG
     console.log(`\n${appTitle} [${chalk.cyanBright(appVersion)} ${chalk.gray("dev")}]\n`);
     /// #else

@@ -68,7 +68,7 @@ import {
     isMuted,
     subscribeSound,
 } from "./sound";
-import { version } from "../../package.json";
+import packageInfo from "../../package.json";
 
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
@@ -96,7 +96,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         Object.assign(deviceData, customDeviceInfo);
     }
     const storage: Storage = window.localStorage;
-    let initMsg = `${deviceData.friendlyName} - v${version}`;
+    let initMsg = `${packageInfo.description} - v${packageInfo.version}`;
     /// #if DEBUG
     initMsg += " - dev";
     /// #endif
@@ -236,12 +236,17 @@ export function terminate(reason: string) {
     notifyAll("closed", reason);
 }
 
+// Returns API library version
+export function getVersion() {
+    return packageInfo.version;
+}
+
 // Returns Device Serial Number based on Device Model and library version
 export function getSerialNumber() {
     const device = deviceData.models.get(deviceData.deviceModel);
     const prefix = device ? device[4] : "X0";
     let verPlain = "";
-    version.split(".").forEach((element) => {
+    packageInfo.version.split(".").forEach((element) => {
         verPlain += element.replace(/\D/g, "").padStart(2, "0");
     });
     return `${prefix}0BRS${verPlain.substring(0, 6)}`;
@@ -345,11 +350,6 @@ export function debug(command: string): boolean {
         handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
     }
     return handled;
-}
-
-// API Library version and device Serial Number
-export function getVersion() {
-    return version;
 }
 
 // Helper Functions

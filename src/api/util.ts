@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { main } from "../../package.json";
+import packageInfo from "../../package.json";
 
 // Shared array data types enumerator
 export enum DataType {
@@ -69,7 +69,7 @@ export function getApiPath(): string {
         const scripts = document.getElementsByTagName("script");
         return scripts[scripts.length - 1].src;
     }
-    return main;
+    return packageInfo.main;
 }
 export function getWorkerLibPath(): string {
     let libPath = getApiPath();

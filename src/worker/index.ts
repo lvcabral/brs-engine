@@ -10,7 +10,6 @@ import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } 
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
 import { Parser } from "./parser";
-import { version } from "../../package.json";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
 import * as _lexer from "./lexer";
@@ -24,6 +23,7 @@ import { zlibSync, unzlibSync } from "fflate";
 import bslCore from "./common/v30/bslCore.brs";
 import bslDefender from "./common/v30/bslDefender.brs";
 import Roku_Ads from "./common/Roku_Ads.brs";
+import packageInfo from "../../package.json";
 
 export { _lexer as lexer };
 export { BrsTypes as types };
@@ -43,7 +43,7 @@ if (typeof onmessage !== "undefined") {
         if (event.data.device) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
-            postMessage(`version,${version}`);
+            postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof SharedArrayBuffer || event.data instanceof ArrayBuffer) {
             // Setup Control Shared Array
             shared.set("buffer", new Int32Array(event.data));
