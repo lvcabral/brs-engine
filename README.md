@@ -44,7 +44,7 @@ The worker library require features like [SharedArrayBuffer](https://developer.m
 
 ### Web Applications
 
-This repository has has a sample web application you can build and install ([learn how](docs/integrating.md)), but if you just want to use the simulation engine, not installing or downloading anything, try one of the web applications below:
+This repository provides a sample web application you can build and run ([learn how](docs/integrating.md)), but if you just want to use the simulation engine, not installing or downloading anything, try one of the web applications below:
 
 - **BrightScript TV** - Run full Roku games and apps in your browser: <https://lvcabral.com/brs>
 - **brsFiddle** - BrightScript playground to test and share code with others: <http://brsFiddle.net>
