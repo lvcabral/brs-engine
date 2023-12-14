@@ -38,7 +38,7 @@ The worker library require features like [SharedArrayBuffer](https://developer.m
 1. [Safari macOS/iOS/ipadOS](https://www.apple.com/safari), version 16.4 or newer.
 1. [Electron](https://electronjs.org), version 4.0 or newer.
 
-**Note:** The **BrightScript Simulation Engine** is a full client-side library, nothing needs to be sent or processed in the server side.
+**Note:** The engine libraries are client-side only, nothing needs to be sent or processed in the server side.
 
 ## How to Use the Simulator
 
@@ -55,7 +55,7 @@ This repository has has a sample web application you can build and install ([lea
 
 ### Desktop Application
 
-The simulator is also available as a multi-platform **desktop application** (Windows, Linux & macOS) that uses the package published by this project. The application, introduces several aditional Roku features, such as the **ECP** (External Control Protocol) and **Remote Console** servers to allow integration with dev tools like the Terminal or [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript). It also allows you to control the device configurations such as screen resolution, keyboard control customization, localization, among others. You can download the installers and find more information in the links below:
+The simulator is also available as a multi-platform **desktop application** (Windows, Linux & macOS) that uses the package published by this project. The application introduces several aditional Roku features, such as the **ECP** (External Control Protocol) and **Remote Console** servers to allow integration with tools like Telnet or [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript). You can also change the device configurations such as screen resolution, keyboard control customization, localization, among others. Download the installers and find more information in the links below:
 
 - Source code and documentation: [app repository](https://github.com/lvcabral/brs-emu-app).
 - Installation packages: [release page](https://github.com/lvcabral/brs-emu-app/releases).
@@ -67,17 +67,17 @@ There are many ways you can use and/or participate in the project, read the docu
 - [How to build from source](docs/build-from-source.md)
 - [How to run as Command Line Interface](docs/run-as-cli.md)
 - [How add the Engine to a Web Application](docs/integrating.md)
-- [BrightScript Engine API reference](docs/emulator-api.md)
+- [BrightScript Engine API reference](docs/engine-api.md)
 - [BrightScript Engine Limitations](docs/limitations.md)
 - [How to contribute to this Project](docs/contributing.md)
 
 ## Developer Links
 
-- My website is [https://lvcabral.com](https://lvcabral.com)
-- My threads is [@lvcabral](https://www.threads.net/@lvcabral)
-- My Bluesky is [@lvcabral.com](https://bsky.app/profile/lvcabral.com)
-- My twitter is [@lvcabral](https://twitter.com/lvcabral)
-- My podcast is [PODebug Podcast](http://podebug.com)
+- My website: [https://lvcabral.com](https://lvcabral.com)
+- My threads: [@lvcabral](https://www.threads.net/@lvcabral)
+- My Bluesky: [@lvcabral.com](https://bsky.app/profile/lvcabral.com)
+- My twitter: [@lvcabral](https://twitter.com/lvcabral)
+- My podcast: [PODebug Podcast](http://podebug.com)
 - Check my other [GitHub repositories](https://github.com/lvcabral)
 
 ## License
