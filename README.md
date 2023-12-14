@@ -16,7 +16,7 @@ This project was created as a fork from [**brs**](https://github.com/rokucommuni
 **Important Notes:**
 
 - At this stage, **SceneGraph** based apps and video playback are not yet supported, but the implementation of these features is now in the backlog. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is missing and what is out of scope.
-- Although **brs-engine** runs channels with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the BrighScript Community, and also to be used as an engine for running the BrighScript language in other platforms.<br /><br />
+- Although **brs-engine** runs channels with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the Roku Community, and also to be used as an engine for running the BrighScript language in other platforms.<br /><br />
 
 <p align="center"><img alt="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
@@ -30,12 +30,15 @@ This engine is developed in [TypeScript](https://www.typescriptlang.org/) and bu
 
 The worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
 
-1. [Chromium](https://www.chromium.org/Home) based browsers, like [Chrome](https://www.google.com/chrome), [Brave](https://brave.com), [Opera](https://www.opera.com) and [Edge](https://www.microsoft.com/en-us/edge), version 79 or newer.
-1. [Electron](https://electronjs.org), version 6.0 or newer.
+1. [Chromium](https://www.chromium.org/Home)/[Chrome](https://www.google.com/chrome) version 69 or newer.
+1. [Chrome Android](https://www.google.com/chrome) version 89 or newer.
+1. [Edge](https://www.microsoft.com/en-us/edge), version 79 or newer.
+1. [Opera](https://www.opera.com), version 56 or newer.
 1. [Firefox](https://firefox.com), version 105 or newer.
-1. [Safari](https://www.apple.com/safari), version 16.4 or newer.
+1. [Safari macOS/iOS/ipadOS](https://www.apple.com/safari), version 16.4 or newer.
+1. [Electron](https://electronjs.org), version 4.0 or newer.
 
-**Note:** The **BrightScript Engine** is a full client-side library, nothing needs to be sent or processed in the server side.
+**Note:** The **BrightScript Simulation Engine** is a full client-side library, nothing needs to be sent or processed in the server side.
 
 ## How to Use the Simulator
 
