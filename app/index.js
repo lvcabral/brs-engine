@@ -191,6 +191,7 @@ function parseVersionString(str) {
 
 function toggleDiv(divId) {
     const objDiv = document.getElementById(divId);
+    const butExpNew = document.getElementById("expand-new");
     const butExp = document.getElementById("expand");
     const butCol = document.getElementById("collapse");
     if (objDiv.style.display == "") {
@@ -200,6 +201,7 @@ function toggleDiv(divId) {
     } else {
         objDiv.style.display = "";
         butExp.style.display = "none";
+        butExpNew.style.display = "none";
         butCol.style.display = "";
     }
 }
