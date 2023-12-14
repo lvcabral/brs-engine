@@ -196,9 +196,9 @@ function repl() {
             process.exit();
         } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
             process.stdout.write("\x1Bc");
-        } else if (line.toLowerCase().trim() === "help") {
+        } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             showHelp();
-        } else if (line.toLowerCase().trim() === "var") {
+        } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
             printLocalVariables(replInterpreter.environment);
         } else {
             executeLine(line, replInterpreter);
@@ -279,8 +279,8 @@ function showHelp() {
     let helpMsg = "\r\n";
     helpMsg += "REPL Command List:\r\n";
     helpMsg += "   print|?         Print variable value or expression\r\n";
-    helpMsg += "   var             Display variables and their types/values\r\n";
-    helpMsg += "   help            Show this REPL command list\r\n";
+    helpMsg += "   var|vars        Display variables and their types/values\r\n";
+    helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
     helpMsg += "   quit|exit       Terminate REPL session\r\n\r\n";
     helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
