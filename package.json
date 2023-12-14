@@ -1,7 +1,7 @@
 {
   "name": "brs-engine",
   "version": "1.0.0",
-  "description": "BrightScript Engine",
+  "description": "BrightScript Simulation Engine",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "homepage": "https://lvcabral.com/brs/",
   "contributors": [
@@ -11,6 +11,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/lvcabral/brs-engine"
+  },
+  "bugs": {
+    "url": "https://github.com/lvcabral/brs-engine/issues"
   },
   "keywords": [
     "brightscript",

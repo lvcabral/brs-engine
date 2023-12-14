@@ -15,6 +15,8 @@ import readline from "readline";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage } from "../api/package";
 import { registerCallback, getInterpreter, executeLine, executeFile } from "../worker";
 import packageInfo from "../../package.json";
+import { PrimitiveKinds, ValueKind, isIterable } from "../worker/brsTypes";
+import { Environment, Scope } from "../worker/interpreter/Environment";
 
 const program = new Command();
 const defaultLevel = chalk.level.toString();
@@ -190,13 +192,20 @@ function repl() {
     });
     rl.setPrompt(`${chalk.magenta("brs")}> `);
     rl.on("line", (line) => {
-        if (line.toLowerCase() === "quit" || line.toLowerCase() === "exit") {
+        if (["quit", "exit"].includes(line.toLowerCase().trim())) {
             process.exit();
+        } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
+            process.stdout.write("\x1Bc");
+        } else if (line.toLowerCase().trim() === "help") {
+            showHelp();
+        } else if (line.toLowerCase().trim() === "var") {
+            printLocalVariables(replInterpreter.environment);
+        } else {
+            executeLine(line, replInterpreter);
         }
-        executeLine(line, replInterpreter);
         rl.prompt();
     });
-
+    console.log(colorize("type `help` to see the list of valid REPL commands.\r\n"));
     rl.prompt();
 }
 
@@ -218,12 +227,10 @@ function packageCallback(event: string, data: any) {
  * Callback function to receive the messages from the Interpreter.
  *
  */
-function messageCallback(message: any, _: any) {
+function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
         const mType = message.split(",")[0];
-        if (!mType) {
-            console.info(chalk.green(message.trimRight()));
-        } else if (mType === "print") {
+        if (mType === "print") {
             console.log(colorize(message.slice(6).trimRight()));
         } else if (mType === "warning") {
             console.warn(chalk.yellow(message.slice(8).trimRight()));
@@ -236,7 +243,10 @@ function messageCallback(message: any, _: any) {
                 console.info(chalk.redBright(msg));
                 process.exitCode = 1;
             }
+        } else {
+            console.info(chalk.blueBright(message.trimRight()));
         }
+         
     }
 }
 
@@ -248,8 +258,8 @@ function colorize(log: string) {
     return log
         .replace(/\b(down|error|errors|failure|fail|fatal|false)(:|\b)/gi, chalk.red("$1$2"))
         .replace(/\b(warning|warn|test|null|undefined|invalid)(:|\b)/gi, chalk.yellow("$1$2"))
-        .replace(/\b(hint|info|information|true|log)(:|\b)/gi, chalk.cyan("$1$2"))
-        .replace(/\b(running|success|successfully)(:|\b)/gi, chalk.green("$1$2"))
+        .replace(/\b(help|hint|info|information|true|log)(:|\b)/gi, chalk.cyan("$1$2"))
+        .replace(/\b(running|success|successfully|valid)(:|\b)/gi, chalk.green("$1$2"))
         .replace(/\b(debug|roku|brs|brightscript)(:|\b)/gi, chalk.magenta("$1$2"))
         .replace(/(\b\d+\.?\d*?\b)/g, chalk.ansi256(122)(`$1`)) // Numeric
         .replace(/\S+@\S+\.\S+/g, (match: string) => {
@@ -264,4 +274,39 @@ function colorize(log: string) {
         .replace(/"(.*?)"/g, (match: string) => {
             return chalk.ansi256(222)(stripAnsi(match)); // Quotes
         });
+}
+function showHelp() {
+    let helpMsg = "\r\n";
+    helpMsg += "REPL Command List:\r\n";
+    helpMsg += "   print|?         Print variable value or expression\r\n";
+    helpMsg += "   var             Display variables and their types/values\r\n";
+    helpMsg += "   help            Show this REPL command list\r\n";
+    helpMsg += "   clear|cls       Clear terminal screen\r\n";
+    helpMsg += "   quit|exit       Terminate REPL session\r\n\r\n";
+    helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
+    console.log(chalk.cyanBright(helpMsg));
+}
+
+function printLocalVariables(environment: Environment) {
+    let debugMsg = "\r\nLocal variables:\r\n";
+    debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
+        environment.getM().getElements().length
+    }\r\n`;
+    let fnc = environment.getList(Scope.Function);
+    fnc.forEach((value, key) => {
+        if (PrimitiveKinds.has(value.kind)) {
+            debugMsg += `${key.padEnd(16)} ${ValueKind.toString(
+                value.kind
+            )} val:${value.toString()}\r\n`;
+        } else if (isIterable(value)) {
+            debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
+                value.getElements().length
+            }\r\n`;
+        } else if (value.kind === ValueKind.Object) {
+            debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
+        } else {
+            debugMsg += `${key.padEnd(17)}${value.toString()}\r\n`;
+        }
+    });
+    console.log(chalk.cyanBright(debugMsg));
 }
