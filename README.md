@@ -11,14 +11,14 @@ An intepreter for the Roku BrightScript language that runs games and apps on mod
 
 ## The Project
 
-This project was created as a fork from [**brs**](https://github.com/rokucommunity/brs), a _command line interpreter_ for **BrightScript** language, with the objective of implementing a Roku simulator, an important kind of tool that was missing for the BrightScript developer community. Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, including simulation of the Roku file system, registry, remote control and the Micro Debugger.
+This project was created as a fork from [**brs**](https://github.com/rokucommunity/brs), a _command line interpreter_ for **BrightScript** language, with the objective of implementing a Roku simulator, an important tool that was missing for the Roku development community. Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, but was extended to include simulation of the Roku file system, registry, remote control and the Micro Debugger.
 
 **Important Notes:**
 
-- At this stage, **SceneGraph** based apps and video playback are not yet supported, but the implementation of these features is now in the backlog. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is missing and what is out of scope.
+- At this stage, apps based on **SceneGraph** and video playback are not yet supported, but these features are now in the backlog to be implemented. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is still missing and what is out of scope.
 - Although **brs-engine** runs channels with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the Roku Community, and also to be used as an engine for running the BrighScript language in other platforms.<br /><br />
 
-<p align="center"><img alt="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
+<p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
 ## Technology and Compatibility
 
