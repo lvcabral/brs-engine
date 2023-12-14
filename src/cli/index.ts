@@ -246,7 +246,6 @@ function messageCallback(message: any, _?: any) {
         } else {
             console.info(chalk.blueBright(message.trimRight()));
         }
-         
     }
 }
 

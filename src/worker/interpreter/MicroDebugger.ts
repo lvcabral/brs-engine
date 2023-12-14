@@ -44,7 +44,6 @@ export function runDebugger(
     // - Implement classes, bsc(s) and stats
     const env = interpreter.environment;
     const lastLines = parseTextFile(source.get(lastLoc.file));
-    const backTrace = env.getBackTrace();
     const prompt = "Brightscript Debugger> ";
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
@@ -66,13 +65,9 @@ export function runDebugger(
         debugMsg += "Source Digest(s):\r\n";
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
         debugMsg += `${interpreter.manifest.get("title")}\r\n\r\n`;
+        debugMsg += `${error ?? "STOP"} (runtime error &hf7) in ${interpreter.formatLocation()}`;
 
-        if (error) {
-            debugMsg += `${error} (runtime error &hf3) in ${interpreter.formatLocation(lastLoc)}\r\n`;
-        } else {
-            debugMsg += `STOP (runtime error &hf7) in ${interpreter.formatLocation(lastLoc)}\r\n`;
-        }
-        debugMsg += "Backtrace: \r\n";
+        debugMsg += "\r\nBacktrace: \r\n";
         postMessage(`print,${debugMsg}`);
         debugBackTrace(interpreter, nextLoc);
         postMessage(`print,Local variables:\r\n`);

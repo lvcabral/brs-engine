@@ -268,7 +268,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 warning = "invalid regionArray parameter type roInvalid";
             }
             if (warning.length) {
-                postMessage(`warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: ${warning}: ${interpreter.formatLocation()}`);
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: ${warning}: ${interpreter.formatLocation()}`
+                );
             }
             return BrsInvalid.Instance;
         },
