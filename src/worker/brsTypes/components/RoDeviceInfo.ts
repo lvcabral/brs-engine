@@ -798,8 +798,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
 }
 // Helper Functions
 function generateUUID(): string {
-    if (!('randomUUID' in crypto)) {
+    if (!("randomUUID" in crypto)) {
         return uuidv4();
-    };
+    }
     return crypto.randomUUID();
 }

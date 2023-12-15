@@ -50,7 +50,7 @@ function sortCompare(
             compare = -1;
         } else if (bSortOrder < aSortOrder) {
             compare = 1;
-        } else if (sortInsideTypes && isBrsNumber(a)) { 
+        } else if (sortInsideTypes && isBrsNumber(a)) {
             // two numbers are in numeric order
             compare = (a as Comparable).greaterThan(b).toBoolean() ? 1 : -1;
         } else if (sortInsideTypes && isBrsString(a)) {
