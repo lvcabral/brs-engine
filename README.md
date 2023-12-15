@@ -28,9 +28,9 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 
 | Library File | Description |
 | --- | --- |
-| `app/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be included by the client applications hosting the Simulator|
-| `app/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform|
-|`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application (still on beta stage) that can be used from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), running `brs` files or packaging encrypted apps|
+| `app/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be imported and used by the client applications hosting the Simulator.|
+| `app/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform.|
+|`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application that can be used from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), running `brs` files or packaging encrypted apps.|
 
 The worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
 
