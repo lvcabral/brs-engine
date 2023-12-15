@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "BrightScript Simulation Engine",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
+  "license": "MIT",
+  "copyright": "© 2019-2023, Marcelo Lv Cabral",
   "homepage": "https://lvcabral.com/brs/",
   "contributors": [
     "Sean Barag <sean@barag.org>",
@@ -23,7 +25,6 @@
     "interpreter",
     "worker"
   ],
-  "license": "MIT",
   "main": "app/lib/brs.api.js",
   "browser": "app/lib/brs.api.js",
   "typings": "types/src/api/index.d.ts",
@@ -80,6 +81,7 @@
     "strip-ansi": "^7.1.0",
     "upng-js": "lvcabral/UPNG.js",
     "url-parse": "^1.5.10",
+    "uuid": "^9.0.1",
     "xml2js": "^0.5.0"
   },
   "devDependencies": {
@@ -87,13 +89,14 @@
     "@types/howler": "^2.2.7",
     "@types/long": "^3.0.32",
     "@types/memory-fs": "^0.3.2",
-    "@types/node": "^8.10.52",
+    "@types/node": "^20.10.4",
     "@types/opentype.js": "^0.7.2",
     "@types/path-parse": "^1.0.19",
     "@types/sprintf-js": "^1.1.2",
     "@types/stats.js": "^0.17.0",
     "@types/upng-js": "^2.1.1",
     "@types/url-parse": "^1.4.8",
+    "@types/uuid": "^9.0.7",
     "@types/xml2js": "^0.4.8",
     "buffer": "^6.0.3",
     "husky": ">=1",
