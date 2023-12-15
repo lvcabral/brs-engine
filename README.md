@@ -18,17 +18,19 @@ Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompos
 **Important Notes:**
 
 - At this stage, apps based on **SceneGraph** and video playback are not yet supported, but these features are now in the backlog to be implemented. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is still missing and what is out of scope.
-- Although **brs-engine** runs channels with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the Roku Community, and also to be used as an engine for running the BrighScript language in other platforms.<br /><br />
+- Although **brs-engine** runs channels with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the Roku Community, and also to be used as a framework for running the BrighScript language in other platforms.<br /><br />
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
 ## Technology and Compatibility
 
-This engine is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries:
+The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as the following collection of [Webpack](https://webpack.js.org/) JavaScript libraries:
 
-- `app/lib/brs.api.js`: Is the **[Engine API](docs/engine-api.md)** to be used by the client application to run the Simulator.
-- `app/lib/brs.worker.js`: Is the **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** that runs the language interpreter in a background thread on the browser platform.
-- `bin/brs.cli.js`: Is the **[CLI](docs/run-as-cli.md)** application that can be executed from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), running `brs` files or packaging encrypted apps.
+| Library File | Description |
+| --- | --- |
+| `app/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be included by the client applications hosting the Simulator|
+| `app/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform|
+|`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application (still on beta stage) that can be used from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), running `brs` files or packaging encrypted apps|
 
 The worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
 
