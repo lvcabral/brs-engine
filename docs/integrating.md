@@ -27,6 +27,11 @@ Your web application cannot be executed as pure HTML page, because some function
 The repository provides a script to run the Webpack DevServer, with COOP and COEP headers, to help testing the web application on development environment. In order to start the web server, execute:
 
 ```shell
+npm run start
+```
+or
+
+```shell
 yarn start
 ```
 
@@ -36,7 +41,7 @@ By default the server will use the port `6502`, if you prefer another port just 
 
 You can see the debug messages from `print` statements in your code using the _browser or desktop application console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your app `.zip` package or `.brs` file. Exceptions from the engine library will be shown there too.
 
-If you added a break point (`stop`) in your code, you can also debug using the _browser console_, just send the commands using: `brs.debug("help")`, but for a better debugging experience, is recommended to use the desktop application integrated with:
+If you added a break point (`stop`) in your code, you can also debug using the _browser console_, just send the commands using `debug` method like this: `brs.debug("help")`, but for a better debugging experience, is recommended to use the **desktop application** integrated with:
 
 - [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript)
 - Telnet connected on port 8085.
@@ -47,7 +52,7 @@ If your code does show an error in some scenario not listed on the [limitations 
 
 ## Games and Demos
 
-You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `app/index.html`. In addition to those, you can load your own code, either as a single **.brs** file or a channel **.zip package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
+You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `app/index.html`. In addition to those, you can load your own code, either as a single **.brs** file or a channel **.zip or .bpk package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
 
 - [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.18.3778/Prince-of-Persia-Roku-018.zip)
 - [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.18.707/Lode-Runner-Roku-018.zip)
@@ -55,7 +60,7 @@ You can try the engine by running one of the demonstration apps included in the 
 
 ## Simple Web Example
 
-Below you can find the most simple example to use the app to run BrightScript code. Make sure the library files `brs.api.js` and `brs.worker.js` are located in a folder name `lib/` under the main folder where you host the files `example.html` and `example.js` (code below). Remember that you need to host these files on a web server like the one described in the section above.
+Here's the most simple example to use the app to run BrightScript code. Make sure the library files `brs.api.js` and `brs.worker.js` are located in a folder name `lib/` under the main folder where you host the files `example.html` and `example.js` (code below). Remember that you need to host these files on a web server like the one described in the section above.
 
 ### example.html
 
