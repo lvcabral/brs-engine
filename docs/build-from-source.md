@@ -1,10 +1,10 @@
 # Building from Source
 
-The BRS project follows pretty standard `node` development patterns, with the caveat that it uses `yarn` for dependency management.
+The brs-engine project follows pretty standard `node` development patterns, with the caveat that it uses `yarn` for dependency management.
 
 ## Prerequisites
 
-BRS builds (and runs) in `node`, so you'll need to [install that first](https://nodejs.org).
+As it builds (and runs the CLI) in `node`, so you'll need to [install that first](https://nodejs.org).
 
 Once that's ready, install [yarn](https://yarnpkg.com).  Installing it with `npm` is probably the simplest:
 
