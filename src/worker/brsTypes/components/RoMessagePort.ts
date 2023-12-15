@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { RoUniversalControlEvent } from "./RoUniversalControlEvent";
 import { RoAudioPlayerEvent } from "./RoAudioPlayerEvent";

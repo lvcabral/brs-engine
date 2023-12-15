@@ -57,7 +57,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element indexes must be strings");
         }
-        return this.getMethod(index.value) || this.namedElements(index.value, true);
+        return this.getMethod(index.value) ?? this.namedElements(index.value, true);
     }
 
     set(index: BrsType, value: BrsType) {

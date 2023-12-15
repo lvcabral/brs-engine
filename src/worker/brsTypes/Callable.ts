@@ -220,7 +220,7 @@ export class Callable implements Brs.BrsValue {
     }
 
     getName(): string {
-        return this.name || "";
+        return this.name ?? "";
     }
 
     getContext() {

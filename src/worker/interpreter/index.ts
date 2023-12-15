@@ -1324,8 +1324,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             )
         );
 
-        let loopExitReason: Stmt.BlockEnd | undefined;
-
         if (increment.getValue() > 0) {
             while (
                 (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
@@ -1338,7 +1336,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this.execute(statement.body);
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
-                        loopExitReason = reason;
                         break;
                     } else {
                         // re-throw returns, runtime errors, etc.
@@ -1361,7 +1358,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this.execute(statement.body);
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
-                        loopExitReason = reason;
                         break;
                     } else {
                         // re-throw returns, runtime errors, etc.

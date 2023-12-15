@@ -166,7 +166,7 @@ export function executeFile(payload: any): RunResult {
     return { endReason: endReason };
 }
 
-interface serializedPCode {
+interface SerializedPCode {
     [pcode: string]: Token[];
 }
 
@@ -531,7 +531,7 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
         if (password.length > 0) {
             const decipher = crypto.createDecipheriv(algorithm, password, iv);
             const inflated = unzlibSync(Buffer.concat([decipher.update(pcode), decipher.final()]));
-            const spcode = decode(inflated) as serializedPCode;
+            const spcode = decode(inflated) as SerializedPCode;
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
                 pcode = Buffer.from([]);
@@ -617,7 +617,6 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
         postMessage(`error,${err.message}`);
         endReason = "EXIT_BRIGHTSCRIPT_CRASH";
     }
-    return;
 }
 
 /**

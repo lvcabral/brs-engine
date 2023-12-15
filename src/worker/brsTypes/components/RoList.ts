@@ -77,11 +77,11 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     get(index: BrsType) {
         switch (index.kind) {
             case ValueKind.Float:
-                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+                return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
             case ValueKind.Int32:
-                return this.getElements()[index.getValue()] || BrsInvalid.Instance;
+                return this.getElements()[index.getValue()] ?? BrsInvalid.Instance;
             case ValueKind.String:
-                return this.getMethod(index.value) || BrsInvalid.Instance;
+                return this.getMethod(index.value) ?? BrsInvalid.Instance;
             default:
                 postMessage(
                     "warning,List indexes must be 32-bit integers, or method names must be strings."

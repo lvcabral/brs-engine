@@ -889,7 +889,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return this.port || BrsInvalid.Instance;
+            return this.port ?? BrsInvalid.Instance;
         },
     });
 
@@ -900,7 +900,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return this.port || BrsInvalid.Instance;
+            return this.port ?? BrsInvalid.Instance;
         },
     });
 

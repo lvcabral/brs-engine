@@ -1,9 +1,6 @@
-import { Callable, BrsInvalid, BrsType } from "../brsTypes";
-import * as Stmt from "../parser/Statement";
+import { Callable, BrsType } from "../brsTypes";
 import * as Expr from "../parser/Expression";
 import { Interpreter } from ".";
-import { Expression } from "../parser/Expression";
-import { Scope, Environment } from "./Environment";
 
 /**
  * Converts a Function expression to a BrightScript callable representation so

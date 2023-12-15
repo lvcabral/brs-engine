@@ -1,5 +1,5 @@
 import { BrsType } from "..";
-import { BrsInvalid, ValueKind, BrsValue } from "../BrsType";
+import { BrsInvalid } from "../BrsType";
 import { Callable } from "../Callable";
 import { BrsInterface } from "../BrsInterface";
 

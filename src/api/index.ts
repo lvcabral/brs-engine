@@ -432,7 +432,7 @@ function workerCallback(event: MessageEvent) {
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${event.data}`);
-    } else if (event.data.slice(0, 6) === "audio,") {
+    } else if (event.data.startsWith("audio,")) {
         const data = event.data.split(",");
         if (data[1] === "play") {
             playSound();
@@ -473,15 +473,15 @@ function workerCallback(event: MessageEvent) {
                 apiException("warning", `[api] Missing Trigger parameters: ${event.data}`);
             }
         }
-    } else if (event.data.slice(0, 6) === "print,") {
+    } else if (event.data.startsWith("print,")) {
         deviceDebug(event.data);
-    } else if (event.data.slice(0, 7) === "beacon,") {
+    } else if (event.data.startsWith("beacon,")) {
         deviceDebug(event.data);
-    } else if (event.data.slice(0, 8) === "warning,") {
+    } else if (event.data.startsWith("warning,")) {
         deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.slice(0, 6) === "error,") {
+    } else if (event.data.startsWith("error,")) {
         deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.slice(0, 6) === "debug,") {
+    } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
         enableControl(level === "continue");
         if (level === "stop") {
@@ -490,17 +490,17 @@ function workerCallback(event: MessageEvent) {
             resumeSound(false);
         }
         notifyAll("debug", { level: level });
-    } else if (event.data.slice(0, 6) === "start,") {
+    } else if (event.data.startsWith("start,")) {
         const title = currentApp.title;
         const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
         const subName = event.data.split(",")[1];
         deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
         deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id 'dev'\r\n`);
-    } else if (event.data.slice(0, 4) === "end,") {
+    } else if (event.data.startsWith("end,")) {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {
         notifyAll("reset");
-    } else if (event.data.slice(0, 8) === "version,") {
+    } else if (event.data.startsWith("version,")) {
         notifyAll("version", event.data.slice(8));
     }
 }

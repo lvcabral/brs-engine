@@ -1,6 +1,5 @@
 import * as Expr from "../parser/Expression";
 import * as Stmt from "../parser/Statement";
-import { BrsType } from "../brsTypes";
 
 /** Creates a pretty-printed representation of an expression to ease debugging. */
 export class AstPrinter implements Expr.Visitor<string> {

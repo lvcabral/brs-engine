@@ -173,7 +173,7 @@ export class Literal implements Expression {
 
     get location() {
         return (
-            this._location || {
+            this._location ?? {
                 file: "(internal)",
                 start: {
                     line: -1,

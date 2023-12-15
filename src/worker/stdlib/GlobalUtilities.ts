@@ -6,7 +6,6 @@ import {
     BrsType,
     StdlibArgument,
     RoAssociativeArray,
-    BrsInterface,
     RoString,
     roBoolean,
     roInt,

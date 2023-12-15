@@ -1,5 +1,4 @@
 import { BrsType, ValueKind, Callable, Int32, BrsString, StdlibArgument } from "../brsTypes";
-import * as Expr from "../parser/Expression";
 import { Interpreter } from "../interpreter";
 
 export const Type = new Callable("type", {

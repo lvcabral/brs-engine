@@ -7,18 +7,9 @@ import {
     Int32,
     RoMessagePort,
     BrsString,
-    BrsType,
-    RoString,
-    roInt,
     Float,
-    roFloat,
-    BrsBoolean,
-    roBoolean,
-    Double,
-    roDouble,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { BrsComponent } from "../brsTypes/components/BrsComponent";
 
 /** Returns the uptime of the system since the last reboot in seconds. */
 export const UpTime = new Callable("UpTime", {

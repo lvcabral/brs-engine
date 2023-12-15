@@ -1595,7 +1595,6 @@ export class Parser {
 
                     let closingSquare = previous();
 
-                    //consume("Expected newline or ':' after array literal", Lexeme.Newline, Lexeme.Colon, Lexeme.Eof);
                     return new Expr.ArrayLiteral(elements, openingSquare, closingSquare);
                 }
                 case match(Lexeme.LeftBrace): {

@@ -1,6 +1,5 @@
 import { Lexeme } from "./Lexeme";
 import { BrsType } from "../brsTypes";
-import { ReservedWords } from "./ReservedWords";
 
 /**
  * Represents a chunk of BrightScript scanned by the lexer.

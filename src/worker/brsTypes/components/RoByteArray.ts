@@ -15,7 +15,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     constructor(elementsParam: Uint8Array);
     constructor(elementsParam?: Uint8Array) {
         super("roByteArray");
-        this.elements = elementsParam ? elementsParam : new Uint8Array();
+        this.elements = elementsParam ?? new Uint8Array();
         this.enumIndex = this.elements.length ? 0 : -1;
         this.registerMethods({
             ifByteArray: [
@@ -85,11 +85,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     get(index: BrsType) {
         switch (index.kind) {
             case ValueKind.Float:
-                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+                return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
             case ValueKind.Int32:
-                return this.getElements()[index.getValue()] || BrsInvalid.Instance;
+                return this.getElements()[index.getValue()] ?? BrsInvalid.Instance;
             case ValueKind.String:
-                return this.getMethod(index.value) || BrsInvalid.Instance;
+                return this.getMethod(index.value) ?? BrsInvalid.Instance;
             default:
                 postMessage(
                     "warning,Array indexes must be 32-bit integers, or method names must be strings"
@@ -266,7 +266,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, hexStr: BrsString) => {
-            const regex = new RegExp("[^a-f0-9]", "gi");
+            const regex = /"[^a-f0-9]/gi;
             const value = hexStr.value.replace(regex, "0");
             if (value.length % 2 === 0) {
                 this.elements = new Uint8Array(Buffer.from(value, "hex"));

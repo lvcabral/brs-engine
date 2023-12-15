@@ -5,6 +5,8 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
+import { v4 as uuidv4 } from "uuid";
+import * as crypto from "crypto";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -796,9 +798,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
 }
 // Helper Functions
 function generateUUID(): string {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-        const r = (Math.random() * 16) | 0,
-            v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
+    if (!('randomUUID' in crypto)) {
+        return uuidv4();
+    };
+    return crypto.randomUUID();
 }

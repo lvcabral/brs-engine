@@ -16,7 +16,7 @@ import { RoFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
-import { RoRegion, createRegion } from "./RoRegion";
+import { createRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
 import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoXMLElement } from "./RoXMLElement";
