@@ -1,6 +1,6 @@
 # Run as Command Line Interface
 
-Once you have built the library you can link it to your path with the following command:
+Once you have built the CLI library you can link it to your path with the following command:
 
 ```shell
 $ npm link
@@ -22,7 +22,9 @@ An interactive BrightScript REPL (Read-Execute-Print Loop) is available by runni
 ```shell
 $ brs-cli
 
-BrightScript Engine CLI [Version 1.0.0]
+BrightScript Simulation Engine CLI [v1.0.0]
+
+type `help` to see the list of valid REPL commands.
 
 brs> ? "Dennis Ritchie said ""Hello, World!"""
 Dennis Ritchie said "Hello, World!"
@@ -77,7 +79,7 @@ If no password is provided the app will be executed and no encryption happens, b
 ```shell
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
 
-BrightScript Engine CLI [Version 1.0.0]
+BrightScript Simulation Engine CLI [v1.0.0]
 
 Packaging ../tests/test-sandbox.zip...
 
