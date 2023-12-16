@@ -1,12 +1,12 @@
 <a name="v1.0.0"></a>
 
-# [v1.0.0 - Simulation Engine Release](https://github.com/lvcabral/brs-engine/releases/tag/v1.0.0) - 15 Dev 2023
+# [v1.0.0 - Simulation Engine Release](https://github.com/lvcabral/brs-engine/releases/tag/v1.0.0) - 15 Dec 2023
 
 After 4 years of Alpha and Beta stages, the project is stable and performant enough to finally be released as version 1.0 and with that, we decided to give it a new name: 
 
 ## brs-engine - BrightScript Simulation Engine 
 
-The term _simulation engine_ was chosen instead of the former _emulator_ to better represent the nature and purpose of the project, as there is no intention to fully emulate a Roku device (OS and Hardware), but rather simulate the behavior, as a development tool and as a engine/framework to run BrightScript apps in different platforms.
+The term _simulation engine_ was chosen instead of the former _emulator_ to better represent the nature and purpose of the project, as there is no intention to fully emulate a Roku device (OS and Hardware), but rather simulate the behavior, as a development tool and as an engine/framework to run BrightScript apps in different platforms.
 
 In this release the [new CLI](/docs/run-as-cli.md) was introduced, still with some limitations (e.g. no `OffScreenCanvas` support), but allowing basic BrightScript code to be executed, either via REPL or files. It also performs the encryption of a `.zip` file into a `.bpk` package to protect the source code.
 
@@ -15,37 +15,37 @@ In this release the [new CLI](/docs/run-as-cli.md) was introduced, still with so
 * Renamed package for `brs-engine`
 * Renamed libraries to `brs.api.js` and `brs.worker.js`
 * Reorganized `src` folder by library, subfolders: `api`, `cli` and `worker`
-* Added support for Conditional Compilation (#93)
-* Added support for `webp` file format in `roBitmap` (#166)
-* Added support for interfaces `ifGetArray` and `ifSetArray` (#170)
-* Added new CLI with REPL (`bin/brs.cli.js`) (#181)
-* Added support for `.bpk` encrypted package file (#188)
-* Added support optional chaining operators: `?.`, `?(`, `?[`, and `.@` (#176)
+* Added new CLI with REPL (`bin/brs.cli.js`) ([#181](https://github.com/lvcabral/brs-engine/181))
+* Added support for Conditional Compilation ([#93](https://github.com/lvcabral/brs-engine/93))
+* Added support for `webp` file format in `roBitmap` ([#166](https://github.com/lvcabral/brs-engine/166))
+* Added support for interfaces `ifGetArray` and `ifSetArray` ([#170](https://github.com/lvcabral/brs-engine/170))
+* Added support for `.bpk` encrypted package file ([#188](https://github.com/lvcabral/brs-engine/188))
+* Added support optional chaining operators: `?.`, `?(`, `?[`, and `.@` ([#176](https://github.com/lvcabral/brs-engine/176))
 * Moved `models` list to API library and updated `serialNumber` format
 * Added new API event `registry`
 * Added check for `break` debug command during the `roMessagePort` loop
 * Added code to pause sound when Micro Debugger is triggered (does not affect wav)
-* Added option to stop on Micro Debugger when a crash happens (#198)
-* Added partial try/catch implementation (#195)
+* Added option to stop on Micro Debugger when a crash happens ([#198](https://github.com/lvcabral/brs-engine/198))
+* Added partial try/catch implementation ([#195](https://github.com/lvcabral/brs-engine/195))
 * Improved error handling and added warning for RSG usage
-* Added stub `roAppMemoryMonitor` and `roDeviceInfo.enableLowGeneralMemory` (#196)
-* Added new method `getAllPurchases` and changed `doOrder` to return `false` (#178)
+* Added stub `roAppMemoryMonitor` and `roDeviceInfo.enableLowGeneralMemory` ([#196](https://github.com/lvcabral/brs-engine/196))
+* Added new method `getAllPurchases` and changed `doOrder` to return `false` ([#178](https://github.com/lvcabral/brs-engine/178))
 * Added `formatLocation` method in the Interpreter to help show location in warning messages
 * Added Bundle Stats Analyzer and replaced dependencies to reduce package size
 * Updated default firmware to 11.0 and added new models to the list
 * Updated images and layout of sample Web application
-* Updated `roDateTime.GetTimeZoneOffset()` to consider `roDeviceInfo.GetTimeZone()` (#94)
-* Finished implementation of `ifEnum` on all array/list objects (#171)
-* Fixed multiple cascading calls for dot-chained methods (#55)
-* Fixed `roRegion` offset not being properly applied when `setWrap` was `true` (#194)
-* Fixed `Val()` function not compliant with Roku (#162)
-* Fixed duplication of exception handling messages (#126)
-* Fixed code smells and bugs based on Sonar Cloud recommendations (#169)
-* Replaced `luxon` by `day.js` on `roDateTime` and `roTimespan` (#193)
+* Updated `roDateTime.GetTimeZoneOffset()` to consider `roDeviceInfo.GetTimeZone()` ([#94](https://github.com/lvcabral/brs-engine/94))
+* Finished implementation of `ifEnum` on all array/list objects ([#171](https://github.com/lvcabral/brs-engine/171))
+* Fixed multiple cascading calls for dot-chained methods ([#55](https://github.com/lvcabral/brs-engine/55))
+* Fixed `roRegion` offset not being properly applied when `setWrap` was `true` ([#194](https://github.com/lvcabral/brs-engine/194))
+* Fixed `Val()` function not compliant with Roku ([#162](https://github.com/lvcabral/brs-engine/162))
+* Fixed duplication of exception handling messages ([#126](https://github.com/lvcabral/brs-engine/126))
+* Fixed code smells and bugs based on Sonar Cloud recommendations ([#169](https://github.com/lvcabral/brs-engine/169))
+* Replaced `luxon` by `day.js` on `roDateTime` and `roTimespan` ([#193](https://github.com/lvcabral/brs-engine/193))
 * Replaced module `jszip` by the lighter `fflate`
 * Removing `ua-parser-js` dependency for the API
 * Bumped version of several dependencies
-* Removed Node 14.x from the build (#182)
+* Removed Node 14.x from the build ([#182](https://github.com/lvcabral/brs-engine/182))
 
 [Full Changelog][v1.0.0]
 
