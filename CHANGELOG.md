@@ -1,3 +1,54 @@
+<a name="v1.0.0"></a>
+
+# [v1.0.0 - Simulation Engine Release](https://github.com/lvcabral/brs-engine/releases/tag/v1.0.0) - 15 Dev 2023
+
+After 4 years of Alpha and Beta stages, the project is stable and performant enough to finally be released as version 1.0 and with that, we decided to give it a new name: 
+
+## brs-engine - BrightScript Simulation Engine 
+
+The term _simulation engine_ was chosen instead of the former _emulator_ to better represent the nature and purpose of the project, as there is no intention to fully emulate a Roku device (OS and Hardware), but rather simulate the behavior, as a development tool and as a engine/framework to run BrightScript apps in different platforms.
+
+In this release the [new CLI](/docs/run-as-cli.md) was introduced, still with some limitations (e.g. no `OffScreenCanvas` support), but allowing basic BrightScript code to be executed, either via REPL or files. It also performs the encryption of a `.zip` file into a `.bpk` package to protect the source code.
+
+### Release Changes
+
+* Renamed package for `brs-engine`
+* Renamed libraries to `brs.api.js` and `brs.worker.js`
+* Reorganized `src` folder by library, subfolders: `api`, `cli` and `worker`
+* Added support for Conditional Compilation (#93)
+* Added support for `webp` file format in `roBitmap` (#166)
+* Added support for interfaces `ifGetArray` and `ifSetArray` (#170)
+* Added new CLI with REPL (`bin/brs.cli.js`) (#181)
+* Added support for `.bpk` encrypted package file (#188)
+* Added support optional chaining operators: `?.`, `?(`, `?[`, and `.@` (#176)
+* Moved `models` list to API library and updated `serialNumber` format
+* Added new API event `registry`
+* Added check for `break` debug command during the `roMessagePort` loop
+* Added code to pause sound when Micro Debugger is triggered (does not affect wav)
+* Added option to stop on Micro Debugger when a crash happens (#198)
+* Added partial try/catch implementation (#195)
+* Improved error handling and added warning for RSG usage
+* Added stub `roAppMemoryMonitor` and `roDeviceInfo.enableLowGeneralMemory` (#196)
+* Added new method `getAllPurchases` and changed `doOrder` to return `false` (#178)
+* Added `formatLocation` method in the Interpreter to help show location in warning messages
+* Added Bundle Stats Analyzer and replaced dependencies to reduce package size
+* Updated default firmware to 11.0 and added new models to the list
+* Updated images and layout of sample Web application
+* Updated `roDateTime.GetTimeZoneOffset()` to consider `roDeviceInfo.GetTimeZone()` (#94)
+* Finished implementation of `ifEnum` on all array/list objects (#171)
+* Fixed multiple cascading calls for dot-chained methods (#55)
+* Fixed `roRegion` offset not being properly applied when `setWrap` was `true` (#194)
+* Fixed `Val()` function not compliant with Roku (#162)
+* Fixed duplication of exception handling messages (#126)
+* Fixed code smells and bugs based on Sonar Cloud recommendations (#169)
+* Replaced `luxon` by `day.js` on `roDateTime` and `roTimespan` (#193)
+* Replaced module `jszip` by the lighter `fflate`
+* Removing `ua-parser-js` dependency for the API
+* Bumped version of several dependencies
+* Removed Node 14.x from the build (#182)
+
+[Full Changelog][v1.0.0]
+
 <a name="v0.10.22"></a>
 
 # [v0.10.22 - New API and Boosted Performance](https://github.com/lvcabral/brs-emu/releases/tag/v0.10.22) - 10 Sep 2023
@@ -43,9 +94,7 @@ This release was a result of months of refactoring work and performance improvem
   * feat(stdlib): Add lookupCI for assocarray ([#639](https://github.com/sjbarag/brs/issues/639)) resolves [#629](https://github.com/sjbarag/brs/issues/629) 
   * fix(interp): allow functions to be typed as objects ([#659](https://github.com/sjbarag/brs/659))
 
-**Full Changelog**: https://github.com/lvcabral/brs-emu/compare/v0.9.0-emu...v0.10.22
-
-[Changes][v0.10.22]
+[Full Changelog][v0.10.22]
 
 <a name="v0.9.0-emu"></a>
 
@@ -91,7 +140,7 @@ This release brings the integration of improvements and fixes from the `brs` int
   * fix(interp): Allow Float parameters passed into function signatures expecting Double ([#394](https://github.com/sjbarag/brs/issues/394))
   * fix(interp): Allow invalid returns for signatures that return object (brs#395)
 
-[Changes][v0.9.0-emu]
+[Full Changelog][v0.9.0-emu]
 
 <a name="v0.8.1-emu"></a>
 
@@ -106,7 +155,7 @@ This release brings bug fixes, support for new Chrome security policies and the 
 * (web) Added support to [Chrome 92+ that will force **self.crossOriginIsolated**](https://developer.chrome.com/blog/enabling-shared-array-buffer/)
 * (app) Upgraded several dependencies to patch security vulnerabilities.
 
-[Changes][v0.8.1-emu]
+[Full Changelog][v0.8.1-emu]
 
 <a name="v0.8.0-emu"></a>
 
@@ -130,7 +179,7 @@ This release brings full support for channel localization. The desktop applicati
   * feat(parse): Allow `.` before indexed property access ([#357](https://github.com/sjbarag/brs/issues/357))
   * chore(cruft): Remove unused AutoBox.ts
 
-[Changes][v0.8.0-emu]
+[Full Changelog][v0.8.0-emu]
 
 <a name="v0.7.2-emu"></a>
 
@@ -157,7 +206,7 @@ This release brings full support for channel localization. The desktop applicati
 * (doc) Updated [list of emulator limitations](https://github.com/lvcabral/brs-emu/blob/master/docs/limitations.md)
 * (doc,app) Added [desktop app build documentation](https://github.com/lvcabral/brs-emu-app/blob/master/docs/build-from-source.md)
 
-[Changes][v0.7.2-emu]
+[Full Changelog][v0.7.2-emu]
 
 <a name="v0.6.0-emu"></a>
 
@@ -172,7 +221,7 @@ This release brings full support for channel localization. The desktop applicati
 * (brs) Implemented `roAudioPlayerEvent` and updated `roMessagePort` to support it
 * (doc) Updated [list of emulator limitations](https://github.com/lvcabral/brs-emu/blob/master/docs/limitations.md)
 
-[Changes][v0.6.0-emu]
+[Full Changelog][v0.6.0-emu]
 
 <a name="v0.5.0-emu"></a>
 
@@ -195,7 +244,7 @@ This version brings the first release of the desktop application and several fix
   * feat(extension): Add _brs_.runInScope ([#326](https://github.com/sjbarag/brs/issues/326))
   * chore(naming): rename src/mocks/ -> src/extensions/ ([#325](https://github.com/sjbarag/brs/issues/325))
 
-[Changes][v0.5.0-emu]
+[Full Changelog][v0.5.0-emu]
 
 <a name="v0.4.0-emu"></a>
 
@@ -219,7 +268,7 @@ This release has the following changes:
 * Implemented roScreen methods SetPort(), GetPng() and GetByteArray()
 * Fixed `for loop` issue that should not process loop when step is on the wrong direction of the start-end parameters [#310](https://github.com/sjbarag/brs/issues/310) ([#311](https://github.com/sjbarag/brs/issues/311))
 
-[Changes][v0.4.0-emu]
+[Full Changelog][v0.4.0-emu]
 
 
 <a name="v0.3.0-emu"></a>
@@ -246,7 +295,7 @@ This releases adds a few font related features as follows:
 * Fixed [#32](https://github.com/lvcabral/brs-emu/issues/32) Changed default font loading code to use relative path
 * Fixed [#30](https://github.com/lvcabral/brs-emu/issues/30) Moved the screen clear code to run before the splash
 
-[Changes][v0.3.0-emu]
+[Full Changelog][v0.3.0-emu]
 
 <a name="v0.2.0-emu"></a>
 
@@ -261,7 +310,7 @@ This releases adds a few font related features as follows:
 
 Included a new dependency to [opentype.js](https://www.npmjs.com/package/opentype.js) package to parse font files.
 
-[Changes][v0.2.0-emu]
+[Full Changelog][v0.2.0-emu]
 
 <a name="v0.1.0-emu"></a>
 
@@ -292,8 +341,9 @@ The following is the list of components implemented (some partially or just mock
 * roXMLElement.ts
 * roXMLList.ts
 
-[Changes][v0.1.0-emu]
+[Full Changelog][v0.1.0-emu]
 
+[v1.0.0]: https://github.com/lvcabral/brs-engine/compare/v0.10.22...v1.0.0
 [v0.10.22]: https://github.com/lvcabral/brs-emu/compare/v0.9.0-emu...v0.10.22
 [v0.9.0-emu]: https://github.com/lvcabral/brs-emu/compare/v0.8.1-emu...v0.9.0-emu
 [v0.8.1-emu]: https://github.com/lvcabral/brs-emu/compare/v0.8.0-emu...v0.8.1-emu
