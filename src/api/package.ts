@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -8,14 +8,14 @@
 import { addSound, audioCodecs } from "./sound";
 import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
 import { inBrowser, bufferToBase64, parseCSV, SubscribeCallback } from "./util";
-import { unzipSync, zipSync, strFromU8, Zippable, Unzipped } from "fflate";
-import models from "../common/models.csv";
+import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
+import models from "../worker/common/models.csv";
 
 // Default Device Data
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
 export const deviceData = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
-    friendlyName: "BrightScript Emulator Library",
+    friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "BSC.00E04193A", // v11.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
@@ -75,9 +75,7 @@ export function loadAppZip(fileName: string, file: any, callback: Function) {
     try {
         currentZip = unzipSync(new Uint8Array(file));
     } catch (e: any) {
-        const msg = `[api] Error reading ${fileName}: ${e.message}`;
-        console.error(msg);
-        notifyAll("error", msg);
+        notifyAll("error", `[package] Error reading ${fileName}: ${e.message}`);
         currentApp.running = false;
         return;
     }
@@ -86,16 +84,12 @@ export function loadAppZip(fileName: string, file: any, callback: Function) {
         try {
             processManifest(strFromU8(manifest));
         } catch (e: any) {
-            const msg = `[api] Error uncompressing manifest: ${e.message}`;
-            console.error(msg);
             currentApp.running = false;
-            notifyAll("error", msg);
+            notifyAll("error", `[package] Error uncompressing manifest: ${e.message}`);
         }
     } else {
-        const msg = "[api] Invalid App Package: missing manifest.";
-        console.error(msg);
         currentApp.running = false;
-        notifyAll("error", msg);
+        notifyAll("error", "[package] Invalid App Package: missing manifest.");
         return;
     }
     binId = 0;
@@ -123,6 +117,10 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ url: relativePath, id: srcId, type: "source" });
         source.push(strFromU8(fileData));
         srcId++;
+    } else if (lcasePath === "source/var") {
+        paths.push({ url: relativePath, id: srcId, type: "text" });
+        txts.push(strFromU8(fileData));
+        txtId++;
     } else if (lcasePath === "manifest" || ["csv", "xml", "json", "txt", "ts"].includes(ext)) {
         paths.push({ url: relativePath, id: txtId, type: "text" });
         txts.push(strFromU8(fileData));
@@ -136,7 +134,7 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         }
         audId++;
     } else {
-        const binType = lcasePath === "source" ? "pcode" : "binary";
+        const binType = lcasePath === "source/data" ? "pcode" : "binary";
         paths.push({ url: relativePath, id: binId, type: binType });
         bins.push(fileData.buffer);
         binId++;
@@ -209,10 +207,10 @@ function parseManifest(contents: string) {
 
             let equals = line.indexOf("=");
             if (equals === -1) {
-                console.error(
-                    `[manifest:${
-                        index + 1
-                    }] No '=' detected.  Manifest attributes must be of the form 'key=value'.`
+                const pos = `${index + 1},0-${line.length}`;
+                notifyAll(
+                    "warning",
+                    `manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`
                 );
             }
             return [line.slice(0, equals), line.slice(equals + 1)];
@@ -230,19 +228,20 @@ function parseManifest(contents: string) {
 }
 
 // Remove the source code and replace by encrypted pcode returning new zip
-export function updateAppZip(source: Uint8Array) {
+export function updateAppZip(source: Uint8Array, iv: string) {
     let newZip: Zippable = {};
     for (const filePath in currentZip) {
         if (!filePath.toLowerCase().startsWith("source")) {
             newZip[filePath] = currentZip[filePath];
         }
-        newZip["source"] = [source, { level: 0 }];
+        newZip["source/data"] = [source, { level: 0 }];
+        newZip["source/var"] = [strToU8(iv), { level: 0 }];
     }
     return zipSync(newZip, { level: 6 });
 }
 
 // Create App Payload
-export function createPayload(timeOut?: number) {
+export function createPayload(timeOut?: number, entryPoint?: boolean) {
     if (!timeOut) {
         timeOut = splashTimeout;
     }
@@ -265,6 +264,8 @@ export function createPayload(timeOut?: number) {
         texts: txts,
         binaries: bins,
         password: currentApp.password,
+        entryPoint: entryPoint,
+        stopOnCrash: currentApp.debugOnCrash,
     };
 }
 
@@ -283,6 +284,7 @@ function createCurrentApp() {
         execSource: "auto-run-dev",
         password: "",
         clearDisplay: true,
+        debugOnCrash: false,
         running: false,
     };
 }

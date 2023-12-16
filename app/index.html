@@ -5,80 +5,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' data: blob: 'self' 
+    <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' data: blob: 'self'
         https://fonts.googleapis.com
         https://fonts.gstatic.com
         https://www.googletagmanager.com
         https://www.google-analytics.com;">
-    <title>BrightScript Emulator</title>
+    <title>BrightScript Engine</title>
     <link href="css/default.css" rel="stylesheet" type="text/css" />
     <link href='https://fonts.googleapis.com/css?family=Maven+Pro|Muli|Istok+Web' rel='stylesheet' type='text/css' />
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
 </head>
 
 <body>
-    <a href="https://github.com/lvcabral/brs-emu/"><img style="position: absolute; top: 0; right: 0; border: 0;"
-            src="images/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
     <div id="container">
-        <h2>BrightScript Emulator :: v<span id="libVersion"></span> Beta
-            <hr>
-        </h2>
+        <a href="https://github.com/lvcabral/brs-engine/"><img style="position: absolute; top: 0; right: 0; border: 0;"
+            src="images/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
         <div style="position: relative; left: 0px; top: 0px">
             <img class="img" src="images/brightscript-tv.png" width="1252" height="650" alt="tv background" />
             <img id="loading" src="images/loading.gif" width="854px" height="480px" alt="loading..." />
             <div id="stats"></div>
             <canvas id="display" width="854px" height="480px"></canvas>
-            <a href="#" onclick="loadZip('channels/Rect-Bounce.zip')">
-                <img id="channel1" src="images/rect-bounce-icon.png" title="Open Rectangle Bounce demo app" alt="Reclangle Bounce app icon" />
-            </a>
-            <a href="#" onclick="loadZip('channels/Ball-Boing.zip')">
-                <img id="channel2" src="images/ball-boing-icon.png" title="Open Ball Boing demo app" alt="Ball Boing app icon" />
-            </a>
-            <a href="#" onclick="loadZip('channels/Collisions.zip')">
-                <img id="channel3" src="images/collisions-icon.png" title="Open Sprite Collisions demo app" alt="Sprite Collision app icon" />
-            </a>
+            <img id="channel1" src="images/icons/rect-bounce-icon.png" title="Open Rectangle Bounce demo app" alt="Rectangle Bounce app icon" onclick="loadZip('channels/Rect-Bounce.zip')" style="cursor: pointer;" />
+            <img id="channel2" src="images/icons/ball-boing-icon.png" title="Open Ball Boing demo app" alt="Ball Boing app icon" onclick="loadZip('channels/Ball-Boing.zip')" style="cursor: pointer;" />
+            <img id="channel3" src="images/icons/collisions-icon.png" title="Open Sprite Collisions demo app" alt="Sprite Collision app icon" onclick="loadZip('channels/Collisions.zip')" style="cursor: pointer;" />
             <span id="channelInfo"></span>
             <input type="file" id="file" accept=".brs,.zip,.bpk" style="display: none;" />
             <input type="button" id="fileButton" class="fileButton" value="Open a ZIP, BPK or BRS file..." />
+            <br /><br /><br /><br /><br /><br /><br />
+            <div id="expand-new" style="text-align: center;">
+                <img src="./images/expand-new.png" title="Expand Project Information" alt="expand icon" width="298" height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
+            </div>
+            <div id="expand" style="text-align: center; display: none;">
+                <img src="./images/expand.png" title="Expand Project Information" alt="expand icon" width="298" height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
+            </div>
+            <div id="collapse" style="text-align: center; display: none;">
+                <img src="./images/collapse.png" title="Hide Project Information" alt="collapse icon" width="298" height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
+            </div>
         </div>
-        <br /><br /><br /><br /><br /><br />
+        <div id="details" style="display: none;">
+            <hr>
+            <img src="./images/icon.png" alt="brs-engine icon" width="48" height="48" style="float: right; margin-top: 1px;" />
+            <h2>BrightScript Simulation Engine :: v<span id="libVersion"></span>
+                <hr>
+            </h2>
+            <h3>How to Use the BrightScript TV</h3>
+            <p>&ndash;&nbsp;Click on any app icon in the BrightScript TV menu screen or load your own app or code using the purple button above.</p>
+            <p>&ndash;&nbsp;When an app is running, you can make it <b>full screen</b> by double-clicking on the display.</p>
+            <p>&ndash;&nbsp;Use your keyboard to navigate on the games and apps, the image you see on the right side, shows what keys
+                that are mapped to the Roku remote control buttons.</p>
 
-        <h3>How to Use the BrightScript Emulator</h3>
-        <p>&ndash;&nbsp;Click on any app icon in the BrightScript TV menu screen or load your own app or code using the purple button above.</p>
-        <p>&ndash;&nbsp;When an app is running, you can make it <b>full screen</b> by double-clicking on the emulator display.</p>
-        <p>&ndash;&nbsp;Use your keyboard to navigate on the games and apps, the image you see on the right side, shows what keys 
-            that are mapped to the Roku remote control buttons.</p>
+            <h3>Notes for BrightScript Developers</h3>
+            <p>You can see the debug messages from <code>print</code> statements in your code using the <em>browser
+                console</em>, just right click anywhere in the page and select <em>Inspect (Ctrl+Shift+i)</em>.
+                Exceptions from the engine library will be shown there too.</p>
+            <p>If you added a break point (<b>stop</b>) in your code, you can also debug using the <em>browser console</em>,
+                just send the commands using: <code>brs.debug("help")</code></p>
+            <p>The Roku `registry` data is stored on the browser Local Storage and you can inspect it using the Developer Tools.</p>
+            <p>For a better debugging experience, is recommended to use the engine desktop application integrated with <b>Visual Studio Code</b>, you will
+            find more details in the links below.</p>
 
-        <h3>Notes for BrightScript Developers</h3>
-        <p>You can see the debug messages from <code>print</code> statements in your code using the <em>browser
-            console</em>, just right click anywhere in the page and select <em>Inspect (Ctrl+Shift+i)</em>. 
-            Exceptions from the emulator will be shown there too.</p>
-        <p>If you added a break point (<b>stop</b>) in your code, you can also debug using the <em>browser console</em>, 
-            just send the commands using: <code>brsEmu.debug("help")</code></p>
-        <p>The Roku `registry` data is stored on the browser Local Storage and you can inspect it using the Developer Tools.</p>
-        <p>For a better debugging experience, is recommended to use the emulator desktop app integrated with <b>Visual Studio Code</b>, you will
-        find more details in the links below.</p>
-
-        <h3>Documentation and Downloads</h3>
-        <p>To learn more about the project visit the repository at:
-            <a href="https://github.com/lvcabral/brs-emu/#readme">https://github.com/lvcabral/brs-emu/</a>
-        </p>
-        <p>To download the <b>Desktop Applications</b> for <b>Windows, macOS and Linux</b> go to the
-            <a href="https://github.com/lvcabral/brs-emu-app/releases">releases page</a>.
-        </p>
-        <p>You can download the source code of this project in either <a
-                href="https://github.com/lvcabral/brs-emu/zipball/master">zip</a> or <a
-                href="https://github.com/lvcabral/brs-emu/tarball/master">tar</a> formats.
-        </p>
-        <p>You can also clone the project with <a href="http://git-scm.com">Git</a> by running:
-        <pre>$ git clone https://github.com/lvcabral/brs-emu</pre>
-        </p>
-        <div class="footer">
-            <hr>Copyright © 2019-2023 by <a href="https://lvcabral.com">Marcelo Lv Cabral</a>
-            - contact: <a href="https://twitter.com/lvcabral">@lvcabral</a>
+            <h3>Documentation and Downloads</h3>
+            <p>To learn more about the project visit the repository at:
+                <a href="https://github.com/lvcabral/brs-engine/#readme">https://github.com/lvcabral/brs-engine/</a>
+            </p>
+            <p>To download the <b>Desktop Applications</b> for <b>Windows, macOS and Linux</b> go to the
+                <a href="https://github.com/lvcabral/brs-emu-app/releases">releases page</a>.
+            </p>
+            <p>You can download the source code of this project in either <a
+                    href="https://github.com/lvcabral/brs-engine/zipball/master">zip</a> or <a
+                    href="https://github.com/lvcabral/brs-engine/tarball/master">tar</a> formats.
+            </p>
+            <p>You can also clone the project with <a href="http://git-scm.com">Git</a> by running:
+            <pre>$ git clone https://github.com/lvcabral/brs-engine</pre>
+            </p>
+            <div class="footer">
+                <hr>Copyright © 2019-2023 by <a href="https://lvcabral.com">Marcelo Lv Cabral</a>
+            </div>
         </div>
     </div>
-    <script type="text/javascript" src="lib/brsEmu.js"></script>
+    <script type="text/javascript" src="lib/brs.api.js"></script>
     <script type="text/javascript" src="index.js"></script>
 </body>
 
