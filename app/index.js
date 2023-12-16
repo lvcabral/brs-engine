@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -18,9 +18,9 @@ const channel3 = document.getElementById("channel3");
 // Channel status object
 let currentChannel = { id: "", running: false };
 
-// Start the emulator
+// Start the engine
 channelInfo.innerHTML = "<br/>";
-// Custom Device Configuration (see /api/index.ts for all fields)
+// Custom device configuration (see /api/index.ts for all fields)
 const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
     locale: "en_US", // Used if channel supports localization
@@ -39,14 +39,14 @@ customKeys.set("PageUp", "ignore"); // do not handle on browser
 customKeys.set("PageDown", "ignore"); // do not handle on browser
 customKeys.set("Digit8", "info");
 
-// Initialize Device Emulator and subscribe to events
-libVersion.innerHTML = brsEmu.getVersion();
-brsEmu.initialize(customDeviceInfo, {
+// Initialize device and subscribe to events
+libVersion.innerHTML = brs.getVersion();
+brs.initialize(customDeviceInfo, {
     debugToConsole: true,
     customKeys: customKeys,
     showStats: true,
 });
-brsEmu.subscribe("app", (event, data) => {
+brs.subscribe("app", (event, data) => {
     if (event === "loaded") {
         currentChannel = data;
         fileButton.style.visibility = "hidden";
@@ -97,13 +97,13 @@ fileSelector.onchange = function () {
                 password = prompt("Please enter the password to decrypt the package.");
             }
             if (password !== null) {
-                brsEmu.execute(file.name, evt.target.result, {
+                brs.execute(file.name, evt.target.result, {
                     clearDisplayOnExit: true,
                     muteSound: false,
                     execSource: "open_app_button",
                     password: password,
+                    debugOnCrash: true,
                 });
-                channelIcons("hidden");
             }
         };
         reader.onerror = function (evt) {
@@ -128,7 +128,7 @@ function loadZip(zip) {
             if (response.status === 200 || response.status === 0) {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
-                        brsEmu.execute(zip, zipData, { execSource: "homescreen" });
+                        brs.execute(zip, zipData, { execSource: "homescreen" });
                         display.focus();
                     });
                 });
@@ -187,4 +187,21 @@ function parseVersionString(str) {
         minor: parseInt(vArray[1]) || 0,
         patch: parseInt(vArray[2]) || 0,
     };
+}
+
+function toggleDiv(divId) {
+    const objDiv = document.getElementById(divId);
+    const butExpNew = document.getElementById("expand-new");
+    const butExp = document.getElementById("expand");
+    const butCol = document.getElementById("collapse");
+    if (objDiv.style.display == "") {
+        objDiv.style.display = "none";
+        butExp.style.display = "";
+        butCol.style.display = "none";
+    } else {
+        objDiv.style.display = "";
+        butExp.style.display = "none";
+        butExpNew.style.display = "none";
+        butCol.style.display = "";
+    }
 }

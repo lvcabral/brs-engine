@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -12,8 +12,7 @@ import {
     dataBufferIndex,
     dataBufferSize,
     getNow,
-    getApiPath,
-    getEmuPath,
+    getWorkerLibPath,
     isElectron,
     inBrowser,
 } from "./util";
@@ -67,12 +66,12 @@ import {
     seekSound,
     muteSound,
     isMuted,
+    subscribeSound,
 } from "./sound";
-import { version } from "../../package.json";
+import packageInfo from "../../package.json";
 
 // Interpreter Library
-const brsApiLib = getApiPath().split("/").pop();
-const brsEmuLib = getEmuPath();
+const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
 
 // Package API
@@ -88,7 +87,7 @@ let sharedArray: Int32Array;
 // API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
     if (customDeviceInfo) {
-        const invalidKeys = ["registry", "models", "audioCodecs", "fonts"];
+        const invalidKeys = ["registry", "models", "audioCodecs", "fonts", "password"];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {
                 delete customDeviceInfo[key];
@@ -97,7 +96,11 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         Object.assign(deviceData, customDeviceInfo);
     }
     const storage: Storage = window.localStorage;
-    console.info(`${deviceData.friendlyName} - ${brsApiLib} v${version}`);
+    let initMsg = `${packageInfo.description} - v${packageInfo.version}`;
+    /// #if DEBUG
+    initMsg += " - dev";
+    /// #endif
+    console.info(initMsg);
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
@@ -117,7 +120,8 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-        console.warn(
+        apiException(
+            "warning",
             `[api] Remote control emulation will not work as SharedArrayBuffer is not enabled, ` +
                 `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
         );
@@ -129,7 +133,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
     // Subscribe Events
-    subscribeDisplay("app", (event: string, data: any) => {
+    subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
             deviceData.displayMode = data;
             if (currentApp.running) {
@@ -138,22 +142,35 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
             notifyAll("display", data);
         } else if (["redraw", "resolution"].includes(event)) {
             notifyAll(event, data);
+        } else if (["error", "warning"].includes(event)) {
+            apiException(event, data);
         }
     });
-    subscribeControl("app", (event: string) => {
+    subscribeControl("api", (event: string, data: any) => {
         if (event === "home") {
             if (currentApp.running) {
                 terminate("EXIT_USER_NAV");
                 playWav(0);
             }
+        } else if (["error", "warning"].includes(event)) {
+            apiException(event, data);
         }
     });
-    subscribePackage("app", (event: string, data: any) => {
-        notifyAll(event, data);
+    subscribeSound("api", (event: string, data: any) => {
+        if (["error", "warning"].includes(event)) {
+            apiException(event, data);
+        }
+    });
+    subscribePackage("api", (event: string, data: any) => {
+        if (["error", "warning"].includes(event)) {
+            apiException(event, data);
+        } else {
+            notifyAll(event, data);
+        }
     });
 
     // Force library download during initialization
-    brsWorker = new Worker(brsEmuLib);
+    brsWorker = new Worker(brsWrkLib);
 }
 
 // Observers Handling
@@ -186,6 +203,9 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     if (typeof options.password === "string") {
         currentApp.password = options.password;
     }
+    if (typeof options.debugOnCrash === "boolean") {
+        currentApp.debugOnCrash = options.debugOnCrash;
+    }
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
@@ -199,10 +219,12 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     }
 }
 
-// Restore emulator state and terminate Worker
+// Restore engine state and terminate Worker
 export function terminate(reason: string) {
-    deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
-    deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
+    if (currentApp.running) {
+        deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
+        deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
+    }
     if (currentApp.clearDisplay) {
         clearDisplay();
     }
@@ -214,12 +236,17 @@ export function terminate(reason: string) {
     notifyAll("closed", reason);
 }
 
+// Returns API library version
+export function getVersion() {
+    return packageInfo.version;
+}
+
 // Returns Device Serial Number based on Device Model and library version
 export function getSerialNumber() {
     const device = deviceData.models.get(deviceData.deviceModel);
     const prefix = device ? device[4] : "X0";
     let verPlain = "";
-    version.split(".").forEach((element) => {
+    packageInfo.version.split(".").forEach((element) => {
         verPlain += element.replace(/\D/g, "").padStart(2, "0");
     });
     return `${prefix}0BRS${verPlain.substring(0, 6)}`;
@@ -325,11 +352,6 @@ export function debug(command: string): boolean {
     return handled;
 }
 
-// API Library version and device Serial Number
-export function getVersion() {
-    return version;
-}
-
 // Helper Functions
 function debugExpression(expr: string) {
     // Store string on SharedArrayBuffer
@@ -362,7 +384,7 @@ function resetArray() {
 // Open source file
 function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
-    reader.onload = function (progressEvent) {
+    reader.onload = function (_) {
         manifestMap.clear();
         currentApp.id = "brs";
         currentApp.title = fileName;
@@ -373,16 +395,16 @@ function loadSourceCode(fileName: string, fileData: any) {
         paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
         clearDisplay();
         notifyAll("loaded", currentApp);
-        runApp(createPayload(0));
+        runApp(createPayload(1, false));
     };
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
-// Execute Emulator Web Worker
+// Execute Engine Web Worker
 function runApp(payload: object) {
     showDisplay();
     currentApp.running = true;
-    brsWorker = new Worker(brsEmuLib);
+    brsWorker = new Worker(brsWrkLib);
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
@@ -407,56 +429,59 @@ function workerCallback(event: MessageEvent) {
         addPlaylist(event.data);
     } else if (event.data.audioPath && inBrowser) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
-    } else if (event.data === "play") {
-        playSound();
-    } else if (event.data === "stop") {
-        stopSound();
-    } else if (event.data === "pause") {
-        pauseSound();
-    } else if (event.data === "resume") {
-        resumeSound();
-    } else if (event.data.slice(0, 4) === "loop") {
-        const loop = event.data.split(",")[1];
-        if (loop) {
-            setLoop(loop === "true");
-        } else {
-            console.warn(`[api] Missing loop parameter: ${event.data}`);
+    } else if (typeof event.data !== "string") {
+        // All messages beyond this point must be csv string
+        apiException("warning", `[api] Invalid worker message: ${event.data}`);
+    } else if (event.data.startsWith("audio,")) {
+        const data = event.data.split(",");
+        if (data[1] === "play") {
+            playSound();
+        } else if (data[1] === "stop") {
+            if (data[2]) {
+                stopWav(data[2]);
+            } else {
+                stopSound();
+            }
+        } else if (data[1] === "pause") {
+            pauseSound();
+        } else if (data[1] === "resume") {
+            resumeSound();
+        } else if (data[1] === "loop") {
+            if (data[2]) {
+                setLoop(data[2] === "true");
+            } else {
+                apiException("warning", `[api] Missing loop parameter: ${event.data}`);
+            }
+        } else if (data[1] === "next") {
+            const newIndex = data[2];
+            if (newIndex && !isNaN(parseInt(newIndex))) {
+                setNext(parseInt(newIndex));
+            } else {
+                apiException("warning", `[api] Invalid next index: ${event.data}`);
+            }
+        } else if (data[1] === "seek") {
+            const position = data[2];
+            if (position && !isNaN(parseInt(position))) {
+                seekSound(parseInt(position));
+            } else {
+                apiException("warning", `[api] Invalid seek position: ${event.data}`);
+            }
+        } else if (data[1] === "trigger") {
+            if (data.length >= 5) {
+                triggerWav(data[2], parseInt(data[3]), parseInt(data[4]));
+            } else {
+                apiException("warning", `[api] Missing Trigger parameters: ${event.data}`);
+            }
         }
-    } else if (event.data.slice(0, 4) === "next") {
-        const newIndex = event.data.split(",")[1];
-        if (newIndex && !isNaN(parseInt(newIndex))) {
-            setNext(parseInt(newIndex));
-        } else {
-            console.warn(`[api] Invalid next index: ${event.data}`);
-        }
-    } else if (event.data.slice(0, 4) === "seek") {
-        const position = event.data.split(",")[1];
-        if (position && !isNaN(parseInt(position))) {
-            seekSound(parseInt(position));
-        } else {
-            console.warn(`[api] Invalid seek position: ${event.data}`);
-        }
-    } else if (event.data.slice(0, 7) === "trigger") {
-        const trigger: string[] = event.data.split(",");
-        if (trigger.length >= 4) {
-            triggerWav(trigger[1], parseInt(trigger[2]), parseInt(trigger[3]));
-        } else {
-            console.warn(`[api] Missing Trigger parameters: ${event.data}`);
-        }
-    } else if (event.data.slice(0, 5) === "stop,") {
-        stopWav(event.data.split(",")[1]);
-    } else if (event.data.slice(0, 6) === "print,") {
+    } else if (event.data.startsWith("print,")) {
         deviceDebug(event.data);
-    } else if (event.data.slice(0, 7) === "beacon,") {
+    } else if (event.data.startsWith("beacon,")) {
         deviceDebug(event.data);
-    } else if (event.data.slice(0, 4) === "log,") {
-        // for backward compatibility with v0.9.1
+    } else if (event.data.startsWith("warning,")) {
         deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.slice(0, 8) === "warning,") {
+    } else if (event.data.startsWith("error,")) {
         deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.slice(0, 6) === "error,") {
-        deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.slice(0, 6) === "debug,") {
+    } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
         enableControl(level === "continue");
         if (level === "stop") {
@@ -465,11 +490,17 @@ function workerCallback(event: MessageEvent) {
             resumeSound(false);
         }
         notifyAll("debug", { level: level });
-    } else if (event.data.slice(0, 4) === "end,") {
+    } else if (event.data.startsWith("start,")) {
+        const title = currentApp.title;
+        const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
+        const subName = event.data.split(",")[1];
+        deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
+        deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id 'dev'\r\n`);
+    } else if (event.data.startsWith("end,")) {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {
         notifyAll("reset");
-    } else if (event.data.slice(0, 8) === "version,") {
+    } else if (event.data.startsWith("version,")) {
         notifyAll("version", event.data.slice(8));
     }
 }
@@ -489,5 +520,15 @@ function deviceDebug(data: string) {
         } else {
             console.log(content);
         }
+    }
+}
+
+// API Exceptions Handler
+function apiException(level: string, message: string) {
+    if (level === "error") {
+        console.error(message);
+        notifyAll("error", message);
+    } else {
+        console.warn(message);
     }
 }

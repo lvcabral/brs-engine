@@ -222,9 +222,12 @@ describe("end to end syntax", () => {
         await execute([resourceFile("dot-chaining.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
-            "removed number '3' from array, remaining 2",
-            "promise-like resolved to 'foo'",
+            "removed number '7' from array, remaining 6",
+            "removed number '6' from array, remaining 5",
+            "promise-like resolved to 'success'",
             "optional chaining works",
+            "param test result was: success",
+            "literal test result was: success",
         ]);
     });
 

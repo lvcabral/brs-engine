@@ -29,4 +29,6 @@ jobs:
     - name: Build
       run: |
         yarn install
+        yarn lint
+        yarn prettier
         yarn build

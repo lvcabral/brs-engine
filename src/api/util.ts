@@ -1,11 +1,11 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { main } from "../../package.json";
+import packageInfo from "../../package.json";
 
 // Shared array data types enumerator
 export enum DataType {
@@ -69,15 +69,11 @@ export function getApiPath(): string {
         const scripts = document.getElementsByTagName("script");
         return scripts[scripts.length - 1].src;
     }
-    return main;
+    return packageInfo.main;
 }
-export function getEmuPath(): string {
+export function getWorkerLibPath(): string {
     let libPath = getApiPath();
-    /// #if DEBUG
-    libPath = libPath.replace(".js", ".worker.js");
-    /// #else
-    libPath = libPath.replace(".min.js", ".worker.min.js");
-    /// #endif
+    libPath = libPath.replace(".api.js", ".worker.js");
     return libPath;
 }
 

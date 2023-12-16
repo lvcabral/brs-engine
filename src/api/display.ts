@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  BrightScript Emulator (https://github.com/lvcabral/brs-emu)
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
  *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
  *
@@ -8,7 +8,7 @@
 import { SubscribeCallback } from "./util";
 import Stats from "stats.js";
 
-// Emulator Display
+// Simulation Display
 const screenSize = { width: 1280, height: 720 };
 let display: HTMLCanvasElement | OffscreenCanvas;
 let ctx: CanvasRenderingContext2D | null;
@@ -38,8 +38,9 @@ export function initDisplayModule(mode: string, perfStats = false) {
         // Performance Statistics
         showPerfStats(perfStats);
     } else {
-        console.warn(
-            `[display] Your browser does not support OffscreenCanvas, so the emulator will not work properly, ` +
+        notifyAll(
+            "warning",
+            `[display] Your browser does not support OffscreenCanvas, so the engine will not work properly, ` +
                 `to know more visit https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas`
         );
     }
@@ -271,7 +272,7 @@ export function showPerfStats(show: boolean): boolean {
             statsDiv.appendChild(statsCanvas.dom);
             showStats = true;
         } else {
-            console.warn("[display] Missing 'Stats' div, can't display Performance Stats!");
+            notifyAll("warning", "[display] Missing 'Stats' div, can't display Performance Stats!");
             showStats = false;
         }
     }
