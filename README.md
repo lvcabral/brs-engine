@@ -2,9 +2,9 @@
 
 An intepreter for the Roku BrightScript language that runs games and apps on modern browser platforms.
 
-![GitHub](https://img.shields.io/github/license/lvcabral/brs-emu)
-[![NPM Version](https://badge.fury.io/js/brs-emu.svg?style=flat)](https://npmjs.org/package/brs-emu)
-[![Build](https://github.com/lvcabral/brs-emu/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-emu/actions/workflows/build.yml)
+![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
+[![NPM Version](https://badge.fury.io/js/brs-engine.svg?style=flat)](https://npmjs.org/package/brs-engine)
+[![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
