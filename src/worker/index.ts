@@ -44,7 +44,7 @@ if (typeof onmessage !== "undefined") {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
-        } else if (event.data instanceof SharedArrayBuffer || event.data instanceof ArrayBuffer) {
+        } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
             // Setup Control Shared Array
             shared.set("buffer", new Int32Array(event.data));
         } else {
