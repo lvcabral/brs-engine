@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { addSound, audioCodecs } from "./sound";
 import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
-import { inBrowser, bufferToBase64, parseCSV, SubscribeCallback } from "./util";
+import { bufferToBase64, parseCSV, SubscribeCallback, context } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import models from "../worker/common/models.csv";
 
@@ -129,7 +129,7 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         ["wav", "mp2", "mp3", "mp4", "m4a", "aac", "ogg", "oga", "ac3", "wma", "flac"].includes(ext)
     ) {
         paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
-        if (inBrowser) {
+        if (context.inBrowser) {
             addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
         }
         audId++;
@@ -168,7 +168,7 @@ function processManifest(content: string) {
     if (icon?.slice(0, 5) === "pkg:/") {
         iconFile = currentZip[icon.slice(5)];
         if (iconFile) {
-            if (inBrowser) {
+            if (context.inBrowser) {
                 bufferToBase64(iconFile).then(function (iconBase64: string) {
                     notifyAll("icon", iconBase64);
                 });

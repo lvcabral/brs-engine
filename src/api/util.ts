@@ -77,21 +77,24 @@ export function getWorkerLibPath(): string {
     return libPath;
 }
 
-// Check if the library is running inside Electron
-export function isElectron() {
-    // Detect the user agent when the `nodeIntegration` option is set to true
-    if (
-        typeof navigator === "object" &&
-        typeof navigator.userAgent === "string" &&
-        navigator.userAgent.indexOf("Electron") >= 0
-    ) {
-        return true;
+// Check the context where the library is running
+export const context = getContext();
+function getContext() {
+    let inApple = false;
+    if (typeof navigator !== "undefined") {
+        inApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
+    } else {
+        inApple = process.platform === "darwin";
     }
-    return false;
+    return {
+        inElectron:
+            typeof navigator === "object" &&
+            typeof navigator.userAgent === "string" &&
+            navigator.userAgent.indexOf("Electron") >= 0,
+        inBrowser: typeof window !== "undefined",
+        inApple: inApple,
+    };
 }
-
-// Check if the library is running in the Browser
-export const inBrowser = typeof window !== "undefined";
 
 // Convert Buffer to Base 64 string
 export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
