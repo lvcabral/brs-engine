@@ -52,15 +52,22 @@ const axesMap = new Map([
 ]);
 const buttonsMap = new Map([
     [0, "select"],
-    [1, "info"],
+    [1, "back"],
     [2, "rev"],
     [3, "fwd"],
-    [4, "back"],
+    [4, "info"],
+    [5, "play"],
+    [6, "instantreplay"],
     [7, "home"],
+    [8, "instantreplay"],
+    [9, "home"],
+    [10, "a"],
+    [11, "b"],
     [12, "up"],
     [13, "down"],
     [14, "left"],
     [15, "right"],
+    [16, "info"],
 ]);
 const rokuKeys: Map<string, number> = new Map([
     ["back", 0],
