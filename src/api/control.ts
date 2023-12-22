@@ -93,7 +93,6 @@ const rokuKeys: Map<string, number> = new Map([
 const controllers: Map<number, GCGamepad> = new Map();
 let sharedArray: Int32Array;
 let disableKeys: boolean = false;
-let disablePads: boolean = false;
 
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
@@ -103,8 +102,9 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     if (typeof options.disableKeys === "boolean") {
         disableKeys = options.disableKeys;
     }
-    if (typeof options.disableGamePads === "boolean") {
-        disablePads = options.disableGamePads;
+    if (!options.disableGamePads) {
+        gameControl.on("connect", gamePadOnHandler);
+        gameControl.on("disconnect", gamePadOffHandler);
     }
 }
 export function addControlKeys(newKeys: Map<string, string>) {
@@ -138,16 +138,6 @@ export function enableControl(enable: boolean) {
         } else {
             document.removeEventListener("keydown", keyDownHandler);
             document.removeEventListener("keyup", keyUpHandler);
-        }
-    }
-    if (!disablePads) {
-        if (enable) {
-            gameControl.on("connect", gamePadOnHandler);
-            gameControl.on("disconnect", gamePadOffHandler);
-        } else {
-            controllers.clear();
-            gameControl.off("connect");
-            gameControl.off("disconnect");
         }
     }
 }
