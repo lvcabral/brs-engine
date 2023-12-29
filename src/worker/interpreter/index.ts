@@ -23,6 +23,7 @@ import {
     Double,
     RoXMLElement,
     isNumberKind,
+    BrsValue,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -283,7 +284,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return this.addError(
                 new BrsError(
                     `Attempting to declare function '${statement.name.text}', but ` +
-                        `a property of that name already exists in this scope.`,
+                    `a property of that name already exists in this scope.`,
                     statement.name.location
                 )
             );
@@ -373,10 +374,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let requiredType = typeDesignators[name.charAt(name.length - 1)];
 
         if (requiredType && requiredType !== value.kind) {
-            if (requiredType === ValueKind.Int64 && value.kind === ValueKind.Int32) {
-                value = new Int64(value.getValue());
-            } else if (requiredType === ValueKind.Double && value.kind === ValueKind.Float) {
-                value = new Double(value.getValue());
+            if (this.canAutoCast(value.kind, requiredType)) {
+                value = this.autoCast(value, requiredType);
             } else {
                 return this.addError(
                     new TypeMismatch({
@@ -1089,21 +1088,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     returnedValue &&
                     this.canAutoCast(returnedValue.kind, satisfiedSignature.signature.returns)
                 ) {
-                    if (
-                        returnedValue instanceof Float ||
-                        returnedValue instanceof Double ||
-                        returnedValue instanceof Int32
-                    ) {
-                        if (satisfiedSignature.signature.returns === ValueKind.Double) {
-                            returnedValue = new Double(returnedValue.getValue());
-                        } else if (satisfiedSignature.signature.returns === ValueKind.Float) {
-                            returnedValue = new Float(returnedValue.getValue());
-                        } else if (satisfiedSignature.signature.returns === ValueKind.Int32) {
-                            returnedValue = new Int32(returnedValue.getValue());
-                        } else if (satisfiedSignature.signature.returns === ValueKind.Int64) {
-                            returnedValue = new Int64(returnedValue.getValue());
-                        }
-                    }
+                    returnedValue = this.autoCast(returnedValue, satisfiedSignature.signature.returns)
                 } else if (
                     returnedValue &&
                     satisfiedSignature.signature.returns !== ValueKind.Dynamic &&
@@ -1115,8 +1100,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             `Attempting to return value of type ${ValueKind.toString(
                                 returnedValue.kind
                             )}, ` +
-                                `but function ${callee.getName()} declares return value of type ` +
-                                ValueKind.toString(satisfiedSignature.signature.returns),
+                            `but function ${callee.getName()} declares return value of type ` +
+                            ValueKind.toString(satisfiedSignature.signature.returns),
                             returnLocation
                         )
                     );
@@ -1702,6 +1687,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
         return isNumberKind(fromKind) && isNumberKind(toKind);
     }
+
+    private autoCast(value: BrsType, requiredType: ValueKind): BrsType {
+        if (value instanceof Float || value instanceof Double || value instanceof Int32) {
+            if (requiredType === ValueKind.Double) {
+                return new Double(value.getValue());
+            } else if (requiredType === ValueKind.Float) {
+                return new Float(value.getValue());
+            } else if (requiredType === ValueKind.Int32) {
+                return new Int32(value.getValue());
+            } else if (requiredType === ValueKind.Int64) {
+                return new Int64(value.getValue());
+            }
+        }
+        return BrsInvalid.Instance;
+    }
+
 
     private isPositive(value: number | Long): boolean {
         if (value instanceof Long) {
