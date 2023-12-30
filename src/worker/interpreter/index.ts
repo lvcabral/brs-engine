@@ -284,7 +284,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return this.addError(
                 new BrsError(
                     `Attempting to declare function '${statement.name.text}', but ` +
-                    `a property of that name already exists in this scope.`,
+                        `a property of that name already exists in this scope.`,
                     statement.name.location
                 )
             );
@@ -1054,8 +1054,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 let returnedValue = (reason as Stmt.ReturnValue).value;
                 let returnLocation = (reason as Stmt.ReturnValue).location;
+                const signatureKind = satisfiedSignature.signature.returns;
 
-                if (returnedValue && satisfiedSignature.signature.returns === ValueKind.Void) {
+                if (returnedValue && signatureKind === ValueKind.Void) {
                     this.addError(
                         new Stmt.Runtime(
                             `Attempting to return value of non-void type ${ValueKind.toString(
@@ -1066,7 +1067,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
 
-                if (!returnedValue && satisfiedSignature.signature.returns !== ValueKind.Void) {
+                if (!returnedValue && signatureKind !== ValueKind.Void) {
                     this.addError(
                         new Stmt.Runtime(
                             `Attempting to return void value from function ${callee.getName()} with non-void return type.`,
@@ -1079,20 +1080,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     returnedValue &&
                     isBoxable(returnedValue) &&
                     returnedValue.kind !== ValueKind.Invalid &&
-                    satisfiedSignature.signature.returns === ValueKind.Object
+                    signatureKind === ValueKind.Object
                 ) {
                     returnedValue = returnedValue.box();
                 }
 
-                if (
-                    returnedValue &&
-                    this.canAutoCast(returnedValue.kind, satisfiedSignature.signature.returns)
-                ) {
-                    returnedValue = this.autoCast(returnedValue, satisfiedSignature.signature.returns)
+                if (returnedValue && this.canAutoCast(returnedValue.kind, signatureKind)) {
+                    returnedValue = this.autoCast(returnedValue, signatureKind);
                 } else if (
                     returnedValue &&
-                    satisfiedSignature.signature.returns !== ValueKind.Dynamic &&
-                    satisfiedSignature.signature.returns !== returnedValue.kind &&
+                    signatureKind !== ValueKind.Dynamic &&
+                    signatureKind !== returnedValue.kind &&
                     returnedValue.kind !== ValueKind.Invalid
                 ) {
                     this.addError(
@@ -1100,8 +1098,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             `Attempting to return value of type ${ValueKind.toString(
                                 returnedValue.kind
                             )}, ` +
-                            `but function ${callee.getName()} declares return value of type ` +
-                            ValueKind.toString(satisfiedSignature.signature.returns),
+                                `but function ${callee.getName()} declares return value of type ` +
+                                ValueKind.toString(signatureKind),
                             returnLocation
                         )
                     );
@@ -1705,7 +1703,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         return BrsInvalid.Instance;
     }
-
 
     private isPositive(value: number | Long): boolean {
         if (value instanceof Long) {
