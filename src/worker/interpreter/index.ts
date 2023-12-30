@@ -23,7 +23,6 @@ import {
     Double,
     RoXMLElement,
     isNumberKind,
-    BrsValue,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
