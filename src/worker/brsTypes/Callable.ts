@@ -276,7 +276,8 @@ export class Callable implements Brs.BrsValue {
 
             if (
                 expected.type.kind === Brs.ValueKind.Dynamic ||
-                expected.type.kind === Brs.ValueKind.Object
+                expected.type.kind === Brs.ValueKind.Object || 
+                received.kind === Brs.ValueKind.Invalid
             ) {
                 return;
             }
