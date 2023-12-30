@@ -373,10 +373,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let requiredType = typeDesignators[name.charAt(name.length - 1)];
 
         if (requiredType && requiredType !== value.kind) {
-            if (requiredType === ValueKind.Int64 && value.kind === ValueKind.Int32) {
-                value = new Int64(value.getValue());
-            } else if (requiredType === ValueKind.Double && value.kind === ValueKind.Float) {
-                value = new Double(value.getValue());
+            if (this.canAutoCast(value.kind, requiredType)) {
+                value = this.autoCast(value, requiredType);
             } else {
                 return this.addError(
                     new TypeMismatch({
@@ -1055,8 +1053,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 let returnedValue = (reason as Stmt.ReturnValue).value;
                 let returnLocation = (reason as Stmt.ReturnValue).location;
+                const signatureKind = satisfiedSignature.signature.returns;
 
-                if (returnedValue && satisfiedSignature.signature.returns === ValueKind.Void) {
+                if (returnedValue && signatureKind === ValueKind.Void) {
                     this.addError(
                         new Stmt.Runtime(
                             `Attempting to return value of non-void type ${ValueKind.toString(
@@ -1067,7 +1066,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
 
-                if (!returnedValue && satisfiedSignature.signature.returns !== ValueKind.Void) {
+                if (!returnedValue && signatureKind !== ValueKind.Void) {
                     this.addError(
                         new Stmt.Runtime(
                             `Attempting to return void value from function ${callee.getName()} with non-void return type.`,
@@ -1080,34 +1079,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     returnedValue &&
                     isBoxable(returnedValue) &&
                     returnedValue.kind !== ValueKind.Invalid &&
-                    satisfiedSignature.signature.returns === ValueKind.Object
+                    signatureKind === ValueKind.Object
                 ) {
                     returnedValue = returnedValue.box();
                 }
 
-                if (
-                    returnedValue &&
-                    this.canAutoCast(returnedValue.kind, satisfiedSignature.signature.returns)
-                ) {
-                    if (
-                        returnedValue instanceof Float ||
-                        returnedValue instanceof Double ||
-                        returnedValue instanceof Int32
-                    ) {
-                        if (satisfiedSignature.signature.returns === ValueKind.Double) {
-                            returnedValue = new Double(returnedValue.getValue());
-                        } else if (satisfiedSignature.signature.returns === ValueKind.Float) {
-                            returnedValue = new Float(returnedValue.getValue());
-                        } else if (satisfiedSignature.signature.returns === ValueKind.Int32) {
-                            returnedValue = new Int32(returnedValue.getValue());
-                        } else if (satisfiedSignature.signature.returns === ValueKind.Int64) {
-                            returnedValue = new Int64(returnedValue.getValue());
-                        }
-                    }
+                if (returnedValue && this.canAutoCast(returnedValue.kind, signatureKind)) {
+                    returnedValue = this.autoCast(returnedValue, signatureKind);
                 } else if (
                     returnedValue &&
-                    satisfiedSignature.signature.returns !== ValueKind.Dynamic &&
-                    satisfiedSignature.signature.returns !== returnedValue.kind &&
+                    signatureKind !== ValueKind.Dynamic &&
+                    signatureKind !== returnedValue.kind &&
                     returnedValue.kind !== ValueKind.Invalid
                 ) {
                     this.addError(
@@ -1116,7 +1098,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                                 returnedValue.kind
                             )}, ` +
                                 `but function ${callee.getName()} declares return value of type ` +
-                                ValueKind.toString(satisfiedSignature.signature.returns),
+                                ValueKind.toString(signatureKind),
                             returnLocation
                         )
                     );
@@ -1221,6 +1203,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let boxedSource = isBoxable(source) ? source.box() : source;
         if (boxedSource instanceof BrsComponent) {
             try {
+                if (boxedSource.interfaces.has(expression.name.text.toLowerCase())) {
+                    return boxedSource; // returns the full boxed object, currently there is no way to filter interface methods.
+                }
                 return boxedSource.getMethod(expression.name.text) ?? BrsInvalid.Instance;
             } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
@@ -1701,6 +1686,21 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
         return isNumberKind(fromKind) && isNumberKind(toKind);
+    }
+
+    private autoCast(value: BrsType, requiredType: ValueKind): BrsType {
+        if (value instanceof Float || value instanceof Double || value instanceof Int32) {
+            if (requiredType === ValueKind.Double) {
+                return new Double(value.getValue());
+            } else if (requiredType === ValueKind.Float) {
+                return new Float(value.getValue());
+            } else if (requiredType === ValueKind.Int32) {
+                return new Int32(value.getValue());
+            } else if (requiredType === ValueKind.Int64) {
+                return new Int64(value.getValue());
+            }
+        }
+        return BrsInvalid.Instance;
     }
 
     private isPositive(value: number | Long): boolean {

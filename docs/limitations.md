@@ -8,12 +8,9 @@ There are several features from the **BrightScript** language and components tha
 * Video playback or streaming are not yet supported.
 * Statements `Goto` and `Throw` are not supported.
 * Statements `Try..Catch` are partially supported, only the `Try` section is executed, `Catch` part is ignored and the exception is still raised.
-* Calling methods using the interface like `obj.ifDraw2d.getPng()` is not supported, call it directly `obj.getPng()`.
 * It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
 * Do not use the same `roMessagePort` instance with different objects (`roScreen`, `roAudioPlayer` etc.) create one per object type.
 * Multi-dimensional arrays cannot be accessed as `array[x, y]` use the notation `array[x][y]` instead.
-* Send `Invalid` as a function parameter when it explicitly defines the type, generates an error. If `Invalid` is possible remove type declaration.
-* In a `for...next` loop the usage of the notation `next <variable>` is not supported.
 * Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
   * Audio format `wma` is not supported and `wav` is not supported when using Safari in MacOS.
   * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
