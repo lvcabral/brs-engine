@@ -1332,6 +1332,10 @@ export class Parser {
             // consume the last terminator
             if (check(...terminators) && !closingToken) {
                 closingToken = advance();
+                const nextToken = peek();
+                if (closingToken.kind === "Next" && nextToken.kind === "Identifier") {
+                    advance();
+                }
             }
 
             if (!closingToken) {
@@ -1467,6 +1471,7 @@ export class Parser {
                 let index = expression();
 
                 while (match(Lexeme.Newline));
+                // TODO: The array multi-dimension access will be done here
                 let closingSquare = consume(
                     "Expected ']' after array or object index",
                     Lexeme.RightSquare
