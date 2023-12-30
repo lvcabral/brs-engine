@@ -1206,6 +1206,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let boxedSource = isBoxable(source) ? source.box() : source;
         if (boxedSource instanceof BrsComponent) {
             try {
+                if (boxedSource.interfaces.has(expression.name.text.toLowerCase())) {
+                    return boxedSource; // returns the full boxed object, currently there is no way to filter interface methods.
+                }
                 return boxedSource.getMethod(expression.name.text) ?? BrsInvalid.Instance;
             } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));
