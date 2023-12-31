@@ -109,7 +109,7 @@ export function redrawDisplay(
         display.height = screenSize.height;
     }
     if (running) {
-        drawBufferImage();
+        window.requestAnimationFrame(drawBufferImage);
     } else {
         clearDisplay();
     }
@@ -156,7 +156,7 @@ export function drawIconAsSplash(imgData: ImageBitmap) {
         bufferCtx.fillStyle = "white";
         bufferCtx.font = "30px sans-serif";
         bufferCtx.fillText("Loading...", w / 2, y + imgData.height + 45);
-        drawBufferImage();
+        window.requestAnimationFrame(drawBufferImage);
     }
 }
 
@@ -169,13 +169,15 @@ export function updateBuffer(buffer: ImageData) {
             bufferCanvas.height = buffer.height;
         }
         bufferCtx.putImageData(buffer, 0, 0);
-        drawBufferImage();
+        window.requestAnimationFrame(drawBufferImage);
     }
 }
 
 // Draw Buffer Image to the Display Canvas
-function drawBufferImage() {
-    if (ctx) {
+let previousTimeStamp = 0;
+function drawBufferImage(timeStamp: number) {
+    const elapsed = timeStamp - previousTimeStamp;
+    if (ctx && elapsed > 10) {
         statsUpdate(false);
         let overscan = 0.04;
         if (overscanMode === "overscan") {
@@ -198,6 +200,7 @@ function drawBufferImage() {
             }
         }
         statsUpdate(true);
+        previousTimeStamp = timeStamp;
     }
 }
 function statsUpdate(start: boolean) {
