@@ -66,6 +66,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         start: { line: 0, column: 0 },
         end: { line: 0, column: 0 },
     };
+    private _dotLevel = 0;
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
@@ -1186,7 +1187,26 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitDottedGet(expression: Expr.DottedGet) {
+        if (expression.obj instanceof Expr.DottedGet) {
+            this._dotLevel++;
+        }
         let source = this.evaluate(expression.obj);
+        let boxedSource = isBoxable(source) ? source.box() : source;
+
+        if (boxedSource instanceof BrsComponent) {
+            if (boxedSource.hasInterface(expression.name.text)) {
+                return this._dotLevel > 0
+                    ? boxedSource
+                    : this.addError(new BrsError("Syntax Error.", expression.name.location));
+            }
+            let ifFilter = "";
+            if (expression.obj instanceof Expr.DottedGet) {
+                const ifName = expression.obj.name.text;
+                ifFilter = boxedSource.hasInterface(ifName) ? ifName : "";
+            }
+            boxedSource.setFilter(ifFilter);
+        }
+        this._dotLevel = 0;
 
         if (isIterable(source)) {
             try {
@@ -1200,12 +1220,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         }
 
-        let boxedSource = isBoxable(source) ? source.box() : source;
         if (boxedSource instanceof BrsComponent) {
             try {
-                if (boxedSource.interfaces.has(expression.name.text.toLowerCase())) {
-                    return boxedSource; // returns the full boxed object, currently there is no way to filter interface methods.
-                }
                 return boxedSource.getMethod(expression.name.text) ?? BrsInvalid.Instance;
             } catch (err: any) {
                 return this.addError(new BrsError(err.message, expression.name.location));

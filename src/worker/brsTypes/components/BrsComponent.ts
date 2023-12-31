@@ -6,6 +6,7 @@ import { BrsInterface } from "../BrsInterface";
 export class BrsComponent {
     private methods: Map<string, Callable> = new Map();
     private readonly componentName: string;
+    private filter: string = "";
 
     readonly interfaces = new Map<string, BrsInterface>();
 
@@ -21,6 +22,14 @@ export class BrsComponent {
         return this.componentName;
     }
 
+    hasInterface(interfaceName: string) {
+        return this.interfaces.has(interfaceName.toLowerCase());
+    }
+
+    setFilter(interfaceName: string) {
+        this.filter = interfaceName.toLowerCase();
+    }
+
     protected registerMethods(interfaces: Record<string, Callable[]>) {
         this.methods = new Map<string, Callable>();
         Object.entries(interfaces).forEach(([interfaceName, methods]) => {
@@ -34,7 +43,13 @@ export class BrsComponent {
     }
 
     getMethod(index: string): Callable | undefined {
-        return this.methods.get(index.toLowerCase());
+        const method = index.toLowerCase();
+        if (this.filter !== "") {
+            const iface = this.interfaces.get(this.filter);
+            this.filter = "";
+            return iface?.hasMethod(method) ? this.methods.get(method) : undefined;
+        }
+        return this.methods.get(method);
     }
 }
 
