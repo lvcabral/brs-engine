@@ -162,7 +162,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             if (this.isDirty) {
                 let timeStamp = performance.now();
-                const elapsed = timeStamp - this.lastMessage;
                 while (timeStamp - this.lastMessage < this.maxMs) {
                     timeStamp = performance.now();
                 }

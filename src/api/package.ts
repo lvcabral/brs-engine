@@ -118,11 +118,10 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ url: relativePath, id: srcId, type: "source" });
         source.push(strFromU8(fileData));
         srcId++;
-    } else if (lcasePath === "source/var") {
-        paths.push({ url: relativePath, id: txtId, type: "text" });
-        txts.push(strFromU8(fileData));
-        txtId++;
-    } else if (lcasePath === "manifest" || ["csv", "xml", "json", "txt", "ts"].includes(ext)) {
+    } else if (
+        ["manifest", "source/var"].includes(lcasePath) ||
+        ["csv", "xml", "json", "txt", "ts"].includes(ext)
+    ) {
         paths.push({ url: relativePath, id: txtId, type: "text" });
         txts.push(strFromU8(fileData));
         txtId++;
