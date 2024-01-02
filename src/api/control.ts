@@ -90,7 +90,6 @@ const rokuKeys: Map<string, number> = new Map([
 ]);
 
 // Initialize Control Module
-const controllers: Map<number, GCGamepad> = new Map();
 let sharedArray: Int32Array;
 let disableKeys: boolean = false;
 
@@ -190,7 +189,6 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
 
 // GamePad handlers
 function gamePadOnHandler(gamePad: GCGamepad) {
-    controllers.set(gamePad.id, gamePad);
     axesMap.forEach((events, index) => {
         events.forEach((key: string) => {
             if (gamePad.axes > index) {
@@ -219,5 +217,5 @@ function gamePadOnHandler(gamePad: GCGamepad) {
 }
 
 function gamePadOffHandler(id: number) {
-    controllers.delete(id);
+    console.info(`GamePad ${id} disconnected!`);
 }
