@@ -165,7 +165,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 const elapsed = timeStamp - this.lastMessage;
                 while (timeStamp - this.lastMessage < this.maxMs) {
                     timeStamp = performance.now();
-                }           
+                }
                 postMessage(
                     this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
                 );
