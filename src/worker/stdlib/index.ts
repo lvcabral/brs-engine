@@ -46,8 +46,8 @@ export const Sleep = new Callable("Sleep", {
     },
     impl: (interpreter: Interpreter, timeout: Int32) => {
         let ms = timeout.getValue();
-        ms += new Date().getTime();
-        while (new Date().getTime() < ms) {}
+        ms += performance.now();
+        while (performance.now() < ms) {}
         return BrsInvalid.Instance;
     },
 });
