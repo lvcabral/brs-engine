@@ -44,10 +44,10 @@ export const Sleep = new Callable("Sleep", {
         args: [new StdlibArgument("timeout", ValueKind.Int32)],
         returns: ValueKind.Void,
     },
-    impl: (interpreter: Interpreter, timeout: Int32) => {
+    impl: (_: Interpreter, timeout: Int32) => {
         let ms = timeout.getValue();
-        ms += new Date().getTime();
-        while (new Date().getTime() < ms) {}
+        ms += performance.now();
+        while (performance.now() < ms) {}
         return BrsInvalid.Instance;
     },
 });

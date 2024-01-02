@@ -2420,6 +2420,11 @@ eslint-visitor-keys@3.3.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-3.3.0.tgz#f6480fa6b1f30efe2d1968aa8ac745b862469826"
   integrity sha512-mQ+suqKJVyeuwGYHAdjMFqjCyfl8+Ldnxuyp3ldiMBFKkvytrXUZWaiPCEav8qDHKty44bD+qV1IP4T+w+xXRA==
 
+esm-gamecontroller.js@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/esm-gamecontroller.js/-/esm-gamecontroller.js-1.0.2.tgz#34ed9ab3c7bb111f877d81e0812e48e82846c45f"
+  integrity sha512-AY/50V/PWGYgItWpccy/li6cRGElaXy9BVDaWpmMQIJxc7aczuD25TSiZySPsISknxy34aNTxQr9pAVNrtNn2g==
+
 esprima@^4.0.0, esprima@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/esprima/-/esprima-4.0.1.tgz#13b04cdb3e6c5d19df91ab6987a8695619b0aa71"

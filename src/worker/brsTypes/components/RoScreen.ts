@@ -23,6 +23,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private context: OffscreenCanvasRenderingContext2D[];
     private port?: RoMessagePort;
     private isDirty: boolean;
+    private lastMessage: number;
+    private maxMs: number;
 
     // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(
@@ -41,6 +43,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
+        this.lastMessage = performance.now();
         this.isDirty = true;
         this.width = defaultWidth;
         this.height = defaultHeight;
@@ -69,6 +72,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas[index].height = this.height;
         }
         this.alphaEnable = false;
+        const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
+        this.maxMs = Math.trunc((1 / maxFps) * 1000);
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
@@ -156,6 +161,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.isDirty) {
+                let timeStamp = performance.now();
+                while (timeStamp - this.lastMessage < this.maxMs) {
+                    timeStamp = performance.now();
+                }
                 postMessage(
                     this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
                 );
@@ -167,6 +176,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 }
                 this.clearCanvas(0xff);
                 this.isDirty = false;
+                this.lastMessage = timeStamp;
             }
             return BrsInvalid.Instance;
         },

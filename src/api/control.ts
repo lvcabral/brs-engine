@@ -5,21 +5,14 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { DataType, DebugCommand, SubscribeCallback } from "./util";
+import { DataType, DebugCommand, SubscribeCallback, context } from "./util";
+import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 
-// Keyboard Mapping
+// Control Mapping
 // References:
 // https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
 // https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
-
-let isApple = false;
-
-if (typeof navigator !== "undefined") {
-    isApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
-} else {
-    isApple = process.platform === "darwin";
-}
-
+// https://w3c.github.io/gamepad/#remapping
 const keysMap: Map<string, string> = new Map();
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
@@ -33,7 +26,7 @@ keysMap.set("Shift+Escape", "home");
 keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
 keysMap.set("End", "play");
-if (isApple) {
+if (context.inApple) {
     keysMap.set("Command+Backspace", "backspace");
     keysMap.set("Command+Enter", "play");
     keysMap.set("Command+ArrowLeft", "rev");
@@ -53,24 +46,48 @@ keysMap.set("PageUp", "fwd");
 keysMap.set("Insert", "info");
 keysMap.set("Control+KeyA", "a");
 keysMap.set("Control+KeyZ", "b");
-
-const rokuKeys: Map<string, number> = new Map();
-rokuKeys.set("back", 0);
-rokuKeys.set("up", 2);
-rokuKeys.set("down", 3);
-rokuKeys.set("left", 4);
-rokuKeys.set("right", 5);
-rokuKeys.set("select", 6);
-rokuKeys.set("instantreplay", 7);
-rokuKeys.set("rev", 8);
-rokuKeys.set("fwd", 9);
-rokuKeys.set("info", 10);
-rokuKeys.set("backspace", 11);
-rokuKeys.set("play", 13);
-rokuKeys.set("enter", 15);
-rokuKeys.set("a", 17);
-rokuKeys.set("b", 18);
-rokuKeys.set("stop", 23);
+const axesMap = new Map([
+    [0, ["up", "down", "left", "right"]],
+    [1, ["up", "down", "left", "right"]],
+]);
+const buttonsMap = new Map([
+    [0, "select"],
+    [1, "back"],
+    [2, "rev"],
+    [3, "fwd"],
+    [4, "info"],
+    [5, "play"],
+    [6, "instantreplay"],
+    [7, "home"],
+    [8, "instantreplay"],
+    [9, "home"],
+    [10, "a"],
+    [11, "b"],
+    [12, "up"],
+    [13, "down"],
+    [14, "left"],
+    [15, "right"],
+    [16, "info"],
+]);
+const rokuKeys: Map<string, number> = new Map([
+    ["back", 0],
+    ["back", 0],
+    ["up", 2],
+    ["down", 3],
+    ["left", 4],
+    ["right", 5],
+    ["select", 6],
+    ["instantreplay", 7],
+    ["rev", 8],
+    ["fwd", 9],
+    ["info", 10],
+    ["backspace", 11],
+    ["play", 13],
+    ["enter", 15],
+    ["a", 17],
+    ["b", 18],
+    ["stop", 23],
+]);
 
 // Initialize Control Module
 let sharedArray: Int32Array;
@@ -83,6 +100,10 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     }
     if (typeof options.disableKeys === "boolean") {
         disableKeys = options.disableKeys;
+    }
+    if (!options.disableGamePads) {
+        gameControl.on("connect", gamePadOnHandler);
+        gameControl.on("disconnect", gamePadOffHandler);
     }
 }
 export function addControlKeys(newKeys: Map<string, string>) {
@@ -107,7 +128,7 @@ function notifyAll(eventName: string, eventData?: any) {
     });
 }
 
-// Keyboard handlers
+// Control API
 export function enableControl(enable: boolean) {
     if (!disableKeys) {
         if (enable) {
@@ -138,6 +159,8 @@ export function sendKey(key: string, mod: number) {
         }
     }
 }
+
+// Keyboard handlers
 function keyDownHandler(event: KeyboardEvent) {
     handleKeyboardEvent(event, 0);
 }
@@ -162,4 +185,37 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
             event.preventDefault();
         }
     }
+}
+
+// GamePad handlers
+function gamePadOnHandler(gamePad: GCGamepad) {
+    axesMap.forEach((events, index) => {
+        events.forEach((key: string) => {
+            if (gamePad.axes > index) {
+                const eventName = `${key}${index}` as EventName;
+                gamePad.before(eventName, () => {
+                    sendKey(key, 0);
+                });
+                gamePad.after(eventName, () => {
+                    sendKey(key, 100);
+                });
+            }
+        });
+    });
+
+    buttonsMap.forEach((key, index) => {
+        if (gamePad.buttons > index) {
+            const eventName = `button${index}` as EventName;
+            gamePad.before(eventName, () => {
+                sendKey(key, 0);
+            });
+            gamePad.after(eventName, () => {
+                sendKey(key, 100);
+            });
+        }
+    });
+}
+
+function gamePadOffHandler(id: number) {
+    console.info(`GamePad ${id} disconnected!`);
 }
