@@ -73,7 +73,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         }
         this.alphaEnable = false;
         const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
-        this.maxMs = Math.trunc((1 / maxFps) * 1000 - 3);
+        this.maxMs = Math.trunc((1 / maxFps) * 1000);
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
@@ -160,9 +160,12 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            const timeStamp = performance.now();
-            const elapsed = timeStamp - this.lastMessage;
-            if (this.isDirty && elapsed > this.maxMs) {
+            if (this.isDirty) {
+                let timeStamp = performance.now();
+                const elapsed = timeStamp - this.lastMessage;
+                while (timeStamp - this.lastMessage < this.maxMs) {
+                    timeStamp = performance.now();
+                }           
                 postMessage(
                     this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
                 );

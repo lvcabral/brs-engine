@@ -44,7 +44,7 @@ export const Sleep = new Callable("Sleep", {
         args: [new StdlibArgument("timeout", ValueKind.Int32)],
         returns: ValueKind.Void,
     },
-    impl: (interpreter: Interpreter, timeout: Int32) => {
+    impl: (_: Interpreter, timeout: Int32) => {
         let ms = timeout.getValue();
         ms += performance.now();
         while (performance.now() < ms) {}

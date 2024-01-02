@@ -174,10 +174,8 @@ export function updateBuffer(buffer: ImageData) {
 }
 
 // Draw Buffer Image to the Display Canvas
-let previousTimeStamp = 0;
 function drawBufferImage(timeStamp: number) {
-    const elapsed = timeStamp - previousTimeStamp;
-    if (ctx && elapsed > 10) {
+    if (ctx) {
         statsUpdate(false);
         let overscan = 0.04;
         if (overscanMode === "overscan") {
@@ -200,7 +198,6 @@ function drawBufferImage(timeStamp: number) {
             }
         }
         statsUpdate(true);
-        previousTimeStamp = timeStamp;
     }
 }
 function statsUpdate(start: boolean) {
