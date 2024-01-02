@@ -231,20 +231,20 @@ function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
         const mType = message.split(",")[0];
         if (mType === "print") {
-            console.log(colorize(message.slice(6).trimRight()));
+            console.log(colorize(message.slice(6).trimEnd()));
         } else if (mType === "warning") {
-            console.warn(chalk.yellow(message.slice(8).trimRight()));
+            console.warn(chalk.yellow(message.slice(8).trimEnd()));
         } else if (mType === "error") {
-            console.error(chalk.red(message.slice(6).trimRight()));
+            console.error(chalk.red(message.slice(6).trimEnd()));
             process.exitCode = 1;
         } else if (mType === "end") {
-            const msg = message.slice(mType.length + 1).trimRight();
+            const msg = message.slice(mType.length + 1).trimEnd();
             if (msg !== "EXIT_USER_NAV") {
                 console.info(chalk.redBright(msg));
                 process.exitCode = 1;
             }
-        } else {
-            console.info(chalk.blueBright(message.trimRight()));
+        } else if (mType !== "start") {
+            console.info(chalk.blueBright(message.trimEnd()));
         }
     }
 }

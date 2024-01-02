@@ -522,7 +522,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, feature: BrsString) => {
-            return BrsBoolean.from(feature.value.toLocaleLowerCase() === "gaming_hardware");
+            const features = ["gaming_hardware", "simulation_engine"];
+            return BrsBoolean.from(features.includes(feature.value.toLowerCase()));
         },
     });
 

@@ -70,8 +70,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     }
                 }
             } else {
-                ms += new Date().getTime();
-                while (new Date().getTime() < ms) {
+                ms += performance.now();
+                while (performance.now() < ms) {
                     const key = Atomics.load(interpreter.sharedArray, this.type.KEY);
                     if (key !== this.lastKey) {
                         return this.newControlEvent(interpreter, key);
@@ -97,8 +97,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     }
                 }
             } else {
-                ms += new Date().getTime();
-                while (new Date().getTime() < ms) {
+                ms += performance.now();
+                while (performance.now() < ms) {
                     const flags = Atomics.load(interpreter.sharedArray, this.type.SND);
                     if (flags !== this.lastFlags) {
                         this.lastFlags = flags;
@@ -137,8 +137,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 }
             } else {
                 postMessage("warning,[roMessagePort] No message in the queue!");
-                ms += new Date().getTime();
-                while (new Date().getTime() < ms) {
+                ms += performance.now();
+                while (performance.now() < ms) {
                     //wait the timeout time
                     if (interpreter.checkBreakCommand()) {
                         return BrsInvalid.Instance;
@@ -153,7 +153,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.lastKey = key;
         let mod = Atomics.load(interpreter.sharedArray, this.type.MOD);
         interpreter.lastKeyTime = interpreter.currKeyTime;
-        interpreter.currKeyTime = Date.now();
+        interpreter.currKeyTime = performance.now();
         return new RoUniversalControlEvent("WD:0", key, mod);
     }
 

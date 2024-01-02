@@ -1,6 +1,6 @@
 {
   "name": "brs-engine",
-  "version": "1.0.0",
+  "version": "1.1.7-dev",
   "description": "BrightScript Simulation Engine",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "license": "MIT",
@@ -62,6 +62,7 @@
     "crypto-browserify": "^3.12.0",
     "dayjs": "^1.11.10",
     "decode-bmp": "^0.1.0",
+    "esm-gamecontroller.js": "^1.0.2",
     "fflate": "^0.8.1",
     "file-type": "^12.4.2",
     "howler": "^2.2.3",

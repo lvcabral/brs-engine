@@ -13,8 +13,7 @@ import {
     dataBufferSize,
     getNow,
     getWorkerLibPath,
-    isElectron,
-    inBrowser,
+    context,
 } from "./util";
 import {
     source,
@@ -116,7 +115,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     }
     // Shared buffer (Keys, Sounds and Debug Commands)
     const length = dataBufferIndex + dataBufferSize;
-    if (self.crossOriginIsolated || isElectron()) {
+    if (self.crossOriginIsolated || context.inElectron) {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } else {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
@@ -418,7 +417,7 @@ function workerCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
-        if (inBrowser) {
+        if (context.inBrowser) {
             const storage: Storage = window.localStorage;
             deviceData.registry.forEach(function (value: string, key: string) {
                 storage.setItem(key, value);
@@ -427,7 +426,7 @@ function workerCallback(event: MessageEvent) {
         notifyAll("registry", event.data);
     } else if (event.data instanceof Array) {
         addPlaylist(event.data);
-    } else if (event.data.audioPath && inBrowser) {
+    } else if (event.data.audioPath && context.inBrowser) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
