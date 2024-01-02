@@ -37,6 +37,7 @@ export const deviceData = {
     audioVolume: 40,
     models: parseCSV(models),
     registry: new Map(),
+    maxFps: 60,
 };
 
 // App Data

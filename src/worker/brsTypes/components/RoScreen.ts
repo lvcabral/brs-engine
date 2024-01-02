@@ -24,6 +24,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private port?: RoMessagePort;
     private isDirty: boolean;
     private lastMessage: number;
+    private maxMs: number;
 
     // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(
@@ -71,6 +72,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas[index].height = this.height;
         }
         this.alphaEnable = false;
+        const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
+        this.maxMs = Math.trunc((1 / maxFps) * 1000 - 3);
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
@@ -159,7 +162,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const timeStamp = performance.now();
             const elapsed = timeStamp - this.lastMessage;
-            if (this.isDirty && elapsed > 10) {
+            if (this.isDirty && elapsed > this.maxMs) {
                 postMessage(
                     this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
                 );
