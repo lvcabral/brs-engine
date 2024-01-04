@@ -103,8 +103,6 @@ end sub
 ### example.js
 
 ```javascript
-// Initialize Simulated Device
-brs.initialize({}, { debugToConsole: true, disableKeys: true });
 // Subscribe to Events (optional)
 brs.subscribe("myApp", (event, data) => {
     if (event === "loaded") {
@@ -115,6 +113,8 @@ brs.subscribe("myApp", (event, data) => {
         console.info(`Execution terminated! ${event}: ${data}`);
     }
 });
+// Initialize Simulated Device
+brs.initialize({}, { debugToConsole: true, disableKeys: true });
 // OnClick handler to execute the code
 function executeBrs() {
     source = document.getElementById("source-code").value;
