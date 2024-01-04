@@ -26,7 +26,7 @@ Check the [documentation](docs/integrating.md) to learn how to start using it. T
 |sendKeyDown(`key`)|Sends a remote control key down event to the engine|<ul><li>`key` (string): one of valid key codes (see [Roku doc](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md)).</li>|
 |sendKeyUp(`key`)|Sends a remote control key up event to the engine|<ul><li>`key` (string): one of valid key codes (see [Roku doc](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md)).</li>|
 |sendKeyPress(`key`, `delay?`)|Sends a remote control key press event to the engine|<ul><li>`key` (string): one of valid key codes (see [Roku doc](https://developer.roku.com/docs/references/scenegraph/component-functions/onkeyevent.md)).</li><li>`delay` (number): the delay (in milliseconds) between sending Key Up and Key Down (default is 300ms).|
-|debug(`command`)|Sends a debug command to the Micro Debugger|<ul><li>`command` (string): the Micro Debugger can be enabled sending `break` command, and after that, any valid BrightScript expression or [debug commands](https://developer.roku.com/en-gb/docs/developer-program/debugging/debugging-channels.md#brightscript-console-port-8085-commands) can be sent. You can use this method on the browser console to debug your app.|
+|debug(`command`)|Sends a debug command to the Engine|<ul><li>`command` (string): the Micro Debugger can be enabled sending `break` command, and after that, any valid BrightScript expression or [debug commands](https://developer.roku.com/en-gb/docs/developer-program/debugging/debugging-channels.md#brightscript-console-port-8085-commands) can be sent. You can also send `pause` to interrupt the interpreter, for instance, when the app loses focus. The command `cont` restarts the app. You can use this method on the browser console to debug your app.|
 |getVersion()|Returns the version of the API library ||
 
 ## Events
@@ -41,5 +41,5 @@ Check the [documentation](docs/integrating.md) to learn how to start using it. T
 | reset      | Triggered when the `RebootSystem()` function is executed from the engine | null: Nothing is returned as data |
 | redraw     | Triggered when the display canvas is redrawn/resized | boolean: If `true` the display canvas is in **full screen** mode |
 | resolution | Triggered when the emulated screen resolution changes (controlled via BrightScript) | object: `{width: integer, height: integer}` |
-| debug      | Triggered when debug messages arrive from the worker library (BrightScript Interpreter) | object: `{level: string, content: string}`, levels are: `print`, `beacon`, `warning`, `error`, `stop`, `continue` |
+| debug      | Triggered when debug messages arrive from the worker library (BrightScript Interpreter) | object: `{level: string, content: string}`, levels are: `print`, `beacon`, `warning`, `error`, `stop`, `pause`, `continue` |
 | error      | Triggered when the any execution exception happens on the API library | string: The message describing the error |

@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -16,7 +16,8 @@ const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 
 // Channel status object
-let currentChannel = { id: "", running: false };
+let currentApp = { id: "", running: false };
+let pausedApp = false;
 
 // Start the engine
 channelInfo.innerHTML = "<br/>";
@@ -42,14 +43,9 @@ customKeys.set("Digit8", "info");
 
 // Initialize device and subscribe to events
 libVersion.innerHTML = brs.getVersion();
-brs.initialize(customDeviceInfo, {
-    debugToConsole: true,
-    customKeys: customKeys,
-    showStats: true,
-});
 brs.subscribe("app", (event, data) => {
     if (event === "loaded") {
-        currentChannel = data;
+        currentApp = data;
         fileButton.style.visibility = "hidden";
         let infoHtml = data.title + "<br/>";
         infoHtml += data.subtitle + "<br/>";
@@ -58,10 +54,10 @@ brs.subscribe("app", (event, data) => {
         channelIcons("hidden");
         loading.style.visibility = "hidden";
     } else if (event === "started") {
-        currentChannel = data;
+        currentApp = data;
         stats.style.visibility = "visible";
     } else if (event === "closed" || event === "error") {
-        currentChannel = { id: "", running: false };
+        currentApp = { id: "", running: false };
         display.style.opacity = 0;
         channelInfo.innerHTML = "<br/>";
         fileButton.style.visibility = "visible";
@@ -76,7 +72,21 @@ brs.subscribe("app", (event, data) => {
                 );
             });
         }
+    } else if (event === "debug") {
+        if (data.level === "pause") {
+            pausedApp = true;
+        }
+        if (data.level === "continue") {
+            pausedApp = false;
+        }
+    } else if (event === "version") {
+        console.info(`Interpreter Library v${data}`);
     }
+});
+brs.initialize(customDeviceInfo, {
+    debugToConsole: true,
+    customKeys: customKeys,
+    showStats: true,
 });
 // File selector
 const fileSelector = document.getElementById("file");
@@ -117,7 +127,7 @@ fileSelector.onchange = function () {
 };
 // Download Zip
 function loadZip(zip) {
-    if (currentChannel.running) {
+    if (currentApp.running) {
         return;
     }
     display.style.opacity = 0;
@@ -146,7 +156,7 @@ function loadZip(zip) {
 // Display Fullscreen control
 display.addEventListener("dblclick", function (event) {
     event.preventDefault();
-    if (currentChannel.running) {
+    if (currentApp.running) {
         if (document.fullscreenElement) {
             document.exitFullscreen().catch((err) => {
                 console.error(
@@ -206,3 +216,15 @@ function toggleDiv(divId) {
         butCol.style.display = "";
     }
 }
+
+window.onfocus = function () {
+    if (currentApp.running && pausedApp) {
+        brs.debug("cont");
+    }
+};
+
+window.onblur = function () {
+    if (currentApp.running && !pausedApp) {
+        brs.debug("pause");
+    }
+};

@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -36,6 +36,7 @@ export enum DebugCommand {
     VAR,
     EXPR,
     BREAK,
+    PAUSE,
 }
 
 // Audio events enumerator
@@ -73,7 +74,7 @@ export function getApiPath(): string {
 }
 export function getWorkerLibPath(): string {
     let libPath = getApiPath();
-    libPath = libPath.replace(".api.js", ".worker.js");
+    libPath = libPath.replace(".api.js", `.worker.js?v=${packageInfo.version}`);
     return libPath;
 }
 

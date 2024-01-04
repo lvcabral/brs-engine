@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -40,6 +40,7 @@ import {
     setOverscan,
     overscanMode,
     showPerfStats,
+    statsUpdate,
 } from "./display";
 import {
     subscribeControl,
@@ -99,10 +100,14 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     /// #if DEBUG
     initMsg += " - dev";
     /// #endif
-    console.info(initMsg);
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
+
+    if (debugToConsole) {
+        console.info(initMsg);
+    }
+
     if (typeof options.showStats === "boolean") {
         showStats = options.showStats;
     }
@@ -170,6 +175,8 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
 
     // Force library download during initialization
     brsWorker = new Worker(brsWrkLib);
+    brsWorker.addEventListener("message", workerCallback);
+    brsWorker.postMessage("getVersion");
 }
 
 // Observers Handling
@@ -208,7 +215,9 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
-    console.info(`Loading ${filePath}...`);
+    if (debugToConsole) {
+        console.info(`Loading ${filePath}...`);
+    }
     initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
@@ -325,6 +334,7 @@ export function debug(command: string): boolean {
             ["ths", DebugCommand.THREADS],
             ["var", DebugCommand.VAR],
             ["break", DebugCommand.BREAK],
+            ["pause", DebugCommand.PAUSE],
         ]);
         let exprs = command
             .toString()
@@ -367,6 +377,7 @@ function debugExpression(expr: string) {
 
 // Terminate and reset BrightScript interpreter
 function resetWorker() {
+    brsWorker.removeEventListener("message", workerCallback);
     brsWorker.terminate();
     resetArray();
     resetSounds();
@@ -408,7 +419,6 @@ function runApp(payload: object) {
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
     enableControl(true);
-    notifyAll("started", currentApp);
 }
 
 // Receive Messages from the Interpreter (Web Worker)
@@ -474,8 +484,6 @@ function workerCallback(event: MessageEvent) {
         }
     } else if (event.data.startsWith("print,")) {
         deviceDebug(event.data);
-    } else if (event.data.startsWith("beacon,")) {
-        deviceDebug(event.data);
     } else if (event.data.startsWith("warning,")) {
         deviceDebug(`${event.data}\r\n`);
     } else if (event.data.startsWith("error,")) {
@@ -483,10 +491,11 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
         enableControl(level === "continue");
-        if (level === "stop") {
-            pauseSound(false);
-        } else {
+        statsUpdate(level === "continue");
+        if (level === "continue") {
             resumeSound(false);
+        } else {
+            pauseSound(false);
         }
         notifyAll("debug", { level: level });
     } else if (event.data.startsWith("start,")) {
@@ -495,6 +504,8 @@ function workerCallback(event: MessageEvent) {
         const subName = event.data.split(",")[1];
         deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
         deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id 'dev'\r\n`);
+        statsUpdate(true);
+        notifyAll("started", currentApp);
     } else if (event.data.startsWith("end,")) {
         terminate(event.data.slice(4));
     } else if (event.data === "reset") {
