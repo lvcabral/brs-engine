@@ -29,6 +29,7 @@ export enum debugCommand {
     VAR,
     EXPR,
     BREAK,
+    PAUSE,
 }
 const dataBufferIndex = 32;
 let stepMode = false;
@@ -214,6 +215,8 @@ function debugHandleCommand(
             break;
         case debugCommand.BREAK:
             postMessage(`warning,Micro Debugger already running!\r\n`);
+            break;
+        case debugCommand.PAUSE:
             break;
         default:
             postMessage(`warning,Invalid Debug command/expression!\r\n`);

@@ -1686,6 +1686,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (cmd === debugCommand.BREAK) {
                 Atomics.store(this.sharedArray, this.type.DBG, -1);
                 this.debugMode = true;
+            } else if (cmd === debugCommand.PAUSE) {
+                postMessage("debug,pause");
+                Atomics.wait(this.sharedArray, this.type.DBG, debugCommand.PAUSE);
+                Atomics.store(this.sharedArray, this.type.DBG, -1);
+                postMessage("debug,continue");
             }
         }
         return this.debugMode;
