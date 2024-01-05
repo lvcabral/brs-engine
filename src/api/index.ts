@@ -5,16 +5,10 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    DataType,
-    DebugCommand,
-    SubscribeCallback,
-    dataBufferIndex,
-    dataBufferSize,
-    getNow,
-    getWorkerLibPath,
-    context,
-} from "./util";
+import { SubscribeCallback, getNow, getWorkerLibPath, context } from "./util";
+
+import { DataType, DebugCommand, dataBufferIndex, dataBufferSize } from "./enums";
+
 import {
     source,
     paths,
@@ -67,6 +61,7 @@ import {
     muteSound,
     isMuted,
     subscribeSound,
+    soundPlaying,
 } from "./sound";
 import packageInfo from "../../package.json";
 
@@ -79,6 +74,7 @@ export { deviceData, loadAppZip, updateAppZip } from "./package";
 
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
+let pausedSound: boolean = false;
 
 // App Shared Buffer
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
@@ -493,9 +489,15 @@ function workerCallback(event: MessageEvent) {
         enableControl(level === "continue");
         statsUpdate(level === "continue");
         if (level === "continue") {
-            resumeSound(false);
-        } else {
+            if (pausedSound) {
+                resumeSound(false);
+                pausedSound = false;
+            }
+        } else if (soundPlaying()) {
             pauseSound(false);
+            pausedSound = true;
+        } else {
+            pausedSound = false;
         }
         notifyAll("debug", { level: level });
     } else if (event.data.startsWith("start,")) {

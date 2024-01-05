@@ -7,48 +7,6 @@
  *--------------------------------------------------------------------------------------------*/
 import packageInfo from "../../package.json";
 
-// Shared array data types enumerator
-export enum DataType {
-    KEY,
-    MOD,
-    SND,
-    IDX,
-    WAV,
-    DBG,
-    EXP,
-}
-
-// Debug constants
-export const dataBufferIndex = 32;
-export const dataBufferSize = 512;
-
-export enum DebugCommand {
-    BT,
-    CONT,
-    EXIT,
-    HELP,
-    LAST,
-    LIST,
-    NEXT,
-    STEP,
-    THREAD,
-    THREADS,
-    VAR,
-    EXPR,
-    BREAK,
-    PAUSE,
-}
-
-// Audio events enumerator
-export enum AudioEvent {
-    SELECTED,
-    FULL,
-    PARTIAL,
-    PAUSED,
-    RESUMED,
-    FAILED,
-}
-
 // Module callback function definition
 export type SubscribeCallback = (event: string, data?: any) => void;
 

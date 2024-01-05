@@ -41,7 +41,8 @@ import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
-import { debugCommand, runDebugger } from "./MicroDebugger";
+import { runDebugger } from "./MicroDebugger";
+import { DataType, DebugCommand } from "../../api/enums";
 import Long from "long";
 
 /** The set of options used to configure an interpreter's execution. */
@@ -73,7 +74,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4, DBG: 5, EXP: 6 };
     readonly sharedArray = shared.get("buffer") || new Int32Array([]);
 
     /** Allows consumers to observe errors as they're detected. */
@@ -1682,14 +1682,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     checkBreakCommand(): boolean {
         if (!this.debugMode) {
-            const cmd = Atomics.load(this.sharedArray, this.type.DBG);
-            if (cmd === debugCommand.BREAK) {
-                Atomics.store(this.sharedArray, this.type.DBG, -1);
+            const cmd = Atomics.load(this.sharedArray, DataType.DBG);
+            if (cmd === DebugCommand.BREAK) {
+                Atomics.store(this.sharedArray, DataType.DBG, -1);
                 this.debugMode = true;
-            } else if (cmd === debugCommand.PAUSE) {
+            } else if (cmd === DebugCommand.PAUSE) {
                 postMessage("debug,pause");
-                Atomics.wait(this.sharedArray, this.type.DBG, debugCommand.PAUSE);
-                Atomics.store(this.sharedArray, this.type.DBG, -1);
+                Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
+                Atomics.store(this.sharedArray, DataType.DBG, -1);
                 postMessage("debug,continue");
             }
         }
