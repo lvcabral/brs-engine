@@ -7,7 +7,7 @@ import { RoArray } from "./RoArray";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly supportedFlags = "ims";
+    readonly supportedFlags = "gims";
     private jsRegex: RegExp;
 
     constructor(expression: BrsString, flags = new BrsString("")) {
@@ -75,7 +75,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             return BrsBoolean.from(this.jsRegex.test(str.value));
         },
     });
@@ -86,7 +86,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             const result = this.jsRegex.exec(str.value);
             let arr: BrsString[] = [];
             if (result !== null) {
@@ -106,7 +106,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, str: BrsString, replacement: BrsString) => {
+        impl: (_: Interpreter, str: BrsString, replacement: BrsString) => {
             let replacementPattern = this.parseReplacementPattern(replacement.value);
             const newStr = this.jsRegex[Symbol.replace](str.value, replacementPattern);
             return new BrsString(newStr);
@@ -122,7 +122,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, str: BrsString, replacement: BrsString) => {
+        impl: (_: Interpreter, str: BrsString, replacement: BrsString) => {
             const source = this.jsRegex.source;
             let flags = this.jsRegex.flags;
             if (!flags.includes("g")) {
@@ -141,7 +141,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             let items = this.jsRegex[Symbol.split](str.value);
             let brsItems = items.map((item) => new BrsString(item));
             return new RoArray(brsItems);
@@ -154,7 +154,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             const source = this.jsRegex.source;
             let flags = this.jsRegex.flags;
             if (!flags.includes("g")) {

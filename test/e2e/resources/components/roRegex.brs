@@ -34,4 +34,13 @@ sub main()
     print "[ " matches[0][0] ", " matches[0][1] " ]"
     print "[ " matches[1][0] ", " matches[1][1] " ]"
     print " ]"
+
+    ' support for the "g" flag
+	line="line of text with ${variable} that needs matched and replaced "
+	regexline = CreateObject( "roRegex", "\$(\!?\!?)\{([a-zA-Z][_\w]*)\}", "ig" )
+	match = regexline.match(line)
+	matched = match[0]
+	capitalize=match[1]
+	variable=match[2]
+	print match[0]; match[1]; match[2]
 end sub
