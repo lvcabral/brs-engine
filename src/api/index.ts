@@ -49,7 +49,6 @@ import {
     resetSounds,
     playSound,
     stopSound,
-    playWav,
     pauseSound,
     resumeSound,
     setLoop,
@@ -68,6 +67,7 @@ import packageInfo from "../../package.json";
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
+let home: Howl;
 
 // Package API
 export { deviceData, loadAppZip, updateAppZip } from "./package";
@@ -149,8 +149,13 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     subscribeControl("api", (event: string, data: any) => {
         if (event === "home") {
             if (currentApp.running) {
-                terminate("EXIT_USER_NAV");
-                playWav(0);
+                if (!home) {
+                    home = new Howl({ src: ["./audio/select.wav"] });
+                    home.on("play", function () {
+                        terminate("EXIT_USER_NAV");
+                    });
+                }
+                home.play();
             }
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);

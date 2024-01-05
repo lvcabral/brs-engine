@@ -226,12 +226,6 @@ export function triggerWav(wav: string, volume: number, index: number) {
     }
 }
 
-export function playWav(soundId: number) {
-    if (soundsDat[soundId]) {
-        soundsDat[soundId].play();
-    }
-}
-
 export function stopWav(wav: string) {
     const soundId = soundsIdx.get(wav.toLowerCase());
     if (soundId) {
