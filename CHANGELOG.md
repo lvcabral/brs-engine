@@ -1,6 +1,18 @@
+<a name="v1.1.10"></a>
+
+# [v1.1.10 - Fixed DBG Command conflict with WAV](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.10) - 04 Jan 2024
+
+## Release Changes
+
+* Fixed wav stream conflict with Debug command by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/207
+  * Extracted enumerators from `util.js` into `enums.js` to reuse inside the worker
+  * Fixed issue that was restarting a sound when returning from pause of break, when the app already had stopped it.
+
+[Full Changelog][v1.1.10]
+
 <a name="v1.1.9"></a>
 
-# [v1.1.9 - GamePad support and FPS Limitation](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.9) - 04 Jan 2024
+# [v1.1.9 - GamePad support and FPS Limitation](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.9) - 03 Jan 2024
 
 ## Release Changes
 
@@ -368,6 +380,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.1.10]: https://github.com/lvcabral/brs-engine/compare/v1.0.9...v1.1.10
 [v1.1.9]: https://github.com/lvcabral/brs-engine/compare/v1.0.0...v1.1.9
 [v1.0.0]: https://github.com/lvcabral/brs-engine/compare/v0.10.22...v1.0.0
 [v0.10.22]: https://github.com/lvcabral/brs-emu/compare/v0.9.0-emu...v0.10.22
