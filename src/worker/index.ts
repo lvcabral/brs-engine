@@ -1,10 +1,11 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2023 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { dataBufferIndex, dataBufferSize } from "../api/enums";
 import { Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import { FileSystem } from "./interpreter/FileSystem";
@@ -55,8 +56,6 @@ if (typeof onmessage !== "undefined") {
 /// #else
 if (typeof onmessage === "undefined") {
     // Library is not running as a Worker
-    const dataBufferIndex = 32;
-    const dataBufferSize = 512;
     const length = dataBufferIndex + dataBufferSize;
     let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     shared.set("buffer", new Int32Array(sharedBuffer));

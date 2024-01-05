@@ -5,16 +5,10 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    DataType,
-    DebugCommand,
-    SubscribeCallback,
-    dataBufferIndex,
-    dataBufferSize,
-    getNow,
-    getWorkerLibPath,
-    context,
-} from "./util";
+import { SubscribeCallback, getNow, getWorkerLibPath, context } from "./util";
+
+import { DataType, DebugCommand, dataBufferIndex, dataBufferSize } from "./enums";
+
 import {
     source,
     paths,
