@@ -53,6 +53,19 @@ export function isMuted() {
     return muted;
 }
 
+export function soundPlaying() {
+    let playing = false;
+    if (soundsDat.length > 0) {
+        soundsDat.forEach((sound) => {
+            if (sound.playing()) {
+                playing = true;
+                return;
+            }
+        });
+    }
+    return playing;
+}
+
 export function audioCodecs() {
     const codecs = [
         "mp3",

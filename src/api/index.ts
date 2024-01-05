@@ -61,6 +61,7 @@ import {
     muteSound,
     isMuted,
     subscribeSound,
+    soundPlaying,
 } from "./sound";
 import packageInfo from "../../package.json";
 
@@ -73,6 +74,7 @@ export { deviceData, loadAppZip, updateAppZip } from "./package";
 
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
+let pausedSound: boolean = false;
 
 // App Shared Buffer
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
@@ -487,9 +489,15 @@ function workerCallback(event: MessageEvent) {
         enableControl(level === "continue");
         statsUpdate(level === "continue");
         if (level === "continue") {
-            resumeSound(false);
+            if (pausedSound) {
+                resumeSound(false);
+                pausedSound = false;
+            }
         } else {
-            pauseSound(false);
+            if (soundPlaying()) {
+                pauseSound(false);
+                pausedSound = true;
+            }
         }
         notifyAll("debug", { level: level });
     } else if (event.data.startsWith("start,")) {
