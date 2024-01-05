@@ -4,11 +4,11 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { DataType } from "../../../api/enums";
 import URL from "url-parse";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly type = { KEY: 0, MOD: 1, SND: 2, IDX: 3, WAV: 4 };
     private audioName: string;
     private audioId?: number;
     private currentIndex: number;
@@ -18,7 +18,6 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
 
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource");
-        Object.freeze(this.type);
         this.maxStreams = interpreter.deviceInfo.get("maxSimulStreams");
         this.valid = true;
         const systemwav = ["select", "navsingle", "navmulti", "deadend"];
@@ -93,7 +92,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             if (this.audioId) {
                 const currentWav = Atomics.load(
                     interpreter.sharedArray,
-                    this.type.WAV + this.currentIndex
+                    DataType.WAV + this.currentIndex
                 );
                 this.playing = currentWav === this.audioId;
             }

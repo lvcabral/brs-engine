@@ -12,6 +12,7 @@ import { Howl, Howler } from "howler";
 // Sound Objects
 let soundsIdx: Map<string, number> = new Map();
 let soundsDat: Howl[] = new Array();
+let soundState: number[] = new Array();
 let playList = new Array();
 let playIndex = 0;
 let playLoop = false;
@@ -54,13 +55,25 @@ export function isMuted() {
 }
 
 export function soundPlaying() {
-    let playing = false;
-    if (soundsDat.length > 0) {
-        playing = soundsDat.some((sound) => {
-            return sound.playing();
+    return soundsDat.some((sound) => {
+        return sound.playing();
+    });
+}
+
+export function switchSoundState(play: boolean) {
+    if (play) {
+        soundState.forEach((id) => {
+            soundsDat[id]?.play();
+        });
+    } else {
+        soundState.length = 0;
+        soundsDat.forEach((sound, index) => {
+            if (sound.playing()) {
+                sound.pause();
+                soundState.push(index);
+            }
         });
     }
-    return playing;
 }
 
 export function audioCodecs() {
@@ -223,12 +236,6 @@ export function triggerWav(wav: string, volume: number, index: number) {
             sound.play();
             Atomics.store(sharedArray, DataType.WAV + index, soundId);
         }
-    }
-}
-
-export function playWav(soundId: number) {
-    if (soundsDat[soundId]) {
-        soundsDat[soundId].play();
     }
 }
 
