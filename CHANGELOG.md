@@ -1,3 +1,28 @@
+<a name="v1.1.9"></a>
+
+# [v1.1.9 - GamePad support and FPS Limitation](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.9) - 04 Jan 2024
+
+## Release Changes
+
+* Updated package name on README.md badges by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/200
+* Fixed [#201](https://github.com/lvcabral/brs-engine/issues/201) - Prevent Exception when SharedArrayBuffer is not supported by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/202
+* Implementing features to remove limitations by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/205
+  * Fixed [#164](https://github.com/lvcabral/brs-engine/issues/164) - Allowing usage of explicit interfaces when calling methods [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/206
+  * Fixed [#159](https://github.com/lvcabral/brs-engine/issues/159) - Properly casting numeric values on Math functions and other scenarios
+  * Added support to have the variable name after `next` statement in a `for...next` loop
+* Implemented GamePad support by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/204
+  * Added support for the GamePad API 
+  * Added a new feature `simulation_engine` to the `roDeviceInfo.hasFeature()` method, allowing apps to adapt when under `brs-engine`
+  * Added new option to define `maxFps` on `deviceData` and limit framerate inside the worker
+  * Reduced web app default framerate to prevent issues on iOS
+  * Added icon dimentions to css
+  * Fixed CLI to not show `start` event
+  * Fixed high framerate performance issue
+  * Fixed loading encrypted package
+* Added new debug command `pause` to allow interrupt the interpreter when app loses focus
+
+[Full Changelog][v1.1.9]
+
 <a name="v1.0.0"></a>
 
 # [v1.0.0 - Simulation Engine Release](https://github.com/lvcabral/brs-engine/releases/tag/v1.0.0) - 15 Dec 2023
@@ -343,6 +368,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.1.9]: https://github.com/lvcabral/brs-engine/compare/v1.0.0...v1.1.9
 [v1.0.0]: https://github.com/lvcabral/brs-engine/compare/v0.10.22...v1.0.0
 [v0.10.22]: https://github.com/lvcabral/brs-emu/compare/v0.9.0-emu...v0.10.22
 [v0.9.0-emu]: https://github.com/lvcabral/brs-emu/compare/v0.8.1-emu...v0.9.0-emu
