@@ -493,11 +493,11 @@ function workerCallback(event: MessageEvent) {
                 resumeSound(false);
                 pausedSound = false;
             }
+        } else if (soundPlaying()) {
+            pauseSound(false);
+            pausedSound = true;
         } else {
-            if (soundPlaying()) {
-                pauseSound(false);
-                pausedSound = true;
-            }
+            pausedSound = false;
         }
         notifyAll("debug", { level: level });
     } else if (event.data.startsWith("start,")) {

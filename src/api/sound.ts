@@ -56,11 +56,8 @@ export function isMuted() {
 export function soundPlaying() {
     let playing = false;
     if (soundsDat.length > 0) {
-        soundsDat.forEach((sound) => {
-            if (sound.playing()) {
-                playing = true;
-                return;
-            }
+        playing = soundsDat.some((sound) => {
+            return sound.playing();
         });
     }
     return playing;
