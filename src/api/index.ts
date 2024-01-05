@@ -60,7 +60,7 @@ import {
     muteSound,
     isMuted,
     subscribeSound,
-    soundPlaying,
+    switchSoundState,
 } from "./sound";
 import packageInfo from "../../package.json";
 
@@ -491,19 +491,10 @@ function workerCallback(event: MessageEvent) {
         deviceDebug(`${event.data}\r\n`);
     } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
-        enableControl(level === "continue");
-        statsUpdate(level === "continue");
-        if (level === "continue") {
-            if (pausedSound) {
-                resumeSound(false);
-                pausedSound = false;
-            }
-        } else if (soundPlaying()) {
-            pauseSound(false);
-            pausedSound = true;
-        } else {
-            pausedSound = false;
-        }
+        const enable = level === "continue";
+        enableControl(enable);
+        statsUpdate(enable);
+        switchSoundState(enable);
         notifyAll("debug", { level: level });
     } else if (event.data.startsWith("start,")) {
         const title = currentApp.title;
