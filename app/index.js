@@ -17,7 +17,7 @@ const channel3 = document.getElementById("channel3");
 
 // Channel status object
 let currentApp = { id: "", running: false };
-let pausedApp = false;
+let debugMode = "continue";
 
 // Start the engine
 channelInfo.innerHTML = "<br/>";
@@ -73,11 +73,8 @@ brs.subscribe("app", (event, data) => {
             });
         }
     } else if (event === "debug") {
-        if (data.level === "pause") {
-            pausedApp = true;
-        }
-        if (data.level === "continue") {
-            pausedApp = false;
+        if (["stop", "pause", "continue"].includes(data.level)) {
+            debugMode = data.level;
         }
     } else if (event === "version") {
         console.info(`Interpreter Library v${data}`);
@@ -218,13 +215,13 @@ function toggleDiv(divId) {
 }
 
 window.onfocus = function () {
-    if (currentApp.running && pausedApp) {
+    if (currentApp.running && debugMode === "pause") {
         brs.debug("cont");
     }
 };
 
 window.onblur = function () {
-    if (currentApp.running && !pausedApp) {
+    if (currentApp.running && debugMode === "continue") {
         brs.debug("pause");
     }
 };

@@ -13,25 +13,9 @@ import {
     IndexedSet,
     Print,
 } from "../parser/Statement";
+import { DataType, DebugCommand, dataBufferIndex } from "../../api/enums";
 
 // Debug Constants
-export enum debugCommand {
-    BT,
-    CONT,
-    EXIT,
-    HELP,
-    LAST,
-    LIST,
-    NEXT,
-    STEP,
-    THREAD,
-    THREADS,
-    VAR,
-    EXPR,
-    BREAK,
-    PAUSE,
-}
-const dataBufferIndex = 32;
 let stepMode = false;
 
 export function runDebugger(
@@ -77,19 +61,19 @@ export function runDebugger(
     // Debugger Loop
     while (true) {
         postMessage(`print,\r\n${prompt}`);
-        Atomics.wait(interpreter.sharedArray, interpreter.type.DBG, -1);
-        let cmd = Atomics.load(interpreter.sharedArray, interpreter.type.DBG);
-        Atomics.store(interpreter.sharedArray, interpreter.type.DBG, -1);
-        if (cmd === debugCommand.EXPR) {
+        Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
+        let cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
+        Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
+        if (cmd === DebugCommand.EXPR) {
             debugHandleExpr(interpreter);
             continue;
         }
-        if (Atomics.load(interpreter.sharedArray, interpreter.type.EXP)) {
+        if (Atomics.load(interpreter.sharedArray, DataType.EXP)) {
             postMessage("warning,Unexpected parameter");
             continue;
         }
         switch (cmd) {
-            case debugCommand.CONT:
+            case DebugCommand.CONT:
                 if (error) {
                     postMessage("print,Can't continue");
                     continue;
@@ -98,7 +82,7 @@ export function runDebugger(
                 interpreter.debugMode = false;
                 postMessage("debug,continue");
                 return true;
-            case debugCommand.STEP:
+            case DebugCommand.STEP:
                 if (error) {
                     postMessage("print,Can't continue");
                     continue;
@@ -106,7 +90,7 @@ export function runDebugger(
                 stepMode = true;
                 interpreter.debugMode = true;
                 return true;
-            case debugCommand.EXIT:
+            case DebugCommand.EXIT:
                 return false;
         }
         debugHandleCommand(interpreter, nextLoc, lastLoc, cmd);
@@ -174,35 +158,35 @@ function debugHandleCommand(
     let currLine: number = currLoc.start.line;
     let debugMsg: string;
     switch (cmd) {
-        case debugCommand.BT:
+        case DebugCommand.BT:
             debugBackTrace(interpreter, currLoc);
             break;
-        case debugCommand.HELP:
+        case DebugCommand.HELP:
             debugHelp();
             break;
-        case debugCommand.LAST:
+        case DebugCommand.LAST:
             postMessage(
                 `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
             );
             break;
-        case debugCommand.LIST: {
+        case DebugCommand.LIST: {
             const flagLine = currLoc.file === lastLoc.file ? lastLine : currLine;
             debugList(backTrace, currLines, flagLine);
             break;
         }
-        case debugCommand.NEXT:
+        case DebugCommand.NEXT:
             postMessage(
                 `print,${currLine.toString().padStart(3, "0")}: ${currLines[currLine - 1]}\r\n`
             );
             break;
-        case debugCommand.THREAD:
+        case DebugCommand.THREAD:
             debugMsg = "Thread selected: ";
             debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
                 lastLine - 1
             ].trim()}`;
             postMessage(`print,${debugMsg}\r\n`);
             break;
-        case debugCommand.THREADS:
+        case DebugCommand.THREADS:
             debugMsg = "ID    Location                                Source Code\r\n";
             debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
                 lastLine - 1
@@ -210,13 +194,13 @@ function debugHandleCommand(
             debugMsg += "  *selected";
             postMessage(`print,${debugMsg}\r\n`);
             break;
-        case debugCommand.VAR:
+        case DebugCommand.VAR:
             debugLocalVariables(env);
             break;
-        case debugCommand.BREAK:
+        case DebugCommand.BREAK:
             postMessage(`warning,Micro Debugger already running!\r\n`);
             break;
-        case debugCommand.PAUSE:
+        case DebugCommand.PAUSE:
             break;
         default:
             postMessage(`warning,Invalid Debug command/expression!\r\n`);
