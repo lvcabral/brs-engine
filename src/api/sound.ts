@@ -12,7 +12,7 @@ import { Howl, Howler } from "howler";
 // Sound Objects
 let soundsIdx: Map<string, number> = new Map();
 let soundsDat: Howl[] = new Array();
-let soundState: number[] =  new Array();
+let soundState: number[] = new Array();
 let playList = new Array();
 let playIndex = 0;
 let playLoop = false;
