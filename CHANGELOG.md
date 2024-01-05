@@ -1,3 +1,17 @@
+<a name="v1.1.11"></a>
+
+# [v1.1.11 - Improved roRegex and fixed Sound issues](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.11) - 05 Jan 2024
+
+## Release Changes
+
+* Added support for `g` flag on `roRegex` by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/209
+* Fixed sound related issues by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/208 
+  * Home Button sound was not always being triggered
+  * The `roAudioResource` was with the old DataType enum configuration
+  * Sound will totally pause now both on `stop` and `pause` states.
+
+[Full Changelog][v1.1.11]
+
 <a name="v1.1.10"></a>
 
 # [v1.1.10 - Fixed DBG Command conflict with WAV](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.10) - 04 Jan 2024
@@ -380,6 +394,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.1.11]: https://github.com/lvcabral/brs-engine/compare/v1.0.10...v1.1.11
 [v1.1.10]: https://github.com/lvcabral/brs-engine/compare/v1.0.9...v1.1.10
 [v1.1.9]: https://github.com/lvcabral/brs-engine/compare/v1.0.0...v1.1.9
 [v1.0.0]: https://github.com/lvcabral/brs-engine/compare/v0.10.22...v1.0.0
