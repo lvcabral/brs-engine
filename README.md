@@ -1,6 +1,6 @@
 # BrightScript Simulation Engine
 
-An intepreter for the Roku BrightScript language that runs games and apps on modern browser platforms.
+An intepreter for the BrightScript language that runs Roku apps on modern browser platforms.
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
 [![NPM Version](https://badge.fury.io/js/brs-engine.svg?style=flat)](https://npmjs.org/package/brs-engine)
