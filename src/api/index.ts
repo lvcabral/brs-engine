@@ -49,7 +49,6 @@ import {
     resetSounds,
     playSound,
     stopSound,
-    playWav,
     pauseSound,
     resumeSound,
     setLoop,
@@ -61,13 +60,14 @@ import {
     muteSound,
     isMuted,
     subscribeSound,
-    soundPlaying,
+    switchSoundState,
 } from "./sound";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
+let home: Howl;
 
 // Package API
 export { deviceData, loadAppZip, updateAppZip } from "./package";
@@ -149,8 +149,13 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     subscribeControl("api", (event: string, data: any) => {
         if (event === "home") {
             if (currentApp.running) {
-                terminate("EXIT_USER_NAV");
-                playWav(0);
+                if (!home) {
+                    home = new Howl({ src: ["./audio/select.wav"] });
+                    home.on("play", function () {
+                        terminate("EXIT_USER_NAV");
+                    });
+                }
+                home.play();
             }
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
@@ -486,19 +491,10 @@ function workerCallback(event: MessageEvent) {
         deviceDebug(`${event.data}\r\n`);
     } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
-        enableControl(level === "continue");
-        statsUpdate(level === "continue");
-        if (level === "continue") {
-            if (pausedSound) {
-                resumeSound(false);
-                pausedSound = false;
-            }
-        } else if (soundPlaying()) {
-            pauseSound(false);
-            pausedSound = true;
-        } else {
-            pausedSound = false;
-        }
+        const enable = level === "continue";
+        enableControl(enable);
+        statsUpdate(enable);
+        switchSoundState(enable);
         notifyAll("debug", { level: level });
     } else if (event.data.startsWith("start,")) {
         const title = currentApp.title;
