@@ -16,6 +16,7 @@ let ctx: CanvasRenderingContext2D | null;
 let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
 let lastImage: ImageBitmap | null;
+let lastFrameReq: number = 0;
 
 // Performance Stats Variables
 let statsDiv: HTMLDivElement;
@@ -182,7 +183,7 @@ export function updateBuffer(buffer: ImageData) {
             lastImage = bitmap;
         });
         clearDisplay();
-        window.requestAnimationFrame(drawBufferImage);
+        lastFrameReq = window.requestAnimationFrame(drawBufferImage);
     }
 }
 
@@ -270,6 +271,7 @@ export function showDisplay() {
 
 // Clear Display and Buffer
 export function clearDisplay() {
+    window.cancelAnimationFrame(lastFrameReq);
     if (ctx && context.inSafari) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
