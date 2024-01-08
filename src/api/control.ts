@@ -14,6 +14,8 @@ import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 // https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
 // https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
 // https://w3c.github.io/gamepad/#remapping
+
+// Keyboard Mapping
 const keysMap: Map<string, string> = new Map();
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
@@ -47,6 +49,8 @@ keysMap.set("PageUp", "fwd");
 keysMap.set("Insert", "info");
 keysMap.set("Control+KeyA", "a");
 keysMap.set("Control+KeyZ", "b");
+
+// Game Pad Mapping
 const axesMap = new Map([
     [0, ["up", "down", "left", "right"]],
     [1, ["up", "down", "left", "right"]],
@@ -69,7 +73,10 @@ const buttonsMap = new Map([
     [14, "left"],
     [15, "right"],
     [16, "info"],
+    [17, "home"],
 ]);
+
+// Roku Remote Mapping
 const rokuKeys: Map<string, number> = new Map([
     ["back", 0],
     ["back", 0],
@@ -96,13 +103,20 @@ let disableKeys: boolean = false;
 
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
-    if (options.customKeys instanceof Map) {
-        addControlKeys(options.customKeys);
-    }
     if (typeof options.disableKeys === "boolean") {
         disableKeys = options.disableKeys;
     }
+    if (options.customKeys instanceof Map && !disableKeys) {
+        addControlKeys(options.customKeys);
+    }
     if (!options.disableGamePads) {
+        if (options.customPadButtons instanceof Map) {
+            options.customPadButtons.forEach(function (value: string, button: number) {
+                if (button >= 0 && button < 32 && value.length) {
+                    buttonsMap.set(button, value);
+                }
+            });
+        }
         gameControl.on("connect", gamePadOnHandler);
         gameControl.on("disconnect", gamePadOffHandler);
     }
