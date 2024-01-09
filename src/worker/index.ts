@@ -144,8 +144,8 @@ export function executeFile(payload: any): RunResult {
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
-    setupManifest(payload.manifest, interpreter);
-    setupRegistry(payload.device.registry, interpreter);
+    interpreter.setManifest(payload.manifest);
+    interpreter.setRegistry(payload.device.registry);
     setupDeviceData(payload.device, interpreter);
     setupDeviceFonts(payload.device, interpreter);
     setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
@@ -193,36 +193,6 @@ function setupInputArray(input: any): AAMember[] {
         inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
     });
     return inputArray;
-}
-
-/**
- * Updates the interpreter manifest with the provided data
- *
- * @param manifest Map with manifest content.
- * @param interpreter the Interpreter instance to update.
- *
- */
-function setupManifest(manifest: any, interpreter: Interpreter) {
-    if (manifest instanceof Map) {
-        manifest.forEach(function (value: string, key: string) {
-            interpreter.manifest.set(key, value);
-        });
-    }
-}
-
-/**
- * Updates the interpreter registry with the provided data
- *
- * @param registry Map with registry content.
- * @param interpreter the Interpreter instance to update.
- *
- */
-function setupRegistry(registry: any, interpreter: Interpreter) {
-    if (registry instanceof Map) {
-        registry.forEach(function (value: string, key: string) {
-            interpreter.registry.set(key, value);
-        });
-    }
 }
 
 /**

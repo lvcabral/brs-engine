@@ -5,17 +5,22 @@ import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
+export interface KeyEvent {
+    key: number; // Key Code
+    mod: number; // Modifier (0 = press, 100 = release)
+}
+
 export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private key: number;
     private remote: string;
     private mod: number;
 
-    constructor(remote: string, key: number, mod: number) {
+    constructor(remote: string, keyEvent: KeyEvent) {
         super("roUniversalControlEvent");
-        this.key = key;
         this.remote = remote;
-        this.mod = mod;
+        this.key = keyEvent.key;
+        this.mod = keyEvent.mod;
 
         this.registerMethods({
             ifUniversalControlEvent: [
