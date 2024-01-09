@@ -63,7 +63,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 while (true) {
                     const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
                     if (key !== this.lastKey) {
-                        return this.newControlEvent(interpreter, key);
+                        const ctrlEvent =  this.newControlEvent(interpreter, key);
+                        if  (ctrlEvent instanceof RoUniversalControlEvent) {
+                            return ctrlEvent;
+                        }
                     } else if (interpreter.checkBreakCommand()) {
                         return BrsInvalid.Instance;
                     }
@@ -73,7 +76,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 while (performance.now() < ms) {
                     const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
                     if (key !== this.lastKey) {
-                        return this.newControlEvent(interpreter, key);
+                        const ctrlEvent =  this.newControlEvent(interpreter, key);
+                        if  (ctrlEvent instanceof RoUniversalControlEvent) {
+                            return ctrlEvent;
+                        }
                     } else if (interpreter.checkBreakCommand()) {
                         return BrsInvalid.Instance;
                     }
@@ -148,11 +154,18 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    newControlEvent(interpreter: Interpreter, key: number): RoUniversalControlEvent {
-        this.lastKey = key;
+    newControlEvent(interpreter: Interpreter, key: number): RoUniversalControlEvent | BrsInvalid {
         let mod = Atomics.load(interpreter.sharedArray, DataType.MOD);
+        if (mod === 0) {
+            if (this.lastKey < 100) {
+                key = this.lastKey + 100
+            }
+        } else if (key !== this.lastKey + 100) {
+            return BrsInvalid.Instance;
+        }
         interpreter.lastKeyTime = interpreter.currKeyTime;
         interpreter.currKeyTime = performance.now();
+        this.lastKey = key;
         return new RoUniversalControlEvent("WD:0", key, mod);
     }
 
