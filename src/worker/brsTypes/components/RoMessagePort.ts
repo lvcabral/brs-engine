@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { RoUniversalControlEvent } from "./RoUniversalControlEvent";
+import { RoUniversalControlEvent, KeyEvent } from "./RoUniversalControlEvent";
 import { RoAudioPlayerEvent } from "./RoAudioPlayerEvent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -12,6 +12,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private messageQueue: BrsType[];
     private callbackQueue: Function[]; // TODO: consider having the id of the connected objects
+    private keysQueue: KeyEvent[];
     private lastKey: number;
     private screen: boolean;
     private lastFlags: number;
@@ -23,6 +24,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         });
         this.messageQueue = [];
         this.callbackQueue = [];
+        this.keysQueue = [];
         this.lastKey = -1;
         this.screen = false;
         this.lastFlags = -1;
@@ -58,58 +60,31 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     wait(interpreter: Interpreter, ms: number) {
+        const loop = ms === 0;
+        ms += performance.now();
         if (this.screen) {
-            if (ms === 0) {
-                while (true) {
-                    const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
-                    if (key !== this.lastKey) {
-                        return this.newControlEvent(interpreter, key);
-                    } else if (interpreter.checkBreakCommand()) {
-                        return BrsInvalid.Instance;
-                    }
-                }
-            } else {
-                ms += performance.now();
-                while (performance.now() < ms) {
-                    const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
-                    if (key !== this.lastKey) {
-                        return this.newControlEvent(interpreter, key);
-                    } else if (interpreter.checkBreakCommand()) {
-                        return BrsInvalid.Instance;
-                    }
+            while (loop || performance.now() < ms) {
+                this.updateKeysQueue(interpreter);
+                const ctrlEvent = this.newControlEvent(interpreter);
+                if (ctrlEvent instanceof RoUniversalControlEvent) {
+                    return ctrlEvent;
+                } else if (interpreter.checkBreakCommand()) {
+                    return BrsInvalid.Instance;
                 }
             }
         } else if (this.audio) {
-            if (ms === 0) {
-                while (true) {
-                    const flags = Atomics.load(interpreter.sharedArray, DataType.SND);
-                    if (flags !== this.lastFlags) {
-                        this.lastFlags = flags;
-                        if (this.lastFlags >= 0) {
-                            return new RoAudioPlayerEvent(
-                                this.lastFlags,
-                                Atomics.load(interpreter.sharedArray, DataType.IDX)
-                            );
-                        }
-                    } else if (interpreter.checkBreakCommand()) {
-                        return BrsInvalid.Instance;
+            while (loop || performance.now() < ms) {
+                const flags = Atomics.load(interpreter.sharedArray, DataType.SND);
+                if (flags !== this.lastFlags) {
+                    this.lastFlags = flags;
+                    if (this.lastFlags >= 0) {
+                        return new RoAudioPlayerEvent(
+                            this.lastFlags,
+                            Atomics.load(interpreter.sharedArray, DataType.IDX)
+                        );
                     }
-                }
-            } else {
-                ms += performance.now();
-                while (performance.now() < ms) {
-                    const flags = Atomics.load(interpreter.sharedArray, DataType.SND);
-                    if (flags !== this.lastFlags) {
-                        this.lastFlags = flags;
-                        if (this.lastFlags >= 0) {
-                            return new RoAudioPlayerEvent(
-                                this.lastFlags,
-                                Atomics.load(interpreter.sharedArray, DataType.IDX)
-                            );
-                        }
-                    } else if (interpreter.checkBreakCommand()) {
-                        return BrsInvalid.Instance;
-                    }
+                } else if (interpreter.checkBreakCommand()) {
+                    return BrsInvalid.Instance;
                 }
             }
         } else {
@@ -148,12 +123,34 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    newControlEvent(interpreter: Interpreter, key: number): RoUniversalControlEvent {
-        this.lastKey = key;
-        let mod = Atomics.load(interpreter.sharedArray, DataType.MOD);
-        interpreter.lastKeyTime = interpreter.currKeyTime;
-        interpreter.currKeyTime = performance.now();
-        return new RoUniversalControlEvent("WD:0", key, mod);
+    updateKeysQueue(interpreter: Interpreter) {
+        const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
+        if (this.keysQueue.length === 0 || key !== this.keysQueue.at(-1)?.key) {
+            let mod = Atomics.load(interpreter.sharedArray, DataType.MOD);
+            this.keysQueue.push({ key: key, mod: mod });
+        }
+    }
+
+    newControlEvent(interpreter: Interpreter): RoUniversalControlEvent | BrsInvalid {
+        const nextKey = this.keysQueue.shift();
+        if (nextKey && nextKey.key !== this.lastKey) {
+            if (interpreter.singleKeyEvents) {
+                if (nextKey.mod === 0) {
+                    if (this.lastKey >= 0 && this.lastKey < 100) {
+                        this.keysQueue.unshift({ key: nextKey.key, mod: nextKey.mod });
+                        nextKey.key = this.lastKey + 100;
+                        nextKey.mod = 100;
+                    }
+                } else if (nextKey.key !== this.lastKey + 100) {
+                    return BrsInvalid.Instance;
+                }
+            }
+            interpreter.lastKeyTime = interpreter.currKeyTime;
+            interpreter.currKeyTime = performance.now();
+            this.lastKey = nextKey.key;
+            return new RoUniversalControlEvent("WD:0", nextKey);
+        }
+        return BrsInvalid.Instance;
     }
 
     /** Waits until an event object is available or timeout milliseconds have passed. */
@@ -175,10 +172,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.screen) {
-                const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
-                if (key !== this.lastKey) {
-                    return this.newControlEvent(interpreter, key);
-                }
+                this.updateKeysQueue(interpreter);
+                return this.newControlEvent(interpreter);
             } else if (this.audio) {
                 const flags = Atomics.load(interpreter.sharedArray, DataType.SND);
                 if (flags !== this.lastFlags) {
@@ -213,10 +208,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.screen) {
-                const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
-                if (key !== this.lastKey) {
-                    const mod = Atomics.load(interpreter.sharedArray, DataType.MOD);
-                    return new RoUniversalControlEvent("WD:0", key, mod);
+                this.updateKeysQueue(interpreter);
+                const nextKey = this.keysQueue[0];
+                if (nextKey) {
+                    return new RoUniversalControlEvent("WD:0", nextKey);
                 }
             } else if (this.audio) {
                 const flags = Atomics.load(interpreter.sharedArray, DataType.SND);
