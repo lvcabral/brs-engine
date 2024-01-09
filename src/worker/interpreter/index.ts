@@ -68,6 +68,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: 0, column: 0 },
     };
     private _dotLevel = 0;
+    private _singleKeyEvents = true; // Default Roku behavior is `true`
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
@@ -90,10 +91,42 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._startTime;
     }
 
+    get singleKeyEvents() {
+        return this._singleKeyEvents;
+    }
+
     public audioId: number = 0;
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();
     public debugMode: boolean = false;
+
+    /**
+     * Updates the interpreter manifest with the provided data
+     *
+     * @param manifest Map with manifest content.
+     *
+     */
+    public setManifest(manifest: Map<string, string>) {
+        manifest.forEach((value: string, key: string) => {
+            this.manifest.set(key, value);
+            // Custom Manifest Entries
+            if (key.toLowerCase() === "multi_key_events") {
+                this._singleKeyEvents = value.trim() !== "1";
+            }
+        });
+    }
+
+    /**
+     * Updates the interpreter registry with the provided data
+     *
+     * @param registry Map with registry content.
+     *
+     */
+    public setRegistry(registry: Map<string, string>) {
+        registry.forEach((value: string, key: string) => {
+            this.registry.set(key, value);
+        });
+    }
 
     /**
      * Convenience function to subscribe to the `err` events emitted by `interpreter.events`.
