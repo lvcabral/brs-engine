@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { DataType, AudioEvent } from "./enums";
+import { DataType, MediaEvent } from "./enums";
 import { Howl, Howler } from "howler";
 
 // Sound Objects
@@ -45,6 +45,49 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Sound Functions
+export function handleSoundEvent(eventData: string) {
+    const data = eventData.split(",");
+    if (data[1] === "play") {
+        playSound();
+    } else if (data[1] === "stop") {
+        if (data[2]) {
+            stopWav(data[2]);
+        } else {
+            stopSound();
+        }
+    } else if (data[1] === "pause") {
+        pauseSound();
+    } else if (data[1] === "resume") {
+        resumeSound();
+    } else if (data[1] === "loop") {
+        if (data[2]) {
+            setLoop(data[2] === "true");
+        } else {
+            notifyAll("warning", `[sound] Missing loop parameter`);
+        }
+    } else if (data[1] === "next") {
+        const newIndex = data[2];
+        if (newIndex && !isNaN(parseInt(newIndex))) {
+            setNext(parseInt(newIndex));
+        } else {
+            notifyAll("warning", `[sound] Invalid next index: ${eventData}`);
+        }
+    } else if (data[1] === "seek") {
+        const position = data[2];
+        if (position && !isNaN(parseInt(position))) {
+            seekSound(parseInt(position));
+        } else {
+            notifyAll("warning", `[sound] Invalid seek position: ${eventData}`);
+        }
+    } else if (data[1] === "trigger") {
+        if (data.length >= 5) {
+            triggerWav(data[2], parseInt(data[3]), parseInt(data[4]));
+        } else {
+            notifyAll("warning", `[sound] Missing Trigger parameters: ${eventData}`);
+        }
+    }
+}
+
 export function muteSound(mute: boolean) {
     muted = mute;
     Howler.mute(mute);
@@ -99,164 +142,7 @@ export function audioCodecs() {
     });
 }
 
-export function playSound() {
-    const audio = playList[playIndex];
-    if (audio) {
-        let sound: Howl;
-        let idx = soundsIdx.get(audio.toLowerCase());
-        if (idx) {
-            sound = soundsDat[idx];
-        } else if (audio.slice(0, 4).toLowerCase() === "http") {
-            sound = addWebSound(audio);
-        } else {
-            notifyAll("warning", `[sound] Can't find audio to play: ${audio}`);
-            return;
-        }
-        sound.seek(0);
-        sound.once("end", nextSound);
-        if (sound.state() === "unloaded") {
-            sound.once("load", function () {
-                sound.play();
-            });
-            sound.load();
-        } else {
-            sound.play();
-        }
-        Atomics.store(sharedArray, DataType.IDX, playIndex);
-        Atomics.store(sharedArray, DataType.SND, AudioEvent.SELECTED);
-    } else {
-        notifyAll("warning", `[sound] Can't find audio index: ${playIndex}`);
-    }
-}
-
-export function nextSound() {
-    if (playNext >= 0 && playNext < playList.length) {
-        playIndex = playNext;
-    } else {
-        playIndex++;
-    }
-    playNext = -1;
-    if (playIndex < playList.length) {
-        playSound();
-    } else if (playLoop) {
-        playIndex = 0;
-        playSound();
-    } else {
-        playIndex = 0;
-        Atomics.store(sharedArray, DataType.SND, AudioEvent.FULL);
-    }
-}
-
-export function stopSound() {
-    const audio = playList[playIndex];
-    if (audio && soundsIdx.has(audio.toLowerCase())) {
-        let idx = soundsIdx.get(audio.toLowerCase());
-        if (idx) {
-            if (soundsDat[idx].state() !== "loading") {
-                soundsDat[idx].stop();
-            } else {
-                soundsDat[idx].unload();
-            }
-        }
-        Atomics.store(sharedArray, DataType.SND, AudioEvent.PARTIAL);
-    } else if (audio) {
-        notifyAll("warning", `[sound] Can't find audio to stop: ${playIndex} - ${audio}`);
-    }
-}
-
-export function pauseSound(notify = true) {
-    const audio = playList[playIndex];
-    if (audio && soundsIdx.has(audio.toLowerCase())) {
-        let idx = soundsIdx.get(audio.toLowerCase());
-        if (idx) {
-            soundsDat[idx].pause();
-        }
-        if (notify) {
-            Atomics.store(sharedArray, DataType.SND, AudioEvent.PAUSED);
-        }
-    } else if (audio) {
-        notifyAll("warning", `[sound] Can't find audio to pause: ${playIndex} - ${audio}`);
-    }
-}
-
-export function resumeSound(notify = true) {
-    const audio = playList[playIndex];
-    if (audio && soundsIdx.has(audio.toLowerCase())) {
-        let idx = soundsIdx.get(audio.toLowerCase());
-        if (idx) {
-            soundsDat[idx].play();
-        }
-        if (notify) {
-            Atomics.store(sharedArray, DataType.SND, AudioEvent.RESUMED);
-        }
-    } else if (audio) {
-        notifyAll("warning", `[sound] Can't find audio to resume: ${playIndex} - ${audio}`);
-    }
-}
-
-export function seekSound(position: number) {
-    const audio = playList[playIndex];
-    if (audio && soundsIdx.has(audio.toLowerCase())) {
-        let idx = soundsIdx.get(audio.toLowerCase());
-        if (idx) {
-            soundsDat[idx].seek(position);
-        }
-    } else if (audio) {
-        notifyAll("warning", `[sound] Can't find audio to seek: ${playIndex} - ${audio}`);
-    }
-}
-
-export function setLoop(enable: boolean) {
-    playLoop = enable;
-}
-
-export function setNext(index: number) {
-    playNext = index;
-    if (playNext >= playList.length) {
-        playNext = -1;
-        notifyAll("warning", `[sound] Next index out of range: ${index}`);
-    }
-}
-
-export function triggerWav(wav: string, volume: number, index: number) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
-    if (soundId) {
-        const sound = soundsDat[soundId];
-        if (volume && !isNaN(volume)) {
-            sound.volume(volume / 100);
-        }
-        if (index >= 0 && index < maxStreams) {
-            if (wavStreams[index]?.playing()) {
-                wavStreams[index].stop();
-            }
-            wavStreams[index] = sound;
-            sound.on("end", function () {
-                Atomics.store(sharedArray, DataType.WAV + index, -1);
-            });
-            sound.play();
-            Atomics.store(sharedArray, DataType.WAV + index, soundId);
-        }
-    }
-}
-
-export function stopWav(wav: string) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
-    if (soundId) {
-        const sound = soundsDat[soundId];
-        for (let index = 0; index < maxStreams; index++) {
-            const wavId = Atomics.load(sharedArray, DataType.WAV + index);
-            if (wavId === soundId) {
-                Atomics.store(sharedArray, DataType.WAV + index, -1);
-                break;
-            }
-        }
-        sound.stop();
-    } else {
-        notifyAll("warning", `[sound] Can't find wav sound: ${wav}`);
-    }
-}
-
-export function addPlaylist(newList: any[]) {
+export function addSoundPlaylist(newList: any[]) {
     if (playList.length > 0) {
         stopSound();
     }
@@ -303,6 +189,163 @@ export function resetSounds() {
     playIndex = 0;
     playLoop = false;
     playNext = -1;
+}
+
+function playSound() {
+    const audio = playList[playIndex];
+    if (audio) {
+        let sound: Howl;
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            sound = soundsDat[idx];
+        } else if (audio.slice(0, 4).toLowerCase() === "http") {
+            sound = addWebSound(audio);
+        } else {
+            notifyAll("warning", `[sound] Can't find audio to play: ${audio}`);
+            return;
+        }
+        sound.seek(0);
+        sound.once("end", nextSound);
+        if (sound.state() === "unloaded") {
+            sound.once("load", function () {
+                sound.play();
+            });
+            sound.load();
+        } else {
+            sound.play();
+        }
+        Atomics.store(sharedArray, DataType.IDX, playIndex);
+        Atomics.store(sharedArray, DataType.SND, MediaEvent.SELECTED);
+    } else {
+        notifyAll("warning", `[sound] Can't find audio index: ${playIndex}`);
+    }
+}
+
+function nextSound() {
+    if (playNext >= 0 && playNext < playList.length) {
+        playIndex = playNext;
+    } else {
+        playIndex++;
+    }
+    playNext = -1;
+    if (playIndex < playList.length) {
+        playSound();
+    } else if (playLoop) {
+        playIndex = 0;
+        playSound();
+    } else {
+        playIndex = 0;
+        Atomics.store(sharedArray, DataType.SND, MediaEvent.FULL);
+    }
+}
+
+function stopSound() {
+    const audio = playList[playIndex];
+    if (audio && soundsIdx.has(audio.toLowerCase())) {
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            if (soundsDat[idx].state() !== "loading") {
+                soundsDat[idx].stop();
+            } else {
+                soundsDat[idx].unload();
+            }
+        }
+        Atomics.store(sharedArray, DataType.SND, MediaEvent.PARTIAL);
+    } else if (audio) {
+        notifyAll("warning", `[sound] Can't find audio to stop: ${playIndex} - ${audio}`);
+    }
+}
+
+function pauseSound(notify = true) {
+    const audio = playList[playIndex];
+    if (audio && soundsIdx.has(audio.toLowerCase())) {
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            soundsDat[idx].pause();
+        }
+        if (notify) {
+            Atomics.store(sharedArray, DataType.SND, MediaEvent.PAUSED);
+        }
+    } else if (audio) {
+        notifyAll("warning", `[sound] Can't find audio to pause: ${playIndex} - ${audio}`);
+    }
+}
+
+function resumeSound(notify = true) {
+    const audio = playList[playIndex];
+    if (audio && soundsIdx.has(audio.toLowerCase())) {
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            soundsDat[idx].play();
+        }
+        if (notify) {
+            Atomics.store(sharedArray, DataType.SND, MediaEvent.RESUMED);
+        }
+    } else if (audio) {
+        notifyAll("warning", `[sound] Can't find audio to resume: ${playIndex} - ${audio}`);
+    }
+}
+
+function seekSound(position: number) {
+    const audio = playList[playIndex];
+    if (audio && soundsIdx.has(audio.toLowerCase())) {
+        let idx = soundsIdx.get(audio.toLowerCase());
+        if (idx) {
+            soundsDat[idx].seek(position);
+        }
+    } else if (audio) {
+        notifyAll("warning", `[sound] Can't find audio to seek: ${playIndex} - ${audio}`);
+    }
+}
+
+function setLoop(enable: boolean) {
+    playLoop = enable;
+}
+
+function setNext(index: number) {
+    playNext = index;
+    if (playNext >= playList.length) {
+        playNext = -1;
+        notifyAll("warning", `[sound] Next index out of range: ${index}`);
+    }
+}
+
+function triggerWav(wav: string, volume: number, index: number) {
+    const soundId = soundsIdx.get(wav.toLowerCase());
+    if (soundId) {
+        const sound = soundsDat[soundId];
+        if (volume && !isNaN(volume)) {
+            sound.volume(volume / 100);
+        }
+        if (index >= 0 && index < maxStreams) {
+            if (wavStreams[index]?.playing()) {
+                wavStreams[index].stop();
+            }
+            wavStreams[index] = sound;
+            sound.on("end", function () {
+                Atomics.store(sharedArray, DataType.WAV + index, -1);
+            });
+            sound.play();
+            Atomics.store(sharedArray, DataType.WAV + index, soundId);
+        }
+    }
+}
+
+function stopWav(wav: string) {
+    const soundId = soundsIdx.get(wav.toLowerCase());
+    if (soundId) {
+        const sound = soundsDat[soundId];
+        for (let index = 0; index < maxStreams; index++) {
+            const wavId = Atomics.load(sharedArray, DataType.WAV + index);
+            if (wavId === soundId) {
+                Atomics.store(sharedArray, DataType.WAV + index, -1);
+                break;
+            }
+        }
+        sound.stop();
+    } else {
+        notifyAll("warning", `[sound] Can't find wav sound: ${wav}`);
+    }
 }
 
 function addWebSound(url: string) {

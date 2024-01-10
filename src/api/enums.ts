@@ -12,6 +12,8 @@ export enum DataType {
     MOD,
     DBG,
     EXP,
+    VDO,
+    VDX,
     SND,
     IDX,
     WAV, // Needs to be the last to allow variable # of streams
@@ -38,8 +40,8 @@ export enum DebugCommand {
     PAUSE,
 }
 
-// Audio events enumerator
-export enum AudioEvent {
+// Media events enumerator
+export enum MediaEvent {
     SELECTED,
     FULL,
     PARTIAL,

@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' data: blob: 'self'
+        https://test-streams.mux.dev
         https://fonts.googleapis.com
+        https://commondatastorage.googleapis.com
         https://fonts.gstatic.com
         https://www.googletagmanager.com
         https://www.google-analytics.com;">
@@ -25,6 +27,7 @@
             <img id="loading" src="images/loading.gif" width="854px" height="480px" alt="loading..." />
             <div id="stats"></div>
             <canvas id="display" width="854px" height="480px"></canvas>
+            <video id="player" width="854px" height="480px" crossorigin="anonymous"></video>
             <img id="channel1" src="images/icons/rect-bounce-icon.png" title="Open Rectangle Bounce demo app" alt="Rectangle Bounce app icon" onclick="loadZip('channels/Rect-Bounce.zip')" style="cursor: pointer;" />
             <img id="channel2" src="images/icons/ball-boing-icon.png" title="Open Ball Boing demo app" alt="Ball Boing app icon" onclick="loadZip('channels/Ball-Boing.zip')" style="cursor: pointer;" />
             <img id="channel3" src="images/icons/collisions-icon.png" title="Open Sprite Collisions demo app" alt="Sprite Collision app icon" onclick="loadZip('channels/Collisions.zip')" style="cursor: pointer;" />

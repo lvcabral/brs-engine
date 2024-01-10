@@ -5,12 +5,13 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
 import Stats from "stats.js";
 
 // Simulation Display
 const screenSize = { width: 1280, height: 720 };
-let display: HTMLCanvasElement | OffscreenCanvas;
+let display: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D | null;
 let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
@@ -19,6 +20,8 @@ let bufferCtx: CanvasRenderingContext2D | null;
 let statsDiv: HTMLDivElement;
 let statsCanvas: Stats;
 let showStats = false;
+let videoState = "stop";
+let frameLoop = false;
 
 // Initialize Display Module
 export let displayMode = "720p";
@@ -26,11 +29,9 @@ export let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 export function initDisplayModule(mode: string, perfStats = false) {
     // Initialize Display Canvas
+    display = document.getElementById("display") as HTMLCanvasElement;
+    ctx = display.getContext("2d", { alpha: false });
     if (typeof OffscreenCanvas !== "undefined") {
-        display =
-            (document.getElementById("display") as HTMLCanvasElement) ||
-            new OffscreenCanvas(screenSize.width, screenSize.height);
-        ctx = display.getContext("2d", { alpha: false });
         bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
         bufferCtx = bufferCanvas.getContext("2d", {
             alpha: false,
@@ -49,6 +50,14 @@ export function initDisplayModule(mode: string, perfStats = false) {
     aspectRatio = displayMode === "480p" ? 4 / 3 : 16 / 9;
     screenSize.height = display.height;
     screenSize.width = Math.trunc(screenSize.height * aspectRatio);
+    subscribeVideo("display", (event: string, data: any) => {
+        videoState = event;
+        if (videoState === "play" && !frameLoop) {
+            console.log("enabling video draw!");
+            frameLoop = true;
+            window.requestAnimationFrame(drawVideoFrame);
+        }
+    });
 }
 
 // Observers Handling
@@ -104,12 +113,9 @@ export function redrawDisplay(
         } else {
             display.style.top = `0px`;
         }
-    } else {
-        display.width = screenSize.width;
-        display.height = screenSize.height;
     }
     if (running) {
-        window.requestAnimationFrame(drawBufferImage);
+        drawBufferImage();
     } else {
         clearDisplay();
     }
@@ -156,7 +162,7 @@ export function drawIconAsSplash(imgData: ImageBitmap) {
         bufferCtx.fillStyle = "white";
         bufferCtx.font = "30px sans-serif";
         bufferCtx.fillText("Loading...", w / 2, y + imgData.height + 45);
-        window.requestAnimationFrame(drawBufferImage);
+        drawBufferImage();
     }
 }
 
@@ -174,7 +180,7 @@ export function updateBuffer(buffer: ImageData) {
 }
 
 // Draw Buffer Image to the Display Canvas
-function drawBufferImage(timeStamp: number) {
+function drawBufferImage() {
     if (ctx) {
         statsUpdate(false);
         let overscan = 0.04;
@@ -200,6 +206,22 @@ function drawBufferImage(timeStamp: number) {
         statsUpdate(true);
     }
 }
+
+// Draw Video Player frame to the Display Canvas
+function drawVideoFrame() {
+    if (ctx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState)) {
+        frameLoop = true;
+        statsUpdate(false);
+        const video = document.getElementById("player") as HTMLVideoElement;
+        ctx.drawImage(video as any, 0, 0, screenSize.width, screenSize.height);
+        window.requestAnimationFrame(drawVideoFrame);
+        statsUpdate(true);
+    } else {
+        frameLoop = false;
+        console.log("disabling video draw!");
+    }
+}
+
 export function statsUpdate(start: boolean) {
     if (showStats) {
         if (start) {

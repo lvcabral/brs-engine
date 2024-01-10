@@ -47,21 +47,21 @@ import {
     initSoundModule,
     addSound,
     resetSounds,
-    playSound,
-    stopSound,
-    pauseSound,
-    resumeSound,
-    setLoop,
-    setNext,
-    triggerWav,
-    stopWav,
-    addPlaylist,
-    seekSound,
+    addSoundPlaylist,
     muteSound,
     isMuted,
     subscribeSound,
     switchSoundState,
+    handleSoundEvent,
 } from "./sound";
+import {
+    addVideoPlaylist,
+    handleVideoEvent,
+    initVideoModule,
+    resetVideo,
+    subscribeVideo,
+    switchVideoState,
+} from "./video";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
@@ -74,7 +74,6 @@ export { deviceData, loadAppZip, updateAppZip } from "./package";
 
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
-let pausedSound: boolean = false;
 
 // App Shared Buffer
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
@@ -132,6 +131,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
+    initVideoModule(sharedArray, false);
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
@@ -162,6 +162,11 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         }
     });
     subscribeSound("api", (event: string, data: any) => {
+        if (["error", "warning"].includes(event)) {
+            apiException(event, data);
+        }
+    });
+    subscribeVideo("api", (event: string, data: any) => {
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
         }
@@ -382,6 +387,7 @@ function resetWorker() {
     brsWorker.terminate();
     resetArray();
     resetSounds();
+    resetVideo();
 }
 function resetArray() {
     Atomics.store(sharedArray, DataType.KEY, -1);
@@ -436,53 +442,20 @@ function workerCallback(event: MessageEvent) {
         }
         notifyAll("registry", event.data);
     } else if (event.data instanceof Array) {
-        addPlaylist(event.data);
+        addSoundPlaylist(event.data);
     } else if (event.data.audioPath && context.inBrowser) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
+    } else if (event.data.videoPlaylist && context.inBrowser) {
+        if (event.data.videoPlaylist instanceof Array) {
+            addVideoPlaylist(event.data.videoPlaylist);
+        }
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${event.data}`);
     } else if (event.data.startsWith("audio,")) {
-        const data = event.data.split(",");
-        if (data[1] === "play") {
-            playSound();
-        } else if (data[1] === "stop") {
-            if (data[2]) {
-                stopWav(data[2]);
-            } else {
-                stopSound();
-            }
-        } else if (data[1] === "pause") {
-            pauseSound();
-        } else if (data[1] === "resume") {
-            resumeSound();
-        } else if (data[1] === "loop") {
-            if (data[2]) {
-                setLoop(data[2] === "true");
-            } else {
-                apiException("warning", `[api] Missing loop parameter: ${event.data}`);
-            }
-        } else if (data[1] === "next") {
-            const newIndex = data[2];
-            if (newIndex && !isNaN(parseInt(newIndex))) {
-                setNext(parseInt(newIndex));
-            } else {
-                apiException("warning", `[api] Invalid next index: ${event.data}`);
-            }
-        } else if (data[1] === "seek") {
-            const position = data[2];
-            if (position && !isNaN(parseInt(position))) {
-                seekSound(parseInt(position));
-            } else {
-                apiException("warning", `[api] Invalid seek position: ${event.data}`);
-            }
-        } else if (data[1] === "trigger") {
-            if (data.length >= 5) {
-                triggerWav(data[2], parseInt(data[3]), parseInt(data[4]));
-            } else {
-                apiException("warning", `[api] Missing Trigger parameters: ${event.data}`);
-            }
-        }
+        handleSoundEvent(event.data);
+    } else if (event.data.startsWith("video,")) {
+        handleVideoEvent(event.data);
     } else if (event.data.startsWith("print,")) {
         deviceDebug(event.data);
     } else if (event.data.startsWith("warning,")) {
@@ -495,6 +468,7 @@ function workerCallback(event: MessageEvent) {
         enableControl(enable);
         statsUpdate(enable);
         switchSoundState(enable);
+        switchVideoState(enable);
         notifyAll("debug", { level: level });
     } else if (event.data.startsWith("start,")) {
         const title = currentApp.title;
