@@ -389,13 +389,12 @@ function resetWorker() {
     resetSounds();
     resetVideo();
 }
+
 function resetArray() {
-    Atomics.store(sharedArray, DataType.KEY, -1);
-    Atomics.store(sharedArray, DataType.MOD, -1);
-    Atomics.store(sharedArray, DataType.SND, -1);
-    Atomics.store(sharedArray, DataType.IDX, -1);
-    Atomics.store(sharedArray, DataType.DBG, -1);
-    Atomics.store(sharedArray, DataType.EXP, -1);
+    sharedArray.some((_, index: number) => {
+        sharedArray[index] = -1;
+        return index < dataBufferIndex;
+    });
 }
 
 // Open source file

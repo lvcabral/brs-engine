@@ -57,20 +57,26 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     }
 
     getContent() {
-        const contents = new Array<string>();
-        this.contentList.forEach((value, index, array) => {
-            let url = value.get(new BrsString("url"));
+        const contents = [] as Object[];
+        this.contentList.forEach((aa, index, array) => {
+            const item = { url: "", streamFormat: "" };
+            let url = aa.get(new BrsString("url"));
             if (url instanceof BrsString) {
-                contents.push(url.value);
+                item.url = url.value;
             } else {
-                const stream = value.get(new BrsString("stream"));
+                const stream = aa.get(new BrsString("stream"));
                 if (stream instanceof RoAssociativeArray) {
                     url = stream.get(new BrsString("url"));
                     if (url instanceof BrsString) {
-                        contents.push(url.value);
+                        item.url = url.value;
                     }
                 }
             }
+            let streamFormat = aa.get(new BrsString("streamFormat"));
+            if (streamFormat instanceof BrsString) {
+                item.streamFormat = streamFormat.value.toLowerCase();
+            }
+            contents.push(item);
         });
         return contents;
     }
@@ -205,6 +211,10 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, period: Int32) => {
             this.notificationPeriod = period.getValue();
+            if (this.port) {
+                this.port.setNotification(this.notificationPeriod);
+            }
+            postMessage(`video,notify,${this.notificationPeriod}`);
             return BrsInvalid.Instance;
         },
     });
@@ -218,6 +228,13 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 returns: ValueKind.Void,
             },
             impl: (_: Interpreter, rect: RoAssociativeArray) => {
+                const x = rect.get(new BrsString("x")) as BrsNumber;
+                const y = rect.get(new BrsString("y")) as BrsNumber;
+                const w = rect.get(new BrsString("w")) as BrsNumber;
+                const h = rect.get(new BrsString("h")) as BrsNumber;
+                postMessage(
+                    `video,rect,${x.getValue()},${y.getValue()},${w.getValue()},${h.getValue()}`
+                );
                 return BrsInvalid.Instance;
             },
         },
@@ -232,6 +249,9 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 returns: ValueKind.Void,
             },
             impl: (_: Interpreter, x: BrsNumber, y: BrsNumber, w: BrsNumber, h: BrsNumber) => {
+                postMessage(
+                    `video,rect,${x.getValue()},${y.getValue()},${w.getValue()},${h.getValue()}`
+                );
                 return BrsInvalid.Instance;
             },
         }

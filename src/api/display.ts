@@ -21,6 +21,7 @@ let statsDiv: HTMLDivElement;
 let statsCanvas: Stats;
 let showStats = false;
 let videoState = "stop";
+let videoRect = { x: 0, y: 0, w: 0, h: 0 };
 let frameLoop = false;
 
 // Initialize Display Module
@@ -51,9 +52,12 @@ export function initDisplayModule(mode: string, perfStats = false) {
     screenSize.height = display.height;
     screenSize.width = Math.trunc(screenSize.height * aspectRatio);
     subscribeVideo("display", (event: string, data: any) => {
+        if (event === "rect") {
+            videoRect = data;
+            return;
+        }
         videoState = event;
         if (videoState === "play" && !frameLoop) {
-            console.log("enabling video draw!");
             frameLoop = true;
             window.requestAnimationFrame(drawVideoFrame);
         }
@@ -209,16 +213,29 @@ function drawBufferImage() {
 
 // Draw Video Player frame to the Display Canvas
 function drawVideoFrame() {
-    if (ctx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState)) {
+    if (bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState)) {
         frameLoop = true;
-        statsUpdate(false);
-        const video = document.getElementById("player") as HTMLVideoElement;
-        ctx.drawImage(video as any, 0, 0, screenSize.width, screenSize.height);
+        let left = videoRect.x;
+        let top = videoRect.y;
+        let width = videoRect.w || bufferCanvas.width;
+        let height = videoRect.h || bufferCanvas.height;
+        if (player.videoHeight > 0) {
+            const videoAR = player.videoWidth / player.videoHeight;
+            if (Math.trunc(width / videoAR) > height) {
+                let nw = Math.trunc(height * videoAR);
+                left += (width - nw) / 2;
+                width = nw;
+            } else {
+                let nh = Math.trunc(width / videoAR);
+                top += (height - nh) / 2;
+                height = nh;
+            }
+        }
+        bufferCtx.drawImage(player as any, left, top, width, height);
+        drawBufferImage();
         window.requestAnimationFrame(drawVideoFrame);
-        statsUpdate(true);
     } else {
         frameLoop = false;
-        console.log("disabling video draw!");
     }
 }
 

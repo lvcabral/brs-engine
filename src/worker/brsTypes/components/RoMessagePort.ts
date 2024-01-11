@@ -7,7 +7,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../../api/enums";
+import { DataType, MediaEvent } from "../../../api/enums";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -18,6 +18,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private screen: boolean;
     private audioFlags: number;
     private videoFlags: number;
+    private videoPosition: number;
+    private videoNotificationPeriod: number;
+    private videoProgress: number;
     private audio: boolean;
     private video: boolean;
     constructor() {
@@ -32,6 +35,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.screen = false;
         this.audioFlags = -1;
         this.videoFlags = -1;
+        this.videoPosition = 0;
+        this.videoProgress = -1;
+        this.videoNotificationPeriod = 0;
         this.audio = false;
         this.video = false;
     }
@@ -46,6 +52,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     enableVideo(enable: boolean) {
         this.video = enable;
+    }
+
+    setNotification(period: number) {
+        this.videoNotificationPeriod = period;
     }
 
     pushMessage(object: BrsType) {
@@ -184,6 +194,11 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     newVideoEvent(interpreter: Interpreter) {
+        const progress = Atomics.load(interpreter.sharedArray, DataType.VLP);
+        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
+            this.videoProgress = progress;
+            return new RoVideoPlayerEvent(MediaEvent.LOADING, progress);
+        }
         const flags = Atomics.load(interpreter.sharedArray, DataType.VDO);
         if (flags !== this.videoFlags) {
             this.videoFlags = flags;
@@ -192,6 +207,13 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     this.videoFlags,
                     Atomics.load(interpreter.sharedArray, DataType.VDX)
                 );
+            }
+        }
+        if (this.videoNotificationPeriod >= 1) {
+            const position = Atomics.load(interpreter.sharedArray, DataType.VPS);
+            if (this.videoPosition + this.videoNotificationPeriod <= position) {
+                this.videoPosition = position;
+                return new RoVideoPlayerEvent(MediaEvent.POSITION, position);
             }
         }
         return BrsInvalid.Instance;

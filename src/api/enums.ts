@@ -14,6 +14,8 @@ export enum DataType {
     EXP,
     VDO,
     VDX,
+    VLP,
+    VPS,
     SND,
     IDX,
     WAV, // Needs to be the last to allow variable # of streams
@@ -48,4 +50,6 @@ export enum MediaEvent {
     PAUSED,
     RESUMED,
     FAILED,
+    LOADING,
+    POSITION,
 }

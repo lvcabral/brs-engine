@@ -17,6 +17,9 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         this.flags = flags;
         this.index = index;
         switch (this.flags) {
+            case MediaEvent.LOADING:
+                this.message = "startup progress";
+                break;
             case MediaEvent.SELECTED:
                 this.message = "start of play";
                 break;
@@ -188,7 +191,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.False;
+            return BrsBoolean.from(this.flags === MediaEvent.POSITION);
         },
     });
 

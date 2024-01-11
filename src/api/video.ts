@@ -17,27 +17,48 @@ let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
 let sharedArray: Int32Array;
+let notifyTime = false;
+let loadProgress = 0;
 
 // Initialize Video Module
 export function initVideoModule(array: Int32Array, mute: boolean = false) {
     player = document.getElementById("player") as HTMLVideoElement;
     if (player) {
         player.addEventListener("canplay", (event) => {
-            player.play();
-            notifyAll("play");
+            if (playerState !== "play") {
+                player.play();
+                loadProgress = 1000;
+                Atomics.store(sharedArray, DataType.VLP, loadProgress);
+                Atomics.store(sharedArray, DataType.VDX, playIndex);
+                Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED);
+                notifyAll("play");
+            }
         });
         player.addEventListener("playing", (event) => {
             notifyAll("play");
+        });
+        player.addEventListener("timeupdate", () => {
+            if (notifyTime) {
+                Atomics.store(sharedArray, DataType.VPS, Math.round(player.currentTime));
+            }
         });
         player.addEventListener("error", (event) => {
             notifyAll("error", `Error ${player.error?.code}; details: ${player.error?.message}`);
         });
         player.addEventListener("ended", nextVideo);
+        player.addEventListener("loadstart", startProgress);
+        player.addEventListener("durationchange", startProgress);
+        player.addEventListener("loadedmetadata", startProgress);
+        player.addEventListener("loadeddata", startProgress);
         player.muted = mute;
     }
     sharedArray = array;
     resetVideo();
-    muteVideo(mute);
+}
+
+function startProgress(event: Event) {
+    loadProgress += 200;
+    Atomics.store(sharedArray, DataType.VLP, loadProgress);
 }
 
 // Observers Handling
@@ -57,10 +78,18 @@ function notifyAll(eventName: string, eventData?: any) {
 
 // Sound Functions
 export function handleVideoEvent(eventData: string) {
-    console.log("video event: ", eventData);
     const data = eventData.split(",");
     if (data[1] === "play") {
         playVideo();
+    } else if (data[1] === "rect" && data.length === 6) {
+        notifyAll("rect", {
+            x: parseInt(data[2]),
+            y: parseInt(data[3]),
+            w: parseInt(data[4]),
+            h: parseInt(data[5]),
+        });
+    } else if (data[1] === "notify" && data.length === 3) {
+        notifyTime = parseInt(data[2]) >= 1;
     } else if (data[1] === "stop") {
         stopVideo();
     } else if (data[1] === "pause") {
@@ -133,15 +162,21 @@ export function resetVideo() {
     playNext = -1;
     playerState = "stop";
     videosState = false;
+    loadProgress = 0;
 }
 
 function playVideo() {
     const video = playList[playIndex];
     if (video && player) {
-        player.src = video;
+        player.src = video.url;
+        if (video.streamFormat === "mp4") {
+            player.setAttribute("type", "video/mp4");
+        } else if (video.streamFormat == "hls") {
+            player.setAttribute("type", "application/x-mpegURL");
+        } else {
+            player.removeAttribute("type");
+        }
         player.load();
-        Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED);
     } else {
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
     }
@@ -173,6 +208,7 @@ function stopVideo() {
         player.load();
         notifyAll("stop");
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
+        loadProgress = 0;
     }
 }
 
@@ -202,7 +238,6 @@ function resumeVideo(notify = true) {
 function seekVideo(position: number) {
     const video = playList[playIndex];
     if (video && player) {
-        console.log("seek to", position);
         player.currentTime = position;
     } else if (video) {
         notifyAll("warning", `[video] Can't find audio to seek: ${playIndex} - ${video}`);
