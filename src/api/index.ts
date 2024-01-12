@@ -392,8 +392,8 @@ function resetWorker() {
 
 function resetArray() {
     sharedArray.some((_, index: number) => {
-        sharedArray[index] = -1;
-        return index < dataBufferIndex;
+        Atomics.store(sharedArray, index, -1);
+        return index === dataBufferIndex - 1;
     });
 }
 
