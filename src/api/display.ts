@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { player, subscribeVideo } from "./video";
-import { SubscribeCallback } from "./util";
+import { SubscribeCallback, context } from "./util";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -15,6 +15,7 @@ let display: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D | null;
 let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
+let lastImage: ImageBitmap | null;
 
 // Performance Stats Variables
 let statsDiv: HTMLDivElement;
@@ -179,6 +180,9 @@ export function updateBuffer(buffer: ImageData) {
             bufferCanvas.height = buffer.height;
         }
         bufferCtx.putImageData(buffer, 0, 0);
+        createImageBitmap(buffer).then((bitmap) => {
+            lastImage = bitmap;
+        })
         window.requestAnimationFrame(drawBufferImage);
     }
 }
@@ -231,7 +235,16 @@ function drawVideoFrame() {
                 height = nh;
             }
         }
+        if (context.inApple) {
+            bufferCtx.fillStyle = "black";
+            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+        } else {
+            bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+        }
         bufferCtx.drawImage(player as any, left, top, width, height);
+        if (lastImage) {
+            bufferCtx.drawImage(lastImage, 0, 0);
+        }
         drawBufferImage();
         window.requestAnimationFrame(drawVideoFrame);
     } else {
@@ -266,6 +279,7 @@ export function clearDisplay() {
     if (ctx) {
         ctx.clearRect(0, 0, display.width, display.height);
     }
+    lastImage = null;
 }
 
 // Set Current Display Mode

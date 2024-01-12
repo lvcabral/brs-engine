@@ -31,7 +31,6 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
                 Atomics.store(sharedArray, DataType.VLP, loadProgress);
                 Atomics.store(sharedArray, DataType.VDX, playIndex);
                 Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED);
-                notifyAll("play");
             }
         });
         player.addEventListener("playing", (event) => {
@@ -176,6 +175,7 @@ function playVideo() {
         } else {
             player.removeAttribute("type");
         }
+        loadProgress = 0;
         player.load();
     } else {
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
