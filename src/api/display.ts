@@ -36,7 +36,7 @@ export function initDisplayModule(mode: string, perfStats = false) {
     if (typeof OffscreenCanvas !== "undefined") {
         bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
         bufferCtx = bufferCanvas.getContext("2d", {
-            alpha: false,
+            alpha: true,
         }) as CanvasRenderingContext2D | null;
         // Performance Statistics
         showPerfStats(perfStats);
@@ -183,6 +183,7 @@ export function updateBuffer(buffer: ImageData) {
         createImageBitmap(buffer).then((bitmap) => {
             lastImage = bitmap;
         })
+        clearDisplay();
         window.requestAnimationFrame(drawBufferImage);
     }
 }
@@ -235,12 +236,7 @@ function drawVideoFrame() {
                 height = nh;
             }
         }
-        if (context.inApple) {
-            bufferCtx.fillStyle = "black";
-            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-        } else {
-            bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-        }
+        clearBuffer()
         bufferCtx.drawImage(player as any, left, top, width, height);
         if (lastImage) {
             bufferCtx.drawImage(lastImage, 0, 0);
@@ -274,12 +270,23 @@ export function showDisplay() {
     }
 }
 
-//Clear Display
+//Clear Display and Buffer
 export function clearDisplay() {
-    if (ctx) {
-        ctx.clearRect(0, 0, display.width, display.height);
+    if (ctx && context.inApple) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    } else if (ctx) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
-    lastImage = null;
+}
+
+function clearBuffer() {
+    if (bufferCtx && context.inApple) {
+        bufferCtx.fillStyle = "black";
+        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    } else if(bufferCtx) {
+        bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    }
 }
 
 // Set Current Display Mode
