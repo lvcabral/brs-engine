@@ -380,7 +380,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     /** Set the region of the sprite to the passed roRegion object. */
     private setRegion = new Callable("setRegion", {
         signature: {
-            args: [new StdlibArgument("reion", ValueKind.Object)],
+            args: [new StdlibArgument("region", ValueKind.Object)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, region: RoRegion) => {
