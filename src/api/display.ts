@@ -5,20 +5,25 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback } from "./util";
+import { player, subscribeVideo } from "./video";
+import { SubscribeCallback, context } from "./util";
 import Stats from "stats.js";
 
 // Simulation Display
 const screenSize = { width: 1280, height: 720 };
-let display: HTMLCanvasElement | OffscreenCanvas;
+let display: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D | null;
 let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
+let lastImage: ImageBitmap | null;
 
 // Performance Stats Variables
 let statsDiv: HTMLDivElement;
 let statsCanvas: Stats;
 let showStats = false;
+let videoState = "stop";
+let videoRect = { x: 0, y: 0, w: 0, h: 0 };
+let frameLoop = false;
 
 // Initialize Display Module
 export let displayMode = "720p";
@@ -26,14 +31,12 @@ export let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 export function initDisplayModule(mode: string, perfStats = false) {
     // Initialize Display Canvas
+    display = document.getElementById("display") as HTMLCanvasElement;
+    ctx = display.getContext("2d", { alpha: false });
     if (typeof OffscreenCanvas !== "undefined") {
-        display =
-            (document.getElementById("display") as HTMLCanvasElement) ||
-            new OffscreenCanvas(screenSize.width, screenSize.height);
-        ctx = display.getContext("2d", { alpha: false });
         bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
         bufferCtx = bufferCanvas.getContext("2d", {
-            alpha: false,
+            alpha: true,
         }) as CanvasRenderingContext2D | null;
         // Performance Statistics
         showPerfStats(perfStats);
@@ -49,6 +52,17 @@ export function initDisplayModule(mode: string, perfStats = false) {
     aspectRatio = displayMode === "480p" ? 4 / 3 : 16 / 9;
     screenSize.height = display.height;
     screenSize.width = Math.trunc(screenSize.height * aspectRatio);
+    subscribeVideo("display", (event: string, data: any) => {
+        if (event === "rect") {
+            videoRect = data;
+            return;
+        }
+        videoState = event;
+        if (videoState === "play" && !frameLoop) {
+            frameLoop = true;
+            window.requestAnimationFrame(drawVideoFrame);
+        }
+    });
 }
 
 // Observers Handling
@@ -104,12 +118,9 @@ export function redrawDisplay(
         } else {
             display.style.top = `0px`;
         }
-    } else {
-        display.width = screenSize.width;
-        display.height = screenSize.height;
     }
     if (running) {
-        window.requestAnimationFrame(drawBufferImage);
+        drawBufferImage();
     } else {
         clearDisplay();
     }
@@ -156,7 +167,7 @@ export function drawIconAsSplash(imgData: ImageBitmap) {
         bufferCtx.fillStyle = "white";
         bufferCtx.font = "30px sans-serif";
         bufferCtx.fillText("Loading...", w / 2, y + imgData.height + 45);
-        window.requestAnimationFrame(drawBufferImage);
+        drawBufferImage();
     }
 }
 
@@ -169,12 +180,16 @@ export function updateBuffer(buffer: ImageData) {
             bufferCanvas.height = buffer.height;
         }
         bufferCtx.putImageData(buffer, 0, 0);
+        createImageBitmap(buffer).then((bitmap) => {
+            lastImage = bitmap;
+        });
+        clearDisplay();
         window.requestAnimationFrame(drawBufferImage);
     }
 }
 
 // Draw Buffer Image to the Display Canvas
-function drawBufferImage(timeStamp: number) {
+function drawBufferImage() {
     if (ctx) {
         statsUpdate(false);
         let overscan = 0.04;
@@ -200,6 +215,39 @@ function drawBufferImage(timeStamp: number) {
         statsUpdate(true);
     }
 }
+
+// Draw Video Player frame to the Display Canvas
+function drawVideoFrame() {
+    if (bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState)) {
+        frameLoop = true;
+        let left = videoRect.x;
+        let top = videoRect.y;
+        let width = videoRect.w || bufferCanvas.width;
+        let height = videoRect.h || bufferCanvas.height;
+        if (player.videoHeight > 0) {
+            const videoAR = player.videoWidth / player.videoHeight;
+            if (Math.trunc(width / videoAR) > height) {
+                let nw = Math.trunc(height * videoAR);
+                left += (width - nw) / 2;
+                width = nw;
+            } else {
+                let nh = Math.trunc(width / videoAR);
+                top += (height - nh) / 2;
+                height = nh;
+            }
+        }
+        clearBuffer();
+        bufferCtx.drawImage(player as any, left, top, width, height);
+        if (lastImage) {
+            bufferCtx.drawImage(lastImage, 0, 0);
+        }
+        drawBufferImage();
+        window.requestAnimationFrame(drawVideoFrame);
+    } else {
+        frameLoop = false;
+    }
+}
+
 export function statsUpdate(start: boolean) {
     if (showStats) {
         if (start) {
@@ -222,10 +270,20 @@ export function showDisplay() {
     }
 }
 
-//Clear Display
+//Clear Display and Buffer
 export function clearDisplay() {
-    if (ctx) {
-        ctx.clearRect(0, 0, display.width, display.height);
+    if (ctx && context.inApple) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    } else if (ctx) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+}
+
+function clearBuffer() {
+    if (bufferCtx) {
+        bufferCtx.fillStyle = "black";
+        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
     }
 }
 

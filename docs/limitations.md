@@ -5,17 +5,18 @@ There are several features from the **BrightScript** language and components tha
 ## In Scope (to be developed/fixed in future releases)
 
 * RSG (Roku SceneGraph) SDK components are not yet supported.
-* Video playback or streaming are not yet supported.
 * Statements `Goto` and `Throw` are not supported.
 * Statements `Try..Catch` are partially supported, only the `Try` section is executed, `Catch` part is ignored and the exception is still raised.
 * It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
-* Do not use the same `roMessagePort` instance with different objects (`roScreen`, `roAudioPlayer` etc.) create one per object type.
 * Multi-dimensional arrays cannot be accessed as `array[x, y]` use the notation `array[x][y]` instead.
 * Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
-  * Audio format `wma` is not supported and `wav` is not supported when using Safari in MacOS.
+  * Audio format `wma` is not supported (old versions of Roku firmware supported it).
   * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
   * If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
   * No `Timed Metadata` support.
+* Video playback via `roVideoPlayer` is implemented, but with some limitations:
+  * If the `roVideoPlayer` instance is destroyed the video keeps playing, make sure to call `.stop()` before discarding the object.
+  * The following methods are still not supported: `setCGMS`, `setMaxVideoDecodeResolution`, `getAudioTracks`, `changeAudioTrack`, `setTimedMetadataForKeys`, `getCaptionRenderer`, `setMacrovisionLevel`
 * The component `roUrlTransfer` is implemented with basic functionality but has some limitations:
   * To make the **web app** access urls from domains other than the one it is hosted, add the domains to the `Content-Security-Policy` tag in `app/index.html`.
   * The configuration above requires the web server called to respond with the proper header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).

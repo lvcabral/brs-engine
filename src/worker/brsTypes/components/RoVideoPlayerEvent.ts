@@ -6,17 +6,20 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { MediaEvent } from "../../../api/enums";
 
-export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
+export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private flags: number;
     private index: number;
     private message: string;
 
     constructor(flags: number, index: number) {
-        super("roAudioPlayerEvent");
+        super("roVideoPlayerEvent");
         this.flags = flags;
         this.index = index;
         switch (this.flags) {
+            case MediaEvent.LOADING:
+                this.message = "startup progress";
+                break;
             case MediaEvent.SELECTED:
                 this.message = "start of play";
                 break;
@@ -28,11 +31,10 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 break;
         }
         this.registerMethods({
-            ifAudioPlayerEvent: [
+            ifVideoPlayerEvent: [
                 this.getIndex,
                 this.getMessage,
                 this.getInfo,
-                this.getData,
                 this.isListItemSelected,
                 this.isFullResult,
                 this.isPartialResult,
@@ -42,12 +44,19 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 this.isResumed,
                 this.isStatusMessage,
                 this.isTimedMetadata,
+                this.isPlaybackPosition,
+                // this.isFormatDetected,
+                // this.isSegmentDownloadStarted,
+                // this.isStreamStarted,
+                // this.isCaptionModeChanged,
+                // this.isStreamSegmentInfo,
+                // this.isDownloadSegmentInfo,
             ],
         });
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roAudioPlayerEvent>";
+        return "<Component: roVideoPlayerEvent>";
     }
 
     equalTo(other: BrsType) {
@@ -76,17 +85,6 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns error code when isRequestFailed() is true. */
-    private getData = new Callable("getData", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(0); //TODO: Get error code from rendered thread
-        },
-    });
-
     /** Returns the current status message. */
     private getMessage = new Callable("getMessage", {
         signature: {
@@ -109,7 +107,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio is loaded and will start to play. */
+    /** Returns true if video is loaded and will start to play. */
     private isFullResult = new Callable("isFullResult", {
         signature: {
             args: [],
@@ -120,7 +118,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback completed at end of content. */
+    /** Returns true if video playback completed at end of content. */
     private isRequestSucceeded = new Callable("isRequestSucceeded", {
         signature: {
             args: [],
@@ -131,7 +129,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback fails. */
+    /** Returns true if video playback fails. */
     private isRequestFailed = new Callable("isRequestFailed", {
         signature: {
             args: [],
@@ -142,7 +140,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback was interrupted. */
+    /** Returns true if video playback was interrupted. */
     private isPartialResult = new Callable("isPartialResult", {
         signature: {
             args: [],
@@ -153,7 +151,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback was paused. */
+    /** Returns true if video playback was paused. */
     private isPaused = new Callable("isPaused", {
         signature: {
             args: [],
@@ -164,7 +162,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback was resumed. */
+    /** Returns true if video playback was resumed. */
     private isResumed = new Callable("isResumed", {
         signature: {
             args: [],
@@ -183,6 +181,17 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.message !== "");
+        },
+    });
+
+    /** Checks whether the current position in the video stream has changed. */
+    private isPlaybackPosition = new Callable("isPlaybackPosition", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.flags === MediaEvent.POSITION);
         },
     });
 

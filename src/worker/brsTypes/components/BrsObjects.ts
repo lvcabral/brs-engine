@@ -19,6 +19,7 @@ import { RoBitmap, createBitmap } from "./RoBitmap";
 import { createRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
 import { RoAudioPlayer } from "./RoAudioPlayer";
+import { RoVideoPlayer } from "./RoVideoPlayer";
 import { RoXMLElement } from "./RoXMLElement";
 import { RoURLTransfer } from "./RoURLTransfer";
 import { createAudioResource } from "./RoAudioResource";
@@ -86,6 +87,7 @@ export const BrsObjects = new Map<string, Function>([
         "roaudioresource",
         (interpreter: Interpreter, name: BrsString) => createAudioResource(interpreter, name),
     ],
+    ["rovideoplayer", (interpreter: Interpreter) => new RoVideoPlayer()],
     ["rocompositor", (interpreter: Interpreter) => new RoCompositor()],
     [
         "roregion",

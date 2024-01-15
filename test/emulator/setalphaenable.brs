@@ -14,7 +14,7 @@ Function Main()
     bm.drawRect(80,80,75,50,&h00FF0078)
     s.DrawObject(0, 300, bm)
     b2=CreateObject("roBitmap", {width:450, height: 450, alphaenable: true} )
-    b2.Clear(255)
+    b2.Clear(127)
     s.DrawObject(451, 0, b2)
     s.swapBuffers()
     ' redraw with the alpha disabled
