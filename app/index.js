@@ -14,6 +14,7 @@ const loading = document.getElementById("loading");
 const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
+const channel4 = document.getElementById("channel4");
 
 // Channel status object
 let currentApp = { id: "", running: false };
@@ -178,10 +179,11 @@ display.addEventListener("mousedown", function (event) {
 
 // Channel icons Visibility
 function channelIcons(visibility) {
-    if (channel3) {
+    if (channel4) {
         channel1.style.visibility = visibility;
         channel2.style.visibility = visibility;
         channel3.style.visibility = visibility;
+        channel4.style.visibility = visibility;
     }
 }
 
