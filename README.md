@@ -17,7 +17,7 @@ Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompos
 
 **Important Notes:**
 
-- At this stage, apps based on **SceneGraph** and video playback are not yet supported, but these features are now in the backlog to be implemented. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is still missing and what is out of scope.
+- At this stage, apps based on **SceneGraph** are not yet supported, but this feature is in the backlog to be implemented. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is still missing and what is out of scope.
 - Although **brs-engine** runs channels with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the Roku Community, and also to be used as a framework for running the BrighScript language in other platforms.<br /><br />
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
