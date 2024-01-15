@@ -40,8 +40,10 @@ export function getWorkerLibPath(): string {
 export const context = getContext();
 function getContext() {
     let inApple = false;
+    let inSafari = false;
     if (typeof navigator !== "undefined") {
         inApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
+        inSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     } else {
         inApple = process.platform === "darwin";
     }
@@ -51,6 +53,7 @@ function getContext() {
             typeof navigator.userAgent === "string" &&
             navigator.userAgent.indexOf("Electron") >= 0,
         inBrowser: typeof window !== "undefined",
+        inSafari: inSafari,
         inApple: inApple,
     };
 }
