@@ -37,7 +37,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 this.setPositionNotificationPeriod,
                 // this.setCGMS,
                 this.setDestinationRect,
-                // this.SetMaxVideoDecodeResolution,
+                // this.setMaxVideoDecodeResolution,
                 this.getPlaybackDuration,
                 // this.getAudioTracks,
                 // this.changeAudioTrack,
