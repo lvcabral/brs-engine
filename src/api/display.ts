@@ -281,11 +281,9 @@ export function clearDisplay() {
 }
 
 function clearBuffer() {
-    if (bufferCtx && context.inApple) {
+    if (bufferCtx) {
         bufferCtx.fillStyle = "black";
         bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-    } else if(bufferCtx) {
-        bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
     }
 }
 
