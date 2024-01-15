@@ -66,7 +66,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         for (let index = 0; index < this.canvas.length; index++) {
             this.canvas[index] = new OffscreenCanvas(this.width, this.height);
             this.context[index] = this.canvas[index].getContext("2d", {
-                alpha: false,
+                alpha: true,
             }) as OffscreenCanvasRenderingContext2D;
             this.canvas[index].width = this.width;
             this.canvas[index].height = this.height;
@@ -354,7 +354,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             let ctx = this.context[this.currentBuffer];
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
+            if (!this.alphaEnable) {
+                ctx.clearRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            }
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
             this.isDirty = true;
             return BrsBoolean.True;
@@ -375,7 +378,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
             const ctx = this.context[this.currentBuffer];
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());

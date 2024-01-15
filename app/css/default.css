@@ -35,6 +35,13 @@ body {
 	z-index: 20;
 }
 
+#player {
+	opacity: 0;
+	z-index: 30;
+	display: none;
+}
+
+
 #stats {
 	position: absolute;
 	left: 45px;

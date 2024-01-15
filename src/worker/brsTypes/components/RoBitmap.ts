@@ -42,7 +42,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             if (volume) {
                 try {
                     image = volume.readFileSync(url.pathname);
-                    this.alphaEnable = true;
+                    this.alphaEnable = false;
                 } catch (err: any) {
                     postMessage(`warning,Error loading bitmap:${url.pathname} - ${err.message}`);
                     this.valid = false;
