@@ -1,3 +1,16 @@
+<a name="v1.2.0"></a>
+
+# [v1.2.0 - Video Playback and GamePad customization](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 14 Jan 2024
+
+## Release Changes
+
+* Implemented `roVideoPlayer` component by @lvcabral in https://github.com/lvcabral/brs-engine/pull/213
+* Added support to customize GamePad buttons mapping by @lvcabral in https://github.com/lvcabral/brs-engine/pull/210
+* Control queue modes: Single Key Events and Multi Key Events by @lvcabral in https://github.com/lvcabral/brs-engine/pull/211
+  * Add the entry `multi_key_events=1` to the manifest to enable support for simultaneous keys.
+
+[Full Changelog][v1.2.0]
+
 <a name="v1.1.11"></a>
 
 # [v1.1.11 - Improved roRegex and fixed Sound issues](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.11) - 05 Jan 2024
@@ -394,6 +407,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[1.2.0]: https://github.com/lvcabral/brs-engine/compare/v1.1.11...v1.2.0
 [v1.1.11]: https://github.com/lvcabral/brs-engine/compare/v1.0.10...v1.1.11
 [v1.1.10]: https://github.com/lvcabral/brs-engine/compare/v1.0.9...v1.1.10
 [v1.1.9]: https://github.com/lvcabral/brs-engine/compare/v1.0.0...v1.1.9
