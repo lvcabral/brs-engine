@@ -108,6 +108,12 @@ export function handleVideoEvent(eventData: string) {
         pauseVideo();
     } else if (data[1] === "resume") {
         resumeVideo();
+    } else if (data[1] === "mute") {
+        if (data[2]) {
+            muteVideo(data[2] === "true");
+        } else {
+            notifyAll("warning", `[video] Missing mute parameter`);
+        }
     } else if (data[1] === "loop") {
         if (data[2]) {
             setVideoLoop(data[2] === "true");

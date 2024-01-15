@@ -11,16 +11,15 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
-    private duration: number;
 
     constructor() {
         super("roVideoPlayer");
         this.contentList = new Array();
         this.notificationPeriod = 0;
-        this.duration = 0;
         postMessage(new Array<string>());
         postMessage("video,loop,false");
         postMessage("video,next,-1");
+        postMessage("video,mute,false");
         this.registerMethods({
             ifVideoPlayer: [
                 this.setContentList,
@@ -33,7 +32,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 this.resume,
                 this.setLoop,
                 this.setNext,
-                // this.setEnableAudio,
+                this.setEnableAudio,
                 this.seek,
                 this.setPositionNotificationPeriod,
                 // this.setCGMS,
@@ -188,7 +187,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Enables/disables the automatic replaying of the Content List */
+    /** Enables/disables the automatic replaying of the Content List. */
     private setLoop = new Callable("setLoop", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
@@ -200,7 +199,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Set what the next item to be played within the Content List should be */
+    /** Set what the next item to be played within the Content List should be. */
     private setNext = new Callable("setNext", {
         signature: {
             args: [new StdlibArgument("item", ValueKind.Int32)],
@@ -208,6 +207,18 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, item: Int32) => {
             postMessage(`video,next,${item.toString()}`);
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Mutes the audio during video playback. */
+    private setEnableAudio = new Callable("setEnableAudio", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            postMessage(`video,mute,${!enable.toBoolean()}`);
             return BrsInvalid.Instance;
         },
     });
