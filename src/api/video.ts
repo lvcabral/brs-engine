@@ -113,14 +113,10 @@ export function handleVideoEvent(eventData: string) {
     } else if (data[1] === "mute") {
         if (data[2]) {
             muteVideo(data[2] === "true");
-        } else {
-            notifyAll("warning", `[video] Missing mute parameter`);
         }
     } else if (data[1] === "loop") {
         if (data[2]) {
             setVideoLoop(data[2] === "true");
-        } else {
-            notifyAll("warning", `[video] Missing loop parameter`);
         }
     } else if (data[1] === "next") {
         const newIndex = data[2];
