@@ -4,17 +4,20 @@ import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, BrsNumber } from "
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { DataType } from "../../../api/enums";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
+    private duration: number;
 
     constructor() {
         super("roVideoPlayer");
         this.contentList = new Array();
         this.notificationPeriod = 0;
+        this.duration = 0;
         postMessage(new Array<string>());
         postMessage("video,loop,false");
         postMessage("video,next,-1");
@@ -23,7 +26,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 this.setContentList,
                 this.addContent,
                 this.clearContent,
-                // this.preBuffer,
+                this.preBuffer,
                 this.play,
                 this.stop,
                 this.pause,
@@ -36,7 +39,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 // this.setCGMS,
                 this.setDestinationRect,
                 // this.SetMaxVideoDecodeResolution,
-                // this.getPlaybackDuration,
+                this.getPlaybackDuration,
                 // this.getAudioTracks,
                 // this.changeAudioTrack,
                 // this.setTimedMetadataForKeys,
@@ -87,6 +90,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentList: RoArray) => {
+            this.port?.resetVideo();
             this.contentList = contentList.getElements() as RoAssociativeArray[];
             postMessage({ videoPlaylist: this.getContent() });
             return BrsInvalid.Instance;
@@ -113,9 +117,24 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            this.port?.resetVideo();
             this.contentList = new Array();
             postMessage({ videoPlaylist: new Array<string>() });
             return BrsInvalid.Instance;
+        },
+    });
+
+    /** Begins downloading and buffering of a video that may be selected by a user. */
+    private preBuffer = new Callable("preBuffer", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            this.port?.resetVideo();
+            this.contentList = new Array();
+            postMessage("video,load");
+            return BrsBoolean.True;
         },
     });
 
@@ -126,6 +145,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
+            this.port?.resetVideo();
             postMessage("video,play");
             return BrsBoolean.True;
         },
@@ -138,6 +158,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
+            this.port?.resetVideo();
             postMessage("video,stop");
             return BrsBoolean.True;
         },
@@ -198,6 +219,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, offsetMs: Int32) => {
+            this.port?.resetVideo();
             postMessage(`video,seek,${offsetMs.toString()}`);
             return BrsInvalid.Instance;
         },
@@ -257,6 +279,18 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         }
     );
 
+    /** Returns the duration of the video, in seconds. */
+    private getPlaybackDuration = new Callable("getPlaybackDuration", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter) => {
+            const duration = Atomics.load(interpreter.sharedArray, DataType.VDR);
+            return duration > 0 ? new Int32(duration) : new Int32(0);
+        },
+    });
+    
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */

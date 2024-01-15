@@ -16,6 +16,7 @@ export enum DataType {
     VDX,
     VLP,
     VPS,
+    VDR,
     SND,
     IDX,
     WAV, // Needs to be the last to allow variable # of streams

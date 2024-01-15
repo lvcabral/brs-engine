@@ -18,19 +18,21 @@ let playLoop = false;
 let playNext = -1;
 let sharedArray: Int32Array;
 let notifyTime = false;
+let bufferOnly = false;
+let canPlay = false;
 let loadProgress = 0;
+let videoDuration = 0;
 
 // Initialize Video Module
 export function initVideoModule(array: Int32Array, mute: boolean = false) {
     player = document.getElementById("player") as HTMLVideoElement;
     if (player) {
         player.addEventListener("canplay", (event) => {
-            if (playerState !== "play") {
-                player.play();
-                loadProgress = 1000;
-                Atomics.store(sharedArray, DataType.VLP, loadProgress);
-                Atomics.store(sharedArray, DataType.VDX, playIndex);
-                Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED);
+            loadProgress = 1000;
+            Atomics.store(sharedArray, DataType.VLP, loadProgress);
+            canPlay = true;
+            if (playerState !== "play" && !bufferOnly) {
+                playVideo();
             }
         });
         player.addEventListener("playing", (event) => {
@@ -42,11 +44,12 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
             }
         });
         player.addEventListener("error", (event) => {
+            canPlay = false;
             notifyAll("error", `Error ${player.error?.code}; details: ${player.error?.message}`);
         });
         player.addEventListener("ended", nextVideo);
         player.addEventListener("loadstart", startProgress);
-        player.addEventListener("durationchange", startProgress);
+        player.addEventListener("durationchange", setDuration);
         player.addEventListener("loadedmetadata", startProgress);
         player.addEventListener("loadeddata", startProgress);
         player.muted = mute;
@@ -55,9 +58,17 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
     resetVideo();
 }
 
-function startProgress(event: Event) {
+function startProgress() {
     loadProgress += 200;
     Atomics.store(sharedArray, DataType.VLP, loadProgress);
+}
+
+function setDuration() {
+    if (!isNaN(player.duration)) {
+        videoDuration = Math.round(player.duration);
+        Atomics.store(sharedArray, DataType.VDR, videoDuration);
+    }
+    startProgress()
 }
 
 // Observers Handling
@@ -80,6 +91,8 @@ export function handleVideoEvent(eventData: string) {
     const data = eventData.split(",");
     if (data[1] === "play") {
         playVideo();
+    } else if (data[1] === "load") {
+        loadVideo(true);
     } else if (data[1] === "rect" && data.length === 6) {
         notifyAll("rect", {
             x: parseInt(data[2]),
@@ -164,7 +177,8 @@ export function resetVideo() {
     loadProgress = 0;
 }
 
-function playVideo() {
+function loadVideo(buffer = false) {
+    canPlay = false;
     const video = playList[playIndex];
     if (video && player) {
         player.src = video.url;
@@ -176,9 +190,20 @@ function playVideo() {
             player.removeAttribute("type");
         }
         loadProgress = 0;
+        bufferOnly = buffer;
         player.load();
     } else {
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
+    }
+}
+
+function playVideo() {
+    if (canPlay) {
+        player.play();
+        Atomics.store(sharedArray, DataType.VDX, playIndex);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED); 
+    } else {
+        loadVideo();
     }
 }
 
@@ -189,11 +214,13 @@ function nextVideo() {
         playIndex++;
     }
     playNext = -1;
+    canPlay = false;
+    playerState = "stop"
     if (playIndex < playList.length) {
-        playVideo();
+        loadVideo();
     } else if (playLoop) {
         playIndex = 0;
-        playVideo();
+        loadVideo();
     } else {
         playIndex = 0;
         notifyAll("stop");
@@ -209,6 +236,7 @@ function stopVideo() {
         notifyAll("stop");
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
         loadProgress = 0;
+        canPlay = false;
     }
 }
 
@@ -238,6 +266,11 @@ function resumeVideo(notify = true) {
 function seekVideo(position: number) {
     const video = playList[playIndex];
     if (video && player) {
+        if (position > videoDuration) {
+            position = videoDuration;
+        } else if (position < 0) {
+            position = 0;
+        }
         player.currentTime = position;
     } else if (video) {
         notifyAll("warning", `[video] Can't find audio to seek: ${playIndex} - ${video}`);
