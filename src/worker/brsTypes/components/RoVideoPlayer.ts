@@ -301,7 +301,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             return duration > 0 ? new Int32(duration) : new Int32(0);
         },
     });
-    
+
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */

@@ -182,7 +182,7 @@ export function updateBuffer(buffer: ImageData) {
         bufferCtx.putImageData(buffer, 0, 0);
         createImageBitmap(buffer).then((bitmap) => {
             lastImage = bitmap;
-        })
+        });
         clearDisplay();
         window.requestAnimationFrame(drawBufferImage);
     }
@@ -236,7 +236,7 @@ function drawVideoFrame() {
                 height = nh;
             }
         }
-        clearBuffer()
+        clearBuffer();
         bufferCtx.drawImage(player as any, left, top, width, height);
         if (lastImage) {
             bufferCtx.drawImage(lastImage, 0, 0);

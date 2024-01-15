@@ -215,7 +215,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         }
         if (this.videoNotificationPeriod >= 1) {
             const position = Atomics.load(interpreter.sharedArray, DataType.VPS);
-            if (Math.abs(this.videoPosition - position)  >=  this.videoNotificationPeriod) {
+            if (Math.abs(this.videoPosition - position) >= this.videoNotificationPeriod) {
                 this.videoPosition = position;
                 return new RoVideoPlayerEvent(MediaEvent.POSITION, position);
             }

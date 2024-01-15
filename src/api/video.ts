@@ -68,7 +68,9 @@ function setDuration() {
         videoDuration = Math.round(player.duration);
         Atomics.store(sharedArray, DataType.VDR, videoDuration);
     }
-    startProgress()
+    if (playerState !== "play") {
+        startProgress();
+    }
 }
 
 // Observers Handling
@@ -207,7 +209,7 @@ function playVideo() {
     if (canPlay) {
         player.play();
         Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED); 
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED);
     } else {
         loadVideo();
     }
@@ -221,7 +223,7 @@ function nextVideo() {
     }
     playNext = -1;
     canPlay = false;
-    playerState = "stop"
+    playerState = "stop";
     if (playIndex < playList.length) {
         loadVideo();
     } else if (playLoop) {
