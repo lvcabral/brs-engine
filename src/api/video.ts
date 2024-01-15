@@ -192,7 +192,7 @@ function loadVideo(buffer = false) {
         player.src = video.url;
         if (video.streamFormat === "mp4") {
             player.setAttribute("type", "video/mp4");
-        } else if (video.streamFormat == "hls") {
+        } else if (video.streamFormat === "hls") {
             player.setAttribute("type", "application/x-mpegURL");
         } else {
             player.removeAttribute("type");
