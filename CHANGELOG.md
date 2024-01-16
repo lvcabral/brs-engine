@@ -1,3 +1,18 @@
+<a name="v1.2.1"></a>
+
+# [v1.2.1 - Mute Audio and Video in Sync](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 14 Jan 2024
+
+## Release Changes
+
+* Fixed API to handle `mute` in sync for both Audio and Video by @lvcabral in https://github.com/lvcabral/brs-engine/pull/215
+* Fixed bad performance when in full screen mode on 4K monitors by @lvcabral in https://github.com/lvcabral/brs-engine/pull/214
+* build(deps): bump follow-redirects from 1.15.3 to 1.15.4 by @dependabot in https://github.com/lvcabral/brs-engine/pull/212
+* Added new demo app to the example web application: `custom-video-player`
+* Updated documentation
+
+
+[Full Changelog][v1.2.1]
+
 <a name="v1.2.0"></a>
 
 # [v1.2.0 - Video Playback and GamePad customization](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 14 Jan 2024
@@ -407,6 +422,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[1.2.1]: [https://github.com/lvcabral/brs-engine/compare/v1.2.0...v1.2.1]
 [1.2.0]: https://github.com/lvcabral/brs-engine/compare/v1.1.11...v1.2.0
 [v1.1.11]: https://github.com/lvcabral/brs-engine/compare/v1.0.10...v1.1.11
 [v1.1.10]: https://github.com/lvcabral/brs-engine/compare/v1.0.9...v1.1.10
