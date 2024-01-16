@@ -88,12 +88,12 @@ export function handleSoundEvent(eventData: string) {
     }
 }
 
-export function muteSound(mute: boolean) {
+export function muteSound(mute: boolean = false) {
     muted = mute;
     Howler.mute(mute);
 }
 
-export function isMuted() {
+export function isSoundMuted() {
     return muted;
 }
 
