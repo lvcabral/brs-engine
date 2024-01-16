@@ -1,6 +1,6 @@
 <a name="v1.2.1"></a>
 
-# [v1.2.1 - Mute Audio and Video in Sync](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 14 Jan 2024
+# [v1.2.1 - Mute Audio and Video in Sync](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 15 Jan 2024
 
 ## Release Changes
 
