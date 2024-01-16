@@ -104,13 +104,7 @@ export function redrawDisplay(
     }
 
     if (display instanceof HTMLCanvasElement) {
-        // Set the "actual" size of the canvas
-        display.width = screenSize.width * dpr;
-        display.height = screenSize.height * dpr;
-        // Scale the context to ensure correct drawing operations
-        if (ctx) {
-            ctx.scale(dpr, dpr);
-        }
+        // Set the display size of the canvas
         display.style.width = `${screenSize.width}px`;
         display.style.height = `${screenSize.height}px`;
         if (fullScreen && height > screenSize.height) {
@@ -118,6 +112,17 @@ export function redrawDisplay(
         } else {
             display.style.top = `0px`;
         }
+        // Check if User Screen is bigger than Simulated Screen
+        if (bufferCanvas.width < screenSize.width) {
+            screenSize.width = bufferCanvas.width;
+            screenSize.height = bufferCanvas.height;
+            dpr = 1;
+        }
+        // Set the "actual" internal size of the canvas
+        display.width = Math.trunc(screenSize.width * dpr);
+        display.height = Math.trunc(screenSize.height * dpr);
+        // Scale the context to ensure correct drawing operations
+        ctx?.scale(dpr, dpr);
     }
     if (running) {
         drawBufferImage();
@@ -272,7 +277,7 @@ export function showDisplay() {
 
 //Clear Display and Buffer
 export function clearDisplay() {
-    if (ctx && context.inApple) {
+    if (ctx && context.inSafari) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     } else if (ctx) {
