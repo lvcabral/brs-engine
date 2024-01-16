@@ -49,7 +49,7 @@ import {
     resetSounds,
     addSoundPlaylist,
     muteSound,
-    isMuted,
+    isSoundMuted,
     subscribeSound,
     switchSoundState,
     handleSoundEvent,
@@ -58,6 +58,8 @@ import {
     addVideoPlaylist,
     handleVideoEvent,
     initVideoModule,
+    isVideoMuted,
+    muteVideo,
     resetVideo,
     subscribeVideo,
     switchVideoState,
@@ -225,6 +227,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
         console.info(`Loading ${filePath}...`);
     }
     initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
+    muteVideo(options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
         loadAppZip(fileName, fileData, runApp);
@@ -288,11 +291,12 @@ export function enableStats(state: boolean) {
 
 // Audio API
 export function getAudioMute() {
-    return isMuted();
+    return isSoundMuted() && isVideoMuted();
 }
 export function setAudioMute(mute: boolean) {
     if (currentApp.running) {
         muteSound(mute);
+        muteVideo(mute);
     }
 }
 
