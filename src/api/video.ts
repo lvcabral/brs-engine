@@ -52,7 +52,7 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.addEventListener("durationchange", setDuration);
         player.addEventListener("loadedmetadata", startProgress);
         player.addEventListener("loadeddata", startProgress);
-        player.muted = mute;
+        player.defaultMuted = mute;
     }
     sharedArray = array;
     resetVideo();
@@ -112,7 +112,7 @@ export function handleVideoEvent(eventData: string) {
         resumeVideo();
     } else if (data[1] === "mute") {
         if (data[2]) {
-            muteVideo(data[2] === "true");
+            player.muted = player?.defaultMuted || data[2] === "true";
         }
     } else if (data[1] === "loop") {
         if (data[2]) {
@@ -135,8 +135,11 @@ export function handleVideoEvent(eventData: string) {
     }
 }
 
-export function muteVideo(mute: boolean) {
-    player.muted = mute;
+export function muteVideo(mute: boolean = false) {
+    if (player) {
+        player.defaultMuted = mute;
+        player.muted = mute;
+    }
 }
 
 export function isVideoMuted() {
