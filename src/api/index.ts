@@ -227,7 +227,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
         console.info(`Loading ${filePath}...`);
     }
     initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
-    muteVideo(options.muteSound)
+    muteVideo(options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
         loadAppZip(fileName, fileData, runApp);
