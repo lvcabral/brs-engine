@@ -5,18 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline' 'unsafe-eval' data: blob: 'self'
-        https://test-streams.mux.dev
-        https://fonts.googleapis.com
-        https://commondatastorage.googleapis.com
-        https://devstreaming-cdn.apple.com
-        https://test-streams.mux.dev
-        http://sample.vodobox.com
-        https://cph-p2p-msl.akamaized.net
-        https://demo.unified-streaming.com
-        https://fonts.gstatic.com
-        https://www.googletagmanager.com
-        https://www.google-analytics.com;">
     <title>BrightScript Simulation Engine</title>
     <link href="css/default.css" rel="stylesheet" type="text/css" />
     <link href='https://fonts.googleapis.com/css?family=Maven+Pro|Muli|Istok+Web' rel='stylesheet' type='text/css' />
@@ -26,52 +14,74 @@
 <body>
     <div id="container">
         <a href="https://github.com/lvcabral/brs-engine/"><img style="position: absolute; top: 0; right: 0; border: 0;"
-            src="images/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+                src="images/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
         <div style="position: relative; left: 0px; top: 0px">
             <img class="img" src="images/brightscript-tv.png" width="1252" height="650" alt="tv background" />
             <img id="loading" src="images/loading.gif" width="854px" height="480px" alt="loading..." />
             <div id="stats"></div>
             <canvas id="display" width="854px" height="480px"></canvas>
             <video id="player" width="854px" height="480px" crossorigin="anonymous"></video>
-            <img id="channel1" src="images/icons/rect-bounce-icon.png" title="Open Rectangle Bounce demo app" alt="Rectangle Bounce app icon" onclick="loadZip('channels/Rect-Bounce.zip')" style="cursor: pointer;" />
-            <img id="channel2" src="images/icons/ball-boing-icon.png" title="Open Ball Boing demo app" alt="Ball Boing app icon" onclick="loadZip('channels/Ball-Boing.zip')" style="cursor: pointer;" />
-            <img id="channel3" src="images/icons/collisions-icon.png" title="Open Sprite Collisions demo app" alt="Sprite Collision app icon" onclick="loadZip('channels/Collisions.zip')" style="cursor: pointer;" />
-            <img id="channel4" src="images/icons/custom-video-player.png" title="Open Video Player demo app" alt="Custom Video Player app icon" onclick="loadZip('channels/custom-video-player.zip')" style="cursor: pointer;" />
+            <img id="channel1" src="images/icons/rect-bounce-icon.png" title="Open Rectangle Bounce demo app"
+                alt="Rectangle Bounce app icon" onclick="loadZip('channels/Rect-Bounce.zip')"
+                style="cursor: pointer;" />
+            <img id="channel2" src="images/icons/ball-boing-icon.png" title="Open Ball Boing demo app"
+                alt="Ball Boing app icon" onclick="loadZip('channels/Ball-Boing.zip')" style="cursor: pointer;" />
+            <img id="channel3" src="images/icons/collisions-icon.png" title="Open Sprite Collisions demo app"
+                alt="Sprite Collision app icon" onclick="loadZip('channels/Collisions.zip')" style="cursor: pointer;" />
+            <img id="channel4" src="images/icons/custom-video-player.png" title="Open Video Player demo app"
+                alt="Custom Video Player app icon" onclick="loadZip('channels/custom-video-player.zip')"
+                style="cursor: pointer;" />
             <span id="channelInfo"></span>
             <input type="file" id="file" accept=".brs,.zip,.bpk" style="display: none;" />
             <input type="button" id="fileButton" class="fileButton" value="Open a ZIP, BPK or BRS file..." />
             <br /><br /><br /><br /><br /><br /><br />
             <div id="expand-new" style="text-align: center;">
-                <img src="./images/expand-new.png" title="Expand Project Information" alt="expand icon" width="298" height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
+                <img src="./images/expand-new.png" title="Expand Project Information" alt="expand icon" width="298"
+                    height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
             </div>
             <div id="expand" style="text-align: center; display: none;">
-                <img src="./images/expand.png" title="Expand Project Information" alt="expand icon" width="298" height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
+                <img src="./images/expand.png" title="Expand Project Information" alt="expand icon" width="298"
+                    height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
             </div>
             <div id="collapse" style="text-align: center; display: none;">
-                <img src="./images/collapse.png" title="Hide Project Information" alt="collapse icon" width="298" height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
+                <img src="./images/collapse.png" title="Hide Project Information" alt="collapse icon" width="298"
+                    height="100" onclick="toggleDiv('details');" style="vertical-align: bottom; cursor: pointer;" />
             </div>
+            <dialog id="passwordDialog" class="modal_dialog" closed>
+                <p class="modal_dialog_content">Please enter the password to decrypt the package:</p>
+                <form method="dialog" name="passwordForm">
+                    <input type="text" name="password" class="modal_dialog_input" />
+                    <button value="ok">OK</button>
+                    <button value="cancel" class="modal_dialog_cancel">Cancel</button>
+                </form>
+            </dialog>
         </div>
         <div id="details" style="display: none;">
             <hr>
-            <img src="./images/icon.png" alt="brs-engine icon" width="48" height="48" style="float: right; margin-top: 1px;" />
+            <img src="./images/icon.png" alt="brs-engine icon" width="48" height="48"
+                style="float: right; margin-top: 1px;" />
             <h2>BrightScript Simulation Engine :: v<span id="libVersion"></span>
                 <hr>
             </h2>
             <h3>How to Use the BrightScript TV</h3>
-            <p>&ndash;&nbsp;Click on any app icon in the BrightScript TV menu screen or load your own app or code using the purple button above.</p>
-            <p>&ndash;&nbsp;When an app is running, you can make it <b>full screen</b> by double-clicking on the display.</p>
-            <p>&ndash;&nbsp;Use your keyboard to navigate on the games and apps, the image you see on the right side, shows what keys
-                that are mapped to the Roku remote control buttons.</p>
+            <p>&ndash;&nbsp;Click on any app icon in the BrightScript TV menu screen or load your own app or code using
+                the purple button above.</p>
+            <p>&ndash;&nbsp;When an app is running, you can make it <b>full screen</b> by double-clicking on the
+                display.</p>
+            <p>&ndash;&nbsp;Use your keyboard to navigate on the games and apps, the image you see on the right side,
+                shows what keys that are mapped to the Roku remote control buttons.</p>
 
             <h3>Notes for BrightScript Developers</h3>
             <p>You can see the debug messages from <code>print</code> statements in your code using the <em>browser
-                console</em>, just right click anywhere in the page and select <em>Inspect (Ctrl+Shift+i)</em>.
+                    console</em>, just right click anywhere in the page and select <em>Inspect (Ctrl+Shift+i)</em>.
                 Exceptions from the engine library will be shown there too.</p>
-            <p>If you added a break point (<b>stop</b>) in your code, you can also debug using the <em>browser console</em>,
-                just send the commands using: <code>brs.debug("help")</code></p>
-            <p>The Roku `registry` data is stored on the browser Local Storage and you can inspect it using the Developer Tools.</p>
-            <p>For a better debugging experience, is recommended to use the engine desktop application integrated with <b>Visual Studio Code</b>, you will
-            find more details in the links below.</p>
+            <p>If you added a break point (<b>stop</b>) in your code, you can also debug using the <em>browser
+                    console</em>, just send the commands using: <code>brs.debug("help")</code></p>
+            <p>The Roku `registry` data is stored on the browser Local Storage and you can inspect it using the
+                Developer Tools.</p>
+            <p>For a better debugging experience, is recommended to use the engine desktop application integrated with
+                <b>Visual Studio Code</b>, you will find more details in the links below.
+            </p>
 
             <h3>Documentation and Downloads</h3>
             <p>To learn more about the project visit the repository at:

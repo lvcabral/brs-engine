@@ -87,6 +87,7 @@ module.exports = (env) => {
             mode: mode,
             devtool: sourceMap,
             devServer: {
+                https: false,
                 static: "./app",
                 port: 6502,
                 headers: {
