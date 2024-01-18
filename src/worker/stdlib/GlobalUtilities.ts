@@ -55,3 +55,24 @@ export const GetInterface = new Callable("GetInterface", {
         return BrsInvalid.Instance;
     },
 });
+
+export const FindMemberFunction = new Callable("FindMemberFunction", {
+    signature: {
+        args: [
+            new StdlibArgument("object", ValueKind.Object),
+            new StdlibArgument("funName", ValueKind.String),
+        ],
+        returns: ValueKind.Interface,
+    },
+    impl: (_: Interpreter, object: BrsType, funName: BrsString): BrsInterface | BrsInvalid => {
+        const boxedObj = isBoxable(object) ? object.box() : object;
+        if (boxedObj instanceof BrsComponent) {
+            for (let [_, iface] of boxedObj.interfaces) {
+                if (iface.hasMethod(funName.value)) {
+                    return iface;
+                }
+            }
+        }
+        return BrsInvalid.Instance;
+    },
+});
