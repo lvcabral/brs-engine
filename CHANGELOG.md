@@ -1,11 +1,26 @@
-<a name="v1.2.1"></a>
+<a name="v1.2.2"></a>
 
-# [v1.2.1 - Mute Audio and Video in Sync](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 15 Jan 2024
+# [v1.2.2 - Implemented FindMemberFunction()](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.2) - 17 Jan 2024
 
 ## Release Changes
 
-* Fixed API to handle `mute` in sync for both Audio and Video by @lvcabral in https://github.com/lvcabral/brs-engine/pull/215
-* Fixed bad performance when in full screen mode on 4K monitors by @lvcabral in https://github.com/lvcabral/brs-engine/pull/214
+* Fixed #190 - Implemented global function `FindMemberFunction()`  by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/216
+* Improved Example web app by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/217
+  * Removed unecessary content policy
+  * Replaced usage of `prompt()` by an HTML5 `dialog`
+  * Updated execution source using the button to match Roku side load with "auto-run-dev"
+
+[Full Changelog][v1.2.2]
+
+
+<a name="v1.2.1"></a>
+
+# [v1.2.1 - Mute Audio and Video in Sync](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.1) - 15 Jan 2024
+
+## Release Changes
+
+* Fixed API to handle `mute` in sync for both Audio and Video by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/215
+* Fixed bad performance when in full screen mode on 4K monitors by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/214
 * build(deps): bump follow-redirects from 1.15.3 to 1.15.4 by @dependabot in https://github.com/lvcabral/brs-engine/pull/212
 * Added new demo app to the example web application: `custom-video-player`
 * Updated documentation
@@ -19,9 +34,9 @@
 
 ## Release Changes
 
-* Implemented `roVideoPlayer` component by @lvcabral in https://github.com/lvcabral/brs-engine/pull/213
-* Added support to customize GamePad buttons mapping by @lvcabral in https://github.com/lvcabral/brs-engine/pull/210
-* Control queue modes: Single Key Events and Multi Key Events by @lvcabral in https://github.com/lvcabral/brs-engine/pull/211
+* Implemented `roVideoPlayer` component by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/213
+* Added support to customize GamePad buttons mapping by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/210
+* Control queue modes: Single Key Events and Multi Key Events by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/211
   * Add the entry `multi_key_events=1` to the manifest to enable support for simultaneous keys.
 
 [Full Changelog][v1.2.0]
@@ -422,6 +437,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[1.2.2]: https://github.com/lvcabral/brs-engine/compare/v1.2.1...v1.2.2
 [1.2.1]: [https://github.com/lvcabral/brs-engine/compare/v1.2.0...v1.2.1]
 [1.2.0]: https://github.com/lvcabral/brs-engine/compare/v1.1.11...v1.2.0
 [v1.1.11]: https://github.com/lvcabral/brs-engine/compare/v1.0.10...v1.1.11
