@@ -1,275 +1,325 @@
 body {
-	margin-top: 1.0em;
-	background-color: #662D91;
-	font-family: 'Istok Web', Helvetica, Arial, FreeSans, sans-serif;
-	color: #000000;
+    margin-top: 1em;
+    background-color: #662d91;
+    font-family: "Istok Web", Helvetica, Arial, FreeSans, sans-serif;
+    color: #000000;
 }
 
 .img {
-	position: absolute;
-	z-index: 1;
+    position: absolute;
+    z-index: 1;
 }
 
 /* * {
 	border: 1px solid #f00 !important;
   } */
 #container {
-	margin: 0 auto;
-	background: whiteSmoke;
-	min-width: 1200px;
-	max-width: 1260px;
-	min-height: 90%;
-	padding: 30px;
-	padding-top: 10px;
-	padding-bottom: 5px;
-	border-radius: 5px;
-	box-shadow: 3px 3px 5px #444;
+    margin: 0 auto;
+    background: whiteSmoke;
+    min-width: 1200px;
+    max-width: 1260px;
+    min-height: 90%;
+    padding: 30px;
+    padding-top: 10px;
+    padding-bottom: 5px;
+    border-radius: 5px;
+    box-shadow: 3px 3px 5px #444;
 }
 
 #display {
-	position: relative;
-	left: 45px;
-	top: 29px;
-	background-color: black;
-	opacity: 0;
-	z-index: 20;
+    position: relative;
+    left: 45px;
+    top: 29px;
+    background-color: black;
+    opacity: 0;
+    z-index: 20;
 }
 
 #player {
-	opacity: 0;
-	z-index: 30;
-	display: none;
+    opacity: 0;
+    z-index: 30;
+    display: none;
 }
 
 #stats {
-	position: absolute;
-	left: 45px;
-	top: 29px;
-	z-index: 60;
-	opacity: 0.5;
-	visibility: hidden;
+    position: absolute;
+    left: 45px;
+    top: 29px;
+    z-index: 60;
+    opacity: 0.5;
+    visibility: hidden;
 }
 
 #loading {
-	position: absolute;
-	left: 45px;
-	top: 29px;
-	z-index: 60;
-	opacity: 0.9;
-	visibility: hidden;
+    position: absolute;
+    left: 45px;
+    top: 29px;
+    z-index: 60;
+    opacity: 0.9;
+    visibility: hidden;
 }
 
 #channelInfo {
-	position: absolute;
-	left: 320px;
-	top: 560px;
-	color: white;
-	z-index: 30;
+    position: absolute;
+    left: 320px;
+    top: 560px;
+    color: white;
+    z-index: 30;
 }
 
 #channel1 {
-	position: absolute;
-	left: 398px;
-	top: 135px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 398px;
+    top: 135px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel2 {
-	position: absolute;
-	left: 541px;
-	top: 135px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 541px;
+    top: 135px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel3 {
-	position: absolute;
-	left: 683px;
-	top: 135px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 683px;
+    top: 135px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel4 {
-	position: absolute;
-	left: 398px;
-	top: 245px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 398px;
+    top: 245px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel5 {
-	position: absolute;
-	left: 541px;
-	top: 245px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 541px;
+    top: 245px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel6 {
-	position: absolute;
-	left: 683px;
-	top: 245px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 683px;
+    top: 245px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel7 {
-	position: absolute;
-	left: 398px;
-	top: 354px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 398px;
+    top: 354px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel8 {
-	position: absolute;
-	left: 541px;
-	top: 354px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 541px;
+    top: 354px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 #channel9 {
-	position: absolute;
-	left: 683px;
-	top: 354px;
-	width: 134px;
-	height: 101px;
-	z-index: 30;
+    position: absolute;
+    left: 683px;
+    top: 354px;
+    width: 134px;
+    height: 101px;
+    z-index: 30;
 }
 
 h1 {
-	font-size: 4em;
-	color: #3e5763;
-	margin-bottom: 3px;
-	margin-top: 20px;
-	font-family: 'Maven Pro', Helvetica, sans-serif;
-	font-weight: normal;
+    font-size: 4em;
+    color: #3e5763;
+    margin-bottom: 3px;
+    margin-top: 20px;
+    font-family: "Maven Pro", Helvetica, sans-serif;
+    font-weight: normal;
 }
 
 h1 .small {
-	font-size: 0.4em;
+    font-size: 0.4em;
 }
 
 h1 a {
-	text-decoration: none
+    text-decoration: none;
 }
 
 h2 {
-	font-size: 1.5em;
-	color: #3e5763;
+    font-size: 1.5em;
+    color: #3e5763;
 }
 
 h3 {
-	color: #3e5763;
+    color: #3e5763;
 }
 
 a {
-	color: #3e5763;
+    color: #3e5763;
 }
 
 .description {
-	font-size: 1.2em;
-	margin-bottom: 30px;
-	margin-top: 30px;
-	font-family: 'Muli', Helvetica, sans-serif;
+    font-size: 1.2em;
+    margin-bottom: 30px;
+    margin-top: 30px;
+    font-family: "Muli", Helvetica, sans-serif;
 }
 
 .download {
-	padding-top: 20px;
-	float: right;
+    padding-top: 20px;
+    float: right;
 }
 
 pre {
-	background: white;
-	color: black;
-	padding: 15px;
-	border-radius: 3px;
-	box-shadow: 0px 0px 10px #ccc;
+    background: white;
+    color: black;
+    padding: 15px;
+    border-radius: 3px;
+    box-shadow: 0px 0px 10px #ccc;
 }
 
 hr {
-	border: 0;
-	border-bottom: 1px solid #aaa;
+    border: 0;
+    border-bottom: 1px solid #aaa;
 }
 
 .footer {
-	text-align: center;
-	padding-top: 30px;
-	font-style: normal;
+    text-align: center;
+    padding-top: 30px;
+    font-style: normal;
 }
 
 li {
-	margin-bottom: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 ul {
-	padding-left: 40px;
+    padding-left: 40px;
 }
 
 ol {
-	padding-left: 25px;
+    padding-left: 25px;
 }
 
 ol ul {
-	padding-left: 15px;
+    padding-left: 15px;
 }
 
 code {
-	background-color: #f3e2fa;
-	font-size: 16px;
+    background-color: #f3e2fa;
+    font-size: 16px;
 }
 
 code.prettyprint {
-	font-size: inherit;
+    font-size: inherit;
 }
 
 p {
-	text-align: justify;
+    text-align: justify;
 }
 
 #fileButton {
-	position: absolute;
-	left: 342px;
-	top: 572px;
-	z-index: 30;
+    position: absolute;
+    left: 342px;
+    top: 572px;
+    z-index: 30;
 }
 
 .fileButton {
-	-moz-box-shadow: inset 0px 1px 0px 0px #c123de;
-	-webkit-box-shadow: inset 0px 1px 0px 0px #c123de;
-	box-shadow: inset 0px 1px 0px 0px #c123de;
-	background-color: #662D91;
-	-moz-border-radius: 6px;
-	-webkit-border-radius: 6px;
-	border-radius: 6px;
-	border: 0px solid #a511c0;
-	display: inline-block;
-	cursor: pointer;
-	color: #ffffff;
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: 15px;
-	font-weight: bold;
-	padding: 10px 24px;
-	text-decoration: none;
-	text-shadow: 0px 1px 0px #9b14b3;
+    -moz-box-shadow: inset 0px 1px 0px 0px #c123de;
+    -webkit-box-shadow: inset 0px 1px 0px 0px #c123de;
+    box-shadow: inset 0px 1px 0px 0px #c123de;
+    background-color: #662d91;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    border: 0px solid #a511c0;
+    display: inline-block;
+    cursor: pointer;
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 10px 24px;
+    text-decoration: none;
+    text-shadow: 0px 1px 0px #9b14b3;
 }
 
 .fileButton:hover {
-	background-color: #3a1241;
+    background-color: #3a1241;
 }
 
 .fileButton:active {
-	position: relative;
-	top: 1px;
+    position: relative;
+    top: 1px;
+}
+
+dialog::backdrop {
+    background: #fff5;
+    backdrop-filter: blur(4px);
+}
+
+.modal_dialog {
+    border-radius: 7px;
+    border: 1px solid #662d91;
+}
+.modal_dialog,
+.modal_dialog input,
+.modal_dialog button {
+    font-size: 16px;
+}
+.modal_dialog input,
+.modal_dialog button {
+    padding: 5px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+.modal_dialog input:focus {
+    outline: none !important;
+    border: 1px solid #662d91;
+}
+
+.modal_dialog_content {
+    margin: 10px 0px;
+}
+.modal_dialog_input {
+    margin: 20px 0px;
+}
+.modal_dialog button {
+    background-color: #662d91;
+    color: white;
+    padding: 10px 0px;
+    border: 0px;
+    cursor: pointer;
+    outline: none;
+    width: 100px;
+}
+
+button.modal_dialog_cancel {
+    margin-left: 10px;
+    border: 1px solid #662d91;
+    background-color: #fff;
+    color: #662d91;
 }

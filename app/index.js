@@ -15,6 +15,7 @@ const channel1 = document.getElementById("channel1");
 const channel2 = document.getElementById("channel2");
 const channel3 = document.getElementById("channel3");
 const channel4 = document.getElementById("channel4");
+const passwordDialog = document.getElementById("passwordDialog");
 
 // Channel status object
 let currentApp = { id: "", running: false };
@@ -96,20 +97,35 @@ fileSelector.onclick = function () {
 };
 fileSelector.onchange = function () {
     const file = this.files[0];
-    const reader = new FileReader();
     const fileExt = file.name.split(".").pop()?.toLowerCase();
+    if (fileExt === "zip" || fileExt === "bpk" || fileExt === "brs") {
+        if (fileExt === "bpk") {
+            passwordDialog.showModal();
+        } else {
+            runFile(file);
+        }
+    } else {
+        console.error(`File format not supported: ${fileExt}`);
+    }
+};
+passwordDialog.addEventListener("close", (e) => {
+    if (passwordDialog.returnValue === "ok") {
+        runFile(fileSelector.files[0], document.forms.passwordForm.password.value);
+    }
+    document.forms.passwordForm.password.value = "";
+});
+
+function runFile(file, password = "") {
+    const reader = new FileReader();
+    const fileExt = file?.name.split(".").pop()?.toLowerCase() ?? "";
     if (fileExt === "zip" || fileExt === "bpk" || fileExt === "brs") {
         reader.onload = function (evt) {
             // file is loaded
-            let password = "";
-            if (fileExt === "bpk") {
-                password = prompt("Please enter the password to decrypt the package.");
-            }
             if (password !== null) {
                 brs.execute(file.name, evt.target.result, {
                     clearDisplayOnExit: true,
                     muteSound: false,
-                    execSource: "open_app_button",
+                    execSource: "auto-run-dev",
                     password: password,
                     debugOnCrash: true,
                 });
@@ -119,10 +135,9 @@ fileSelector.onchange = function () {
             console.error(`Error opening ${file.name}:${reader.error}`);
         };
         reader.readAsArrayBuffer(file);
-    } else {
-        console.error(`File format not supported: ${fileExt}`);
     }
-};
+}
+
 // Download Zip
 function loadZip(zip) {
     if (currentApp.running) {
