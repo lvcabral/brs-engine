@@ -64,11 +64,11 @@ export const FindMemberFunction = new Callable("FindMemberFunction", {
         ],
         returns: ValueKind.Interface,
     },
-    impl: (_: Interpreter, object: BrsType, ifname: BrsString): BrsInterface | BrsInvalid => {
+    impl: (_: Interpreter, object: BrsType, funName: BrsString): BrsInterface | BrsInvalid => {
         const boxedObj = isBoxable(object) ? object.box() : object;
         if (boxedObj instanceof BrsComponent) {
-            for (let [key, iface] of boxedObj.interfaces) {
-                if (iface.hasMethod(ifname.value)) {
+            for (let [_, iface] of boxedObj.interfaces) {
+                if (iface.hasMethod(funName.value)) {
                     return iface;
                 }
             }
