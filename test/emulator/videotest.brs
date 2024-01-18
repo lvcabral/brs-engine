@@ -38,14 +38,17 @@ sub main()
                 if index = 0  '<BACK>
                     exit while
 				else if index = 2 '<UP
+					screen.drawRect(0, 0, screen.getWidth(), screen.getHeight(), 1)
+    				screen.swapBuffers()
 					player.SetDestinationRect(0, 0, 0, 0) 'fullscreen
 				else if index = 3 'DOWN
+					screen.clear(&hFFFFFFFF)
+					screen.drawRect(rect.x, rect.y, rect.w, rect.h, 1)
+    				screen.swapBuffers()
     				player.setDestinationRect(rect)
                 else if index = 4 or index = 8  '<LEFT> or <REV>
-					if position > 60
-						position = position - 60
-						player.Seek(position * 1000)
-					end if
+					position = position - 60
+					player.Seek(position * 1000)
                 else if index = 5 or index = 9  '<RIGHT> or <FWD>
                     position = position + 60
                     player.Seek(position * 1000)
