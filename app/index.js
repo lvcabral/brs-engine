@@ -125,7 +125,7 @@ function runFile(file, password = "") {
                 brs.execute(file.name, evt.target.result, {
                     clearDisplayOnExit: true,
                     muteSound: false,
-                    execSource: "open_app_button",
+                    execSource: "auto-run-dev",
                     password: password,
                     debugOnCrash: true,
                 });
