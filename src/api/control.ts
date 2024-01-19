@@ -155,7 +155,7 @@ export function setControlMode(newState: object) {
 }
 
 export function getControlMode() {
-    return Object.assign({}, controls);
+    return { ...controls };
 }
 
 export function enableKeyboardEvents(enable: boolean) {
