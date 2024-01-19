@@ -30,19 +30,8 @@ import {
     showDisplay,
     redrawDisplay,
     clearDisplay,
-    setCurrentMode,
-    setOverscan,
-    overscanMode,
-    showPerfStats,
     statsUpdate,
 } from "./display";
-import {
-    subscribeControl,
-    initControlModule,
-    enableControl,
-    sendKey,
-    addControlKeys,
-} from "./control";
 import {
     initSoundModule,
     addSound,
@@ -64,6 +53,7 @@ import {
     subscribeVideo,
     switchVideoState,
 } from "./video";
+import { subscribeControl, initControlModule, enableKeyboardEvents, sendKey } from "./control";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
@@ -73,6 +63,18 @@ let home: Howl;
 
 // Package API
 export { deviceData, loadAppZip, updateAppZip } from "./package";
+
+// Control API
+export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons } from "./control";
+
+// Display API
+export {
+    setDisplayMode,
+    getDisplayMode,
+    setOverscanMode,
+    getOverscanMode,
+    enableStats,
+} from "./display";
 
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
@@ -249,7 +251,7 @@ export function terminate(reason: string) {
     lastApp.id = currentApp.id;
     lastApp.exitReason = reason;
     Object.assign(currentApp, resetCurrentApp());
-    enableControl(false);
+    enableKeyboardEvents(false);
     notifyAll("closed", reason);
 }
 
@@ -273,21 +275,6 @@ export function getSerialNumber() {
 export function redraw(fullScreen: boolean, width?: number, height?: number, dpr?: number) {
     redrawDisplay(currentApp.running, fullScreen, width, height, dpr);
 }
-export function getDisplayMode() {
-    return deviceData.displayMode;
-}
-export function setDisplayMode(mode: string) {
-    setCurrentMode(mode);
-}
-export function getOverscanMode() {
-    return overscanMode;
-}
-export function setOverscanMode(mode: string) {
-    setOverscan(mode);
-}
-export function enableStats(state: boolean) {
-    showPerfStats(state);
-}
 
 // Audio API
 export function getAudioMute() {
@@ -301,9 +288,6 @@ export function setAudioMute(mute: boolean) {
 }
 
 // Remote Control API
-export function setCustomKeys(keys: Map<string, string>) {
-    addControlKeys(keys);
-}
 export function sendKeyDown(key: string) {
     sendKey(key, 0);
 }
@@ -428,7 +412,7 @@ function runApp(payload: object) {
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
-    enableControl(true);
+    enableKeyboardEvents(true);
 }
 
 // Receive Messages from the Interpreter (Web Worker)
@@ -468,7 +452,7 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
         const enable = level === "continue";
-        enableControl(enable);
+        enableKeyboardEvents(enable);
         statsUpdate(enable);
         switchSoundState(enable);
         switchVideoState(enable);

@@ -26,8 +26,8 @@ let videoRect = { x: 0, y: 0, w: 0, h: 0 };
 let frameLoop = false;
 
 // Initialize Display Module
-export let displayMode = "720p";
-export let overscanMode = "disabled";
+let displayMode = "720p";
+let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 export function initDisplayModule(mode: string, perfStats = false) {
     // Initialize Display Canvas
@@ -39,7 +39,7 @@ export function initDisplayModule(mode: string, perfStats = false) {
             alpha: true,
         }) as CanvasRenderingContext2D | null;
         // Performance Statistics
-        showPerfStats(perfStats);
+        enableStats(perfStats);
     } else {
         notifyAll(
             "warning",
@@ -293,18 +293,26 @@ function clearBuffer() {
 }
 
 // Set Current Display Mode
-export function setCurrentMode(mode: string) {
+export function setDisplayMode(mode: string) {
     displayMode = mode;
     aspectRatio = mode === "480p" ? 4 / 3 : 16 / 9;
     notifyAll("mode", mode);
 }
 
+export function getDisplayMode() {
+    return displayMode;
+}
+
 // Set Overscan Mode
-export function setOverscan(mode: string) {
+export function setOverscanMode(mode: string) {
     overscanMode = mode;
 }
 
-export function showPerfStats(show: boolean): boolean {
+export function getOverscanMode() {
+    return overscanMode;
+}
+
+export function enableStats(show: boolean): boolean {
     if (statsCanvas?.dom) {
         showStats = show;
     } else if (show) {
