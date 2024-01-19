@@ -22,6 +22,7 @@ let bufferOnly = false;
 let canPlay = false;
 let loadProgress = 0;
 let videoDuration = 0;
+let videoMuted = false;
 
 // Initialize Video Module
 export function initVideoModule(array: Int32Array, mute: boolean = false) {
@@ -111,8 +112,9 @@ export function handleVideoEvent(eventData: string) {
     } else if (data[1] === "resume") {
         resumeVideo();
     } else if (data[1] === "mute") {
-        if (data[2]) {
-            player.muted = player?.defaultMuted || data[2] === "true";
+        if (data[2] && player) {
+            videoMuted = data[2] === "true";
+            player.muted = player.defaultMuted || videoMuted;
         }
     } else if (data[1] === "loop") {
         if (data[2]) {
@@ -138,12 +140,12 @@ export function handleVideoEvent(eventData: string) {
 export function muteVideo(mute: boolean = false) {
     if (player) {
         player.defaultMuted = mute;
-        player.muted = mute;
+        player.muted = mute || videoMuted;
     }
 }
 
 export function isVideoMuted() {
-    return player.muted;
+    return player?.defaultMuted ?? false;
 }
 
 export function switchVideoState(play: boolean) {
