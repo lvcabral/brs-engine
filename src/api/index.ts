@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getNow, getWorkerLibPath, context } from "./util";
 
-import { DataType, DebugCommand, dataBufferIndex, dataBufferSize } from "./enums";
+import { DataType, DebugCommand, RemoteType, dataBufferIndex, dataBufferSize } from "./enums";
 
 import {
     source,
@@ -288,17 +288,17 @@ export function setAudioMute(mute: boolean) {
 }
 
 // Remote Control API
-export function sendKeyDown(key: string) {
-    sendKey(key, 0);
+export function sendKeyDown(key: string, remote?: RemoteType, index?: number) {
+    sendKey(key, 0, remote ?? RemoteType.ECP, index);
 }
-export function sendKeyUp(key: string) {
-    sendKey(key, 100);
+export function sendKeyUp(key: string, remote?: RemoteType, index?: number) {
+    sendKey(key, 100, remote ?? RemoteType.ECP, index);
 }
-export function sendKeyPress(key: string, delay = 300) {
+export function sendKeyPress(key: string, delay = 300, remote?: RemoteType, index?: number) {
     setTimeout(function () {
-        sendKey(key, 100);
+        sendKey(key, 100, remote ?? RemoteType.ECP, index);
     }, delay);
-    sendKey(key, 0);
+    sendKey(key, 0, remote ?? RemoteType.ECP, index);
 }
 
 // Telnet Debug API

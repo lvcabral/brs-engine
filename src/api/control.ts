@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, context } from "./util";
-import { DataType, DebugCommand } from "./enums";
+import { DataType, RemoteType, DebugCommand } from "./enums";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 
 // Control Mapping
@@ -168,7 +168,7 @@ export function enableKeyboardEvents(enable: boolean) {
     }
 }
 
-export function sendKey(key: string, mod: number) {
+export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
     key = key.toLowerCase();
     if (key === "home" && mod === 0) {
         notifyAll(key);
@@ -177,11 +177,13 @@ export function sendKey(key: string, mod: number) {
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
+            Atomics.store(sharedArray, DataType.RID, type + index);
             Atomics.store(sharedArray, DataType.MOD, mod);
             Atomics.store(sharedArray, DataType.KEY, code + mod);
         }
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
         if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
+            Atomics.store(sharedArray, DataType.RID, type + index);
             Atomics.store(sharedArray, DataType.MOD, mod);
             Atomics.store(sharedArray, DataType.KEY, key.charCodeAt(4) + mod);
         }
@@ -209,7 +211,7 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
         }
         const key = keysMap.get(keyCode);
         if (key && key.toLowerCase() !== "ignore") {
-            sendKey(key, mod);
+            sendKey(key, mod, RemoteType.IR);
             if (mod === 0) {
                 event.preventDefault();
             }
@@ -237,12 +239,12 @@ function gamePadOnHandler(gamePad: GCGamepad) {
 function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, key: string) {
     gamePad.before(eventName, () => {
         if (controls.gamePads) {
-            sendKey(key, 0);
+            sendKey(key, 0, RemoteType.WD, gamePad.id);
         }
     });
     gamePad.after(eventName, () => {
         if (controls.gamePads) {
-            sendKey(key, 100);
+            sendKey(key, 100, RemoteType.WD, gamePad.id);
         }
     });
 }
