@@ -98,35 +98,25 @@ const rokuKeys: Map<string, number> = new Map([
 ]);
 
 // Initialize Control Module
+const controls = { keyboard: true, gamePads: true };
 let sharedArray: Int32Array;
-let disableKeys: boolean = false;
 
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
     if (typeof options.disableKeys === "boolean") {
-        disableKeys = options.disableKeys;
+        controls.keyboard = !options.disableKeys;
     }
-    if (options.customKeys instanceof Map && !disableKeys) {
-        addControlKeys(options.customKeys);
+    if (options.customKeys instanceof Map) {
+        setCustomKeys(options.customKeys);
     }
-    if (!options.disableGamePads) {
-        if (options.customPadButtons instanceof Map) {
-            options.customPadButtons.forEach(function (value: string, button: number) {
-                if (button >= 0 && button < 32 && value.length) {
-                    buttonsMap.set(button, value);
-                }
-            });
-        }
-        gameControl.on("connect", gamePadOnHandler);
-        gameControl.on("disconnect", gamePadOffHandler);
+    if (typeof options.disableGamePads === "boolean") {
+        controls.gamePads = !options.disableGamePads;
     }
-}
-export function addControlKeys(newKeys: Map<string, string>) {
-    newKeys.forEach(function (value: string, key: string) {
-        key = key.replace(/Windows|Command/gi, "Meta");
-        key = key.replace("Option", "Alt");
-        keysMap.set(key, value);
-    });
+    if (options.customPadButtons instanceof Map) {
+        setCustomPadButtons(options.customPadButtons);
+    }
+    gameControl.on("connect", gamePadOnHandler);
+    gameControl.on("disconnect", gamePadOffHandler);
 }
 
 // Observers Handling
@@ -144,17 +134,40 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Control API
-export function enableControl(enable: boolean) {
-    if (!disableKeys) {
-        if (enable) {
-            document.addEventListener("keydown", keyDownHandler);
-            document.addEventListener("keyup", keyUpHandler);
-        } else {
-            document.removeEventListener("keydown", keyDownHandler);
-            document.removeEventListener("keyup", keyUpHandler);
+export function setCustomKeys(newKeys: Map<string, string>) {
+    newKeys.forEach((value: string, key: string) => {
+        key = key.replace(/Windows|Command/gi, "Meta");
+        key = key.replace("Option", "Alt");
+        keysMap.set(key, value);
+    });
+}
+
+export function setCustomPadButtons(newButtons: Map<number, string>) {
+    newButtons.forEach((value: string, button: number) => {
+        if (button >= 0 && button < 32 && value.length) {
+            buttonsMap.set(button, value);
         }
+    });
+}
+
+export function setControlMode(newState: object) {
+    Object.assign(controls, newState);
+}
+
+export function getControlMode() {
+    return Object.assign({}, controls);
+}
+
+export function enableKeyboardEvents(enable: boolean) {
+    if (enable) {
+        document.addEventListener("keydown", keyDownHandler);
+        document.addEventListener("keyup", keyUpHandler);
+    } else {
+        document.removeEventListener("keydown", keyDownHandler);
+        document.removeEventListener("keyup", keyUpHandler);
     }
 }
+
 export function sendKey(key: string, mod: number) {
     key = key.toLowerCase();
     if (key === "home" && mod === 0) {
@@ -183,21 +196,23 @@ function keyUpHandler(event: KeyboardEvent) {
     handleKeyboardEvent(event, 100);
 }
 function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
-    let keyCode: string = event.code;
-    if (event.shiftKey) {
-        keyCode = "Shift+" + keyCode;
-    } else if (event.ctrlKey) {
-        keyCode = "Control+" + keyCode;
-    } else if (event.altKey) {
-        keyCode = "Alt+" + keyCode;
-    } else if (event.metaKey) {
-        keyCode = "Meta+" + keyCode;
-    }
-    const key = keysMap.get(keyCode);
-    if (key && key.toLowerCase() !== "ignore") {
-        sendKey(key, mod);
-        if (mod === 0) {
-            event.preventDefault();
+    if (controls.keyboard) {
+        let keyCode: string = event.code;
+        if (event.shiftKey) {
+            keyCode = "Shift+" + keyCode;
+        } else if (event.ctrlKey) {
+            keyCode = "Control+" + keyCode;
+        } else if (event.altKey) {
+            keyCode = "Alt+" + keyCode;
+        } else if (event.metaKey) {
+            keyCode = "Meta+" + keyCode;
+        }
+        const key = keysMap.get(keyCode);
+        if (key && key.toLowerCase() !== "ignore") {
+            sendKey(key, mod);
+            if (mod === 0) {
+                event.preventDefault();
+            }
         }
     }
 }
@@ -208,29 +223,29 @@ function gamePadOnHandler(gamePad: GCGamepad) {
         events.forEach((key: string) => {
             if (gamePad.axes > index) {
                 const eventName = `${key}${index}` as EventName;
-                gamePad.before(eventName, () => {
-                    sendKey(key, 0);
-                });
-                gamePad.after(eventName, () => {
-                    sendKey(key, 100);
-                });
+                gamePadSubscribe(gamePad, eventName, key);
             }
         });
     });
-
     buttonsMap.forEach((key, index) => {
         if (gamePad.buttons > index) {
             const eventName = `button${index}` as EventName;
-            gamePad.before(eventName, () => {
-                sendKey(key, 0);
-            });
-            gamePad.after(eventName, () => {
-                sendKey(key, 100);
-            });
+            gamePadSubscribe(gamePad, eventName, key);
         }
     });
 }
-
+function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, key: string) {
+    gamePad.before(eventName, () => {
+        if (controls.gamePads) {
+            sendKey(key, 0);
+        }
+    });
+    gamePad.after(eventName, () => {
+        if (controls.gamePads) {
+            sendKey(key, 100);
+        }
+    });
+}
 function gamePadOffHandler(id: number) {
     console.info(`GamePad ${id} disconnected!`);
 }
