@@ -1,3 +1,19 @@
+<a name="v1.2.3"></a>
+
+# [v1.2.3 - Implemented FindMemberFunction()](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.3) - 19 Jan 2024
+
+## Release Changes
+* Fixed issue that allowed API to unmute a video when App had it muted by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/221
+* Added new API methods to enable/disable dynamically both keyboard or game pad controllers by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/222
+  * `setControlMode()`
+  * `getControlMode()`
+  * `setCustomPadButtons()`
+* Improvements on Remote Control simulation by @lvcabral in https://github.com/lvcabral/brs-engine/pull/223
+  * Added support for different control types
+  * Added a key buffer on the API side to avoid losing key events
+
+[Full Changelog][v1.2.3]
+
 <a name="v1.2.2"></a>
 
 # [v1.2.2 - Implemented FindMemberFunction()](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.2) - 17 Jan 2024
@@ -437,9 +453,10 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
-[1.2.2]: https://github.com/lvcabral/brs-engine/compare/v1.2.1...v1.2.2
-[1.2.1]: [https://github.com/lvcabral/brs-engine/compare/v1.2.0...v1.2.1]
-[1.2.0]: https://github.com/lvcabral/brs-engine/compare/v1.1.11...v1.2.0
+[v1.2.3]: https://github.com/lvcabral/brs-engine/compare/v1.2.2...v1.2.3
+[v1.2.2]: https://github.com/lvcabral/brs-engine/compare/v1.2.1...v1.2.2
+[v1.2.1]: https://github.com/lvcabral/brs-engine/compare/v1.2.0...v1.2.1
+[v1.2.0]: https://github.com/lvcabral/brs-engine/compare/v1.1.11...v1.2.0
 [v1.1.11]: https://github.com/lvcabral/brs-engine/compare/v1.0.10...v1.1.11
 [v1.1.10]: https://github.com/lvcabral/brs-engine/compare/v1.0.9...v1.1.10
 [v1.1.9]: https://github.com/lvcabral/brs-engine/compare/v1.0.0...v1.1.9
