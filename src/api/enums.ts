@@ -8,19 +8,41 @@
 
 // Shared array data types enumerator
 export enum DataType {
-    KEY,
-    MOD,
-    DBG,
-    EXP,
-    VDO,
-    VDX,
-    VLP,
-    VPS,
-    VDR,
-    SND,
-    IDX,
-    WAV, // Needs to be the last to allow variable # of streams
+    DBG, // Debug Command
+    EXP, // Debug Expression flag
+    VDO, // Video State
+    VDX, // Video Index
+    VLP, // Video Load Progress
+    VPS, // Video Position
+    VDR, // Video Duration
+    SND, // Sound State
+    IDX, // Sound Index
+    WAV, // Wave Audio
+    WAV1, // Reserved for second stream
+    WAV2, // Reserved for third stream
+    // Key Buffer starts here: KeyBufferSize * KeyArraySpots
+    RID, // Remote Id
+    KEY, // Key Code
+    MOD, // Key State (down/up)
 }
+
+// Key Buffer Constants
+export const keyBufferSize = 5; // Max is 6, if needs more space needs to increase `dataBufferIndex`
+export const keyArraySpots = 3;
+
+// Remote control type
+export enum RemoteType {
+    SIM = 10, // Simulated (default)
+    IR = 20, // Infra Red
+    WD = 30, // Wifi Direct
+    ECP = 40, // External Control Protocol
+    RMOB = 50, // Roku Mobile App (ECP2)
+}
+// Other valid remote codes:
+// BT - Bluetooth
+// CEC - Consumer Electronics Control
+// MHL - Mobile High-Definition Link
+// FP - Front Panel (for on device controls)
 
 // Debug constants
 export const dataBufferIndex = 32;

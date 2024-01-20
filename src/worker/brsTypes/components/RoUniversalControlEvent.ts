@@ -6,21 +6,17 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
 export interface KeyEvent {
+    remote: string; // Remote Id (Remote Type:Remote Index)
     key: number; // Key Code
     mod: number; // Modifier (0 = press, 100 = release)
 }
 
 export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private key: number;
-    private remote: string;
-    private mod: number;
-
-    constructor(remote: string, keyEvent: KeyEvent) {
+    private event: KeyEvent;
+    constructor(keyEvent: KeyEvent) {
         super("roUniversalControlEvent");
-        this.remote = remote;
-        this.key = keyEvent.key;
-        this.mod = keyEvent.mod;
+        this.event = keyEvent;
 
         this.registerMethods({
             ifUniversalControlEvent: [
@@ -49,7 +45,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.key);
+            return new Int32(this.event.key);
         },
     });
 
@@ -60,7 +56,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            let id = this.key - this.mod;
+            let id = this.event.key - this.event.mod;
             if (id >= 32) {
                 id = 0;
             }
@@ -75,7 +71,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.key - this.mod);
+            return new Int32(this.event.key - this.event.mod);
         },
     });
 
@@ -86,7 +82,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.remote);
+            return new BrsString(this.event.remote);
         },
     });
 
@@ -97,7 +93,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            let char = this.key - this.mod;
+            let char = this.event.key - this.event.mod;
             if (char < 32) {
                 char = 0;
             }
@@ -112,7 +108,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.mod < 100);
+            return BrsBoolean.from(this.event.mod < 100);
         },
     });
 }
