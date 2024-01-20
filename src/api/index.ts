@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getNow, getWorkerLibPath, context } from "./util";
 
-import { DataType, DebugCommand, dataBufferIndex, dataBufferSize } from "./enums";
+import { DataType, DebugCommand, RemoteType, dataBufferIndex, dataBufferSize } from "./enums";
 
 import {
     source,
@@ -53,7 +53,7 @@ import {
     subscribeVideo,
     switchVideoState,
 } from "./video";
-import { subscribeControl, initControlModule, enableKeyboardEvents, sendKey } from "./control";
+import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
@@ -251,7 +251,7 @@ export function terminate(reason: string) {
     lastApp.id = currentApp.id;
     lastApp.exitReason = reason;
     Object.assign(currentApp, resetCurrentApp());
-    enableKeyboardEvents(false);
+    enableSendKeys(false);
     notifyAll("closed", reason);
 }
 
@@ -288,17 +288,17 @@ export function setAudioMute(mute: boolean) {
 }
 
 // Remote Control API
-export function sendKeyDown(key: string) {
-    sendKey(key, 0);
+export function sendKeyDown(key: string, remote?: RemoteType, index?: number) {
+    sendKey(key, 0, remote ?? RemoteType.ECP, index);
 }
-export function sendKeyUp(key: string) {
-    sendKey(key, 100);
+export function sendKeyUp(key: string, remote?: RemoteType, index?: number) {
+    sendKey(key, 100, remote ?? RemoteType.ECP, index);
 }
-export function sendKeyPress(key: string, delay = 300) {
+export function sendKeyPress(key: string, delay = 300, remote?: RemoteType, index?: number) {
     setTimeout(function () {
-        sendKey(key, 100);
+        sendKey(key, 100, remote ?? RemoteType.ECP, index);
     }, delay);
-    sendKey(key, 0);
+    sendKey(key, 0, remote ?? RemoteType.ECP, index);
 }
 
 // Telnet Debug API
@@ -412,7 +412,7 @@ function runApp(payload: object) {
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
-    enableKeyboardEvents(true);
+    enableSendKeys(true);
 }
 
 // Receive Messages from the Interpreter (Web Worker)
@@ -452,7 +452,7 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
         const enable = level === "continue";
-        enableKeyboardEvents(enable);
+        enableSendKeys(enable);
         statsUpdate(enable);
         switchSoundState(enable);
         switchVideoState(enable);

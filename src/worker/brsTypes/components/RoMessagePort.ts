@@ -7,13 +7,13 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType, MediaEvent } from "../../../api/enums";
+import { DataType, MediaEvent, RemoteType, keyArraySpots, keyBufferSize } from "../../../api/enums";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private messageQueue: BrsType[];
     private callbackQueue: Function[]; // TODO: consider having the id of the connected objects
-    private keysQueue: KeyEvent[];
+    private keysBuffer: KeyEvent[];
     private lastKey: number;
     private screen: boolean;
     private audioFlags: number;
@@ -30,7 +30,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         });
         this.messageQueue = [];
         this.callbackQueue = [];
-        this.keysQueue = [];
+        this.keysBuffer = [];
         this.lastKey = -1;
         this.screen = false;
         this.audioFlags = -1;
@@ -132,7 +132,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     getEvent(interpreter: Interpreter) {
         if (this.screen) {
-            this.updateKeysQueue(interpreter);
+            this.updateKeysBuffer(interpreter);
             const ctrlEvent = this.newControlEvent(interpreter);
             if (ctrlEvent instanceof RoUniversalControlEvent) {
                 return ctrlEvent;
@@ -153,21 +153,31 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    updateKeysQueue(interpreter: Interpreter) {
-        const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
-        if (this.keysQueue.length === 0 || key !== this.keysQueue.at(-1)?.key) {
-            let mod = Atomics.load(interpreter.sharedArray, DataType.MOD);
-            this.keysQueue.push({ key: key, mod: mod });
+    updateKeysBuffer(interpreter: Interpreter) {
+        for (let i = 0; i < keyBufferSize; i++) {
+            const idx = i * keyArraySpots;
+            const key = Atomics.load(interpreter.sharedArray, DataType.KEY + idx);
+            if (key === -1) {
+                return;
+            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
+                const remoteId = Atomics.load(interpreter.sharedArray, DataType.RID + idx);
+                const remoteType = Math.trunc(remoteId / 10) * 10;
+                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
+                const remoteIdx = remoteId - remoteType;
+                const mod = Atomics.load(interpreter.sharedArray, DataType.MOD + idx);
+                Atomics.store(interpreter.sharedArray, DataType.KEY + idx, -1);
+                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+            }
         }
     }
 
     newControlEvent(interpreter: Interpreter): RoUniversalControlEvent | BrsInvalid {
-        const nextKey = this.keysQueue.shift();
+        const nextKey = this.keysBuffer.shift();
         if (nextKey && nextKey.key !== this.lastKey) {
             if (interpreter.singleKeyEvents) {
                 if (nextKey.mod === 0) {
                     if (this.lastKey >= 0 && this.lastKey < 100) {
-                        this.keysQueue.unshift({ key: nextKey.key, mod: nextKey.mod });
+                        this.keysBuffer.unshift({ ...nextKey });
                         nextKey.key = this.lastKey + 100;
                         nextKey.mod = 100;
                     }
@@ -178,7 +188,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             interpreter.lastKeyTime = interpreter.currKeyTime;
             interpreter.currKeyTime = performance.now();
             this.lastKey = nextKey.key;
-            return new RoUniversalControlEvent("WD:0", nextKey);
+            return new RoUniversalControlEvent(nextKey);
         }
         return BrsInvalid.Instance;
     }
@@ -266,10 +276,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.screen) {
-                this.updateKeysQueue(interpreter);
-                const nextKey = this.keysQueue[0];
+                this.updateKeysBuffer(interpreter);
+                const nextKey = this.keysBuffer[0];
                 if (nextKey) {
-                    return new RoUniversalControlEvent("WD:0", nextKey);
+                    return new RoUniversalControlEvent(nextKey);
                 }
             }
             if (this.audio) {
