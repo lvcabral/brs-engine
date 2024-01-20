@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, context } from "./util";
-import { DataType, RemoteType, DebugCommand } from "./enums";
+import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots } from "./enums";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 
 // Control Mapping
@@ -100,6 +100,7 @@ const rokuKeys: Map<string, number> = new Map([
 // Initialize Control Module
 const controls = { keyboard: true, gamePads: true };
 let sharedArray: Int32Array;
+let sendKeysEnabled = false;
 
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
@@ -158,7 +159,7 @@ export function getControlMode() {
     return { ...controls };
 }
 
-export function enableKeyboardEvents(enable: boolean) {
+export function enableSendKeys(enable: boolean) {
     if (enable) {
         document.addEventListener("keydown", keyDownHandler);
         document.addEventListener("keyup", keyUpHandler);
@@ -166,28 +167,53 @@ export function enableKeyboardEvents(enable: boolean) {
         document.removeEventListener("keydown", keyDownHandler);
         document.removeEventListener("keyup", keyUpHandler);
     }
+    sendKeysEnabled = enable;
 }
 
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
-    key = key.toLowerCase();
-    if (key === "home" && mod === 0) {
-        notifyAll(key);
-    } else if (key === "break") {
-        Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
-    } else if (rokuKeys.has(key)) {
-        const code = rokuKeys.get(key);
-        if (typeof code !== "undefined") {
-            Atomics.store(sharedArray, DataType.RID, type + index);
-            Atomics.store(sharedArray, DataType.MOD, mod);
-            Atomics.store(sharedArray, DataType.KEY, code + mod);
-        }
-    } else if (key.slice(0, 4).toLowerCase() === "lit_") {
-        if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            Atomics.store(sharedArray, DataType.RID, type + index);
-            Atomics.store(sharedArray, DataType.MOD, mod);
-            Atomics.store(sharedArray, DataType.KEY, key.charCodeAt(4) + mod);
+    if (sendKeysEnabled) {
+        key = key.toLowerCase();
+        if (key === "home" && mod === 0) {
+            notifyAll(key);
+        } else if (key === "break") {
+            Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+        } else if (rokuKeys.has(key)) {
+            const code = rokuKeys.get(key);
+            if (typeof code !== "undefined") {
+                const next = getNext();
+                Atomics.store(sharedArray, DataType.RID + next, type + index);
+                Atomics.store(sharedArray, DataType.MOD + next, mod);
+                Atomics.store(sharedArray, DataType.KEY + next, code + mod);
+            }
+        } else if (key.slice(0, 4).toLowerCase() === "lit_") {
+            if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
+                const next = getNext();
+                Atomics.store(sharedArray, DataType.RID + next, type + index);
+                Atomics.store(sharedArray, DataType.MOD + next, mod);
+                Atomics.store(sharedArray, DataType.KEY + next, key.charCodeAt(4) + mod);
+            }
         }
     }
+}
+
+function getNext() {
+    for (let i = 0; i < keyBufferSize; i++) {
+        const next = i * keyArraySpots;
+        if (Atomics.load(sharedArray, DataType.KEY + next) < 0) {
+            return next;
+        }
+    }
+    // buffer full
+    for (let i = 1; i < keyBufferSize; i++) {
+        const prev = (i - 1) * keyArraySpots;
+        const next = i * keyArraySpots;
+        Atomics.store(
+            sharedArray,
+            DataType.KEY + prev,
+            Atomics.load(sharedArray, DataType.KEY + next)
+        );
+    }
+    return (keyBufferSize - 1) * keyArraySpots;
 }
 
 // Keyboard handlers

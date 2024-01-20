@@ -7,7 +7,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType, MediaEvent, RemoteType } from "../../../api/enums";
+import { DataType, MediaEvent, RemoteType, keyArraySpots, keyBufferSize } from "../../../api/enums";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -154,14 +154,20 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     updateKeysBuffer(interpreter: Interpreter) {
-        const key = Atomics.load(interpreter.sharedArray, DataType.KEY);
-        if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
-            const remoteId = Atomics.load(interpreter.sharedArray, DataType.RID);
-            const remoteType = Math.trunc(remoteId / 10) * 10;
-            const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
-            const remoteIdx = remoteId - remoteType;
-            const mod = Atomics.load(interpreter.sharedArray, DataType.MOD);
-            this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+        for (let i = 0; i < keyBufferSize; i++) {
+            const idx = i * keyArraySpots;
+            const key = Atomics.load(interpreter.sharedArray, DataType.KEY + idx);
+            if (key === -1) {
+                return;
+            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
+                const remoteId = Atomics.load(interpreter.sharedArray, DataType.RID + idx);
+                const remoteType = Math.trunc(remoteId / 10) * 10;
+                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
+                const remoteIdx = remoteId - remoteType;
+                const mod = Atomics.load(interpreter.sharedArray, DataType.MOD + idx);
+                Atomics.store(interpreter.sharedArray, DataType.KEY + idx, -1);
+                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+            }
         }
     }
 

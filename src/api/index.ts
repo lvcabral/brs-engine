@@ -53,7 +53,7 @@ import {
     subscribeVideo,
     switchVideoState,
 } from "./video";
-import { subscribeControl, initControlModule, enableKeyboardEvents, sendKey } from "./control";
+import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
@@ -251,7 +251,7 @@ export function terminate(reason: string) {
     lastApp.id = currentApp.id;
     lastApp.exitReason = reason;
     Object.assign(currentApp, resetCurrentApp());
-    enableKeyboardEvents(false);
+    enableSendKeys(false);
     notifyAll("closed", reason);
 }
 
@@ -412,7 +412,7 @@ function runApp(payload: object) {
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage(sharedBuffer);
     brsWorker.postMessage(payload, bins);
-    enableKeyboardEvents(true);
+    enableSendKeys(true);
 }
 
 // Receive Messages from the Interpreter (Web Worker)
@@ -452,7 +452,7 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data.startsWith("debug,")) {
         const level = event.data.slice(6);
         const enable = level === "continue";
-        enableKeyboardEvents(enable);
+        enableSendKeys(enable);
         statsUpdate(enable);
         switchSoundState(enable);
         switchVideoState(enable);

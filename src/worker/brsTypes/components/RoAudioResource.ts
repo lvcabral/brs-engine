@@ -18,7 +18,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
 
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource");
-        this.maxStreams = interpreter.deviceInfo.get("maxSimulStreams");
+        this.maxStreams = Math.min(interpreter.deviceInfo.get("maxSimulStreams"), 3) || 2;
         this.valid = true;
         const systemwav = ["select", "navsingle", "navmulti", "deadend"];
         const sysIndex = systemwav.findIndex((wav) => wav === name.value.toLowerCase());

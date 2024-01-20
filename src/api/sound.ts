@@ -25,7 +25,7 @@ let muted: boolean;
 // Initialize Sound Module
 export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
     sharedArray = array;
-    maxStreams = streams;
+    maxStreams = Math.min(streams, 3) || 2;
     resetSounds();
     muteSound(mute);
 }

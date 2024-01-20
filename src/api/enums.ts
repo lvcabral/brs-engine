@@ -8,9 +8,6 @@
 
 // Shared array data types enumerator
 export enum DataType {
-    RID, // Remote Id
-    KEY, // Key code
-    MOD, // Key Modification
     DBG, // Debug Command
     EXP, // Debug Expression flag
     VDO, // Video State
@@ -20,8 +17,18 @@ export enum DataType {
     VDR, // Video Duration
     SND, // Sound State
     IDX, // Sound Index
-    WAV, // Wave Audio - Needs to be the last to allow variable # of streams
+    WAV, // Wave Audio
+    WAV1, // Reserved for second stream
+    WAV2, // Reserved for third stream
+    // Key Buffer starts here: KeyBufferSize * KeyArraySpots
+    RID, // Remote Id
+    KEY, // Key Code
+    MOD, // Key State (down/up)
 }
+
+// Key Buffer Constants
+export const keyBufferSize = 5; // Max is 6, if needs more space needs to increase `dataBufferIndex`
+export const keyArraySpots = 3;
 
 // Remote control type
 export enum RemoteType {
