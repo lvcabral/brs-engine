@@ -1,6 +1,6 @@
 <a name="v1.2.3"></a>
 
-# [v1.2.3 - Implemented FindMemberFunction()](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.3) - 19 Jan 2024
+# [v1.2.3 - Improved Control Simulation](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.3) - 19 Jan 2024
 
 ## Release Changes
 * Fixed issue that allowed API to unmute a video when App had it muted by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/221
