@@ -83,7 +83,9 @@ export function unsubscribeVideo(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    playerState = eventName;
+    if (["play", "pause", "stop"].includes(eventName)) {
+        playerState = eventName;
+    }
     observers.forEach((callback, id) => {
         callback(eventName, eventData);
     });
