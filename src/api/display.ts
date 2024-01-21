@@ -133,22 +133,7 @@ export function redrawDisplay(
 }
 
 // Draw App Splash
-export function drawSplashScreen(imgData: ImageBitmap) {
-    if (ctx) {
-        if (display instanceof HTMLCanvasElement) {
-            display.style.opacity = "1";
-        }
-        ctx.drawImage(imgData, 0, 0, screenSize.width, screenSize.height);
-        let buffer = ctx.getImageData(0, 0, screenSize.width, screenSize.height);
-        bufferCanvas.width = buffer.width;
-        bufferCanvas.height = buffer.height;
-        if (bufferCtx) {
-            bufferCtx.putImageData(buffer, 0, 0);
-        }
-    }
-}
-
-export function drawIconAsSplash(imgData: ImageBitmap) {
+export function drawSplashScreen(imgBmp: ImageBitmap, icon = false) {
     if (bufferCtx) {
         if (display instanceof HTMLCanvasElement) {
             display.style.opacity = "1";
@@ -164,16 +149,24 @@ export function drawIconAsSplash(imgData: ImageBitmap) {
         }
         bufferCanvas.width = w;
         bufferCanvas.height = h;
-        const x = Math.trunc((w - imgData.width) / 2);
-        const y = Math.trunc((h - imgData.height) / 2);
-        bufferCtx.clearRect(0, 0, w, h);
-        bufferCtx.drawImage(imgData, x, y);
-        bufferCtx.textAlign = "center";
-        bufferCtx.fillStyle = "white";
-        bufferCtx.font = "30px sans-serif";
-        bufferCtx.fillText("Loading...", w / 2, y + imgData.height + 45);
+        if (icon) {
+            const x = Math.trunc((w - imgBmp.width) / 2);
+            const y = Math.trunc((h - imgBmp.height) / 2);
+            bufferCtx.clearRect(0, 0, w, h);
+            bufferCtx.drawImage(imgBmp, x, y);
+            bufferCtx.textAlign = "center";
+            bufferCtx.fillStyle = "white";
+            bufferCtx.font = "30px sans-serif";
+            bufferCtx.fillText("Loading...", w / 2, y + imgBmp.height + 45);
+        } else {
+            bufferCtx.drawImage(imgBmp, 0, 0, w, h);
+        }
         drawBufferImage();
     }
+}
+
+export function drawIconAsSplash(imgBmp: ImageBitmap) {
+    drawSplashScreen(imgBmp, true);
 }
 
 // Update Buffer Image
@@ -253,6 +246,7 @@ function drawVideoFrame() {
     }
 }
 
+// Update Performance Statistics
 export function statsUpdate(start: boolean) {
     if (showStats) {
         if (start) {
@@ -265,7 +259,6 @@ export function statsUpdate(start: boolean) {
 
 // Show Display and set focus
 export function showDisplay() {
-    bufferCanvas.width = 1;
     if (display instanceof HTMLCanvasElement) {
         display.style.opacity = "1";
         display.focus();
@@ -275,7 +268,7 @@ export function showDisplay() {
     }
 }
 
-//Clear Display and Buffer
+// Clear Display and Buffer
 export function clearDisplay() {
     if (ctx && context.inSafari) {
         ctx.fillStyle = "black";
@@ -292,7 +285,7 @@ function clearBuffer() {
     }
 }
 
-// Set Current Display Mode
+// Set/Get Current Display Mode
 export function setDisplayMode(mode: string) {
     displayMode = mode;
     aspectRatio = mode === "480p" ? 4 / 3 : 16 / 9;
@@ -303,7 +296,7 @@ export function getDisplayMode() {
     return displayMode;
 }
 
-// Set Overscan Mode
+// Set/Get Overscan Mode
 export function setOverscanMode(mode: string) {
     overscanMode = mode;
 }
@@ -312,6 +305,7 @@ export function getOverscanMode() {
     return overscanMode;
 }
 
+// Set the Performance Statistics state
 export function enableStats(show: boolean): boolean {
     if (statsCanvas?.dom) {
         showStats = show;
