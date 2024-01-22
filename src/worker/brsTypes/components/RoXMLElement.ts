@@ -117,6 +117,8 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         let root = Object.keys(this.parsedXML)[0];
         if (this.parsedXML[root]._) {
             text = this.parsedXML[root]._;
+        } else if (typeof this.parsedXML[root] === "string") {
+            text = this.parsedXML[root];
         }
         return new BrsString(text);
     }
