@@ -218,7 +218,9 @@ function getNext() {
 
 // Keyboard handlers
 function keyDownHandler(event: KeyboardEvent) {
-    handleKeyboardEvent(event, 0);
+    if (!event.repeat) {
+        handleKeyboardEvent(event, 0);
+    }
 }
 function keyUpHandler(event: KeyboardEvent) {
     handleKeyboardEvent(event, 100);
