@@ -1,3 +1,14 @@
+<a name="v1.2.5"></a>
+
+# [v1.2.5 - Fixes on Keyboard Control, Display and XML](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.5) - 22 Jan 2024
+
+## Release Changes
+* Fixed #228 - Prevent repeated `keydown` events by @lvcabral in https://github.com/lvcabral/brs-engine/pull/230
+* Fixed #229 - Clear buffer on terminate by @lvcabral in https://github.com/lvcabral/brs-engine/pull/231
+* Fixed #232 - Object `roXMLElement` called method `getText()` is returning empty string by @lvcabral in https://github.com/lvcabral/brs-engine/pull/233
+
+[Full Changelog][v1.2.5]
+
 <a name="v1.2.4"></a>
 
 # [v1.2.4 - Fixed Low Resolution and Video Pause](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.4) - 21 Jan 2024
@@ -465,6 +476,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.2.5]: https://github.com/lvcabral/brs-engine/compare/v1.2.4...v1.2.5
 [v1.2.4]: https://github.com/lvcabral/brs-engine/compare/v1.2.3...v1.2.4
 [v1.2.3]: https://github.com/lvcabral/brs-engine/compare/v1.2.2...v1.2.3
 [v1.2.2]: https://github.com/lvcabral/brs-engine/compare/v1.2.1...v1.2.2
