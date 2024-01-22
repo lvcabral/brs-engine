@@ -31,6 +31,7 @@ import {
     redrawDisplay,
     clearDisplay,
     statsUpdate,
+    clearBuffer,
 } from "./display";
 import {
     initSoundModule,
@@ -245,6 +246,7 @@ export function terminate(reason: string) {
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
     }
     if (currentApp.clearDisplay) {
+        clearBuffer();
         clearDisplay();
     }
     resetWorker();

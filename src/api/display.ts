@@ -278,7 +278,7 @@ export function clearDisplay() {
     }
 }
 
-function clearBuffer() {
+export function clearBuffer() {
     if (bufferCtx) {
         bufferCtx.fillStyle = "black";
         bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
