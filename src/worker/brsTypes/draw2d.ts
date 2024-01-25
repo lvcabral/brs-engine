@@ -3,6 +3,8 @@ import { BrsComponent } from "./components/BrsComponent";
 import { RoCompositor } from "./components/RoCompositor";
 import { Int32 } from "./Int32";
 
+export type BrsDraw2D = RoBitmap | RoRegion | RoScreen;
+
 // In Chrome, when this is enabled, it slows down non-alpha draws. However, when this is true, it behaves the same as Roku
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
 const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
@@ -16,12 +18,9 @@ function setContextAlpha(ctx: OffscreenCanvasRenderingContext2D, rgba: Int32 | B
     }
 }
 
-function getCanvasFromDraw2d(
-    object: RoBitmap | RoRegion,
-    rgba: Int32 | BrsInvalid
-): OffscreenCanvas {
+function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): OffscreenCanvas {
     let cvs: OffscreenCanvas;
-    if (rgba instanceof Int32) {
+    if (rgba instanceof Int32 && !(object instanceof RoScreen)) {
         cvs = object.getRgbaCanvas(rgba.getValue());
     } else {
         cvs = object.getCanvas();
@@ -42,7 +41,7 @@ export class DrawOffset {
     y: number = 0;
 }
 
-export function getDrawOffset(object: RoBitmap | RoRegion | RoScreen | RoCompositor): DrawOffset {
+export function getDrawOffset(object: BrsDraw2D | RoCompositor): DrawOffset {
     let x = 0,
         y = 0;
     if (object instanceof RoRegion) {
@@ -52,7 +51,7 @@ export function getDrawOffset(object: RoBitmap | RoRegion | RoScreen | RoComposi
     return { x, y };
 }
 
-function getPreTranslation(object: RoBitmap | RoRegion | RoScreen): DrawOffset {
+function getPreTranslation(object: BrsDraw2D): DrawOffset {
     let x = 0,
         y = 0;
     if (object instanceof RoRegion) {
@@ -66,9 +65,7 @@ export class Dimensions {
     constructor(public width: number, public height: number) {}
 }
 
-export function getDimensions(
-    object: RoRegion | RoBitmap | RoScreen | RoCompositor | OffscreenCanvas
-): Dimensions {
+export function getDimensions(object: BrsDraw2D | RoCompositor | OffscreenCanvas): Dimensions {
     if (object instanceof RoRegion || object instanceof RoBitmap) {
         return new Dimensions(object.getImageWidth(), object.getImageHeight());
     } else if (object instanceof RoScreen) {
@@ -99,7 +96,7 @@ function getDrawChunks(
     ctx: OffscreenCanvasRenderingContext2D,
     destOffset: DrawOffset,
     allowWrap: boolean,
-    object: RoBitmap | RoRegion,
+    object: BrsDraw2D,
     x: number,
     y: number,
     scaleX: number = 1,
@@ -127,7 +124,12 @@ function getDrawChunks(
 
     chunks.push({ sx, sy, sw, sh, dx, dy, dw, dh });
 
-    if (!allowWrap || object instanceof RoBitmap || !object.getWrapValue()) {
+    if (
+        !allowWrap ||
+        object instanceof RoBitmap ||
+        object instanceof RoScreen ||
+        !object.getWrapValue()
+    ) {
         // No wraps, so just one image chunk to draw
         return chunks;
     }
@@ -187,7 +189,7 @@ function getDrawChunks(
 }
 
 export function drawObjectToComponent(
-    component: RoRegion | RoBitmap | RoScreen | RoCompositor,
+    component: BrsDraw2D | RoCompositor,
     object: BrsComponent,
     rgba: Int32 | BrsInvalid,
     x: number,
@@ -198,7 +200,7 @@ export function drawObjectToComponent(
     const ctx = component.getContext();
     const alphaEnable = component.getAlphaEnableValue();
     let image: OffscreenCanvas;
-    if (object instanceof RoBitmap || object instanceof RoRegion) {
+    if (object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen) {
         image = getCanvasFromDraw2d(object, rgba);
         setContextAlpha(ctx, rgba);
     } else {
