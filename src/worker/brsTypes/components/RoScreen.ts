@@ -17,6 +17,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private alphaEnable: boolean;
     private doubleBuffer: boolean;
     private currentBuffer: number;
+    private lastBuffer: number;
     private width: number;
     private height: number;
     private canvas: OffscreenCanvas[];
@@ -61,6 +62,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         }
         this.doubleBuffer = doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean();
         this.currentBuffer = 0;
+        this.lastBuffer = 0;
         this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 2 : 1);
         this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
         for (let index = 0; index < this.canvas.length; index++) {
@@ -169,6 +171,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                     this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
                 );
                 if (this.doubleBuffer) {
+                    this.lastBuffer = this.currentBuffer;
                     this.currentBuffer++;
                     if (this.currentBuffer === this.canvas.length) {
                         this.currentBuffer = 0;
@@ -458,7 +461,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.context[this.currentBuffer].getImageData(
+            let imgData = this.context[this.lastBuffer].getImageData(
                 x.getValue(),
                 y.getValue(),
                 width.getValue(),
@@ -481,7 +484,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.context[this.currentBuffer].getImageData(
+            let imgData = this.context[this.lastBuffer].getImageData(
                 x.getValue(),
                 y.getValue(),
                 width.getValue(),
