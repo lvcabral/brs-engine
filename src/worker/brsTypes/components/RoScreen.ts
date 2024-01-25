@@ -99,8 +99,17 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ifGetMessagePort: [this.getMessagePort],
         });
     }
+
+    getImageWidth(): number {
+        return this.canvas[this.lastBuffer].width;
+    }
+
+    getImageHeight(): number {
+        return this.canvas[this.lastBuffer].height;
+    }
+
     getCanvas(): OffscreenCanvas {
-        return this.canvas[this.currentBuffer];
+        return this.canvas[this.lastBuffer];
     }
 
     getContext(): OffscreenCanvasRenderingContext2D {
