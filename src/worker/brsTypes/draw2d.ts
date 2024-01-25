@@ -18,10 +18,7 @@ function setContextAlpha(ctx: OffscreenCanvasRenderingContext2D, rgba: Int32 | B
     }
 }
 
-function getCanvasFromDraw2d(
-    object: BrsDraw2D,
-    rgba: Int32 | BrsInvalid
-): OffscreenCanvas {
+function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): OffscreenCanvas {
     let cvs: OffscreenCanvas;
     if (rgba instanceof Int32 && !(object instanceof RoScreen)) {
         cvs = object.getRgbaCanvas(rgba.getValue());
@@ -65,12 +62,10 @@ function getPreTranslation(object: BrsDraw2D): DrawOffset {
 }
 
 export class Dimensions {
-    constructor(public width: number, public height: number) { }
+    constructor(public width: number, public height: number) {}
 }
 
-export function getDimensions(
-    object: BrsDraw2D | RoCompositor | OffscreenCanvas
-): Dimensions {
+export function getDimensions(object: BrsDraw2D | RoCompositor | OffscreenCanvas): Dimensions {
     if (object instanceof RoRegion || object instanceof RoBitmap) {
         return new Dimensions(object.getImageWidth(), object.getImageHeight());
     } else if (object instanceof RoScreen) {
@@ -129,7 +124,12 @@ function getDrawChunks(
 
     chunks.push({ sx, sy, sw, sh, dx, dy, dw, dh });
 
-    if (!allowWrap || object instanceof RoBitmap || object instanceof RoScreen || !object.getWrapValue()) {
+    if (
+        !allowWrap ||
+        object instanceof RoBitmap ||
+        object instanceof RoScreen ||
+        !object.getWrapValue()
+    ) {
         // No wraps, so just one image chunk to draw
         return chunks;
     }
