@@ -1,5 +1,9 @@
 sub main()
     print "starting video test"
+	di = CreateObject("roDeviceInfo")
+    codec = "mpeg4 avc"
+	print "Supports MP4:"; di.canDecodeVideo({codec: codec, container: "mp4"})
+	print "Supports HLS:"; di.canDecodeVideo({codec: codec, container: "hls"})
 	rect = { x: 249, y: 177, w: 391, h: 291 }
     port = CreateObject("roMessagePort")
     screen = CreateObject("roScreen", true, 1280, 720)

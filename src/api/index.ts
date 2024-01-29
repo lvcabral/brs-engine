@@ -87,7 +87,14 @@ let sharedArray: Int32Array;
 // API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
     if (customDeviceInfo) {
-        const invalidKeys = ["registry", "models", "audioCodecs", "fonts", "password"];
+        const invalidKeys = [
+            "registry",
+            "models",
+            "audioCodecs",
+            "videoFormats",
+            "fonts",
+            "password",
+        ];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {
                 delete customDeviceInfo[key];

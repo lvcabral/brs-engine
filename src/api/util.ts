@@ -41,9 +41,12 @@ export const context = getContext();
 function getContext() {
     let inApple = false;
     let inSafari = false;
+    let inChromium = false;
     if (typeof navigator !== "undefined") {
         inApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
         inSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        inChromium =
+            ("chrome" in window || (window.Intl && "v8BreakIterator" in Intl)) && "CSS" in window;
     } else {
         inApple = process.platform === "darwin";
     }
@@ -54,6 +57,7 @@ function getContext() {
             navigator.userAgent.indexOf("Electron") >= 0,
         inBrowser: typeof window !== "undefined",
         inSafari: inSafari,
+        inChromium: inChromium,
         inApple: inApple,
     };
 }

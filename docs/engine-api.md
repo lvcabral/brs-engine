@@ -1,8 +1,8 @@
 # BrightScript Engine API
 
-The engine worker library has a programable interface to make it easy to integrate into any web based application. 
+The engine worker library has a programable interface to make it easy to integrate into any web based application.
 
-Check the [documentation](docs/integrating.md) to learn how to start using it. The only pre-requisite is to expose a `canvas` object named `display` on the default `document`, and optionally,  if you want to show the performance statistics, you also need to expose a `div` object named `stats`.
+Check the [documentation](docs/integrating.md) to learn how to start using it. The only pre-requisites are to expose, on the default `document`, a `canvas` object named `display` and a `video` object named `player`, and optionally,  if you want to show the performance statistics, you also need to expose a `div` object named `stats`.
 
 ## Methods
 

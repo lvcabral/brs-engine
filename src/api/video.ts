@@ -5,11 +5,11 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback } from "./util";
+import { SubscribeCallback, context } from "./util";
 import { DataType, MediaEvent } from "./enums";
 
 // Video Objects
-export let player: HTMLVideoElement;
+export const player = document.getElementById("player") as HTMLVideoElement;
 let playerState: string = "stop";
 let videosState = false;
 let playList = new Array();
@@ -26,7 +26,6 @@ let videoMuted = false;
 
 // Initialize Video Module
 export function initVideoModule(array: Int32Array, mute: boolean = false) {
-    player = document.getElementById("player") as HTMLVideoElement;
     if (player) {
         player.addEventListener("canplay", (event) => {
             loadProgress = 1000;
@@ -163,9 +162,40 @@ export function switchVideoState(play: boolean) {
     }
 }
 
-export function videoCodecs() {
-    const codecs = ["mp4", "hls"];
-    return codecs;
+export function videoFormats() {
+    // Mime and Codecs browser test page
+    // https://cconcolato.github.io/media-mime-support/
+    const formats = new Map([
+        ["av1", `video/mp4; codecs="av01.0.05M.08"`],
+        ["mpeg4 avc", `video/mp4; codecs="avc1.42E01E"`],
+        ["hevc", `video/mp4; codecs="hev1.2.4.L120.B0"`],
+        ["vp8", `video/webm; codecs="vp8, vorbis"`],
+        ["vp9", `video/mp4; codecs="vp09.00.50.08"`],
+        ["mpeg1", "vdeo/mpeg"],
+        ["mpeg2", "video/mpeg2"],
+    ]);
+    const codecs: Array<string> = [];
+    formats.forEach((mime: string, codec: string) => {
+        if (player.canPlayType(mime) !== "") {
+            codecs.push(codec);
+        }
+    });
+    // All Browsers Support mp4 and mov, only Chromium supports mkv natively
+    // https://stackoverflow.com/questions/57060193/browser-support-for-mov-video
+    const containers = ["mp4", "mov"];
+    if (player.canPlayType(`application/x-mpegURL; codecs="avc1"`) !== "") {
+        containers.push("hls");
+    }
+    if (player.canPlayType("video/mp2t") !== "") {
+        containers.push("ts");
+    }
+    if (context.inChromium) {
+        containers.push("mkv");
+    }
+    return new Map([
+        ["codecs", codecs],
+        ["containers", containers],
+    ]);
 }
 
 export function addVideoPlaylist(newList: any[]) {
@@ -193,7 +223,7 @@ function loadVideo(buffer = false) {
     const video = playList[playIndex];
     if (video && player) {
         player.src = video.url;
-        if (video.streamFormat === "mp4") {
+        if (["mp4", "mkv"].includes(video.streamFormat)) {
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
             player.setAttribute("type", "application/x-mpegURL");
