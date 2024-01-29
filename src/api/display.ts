@@ -16,6 +16,7 @@ let ctx: CanvasRenderingContext2D | null;
 let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
 let lastImage: ImageBitmap | null;
+let lastFrameReq: number = 0;
 
 // Performance Stats Variables
 let statsDiv: HTMLDivElement;
@@ -60,7 +61,7 @@ export function initDisplayModule(mode: string, perfStats = false) {
         videoState = event;
         if (videoState === "play" && !frameLoop) {
             frameLoop = true;
-            window.requestAnimationFrame(drawVideoFrame);
+            lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
         }
     });
 }
@@ -182,7 +183,7 @@ export function updateBuffer(buffer: ImageData) {
             lastImage = bitmap;
         });
         clearDisplay();
-        window.requestAnimationFrame(drawBufferImage);
+        lastFrameReq = window.requestAnimationFrame(drawBufferImage);
     }
 }
 
@@ -234,7 +235,8 @@ function drawVideoFrame() {
                 height = nh;
             }
         }
-        clearBuffer();
+        bufferCtx.fillStyle = "black";
+        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
         bufferCtx.drawImage(player as any, left, top, width, height);
         if (lastImage) {
             bufferCtx.drawImage(lastImage, 0, 0);
@@ -270,18 +272,12 @@ export function showDisplay() {
 
 // Clear Display and Buffer
 export function clearDisplay() {
+    window.cancelAnimationFrame(lastFrameReq);
     if (ctx && context.inSafari) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     } else if (ctx) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    }
-}
-
-export function clearBuffer() {
-    if (bufferCtx) {
-        bufferCtx.fillStyle = "black";
-        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
     }
 }
 
