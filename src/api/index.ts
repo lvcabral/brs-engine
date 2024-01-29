@@ -7,7 +7,13 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getNow, getWorkerLibPath, context } from "./util";
 
-import { DataType, DebugCommand, RemoteType, dataBufferIndex, dataBufferSize } from "./enums";
+import {
+    DataType,
+    DebugCommand,
+    RemoteType,
+    dataBufferIndex,
+    dataBufferSize,
+} from "../worker/enums";
 
 import {
     source,

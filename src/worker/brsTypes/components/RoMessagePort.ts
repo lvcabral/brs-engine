@@ -7,7 +7,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType, MediaEvent, RemoteType, keyArraySpots, keyBufferSize } from "../../../api/enums";
+import { DataType, MediaEvent, RemoteType, keyArraySpots, keyBufferSize } from "../../enums";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

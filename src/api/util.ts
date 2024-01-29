@@ -40,22 +40,26 @@ export function getWorkerLibPath(): string {
 export const context = getContext();
 function getContext() {
     let inApple = false;
+    let inBrowser = false;
     let inSafari = false;
     let inChromium = false;
     if (typeof navigator !== "undefined") {
         inApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
         inSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        inChromium =
-            ("chrome" in window || (window.Intl && "v8BreakIterator" in Intl)) && "CSS" in window;
     } else {
         inApple = process.platform === "darwin";
+    }
+    if (typeof window !== "undefined") {
+        inBrowser = true;
+        inChromium =
+            ("chrome" in window || (window.Intl && "v8BreakIterator" in Intl)) && "CSS" in window;
     }
     return {
         inElectron:
             typeof navigator === "object" &&
             typeof navigator.userAgent === "string" &&
             navigator.userAgent.indexOf("Electron") >= 0,
-        inBrowser: typeof window !== "undefined",
+        inBrowser: inBrowser,
         inSafari: inSafari,
         inChromium: inChromium,
         inApple: inApple,

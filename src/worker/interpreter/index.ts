@@ -42,7 +42,7 @@ import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand } from "../../api/enums";
+import { DataType, DebugCommand } from "../enums";
 import Long from "long";
 
 /** The set of options used to configure an interpreter's execution. */

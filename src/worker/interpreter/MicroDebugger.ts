@@ -13,7 +13,7 @@ import {
     IndexedSet,
     Print,
 } from "../parser/Statement";
-import { DataType, DebugCommand, dataBufferIndex } from "../../api/enums";
+import { DataType, DebugCommand, dataBufferIndex } from "../enums";
 
 // Debug Constants
 let stepMode = false;
