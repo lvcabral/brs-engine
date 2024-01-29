@@ -17,6 +17,7 @@ There are several features from the **BrightScript** language and components tha
 * Video playback via `roVideoPlayer` is implemented, but with some limitations:
   * If the `roVideoPlayer` instance is destroyed the video keeps playing, make sure to call `.stop()` before discarding the object.
   * The following methods are still not supported: `setCGMS`, `setMaxVideoDecodeResolution`, `getAudioTracks`, `changeAudioTrack`, `setTimedMetadataForKeys`, `getCaptionRenderer`, `setMacrovisionLevel`
+  * Check what codecs can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
 * The component `roUrlTransfer` is implemented with basic functionality but has some limitations:
   * To make the **web app** access urls from domains other than the one it is hosted, add the domains to the `Content-Security-Policy` tag in `app/index.html`.
   * The configuration above requires the web server called to respond with the proper header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).

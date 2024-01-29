@@ -7,7 +7,13 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getNow, getWorkerLibPath, context } from "./util";
 
-import { DataType, DebugCommand, RemoteType, dataBufferIndex, dataBufferSize } from "./enums";
+import {
+    DataType,
+    DebugCommand,
+    RemoteType,
+    dataBufferIndex,
+    dataBufferSize,
+} from "../worker/enums";
 
 import {
     source,
@@ -87,7 +93,14 @@ let sharedArray: Int32Array;
 // API Methods
 export function initialize(customDeviceInfo?: any, options: any = {}) {
     if (customDeviceInfo) {
-        const invalidKeys = ["registry", "models", "audioCodecs", "fonts", "password"];
+        const invalidKeys = [
+            "registry",
+            "models",
+            "audioCodecs",
+            "videoFormats",
+            "fonts",
+            "password",
+        ];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {
                 delete customDeviceInfo[key];

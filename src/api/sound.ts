@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { DataType, MediaEvent } from "./enums";
+import { DataType, MediaEvent } from "../worker/enums";
 import { Howl, Howler } from "howler";
 
 // Sound Objects

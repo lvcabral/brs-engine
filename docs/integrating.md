@@ -71,7 +71,8 @@ Here's the most simple example to use the app to run BrightScript code. Make sur
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
 </head>
 <body>
-<canvas id="display" width="854px" height="480px"></canvas><br />
+<canvas id="display" width="854px" height="480px"></canvas>
+<video id="player" style="display: none" crossorigin="anonymous"></video><br />
 <label for="story">
 Type some BrightScript code: (open Developer Tools console to see <b>print</b> outputs)
 </label><br />

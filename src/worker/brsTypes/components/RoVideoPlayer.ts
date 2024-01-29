@@ -4,7 +4,7 @@ import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, BrsNumber } from "
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../../api/enums";
+import { DataType } from "../../enums";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
