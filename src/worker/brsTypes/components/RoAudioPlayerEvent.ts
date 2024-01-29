@@ -4,7 +4,7 @@ import { BrsType } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { MediaEvent } from "../../../api/enums";
+import { MediaEvent } from "../../enums";
 
 export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

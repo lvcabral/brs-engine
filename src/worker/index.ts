@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { dataBufferIndex, dataBufferSize } from "../api/enums";
+import { dataBufferIndex, dataBufferSize } from "./enums";
 import { Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import { FileSystem } from "./interpreter/FileSystem";

@@ -5,10 +5,11 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { addSound, audioCodecs } from "./sound";
 import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
 import { bufferToBase64, parseCSV, SubscribeCallback, context } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
+import { addSound, audioCodecs } from "./sound";
+import { videoFormats } from "./video";
 import models from "../worker/common/models.csv";
 
 // Default Device Data
@@ -29,8 +30,9 @@ export const deviceData = {
     defaultFont: "Asap",
     fontPath: "../fonts/",
     fonts: new Map(),
-    audioCodecs: audioCodecs(),
     maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
+    audioCodecs: audioCodecs(),
+    videoFormats: videoFormats(),
     connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),

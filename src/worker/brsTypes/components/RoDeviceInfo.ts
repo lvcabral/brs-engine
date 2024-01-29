@@ -581,13 +581,38 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("options", ValueKind.Dynamic)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, options: RoAssociativeArray) => {
+        impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
+                const formats = interpreter.deviceInfo.get("videoFormats") as Map<string, string[]>;
+                const codecs = formats.get("codecs") ?? [];
+                const containers = formats.get("containers") ?? [];
+                const codec = options.get(new BrsString("codec"));
+                const container = options.get(new BrsString("container"));
                 const result = new Array<AAMember>();
-                result.push({ name: new BrsString("result"), value: BrsBoolean.False });
-                result.push({ name: new BrsString("updated"), value: new BrsString("codec") });
-                const roCodecs = new RoArray([]);
-                result.push({ name: new BrsString("codec"), value: roCodecs });
+                let canDecode = true;
+                let updated = "";
+                if (codec instanceof BrsString && !codecs.includes(codec.value.toLowerCase())) {
+                    canDecode = false;
+                    updated = "codec";
+                }
+                if (
+                    canDecode &&
+                    container instanceof BrsString &&
+                    !containers.includes(container.value.toLowerCase())
+                ) {
+                    canDecode = false;
+                    updated = "container";
+                }
+                if (!canDecode) {
+                    result.push({ name: new BrsString("updated"), value: new BrsString(updated) });
+                    if (updated === "codec") {
+                        const valid = new RoArray(codecs.map((c: string) => new BrsString(c)));
+                        result.push({ name: new BrsString(updated), value: valid });
+                    } else {
+                        result.push({ name: new BrsString(updated), value: new BrsString("n.a.") });
+                    }
+                }
+                result.push({ name: new BrsString("result"), value: BrsBoolean.from(canDecode) });
                 return new RoAssociativeArray(result);
             }
             return BrsInvalid.Instance;
