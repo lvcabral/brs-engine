@@ -1,11 +1,27 @@
+<a name="v1.2.6"></a>
+
+# [v1.2.6 - roScreen fix and Video Codec Detection](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.6) - 28 Jan 2024
+
+## Release Changes
+
+* Fixed #234 - Return last buffer on `roScreen` methods `getPng` and `roGetByteArray` by [@lvcabral](https://github.com/lvcabral) in [#236](https://github.com/lvcabral/brs-engine/pull/236)
+* Fixed #235 - Updated `ifDraw2D` to support `roScreen` as image source by [@lvcabral](https://github.com/lvcabral) in [#237](https://github.com/lvcabral/brs-engine/pull/237)
+* Fixed #238 - Detected supported video codecs and containers to return in `roDeviceInfo.canDecodeVideo()` by [@lvcabral](https://github.com/lvcabral) in [#240](https://github.com/lvcabral/brs-engine/pull/240)
+* Fixed last frame on screen using `cancelAnimationFrame()` by [@lvcabral](https://github.com/lvcabral) in [#241](https://github.com/lvcabral/brs-engine/pull/241)
+* Fixed #242 - Raise `resolution` event during app startup by [@lvcabral](https://github.com/lvcabral) in [#243](https://github.com/lvcabral/brs-engine/pull/243)
+
+
+[Full Changelog][v1.2.6]
+
 <a name="v1.2.5"></a>
 
 # [v1.2.5 - Fixes on Keyboard Control, Display and XML](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.5) - 22 Jan 2024
 
 ## Release Changes
-* Fixed #228 - Prevent repeated `keydown` events by @lvcabral in https://github.com/lvcabral/brs-engine/pull/230
-* Fixed #229 - Clear buffer on terminate by @lvcabral in https://github.com/lvcabral/brs-engine/pull/231
-* Fixed #232 - Object `roXMLElement` called method `getText()` is returning empty string by @lvcabral in https://github.com/lvcabral/brs-engine/pull/233
+
+* Fixed #228 - Prevent repeated `keydown` events by [@lvcabral](https://github.com/lvcabral) in [#230](https://github.com/lvcabral/brs-engine/pull/230)
+* Fixed #229 - Clear buffer on terminate by [@lvcabral](https://github.com/lvcabral) in [#231](https://github.com/lvcabral/brs-engine/pull/231)
+* Fixed #232 - Object `roXMLElement` called method `getText()` is returning empty string by [@lvcabral](https://github.com/lvcabral) in [#233](https://github.com/lvcabral/brs-engine/pull/233)
 
 [Full Changelog][v1.2.5]
 
@@ -15,8 +31,8 @@
 
 ## Release Changes
 
-* Fix #225 - Low Resolution on Screen Resize by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/226
-* Fixed #219 - Video playback is not always pausing when the app get `PAUSE` or `BREAK` commands by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/227
+* Fix #225 - Low Resolution on Screen Resize by [@lvcabral](https://github.com/lvcabral) in [#226](https://github.com/lvcabral/brs-engine/pull/226)
+* Fixed #219 - Video playback is not always pausing when the app get `PAUSE` or `BREAK` commands by [@lvcabral](https://github.com/lvcabral) in [#227](https://github.com/lvcabral/brs-engine/pull/227)
 
 [Full Changelog][v1.2.4]
 
@@ -26,12 +42,12 @@
 
 ## Release Changes
 
-* Fixed issue that allowed API to unmute a video when App had it muted by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/221
-* Added new API methods to enable/disable dynamically both keyboard or game pad controllers by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/222
+* Fixed issue that allowed API to unmute a video when App had it muted by [@lvcabral](https://github.com/lvcabral) in [#221](https://github.com/lvcabral/brs-engine/pull/221)
+* Added new API methods to enable/disable dynamically both keyboard or game pad controllers by [@lvcabral](https://github.com/lvcabral) in [#222](https://github.com/lvcabral/brs-engine/pull/222)
   * `setControlMode()`
   * `getControlMode()`
   * `setCustomPadButtons()`
-* Improvements on Remote Control simulation by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/223
+* Improvements on Remote Control simulation by [@lvcabral](https://github.com/lvcabral) in [#223](https://github.com/lvcabral/brs-engine/pull/223)
   * Added support for different control types
   * Added a key buffer on the API side to avoid losing key events
 
@@ -43,8 +59,8 @@
 
 ## Release Changes
 
-* Fixed #190 - Implemented global function `FindMemberFunction()`  by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/216
-* Improved Example web app by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/217
+* Fixed #190 - Implemented global function `FindMemberFunction()`  by [@lvcabral](https://github.com/lvcabral) in [#216](https://github.com/lvcabral/brs-engine/pull/216)
+* Improved Example web app by [@lvcabral](https://github.com/lvcabral) in [#217](https://github.com/lvcabral/brs-engine/pull/217)
   * Removed unecessary content policy
   * Replaced usage of `prompt()` by an HTML5 `dialog`
   * Updated execution source using the button to match Roku side load with "auto-run-dev"
@@ -58,9 +74,9 @@
 
 ## Release Changes
 
-* Fixed API to handle `mute` in sync for both Audio and Video by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/215
-* Fixed bad performance when in full screen mode on 4K monitors by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/214
-* build(deps): bump follow-redirects from 1.15.3 to 1.15.4 by @dependabot in https://github.com/lvcabral/brs-engine/pull/212
+* Fixed API to handle `mute` in sync for both Audio and Video by [@lvcabral](https://github.com/lvcabral) in [#215](https://github.com/lvcabral/brs-engine/pull/215)
+* Fixed bad performance when in full screen mode on 4K monitors by [@lvcabral](https://github.com/lvcabral) in [#214](https://github.com/lvcabral/brs-engine/pull/214)
+* build(deps): bump follow-redirects from 1.15.3 to 1.15.4 by @dependabot in [#212](https://github.com/lvcabral/brs-engine/pull/212)
 * Added new demo app to the example web application: `custom-video-player`
 * Updated documentation
 
@@ -73,9 +89,9 @@
 
 ## Release Changes
 
-* Implemented `roVideoPlayer` component by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/213
-* Added support to customize GamePad buttons mapping by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/210
-* Control queue modes: Single Key Events and Multi Key Events by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/211
+* Implemented `roVideoPlayer` component by [@lvcabral](https://github.com/lvcabral) in [#213](https://github.com/lvcabral/brs-engine/pull/213)
+* Added support to customize GamePad buttons mapping by [@lvcabral](https://github.com/lvcabral) in [#210](https://github.com/lvcabral/brs-engine/pull/210)
+* Control queue modes: Single Key Events and Multi Key Events by [@lvcabral](https://github.com/lvcabral) in [#211](https://github.com/lvcabral/brs-engine/pull/211)
   * Add the entry `multi_key_events=1` to the manifest to enable support for simultaneous keys.
 
 [Full Changelog][v1.2.0]
@@ -86,8 +102,8 @@
 
 ## Release Changes
 
-* Added support for `g` flag on `roRegex` by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/209
-* Fixed sound related issues by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/208 
+* Added support for `g` flag on `roRegex` by [@lvcabral](https://github.com/lvcabral) in [#209](https://github.com/lvcabral/brs-engine/pull/209)
+* Fixed sound related issues by [@lvcabral](https://github.com/lvcabral) in [#208](https://github.com/lvcabral/brs-engine/pull/208)
   * Home Button sound was not always being triggered
   * The `roAudioResource` was with the old DataType enum configuration
   * Sound will totally pause now both on `stop` and `pause` states.
@@ -100,7 +116,7 @@
 
 ## Release Changes
 
-* Fixed wav stream conflict with Debug command by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/207
+* Fixed wav stream conflict with Debug command by [@lvcabral](https://github.com/lvcabral) in [#207](https://github.com/lvcabral/brs-engine/pull/207)
   * Extracted enumerators from `util.js` into `enums.js` to reuse inside the worker
   * Fixed issue that was restarting a sound when returning from pause of break, when the app already had stopped it.
 
@@ -112,14 +128,14 @@
 
 ## Release Changes
 
-* Updated package name on README.md badges by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/200
-* Fixed [#201](https://github.com/lvcabral/brs-engine/issues/201) - Prevent Exception when SharedArrayBuffer is not supported by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/202
-* Implementing features to remove limitations by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/205
-  * Fixed [#164](https://github.com/lvcabral/brs-engine/issues/164) - Allowing usage of explicit interfaces when calling methods [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/206
+* Updated package name on README.md badges by [@lvcabral](https://github.com/lvcabral) in [#200](https://github.com/lvcabral/brs-engine/pull/200)
+* Fixed [#201](https://github.com/lvcabral/brs-engine/issues/201) - Prevent Exception when SharedArrayBuffer is not supported by [@lvcabral](https://github.com/lvcabral) in [#202](https://github.com/lvcabral/brs-engine/pull/202)
+* Implementing features to remove limitations by [@lvcabral](https://github.com/lvcabral) in [#205](https://github.com/lvcabral/brs-engine/pull/205)
+  * Fixed [#164](https://github.com/lvcabral/brs-engine/issues/164) - Allowing usage of explicit interfaces when calling methods [@lvcabral](https://github.com/lvcabral) in [#206](https://github.com/lvcabral/brs-engine/pull/206)
   * Fixed [#159](https://github.com/lvcabral/brs-engine/issues/159) - Properly casting numeric values on Math functions and other scenarios
   * Added support to have the variable name after `next` statement in a `for...next` loop
-* Implemented GamePad support by [@lvcabral](https://github.com/lvcabral) in https://github.com/lvcabral/brs-engine/pull/204
-  * Added support for the GamePad API 
+* Implemented GamePad support by [@lvcabral](https://github.com/lvcabral) in [#204](https://github.com/lvcabral/brs-engine/pull/204)
+  * Added support for the GamePad API
   * Added a new feature `simulation_engine` to the `roDeviceInfo.hasFeature()` method, allowing apps to adapt when under `brs-engine`
   * Added new option to define `maxFps` on `deviceData` and limit framerate inside the worker
   * Reduced web app default framerate to prevent issues on iOS
@@ -135,9 +151,9 @@
 
 # [v1.0.0 - Simulation Engine Release](https://github.com/lvcabral/brs-engine/releases/tag/v1.0.0) - 15 Dec 2023
 
-After 4 years of Alpha and Beta stages, the project is stable and performant enough to finally be released as version 1.0 and with that, we decided to give it a new name: 
+After 4 years of Alpha and Beta stages, the project is stable and performant enough to finally be released as version 1.0 and with that, we decided to give it a new name:
 
-## brs-engine - BrightScript Simulation Engine 
+## brs-engine - BrightScript Simulation Engine
 
 The term _simulation engine_ was chosen instead of the former _emulator_ to better represent the nature and purpose of the project, as there is no intention to fully emulate a Roku device (OS and Hardware), but rather simulate the behavior, as a development tool and as an engine/framework to run BrightScript apps in different platforms.
 
@@ -476,6 +492,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.2.6]: https://github.com/lvcabral/brs-engine/compare/v1.2.5...v1.2.6
 [v1.2.5]: https://github.com/lvcabral/brs-engine/compare/v1.2.4...v1.2.5
 [v1.2.4]: https://github.com/lvcabral/brs-engine/compare/v1.2.3...v1.2.4
 [v1.2.3]: https://github.com/lvcabral/brs-engine/compare/v1.2.2...v1.2.3
