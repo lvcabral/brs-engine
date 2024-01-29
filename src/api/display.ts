@@ -61,7 +61,7 @@ export function initDisplayModule(mode: string, perfStats = false) {
         videoState = event;
         if (videoState === "play" && !frameLoop) {
             frameLoop = true;
-            window.requestAnimationFrame(drawVideoFrame);
+            lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
         }
     });
 }
@@ -235,7 +235,8 @@ function drawVideoFrame() {
                 height = nh;
             }
         }
-        clearBuffer();
+        bufferCtx.fillStyle = "black";
+        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
         bufferCtx.drawImage(player as any, left, top, width, height);
         if (lastImage) {
             bufferCtx.drawImage(lastImage, 0, 0);
@@ -277,13 +278,6 @@ export function clearDisplay() {
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     } else if (ctx) {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    }
-}
-
-export function clearBuffer() {
-    if (bufferCtx) {
-        bufferCtx.fillStyle = "black";
-        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
     }
 }
 
