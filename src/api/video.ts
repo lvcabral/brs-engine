@@ -174,7 +174,7 @@ export function videoFormats() {
         ["mpeg1", "vdeo/mpeg"],
         ["mpeg2", "video/mpeg2"],
     ]);
-    const codecs: Array<string> = [];
+    const codecs: string[] = [];
     formats.forEach((mime: string, codec: string) => {
         if (player.canPlayType(mime) !== "") {
             codecs.push(codec);
