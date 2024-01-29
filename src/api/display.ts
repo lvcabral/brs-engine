@@ -139,15 +139,9 @@ export function drawSplashScreen(imgBmp: ImageBitmap, icon = false) {
         if (display instanceof HTMLCanvasElement) {
             display.style.opacity = "1";
         }
-        let w = 1280;
-        let h = 720;
-        if (displayMode === "480p") {
-            w = 720;
-            h = 540;
-        } else if (displayMode === "1080p") {
-            w = 1920;
-            h = 1080;
-        }
+        const dims = getDisplayModeDims();
+        let w = dims.width;
+        let h = dims.height;
         bufferCanvas.width = w;
         bufferCanvas.height = h;
         if (icon) {
@@ -267,6 +261,7 @@ export function showDisplay() {
         if (statsDiv && statsDiv.style.visibility === "visible") {
             showStats = true;
         }
+        notifyAll("resolution", getDisplayModeDims());
     }
 }
 
@@ -338,4 +333,17 @@ export function enableStats(show: boolean): boolean {
         }
     }
     return showStats;
+}
+
+function getDisplayModeDims() {
+    let w = 1280;
+    let h = 720;
+    if (displayMode === "480p") {
+        w = 720;
+        h = 540;
+    } else if (displayMode === "1080p") {
+        w = 1920;
+        h = 1080;
+    }
+    return { width: w, height: h };
 }
