@@ -102,8 +102,16 @@ function debugHandleExpr(interpreter: Interpreter) {
     const parser = new Parser();
     interpreter.debugMode = false;
     let expr = debugGetExpr(interpreter.sharedArray);
-    const exprScan = lexer.scan(expr, "debug");
+    const exprScan = lexer.scan(`${expr}\n`, "debug");
+    if (exprScan.errors.length > 0) {
+        postMessage(`error,${exprScan.errors[0].message}`);
+        return;
+    }
     const exprParse = parser.parse(exprScan.tokens);
+    if (exprParse.errors.length > 0) {
+        postMessage(`error,${exprScan.errors[0].message}`);
+        return;
+    }
     if (exprParse.statements.length > 0) {
         const exprStmt = exprParse.statements[0];
         try {
@@ -122,7 +130,6 @@ function debugHandleExpr(interpreter: Interpreter) {
             } else if (exprStmt instanceof ForEach) {
                 interpreter.visitForEach(exprStmt);
             } else {
-                postMessage(`print,${exprStmt}`);
                 postMessage(`print,Debug command/expression not supported!\r\n`);
             }
         } catch (err: any) {
@@ -137,7 +144,7 @@ function debugGetExpr(buffer: Int32Array): string {
     let expr = "";
     buffer.slice(dataBufferIndex).every((char) => {
         if (char > 0) {
-            expr += String.fromCharCode(char).toLocaleLowerCase();
+            expr += String.fromCharCode(char);
         }
         return char; // if \0 stops decoding
     });

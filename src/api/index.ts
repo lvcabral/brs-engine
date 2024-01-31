@@ -348,12 +348,9 @@ export function debug(command: string): boolean {
             .trim()
             .split(/(?<=^\S+)\s/);
         let cmd = commandsMap.get(exprs[0].toLowerCase());
-        if (cmd !== undefined) {
+        if (cmd !== undefined && exprs.length === 1) {
             Atomics.store(sharedArray, DataType.DBG, cmd);
-            Atomics.store(sharedArray, DataType.EXP, exprs.length - 1);
-            if (exprs.length > 1) {
-                debugExpression(exprs[1]);
-            }
+            Atomics.store(sharedArray, DataType.EXP, 0);
         } else {
             let expr = command.toString().trim();
             if (exprs[0].toLowerCase() === "p") {
