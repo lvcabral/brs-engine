@@ -2897,6 +2897,11 @@ hasown@^2.0.0:
   dependencies:
     function-bind "^1.1.2"
 
+hls.js@^1.5.3:
+  version "1.5.3"
+  resolved "https://registry.yarnpkg.com/hls.js/-/hls.js-1.5.3.tgz#548a4de3b9bdb9f12985cc2f07d206c0f2e74d12"
+  integrity sha512-gonnYpZ5bxuVdwpcbzfylUlNZ8917LjACUjpWXiaeo8zPAIDfPcMZjEQPy6CeeRSJbcg1P+aVqwxrXr2J+SeUg==
+
 hmac-drbg@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/hmac-drbg/-/hmac-drbg-1.0.1.tgz#d2745701025a6c775a6c545793ed502fc0c649a1"

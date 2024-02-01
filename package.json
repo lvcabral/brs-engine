@@ -65,6 +65,7 @@
     "esm-gamecontroller.js": "^1.0.2",
     "fflate": "^0.8.1",
     "file-type": "^12.4.2",
+    "hls.js": "^1.5.3",
     "howler": "^2.2.3",
     "jpeg-js": "^0.4.4",
     "libwebpjs": "lvcabral/libwebpjs",

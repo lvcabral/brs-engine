@@ -7,9 +7,11 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, context } from "./util";
 import { DataType, MediaEvent } from "../worker/enums";
+import Hls from "hls.js";
 
 // Video Objects
 export let player: HTMLVideoElement;
+let hls: Hls;
 let packageVideos = new Map();
 let playerState: string = "stop";
 let videosState = false;
@@ -189,7 +191,7 @@ export function videoFormats() {
         // All Browsers Support mp4 and mov, only Chromium supports mkv natively
         // https://stackoverflow.com/questions/57060193/browser-support-for-mov-video
         containers.push.apply(containers, ["mp4", "m4v", "mov"]);
-        if (player.canPlayType(`application/x-mpegURL; codecs="avc1"`) !== "") {
+        if (player.canPlayType("application/vnd.apple.mpegurl") || Hls.isSupported()) {
             containers.push("hls");
         }
         if (player.canPlayType("video/mp2t") !== "") {
@@ -223,6 +225,7 @@ export function resetVideo() {
     if (player.src.startsWith("blob:")) {
         revokeVideoURL(player.src);
     }
+    hls?.destroy();
     playList = new Array();
     packageVideos = new Map();
     playIndex = 0;
@@ -240,23 +243,36 @@ function loadVideo(buffer = false) {
         if (player.src.startsWith("blob:")) {
             revokeVideoURL(player.src);
         }
+        let videoSrc: string;
         if (video.url.startsWith("http")) {
-            player.src = video.url;
+            videoSrc = video.url;
         } else if (video.url.startsWith("pkg:/")) {
-            player.src = createVideoURL(packageVideos.get(video.url.toLowerCase()));
+            videoSrc = createVideoURL(packageVideos.get(video.url.toLowerCase()));
         } else {
             notifyAll("warning", `[video] Invalid video url: ${video.url}`);
             return;
         }
+        loadProgress = 0;
+        bufferOnly = buffer;
         if (["mp4", "mkv"].includes(video.streamFormat)) {
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
-            player.setAttribute("type", "application/x-mpegURL");
+            if (player.canPlayType("application/vnd.apple.mpegurl")) {
+                // Using native HLS support
+                player.setAttribute("type", "application/vnd.apple.mpegurl");
+                player.src = videoSrc;
+            } else if (Hls.isSupported()) {
+                createHlsInstance();
+                hls.loadSource(videoSrc);
+                hls.attachMedia(player);
+                return;
+            } else {
+                notifyAll("warning", "[video] HLS is not supported");
+                return;
+            }
         } else {
             player.removeAttribute("type");
         }
-        loadProgress = 0;
-        bufferOnly = buffer;
         player.load();
     } else {
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
@@ -362,4 +378,30 @@ function createVideoURL(blob: Blob) {
 
 function revokeVideoURL(url: string) {
     URL.revokeObjectURL(url);
+}
+
+function createHlsInstance() {
+    hls?.destroy();
+    hls = new Hls();
+    hls.on(Hls.Events.ERROR, function (event, data) {
+        if (data.fatal) {
+            switch (data.type) {
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                    notifyAll(
+                        "warning",
+                        "[video] fatal media error encountered, will try to recover"
+                    );
+                    hls.recoverMediaError();
+                    break;
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                    // All retries and media options have been exhausted.
+                    notifyAll("error", `[video] fatal network error encountered ${data.details}`);
+                    break;
+                default:
+                    // cannot recover
+                    hls.destroy();
+                    break;
+            }
+        }
+    });
 }
