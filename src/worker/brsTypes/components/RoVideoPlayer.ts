@@ -35,15 +35,15 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 this.setEnableAudio,
                 this.seek,
                 this.setPositionNotificationPeriod,
-                // this.setCGMS,
+                this.setCGMS,
                 this.setDestinationRect,
-                // this.setMaxVideoDecodeResolution,
+                this.setMaxVideoDecodeResolution,
                 this.getPlaybackDuration,
-                // this.getAudioTracks,
-                // this.changeAudioTrack,
-                // this.setTimedMetadataForKeys,
-                // this.getCaptionRenderer,
-                // this.setMacrovisionLevel,
+                this.getAudioTracks,
+                this.changeAudioTrack,
+                this.setTimedMetadataForKeys,
+                this.getCaptionRenderer,
+                this.setMacrovisionLevel,
             ],
             ifSetMessagePort: [this.setMessagePort, this.setPort],
             ifGetMessagePort: [this.getMessagePort],
@@ -252,6 +252,18 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Sets CGMS (Copy Guard Management System) on analog outputs to the desired level. */
+    private setCGMS = new Callable("setCGMS", {
+        signature: {
+            args: [new StdlibArgument("level", ValueKind.Int32)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, level: Int32) => {
+            // Not supported, created for compatibility
+            return BrsInvalid.Instance;
+        },
+    });
+
     /** Sets the target display window for the video. */
     private setDestinationRect = new Callable(
         "setDestinationRect",
@@ -290,6 +302,21 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         }
     );
 
+    /** Sets the max resolution required by your video. */
+    private setMaxVideoDecodeResolution = new Callable("setMaxVideoDecodeResolution", {
+        signature: {
+            args: [
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, width: BrsNumber, height: BrsNumber) => {
+            // Not supported yet, created for compatibility
+            return BrsInvalid.Instance;
+        },
+    });
+
     /** Returns the duration of the video, in seconds. */
     private getPlaybackDuration = new Callable("getPlaybackDuration", {
         signature: {
@@ -299,6 +326,63 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             const duration = Atomics.load(interpreter.sharedArray, DataType.VDR);
             return duration > 0 ? new Int32(duration) : new Int32(0);
+        },
+    });
+
+    /** Returns the audio tracks contained in the current stream. */
+    private getAudioTracks = new Callable("getAudioTracks", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            // TODO: Implement this method when audio tracks are supported
+            return new RoArray([]);
+        },
+    });
+
+    /** Changes the currently playing audio track. */
+    private changeAudioTrack = new Callable("changeAudioTrack", {
+        signature: {
+            args: [new StdlibArgument("trackId", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, trackId: BrsString) => {
+            // TODO: Implement this method when audio tracks are supported
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private setTimedMetadataForKeys = new Callable("setTimedMetadataForKeys", {
+        signature: {
+            args: [new StdlibArgument("keys", ValueKind.Dynamic)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, keys: RoAssociativeArray) => {
+            // Not supported yet, created for compatibility
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private getCaptionRenderer = new Callable("getCaptionRenderer", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            // Not supported yet, created for compatibility
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** This function is deprecated. Macrovision is not supported anymore. */
+    private setMacrovisionLevel = new Callable("setMacrovisionLevel", {
+        signature: {
+            args: [new StdlibArgument("level", ValueKind.Int32)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, level: Int32) => {
+            return BrsInvalid.Instance;
         },
     });
 
