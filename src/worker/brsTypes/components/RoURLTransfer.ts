@@ -7,22 +7,11 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import { FileSystem } from "../../interpreter/FileSystem";
+import { audioExt, videoExt } from "../../enums";
 import fileType from "file-type";
 
 export class RoURLTransfer extends BrsComponent implements BrsValue {
-    readonly audio = new Set<string>([
-        "wav",
-        "mp2",
-        "mp3",
-        "mp4",
-        "m4a",
-        "aac",
-        "ogg",
-        "oga",
-        "ac3",
-        "wma",
-        "flac",
-    ]);
     readonly kind = ValueKind.Object;
     private identity: number;
     private url: string;
@@ -143,19 +132,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             xhr.send();
             this.failureReason = xhr.statusText;
             if (xhr.status === 200 && volume) {
-                const bytes = xhr.response.slice(0, fileType.minimumBytes);
-                const type = fileType(bytes);
-                if (type && this.audio.has(type.ext)) {
-                    this.interpreter.audioId++;
-                    volume.writeFileSync(path.pathname, this.interpreter.audioId.toString());
-                    postMessage({
-                        audioPath: filePath,
-                        audioFormat: type.ext,
-                        audioData: xhr.response,
-                    });
-                } else {
-                    volume.writeFileSync(path.pathname, xhr.response);
-                }
+                this.saveDownloadedFile(volume, path, xhr.response);
             }
             return new RoURLEvent(
                 this.identity,
@@ -249,22 +226,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 const outPath = new URL(outputPath);
                 const outVolume = this.interpreter.fileSystem.get(outPath.protocol);
                 if (xhr.status === 200 && outVolume) {
-                    const bytes = xhr.response.slice(0, fileType.minimumBytes);
-                    const type = fileType(bytes);
-                    if (type && this.audio.has(type.ext)) {
-                        this.interpreter.audioId++;
-                        outVolume.writeFileSync(
-                            outPath.pathname,
-                            this.interpreter.audioId.toString()
-                        );
-                        postMessage({
-                            audioPath: outputPath,
-                            audioFormat: type.ext,
-                            audioData: xhr.response,
-                        });
-                    } else {
-                        outVolume.writeFileSync(outPath.pathname, xhr.response);
-                    }
+                    this.saveDownloadedFile(outVolume, outPath, xhr.response);
                 }
                 this.failureReason = xhr.statusText;
             } else {
@@ -293,6 +255,28 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             return BrsInvalid.Instance;
         }
         return this.postFromFileToFileSync(inPath, outPath);
+    }
+
+    saveDownloadedFile(volume: FileSystem, path: URL, data: any) {
+        const bytes = data.slice(0, fileType.minimumBytes);
+        const type = fileType(bytes);
+        if (type && audioExt.has(type.ext)) {
+            this.interpreter.audioId++;
+            volume.writeFileSync(path.pathname, this.interpreter.audioId.toString());
+            postMessage({
+                audioPath: path.protocol + path.pathname,
+                audioFormat: type.ext,
+                audioData: data,
+            });
+        } else if (type && videoExt.has(type.ext)) {
+            volume.writeFileSync(path.pathname, "video");
+            postMessage({
+                videoPath: path.protocol + path.pathname,
+                videoData: data,
+            });
+        } else {
+            volume.writeFileSync(path.pathname, data);
+        }
     }
 
     requestHead(): BrsType {

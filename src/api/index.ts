@@ -50,6 +50,7 @@ import {
     handleSoundEvent,
 } from "./sound";
 import {
+    addVideo,
     addVideoPlaylist,
     handleVideoEvent,
     initVideoModule,
@@ -446,6 +447,8 @@ function workerCallback(event: MessageEvent) {
         if (event.data.videoPlaylist instanceof Array) {
             addVideoPlaylist(event.data.videoPlaylist);
         }
+    } else if (event.data.videoPath && context.inBrowser) {
+        addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${event.data}`);
