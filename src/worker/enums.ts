@@ -76,3 +76,18 @@ export enum MediaEvent {
     LOADING,
     POSITION,
 }
+
+export const audioExt = new Set<string>([
+    "wav",
+    "mp2",
+    "mp3",
+    "m4a",
+    "aac",
+    "ogg",
+    "oga",
+    "ac3",
+    "wma",
+    "flac",
+]);
+
+export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);

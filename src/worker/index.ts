@@ -297,11 +297,13 @@ function setupPackageFiles(
                     volume.writeFileSync(`/${filePath.url}`, binaries[filePath.id]);
                 } else if (filePath.type === "pcode" && Array.isArray(binaries)) {
                     pcode = Buffer.from(binaries[filePath.id]);
-                } else if (filePath.type === "audio") {
-                    // As the audio files are played on the renderer process we need to
+                } else if (["audio", "video"].includes(filePath.type)) {
+                    // As the media files are played on the renderer process we need to
                     // save a mock file to allow file exist checking and save the index
                     volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
-                    interpreter.audioId = filePath.id;
+                    if (filePath.type === "audio") {
+                        interpreter.audioId = filePath.id;
+                    }
                 } else if (filePath.type === "text" && Array.isArray(texts)) {
                     if (filePath.url === "source/var") {
                         iv = texts[filePath.id];

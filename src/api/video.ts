@@ -10,6 +10,7 @@ import { DataType, MediaEvent } from "../worker/enums";
 
 // Video Objects
 export let player: HTMLVideoElement;
+let packageVideos = new Map();
 let playerState: string = "stop";
 let videosState = false;
 let playList = new Array();
@@ -187,7 +188,7 @@ export function videoFormats() {
         });
         // All Browsers Support mp4 and mov, only Chromium supports mkv natively
         // https://stackoverflow.com/questions/57060193/browser-support-for-mov-video
-        containers.push.apply(containers, ["mp4", "mov"]);
+        containers.push.apply(containers, ["mp4", "m4v", "mov"]);
         if (player.canPlayType(`application/x-mpegURL; codecs="avc1"`) !== "") {
             containers.push("hls");
         }
@@ -204,6 +205,10 @@ export function videoFormats() {
     ]);
 }
 
+export function addVideo(path: string, data: Blob) {
+    packageVideos.set(path.toLowerCase(), data);
+}
+
 export function addVideoPlaylist(newList: any[]) {
     if (playList.length > 0) {
         stopVideo();
@@ -215,7 +220,11 @@ export function addVideoPlaylist(newList: any[]) {
 
 export function resetVideo() {
     stopVideo();
+    if (player.src.startsWith("blob:")) {
+        revokeVideoURL(player.src);
+    }
     playList = new Array();
+    packageVideos = new Map();
     playIndex = 0;
     playLoop = false;
     playNext = -1;
@@ -228,7 +237,17 @@ function loadVideo(buffer = false) {
     canPlay = false;
     const video = playList[playIndex];
     if (video && player) {
-        player.src = video.url;
+        if (player.src.startsWith("blob:")) {
+            revokeVideoURL(player.src);
+        }
+        if (video.url.startsWith("http")) {
+            player.src = video.url;
+        } else if (video.url.startsWith("pkg:/")) {
+            player.src = createVideoURL(packageVideos.get(video.url.toLowerCase()));
+        } else {
+            notifyAll("warning", `[video] Invalid video url: ${video.url}`);
+            return;
+        }
         if (["mp4", "mkv"].includes(video.streamFormat)) {
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
@@ -334,4 +353,13 @@ function setNextVideo(index: number) {
         playNext = -1;
         notifyAll("warning", `[video] Next index out of range: ${index}`);
     }
+}
+
+// Convert Blob to URL to play as video
+function createVideoURL(blob: Blob) {
+    return URL.createObjectURL(blob);
+}
+
+function revokeVideoURL(url: string) {
+    URL.revokeObjectURL(url);
 }

@@ -131,7 +131,6 @@ export function audioCodecs() {
         "caf",
         "m4a",
         "m4b",
-        "mp4",
         "weba",
         "webm",
         "dolby",

@@ -9,7 +9,8 @@ import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
 import { bufferToBase64, parseCSV, SubscribeCallback, context } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import { addSound, audioCodecs } from "./sound";
-import { videoFormats } from "./video";
+import { addVideo, videoFormats } from "./video";
+import { audioExt, videoExt } from "../worker/enums";
 import models from "../worker/common/models.csv";
 
 // Default Device Data
@@ -127,14 +128,17 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ url: relativePath, id: txtId, type: "text" });
         txts.push(strFromU8(fileData));
         txtId++;
-    } else if (
-        ["wav", "mp2", "mp3", "mp4", "m4a", "aac", "ogg", "oga", "ac3", "wma", "flac"].includes(ext)
-    ) {
+    } else if (audioExt.has(ext)) {
         paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
         if (context.inBrowser) {
             addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
         }
         audId++;
+    } else if (videoExt.has(ext)) {
+        paths.push({ url: relativePath, id: 0, type: "video", format: ext });
+        if (context.inBrowser) {
+            addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
+        }
     } else {
         const binType = lcasePath === "source/data" ? "pcode" : "binary";
         paths.push({ url: relativePath, id: binId, type: binType });
