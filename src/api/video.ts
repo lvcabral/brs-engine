@@ -298,18 +298,7 @@ function loadVideo(buffer = false) {
     canPlay = false;
     const video = playList[playIndex];
     if (video && player) {
-        if (player.src.startsWith("blob:")) {
-            revokeVideoURL(player.src);
-        }
-        let videoSrc: string;
-        if (video.url.startsWith("http")) {
-            videoSrc = video.url;
-        } else if (video.url.startsWith("pkg:/")) {
-            videoSrc = createVideoURL(packageVideos.get(video.url.toLowerCase()));
-        } else {
-            notifyAll("warning", `[video] Invalid video url: ${video.url}`);
-            return;
-        }
+        let videoSrc = getVideoUrl(video);
         loadProgress = 0;
         bufferOnly = buffer;
         if (["mp4", "mkv"].includes(video.streamFormat)) {
@@ -318,7 +307,6 @@ function loadVideo(buffer = false) {
             if (player.canPlayType("application/vnd.apple.mpegurl")) {
                 // Using native HLS support
                 player.setAttribute("type", "application/vnd.apple.mpegurl");
-                player.src = videoSrc;
             } else if (Hls.isSupported()) {
                 createHlsInstance();
                 hls.loadSource(videoSrc);
@@ -331,11 +319,26 @@ function loadVideo(buffer = false) {
         } else {
             player.removeAttribute("type");
         }
-        player.src = videoSrc;
-        player.load();
+        if (videoSrc.length) {
+            player.src = videoSrc;
+            player.load();
+        }
     } else {
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
     }
+}
+
+function getVideoUrl(video: any): string {
+    if (player.src.startsWith("blob:")) {
+        revokeVideoURL(player.src);
+    }
+    if (video.url.startsWith("http")) {
+        return video.url;
+    } else if (video.url.startsWith("pkg:/")) {
+        return createVideoURL(packageVideos.get(video.url.toLowerCase()));
+    }
+    notifyAll("warning", `[video] Invalid video url: ${video.url}`);
+    return "";
 }
 
 function playVideo() {
