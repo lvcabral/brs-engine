@@ -5,6 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { dataBufferIndex, dataBufferSize } from "../worker/enums";
 import packageInfo from "../../package.json";
 
 // Module callback function definition
@@ -64,6 +65,19 @@ function getContext() {
         inChromium: inChromium,
         inApple: inApple,
     };
+}
+
+export function saveDataBuffer(sharedArray: Int32Array, data: string) {
+    // Store string on SharedArrayBuffer
+    data = data.trim();
+    let len = Math.min(data.length, dataBufferSize);
+    for (let i = 0; i < len; i++) {
+        Atomics.store(sharedArray, dataBufferIndex + i, data.charCodeAt(i));
+    }
+    // String terminator
+    if (len < dataBufferSize) {
+        Atomics.store(sharedArray, dataBufferIndex + len, 0);
+    }
 }
 
 // Convert Buffer to Base 64 string

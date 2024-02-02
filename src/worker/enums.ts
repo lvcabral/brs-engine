@@ -9,7 +9,7 @@
 // Shared array data types enumerator
 export enum DataType {
     DBG, // Debug Command
-    EXP, // Debug Expression flag
+    BUF, // Buffer flag
     VDO, // Video State
     VDX, // Video Index
     VLP, // Video Load Progress
@@ -25,6 +25,10 @@ export enum DataType {
     KEY, // Key Code
     MOD, // Key State (down/up)
 }
+
+// Debug constants
+export const dataBufferIndex = 32;
+export const dataBufferSize = 512;
 
 // Key Buffer Constants
 export const keyBufferSize = 5; // Max is 6, if needs more space needs to increase `dataBufferIndex`
@@ -43,10 +47,6 @@ export enum RemoteType {
 // CEC - Consumer Electronics Control
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on device controls)
-
-// Debug constants
-export const dataBufferIndex = 32;
-export const dataBufferSize = 512;
 
 export enum DebugCommand {
     BT,
@@ -75,8 +75,17 @@ export enum MediaEvent {
     FAILED,
     LOADING,
     POSITION,
+    STARTED,
 }
 
+// Buffer Data Types enumerator
+export enum BufferType {
+    NONE,
+    AUDIO_TRACKS,
+    VIDEO_INFO,
+}
+
+// Media Files Extensions
 export const audioExt = new Set<string>([
     "wav",
     "mp2",

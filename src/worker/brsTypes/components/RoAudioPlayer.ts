@@ -28,7 +28,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
                 this.setLoop,
                 this.setNext,
                 this.seek,
-                //this.setTimedMetadataForKeys,
+                this.setTimedMetadataForKeys,
             ],
             ifSetMessagePort: [this.setMessagePort, this.setPort],
             ifGetMessagePort: [this.getMessagePort],
@@ -176,6 +176,17 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, offsetMs: Int32) => {
             postMessage(`audio,seek,${offsetMs.toString()}`);
+            return BrsInvalid.Instance;
+        },
+    });
+
+    private setTimedMetadataForKeys = new Callable("setTimedMetadataForKeys", {
+        signature: {
+            args: [new StdlibArgument("keys", ValueKind.Dynamic)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, keys: RoAssociativeArray) => {
+            // Not supported yet, created for compatibility
             return BrsInvalid.Instance;
         },
     });
