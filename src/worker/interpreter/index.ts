@@ -42,7 +42,7 @@ import { FileSystem } from "./FileSystem";
 import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand } from "../enums";
+import { DataType, DebugCommand, dataBufferIndex } from "../enums";
 import Long from "long";
 
 /** The set of options used to configure an interpreter's execution. */
@@ -1727,6 +1727,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         }
         return this.debugMode;
+    }
+
+    readDataBuffer(): string {
+        let data = "";
+        this.sharedArray.slice(dataBufferIndex).every((char) => {
+            if (char > 0) {
+                data += String.fromCharCode(char);
+            }
+            return char; // if \0 stops decoding
+        });
+        return data;
     }
     /**
      * Emits an error via this processor's `events` property, then throws it.

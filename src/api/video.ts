@@ -5,12 +5,17 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, context } from "./util";
-import { DataType, MediaEvent } from "../worker/enums";
+import { SubscribeCallback, context, saveDataBuffer } from "./util";
+import { BufferType, DataType, MediaEvent } from "../worker/enums";
+import Hls from "hls.js";
 
 // Video Objects
 export let player: HTMLVideoElement;
+let hls: Hls;
 let packageVideos = new Map();
+let audioTracks = new Array();
+let currentAudioTrack = -1;
+let currentFrame = 0;
 let playerState: string = "stop";
 let videosState = false;
 let playList = new Array();
@@ -40,6 +45,11 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
             }
         });
         player.addEventListener("playing", (event) => {
+            if (playerState !== "pause") {
+                setAudioTrack(currentAudioTrack);
+                Atomics.store(sharedArray, DataType.VDX, currentFrame);
+                Atomics.store(sharedArray, DataType.VDO, MediaEvent.STARTED);
+            }
             notifyAll("play");
         });
         player.addEventListener("timeupdate", () => {
@@ -62,21 +72,6 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
     resetVideo();
 }
 
-function startProgress() {
-    loadProgress += 200;
-    Atomics.store(sharedArray, DataType.VLP, loadProgress);
-}
-
-function setDuration() {
-    if (!isNaN(player.duration)) {
-        videoDuration = Math.round(player.duration);
-        Atomics.store(sharedArray, DataType.VDR, videoDuration);
-    }
-    if (playerState !== "play") {
-        startProgress();
-    }
-}
-
 // Observers Handling
 const observers = new Map();
 export function subscribeVideo(observerId: string, observerCallback: SubscribeCallback) {
@@ -94,7 +89,7 @@ function notifyAll(eventName: string, eventData?: any) {
     });
 }
 
-// Sound Functions
+// Video Module Functions
 export function handleVideoEvent(eventData: string) {
     const data = eventData.split(",");
     if (data[1] === "play") {
@@ -138,6 +133,11 @@ export function handleVideoEvent(eventData: string) {
             seekVideo(Math.round(parseInt(position) / 1000));
         } else {
             notifyAll("warning", `[video] Invalid seek position: ${eventData}`);
+        }
+    } else if (data[1] === "audio") {
+        const index = parseInt(data[2]);
+        if (index > 0) {
+            setAudioTrack(index - 1);
         }
     }
 }
@@ -186,10 +186,10 @@ export function videoFormats() {
                 codecs.push(codec);
             }
         });
-        // All Browsers Support mp4 and mov, only Chromium supports mkv natively
+        // All Browsers Support mp4, m4v and mov, only Chromium supports mkv natively
         // https://stackoverflow.com/questions/57060193/browser-support-for-mov-video
         containers.push.apply(containers, ["mp4", "m4v", "mov"]);
-        if (player.canPlayType(`application/x-mpegURL; codecs="avc1"`) !== "") {
+        if (player.canPlayType("application/vnd.apple.mpegurl") || Hls.isSupported()) {
             containers.push("hls");
         }
         if (player.canPlayType("video/mp2t") !== "") {
@@ -223,6 +223,7 @@ export function resetVideo() {
     if (player.src.startsWith("blob:")) {
         revokeVideoURL(player.src);
     }
+    hls?.destroy();
     playList = new Array();
     packageVideos = new Map();
     playIndex = 0;
@@ -231,36 +232,113 @@ export function resetVideo() {
     playerState = "stop";
     videosState = false;
     loadProgress = 0;
+    currentAudioTrack = -1;
+    currentFrame = 0;
+}
+
+// Helper Functions
+function startProgress(e: Event) {
+    if (e.type === "loadeddata") {
+        loadAudioTracks();
+    }
+    loadProgress += 200;
+    Atomics.store(sharedArray, DataType.VLP, loadProgress);
+}
+
+function setDuration(e: Event) {
+    if (!isNaN(player.duration)) {
+        videoDuration = Math.round(player.duration);
+        Atomics.store(sharedArray, DataType.VDR, videoDuration);
+    }
+    if (playerState !== "play") {
+        startProgress(e);
+    }
+}
+
+function loadAudioTracks() {
+    audioTracks = new Array();
+    if (hls) {
+        hls.audioTracks.forEach((track, index) => {
+            audioTracks.push([index + 1, track.lang, track.name]);
+        });
+        if (currentAudioTrack === -1) {
+            currentAudioTrack = hls.audioTrack;
+        }
+    } else if ((player as any).audioTracks?.length) {
+        const tracks = (player as any).audioTracks;
+        for (let i = 0; i < tracks.length; i++) {
+            audioTracks.push([i + 1, tracks[i].language, tracks[i].label]);
+            if (currentAudioTrack === -1 && tracks[i].enabled) {
+                currentAudioTrack = i;
+            }
+        }
+    }
+    if (audioTracks.length > 0) {
+        saveDataBuffer(sharedArray, JSON.stringify(audioTracks));
+        Atomics.store(sharedArray, DataType.BUF, BufferType.AUDIO_TRACKS);
+    }
+}
+
+function setAudioTrack(index: number) {
+    if (index > -1 && index < audioTracks.length) {
+        if (hls && hls.audioTrack !== index) {
+            hls.audioTrack = index;
+            currentAudioTrack = index;
+        } else if ((player as any).audioTracks?.length) {
+            const tracks = (player as any).audioTracks;
+            if (tracks[index]) {
+                tracks[index].enabled = true;
+                currentAudioTrack = index;
+            }
+        }
+    }
 }
 
 function loadVideo(buffer = false) {
     canPlay = false;
     const video = playList[playIndex];
     if (video && player) {
-        if (player.src.startsWith("blob:")) {
-            revokeVideoURL(player.src);
-        }
-        if (video.url.startsWith("http")) {
-            player.src = video.url;
-        } else if (video.url.startsWith("pkg:/")) {
-            player.src = createVideoURL(packageVideos.get(video.url.toLowerCase()));
-        } else {
-            notifyAll("warning", `[video] Invalid video url: ${video.url}`);
-            return;
-        }
+        let videoSrc = getVideoUrl(video);
+        loadProgress = 0;
+        bufferOnly = buffer;
         if (["mp4", "mkv"].includes(video.streamFormat)) {
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
-            player.setAttribute("type", "application/x-mpegURL");
+            if (player.canPlayType("application/vnd.apple.mpegurl")) {
+                // Using native HLS support
+                player.setAttribute("type", "application/vnd.apple.mpegurl");
+            } else if (Hls.isSupported()) {
+                createHlsInstance();
+                hls.loadSource(videoSrc);
+                hls.attachMedia(player);
+                return;
+            } else {
+                notifyAll("warning", "[video] HLS is not supported");
+                return;
+            }
         } else {
             player.removeAttribute("type");
         }
-        loadProgress = 0;
-        bufferOnly = buffer;
-        player.load();
+        if (videoSrc.length) {
+            player.src = videoSrc;
+            player.load();
+        }
     } else {
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
     }
+}
+
+function getVideoUrl(video: any): string {
+    if (player.src.startsWith("blob:")) {
+        revokeVideoURL(player.src);
+    }
+    if (video.url.startsWith("http")) {
+        return video.url;
+    } else if (video.url.startsWith("pkg:/")) {
+        return createVideoURL(packageVideos.get(video.url.toLowerCase()));
+    }
+    notifyAll("warning", `[video] Invalid video url: ${video.url}`);
+    return "";
 }
 
 function playVideo() {
@@ -283,14 +361,19 @@ function nextVideo() {
     canPlay = false;
     playerState = "stop";
     if (playIndex < playList.length) {
+        currentAudioTrack = -1;
+        currentFrame = 0;
         loadVideo();
     } else if (playLoop) {
         playIndex = 0;
         loadVideo();
     } else {
-        playIndex = 0;
-        notifyAll("stop");
+        Atomics.store(sharedArray, DataType.VDX, playIndex);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.FULL);
+        playIndex = 0;
+        currentAudioTrack = -1;
+        currentFrame = 0;
+        notifyAll("stop");
     }
 }
 
@@ -300,6 +383,7 @@ function stopVideo() {
         player.removeAttribute("src"); // empty source
         player.load();
         notifyAll("stop");
+        Atomics.store(sharedArray, DataType.VDX, playIndex);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
         loadProgress = 0;
         canPlay = false;
@@ -355,11 +439,41 @@ function setNextVideo(index: number) {
     }
 }
 
-// Convert Blob to URL to play as video
 function createVideoURL(blob: Blob) {
     return URL.createObjectURL(blob);
 }
 
 function revokeVideoURL(url: string) {
     URL.revokeObjectURL(url);
+}
+
+function createHlsInstance() {
+    hls?.destroy();
+    hls = new Hls();
+    hls.on(Hls.Events.ERROR, function (event, data) {
+        if (data.fatal) {
+            switch (data.type) {
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                    notifyAll(
+                        "warning",
+                        "[video] fatal media error encountered, will try to recover"
+                    );
+                    hls.recoverMediaError();
+                    break;
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                    // All retries and media options have been exhausted.
+                    notifyAll("error", `[video] fatal network error encountered ${data.details}`);
+                    break;
+                default:
+                    // cannot recover
+                    hls.destroy();
+                    break;
+            }
+        }
+    });
+    hls.on(Hls.Events.FRAG_CHANGED, function (event, data) {
+        if (typeof data.frag.sn === "number") {
+            currentFrame = data.frag.sn;
+        }
+    });
 }

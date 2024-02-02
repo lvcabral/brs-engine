@@ -13,7 +13,7 @@ import {
     IndexedSet,
     Print,
 } from "../parser/Statement";
-import { DataType, DebugCommand, dataBufferIndex } from "../enums";
+import { DataType, DebugCommand } from "../enums";
 
 // Debug Constants
 let stepMode = false;
@@ -68,10 +68,6 @@ export function runDebugger(
             debugHandleExpr(interpreter);
             continue;
         }
-        if (Atomics.load(interpreter.sharedArray, DataType.EXP)) {
-            postMessage("warning,Unexpected parameter");
-            continue;
-        }
         switch (cmd) {
             case DebugCommand.CONT:
                 if (error) {
@@ -101,7 +97,7 @@ function debugHandleExpr(interpreter: Interpreter) {
     const lexer = new Lexer();
     const parser = new Parser();
     interpreter.debugMode = false;
-    let expr = debugGetExpr(interpreter.sharedArray);
+    let expr = interpreter.readDataBuffer();
     const exprScan = lexer.scan(`${expr}\n`, "debug");
     if (exprScan.errors.length > 0) {
         postMessage(`error,${exprScan.errors[0].message}`);
@@ -109,7 +105,7 @@ function debugHandleExpr(interpreter: Interpreter) {
     }
     const exprParse = parser.parse(exprScan.tokens);
     if (exprParse.errors.length > 0) {
-        postMessage(`error,${exprScan.errors[0].message}`);
+        postMessage(`error,${exprParse.errors[0].message}`);
         return;
     }
     if (exprParse.statements.length > 0) {
@@ -138,17 +134,6 @@ function debugHandleExpr(interpreter: Interpreter) {
     } else {
         postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
     }
-}
-
-function debugGetExpr(buffer: Int32Array): string {
-    let expr = "";
-    buffer.slice(dataBufferIndex).every((char) => {
-        if (char > 0) {
-            expr += String.fromCharCode(char);
-        }
-        return char; // if \0 stops decoding
-    });
-    return expr;
 }
 
 function debugHandleCommand(

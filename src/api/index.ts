@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, getNow, getWorkerLibPath, context } from "./util";
+import { SubscribeCallback, getNow, getWorkerLibPath, context, saveDataBuffer } from "./util";
 
 import {
     DataType,
@@ -351,33 +351,17 @@ export function debug(command: string): boolean {
         let cmd = commandsMap.get(exprs[0].toLowerCase());
         if (cmd !== undefined && exprs.length === 1) {
             Atomics.store(sharedArray, DataType.DBG, cmd);
-            Atomics.store(sharedArray, DataType.EXP, 0);
         } else {
             let expr = command.toString().trim();
             if (exprs[0].toLowerCase() === "p") {
                 expr = "? " + expr.slice(1);
             }
+            saveDataBuffer(sharedArray, expr);
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
-            Atomics.store(sharedArray, DataType.EXP, 1);
-            debugExpression(expr);
         }
         handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
     }
     return handled;
-}
-
-// Helper Functions
-function debugExpression(expr: string) {
-    // Store string on SharedArrayBuffer
-    expr = expr.trim();
-    let len = Math.min(expr.length, dataBufferSize);
-    for (let i = 0; i < len; i++) {
-        Atomics.store(sharedArray, dataBufferIndex + i, expr.charCodeAt(i));
-    }
-    // String terminator
-    if (len < dataBufferSize) {
-        Atomics.store(sharedArray, dataBufferIndex + len, 0);
-    }
 }
 
 // Terminate and reset BrightScript interpreter
