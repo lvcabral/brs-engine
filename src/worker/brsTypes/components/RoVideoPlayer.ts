@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, BrsNumber } from "..";
+import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, BrsNumber, AAMember } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -336,8 +336,31 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            // TODO: Implement this method when audio tracks are supported
-            return new RoArray([]);
+            const result: BrsType[] = [];
+            if (this.port) {
+                const tracks = this.port.getAudioTracks();
+                if (tracks?.length) {
+                    tracks.forEach((track, index) => {
+                        if (track instanceof Array && track.length === 3) {
+                            let item = new Array<AAMember>();
+                            item.push({
+                                name: new BrsString("Track"),
+                                value: new BrsString(`${track[0]}`),
+                            });
+                            item.push({
+                                name: new BrsString("Language"),
+                                value: new BrsString(track[1]),
+                            });
+                            item.push({
+                                name: new BrsString("Name"),
+                                value: new BrsString(track[2]),
+                            });
+                            result.push(new RoAssociativeArray(item));
+                        }
+                    });
+                }
+            }
+            return new RoArray(result);
         },
     });
 
@@ -348,7 +371,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, trackId: BrsString) => {
-            // TODO: Implement this method when audio tracks are supported
+            postMessage(`video,audio,${trackId.value}`);
             return BrsInvalid.Instance;
         },
     });

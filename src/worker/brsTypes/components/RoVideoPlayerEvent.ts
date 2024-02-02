@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { AAMember, BrsType, RoAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -47,7 +47,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
                 this.isPlaybackPosition,
                 // this.isFormatDetected,
                 // this.isSegmentDownloadStarted,
-                // this.isStreamStarted,
+                this.isStreamStarted,
                 // this.isCaptionModeChanged,
                 // this.isStreamSegmentInfo,
                 // this.isDownloadSegmentInfo,
@@ -81,6 +81,21 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
+            let result = new Array<AAMember>();
+            if (this.flags === MediaEvent.STARTED) {
+                result.push({ name: new BrsString("Url"), value: new BrsString("") });
+                result.push({ name: new BrsString("StreamBitrate"), value: new Int32(0) });
+                result.push({ name: new BrsString("MeasuredBitrate"), value: new Int32(0) });
+                result.push({ name: new BrsString("IsUnderrun"), value: BrsBoolean.from(false) });
+                return new RoAssociativeArray(result);
+            } else if (this.flags === MediaEvent.POSITION) {
+                result.push({ name: new BrsString("ClipIdx"), value: new Int32(0) });
+                result.push({
+                    name: new BrsString("ClipPos"),
+                    value: new Int32(this.index * 1000),
+                });
+                return new RoAssociativeArray(result);
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -192,6 +207,17 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.flags === MediaEvent.POSITION);
+        },
+    });
+
+    /** Checks whether the video stream has started playing. */
+    private isStreamStarted = new Callable("isStreamStarted", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.flags === MediaEvent.STARTED);
         },
     });
 

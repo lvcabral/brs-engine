@@ -7,7 +7,14 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType, MediaEvent, RemoteType, keyArraySpots, keyBufferSize } from "../../enums";
+import {
+    BufferType,
+    DataType,
+    MediaEvent,
+    RemoteType,
+    keyArraySpots,
+    keyBufferSize,
+} from "../../enums";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -18,11 +25,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private screen: boolean;
     private audioFlags: number;
     private videoFlags: number;
+    private videoIndex: number;
     private videoPosition: number;
     private videoNotificationPeriod: number;
     private videoProgress: number;
     private audio: boolean;
     private video: boolean;
+    private audioTracks: any[];
+
     constructor() {
         super("roMessagePort");
         this.registerMethods({
@@ -35,11 +45,13 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.screen = false;
         this.audioFlags = -1;
         this.videoFlags = -1;
+        this.videoIndex = -1;
         this.videoPosition = 0;
         this.videoProgress = -1;
         this.videoNotificationPeriod = 0;
         this.audio = false;
         this.video = false;
+        this.audioTracks = [];
     }
 
     enableKeys(enable: boolean) {
@@ -87,19 +99,16 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         ms += performance.now();
         if (this.screen || this.audio || this.video) {
             while (loop || performance.now() < ms) {
-                const newEvent = this.getEvent(interpreter);
-                if (newEvent instanceof BrsComponent) {
-                    return newEvent;
+                this.updateMessageQueue(interpreter);
+                if (this.messageQueue.length > 0) {
+                    return this.messageQueue.shift();
                 } else if (interpreter.checkBreakCommand()) {
                     return BrsInvalid.Instance;
                 }
             }
         } else {
             if (this.messageQueue.length > 0) {
-                let message = this.messageQueue.shift();
-                if (message) {
-                    return message;
-                }
+                return this.messageQueue.shift();
             } else if (this.callbackQueue.length > 0) {
                 let callback = this.callbackQueue.shift();
                 if (callback) {
@@ -130,25 +139,22 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    getEvent(interpreter: Interpreter) {
+    updateMessageQueue(interpreter: Interpreter) {
         if (this.screen) {
             this.updateKeysBuffer(interpreter);
             const ctrlEvent = this.newControlEvent(interpreter);
             if (ctrlEvent instanceof RoUniversalControlEvent) {
-                return ctrlEvent;
+                this.messageQueue.push(ctrlEvent);
             }
         }
         if (this.audio) {
             const audioEvent = this.newAudioEvent(interpreter);
             if (audioEvent instanceof RoAudioPlayerEvent) {
-                return audioEvent;
+                this.messageQueue.push(audioEvent);
             }
         }
         if (this.video) {
-            const videoEvent = this.newVideoEvent(interpreter);
-            if (videoEvent instanceof RoVideoPlayerEvent) {
-                return videoEvent;
-            }
+            this.processVideoMessages(interpreter);
         }
         return BrsInvalid.Instance;
     }
@@ -207,30 +213,42 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    newVideoEvent(interpreter: Interpreter) {
+    processVideoMessages(interpreter: Interpreter) {
+        const bufferFlag = Atomics.load(interpreter.sharedArray, DataType.BUF);
+        if (bufferFlag === BufferType.AUDIO_TRACKS) {
+            const strTracks = interpreter.readDataBuffer();
+            try {
+                this.audioTracks = JSON.parse(strTracks);
+            } catch (e) {
+                this.audioTracks = [];
+            }
+            Atomics.store(interpreter.sharedArray, DataType.BUF, -1);
+        }
         const progress = Atomics.load(interpreter.sharedArray, DataType.VLP);
         if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
             this.videoProgress = progress;
-            return new RoVideoPlayerEvent(MediaEvent.LOADING, progress);
+            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
         }
         const flags = Atomics.load(interpreter.sharedArray, DataType.VDO);
-        if (flags !== this.videoFlags) {
+        const index = Atomics.load(interpreter.sharedArray, DataType.VDX);
+        if (flags !== this.videoFlags || index !== this.videoIndex) {
             this.videoFlags = flags;
+            this.videoIndex = index;
             if (this.videoFlags >= 0) {
-                return new RoVideoPlayerEvent(
-                    this.videoFlags,
-                    Atomics.load(interpreter.sharedArray, DataType.VDX)
-                );
+                this.messageQueue.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
             }
         }
         if (this.videoNotificationPeriod >= 1) {
             const position = Atomics.load(interpreter.sharedArray, DataType.VPS);
             if (Math.abs(this.videoPosition - position) >= this.videoNotificationPeriod) {
                 this.videoPosition = position;
-                return new RoVideoPlayerEvent(MediaEvent.POSITION, position);
+                this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position));
             }
         }
-        return BrsInvalid.Instance;
+    }
+
+    getAudioTracks() {
+        return this.audioTracks;
     }
 
     /** Waits until an event object is available or timeout milliseconds have passed. */
@@ -252,12 +270,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.screen || this.audio || this.video) {
-                return this.getEvent(interpreter);
-            } else if (this.messageQueue.length > 0) {
-                let message = this.messageQueue.shift();
-                if (message) {
-                    return message;
-                }
+                this.updateMessageQueue(interpreter);
+            }
+            if (this.messageQueue.length > 0) {
+                return this.messageQueue.shift();
             } else if (this.callbackQueue.length > 0) {
                 let callback = this.callbackQueue.shift();
                 if (callback) {
@@ -275,32 +291,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
-            if (this.screen) {
-                this.updateKeysBuffer(interpreter);
-                const nextKey = this.keysBuffer[0];
-                if (nextKey) {
-                    return new RoUniversalControlEvent(nextKey);
-                }
-            }
-            if (this.audio) {
-                const flags = Atomics.load(interpreter.sharedArray, DataType.SND);
-                if (flags !== this.audioFlags && flags >= 0) {
-                    const idx = Atomics.load(interpreter.sharedArray, DataType.IDX);
-                    return new RoAudioPlayerEvent(flags, idx);
-                }
-            }
-            if (this.video) {
-                const flags = Atomics.load(interpreter.sharedArray, DataType.VDO);
-                if (flags !== this.audioFlags && flags >= 0) {
-                    const idx = Atomics.load(interpreter.sharedArray, DataType.VDX);
-                    return new RoVideoPlayerEvent(flags, idx);
-                }
-            }
+            this.updateMessageQueue(interpreter);
             if (this.messageQueue.length > 0) {
-                let message = this.messageQueue[0];
-                if (message) {
-                    return message;
-                }
+                return this.messageQueue[0];
             }
             if (this.callbackQueue.length > 0) {
                 let callback = this.callbackQueue[0];
