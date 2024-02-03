@@ -1,4 +1,4 @@
-import { BrsType, Int32 } from "..";
+import { BrsType, Float, Int32, isBrsNumber } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -8,7 +8,10 @@ import { crc32 } from "crc";
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private elements: Uint8Array;
-    private resize = true;
+    private _capacity = 0;
+    private _resizable = true;
+    private _increment = 16;
+
     enumIndex: number;
 
     constructor();
@@ -47,6 +50,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             ifArrayGet: [this.getEntry],
             ifArraySet: [this.setEntry],
+            ifArraySizeInfo: [this.capacity, this.isResizable],
             ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
         });
     }
@@ -129,6 +133,20 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
+    updateCapacity() {
+        if (this._resizable) {
+            let multiplier = this._capacity < 33 ? 1 : 1.5;
+            if (this.elements.length > this._capacity) {
+                this._increment = this._increment * multiplier;
+                while (this.elements.length > this._capacity) {
+                    this._capacity = Math.trunc(this._capacity + this._increment);
+                }
+            }
+        } else {
+            this._capacity = Math.max(this.elements.length, this._capacity);
+        }
+    }
+
     // ifByteArray ---------------------------------------------------------------------
 
     private readFile = new Callable("readFile", {
@@ -149,12 +167,14 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     if (index.getValue() > 0 || length.getValue() > 0) {
                         let start = index.getValue();
                         let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                        this.elements = array.slice(start, end);
-                    } else {
-                        this.elements = array;
+                        array = array.slice(start, end);
                     }
-                    this.updateNext();
-                    return BrsBoolean.True;
+                    if (this._resizable || array.length <= this._capacity) {
+                        this.elements = array;
+                        this.updateNext();
+                        this.updateCapacity();
+                        return BrsBoolean.True;
+                    }
                 }
             } catch (err: any) {
                 return BrsBoolean.False;
@@ -244,8 +264,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, asciiStr: BrsString) => {
-            this.elements = new Uint8Array(Buffer.from(asciiStr.value, "utf8"));
-            this.updateNext();
+            const array = new Uint8Array(Buffer.from(asciiStr.value, "utf8"));
+            if (this._resizable || array.length <= this._capacity) {
+                this.elements = array;
+                this.updateNext();
+                this.updateCapacity();
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -266,12 +290,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, hexStr: BrsString) => {
-            const regex = /"[^a-f0-9]/gi;
-            const value = hexStr.value.replace(regex, "0");
-            if (value.length % 2 === 0) {
+            const value = hexStr.value.replace(/[^0-9A-Fa-f]/g, "0");
+            if (this._resizable || (value.length % 2 === 0 && value.length / 2 <= this._capacity)) {
                 this.elements = new Uint8Array(Buffer.from(value, "hex"));
+                this.updateNext();
+                this.updateCapacity();
             }
-            this.updateNext();
             return BrsInvalid.Instance;
         },
     });
@@ -293,8 +317,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, hexStr: BrsString) => {
-            this.elements = new Uint8Array(Buffer.from(hexStr.value, "base64"));
-            this.updateNext();
+            const array = new Uint8Array(Buffer.from(hexStr.value, "base64"));
+            if (this._resizable || array.length <= this._capacity) {
+                this.elements = array;
+                this.updateNext();
+                this.updateCapacity();
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -315,8 +343,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, index: Int32) => {
-            let byte = (this.elements[index.getValue()] << 24) >> 24;
-            return new Int32(byte);
+            if (index.getValue() < this.elements.length) {
+                let byte = (this.elements[index.getValue()] << 24) >> 24;
+                return new Int32(byte);
+            }
+            return new Int32(0);
         },
     });
 
@@ -326,9 +357,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, index: Int32) => {
-            const dataView = new DataView(this.elements.buffer, index.getValue(), 4);
-            const long = dataView.getInt32(0, true);
-            return new Int32(long);
+            if (index.getValue() < this.elements.length - 3) {
+                const dataView = new DataView(this.elements.buffer, index.getValue(), 4);
+                const long = dataView.getInt32(0, true);
+                return new Int32(long);
+            }
+            return new Int32(0);
         },
     });
 
@@ -359,8 +393,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, minSize: Int32, autoResize: BrsBoolean) => {
-            this.resize = autoResize.toBoolean();
-            // TODO: Resize byte array if length < minSize
+            this._capacity = Math.max(minSize.getValue(), this.elements.length);
+            this._resizable = autoResize.toBoolean();
             return BrsInvalid.Instance;
         },
     });
@@ -371,7 +405,10 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.True;
+            // Solution from: https://abdulapopoola.com/2019/01/20/check-endianness-with-javascript/
+            const uInt32 = new Uint32Array([0x11223344]);
+            const uInt8 = new Uint8Array(uInt32.buffer);
+            return BrsBoolean.from(uInt8[0] === 0x44);
         },
     });
 
@@ -394,23 +431,39 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            const item = this.elements[this.elements.length - 1];
-            // TODO: Remove last item from byte array (check how to behave with resize=true)
+            const index = this.elements.length - 1;
+            const item = this.elements[index];
+            let array = new Uint8Array(index);
+            array.set(this.elements.slice(0, index), 0);
+            this.elements = array;
             return item ? new Int32(item) : BrsInvalid.Instance;
         },
     });
 
     private push = new Callable("push", {
         signature: {
-            args: [new StdlibArgument("byte", ValueKind.Int32)],
+            args: [new StdlibArgument("byte", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, byte: Int32) => {
-            let array = new Uint8Array(this.elements.length + 1);
-            array.set(this.elements, 0);
-            array[this.elements.length] = byte.getValue();
-            this.elements = array;
-            this.updateNext();
+        impl: (interpreter: Interpreter, byte: Int32 | Float | BrsInvalid) => {
+            if (isBrsNumber(byte)) {
+                if (this._resizable || this.elements.length < this._capacity) {
+                    let array = new Uint8Array(this.elements.length + 1);
+                    array.set(this.elements, 0);
+                    array[this.elements.length] = byte.getValue();
+                    this.elements = array;
+                    this.updateNext();
+                    this.updateCapacity();
+                } else {
+                    postMessage(
+                        `warning,BRIGHTSCRIPT: ERROR: roByteArray.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
+                    );
+                }
+            } else {
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roByteArray.Push: set ignored for non-numeric value: ${interpreter.formatLocation()}`
+                );
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -422,22 +475,37 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             const item = this.elements[0];
-            // TODO: Remove first item from byte array (check how to behave with resize=true)
+            let array = new Uint8Array(this.elements.length - 1);
+            array.set(array.slice(1, this.elements.length), 0);
+            this.elements = array;
             return item ? new Int32(item) : BrsInvalid.Instance;
         },
     });
 
     private unshift = new Callable("unshift", {
         signature: {
-            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
+            args: [new StdlibArgument("byte", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, byte: Int32) => {
-            let array = new Uint8Array(this.elements.length + 1);
-            array[0] = byte.getValue();
-            array.set(this.elements, 1);
-            this.elements = array;
-            this.updateNext();
+        impl: (interpreter: Interpreter, byte: Int32 | Float | BrsInvalid) => {
+            if (isBrsNumber(byte)) {
+                if (this._resizable || this.elements.length < this._capacity) {
+                    let array = new Uint8Array(this.elements.length + 1);
+                    array[0] = byte.getValue();
+                    array.set(this.elements, 1);
+                    this.elements = array;
+                    this.updateNext();
+                    this.updateCapacity();
+                } else {
+                    postMessage(
+                        `warning,BRIGHTSCRIPT: ERROR: roByteArray.Unshift: unshift ignored for full non-resizable array: ${interpreter.formatLocation()}`
+                    );
+                }
+            } else {
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roByteArray.Unshift: unshift ignored for non-numeric value: ${interpreter.formatLocation()}`
+                );
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -451,7 +519,10 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             if (index.lessThan(new Int32(0)).toBoolean()) {
                 return BrsBoolean.False;
             }
-            // TODO: Remove specific item from byte array (check how to behave with resize=true)
+            let array = new Uint8Array(this.elements.length + 1);
+            const idx = index.getValue();
+            array.set(this.elements.slice(0, idx), 0);
+            array.set(this.elements.slice(idx + 1, this.elements.length), idx);
             return BrsBoolean.True;
         },
     });
@@ -488,14 +559,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 // TODO: validate against RBI
                 return BrsInvalid.Instance;
             }
-
-            // TODO: Append other byte array to the end of this byte array (check how to behave with resize=true)
-
-            // this.elements = [
-            //     ...this.elements,
-            //     ...array.elements.filter(element => !!element), // don't copy "holes" where no value exists
-            // ];
-
+            if (this._resizable || this.elements.length + array.elements.length <= this._capacity) {
+                this.elements = new Uint8Array([...this.elements, ...array.elements]);
+                this.updateNext();
+                this.updateCapacity();
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -521,12 +589,34 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         signature: {
             args: [
                 new StdlibArgument("index", ValueKind.Dynamic),
-                new StdlibArgument("tvalue", ValueKind.Dynamic),
+                new StdlibArgument("value", ValueKind.Dynamic),
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
-            return this.set(index, tvalue);
+        impl: (_: Interpreter, index: BrsType, value: BrsType) => {
+            return this.set(index, value);
+        },
+    });
+
+    // ifArraySizeInfo ---------------------------------------------------------------------
+
+    private capacity = new Callable("capacity", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(this._capacity);
+        },
+    });
+
+    private isResizable = new Callable("isResizable", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this._resizable);
         },
     });
 
