@@ -1,3 +1,14 @@
+<a name="v1.2.7"></a>
+
+# [v1.2.7 - Video: HLS Support and Multiple Audios](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.7) - 02 Feb 2024
+
+* Added full support to HLS and Multiple Audio Tracks - closes #247, #220 by [@lvcabral](https://github.com/lvcabral) in [#249](https://github.com/lvcabral/brs-engine/pull/249)
+* Added support to videos inside the package or downloaded - closes #239 by [@lvcabral](https://github.com/lvcabral) in [#246](https://github.com/lvcabral/brs-engine/pull/246)
+* Finished implementation of `roByteArray`- closes #172 by [@lvcabral](https://github.com/lvcabral) in [#251](https://github.com/lvcabral/brs-engine/pull/251)
+* Fixed #244 - API Debug issues by [@lvcabral](https://github.com/lvcabral) in [#245](https://github.com/lvcabral/brs-engine/pull/245)
+
+[Full Changelog][v1.2.7]
+
 <a name="v1.2.6"></a>
 
 # [v1.2.6 - roScreen fix and Video Codec Detection](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.6) - 28 Jan 2024
@@ -31,7 +42,7 @@
 
 ## Release Changes
 
-* Fix #225 - Low Resolution on Screen Resize by [@lvcabral](https://github.com/lvcabral) in [#226](https://github.com/lvcabral/brs-engine/pull/226)
+* Fixed #225 - Low Resolution on Screen Resize by [@lvcabral](https://github.com/lvcabral) in [#226](https://github.com/lvcabral/brs-engine/pull/226)
 * Fixed #219 - Video playback is not always pausing when the app get `PAUSE` or `BREAK` commands by [@lvcabral](https://github.com/lvcabral) in [#227](https://github.com/lvcabral/brs-engine/pull/227)
 
 [Full Changelog][v1.2.4]
@@ -492,6 +503,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.2.7]: https://github.com/lvcabral/brs-engine/compare/v1.2.6...v1.2.7
 [v1.2.6]: https://github.com/lvcabral/brs-engine/compare/v1.2.5...v1.2.6
 [v1.2.5]: https://github.com/lvcabral/brs-engine/compare/v1.2.4...v1.2.5
 [v1.2.4]: https://github.com/lvcabral/brs-engine/compare/v1.2.3...v1.2.4
