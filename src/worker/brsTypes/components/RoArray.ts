@@ -100,6 +100,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             ifArraySet: [this.setEntry],
             ifArrayJoin: [this.join],
             ifArraySort: [this.sort, this.sortBy, this.reverse],
+            // ifArraySizeInfo: [this.capacity, this.isResizable],
             ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
         });
     }
