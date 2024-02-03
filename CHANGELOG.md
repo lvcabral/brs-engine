@@ -2,6 +2,8 @@
 
 # [v1.2.7 - Video: HLS Support and Multiple Audios](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.7) - 02 Feb 2024
 
+## Release Changes
+
 * Added full support to HLS and Multiple Audio Tracks - closes #247, #220 by [@lvcabral](https://github.com/lvcabral) in [#249](https://github.com/lvcabral/brs-engine/pull/249)
 * Added support to videos inside the package or downloaded - closes #239 by [@lvcabral](https://github.com/lvcabral) in [#246](https://github.com/lvcabral/brs-engine/pull/246)
 * Finished implementation of `roByteArray`- closes #172 by [@lvcabral](https://github.com/lvcabral) in [#251](https://github.com/lvcabral/brs-engine/pull/251)
