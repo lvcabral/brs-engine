@@ -89,7 +89,7 @@ function notifyAll(eventName: string, eventData?: any) {
     });
 }
 
-// Video Module Functions
+// Video Module Public Functions
 export function handleVideoEvent(eventData: string) {
     const data = eventData.split(",");
     if (data[1] === "play") {
@@ -233,7 +233,7 @@ export function resetVideo() {
     videosState = false;
 }
 
-// Helper Functions
+// Video Module Private Functions
 function startProgress(e: Event) {
     if (e.type === "loadeddata") {
         loadAudioTracks();
@@ -283,6 +283,7 @@ function setAudioTrack(index: number) {
             const tracks = (player as any).audioTracks;
             if (tracks[index] !== undefined && index !== currentAudioTrack) {
                 tracks[index].enabled = true;
+                tracks[currentAudioTrack].enabled = false;
                 currentAudioTrack = index;
             }
         }
