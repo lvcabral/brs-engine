@@ -61,7 +61,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     getContent() {
         const contents: Object[] = [];
         this.contentList.forEach((aa, index, array) => {
-            const item = { url: "", streamFormat: "" };
+            const item = { url: "", streamFormat: "", audioTrack: -1 };
             let url = aa.get(new BrsString("url"));
             if (url instanceof BrsString) {
                 item.url = url.value;
