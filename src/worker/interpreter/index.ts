@@ -207,7 +207,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         try {
             let mainVariable = new Expr.Variable({
                 kind: Lexeme.Identifier,
-                text: "main",
+                text: "runuserinterface",
                 isReserved: false,
                 location: {
                     start: {
@@ -227,7 +227,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (maybeMain.kind !== ValueKind.Callable) {
                 mainVariable = new Expr.Variable({
                     kind: Lexeme.Identifier,
-                    text: "runuserinterface",
+                    text: "main",
                     isReserved: false,
                     location: {
                         start: {
