@@ -130,11 +130,6 @@
     "tabWidth": 4,
     "printWidth": 100
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
     "*.{ts,js}": [
       "prettier --write",
