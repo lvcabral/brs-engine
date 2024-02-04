@@ -229,6 +229,11 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             this.videoProgress = progress;
             this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
         }
+        const selected = Atomics.load(interpreter.sharedArray, DataType.VSE);
+        if (selected >= 0) {
+            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
+            Atomics.store(interpreter.sharedArray, DataType.VSE, -1);
+        }
         const flags = Atomics.load(interpreter.sharedArray, DataType.VDO);
         const index = Atomics.load(interpreter.sharedArray, DataType.VDX);
         if (flags !== this.videoFlags || index !== this.videoIndex) {
@@ -236,6 +241,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             this.videoIndex = index;
             if (this.videoFlags >= 0) {
                 this.messageQueue.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
+                Atomics.store(interpreter.sharedArray, DataType.VDO, -1);
+                Atomics.store(interpreter.sharedArray, DataType.VDX, -1);
             }
         }
         if (this.videoNotificationPeriod >= 1) {
