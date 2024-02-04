@@ -11,5 +11,4 @@ out/
 *.bpk
 desktop.ini
 .DS_Store
-.husky
 *.tgz
