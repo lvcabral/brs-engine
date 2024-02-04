@@ -28,6 +28,7 @@ let canPlay = false;
 let loadProgress = 0;
 let videoDuration = 0;
 let videoMuted = false;
+let uiMuted = false;
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
@@ -65,7 +66,9 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.addEventListener("durationchange", setDuration);
         player.addEventListener("loadedmetadata", startProgress);
         player.addEventListener("loadeddata", startProgress);
-        player.defaultMuted = mute;
+        player.muted = true;
+        player.defaultMuted = true;
+        uiMuted = mute;
     }
     sharedArray = array;
     resetVideo();
@@ -113,7 +116,7 @@ export function handleVideoEvent(eventData: string) {
     } else if (data[1] === "mute") {
         if (data[2] && player) {
             videoMuted = data[2] === "true";
-            player.muted = player.defaultMuted || videoMuted;
+            player.muted = uiMuted || videoMuted;
         }
     } else if (data[1] === "loop") {
         if (data[2]) {
@@ -143,13 +146,13 @@ export function handleVideoEvent(eventData: string) {
 
 export function muteVideo(mute: boolean = false) {
     if (player) {
-        player.defaultMuted = mute;
+        uiMuted = mute;
         player.muted = mute || videoMuted;
     }
 }
 
 export function isVideoMuted() {
-    return player?.defaultMuted ?? false;
+    return uiMuted ?? false;
 }
 
 export function switchVideoState(play: boolean) {
@@ -330,7 +333,19 @@ function getVideoUrl(video: any): string {
 
 function playVideo() {
     if (canPlay) {
-        player.play();
+        var promise = player.play();
+        if (promise !== undefined) {
+            promise
+                .then(function () {
+                    player.muted = uiMuted || videoMuted;
+                })
+                .catch(function (error) {
+                    notifyAll(
+                        "warning",
+                        `[video] Browser prevented the auto-play, press pause and play to start the video.`
+                    );
+                });
+        }
         Atomics.store(sharedArray, DataType.VSE, playIndex);
     } else {
         loadVideo();
@@ -394,6 +409,7 @@ function resumeVideo(notify = true) {
     const video = playList[playIndex];
     if (video && player?.paused) {
         player.play();
+        player.muted = uiMuted || videoMuted;
         if (notify) {
             Atomics.store(sharedArray, DataType.VDO, MediaEvent.RESUMED);
         }
