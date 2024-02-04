@@ -14,7 +14,6 @@ export let player: HTMLVideoElement;
 let hls: Hls;
 let packageVideos = new Map();
 let audioTracks = new Array();
-let currentAudioTrack = -1;
 let currentFrame = 0;
 let playerState: string = "stop";
 let videosState = false;
@@ -46,7 +45,7 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         });
         player.addEventListener("playing", (e: Event) => {
             if (playerState !== "pause") {
-                setAudioTrack(currentAudioTrack);
+                setAudioTrack(playList[playIndex]?.audioTrack ?? -1);
                 Atomics.store(sharedArray, DataType.VDX, currentFrame);
                 Atomics.store(sharedArray, DataType.VDO, MediaEvent.STARTED);
             }
@@ -258,16 +257,8 @@ function loadAudioTracks() {
         hls.audioTracks.forEach((track, index) => {
             audioTracks.push([index + 1, track.lang, track.name]);
         });
-        if (currentAudioTrack === -1) {
-            currentAudioTrack = hls.audioTrack;
-        }
-    } else if ((player as any).audioTracks?.length) {
-        const tracks = (player as any).audioTracks;
-        for (let i = 0; i < tracks.length; i++) {
-            audioTracks.push([i + 1, tracks[i].language, tracks[i].label]);
-            if (currentAudioTrack === -1 && tracks[i].enabled) {
-                currentAudioTrack = i;
-            }
+        if (playList[playIndex]?.audioTrack === -1) {
+            playList[playIndex].audioTrack = hls.audioTrack;
         }
     }
     saveDataBuffer(sharedArray, JSON.stringify(audioTracks));
@@ -278,14 +269,7 @@ function setAudioTrack(index: number) {
     if (index > -1 && index < audioTracks.length) {
         if (hls && hls.audioTrack !== index) {
             hls.audioTrack = index;
-            currentAudioTrack = index;
-        } else if ((player as any).audioTracks?.length) {
-            const tracks = (player as any).audioTracks;
-            if (tracks[index] !== undefined && index !== currentAudioTrack) {
-                tracks[index].enabled = true;
-                tracks[currentAudioTrack].enabled = false;
-                currentAudioTrack = index;
-            }
+            playList[playIndex].audioTrack = index;
         }
     }
 }
@@ -293,7 +277,6 @@ function setAudioTrack(index: number) {
 function clearVideoTracking() {
     loadProgress = 0;
     currentFrame = 0;
-    currentAudioTrack = -1;
     audioTracks = new Array();
 }
 
@@ -308,14 +291,14 @@ function loadVideo(buffer = false) {
             hls?.destroy();
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
-            if (player.canPlayType("application/vnd.apple.mpegurl")) {
-                // Using native HLS support
-                player.setAttribute("type", "application/vnd.apple.mpegurl");
-            } else if (Hls.isSupported()) {
+            if (Hls.isSupported()) {
                 createHlsInstance();
                 hls.loadSource(videoSrc);
                 hls.attachMedia(player);
                 return;
+            } else if (player.canPlayType("application/vnd.apple.mpegurl")) {
+                // Fallback to native HLS support
+                player.setAttribute("type", "application/vnd.apple.mpegurl");
             } else {
                 notifyAll("warning", "[video] HLS is not supported");
                 return;
