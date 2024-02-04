@@ -1,3 +1,16 @@
+<a name="v1.2.8"></a>
+
+# [v1.2.8 - Video: Play List Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.8) - 03 Feb 2024
+
+## Release Changes
+
+* Fixed #252 - Clear the audio tracks list when switching videos by [@lvcabral](https://github.com/lvcabral) in [#256](https://github.com/lvcabral/brs-engine/pull/256)
+* Fixed #253 - Safari native HLS support not selecting default audio track by [@lvcabral](https://github.com/lvcabral) in [#257](https://github.com/lvcabral/brs-engine/pull/257)
+* Fixed #254 - Keep the audio track selection on each playlist video metadata by [@lvcabral](https://github.com/lvcabral) in [#258](https://github.com/lvcabral/brs-engine/pull/258)
+* Fixed #250 - Made `RunUserInterface` the primary entry point by [@lvcabral](https://github.com/lvcabral) in [259](https://github.com/lvcabral/brs-engine/pull/259)
+
+[Full Changelog][v1.2.8]
+
 <a name="v1.2.7"></a>
 
 # [v1.2.7 - Video: HLS Support and Multiple Audios](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.7) - 02 Feb 2024
@@ -505,6 +518,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.2.8]: https://github.com/lvcabral/brs-engine/compare/v1.2.7...v1.2.8
 [v1.2.7]: https://github.com/lvcabral/brs-engine/compare/v1.2.6...v1.2.7
 [v1.2.6]: https://github.com/lvcabral/brs-engine/compare/v1.2.5...v1.2.6
 [v1.2.5]: https://github.com/lvcabral/brs-engine/compare/v1.2.4...v1.2.5
