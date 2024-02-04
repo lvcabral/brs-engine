@@ -12,6 +12,7 @@ export enum DataType {
     BUF, // Buffer flag
     VDO, // Video State
     VDX, // Video Index
+    VSE, // Video Selected
     VLP, // Video Load Progress
     VPS, // Video Position
     VDR, // Video Duration
@@ -31,7 +32,7 @@ export const dataBufferIndex = 32;
 export const dataBufferSize = 512;
 
 // Key Buffer Constants
-export const keyBufferSize = 5; // Max is 6, if needs more space needs to increase `dataBufferIndex`
+export const keyBufferSize = 5; // Max is 6, if needs more space increase `dataBufferIndex`
 export const keyArraySpots = 3;
 
 // Remote control type

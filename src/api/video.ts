@@ -36,7 +36,7 @@ if (typeof document !== "undefined") {
 }
 export function initVideoModule(array: Int32Array, mute: boolean = false) {
     if (player) {
-        player.addEventListener("canplay", (event) => {
+        player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
             Atomics.store(sharedArray, DataType.VLP, loadProgress);
             canPlay = true;
@@ -44,7 +44,7 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
                 playVideo();
             }
         });
-        player.addEventListener("playing", (event) => {
+        player.addEventListener("playing", (e: Event) => {
             if (playerState !== "pause") {
                 setAudioTrack(currentAudioTrack);
                 Atomics.store(sharedArray, DataType.VDX, currentFrame);
@@ -52,12 +52,12 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
             }
             notifyAll("play");
         });
-        player.addEventListener("timeupdate", () => {
+        player.addEventListener("timeupdate", (e: Event) => {
             if (notifyTime) {
                 Atomics.store(sharedArray, DataType.VPS, Math.round(player.currentTime));
             }
         });
-        player.addEventListener("error", (event) => {
+        player.addEventListener("error", (e: Event) => {
             canPlay = false;
             notifyAll("error", `Error ${player.error?.code}; details: ${player.error?.message}`);
         });
@@ -231,9 +231,6 @@ export function resetVideo() {
     playNext = -1;
     playerState = "stop";
     videosState = false;
-    loadProgress = 0;
-    currentAudioTrack = -1;
-    currentFrame = 0;
 }
 
 // Helper Functions
@@ -273,10 +270,8 @@ function loadAudioTracks() {
             }
         }
     }
-    if (audioTracks.length > 0) {
-        saveDataBuffer(sharedArray, JSON.stringify(audioTracks));
-        Atomics.store(sharedArray, DataType.BUF, BufferType.AUDIO_TRACKS);
-    }
+    saveDataBuffer(sharedArray, JSON.stringify(audioTracks));
+    Atomics.store(sharedArray, DataType.BUF, BufferType.AUDIO_TRACKS);
 }
 
 function setAudioTrack(index: number) {
@@ -286,7 +281,7 @@ function setAudioTrack(index: number) {
             currentAudioTrack = index;
         } else if ((player as any).audioTracks?.length) {
             const tracks = (player as any).audioTracks;
-            if (tracks[index]) {
+            if (tracks[index] !== undefined && index !== currentAudioTrack) {
                 tracks[index].enabled = true;
                 currentAudioTrack = index;
             }
@@ -294,14 +289,22 @@ function setAudioTrack(index: number) {
     }
 }
 
+function clearVideoTracking() {
+    loadProgress = 0;
+    currentFrame = 0;
+    currentAudioTrack = -1;
+    audioTracks = new Array();
+}
+
 function loadVideo(buffer = false) {
     canPlay = false;
     const video = playList[playIndex];
     if (video && player) {
         let videoSrc = getVideoUrl(video);
-        loadProgress = 0;
+        clearVideoTracking();
         bufferOnly = buffer;
         if (["mp4", "mkv"].includes(video.streamFormat)) {
+            hls?.destroy();
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
             if (player.canPlayType("application/vnd.apple.mpegurl")) {
@@ -344,48 +347,50 @@ function getVideoUrl(video: any): string {
 function playVideo() {
     if (canPlay) {
         player.play();
-        Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.SELECTED);
+        Atomics.store(sharedArray, DataType.VSE, playIndex);
     } else {
         loadVideo();
     }
 }
 
 function nextVideo() {
-    if (playNext >= 0 && playNext < playList.length) {
-        playIndex = playNext;
-    } else {
-        playIndex++;
+    if (playNext < 0) {
+        playNext = playIndex + 1;
     }
-    playNext = -1;
-    canPlay = false;
-    playerState = "stop";
-    if (playIndex < playList.length) {
-        currentAudioTrack = -1;
-        currentFrame = 0;
-        loadVideo();
+    if (playNext < playList.length) {
+        playIndex = playNext;
     } else if (playLoop) {
+        if (playList.length === 1) {
+            seekVideo(0);
+            resumeVideo(false);
+            return;
+        }
         playIndex = 0;
-        loadVideo();
     } else {
         Atomics.store(sharedArray, DataType.VDX, playIndex);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.FULL);
         playIndex = 0;
-        currentAudioTrack = -1;
-        currentFrame = 0;
+        playNext = -1;
+        canPlay = false;
+        clearVideoTracking();
         notifyAll("stop");
+        return;
     }
+    playNext = -1;
+    playerState = "stop";
+    canPlay = false;
+    loadVideo();
 }
 
 function stopVideo() {
-    if (player) {
+    if (player && playerState !== "stop") {
         player.pause();
         player.removeAttribute("src"); // empty source
         player.load();
         notifyAll("stop");
         Atomics.store(sharedArray, DataType.VDX, playIndex);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
-        loadProgress = 0;
+        clearVideoTracking();
         canPlay = false;
     }
 }
