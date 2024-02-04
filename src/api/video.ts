@@ -333,7 +333,7 @@ function getVideoUrl(video: any): string {
 
 function playVideo() {
     if (canPlay) {
-        var promise = player.play();
+        const promise = player.play();
         if (promise !== undefined) {
             promise
                 .then(function () {
