@@ -13,7 +13,13 @@ sub main()
     player.setContentList([{
         Stream: {url: "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8"}
         StreamFormat: "hls"
-    }])
+    },{
+        Stream: {url: "https://5b44cf20b0388.streamlock.net:8443/vod/smil:hls-maudios-prod.smil/playlist.m3u8"}
+        StreamFormat: "hls"
+    },{
+        Stream: {url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"}
+        StreamFormat: "mp4"
+	}])
     player.Play()
     position = 0
     skip = 15
@@ -59,7 +65,7 @@ sub main()
                 else if index = 5 or index = 9 '<RIGHT> or <FWD>
                     position = position + skip
                     player.Seek(position * 1000)
-                else if index = 10 'INFO
+                else if index = 10 or index = 6 'INFO or OK
                     if tracks.count() > 0
                         currAudioTrack = (currAudioTrack + 1) mod tracks.count()
                         print "Switching to audio track: "; tracks[currAudioTrack].Language
