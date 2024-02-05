@@ -133,13 +133,15 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    updateCapacity() {
-        if (this._resizable) {
-            let multiplier = this._capacity < 33 ? 1 : 1.5;
-            if (this.elements.length > this._capacity) {
-                this._increment = this._increment * multiplier;
-                while (this.elements.length > this._capacity) {
-                    this._capacity = Math.trunc(this._capacity + this._increment);
+    updateCapacity(growthFactor = 0) {
+        if (this._resizable && growthFactor > 0) {
+            if (this.elements.length > 0 && this.elements.length > this._capacity) {
+                let count = this.elements.length - 1;
+                let newCap = Math.trunc(count * growthFactor);
+                if (newCap - this._capacity < 16) {
+                    this._capacity = Math.trunc(16 * (count / 16 + 1));
+                } else {
+                    this._capacity = newCap;
                 }
             }
         } else {
@@ -453,7 +455,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     array[this.elements.length] = byte.getValue();
                     this.elements = array;
                     this.updateNext();
-                    this.updateCapacity();
+                    this.updateCapacity(1.5);
                 } else {
                     postMessage(
                         `warning,BRIGHTSCRIPT: ERROR: roByteArray.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
@@ -495,7 +497,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     array.set(this.elements, 1);
                     this.elements = array;
                     this.updateNext();
-                    this.updateCapacity();
+                    this.updateCapacity(1.25);
                 } else {
                     postMessage(
                         `warning,BRIGHTSCRIPT: ERROR: roByteArray.Unshift: unshift ignored for full non-resizable array: ${interpreter.formatLocation()}`
