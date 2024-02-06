@@ -253,25 +253,31 @@ function gamePadOnHandler(gamePad: GCGamepad) {
         events.forEach((key: string) => {
             if (gamePad.axes > index) {
                 const eventName = `${key}${index}` as EventName;
-                gamePadSubscribe(gamePad, eventName, key);
+                gamePadSubscribe(gamePad, eventName, index, key);
             }
         });
     });
     buttonsMap.forEach((key, index) => {
         if (gamePad.buttons > index) {
             const eventName = `button${index}` as EventName;
-            gamePadSubscribe(gamePad, eventName, key);
+            gamePadSubscribe(gamePad, eventName, index, key);
         }
     });
 }
-function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, key: string) {
+function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: number, key: string) {
     gamePad.before(eventName, () => {
-        if (controls.gamePads) {
+        if (eventName.startsWith("button")) {
+            key = buttonsMap.get(index) ?? "";
+        }
+        if (controls.gamePads && key !== "") {
             sendKey(key, 0, RemoteType.WD, gamePad.id);
         }
     });
     gamePad.after(eventName, () => {
-        if (controls.gamePads) {
+        if (eventName.startsWith("button")) {
+            key = buttonsMap.get(index) ?? "";
+        }
+        if (controls.gamePads && key !== "") {
             sendKey(key, 100, RemoteType.WD, gamePad.id);
         }
     });
