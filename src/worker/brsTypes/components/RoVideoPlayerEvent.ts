@@ -211,7 +211,6 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-
     /** Checks whether the current position in the video stream has changed. */
     private isPlaybackPosition = new Callable("isPlaybackPosition", {
         signature: {
