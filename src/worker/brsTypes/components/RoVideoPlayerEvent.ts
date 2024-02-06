@@ -20,7 +20,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             case MediaEvent.LOADING:
                 this.message = "startup progress";
                 break;
-            case MediaEvent.SELECTED:
+            case MediaEvent.START_PLAY:
                 this.message = "start of play";
                 break;
             case MediaEvent.FULL:
@@ -45,12 +45,12 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
                 this.isStatusMessage,
                 this.isTimedMetadata,
                 this.isPlaybackPosition,
-                // this.isFormatDetected,
-                // this.isSegmentDownloadStarted,
+                this.isFormatDetected,
+                this.isSegmentDownloadStarted,
                 this.isStreamStarted,
-                // this.isCaptionModeChanged,
-                // this.isStreamSegmentInfo,
-                // this.isDownloadSegmentInfo,
+                this.isCaptionModeChanged,
+                this.isStreamSegmentInfo,
+                this.isDownloadSegmentInfo,
             ],
         });
     }
@@ -82,7 +82,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             let result = new Array<AAMember>();
-            if (this.flags === MediaEvent.STARTED) {
+            if (this.flags === MediaEvent.START_STREAM) {
                 result.push({ name: new BrsString("Url"), value: new BrsString("") });
                 result.push({ name: new BrsString("StreamBitrate"), value: new Int32(0) });
                 result.push({ name: new BrsString("MeasuredBitrate"), value: new Int32(0) });
@@ -199,6 +199,19 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Checks whether an ID3 timecode has passed with an event that includes key-value pairs for timed metadata. */
+    private isTimedMetadata = new Callable("isTimedMetadata", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.False;
+        },
+    });
+
+
     /** Checks whether the current position in the video stream has changed. */
     private isPlaybackPosition = new Callable("isPlaybackPosition", {
         signature: {
@@ -210,6 +223,30 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Checks whether the format of all tracks in the media stream have been identified. */
+    private isFormatDetected = new Callable("isFormatDetected", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.from(false);
+        },
+    });
+
+    /** Checks whether the video stream has started downloading a segment. */
+    private isSegmentDownloadStarted = new Callable("isSegmentDownloadStarted", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.from(false);
+        },
+    });
+
     /** Checks whether the video stream has started playing. */
     private isStreamStarted = new Callable("isStreamStarted", {
         signature: {
@@ -217,17 +254,42 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.STARTED);
+            return BrsBoolean.from(this.flags === MediaEvent.START_STREAM);
         },
     });
 
-    /** Not Implemented just a placeholder. */
-    private isTimedMetadata = new Callable("isTimedMetadata", {
+    /** Checks whether the caption mode has changed. */
+    private isCaptionModeChanged = new Callable("isCaptionModeChanged", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Checks whether playback has begun of a segment in an HLS, DASH, or smooth stream. */
+    private isStreamSegmentInfo = new Callable("isStreamSegmentInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Checks whether a segment in an adaptive stream (HLS, Smooth, or DASH) has been downloaded. */
+    private isDownloadSegmentInfo = new Callable("isDownloadSegmentInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
             return BrsBoolean.False;
         },
     });
