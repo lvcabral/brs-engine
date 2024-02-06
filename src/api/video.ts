@@ -27,6 +27,7 @@ let bufferOnly = false;
 let canPlay = false;
 let loadProgress = 0;
 let videoDuration = 0;
+let startPosition = 0;
 let videoMuted = false;
 let uiMuted = false;
 
@@ -48,7 +49,7 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
             if (playerState !== "pause") {
                 setAudioTrack(playList[playIndex]?.audioTrack ?? -1);
                 Atomics.store(sharedArray, DataType.VDX, currentFrame);
-                Atomics.store(sharedArray, DataType.VDO, MediaEvent.STARTED);
+                Atomics.store(sharedArray, DataType.VDO, MediaEvent.START_STREAM);
             }
             notifyAll("play");
         });
@@ -218,6 +219,7 @@ export function addVideoPlaylist(newList: any[]) {
     playList = newList;
     playIndex = 0;
     playNext = -1;
+    startPosition = 0;
 }
 
 export function resetVideo() {
@@ -231,6 +233,7 @@ export function resetVideo() {
     playIndex = 0;
     playLoop = false;
     playNext = -1;
+    startPosition = 0;
     playerState = "stop";
     videosState = false;
 }
@@ -239,6 +242,11 @@ export function resetVideo() {
 function startProgress(e: Event) {
     if (e.type === "loadeddata") {
         loadAudioTracks();
+    } else if (e.type === "loadedmetadata") {
+        if (startPosition > 0) {
+            player.currentTime = startPosition;
+            startPosition = 0;
+        }
     }
     loadProgress += 200;
     Atomics.store(sharedArray, DataType.VLP, loadProgress);
@@ -346,7 +354,6 @@ function playVideo() {
                     );
                 });
         }
-        Atomics.store(sharedArray, DataType.VSE, playIndex);
     } else {
         loadVideo();
     }
@@ -371,6 +378,7 @@ function nextVideo() {
         playIndex = 0;
         playNext = -1;
         canPlay = false;
+        startPosition = 0;
         clearVideoTracking();
         notifyAll("stop");
         return;
@@ -378,6 +386,7 @@ function nextVideo() {
     playNext = -1;
     playerState = "stop";
     canPlay = false;
+    Atomics.store(sharedArray, DataType.VSE, playIndex);
     loadVideo();
 }
 
@@ -390,6 +399,7 @@ function stopVideo() {
         Atomics.store(sharedArray, DataType.VDX, playIndex);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
         clearVideoTracking();
+        startPosition = 0;
         canPlay = false;
     }
 }
@@ -421,12 +431,19 @@ function resumeVideo(notify = true) {
 function seekVideo(position: number) {
     const video = playList[playIndex];
     if (video && player) {
-        if (position > videoDuration) {
-            position = videoDuration;
-        } else if (position < 0) {
-            position = 0;
+        if (playerState === "stop") {
+            // Replicate Roku behavior and start a few seconds before the seek position
+            startPosition = position < 3 ? 0 : position - 2;
+        } else if (playNext === -1 || playNext === playIndex) {
+            if (position > videoDuration || position < 0) {
+                // Replicate Roku behavior: go to a few seconds before the end of video
+                position = videoDuration - 2;
+            }
+            player.currentTime = position;
+        } else {
+            startPosition = position;
+            nextVideo();
         }
-        player.currentTime = position;
     } else if (video) {
         notifyAll("warning", `[video] Can't find audio to seek: ${playIndex} - ${video}`);
     }

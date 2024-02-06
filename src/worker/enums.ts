@@ -75,8 +75,9 @@ export enum MediaEvent {
     RESUMED,
     FAILED,
     LOADING,
+    START_STREAM,
+    START_PLAY,
     POSITION,
-    STARTED,
 }
 
 // Buffer Data Types enumerator
