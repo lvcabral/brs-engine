@@ -214,6 +214,11 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     processVideoMessages(interpreter: Interpreter) {
+        const selected = Atomics.load(interpreter.sharedArray, DataType.VSE);
+        if (selected >= 0) {
+            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
+            Atomics.store(interpreter.sharedArray, DataType.VSE, -1);
+        }
         const bufferFlag = Atomics.load(interpreter.sharedArray, DataType.BUF);
         if (bufferFlag === BufferType.AUDIO_TRACKS) {
             const strTracks = interpreter.readDataBuffer();
@@ -224,16 +229,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             }
             Atomics.store(interpreter.sharedArray, DataType.BUF, -1);
         }
-        const progress = Atomics.load(interpreter.sharedArray, DataType.VLP);
-        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
-            this.videoProgress = progress;
-            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
-        }
-        const selected = Atomics.load(interpreter.sharedArray, DataType.VSE);
-        if (selected >= 0) {
-            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
-            Atomics.store(interpreter.sharedArray, DataType.VSE, -1);
-        }
         const flags = Atomics.load(interpreter.sharedArray, DataType.VDO);
         const index = Atomics.load(interpreter.sharedArray, DataType.VDX);
         if (flags !== this.videoFlags || index !== this.videoIndex) {
@@ -243,6 +238,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 this.messageQueue.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
                 Atomics.store(interpreter.sharedArray, DataType.VDO, -1);
                 Atomics.store(interpreter.sharedArray, DataType.VDX, -1);
+            }
+        }
+        const progress = Atomics.load(interpreter.sharedArray, DataType.VLP);
+        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
+            this.videoProgress = progress;
+            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
+            if (progress === 1000) {
+                this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.START_PLAY, 0));
             }
         }
         if (this.videoNotificationPeriod >= 1) {
