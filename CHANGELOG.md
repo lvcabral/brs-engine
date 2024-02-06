@@ -1,8 +1,22 @@
+# Changelog
+
+<a name="v1.2.9"></a>
+
+## [v1.2.9 - Fixes: roByteArray and roVideoPlayer](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.9) - 05 Feb 2024
+
+### Release Changes
+
+* Fixed #260 - `roByteArray` - Capacity calculation now behave as Roku by [@lvcabral](https://github.com/lvcabral) in [#261](https://github.com/lvcabral/brs-engine/pull/261)
+* Fixed #255 - `roVideoPlayer` - Seek now behave as Roku by [@lvcabral](https://github.com/lvcabral) in [#262](https://github.com/lvcabral/brs-engine/pull/262)
+* Fixed #263 - Checking the Game Pad buttons map on event handler by [@lvcabral](https://github.com/lvcabral) in [#264](https://github.com/lvcabral/brs-engine/pull/264)
+
+[Full Changelog][v1.2.9]
+
 <a name="v1.2.8"></a>
 
-# [v1.2.8 - Video: Play List Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.8) - 03 Feb 2024
+## [v1.2.8 - Video: Play List Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.8) - 03 Feb 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed #252 - Clear the audio tracks list when switching videos by [@lvcabral](https://github.com/lvcabral) in [#256](https://github.com/lvcabral/brs-engine/pull/256)
 * Fixed #253 - Safari native HLS support not selecting default audio track by [@lvcabral](https://github.com/lvcabral) in [#257](https://github.com/lvcabral/brs-engine/pull/257)
@@ -13,9 +27,9 @@
 
 <a name="v1.2.7"></a>
 
-# [v1.2.7 - Video: HLS Support and Multiple Audios](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.7) - 02 Feb 2024
+## [v1.2.7 - Video: HLS Support and Multiple Audios](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.7) - 02 Feb 2024
 
-## Release Changes
+### Release Changes
 
 * Added full support to HLS and Multiple Audio Tracks - closes #247, #220 by [@lvcabral](https://github.com/lvcabral) in [#249](https://github.com/lvcabral/brs-engine/pull/249)
 * Added support to videos inside the package or downloaded - closes #239 by [@lvcabral](https://github.com/lvcabral) in [#246](https://github.com/lvcabral/brs-engine/pull/246)
@@ -26,9 +40,9 @@
 
 <a name="v1.2.6"></a>
 
-# [v1.2.6 - roScreen fix and Video Codec Detection](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.6) - 28 Jan 2024
+## [v1.2.6 - roScreen fix and Video Codec Detection](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.6) - 28 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed #234 - Return last buffer on `roScreen` methods `getPng` and `roGetByteArray` by [@lvcabral](https://github.com/lvcabral) in [#236](https://github.com/lvcabral/brs-engine/pull/236)
 * Fixed #235 - Updated `ifDraw2D` to support `roScreen` as image source by [@lvcabral](https://github.com/lvcabral) in [#237](https://github.com/lvcabral/brs-engine/pull/237)
@@ -41,9 +55,9 @@
 
 <a name="v1.2.5"></a>
 
-# [v1.2.5 - Fixes on Keyboard Control, Display and XML](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.5) - 22 Jan 2024
+## [v1.2.5 - Fixes on Keyboard Control, Display and XML](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.5) - 22 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed #228 - Prevent repeated `keydown` events by [@lvcabral](https://github.com/lvcabral) in [#230](https://github.com/lvcabral/brs-engine/pull/230)
 * Fixed #229 - Clear buffer on terminate by [@lvcabral](https://github.com/lvcabral) in [#231](https://github.com/lvcabral/brs-engine/pull/231)
@@ -53,9 +67,9 @@
 
 <a name="v1.2.4"></a>
 
-# [v1.2.4 - Fixed Low Resolution and Video Pause](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.4) - 21 Jan 2024
+## [v1.2.4 - Fixed Low Resolution and Video Pause](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.4) - 21 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed #225 - Low Resolution on Screen Resize by [@lvcabral](https://github.com/lvcabral) in [#226](https://github.com/lvcabral/brs-engine/pull/226)
 * Fixed #219 - Video playback is not always pausing when the app get `PAUSE` or `BREAK` commands by [@lvcabral](https://github.com/lvcabral) in [#227](https://github.com/lvcabral/brs-engine/pull/227)
@@ -64,9 +78,9 @@
 
 <a name="v1.2.3"></a>
 
-# [v1.2.3 - Improved Control Simulation](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.3) - 19 Jan 2024
+## [v1.2.3 - Improved Control Simulation](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.3) - 19 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed issue that allowed API to unmute a video when App had it muted by [@lvcabral](https://github.com/lvcabral) in [#221](https://github.com/lvcabral/brs-engine/pull/221)
 * Added new API methods to enable/disable dynamically both keyboard or game pad controllers by [@lvcabral](https://github.com/lvcabral) in [#222](https://github.com/lvcabral/brs-engine/pull/222)
@@ -81,9 +95,9 @@
 
 <a name="v1.2.2"></a>
 
-# [v1.2.2 - Implemented FindMemberFunction()](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.2) - 17 Jan 2024
+## [v1.2.2 - Implemented FindMemberFunction()](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.2) - 17 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed #190 - Implemented global function `FindMemberFunction()`  by [@lvcabral](https://github.com/lvcabral) in [#216](https://github.com/lvcabral/brs-engine/pull/216)
 * Improved Example web app by [@lvcabral](https://github.com/lvcabral) in [#217](https://github.com/lvcabral/brs-engine/pull/217)
@@ -96,9 +110,9 @@
 
 <a name="v1.2.1"></a>
 
-# [v1.2.1 - Mute Audio and Video in Sync](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.1) - 15 Jan 2024
+## [v1.2.1 - Mute Audio and Video in Sync](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.1) - 15 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed API to handle `mute` in sync for both Audio and Video by [@lvcabral](https://github.com/lvcabral) in [#215](https://github.com/lvcabral/brs-engine/pull/215)
 * Fixed bad performance when in full screen mode on 4K monitors by [@lvcabral](https://github.com/lvcabral) in [#214](https://github.com/lvcabral/brs-engine/pull/214)
@@ -111,9 +125,9 @@
 
 <a name="v1.2.0"></a>
 
-# [v1.2.0 - Video Playback and GamePad customization](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 14 Jan 2024
+## [v1.2.0 - Video Playback and GamePad customization](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.0) - 14 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Implemented `roVideoPlayer` component by [@lvcabral](https://github.com/lvcabral) in [#213](https://github.com/lvcabral/brs-engine/pull/213)
 * Added support to customize GamePad buttons mapping by [@lvcabral](https://github.com/lvcabral) in [#210](https://github.com/lvcabral/brs-engine/pull/210)
@@ -124,9 +138,9 @@
 
 <a name="v1.1.11"></a>
 
-# [v1.1.11 - Improved roRegex and fixed Sound issues](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.11) - 05 Jan 2024
+## [v1.1.11 - Improved roRegex and fixed Sound issues](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.11) - 05 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Added support for `g` flag on `roRegex` by [@lvcabral](https://github.com/lvcabral) in [#209](https://github.com/lvcabral/brs-engine/pull/209)
 * Fixed sound related issues by [@lvcabral](https://github.com/lvcabral) in [#208](https://github.com/lvcabral/brs-engine/pull/208)
@@ -138,9 +152,9 @@
 
 <a name="v1.1.10"></a>
 
-# [v1.1.10 - Fixed DBG Command conflict with WAV](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.10) - 04 Jan 2024
+## [v1.1.10 - Fixed DBG Command conflict with WAV](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.10) - 04 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Fixed wav stream conflict with Debug command by [@lvcabral](https://github.com/lvcabral) in [#207](https://github.com/lvcabral/brs-engine/pull/207)
   * Extracted enumerators from `util.js` into `enums.js` to reuse inside the worker
@@ -150,9 +164,9 @@
 
 <a name="v1.1.9"></a>
 
-# [v1.1.9 - GamePad support and FPS Limitation](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.9) - 03 Jan 2024
+## [v1.1.9 - GamePad support and FPS Limitation](https://github.com/lvcabral/brs-engine/releases/tag/v1.1.9) - 03 Jan 2024
 
-## Release Changes
+### Release Changes
 
 * Updated package name on README.md badges by [@lvcabral](https://github.com/lvcabral) in [#200](https://github.com/lvcabral/brs-engine/pull/200)
 * Fixed [#201](https://github.com/lvcabral/brs-engine/issues/201) - Prevent Exception when SharedArrayBuffer is not supported by [@lvcabral](https://github.com/lvcabral) in [#202](https://github.com/lvcabral/brs-engine/pull/202)
@@ -175,7 +189,7 @@
 
 <a name="v1.0.0"></a>
 
-# [v1.0.0 - Simulation Engine Release](https://github.com/lvcabral/brs-engine/releases/tag/v1.0.0) - 15 Dec 2023
+## [v1.0.0 - Simulation Engine Release](https://github.com/lvcabral/brs-engine/releases/tag/v1.0.0) - 15 Dec 2023
 
 After 4 years of Alpha and Beta stages, the project is stable and performant enough to finally be released as version 1.0 and with that, we decided to give it a new name:
 
@@ -185,7 +199,7 @@ The term _simulation engine_ was chosen instead of the former _emulator_ to bett
 
 In this release the [new CLI](/docs/run-as-cli.md) was introduced, still with some limitations (e.g. no `OffScreenCanvas` support), but allowing basic BrightScript code to be executed, either via REPL or files. It also performs the encryption of a `.zip` file into a `.bpk` package to protect the source code.
 
-### Release Changes
+#### Release Changes
 
 * Renamed package for `brs-engine`
 * Renamed libraries to `brs.api.js` and `brs.worker.js`
@@ -226,7 +240,7 @@ In this release the [new CLI](/docs/run-as-cli.md) was introduced, still with so
 
 <a name="v0.10.22"></a>
 
-# [v0.10.22 - New API and Boosted Performance](https://github.com/lvcabral/brs-emu/releases/tag/v0.10.22) - 10 Sep 2023
+## [v0.10.22 - New API and Boosted Performance](https://github.com/lvcabral/brs-emu/releases/tag/v0.10.22) - 10 Sep 2023
 
 This release was a result of months of refactoring work and performance improvements. 
 
@@ -273,7 +287,7 @@ This release was a result of months of refactoring work and performance improvem
 
 <a name="v0.9.0-emu"></a>
 
-# [v0.9.0 - Improved ECP and BrightScript support](https://github.com/lvcabral/brs-emu/releases/tag/v0.9.0-emu) - 28 Jun 2021
+## [v0.9.0 - Improved ECP and BrightScript support](https://github.com/lvcabral/brs-emu/releases/tag/v0.9.0-emu) - 28 Jun 2021
 
 This release brings the integration of improvements and fixes from the `brs` interpreter up to their **v0.43**. Also several improvements
 
@@ -319,7 +333,7 @@ This release brings the integration of improvements and fixes from the `brs` int
 
 <a name="v0.8.1-emu"></a>
 
-# [v0.8.1 - Fixes and Security Patches](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.1-emu) - 09 Jun 2021
+## [v0.8.1 - Fixes and Security Patches](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.1-emu) - 09 Jun 2021
 
 This release brings bug fixes, support for new Chrome security policies and the desktop application has upgraded dependencies including Electron's bump to v9.
 
@@ -334,7 +348,7 @@ This release brings bug fixes, support for new Chrome security policies and the 
 
 <a name="v0.8.0-emu"></a>
 
-# [v0.8.0 - Localization Support](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.0-emu) - 11 Mar 2020
+## [v0.8.0 - Localization Support](https://github.com/lvcabral/brs-emu/releases/tag/v0.8.0-emu) - 11 Mar 2020
 
 This release brings full support for channel localization. The desktop application has a new menu with the locales with the same options available on Roku devices.
 
@@ -358,7 +372,7 @@ This release brings full support for channel localization. The desktop applicati
 
 <a name="v0.7.2-emu"></a>
 
-# [v0.7.2 - First Beta Release](https://github.com/lvcabral/brs-emu/releases/tag/v0.7.2-emu) - 17 Nov 2019
+## [v0.7.2 - First Beta Release](https://github.com/lvcabral/brs-emu/releases/tag/v0.7.2-emu) - 17 Nov 2019
 
 * (brs) Library now supports `roUrlTransfer` and `roUrlEvent`
 * (brs) Added support to **bmp** images, and better file type detection
@@ -385,7 +399,7 @@ This release brings full support for channel localization. The desktop applicati
 
 <a name="v0.6.0-emu"></a>
 
-# [v0.6.0 - Audio Playback and new Display Modes](https://github.com/lvcabral/brs-emu/releases/tag/v0.6.0-emu) - 24 Oct 2019
+## [v0.6.0 - Audio Playback and new Display Modes](https://github.com/lvcabral/brs-emu/releases/tag/v0.6.0-emu) - 24 Oct 2019
 
 * (app,web) Support for audio playback from `roAudioResource` and `roAudioPlayer`
 * (app,web) Support for **SD** and **FHD** display modes
@@ -400,7 +414,7 @@ This release brings full support for channel localization. The desktop applicati
 
 <a name="v0.5.0-emu"></a>
 
-# [v0.5.0 - Desktop Applications and Library Fixes](https://github.com/lvcabral/brs-emu/releases/tag/v0.5.0-emu) - 05 Oct 2019
+## [v0.5.0 - Desktop Applications and Library Fixes](https://github.com/lvcabral/brs-emu/releases/tag/v0.5.0-emu) - 05 Oct 2019
 
 This version brings the first release of the desktop application and several fixes and improvements:
 
@@ -423,7 +437,7 @@ This version brings the first release of the desktop application and several fix
 
 <a name="v0.4.0-emu"></a>
 
-# [v0.4.0 - Support for rgba on Draw Object methods](https://github.com/lvcabral/brs-emu/releases/tag/v0.4.0-emu) - 25 Sep 2019
+## [v0.4.0 - Support for rgba on Draw Object methods](https://github.com/lvcabral/brs-emu/releases/tag/v0.4.0-emu) - 25 Sep 2019
 
 This release has the following changes:
 
@@ -448,7 +462,7 @@ This release has the following changes:
 
 <a name="v0.3.0-emu"></a>
 
-# [v0.3.0 - Several fixes and improvements](https://github.com/lvcabral/brs-emu/releases/tag/v0.3.0-emu) - 16 Sep 2019
+## [v0.3.0 - Several fixes and improvements](https://github.com/lvcabral/brs-emu/releases/tag/v0.3.0-emu) - 16 Sep 2019
 
 This releases adds a few font related features as follows:
 
@@ -474,7 +488,7 @@ This releases adds a few font related features as follows:
 
 <a name="v0.2.0-emu"></a>
 
-# [v0.2.0 - Custom Fonts and Metrics](https://github.com/lvcabral/brs-emu/releases/tag/v0.2.0-emu) - 09 Sep 2019
+## [v0.2.0 - Custom Fonts and Metrics](https://github.com/lvcabral/brs-emu/releases/tag/v0.2.0-emu) - 09 Sep 2019
 
 This releases adds a few font related features as follows:
 
@@ -489,7 +503,7 @@ Included a new dependency to [opentype.js](https://www.npmjs.com/package/opentyp
 
 <a name="v0.1.0-emu"></a>
 
-# [v0.1.0 - First Emulator Alpha Release](https://github.com/lvcabral/brs-emu/releases/tag/v0.1.0-emu) - 08 Sep 2019
+## [v0.1.0 - First Emulator Alpha Release](https://github.com/lvcabral/brs-emu/releases/tag/v0.1.0-emu) - 08 Sep 2019
 
 This is the prototype release of the 2D API emulator, forked from the original BRS project.
 The following is the list of components implemented (some partially or just mocked):
@@ -518,6 +532,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.2.9]: https://github.com/lvcabral/brs-engine/compare/v1.2.8...v1.2.9
 [v1.2.8]: https://github.com/lvcabral/brs-engine/compare/v1.2.7...v1.2.8
 [v1.2.7]: https://github.com/lvcabral/brs-engine/compare/v1.2.6...v1.2.7
 [v1.2.6]: https://github.com/lvcabral/brs-engine/compare/v1.2.5...v1.2.6
