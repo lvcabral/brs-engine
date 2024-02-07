@@ -46,7 +46,7 @@ customKeys.set("ShiftLeft", "playonly"); // Support for Prince of Persia
 customKeys.set("Shift+ArrowRight", "right"); // Support for Prince of Persia
 customKeys.set("Shift+ArrowLeft", "left"); // Support for Prince of Persia
 customKeys.set("Shift+ArrowUp", "up"); // Support for Prince of Persia
-customKeys.set("Shift+ArrowDown", "down");// Support for Prince of Persia
+customKeys.set("Shift+ArrowDown", "down"); // Support for Prince of Persia
 
 // Initialize device and subscribe to events
 libVersion.innerHTML = brs.getVersion();
