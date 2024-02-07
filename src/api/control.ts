@@ -226,23 +226,24 @@ function keyUpHandler(event: KeyboardEvent) {
     handleKeyboardEvent(event, 100);
 }
 function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
-    if (controls.keyboard) {
-        let keyCode: string = event.code;
-        if (event.shiftKey && !keyCode.startsWith("Shift")) {
-            keyCode = "Shift+" + keyCode;
-        } else if (event.ctrlKey && !keyCode.startsWith("Control")) {
-            keyCode = "Control+" + keyCode;
-        } else if (event.altKey && !keyCode.startsWith("Alt")) {
-            keyCode = "Alt+" + keyCode;
-        } else if (event.metaKey && !keyCode.startsWith("Meta")) {
-            keyCode = "Meta+" + keyCode;
-        }
-        const key = keysMap.get(keyCode);
-        if (key && key.toLowerCase() !== "ignore") {
-            sendKey(key, mod, RemoteType.IR);
-            if (mod === 0) {
-                event.preventDefault();
-            }
+    if (!controls.keyboard) {
+        return;
+    }
+    let keyCode: string = event.code;
+    if (event.shiftKey && !keyCode.startsWith("Shift")) {
+        keyCode = "Shift+" + keyCode;
+    } else if (event.ctrlKey && !keyCode.startsWith("Control")) {
+        keyCode = "Control+" + keyCode;
+    } else if (event.altKey && !keyCode.startsWith("Alt")) {
+        keyCode = "Alt+" + keyCode;
+    } else if (event.metaKey && !keyCode.startsWith("Meta")) {
+        keyCode = "Meta+" + keyCode;
+    }
+    const key = keysMap.get(keyCode);
+    if (key && key.toLowerCase() !== "ignore") {
+        sendKey(key, mod, RemoteType.IR);
+        if (mod === 0) {
+            event.preventDefault();
         }
     }
 }
