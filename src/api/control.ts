@@ -79,7 +79,6 @@ const buttonsMap = new Map([
 // Roku Remote Mapping
 const rokuKeys: Map<string, number> = new Map([
     ["back", 0],
-    ["back", 0],
     ["up", 2],
     ["down", 3],
     ["left", 4],
@@ -94,6 +93,7 @@ const rokuKeys: Map<string, number> = new Map([
     ["enter", 15],
     ["a", 17],
     ["b", 18],
+    ["playonly", 22],
     ["stop", 23],
 ]);
 
@@ -226,23 +226,24 @@ function keyUpHandler(event: KeyboardEvent) {
     handleKeyboardEvent(event, 100);
 }
 function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
-    if (controls.keyboard) {
-        let keyCode: string = event.code;
-        if (event.shiftKey) {
-            keyCode = "Shift+" + keyCode;
-        } else if (event.ctrlKey) {
-            keyCode = "Control+" + keyCode;
-        } else if (event.altKey) {
-            keyCode = "Alt+" + keyCode;
-        } else if (event.metaKey) {
-            keyCode = "Meta+" + keyCode;
-        }
-        const key = keysMap.get(keyCode);
-        if (key && key.toLowerCase() !== "ignore") {
-            sendKey(key, mod, RemoteType.IR);
-            if (mod === 0) {
-                event.preventDefault();
-            }
+    if (!controls.keyboard) {
+        return;
+    }
+    let keyCode: string = event.code;
+    if (event.shiftKey && !keyCode.startsWith("Shift")) {
+        keyCode = "Shift+" + keyCode;
+    } else if (event.ctrlKey && !keyCode.startsWith("Control")) {
+        keyCode = "Control+" + keyCode;
+    } else if (event.altKey && !keyCode.startsWith("Alt")) {
+        keyCode = "Alt+" + keyCode;
+    } else if (event.metaKey && !keyCode.startsWith("Meta")) {
+        keyCode = "Meta+" + keyCode;
+    }
+    const key = keysMap.get(keyCode);
+    if (key && key.toLowerCase() !== "ignore") {
+        sendKey(key, mod, RemoteType.IR);
+        if (mod === 0) {
+            event.preventDefault();
         }
     }
 }
