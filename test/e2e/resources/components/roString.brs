@@ -25,4 +25,9 @@ sub main()
     print "%F0%9F%90%B6".decodeUriComponent() ' => 🐶
     print "".isEmpty() ' => true
     print "<3".isEmpty() ' => false
+
+    print "1234567890".startsWith("123") ' => true
+    print "1234567890".endsWith("890") ' => true
+    print "1234567890".startsWith("567", 4) ' => true
+    print "1234567890".endsWith("567", 7) ' => true
 end sub
