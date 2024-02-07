@@ -209,6 +209,10 @@ describe("end to end brightscript functions", () => {
             "🐶", // uri-encoded dog emoji, decoded
             "true", // isEmpty for empty string
             "false", // isEmpty for filled string
+            "true", // startsWith no position
+            "true", // startsWith with position
+            "true", // endsWith no position
+            "true", // endsWith with position
         ]);
     });
 
