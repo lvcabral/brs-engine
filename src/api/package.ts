@@ -240,9 +240,9 @@ export function updateAppZip(source: Uint8Array, iv: string) {
         if (!filePath.toLowerCase().startsWith("source")) {
             newZip[filePath] = currentZip[filePath];
         }
-        newZip["source/data"] = [source, { level: 0 }];
-        newZip["source/var"] = [strToU8(iv), { level: 0 }];
     }
+    newZip["source/data"] = [source, { level: 0 }];
+    newZip["source/var"] = [strToU8(iv), { level: 0 }];
     return zipSync(newZip, { level: 6 });
 }
 
