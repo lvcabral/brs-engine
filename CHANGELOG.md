@@ -1,5 +1,19 @@
 # Changelog
 
+
+<a name="v1.2.10"></a>
+
+## [v1.2.10 - New roString methods and Keyboard mapping](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.10) - 12 Feb 2024
+
+### Release Changes
+
+* Fixed #265 - Implemented `roString` methods `startsWith()` and `endsWith()` by [@lvcabral](https://github.com/lvcabral) in [#266](https://github.com/lvcabral/brs-engine/pull/266)
+* Fixed #267 - Allow map modification keys (Shift, Control, Alt and Meta) independently by [@lvcabral](https://github.com/lvcabral) in [#268](https://github.com/lvcabral/brs-engine/pull/268)
+* Improved performance of creating encrypted package by [@lvcabral](https://github.com/lvcabral) in [#269](https://github.com/lvcabral/brs-engine/pull/269)
+
+
+[Full Changelog][v1.2.10]
+
 <a name="v1.2.9"></a>
 
 ## [v1.2.9 - Fixes: roByteArray and roVideoPlayer](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.9) - 05 Feb 2024
@@ -532,6 +546,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.2.10]: https://github.com/lvcabral/brs-engine/compare/v1.2.9...v1.2.10
 [v1.2.9]: https://github.com/lvcabral/brs-engine/compare/v1.2.8...v1.2.9
 [v1.2.8]: https://github.com/lvcabral/brs-engine/compare/v1.2.7...v1.2.8
 [v1.2.7]: https://github.com/lvcabral/brs-engine/compare/v1.2.6...v1.2.7
