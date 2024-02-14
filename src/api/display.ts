@@ -149,10 +149,6 @@ export function drawSplashScreen(imgBmp: ImageBitmap, icon = false) {
             const y = Math.trunc((h - imgBmp.height) / 2);
             bufferCtx.clearRect(0, 0, w, h);
             bufferCtx.drawImage(imgBmp, x, y);
-            bufferCtx.textAlign = "center";
-            bufferCtx.fillStyle = "white";
-            bufferCtx.font = "30px sans-serif";
-            bufferCtx.fillText("Loading...", w / 2, y + imgBmp.height + 45);
         } else {
             bufferCtx.drawImage(imgBmp, 0, 0, w, h);
         }
