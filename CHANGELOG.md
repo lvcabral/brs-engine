@@ -1,5 +1,17 @@
 # Changelog
 
+<a name="v1.2.10"></a>
+
+## [v1.2.11 - New API Event: `control`](https://github.com/lvcabral/brs-engine/releases/tag/v1.2.10) - 14 Feb 2024
+
+### Release Changes
+
+* Added `control` event triggered when `keydown` and `keyup` are sent to the engine by[@lvcabral](https://github.com/lvcabral) in [#270(https://github.com/lvcabral/brs-engine/pull/270)
+  * Created to allow the apps to have access to the control keys
+  * Updated API documentation
+* Removed "Loading..." message when running apps without splash, only showing the icon (Roku updated behavior)
+
+[Full Changelog][v1.2.11]
 
 <a name="v1.2.10"></a>
 
@@ -546,6 +558,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.2.11]: https://github.com/lvcabral/brs-engine/compare/v1.2.10...v1.2.11
 [v1.2.10]: https://github.com/lvcabral/brs-engine/compare/v1.2.9...v1.2.10
 [v1.2.9]: https://github.com/lvcabral/brs-engine/compare/v1.2.8...v1.2.9
 [v1.2.8]: https://github.com/lvcabral/brs-engine/compare/v1.2.7...v1.2.8
