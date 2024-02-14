@@ -42,6 +42,7 @@ Check the [documentation](docs/integrating.md) to learn how to start using it. T
 | started    | Triggered when the engine started running the source code | object: `{id: string, file: string, title: string, subtitle: string, version: string, running: boolean}` |
 | closed     | Triggered when the engine terminated the execution of the source code | string: the exit reason based on [Roku documentation](https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter) |
 | reset      | Triggered when the `RebootSystem()` function is executed from the engine | null: Nothing is returned as data |
+| control    | Triggered when a control key is sent to the engine | object: `{key: string, mod: number}`. The property `key` contains an [ECP key code](https://developer.roku.com/en-gb/docs/developer-program/dev-tools/external-control-api.md#keypress-key-values) and `mod` contains `0` for keydown or `100` for keyup |
 | redraw     | Triggered when the display canvas is redrawn/resized | boolean: If `true` the display canvas is in **full screen** mode |
 | resolution | Triggered when the emulated screen resolution changes (controlled via BrightScript) | object: `{width: integer, height: integer}` |
 | debug      | Triggered when debug messages arrive from the worker library (BrightScript Interpreter) | object: `{level: string, content: string}`, levels are: `print`, `beacon`, `warning`, `error`, `stop`, `pause`, `continue` |

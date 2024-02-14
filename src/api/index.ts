@@ -175,6 +175,8 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
                 }
                 home.play();
             }
+        } else if (event === "control") {
+            notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         }

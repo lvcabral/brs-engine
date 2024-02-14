@@ -171,27 +171,34 @@ export function enableSendKeys(enable: boolean) {
 }
 
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
-    if (sendKeysEnabled) {
-        key = key.toLowerCase();
-        if (key === "home" && mod === 0) {
+    if (!sendKeysEnabled) {
+        return;
+    }
+    key = key.toLowerCase();
+    if (key === "home") {
+        if (mod === 0) {
             notifyAll(key);
-        } else if (key === "break") {
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
-        } else if (rokuKeys.has(key)) {
-            const code = rokuKeys.get(key);
-            if (typeof code !== "undefined") {
-                const next = getNext();
-                Atomics.store(sharedArray, DataType.RID + next, type + index);
-                Atomics.store(sharedArray, DataType.MOD + next, mod);
-                Atomics.store(sharedArray, DataType.KEY + next, code + mod);
-            }
-        } else if (key.slice(0, 4).toLowerCase() === "lit_") {
-            if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-                const next = getNext();
-                Atomics.store(sharedArray, DataType.RID + next, type + index);
-                Atomics.store(sharedArray, DataType.MOD + next, mod);
-                Atomics.store(sharedArray, DataType.KEY + next, key.charCodeAt(4) + mod);
-            }
+        }
+        notifyAll("control", { key: key, mod: mod });
+    } else if (key === "break") {
+        Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+        notifyAll("control", { key: key, mod: mod });
+    } else if (rokuKeys.has(key)) {
+        const code = rokuKeys.get(key);
+        if (typeof code !== "undefined") {
+            const next = getNext();
+            Atomics.store(sharedArray, DataType.RID + next, type + index);
+            Atomics.store(sharedArray, DataType.MOD + next, mod);
+            Atomics.store(sharedArray, DataType.KEY + next, code + mod);
+            notifyAll("control", { key: key, mod: mod });
+        }
+    } else if (key.slice(0, 4).toLowerCase() === "lit_") {
+        if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
+            const next = getNext();
+            Atomics.store(sharedArray, DataType.RID + next, type + index);
+            Atomics.store(sharedArray, DataType.MOD + next, mod);
+            Atomics.store(sharedArray, DataType.KEY + next, key.charCodeAt(4) + mod);
+            notifyAll("control", { key: key, mod: mod });
         }
     }
 }
