@@ -9,7 +9,7 @@ import { rgbaIntToHex } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
-import { drawImageToContext, drawObjectToComponent } from "../draw2d";
+import { drawImageToContext, drawObjectToComponent, drawRotatedObject } from "../draw2d";
 import UPNG from "upng-js";
 
 export class RoScreen extends BrsComponent implements BrsValue {
@@ -254,14 +254,15 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            const positionX = x.getValue();
-            const positionY = y.getValue();
-            const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save();
-            ctx.translate(positionX, positionY);
-            ctx.rotate(angleInRad);
-            this.drawImage(object, rgba, 0, 0);
-            ctx.restore();
+            drawRotatedObject(
+                this,
+                ctx,
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                theta.getValue()
+            );
             return BrsBoolean.from(this.isDirty);
         },
     });
@@ -333,14 +334,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ctx.save();
             ctx.translate(positionX, positionY);
             ctx.rotate(angleInRad);
-            this.drawImage(
-                object,
-                rgba,
-                0,
-                0,
-                scaleX.getValue(),
-                scaleY.getValue()
-            );
+            this.drawImage(object, rgba, 0, 0, scaleX.getValue(), scaleY.getValue());
             ctx.globalAlpha = 1.0;
             ctx.restore();
             return BrsBoolean.from(this.isDirty);

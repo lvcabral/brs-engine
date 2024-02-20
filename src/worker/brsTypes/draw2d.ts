@@ -262,3 +262,21 @@ export function drawImageToContext(
     }
     return true;
 }
+
+export function drawRotatedObject(
+    component: BrsDraw2D,
+    ctx: OffscreenCanvasRenderingContext2D,
+    object: BrsComponent,
+    rgba: Int32 | BrsInvalid,
+    x: number,
+    y: number,
+    angle: number
+): boolean {
+    const angleInRad = (-angle * Math.PI) / 180;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angleInRad);
+    const didDraw = component.drawImage(object, rgba, 0, 0);
+    ctx.restore();
+    return didDraw;
+}

@@ -8,7 +8,7 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
-import { drawImageToContext, drawObjectToComponent } from "../draw2d";
+import { drawImageToContext, drawObjectToComponent, drawRotatedObject } from "../draw2d";
 import UPNG from "upng-js";
 
 export class RoRegion extends BrsComponent implements BrsValue {
@@ -620,14 +620,15 @@ export class RoRegion extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.bitmap.getContext();
-            const positionX = x.getValue();
-            const positionY = y.getValue();
-            const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save();
-            ctx.translate(positionX, positionY);
-            ctx.rotate(angleInRad);
-            const didDraw = this.drawImage(object, rgba, 0, 0);
-            ctx.restore();
+            const didDraw = drawRotatedObject(
+                this,
+                ctx,
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                theta.getValue()
+            );
             return BrsBoolean.from(didDraw);
         },
     });
