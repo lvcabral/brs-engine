@@ -49,6 +49,7 @@ keysMap.set("PageUp", "fwd");
 keysMap.set("Insert", "info");
 keysMap.set("Control+KeyA", "a");
 keysMap.set("Control+KeyZ", "b");
+keysMap.set("F10", "volumemute");
 
 // Game Pad Mapping
 const axesMap = new Map([
@@ -73,7 +74,7 @@ const buttonsMap = new Map([
     [14, "left"],
     [15, "right"],
     [16, "info"],
-    [17, "home"],
+    [17, "volumemute"],
 ]);
 
 // Roku Remote Mapping
@@ -90,6 +91,7 @@ const rokuKeys: Map<string, number> = new Map([
     ["info", 10],
     ["backspace", 11],
     ["play", 13],
+    ["pause", 13],
     ["enter", 15],
     ["a", 17],
     ["b", 18],
@@ -171,15 +173,14 @@ export function enableSendKeys(enable: boolean) {
 }
 
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
-    if (!sendKeysEnabled) {
-        return;
-    }
     key = key.toLowerCase();
-    if (key === "home") {
+    if (["home", "volumemute", "poweroff"].includes(key)) {
         if (mod === 0) {
             notifyAll(key);
         }
         notifyAll("control", { key: key, mod: mod });
+    } else if (!sendKeysEnabled) {
+        return;
     } else if (key === "break") {
         Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
         notifyAll("control", { key: key, mod: mod });

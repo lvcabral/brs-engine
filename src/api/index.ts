@@ -175,6 +175,12 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
                 }
                 home.play();
             }
+        } else if (event === "poweroff") {
+            if (currentApp.running) {
+                terminate("EXIT_POWER_MODE");
+            }
+        } else if (event === "volumemute") {
+            setAudioMute(!getAudioMute());
         } else if (event === "control") {
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
