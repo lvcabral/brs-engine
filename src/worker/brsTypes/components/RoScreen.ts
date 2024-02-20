@@ -9,7 +9,7 @@ import { rgbaIntToHex } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
-import { drawImageToContext, drawObjectToComponent } from "../draw2d";
+import { drawImageToContext, drawObjectToComponent, drawRotatedObject } from "../draw2d";
 import UPNG from "upng-js";
 
 export class RoScreen extends BrsComponent implements BrsValue {
@@ -83,6 +83,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 this.drawObject,
                 this.drawRotatedObject,
                 this.drawScaledObject,
+                this.drawTransformedObject,
                 this.drawLine,
                 this.drawPoint,
                 this.drawRect,
@@ -253,14 +254,15 @@ export class RoScreen extends BrsComponent implements BrsValue {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.context[this.currentBuffer];
-            const positionX = x.getValue();
-            const positionY = y.getValue();
-            const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save();
-            ctx.translate(positionX, positionY);
-            ctx.rotate(angleInRad);
-            this.drawImage(object, rgba, 0, 0);
-            ctx.restore();
+            drawRotatedObject(
+                this,
+                ctx,
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                theta.getValue()
+            );
             return BrsBoolean.from(this.isDirty);
         },
     });
@@ -297,6 +299,44 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 scaleY.getValue()
             );
             ctx.globalAlpha = 1.0;
+            return BrsBoolean.from(this.isDirty);
+        },
+    });
+
+    /** Draw the source object, at position x,y, rotated by theta and scaled horizontally by scaleX and vertically by scaleY. */
+    private drawTransformedObject = new Callable("drawTransformedObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("theta", ValueKind.Float),
+                new StdlibArgument("scaleX", ValueKind.Float),
+                new StdlibArgument("scaleY", ValueKind.Float),
+                new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Object, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            theta: Float,
+            scaleX: Float,
+            scaleY: Float,
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
+        ) => {
+            const ctx = this.context[this.currentBuffer];
+            const positionX = x.getValue();
+            const positionY = y.getValue();
+            const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.save();
+            ctx.translate(positionX, positionY);
+            ctx.rotate(angleInRad);
+            this.drawImage(object, rgba, 0, 0, scaleX.getValue(), scaleY.getValue());
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
             return BrsBoolean.from(this.isDirty);
         },
     });
