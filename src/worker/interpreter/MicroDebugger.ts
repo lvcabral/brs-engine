@@ -241,9 +241,12 @@ function debugLocalVariables(environment: Environment) {
     let fnc = environment.getList(Scope.Function);
     fnc.forEach((value, key) => {
         if (PrimitiveKinds.has(value.kind)) {
-            debugMsg += `${key.padEnd(16)} ${ValueKind.toString(
-                value.kind
-            )} val:${value.toString()}\r\n`;
+            let text = value.toString();
+            let lf = text.length <= 94 ? "\r\n" : "...\r\n";
+            if (value.kind === ValueKind.String) {
+                text = `"${text.substring(0, 94)}"`;
+            }
+            debugMsg += `${key.padEnd(16)} ${ValueKind.toString(value.kind)} val:${text}${lf}`;
         } else if (isIterable(value)) {
             debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
                 value.getElements().length
@@ -251,7 +254,7 @@ function debugLocalVariables(environment: Environment) {
         } else if (value.kind === ValueKind.Object) {
             debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
         } else {
-            debugMsg += `${key.padEnd(17)}${value.toString()}\r\n`;
+            debugMsg += `${key.padEnd(17)}${value.toString().substring(0, 94)}\r\n`;
         }
     });
     postMessage(`print,${debugMsg}`);
