@@ -1065,6 +1065,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 });
             } catch (reason: any) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
+                    if (reason.message === "debug-exit") {
+                        throw new Error(reason.message);
+                    }
                     let message = `${reason.message}\n`;
                     if (!message.startsWith("Backtrace:") && !message.startsWith("-->")) {
                         if (reason instanceof BrsError) {
@@ -1083,6 +1086,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         message += `--> Function ${functionName}()`;
                     }
                     throw new Error(message);
+                } else if (reason.message === "debug-exit") {
+                    throw new Error(reason.message);
                 }
 
                 let returnedValue = (reason as Stmt.ReturnValue).value;
@@ -1688,6 +1693,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.checkBreakCommand()) {
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this._currLoc)) {
+                    this.options.stopOnCrash = false;
                     throw new BlockEnd("debug-exit", statement.location);
                 }
             }
