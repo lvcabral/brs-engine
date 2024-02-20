@@ -479,8 +479,11 @@ function runSource(
             interpreter.exec(allStatements, input);
         }
     } catch (err: any) {
-        postMessage(`error,${err.message}`);
-        endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+        endReason = "EXIT_USER_NAV";
+        if (err.message !== "debug-exit") {
+            postMessage(`error,${err.message}`);
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+        }
     }
     return { endReason: endReason };
 }
@@ -581,12 +584,14 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
             allStatements.push(...libParse.statements);
         }
     });
+    endReason = "EXIT_USER_NAV";
     try {
-        endReason = "EXIT_USER_NAV";
         interpreter.exec(allStatements, input);
     } catch (err: any) {
-        postMessage(`error,${err.message}`);
-        endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+        if (err.message !== "debug-exit") {
+            postMessage(`error,${err.message}`);
+            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+        }
     }
 }
 
