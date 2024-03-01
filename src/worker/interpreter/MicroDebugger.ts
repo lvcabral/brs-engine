@@ -12,6 +12,10 @@ import {
     Increment,
     IndexedSet,
     Print,
+    Function,
+    If,
+    For,
+    While
 } from "../parser/Statement";
 import { DataType, DebugCommand } from "../enums";
 
@@ -98,6 +102,9 @@ function debugHandleExpr(interpreter: Interpreter) {
     const parser = new Parser();
     interpreter.debugMode = false;
     let expr = interpreter.readDataBuffer();
+    if (expr.trim().length === 0) {
+        return;
+    }
     const exprScan = lexer.scan(`${expr}\n`, "debug");
     if (exprScan.errors.length > 0) {
         postMessage(`error,${exprScan.errors[0].message}`);
@@ -123,16 +130,22 @@ function debugHandleExpr(interpreter: Interpreter) {
                 interpreter.visitExpression(exprStmt);
             } else if (exprStmt instanceof Increment) {
                 interpreter.visitIncrement(exprStmt);
+            } else if (exprStmt instanceof If) {
+                interpreter.visitIf(exprStmt);
+            } else if (exprStmt instanceof For) {
+                interpreter.visitFor(exprStmt);
             } else if (exprStmt instanceof ForEach) {
                 interpreter.visitForEach(exprStmt);
+            } else if (exprStmt instanceof While) {
+                interpreter.visitWhile(exprStmt);
+            } else if (exprStmt instanceof Function) {
+                interpreter.visitNamedFunction(exprStmt);
             } else {
                 postMessage(`print,Debug command/expression not supported!\r\n`);
             }
         } catch (err: any) {
             // ignore to avoid crash
         }
-    } else {
-        postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
     }
 }
 

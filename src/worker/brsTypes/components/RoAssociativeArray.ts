@@ -59,7 +59,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
                 .sort()
                 .map(([key, value]) => `    ${key}: ${value.toString(this)}`),
             "}",
-        ].join("\n");
+        ].join("\r\n");
     }
 
     equalTo(other: BrsType) {
