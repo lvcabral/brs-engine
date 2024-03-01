@@ -15,7 +15,7 @@ import {
     Function,
     If,
     For,
-    While
+    While,
 } from "../parser/Statement";
 import { DataType, DebugCommand } from "../enums";
 

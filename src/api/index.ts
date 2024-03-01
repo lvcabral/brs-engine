@@ -369,7 +369,7 @@ export function debug(command: string): boolean {
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
         }
         handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
-        if  (cmd === DebugCommand.BREAK || cmd === DebugCommand.PAUSE) {
+        if (cmd === DebugCommand.BREAK || cmd === DebugCommand.PAUSE) {
             handled = true;
         }
     }
