@@ -83,6 +83,7 @@ export {
     enableStats,
 } from "./display";
 
+let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
 
@@ -113,14 +114,15 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     /// #if DEBUG
     initMsg += " - dev";
     /// #endif
+    if (typeof options.disableDebug === "boolean") {
+        disableDebug = options.disableDebug;
+    }
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
-
     if (debugToConsole) {
         console.info(initMsg);
     }
-
     if (typeof options.showStats === "boolean") {
         showStats = options.showStats;
     }
@@ -241,7 +243,9 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     if (typeof options.password === "string") {
         currentApp.password = options.password;
     }
-    if (typeof options.debugOnCrash === "boolean") {
+    if (disableDebug) {
+        currentApp.debugOnCrash = false;
+    } else if (typeof options.debugOnCrash === "boolean") {
         currentApp.debugOnCrash = options.debugOnCrash;
     }
     if (typeof brsWorker !== "undefined") {
@@ -326,7 +330,7 @@ export function sendKeyPress(key: string, delay = 300, remote?: RemoteType, inde
 // Telnet Debug API
 export function debug(command: string): boolean {
     let handled = false;
-    if (currentApp.running && command && command.length > 0) {
+    if (!disableDebug && currentApp.running && command && command.length > 0) {
         const commandsMap = new Map([
             ["bt", DebugCommand.BT],
             ["cont", DebugCommand.CONT],
@@ -352,10 +356,7 @@ export function debug(command: string): boolean {
             ["break", DebugCommand.BREAK],
             ["pause", DebugCommand.PAUSE],
         ]);
-        let exprs = command
-            .toString()
-            .trim()
-            .split(/(?<=^\S+)\s/);
+        let exprs = command.trim().split(/(?<=^\S+)\s/);
         let cmd = commandsMap.get(exprs[0].toLowerCase());
         if (cmd !== undefined && exprs.length === 1) {
             Atomics.store(sharedArray, DataType.DBG, cmd);
@@ -368,6 +369,9 @@ export function debug(command: string): boolean {
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
         }
         handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
+        if  (cmd === DebugCommand.BREAK || cmd === DebugCommand.PAUSE) {
+            handled = true;
+        }
     }
     return handled;
 }
@@ -481,6 +485,9 @@ function workerCallback(event: MessageEvent) {
 
 // Debug Messages Handler
 function deviceDebug(data: string) {
+    if (disableDebug) {
+        return;
+    }
     const level = data.split(",")[0];
     const content = data.slice(level.length + 1);
     notifyAll("debug", { level: level, content: content });

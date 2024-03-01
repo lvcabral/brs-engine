@@ -103,9 +103,13 @@ const rokuKeys: Map<string, number> = new Map([
 const controls = { keyboard: true, gamePads: true };
 let sharedArray: Int32Array;
 let sendKeysEnabled = false;
+let disableDebug: boolean = false;
 
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
+    if (typeof options.disableDebug === "boolean") {
+        disableDebug = options.disableDebug;
+    }
     if (typeof options.disableKeys === "boolean") {
         controls.keyboard = !options.disableKeys;
     }
@@ -182,8 +186,10 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
     } else if (!sendKeysEnabled) {
         return;
     } else if (key === "break") {
-        Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
-        notifyAll("control", { key: key, mod: mod });
+        if (!disableDebug) {
+            Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+            notifyAll("control", { key: key, mod: mod });
+        }
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
