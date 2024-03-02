@@ -243,7 +243,7 @@ function messageCallback(message: any, _?: any) {
                 console.info(chalk.redBright(msg));
                 process.exitCode = 1;
             }
-        } else if (mType !== "start") {
+        } else if (!["debug", "start"].includes(mType)) {
             console.info(chalk.blueBright(message.trimEnd()));
         }
     }
