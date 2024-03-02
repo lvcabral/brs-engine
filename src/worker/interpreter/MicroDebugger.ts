@@ -37,9 +37,8 @@ export function runDebugger(
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
     if (stepMode) {
-        postMessage(
-            `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
-        );
+        const line = lastLines[lastLine - 1].trimEnd();
+        postMessage(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
     } else {
         postMessage("debug,stop");
         debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
@@ -49,7 +48,8 @@ export function runDebugger(
         let end = Math.min(lastLine + 5, lastLines.length);
         for (let index = start; index < end; index++) {
             const flag = index === lastLine ? "*" : " ";
-            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${lastLines[index - 1]}\r\n`;
+            const line = lastLines[index - 1].trimEnd();
+            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`;
         }
         debugMsg += "Source Digest(s):\r\n";
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
@@ -161,6 +161,7 @@ function debugHandleCommand(
     const currLines = parseTextFile(source.get(currLoc.file));
     let lastLine: number = lastLoc.start.line;
     let currLine: number = currLoc.start.line;
+    let lineText: string;
     let debugMsg: string;
     switch (cmd) {
         case DebugCommand.BT:
@@ -170,9 +171,8 @@ function debugHandleCommand(
             debugHelp();
             break;
         case DebugCommand.LAST:
-            postMessage(
-                `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
-            );
+            lineText = lastLines[lastLine - 1].trimEnd();
+            postMessage(`print,${lastLine.toString().padStart(3, "0")}: ${lineText}\r\n`);
             break;
         case DebugCommand.LIST: {
             const flagLine = currLoc.file === lastLoc.file ? lastLine : currLine;
@@ -180,22 +180,19 @@ function debugHandleCommand(
             break;
         }
         case DebugCommand.NEXT:
-            postMessage(
-                `print,${currLine.toString().padStart(3, "0")}: ${currLines[currLine - 1]}\r\n`
-            );
+            lineText = currLines[currLine - 1].trimEnd();
+            postMessage(`print,${currLine.toString().padStart(3, "0")}: ${lineText}\r\n`);
             break;
         case DebugCommand.THREAD:
+            lineText = lastLines[lastLine - 1].trim();
             debugMsg = "Thread selected: ";
-            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
-                lastLine - 1
-            ].trim()}`;
+            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}`;
             postMessage(`print,${debugMsg}\r\n`);
             break;
         case DebugCommand.THREADS:
+            lineText = lastLines[lastLine - 1].trim();
             debugMsg = "ID    Location                                Source Code\r\n";
-            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
-                lastLine - 1
-            ].trim()}\r\n`;
+            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}\r\n`;
             debugMsg += "  *selected";
             postMessage(`print,${debugMsg}\r\n`);
             break;
@@ -238,10 +235,9 @@ function debugList(backTrace: BackTrace[], currLines: string[], flagLine: number
         const start = func.functionLoc.start.line;
         const end = Math.min(func.functionLoc.end.line, currLines.length);
         for (let index = start; index <= end; index++) {
-            let flag = index === flagLine ? "*" : " ";
-            postMessage(
-                `print,${index.toString().padStart(3, "0")}:${flag} ${currLines[index - 1]}\r\n`
-            );
+            const flag = index === flagLine ? "*" : " ";
+            const line = currLines[index - 1].trimEnd();
+            postMessage(`print,${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`);
         }
     }
 }
