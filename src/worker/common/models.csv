@@ -12,6 +12,7 @@ N1101,Roku HD-XR Classic,STB,directfb,hd,D0
 2700X,Roku LT,STB,directfb,hd,1P
 2710X,Roku 1,STB,directfb,hd,1X
 2720X,Roku 2,STB,directfb,hd,1R
+2900X,Roku Test Device,STB,opengl,fhd,X0
 3000X,Roku 2 HD,STB,opengl,hd,11
 3050X,Roku 2 XD,STB,opengl,hd,12
 3100X,Roku 2 XS,STB,opengl,hd,13
