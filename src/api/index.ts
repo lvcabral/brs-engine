@@ -333,8 +333,8 @@ export function debug(command: string): boolean {
     if (!disableDebug && currentApp.running && command?.length) {
         const exprs = command.trim().split(/(?<=^\S+)\s/);
         if (exprs.length === 1 && ["break", "pause"].includes(exprs[0].toLowerCase())) {
-            const cmd = exprs[0].toLowerCase() === "break" ? DebugCommand.BREAK : DebugCommand.PAUSE;
-            Atomics.store(sharedArray, DataType.DBG, cmd);
+            const cmd = exprs[0].toUpperCase() as keyof typeof DebugCommand;
+            Atomics.store(sharedArray, DataType.DBG, DebugCommand[cmd]);
             Atomics.notify(sharedArray, DataType.DBG);
             handled = true;
         } else {

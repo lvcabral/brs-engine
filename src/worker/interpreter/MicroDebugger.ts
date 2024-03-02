@@ -18,9 +18,10 @@ import {
     While,
 } from "../parser/Statement";
 import { DataType, DebugCommand } from "../enums";
+const prompt = "Brightscript Debugger> ";
 /// #if !WORKER
 import readline from "readline-sync";
-readline.setDefaultOptions({ prompt: "Brightscript Debugger> "});
+readline.setDefaultOptions({ prompt: prompt });
 /// #endif
 
 // Debug Constants
@@ -37,7 +38,6 @@ export function runDebugger(
     // - Implement classes, bsc(s) and stats
     const env = interpreter.environment;
     const lastLines = parseTextFile(source.get(lastLoc.file));
-    const prompt = "Brightscript Debugger> ";
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
     if (stepMode) {
@@ -70,18 +70,18 @@ export function runDebugger(
     // Debugger Loop
     while (true) {
         let line = "";
-/// #if WORKER
+        /// #if WORKER
         postMessage(`print,\r\n${prompt}`);
         Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
         const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
         Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
         if (cmd === DebugCommand.EXPR) {
-            line  = interpreter.readDataBuffer();
+            line = interpreter.readDataBuffer();
         }
-/// #else
+        /// #else
         postMessage(`print,\r\n`);
         line = readline.prompt();
-/// #endif
+        /// #endif
         const command = parseCommand(line);
         if (command.cmd === DebugCommand.EXPR) {
             debugHandleExpr(interpreter, command.expr);
@@ -292,7 +292,7 @@ function debugHelp() {
     // debugMsg += "   classes         List public classes\r\n"
     debugMsg += "   cont|c          Continue script execution\r\n";
     // debugMsg += "   down|d          Move down the function context chain one\r\n"
-    debugMsg += "   exit|q          Exit shell\r\n";
+    debugMsg += "   exit|quit|q     Exit shell\r\n";
     // debugMsg += "   gc              Run garbage collector\r\n"
     debugMsg += "   last|l          Show last line that executed\r\n";
     debugMsg += "   next|n          Show the next line to execute\r\n";
@@ -333,6 +333,7 @@ function parseCommand(command: string): any {
             ["c", DebugCommand.CONT],
             ["exit", DebugCommand.EXIT],
             ["q", DebugCommand.EXIT],
+            ["quit", DebugCommand.EXIT],
             ["help", DebugCommand.HELP],
             ["last", DebugCommand.LAST],
             ["l", DebugCommand.LAST],
