@@ -5,6 +5,7 @@ import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
 import {
+    Statement,
     Assignment,
     DottedSet,
     Expression,
@@ -129,10 +130,12 @@ function debugHandleExpr(interpreter: Interpreter, expr: string) {
         postMessage(`error,${exprParse.errors[0].message}`);
         return;
     }
-    if (exprParse.statements.length === 0) {
-        return;
+    if (exprParse.statements.length > 0) {
+        runStatement(interpreter, exprParse.statements[0]);
     }
-    const exprStmt = exprParse.statements[0];
+}
+
+function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     try {
         if (exprStmt instanceof Assignment) {
             interpreter.visitAssignment(exprStmt);
