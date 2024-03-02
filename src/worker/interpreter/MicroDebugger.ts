@@ -69,27 +69,25 @@ export function runDebugger(
 
     // Debugger Loop
     while (true) {
-        let cmd: number;
+        let line = "";
 /// #if WORKER
         postMessage(`print,\r\n${prompt}`);
         Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
-        cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
+        const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
         Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
         if (cmd === DebugCommand.EXPR) {
-            debugHandleExpr(interpreter, interpreter.readDataBuffer());
-            continue;
+            line  = interpreter.readDataBuffer();
         }
 /// #else
         postMessage(`print,\r\n`);
-        const line = readline.prompt();
+        line = readline.prompt();
+/// #endif
         const command = parseCommand(line);
-        cmd = command.cmd;
-        if (command.expr !== "") {
+        if (command.cmd === DebugCommand.EXPR) {
             debugHandleExpr(interpreter, command.expr);
             continue;
         }
-/// #endif
-        switch (cmd) {
+        switch (command.cmd) {
             case DebugCommand.CONT:
                 if (error) {
                     postMessage("print,Can't continue");
@@ -110,7 +108,7 @@ export function runDebugger(
             case DebugCommand.EXIT:
                 return false;
         }
-        debugHandleCommand(interpreter, nextLoc, lastLoc, cmd);
+        debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
     }
 }
 
@@ -327,8 +325,8 @@ function parseTextFile(content?: string): string[] {
 }
 
 function parseCommand(command: string): any {
-    let result = { cmd: -1, expr: "" };
-    if (command && command.length > 0) {
+    let result = { cmd: DebugCommand.EXPR, expr: "" };
+    if (command?.length) {
         const commandsMap = new Map([
             ["bt", DebugCommand.BT],
             ["cont", DebugCommand.CONT],
@@ -363,7 +361,6 @@ function parseCommand(command: string): any {
             if (exprs[0].toLowerCase() === "p") {
                 expr = "? " + expr.slice(1);
             }
-            result.cmd = DebugCommand.EXPR;
             result.expr = expr;
         }
     }
