@@ -129,37 +129,38 @@ function debugHandleExpr(interpreter: Interpreter, expr: string) {
         postMessage(`error,${exprParse.errors[0].message}`);
         return;
     }
-    if (exprParse.statements.length > 0) {
-        const exprStmt = exprParse.statements[0];
-        try {
-            if (exprStmt instanceof Assignment) {
-                interpreter.visitAssignment(exprStmt);
-            } else if (exprStmt instanceof DottedSet) {
-                interpreter.visitDottedSet(exprStmt);
-            } else if (exprStmt instanceof IndexedSet) {
-                interpreter.visitIndexedSet(exprStmt);
-            } else if (exprStmt instanceof Print) {
-                interpreter.visitPrint(exprStmt);
-            } else if (exprStmt instanceof Expression) {
-                interpreter.visitExpression(exprStmt);
-            } else if (exprStmt instanceof Increment) {
-                interpreter.visitIncrement(exprStmt);
-            } else if (exprStmt instanceof If) {
-                interpreter.visitIf(exprStmt);
-            } else if (exprStmt instanceof For) {
-                interpreter.visitFor(exprStmt);
-            } else if (exprStmt instanceof ForEach) {
-                interpreter.visitForEach(exprStmt);
-            } else if (exprStmt instanceof While) {
-                interpreter.visitWhile(exprStmt);
-            } else if (exprStmt instanceof Function) {
-                interpreter.visitNamedFunction(exprStmt);
-            } else {
-                postMessage(`print,Debug command/expression not supported!\r\n`);
-            }
-        } catch (err: any) {
-            // ignore to avoid crash
+    if (exprParse.statements.length === 0) {
+        return;
+    }
+    const exprStmt = exprParse.statements[0];
+    try {
+        if (exprStmt instanceof Assignment) {
+            interpreter.visitAssignment(exprStmt);
+        } else if (exprStmt instanceof DottedSet) {
+            interpreter.visitDottedSet(exprStmt);
+        } else if (exprStmt instanceof IndexedSet) {
+            interpreter.visitIndexedSet(exprStmt);
+        } else if (exprStmt instanceof Print) {
+            interpreter.visitPrint(exprStmt);
+        } else if (exprStmt instanceof Expression) {
+            interpreter.visitExpression(exprStmt);
+        } else if (exprStmt instanceof Increment) {
+            interpreter.visitIncrement(exprStmt);
+        } else if (exprStmt instanceof If) {
+            interpreter.visitIf(exprStmt);
+        } else if (exprStmt instanceof For) {
+            interpreter.visitFor(exprStmt);
+        } else if (exprStmt instanceof ForEach) {
+            interpreter.visitForEach(exprStmt);
+        } else if (exprStmt instanceof While) {
+            interpreter.visitWhile(exprStmt);
+        } else if (exprStmt instanceof Function) {
+            interpreter.visitNamedFunction(exprStmt);
+        } else {
+            postMessage(`print,Debug command/expression not supported!\r\n`);
         }
+    } catch (err: any) {
+        // ignore to avoid crash
     }
 }
 
