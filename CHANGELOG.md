@@ -1,5 +1,21 @@
 # Changelog
 
+<a name="v1.3.1"></a>
+
+## [v1.3.1 - MicroDebugger Improvements](https://github.com/lvcabral/brs-engine/releases/tag/v1.3.1) - 02 Mar 2024
+
+### Release Changes
+
+* Micro debugger improvements by [@lvcabral](https://github.com/lvcabral) in [280](https://github.com/lvcabral/brs-engine/pull/280)
+  * Added to the API `initialize` method a new option: `disableDebug`
+  * Added to the MicroDebugger support for `Function`, `If`,  `For` and `While`
+  * Added support for MicroDebugger on CLI
+  * Fixed MicroDebugger formatting issues and the handling of linefeed
+  * Moved command parsing code from API to MicroDebugger
+  * Added `quit` command to the MicroDebugger
+* Added #278 - Support to ECP control keys `VolumeMute` and `PowerOff` by [@lvcabral](https://github.com/lvcabral) in [279](https://github.com/lvcabral/brs-engine/pull/279)
+
+[Full Changelog][v1.3.1]
 
 <a name="v1.3.0"></a>
 
@@ -571,6 +587,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.3.1]: https://github.com/lvcabral/brs-engine/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/lvcabral/brs-engine/compare/v1.2.11...v1.3.0
 [v1.2.11]: https://github.com/lvcabral/brs-engine/compare/v1.2.10...v1.2.11
 [v1.2.10]: https://github.com/lvcabral/brs-engine/compare/v1.2.9...v1.2.10
