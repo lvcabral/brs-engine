@@ -115,7 +115,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             "[",
             ...this.elements.map((el: BrsValue) => `    ${el.toString(this)}`),
             "]",
-        ].join("\n");
+        ].join("\r\n");
     }
 
     equalTo(other: BrsType) {

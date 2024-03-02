@@ -53,7 +53,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             "(",
             ...this.roList.elements.map((el: BrsValue) => `    ${el.toString(this)}`),
             ")",
-        ].join("\n");
+        ].join("\r\n");
     }
 
     equalTo(other: BrsType) {

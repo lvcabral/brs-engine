@@ -59,7 +59,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             "(",
             ...this.elements.map((el: BrsValue) => `    ${el.toString(this)}`),
             ")",
-        ].join("\n");
+        ].join("\r\n");
     }
 
     equalTo(_other: BrsType) {

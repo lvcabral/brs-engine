@@ -67,7 +67,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 .slice(0, 100)
                 .map((el: BrsValue) => `    ${el.toString(this)}`),
             this.elements.length > 100 ? "    ...\n]" : "]",
-        ].join("\n");
+        ].join("\r\n");
     }
 
     equalTo(other: BrsType) {
