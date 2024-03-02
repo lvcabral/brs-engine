@@ -83,6 +83,7 @@ export {
     enableStats,
 } from "./display";
 
+let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
 
@@ -113,14 +114,15 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
     /// #if DEBUG
     initMsg += " - dev";
     /// #endif
+    if (typeof options.disableDebug === "boolean") {
+        disableDebug = options.disableDebug;
+    }
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
-
     if (debugToConsole) {
         console.info(initMsg);
     }
-
     if (typeof options.showStats === "boolean") {
         showStats = options.showStats;
     }
@@ -241,7 +243,9 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     if (typeof options.password === "string") {
         currentApp.password = options.password;
     }
-    if (typeof options.debugOnCrash === "boolean") {
+    if (disableDebug) {
+        currentApp.debugOnCrash = false;
+    } else if (typeof options.debugOnCrash === "boolean") {
         currentApp.debugOnCrash = options.debugOnCrash;
     }
     if (typeof brsWorker !== "undefined") {
@@ -326,48 +330,18 @@ export function sendKeyPress(key: string, delay = 300, remote?: RemoteType, inde
 // Telnet Debug API
 export function debug(command: string): boolean {
     let handled = false;
-    if (currentApp.running && command && command.length > 0) {
-        const commandsMap = new Map([
-            ["bt", DebugCommand.BT],
-            ["cont", DebugCommand.CONT],
-            ["c", DebugCommand.CONT],
-            ["exit", DebugCommand.EXIT],
-            ["q", DebugCommand.EXIT],
-            ["help", DebugCommand.HELP],
-            ["last", DebugCommand.LAST],
-            ["l", DebugCommand.LAST],
-            ["list", DebugCommand.LIST],
-            ["next", DebugCommand.NEXT],
-            ["n", DebugCommand.NEXT],
-            ["over", DebugCommand.STEP],
-            ["out", DebugCommand.STEP],
-            ["step", DebugCommand.STEP],
-            ["s", DebugCommand.STEP],
-            ["t", DebugCommand.STEP],
-            ["thread", DebugCommand.THREAD],
-            ["th", DebugCommand.THREAD],
-            ["threads", DebugCommand.THREADS],
-            ["ths", DebugCommand.THREADS],
-            ["var", DebugCommand.VAR],
-            ["break", DebugCommand.BREAK],
-            ["pause", DebugCommand.PAUSE],
-        ]);
-        let exprs = command
-            .toString()
-            .trim()
-            .split(/(?<=^\S+)\s/);
-        let cmd = commandsMap.get(exprs[0].toLowerCase());
-        if (cmd !== undefined && exprs.length === 1) {
-            Atomics.store(sharedArray, DataType.DBG, cmd);
+    if (!disableDebug && currentApp.running && command?.length) {
+        const exprs = command.trim().split(/(?<=^\S+)\s/);
+        if (exprs.length === 1 && ["break", "pause"].includes(exprs[0].toLowerCase())) {
+            const cmd = exprs[0].toUpperCase() as keyof typeof DebugCommand;
+            Atomics.store(sharedArray, DataType.DBG, DebugCommand[cmd]);
+            Atomics.notify(sharedArray, DataType.DBG);
+            handled = true;
         } else {
-            let expr = command.toString().trim();
-            if (exprs[0].toLowerCase() === "p") {
-                expr = "? " + expr.slice(1);
-            }
-            saveDataBuffer(sharedArray, expr);
+            saveDataBuffer(sharedArray, command.trim());
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
+            handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
         }
-        handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
     }
     return handled;
 }
@@ -481,6 +455,9 @@ function workerCallback(event: MessageEvent) {
 
 // Debug Messages Handler
 function deviceDebug(data: string) {
+    if (disableDebug) {
+        return;
+    }
     const level = data.split(",")[0];
     const content = data.slice(level.length + 1);
     notifyAll("debug", { level: level, content: content });

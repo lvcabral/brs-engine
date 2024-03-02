@@ -5,6 +5,7 @@ import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
 import {
+    Statement,
     Assignment,
     DottedSet,
     Expression,
@@ -12,8 +13,17 @@ import {
     Increment,
     IndexedSet,
     Print,
+    Function,
+    If,
+    For,
+    While,
 } from "../parser/Statement";
 import { DataType, DebugCommand } from "../enums";
+const prompt = "Brightscript Debugger> ";
+/// #if !WORKER
+import readline from "readline-sync";
+readline.setDefaultOptions({ prompt: prompt });
+/// #endif
 
 // Debug Constants
 let stepMode = false;
@@ -29,13 +39,11 @@ export function runDebugger(
     // - Implement classes, bsc(s) and stats
     const env = interpreter.environment;
     const lastLines = parseTextFile(source.get(lastLoc.file));
-    const prompt = "Brightscript Debugger> ";
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
     if (stepMode) {
-        postMessage(
-            `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
-        );
+        const line = lastLines[lastLine - 1].trimEnd();
+        postMessage(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
     } else {
         postMessage("debug,stop");
         debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
@@ -45,7 +53,8 @@ export function runDebugger(
         let end = Math.min(lastLine + 5, lastLines.length);
         for (let index = start; index < end; index++) {
             const flag = index === lastLine ? "*" : " ";
-            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${lastLines[index - 1]}\r\n`;
+            const line = lastLines[index - 1].trimEnd();
+            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`;
         }
         debugMsg += "Source Digest(s):\r\n";
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
@@ -58,17 +67,28 @@ export function runDebugger(
         postMessage(`print,Local variables:\r\n`);
         debugLocalVariables(env);
     }
+
     // Debugger Loop
     while (true) {
+        let line = "";
+        /// #if WORKER
         postMessage(`print,\r\n${prompt}`);
         Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
-        let cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
+        const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
         Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
         if (cmd === DebugCommand.EXPR) {
-            debugHandleExpr(interpreter);
+            line = interpreter.readDataBuffer();
+        }
+        /// #else
+        postMessage(`print,\r\n`);
+        line = readline.prompt();
+        /// #endif
+        const command = parseCommand(line);
+        if (command.cmd === DebugCommand.EXPR) {
+            debugHandleExpr(interpreter, command.expr);
             continue;
         }
-        switch (cmd) {
+        switch (command.cmd) {
             case DebugCommand.CONT:
                 if (error) {
                     postMessage("print,Can't continue");
@@ -89,15 +109,17 @@ export function runDebugger(
             case DebugCommand.EXIT:
                 return false;
         }
-        debugHandleCommand(interpreter, nextLoc, lastLoc, cmd);
+        debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
     }
 }
 
-function debugHandleExpr(interpreter: Interpreter) {
+function debugHandleExpr(interpreter: Interpreter, expr: string) {
     const lexer = new Lexer();
     const parser = new Parser();
     interpreter.debugMode = false;
-    let expr = interpreter.readDataBuffer();
+    if (expr.trim().length === 0) {
+        return;
+    }
     const exprScan = lexer.scan(`${expr}\n`, "debug");
     if (exprScan.errors.length > 0) {
         postMessage(`error,${exprScan.errors[0].message}`);
@@ -109,30 +131,39 @@ function debugHandleExpr(interpreter: Interpreter) {
         return;
     }
     if (exprParse.statements.length > 0) {
-        const exprStmt = exprParse.statements[0];
-        try {
-            if (exprStmt instanceof Assignment) {
-                interpreter.visitAssignment(exprStmt);
-            } else if (exprStmt instanceof DottedSet) {
-                interpreter.visitDottedSet(exprStmt);
-            } else if (exprStmt instanceof IndexedSet) {
-                interpreter.visitIndexedSet(exprStmt);
-            } else if (exprStmt instanceof Print) {
-                interpreter.visitPrint(exprStmt);
-            } else if (exprStmt instanceof Expression) {
-                interpreter.visitExpression(exprStmt);
-            } else if (exprStmt instanceof Increment) {
-                interpreter.visitIncrement(exprStmt);
-            } else if (exprStmt instanceof ForEach) {
-                interpreter.visitForEach(exprStmt);
-            } else {
-                postMessage(`print,Debug command/expression not supported!\r\n`);
-            }
-        } catch (err: any) {
-            // ignore to avoid crash
+        runStatement(interpreter, exprParse.statements[0]);
+    }
+}
+
+function runStatement(interpreter: Interpreter, exprStmt: Statement) {
+    try {
+        if (exprStmt instanceof Assignment) {
+            interpreter.visitAssignment(exprStmt);
+        } else if (exprStmt instanceof DottedSet) {
+            interpreter.visitDottedSet(exprStmt);
+        } else if (exprStmt instanceof IndexedSet) {
+            interpreter.visitIndexedSet(exprStmt);
+        } else if (exprStmt instanceof Print) {
+            interpreter.visitPrint(exprStmt);
+        } else if (exprStmt instanceof Expression) {
+            interpreter.visitExpression(exprStmt);
+        } else if (exprStmt instanceof Increment) {
+            interpreter.visitIncrement(exprStmt);
+        } else if (exprStmt instanceof If) {
+            interpreter.visitIf(exprStmt);
+        } else if (exprStmt instanceof For) {
+            interpreter.visitFor(exprStmt);
+        } else if (exprStmt instanceof ForEach) {
+            interpreter.visitForEach(exprStmt);
+        } else if (exprStmt instanceof While) {
+            interpreter.visitWhile(exprStmt);
+        } else if (exprStmt instanceof Function) {
+            interpreter.visitNamedFunction(exprStmt);
+        } else {
+            postMessage(`print,Debug command/expression not supported!\r\n`);
         }
-    } else {
-        postMessage("error,Syntax Error. (compile error &h02) in $LIVECOMPILE");
+    } catch (err: any) {
+        // ignore to avoid crash
     }
 }
 
@@ -148,6 +179,7 @@ function debugHandleCommand(
     const currLines = parseTextFile(source.get(currLoc.file));
     let lastLine: number = lastLoc.start.line;
     let currLine: number = currLoc.start.line;
+    let lineText: string;
     let debugMsg: string;
     switch (cmd) {
         case DebugCommand.BT:
@@ -157,9 +189,8 @@ function debugHandleCommand(
             debugHelp();
             break;
         case DebugCommand.LAST:
-            postMessage(
-                `print,${lastLine.toString().padStart(3, "0")}: ${lastLines[lastLine - 1]}\r\n`
-            );
+            lineText = lastLines[lastLine - 1].trimEnd();
+            postMessage(`print,${lastLine.toString().padStart(3, "0")}: ${lineText}\r\n`);
             break;
         case DebugCommand.LIST: {
             const flagLine = currLoc.file === lastLoc.file ? lastLine : currLine;
@@ -167,22 +198,19 @@ function debugHandleCommand(
             break;
         }
         case DebugCommand.NEXT:
-            postMessage(
-                `print,${currLine.toString().padStart(3, "0")}: ${currLines[currLine - 1]}\r\n`
-            );
+            lineText = currLines[currLine - 1].trimEnd();
+            postMessage(`print,${currLine.toString().padStart(3, "0")}: ${lineText}\r\n`);
             break;
         case DebugCommand.THREAD:
+            lineText = lastLines[lastLine - 1].trim();
             debugMsg = "Thread selected: ";
-            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
-                lastLine - 1
-            ].trim()}`;
+            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}`;
             postMessage(`print,${debugMsg}\r\n`);
             break;
         case DebugCommand.THREADS:
+            lineText = lastLines[lastLine - 1].trim();
             debugMsg = "ID    Location                                Source Code\r\n";
-            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lastLines[
-                lastLine - 1
-            ].trim()}\r\n`;
+            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}\r\n`;
             debugMsg += "  *selected";
             postMessage(`print,${debugMsg}\r\n`);
             break;
@@ -225,10 +253,9 @@ function debugList(backTrace: BackTrace[], currLines: string[], flagLine: number
         const start = func.functionLoc.start.line;
         const end = Math.min(func.functionLoc.end.line, currLines.length);
         for (let index = start; index <= end; index++) {
-            let flag = index === flagLine ? "*" : " ";
-            postMessage(
-                `print,${index.toString().padStart(3, "0")}:${flag} ${currLines[index - 1]}\r\n`
-            );
+            const flag = index === flagLine ? "*" : " ";
+            const line = currLines[index - 1].trimEnd();
+            postMessage(`print,${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`);
         }
     }
 }
@@ -269,7 +296,7 @@ function debugHelp() {
     // debugMsg += "   classes         List public classes\r\n"
     debugMsg += "   cont|c          Continue script execution\r\n";
     // debugMsg += "   down|d          Move down the function context chain one\r\n"
-    debugMsg += "   exit|q          Exit shell\r\n";
+    debugMsg += "   exit|quit|q     Exit shell\r\n";
     // debugMsg += "   gc              Run garbage collector\r\n"
     debugMsg += "   last|l          Show last line that executed\r\n";
     debugMsg += "   next|n          Show the next line to execute\r\n";
@@ -299,4 +326,48 @@ function parseTextFile(content?: string): string[] {
         lines = content.split("\n");
     }
     return lines;
+}
+
+function parseCommand(command: string): any {
+    let result = { cmd: DebugCommand.EXPR, expr: "" };
+    if (command?.length) {
+        const commandsMap = new Map([
+            ["bt", DebugCommand.BT],
+            ["cont", DebugCommand.CONT],
+            ["c", DebugCommand.CONT],
+            ["exit", DebugCommand.EXIT],
+            ["q", DebugCommand.EXIT],
+            ["quit", DebugCommand.EXIT],
+            ["help", DebugCommand.HELP],
+            ["last", DebugCommand.LAST],
+            ["l", DebugCommand.LAST],
+            ["list", DebugCommand.LIST],
+            ["next", DebugCommand.NEXT],
+            ["n", DebugCommand.NEXT],
+            ["over", DebugCommand.STEP],
+            ["out", DebugCommand.STEP],
+            ["step", DebugCommand.STEP],
+            ["s", DebugCommand.STEP],
+            ["t", DebugCommand.STEP],
+            ["thread", DebugCommand.THREAD],
+            ["th", DebugCommand.THREAD],
+            ["threads", DebugCommand.THREADS],
+            ["ths", DebugCommand.THREADS],
+            ["var", DebugCommand.VAR],
+            ["break", DebugCommand.BREAK],
+            ["pause", DebugCommand.PAUSE],
+        ]);
+        let exprs = command.trim().split(/(?<=^\S+)\s/);
+        let cmd = commandsMap.get(exprs[0].toLowerCase());
+        if (cmd !== undefined && exprs.length === 1) {
+            result.cmd = cmd;
+        } else {
+            let expr = command.toString().trim();
+            if (exprs[0].toLowerCase() === "p") {
+                expr = "? " + expr.slice(1);
+            }
+            result.expr = expr;
+        }
+    }
+    return result;
 }
