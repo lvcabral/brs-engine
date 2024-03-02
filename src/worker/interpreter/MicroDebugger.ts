@@ -58,7 +58,7 @@ export function runDebugger(
         }
         debugMsg += "Source Digest(s):\r\n";
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
-        debugMsg += `${interpreter.manifest.get("title")||"brs"}\r\n\r\n`;
+        debugMsg += `${interpreter.manifest.get("title") || "brs"}\r\n\r\n`;
         debugMsg += `${error ?? "STOP"} (runtime error &hf7) in ${interpreter.formatLocation()}`;
 
         debugMsg += "\r\nBacktrace: \r\n";
