@@ -18,6 +18,10 @@ import {
     While,
 } from "../parser/Statement";
 import { DataType, DebugCommand } from "../enums";
+/// #if !WORKER
+import readline from "readline-sync";
+readline.setDefaultOptions({ prompt: "Brightscript Debugger> "});
+/// #endif
 
 // Debug Constants
 let stepMode = false;
@@ -62,16 +66,29 @@ export function runDebugger(
         postMessage(`print,Local variables:\r\n`);
         debugLocalVariables(env);
     }
+
     // Debugger Loop
     while (true) {
+        let cmd: number;
+/// #if WORKER
         postMessage(`print,\r\n${prompt}`);
         Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
-        let cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
+        cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
         Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
         if (cmd === DebugCommand.EXPR) {
-            debugHandleExpr(interpreter);
+            debugHandleExpr(interpreter, interpreter.readDataBuffer());
             continue;
         }
+/// #else
+        postMessage(`print,\r\n`);
+        const line = readline.prompt();
+        const command = parseCommand(line);
+        cmd = command.cmd;
+        if (command.expr !== "") {
+            debugHandleExpr(interpreter, command.expr);
+            continue;
+        }
+/// #endif
         switch (cmd) {
             case DebugCommand.CONT:
                 if (error) {
@@ -97,11 +114,10 @@ export function runDebugger(
     }
 }
 
-function debugHandleExpr(interpreter: Interpreter) {
+function debugHandleExpr(interpreter: Interpreter, expr: string) {
     const lexer = new Lexer();
     const parser = new Parser();
     interpreter.debugMode = false;
-    let expr = interpreter.readDataBuffer();
     if (expr.trim().length === 0) {
         return;
     }
@@ -308,4 +324,48 @@ function parseTextFile(content?: string): string[] {
         lines = content.split("\n");
     }
     return lines;
+}
+
+function parseCommand(command: string): any {
+    let result = { cmd: -1, expr: "" };
+    if (command && command.length > 0) {
+        const commandsMap = new Map([
+            ["bt", DebugCommand.BT],
+            ["cont", DebugCommand.CONT],
+            ["c", DebugCommand.CONT],
+            ["exit", DebugCommand.EXIT],
+            ["q", DebugCommand.EXIT],
+            ["help", DebugCommand.HELP],
+            ["last", DebugCommand.LAST],
+            ["l", DebugCommand.LAST],
+            ["list", DebugCommand.LIST],
+            ["next", DebugCommand.NEXT],
+            ["n", DebugCommand.NEXT],
+            ["over", DebugCommand.STEP],
+            ["out", DebugCommand.STEP],
+            ["step", DebugCommand.STEP],
+            ["s", DebugCommand.STEP],
+            ["t", DebugCommand.STEP],
+            ["thread", DebugCommand.THREAD],
+            ["th", DebugCommand.THREAD],
+            ["threads", DebugCommand.THREADS],
+            ["ths", DebugCommand.THREADS],
+            ["var", DebugCommand.VAR],
+            ["break", DebugCommand.BREAK],
+            ["pause", DebugCommand.PAUSE],
+        ]);
+        let exprs = command.trim().split(/(?<=^\S+)\s/);
+        let cmd = commandsMap.get(exprs[0].toLowerCase());
+        if (cmd !== undefined && exprs.length === 1) {
+            result.cmd = cmd;
+        } else {
+            let expr = command.toString().trim();
+            if (exprs[0].toLowerCase() === "p") {
+                expr = "? " + expr.slice(1);
+            }
+            result.cmd = DebugCommand.EXPR;
+            result.expr = expr;
+        }
+    }
+    return result;
 }
