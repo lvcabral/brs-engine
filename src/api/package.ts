@@ -34,6 +34,7 @@ export const deviceData = {
     maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
+    customFeatures: [],
     connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
