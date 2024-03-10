@@ -74,6 +74,7 @@ There are many ways you can use and/or participate in the project, read the docu
 - [How to build from source](docs/build-from-source.md)
 - [How to run as Command Line Interface](docs/run-as-cli.md)
 - [How add the Engine to a Web Application](docs/integrating.md)
+- [How to customize the Engine behavior](docs/customization.md)
 - [BrightScript Engine API reference](docs/engine-api.md)
 - [BrightScript Engine Limitations](docs/limitations.md)
 - [How to contribute to this Project](docs/contributing.md)
