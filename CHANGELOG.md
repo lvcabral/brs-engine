@@ -1,5 +1,18 @@
 # Changelog
 
+<a name="v1.3.2"></a>
+
+## [v1.3.2 - Custom Features](https://github.com/lvcabral/brs-engine/releases/tag/v1.3.2) - 09 Mar 2024
+
+### Release Changes
+
+* Add custom features by [@lvcabral](https://github.com/lvcabral) in [283](https://github.com/lvcabral/brs-engine/pull/283)
+  * Added a way to add custom features to be checked by `roDeviceInfo.hasFeatures()`
+  * Created new document [docs/customization.md](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md)
+  * Updated default game pad mapping
+
+[Full Changelog][v1.3.2]
+
 <a name="v1.3.1"></a>
 
 ## [v1.3.1 - MicroDebugger Improvements](https://github.com/lvcabral/brs-engine/releases/tag/v1.3.1) - 02 Mar 2024
@@ -587,6 +600,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.3.2]: https://github.com/lvcabral/brs-engine/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/lvcabral/brs-engine/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/lvcabral/brs-engine/compare/v1.2.11...v1.3.0
 [v1.2.11]: https://github.com/lvcabral/brs-engine/compare/v1.2.10...v1.2.11
