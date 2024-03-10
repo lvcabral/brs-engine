@@ -524,8 +524,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, feature: BrsString) => {
             const features = ["gaming_hardware", "simulation_engine"];
             const custom = interpreter.deviceInfo.get("customFeatures");
-            if ( custom instanceof Array && custom.length > 0) {
-                features.push(...custom)
+            if (custom instanceof Array && custom.length > 0) {
+                features.push(...custom);
             }
             return BrsBoolean.from(features.includes(feature.value.toLowerCase()));
         },
