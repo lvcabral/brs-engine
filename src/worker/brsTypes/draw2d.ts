@@ -287,13 +287,10 @@ export function drawRotatedObject(
 }
 
 export function createNewCanvas(width: number, height: number) {
-    /// #if WORKER
     if (typeof OffscreenCanvas !== "undefined") {
         return new OffscreenCanvas(width, height);
     }
-    /// #else
     return createCanvas(width, height);
-    /// #endif
 }
 
 export function drawImageAtPos(
