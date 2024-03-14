@@ -9,7 +9,14 @@ import { rgbaIntToHex } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
-import { drawImageToContext, drawObjectToComponent, drawRotatedObject } from "../draw2d";
+import {
+    WorkerCanvas,
+    WorkerCanvasRenderingContext2D,
+    createNewCanvas,
+    drawImageToContext,
+    drawObjectToComponent,
+    drawRotatedObject,
+} from "../draw2d";
 import UPNG from "upng-js";
 
 export class RoScreen extends BrsComponent implements BrsValue {
@@ -20,8 +27,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private lastBuffer: number;
     private width: number;
     private height: number;
-    private canvas: OffscreenCanvas[];
-    private context: OffscreenCanvasRenderingContext2D[];
+    private canvas: WorkerCanvas[];
+    private context: WorkerCanvasRenderingContext2D[];
     private port?: RoMessagePort;
     private isDirty: boolean;
     private lastMessage: number;
@@ -63,13 +70,13 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.doubleBuffer = doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean();
         this.currentBuffer = 0;
         this.lastBuffer = 0;
-        this.canvas = new Array<OffscreenCanvas>(this.doubleBuffer ? 2 : 1);
-        this.context = new Array<OffscreenCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
+        this.canvas = new Array<WorkerCanvas>(this.doubleBuffer ? 2 : 1);
+        this.context = new Array<WorkerCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
         for (let index = 0; index < this.canvas.length; index++) {
-            this.canvas[index] = new OffscreenCanvas(this.width, this.height);
+            this.canvas[index] = createNewCanvas(this.width, this.height);
             this.context[index] = this.canvas[index].getContext("2d", {
                 alpha: true,
-            }) as OffscreenCanvasRenderingContext2D;
+            }) as WorkerCanvasRenderingContext2D;
             this.canvas[index].width = this.width;
             this.canvas[index].height = this.height;
         }
@@ -109,11 +116,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.canvas[this.lastBuffer].height;
     }
 
-    getCanvas(): OffscreenCanvas {
+    getCanvas(): WorkerCanvas {
         return this.canvas[this.lastBuffer];
     }
 
-    getContext(): OffscreenCanvasRenderingContext2D {
+    getContext(): WorkerCanvasRenderingContext2D {
         return this.context[this.currentBuffer];
     }
 
@@ -141,7 +148,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.isDirty;
     }
 
-    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
+    drawImageToContext(image: WorkerCanvas, x: number, y: number): boolean {
         const ctx = this.context[this.currentBuffer];
         this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y);
         return this.isDirty;

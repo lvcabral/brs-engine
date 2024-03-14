@@ -8,7 +8,14 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
-import { drawImageToContext, drawObjectToComponent, drawRotatedObject } from "../draw2d";
+import {
+    WorkerCanvas,
+    WorkerCanvasRenderingContext2D,
+    WorkerImageData,
+    drawImageToContext,
+    drawObjectToComponent,
+    drawRotatedObject,
+} from "../draw2d";
 import UPNG from "upng-js";
 
 export class RoRegion extends BrsComponent implements BrsValue {
@@ -168,7 +175,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return isDirty;
     }
 
-    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
+    drawImageToContext(image: WorkerCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
         const isDirty = drawImageToContext(
             ctx,
@@ -183,15 +190,15 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return isDirty;
     }
 
-    getCanvas(): OffscreenCanvas {
+    getCanvas(): WorkerCanvas {
         return this.bitmap.getCanvas();
     }
 
-    getContext(): OffscreenCanvasRenderingContext2D {
+    getContext(): WorkerCanvasRenderingContext2D {
         return this.bitmap.getContext();
     }
 
-    getRgbaCanvas(rgba: number): OffscreenCanvas {
+    getRgbaCanvas(rgba: number): WorkerCanvas {
         if (this.bitmap instanceof RoBitmap) {
             return this.bitmap.getRgbaCanvas(rgba);
         }
@@ -238,7 +245,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.collisionType;
     }
 
-    getImageData(): ImageData {
+    getImageData(): WorkerImageData {
         return this.bitmap.getContext().getImageData(this.x, this.y, this.width, this.height);
     }
 

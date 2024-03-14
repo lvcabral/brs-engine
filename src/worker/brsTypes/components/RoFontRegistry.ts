@@ -74,11 +74,13 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 };
                 // Register font family
                 const fontFamily = fontObj.names.fontFamily.en;
-                const fontFace = new FontFace(fontFamily, fontArray, {
-                    weight: fontMetrics.weight,
-                    style: fontMetrics.style,
-                });
-                (self as any).fonts.add(fontFace);
+                if (typeof FontFace !== "undefined") {
+                    const fontFace = new FontFace(fontFamily, fontArray, {
+                        weight: fontMetrics.weight,
+                        style: fontMetrics.style,
+                    });
+                    (self as any).fonts.add(fontFace);
+                }
                 const familyArray = this.fontRegistry.get(fontFamily);
                 if (familyArray) {
                     familyArray.push(fontMetrics);

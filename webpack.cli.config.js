@@ -57,6 +57,9 @@ module.exports = (env) => {
             plugins: [
                 new ShebangPlugin(),
             ],
+            externals: {
+                canvas: "commonjs canvas" // Important (2)
+            },
             output: {
                 filename: libName + ".cli.js",
                 path: path.resolve(__dirname, cliPath),

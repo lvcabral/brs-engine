@@ -7,14 +7,20 @@ import { Int32 } from "../Int32";
 import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
-import { drawObjectToComponent, getDimensions } from "../draw2d";
+import {
+    WorkerCanvas,
+    WorkerCanvasRenderingContext2D,
+    createNewCanvas,
+    drawObjectToComponent,
+    getDimensions,
+} from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly sprites = new Map<number, RoSprite[]>();
     readonly animations = new Array<RoSprite>();
-    private canvas: OffscreenCanvas;
-    private context: OffscreenCanvasRenderingContext2D;
+    private canvas: WorkerCanvas;
+    private context: WorkerCanvasRenderingContext2D;
     private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
@@ -22,10 +28,10 @@ export class RoCompositor extends BrsComponent implements BrsValue {
 
     constructor() {
         super("roCompositor");
-        this.canvas = new OffscreenCanvas(10, 10);
+        this.canvas = createNewCanvas(10, 10);
         let context = this.canvas.getContext("2d", {
             alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
+        }) as WorkerCanvasRenderingContext2D;
         this.context = context;
         this.spriteId = 0;
         this.registerMethods({
@@ -90,7 +96,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return !!this.destBitmap?.getAlphaEnableValue();
     }
 
-    getContext(): OffscreenCanvasRenderingContext2D {
+    getContext(): WorkerCanvasRenderingContext2D {
         return this.context;
     }
 
