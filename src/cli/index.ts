@@ -48,6 +48,9 @@ program
                 )
             );
         }
+        if (typeof deviceData === "object") {
+            deviceData.fonts = getFonts(deviceData.defaultFont);
+        }
         subscribePackage("cli", packageCallback);
         registerCallback(messageCallback);
         if (brsFiles.length > 0) {
@@ -130,7 +133,7 @@ function runBrsFiles(files: any[]) {
         texts: [],
         binaries: [],
         entryPoint: false,
-        stopOnCrash: false,
+        stopOnCrash: true,
     };
     runApp(payload);
 }
@@ -141,26 +144,7 @@ function runBrsFiles(files: any[]) {
  *
  */
 function runApp(payload: any) {
-    const fontPath = "../app/fonts";
-    const fontFamily = payload.device.defaultFont;
-    payload.device.fonts.set(
-        "regular",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`))
-    );
-    payload.device.fonts.set(
-        "bold",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`))
-    );
-    payload.device.fonts.set(
-        "italic",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`))
-    );
-    payload.device.fonts.set(
-        "bold-italic",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`))
-    );
     payload.password = program.pack;
-    payload.stopOnCrash = true;
     const pkg = executeFile(payload);
     if (pkg?.cipherText instanceof Uint8Array && pkg.iv) {
         const filePath = path.join(program.out, zipFileName.replace(/.zip/gi, ".bpk"));
@@ -182,6 +166,34 @@ function runApp(payload: any) {
 }
 
 /**
+ * Get the fonts map for the device.
+ * @param fontFamily a string with the font family name.
+ * @returns a Map with the fonts.
+ */
+
+function getFonts(fontFamily: string) {
+    const fontPath = "../app/fonts";
+    const fonts = new Map();
+    fonts.set(
+        "regular",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`))
+    );
+    fonts.set(
+        "bold",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`))
+    );
+    fonts.set(
+        "italic",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`))
+    );
+    fonts.set(
+        "bold-italic",
+        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`))
+    );
+    return fonts;
+}
+
+/**
  * Launches an interactive read-execute-print loop, which reads input from
  * `stdin` and executes it.
  *
@@ -195,7 +207,7 @@ function repl() {
     });
     rl.setPrompt(`${chalk.magenta("brs")}> `);
     rl.on("line", (line) => {
-        if (["quit", "exit"].includes(line.toLowerCase().trim())) {
+        if (["exit", "quit", "q"].includes(line.toLowerCase().trim())) {
             process.exit();
         } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
             process.stdout.write("\x1Bc");
@@ -284,6 +296,10 @@ function colorize(log: string) {
             return chalk.ansi256(222)(stripAnsi(match)); // Quotes
         });
 }
+
+/**
+ * Display the help message on the console.
+ */
 function showHelp() {
     let helpMsg = "\r\n";
     helpMsg += "REPL Command List:\r\n";
@@ -291,11 +307,15 @@ function showHelp() {
     helpMsg += "   var|vars        Display variables and their types/values\r\n";
     helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
-    helpMsg += "   quit|exit       Terminate REPL session\r\n\r\n";
+    helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";
     helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
     console.log(chalk.cyanBright(helpMsg));
 }
 
+/**
+ * Display the local variables on the console.
+ * @param environment an object with the Interpreter Environment data
+ */
 function printLocalVariables(environment: Environment) {
     let debugMsg = "\r\nLocal variables:\r\n";
     debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
@@ -320,7 +340,13 @@ function printLocalVariables(environment: Environment) {
     console.log(chalk.cyanBright(debugMsg));
 }
 
-// Code adapted from: https://github.com/victorqribeiro/imgToAscii
+
+/**
+ * Prints the ASCII screen on the console.
+ * @param columns the number of columns to print the ASCII screen.
+ * @param image the Canvas object with the screen image.
+ * Code adapted from: https://github.com/victorqribeiro/imgToAscii
+ */
 function printAsciiScreen(columns: number, image: Canvas) {
     const alphabet = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "];
     const ratio = (image.width / image.height) * 1.7;

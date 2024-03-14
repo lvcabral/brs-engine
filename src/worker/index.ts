@@ -245,22 +245,30 @@ function setupDeviceFonts(device: any, interpreter: Interpreter) {
             fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
         } else if (device.fonts) {
             // Running locally as CLI
-            fontRegular = device.fonts.get("regular").buffer;
-            fontBold = device.fonts.get("bold").buffer;
-            fontItalic = device.fonts.get("italic").buffer;
-            fontBoldIt = device.fonts.get("bold-italic").buffer;
+            fontRegular = device.fonts.get("regular")?.buffer;
+            fontBold = device.fonts.get("bold")?.buffer;
+            fontItalic = device.fonts.get("italic")?.buffer;
+            fontBoldIt = device.fonts.get("bold-italic")?.buffer;
         }
         if (fontRegular) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
+        } else {
+            postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Regular.ttf`);
         }
         if (fontBold) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
+        } else {
+            postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Bold.ttf`);
         }
         if (fontItalic) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
+        } else {
+            postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Italic.ttf`);
         }
         if (fontBoldIt) {
             volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
+        } else {
+            postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-BoldItalic.ttf`);
         }
     }
 }
