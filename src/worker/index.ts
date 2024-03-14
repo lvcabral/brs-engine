@@ -58,7 +58,9 @@ if (typeof onmessage === "undefined") {
     // Library is not running as a Worker
     const length = dataBufferIndex + dataBufferSize;
     let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-    shared.set("buffer", new Int32Array(sharedBuffer));
+    let sharedArray = new Int32Array(sharedBuffer);
+    sharedArray.fill(-1);
+    shared.set("buffer", sharedArray);
 }
 /**
  * Support postMessage when not running as Worker.
@@ -243,10 +245,10 @@ function setupDeviceFonts(device: any, interpreter: Interpreter) {
             fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
         } else if (device.fonts) {
             // Running locally as CLI
-            fontRegular = device.fonts.get("regular");
-            fontBold = device.fonts.get("bold");
-            fontItalic = device.fonts.get("italic");
-            fontBoldIt = device.fonts.get("bold-italic");
+            fontRegular = device.fonts.get("regular").buffer;
+            fontBold = device.fonts.get("bold").buffer;
+            fontItalic = device.fonts.get("italic").buffer;
+            fontBoldIt = device.fonts.get("bold-italic").buffer;
         }
         if (fontRegular) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
