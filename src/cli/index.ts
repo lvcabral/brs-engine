@@ -172,24 +172,12 @@ function runApp(payload: any) {
  */
 
 function getFonts(fontFamily: string) {
-    const fontPath = "../app/fonts";
     const fonts = new Map();
-    fonts.set(
-        "regular",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Regular.ttf`))
-    );
-    fonts.set(
-        "bold",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Bold.ttf`))
-    );
-    fonts.set(
-        "italic",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-Italic.ttf`))
-    );
-    fonts.set(
-        "bold-italic",
-        fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`))
-    );
+    const fontsPath = path.join(__dirname, "../app/fonts", `${fontFamily}`);
+    fonts.set("regular", fs.readFileSync(`${fontsPath}-Regular.ttf`));
+    fonts.set("bold", fs.readFileSync(`${fontsPath}-Bold.ttf`));
+    fonts.set("italic", fs.readFileSync(`${fontsPath}-Italic.ttf`));
+    fonts.set("bold-italic", fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
     return fonts;
 }
 
@@ -339,7 +327,6 @@ function printLocalVariables(environment: Environment) {
     });
     console.log(chalk.cyanBright(debugMsg));
 }
-
 
 /**
  * Prints the ASCII screen on the console.
