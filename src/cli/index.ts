@@ -17,6 +17,7 @@ import { registerCallback, getInterpreter, executeLine, executeFile } from "../w
 import packageInfo from "../../package.json";
 import { PrimitiveKinds, ValueKind, isIterable } from "../worker/brsTypes";
 import { Environment, Scope } from "../worker/interpreter/Environment";
+import { Canvas, ImageData, createCanvas } from "canvas";
 
 const program = new Command();
 const defaultLevel = chalk.level.toString();
@@ -29,6 +30,7 @@ let zipFileName = "";
 program
     .description(`${packageInfo.description} CLI`)
     .arguments(`brs-cli [brsFiles...]`)
+    .option("-a, --ascii <columns>", "Enable the ASCII Art screen mode", 0)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option(
@@ -158,6 +160,7 @@ function runApp(payload: any) {
         fs.readFileSync(path.join(__dirname, fontPath, `${fontFamily}-BoldItalic.ttf`))
     );
     payload.password = program.pack;
+    payload.stopOnCrash = true;
     const pkg = executeFile(payload);
     if (pkg?.cipherText instanceof Uint8Array && pkg.iv) {
         const filePath = path.join(program.out, zipFileName.replace(/.zip/gi, ".bpk"));
@@ -243,9 +246,16 @@ function messageCallback(message: any, _?: any) {
                 console.info(chalk.redBright(msg));
                 process.exitCode = 1;
             }
-        } else if (!["debug", "start"].includes(mType)) {
+        } else if (!["debug", "start", "audio"].includes(mType)) {
             console.info(chalk.blueBright(message.trimEnd()));
         }
+    } else if (program.ascii && message instanceof ImageData) {
+        const canvas = createCanvas(message.width, message.height);
+        const ctx = canvas.getContext("2d");
+        canvas.width = message.width;
+        canvas.height = message.height;
+        ctx.putImageData(message, 0, 0);
+        printAsciiScreen(program.ascii, canvas);
     }
 }
 
@@ -308,4 +318,39 @@ function printLocalVariables(environment: Environment) {
         }
     });
     console.log(chalk.cyanBright(debugMsg));
+}
+
+// Code adapted from: https://github.com/victorqribeiro/imgToAscii
+function printAsciiScreen(columns: number, image: Canvas) {
+    const alphabet = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "];
+    const ratio = (image.width / image.height) * 1.7;
+    let string = "";
+    let stringColor = "";
+    let cols = columns * 1;
+    let lines = Math.trunc(cols / ratio);
+    const canvas = createCanvas(cols, lines);
+    const context = canvas.getContext("2d");
+    if (context) {
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        let grayStep = Math.ceil(255 / alphabet.length);
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            for (let j = 0; j < alphabet.length; j++) {
+                let r = imageData.data[i];
+                let g = imageData.data[i + 1];
+                let b = imageData.data[i + 2];
+                if (r * 0.2126 + g * 0.7152 + b * 0.0722 < (j + 1) * grayStep) {
+                    const char = alphabet[j];
+                    string += char;
+                    stringColor += chalk.rgb(r, g, b)(char);
+                    break;
+                }
+            }
+            if (!((i / 4 + 1) % canvas.width)) {
+                string += "\n";
+                stringColor += "\n";
+            }
+        }
+        process.stdout.write(`\x1Bc${program.colors ? stringColor : string}`);
+    }
 }

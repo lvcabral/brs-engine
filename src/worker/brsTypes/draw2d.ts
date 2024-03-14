@@ -2,14 +2,20 @@ import { BrsInvalid, RoBitmap, RoRegion, RoScreen } from ".";
 import { BrsComponent } from "./components/BrsComponent";
 import { RoCompositor } from "./components/RoCompositor";
 import { Int32 } from "./Int32";
+import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
 
 export type BrsDraw2D = RoBitmap | RoRegion | RoScreen;
+export type WorkerCanvas = OffscreenCanvas | Canvas;
+export type WorkerCanvasRenderingContext2D =
+    | OffscreenCanvasRenderingContext2D
+    | CanvasRenderingContext2D;
+export type WorkerImageData = ImageData | NodeImageData;
 
 // In Chrome, when this is enabled, it slows down non-alpha draws. However, when this is true, it behaves the same as Roku
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
 const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
 
-function setContextAlpha(ctx: OffscreenCanvasRenderingContext2D, rgba: Int32 | BrsInvalid) {
+function setContextAlpha(ctx: WorkerCanvasRenderingContext2D, rgba: Int32 | BrsInvalid) {
     if (rgba instanceof Int32) {
         const alpha = rgba.getValue() & 255;
         if (alpha < 255) {
@@ -18,8 +24,8 @@ function setContextAlpha(ctx: OffscreenCanvasRenderingContext2D, rgba: Int32 | B
     }
 }
 
-function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): OffscreenCanvas {
-    let cvs: OffscreenCanvas;
+function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): WorkerCanvas {
+    let cvs: WorkerCanvas;
     if (rgba instanceof Int32 && !(object instanceof RoScreen)) {
         cvs = object.getRgbaCanvas(rgba.getValue());
     } else {
@@ -28,7 +34,7 @@ function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): Offsc
     return cvs;
 }
 
-function isCanvasValid(cvs?: OffscreenCanvas): boolean {
+function isCanvasValid(cvs?: WorkerCanvas): boolean {
     if (!cvs) {
         return false;
     }
@@ -65,7 +71,7 @@ export class Dimensions {
     constructor(public width: number, public height: number) {}
 }
 
-export function getDimensions(object: BrsDraw2D | RoCompositor | OffscreenCanvas): Dimensions {
+export function getDimensions(object: BrsDraw2D | RoCompositor | WorkerCanvas): Dimensions {
     if (object instanceof RoRegion || object instanceof RoBitmap) {
         return new Dimensions(object.getImageWidth(), object.getImageHeight());
     } else if (object instanceof RoScreen) {
@@ -93,7 +99,6 @@ interface DrawChunk {
  *  This function figures that out, and returns the correct pieces of the original to draw, and where they should go
  */
 function getDrawChunks(
-    ctx: OffscreenCanvasRenderingContext2D,
     destOffset: DrawOffset,
     allowWrap: boolean,
     object: BrsDraw2D,
@@ -199,7 +204,7 @@ export function drawObjectToComponent(
 ): boolean {
     const ctx = component.getContext();
     const alphaEnable = component.getAlphaEnableValue();
-    let image: OffscreenCanvas;
+    let image: WorkerCanvas;
     if (object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen) {
         image = getCanvasFromDraw2d(object, rgba);
         setContextAlpha(ctx, rgba);
@@ -221,20 +226,20 @@ export function drawObjectToComponent(
     // Only Compositor and Region uses wraps
     const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
 
-    const chunks = getDrawChunks(ctx, destOffset, allowWrap, object, x, y, scaleX, scaleY);
+    const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
     for (const chunk of chunks) {
         const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
         if (!alphaEnable) {
             ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
         }
-        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+        drawChunk(ctx, image, chunk);
     }
     return true;
 }
 
 export function drawImageToContext(
-    ctx: OffscreenCanvasRenderingContext2D,
-    image: OffscreenCanvas,
+    ctx: WorkerCanvasRenderingContext2D,
+    image: WorkerCanvas,
     alphaEnable: boolean,
     x: number,
     y: number
@@ -246,26 +251,26 @@ export function drawImageToContext(
         if (!alphaEnable) {
             ctx.clearRect(x, y, image.width, image.height);
         }
-        ctx.drawImage(image, x, y);
+        drawImageAtPos(image, ctx, x, y);
     } else if (alphaEnable) {
-        ctx.drawImage(image, x, y);
+        drawImageAtPos(image, ctx, x, y);
     } else {
         const ctc = image.getContext("2d", {
             alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
+        }) as WorkerCanvasRenderingContext2D;
         let imageData = ctc.getImageData(0, 0, image.width, image.height);
         let pixels = imageData.data;
         for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
             pixels[i] = 255;
         }
-        ctx.putImageData(imageData, x, y);
+        putImageAtPos(imageData, ctx, x, y);
     }
     return true;
 }
 
 export function drawRotatedObject(
     component: BrsDraw2D,
-    ctx: OffscreenCanvasRenderingContext2D,
+    ctx: WorkerCanvasRenderingContext2D,
     object: BrsComponent,
     rgba: Int32 | BrsInvalid,
     x: number,
@@ -279,4 +284,61 @@ export function drawRotatedObject(
     const didDraw = component.drawImage(object, rgba, 0, 0);
     ctx.restore();
     return didDraw;
+}
+
+export function createNewCanvas(width: number, height: number) {
+    /// #if WORKER
+    if (typeof OffscreenCanvas !== "undefined") {
+        return new OffscreenCanvas(width, height);
+    }
+    /// #else
+    return createCanvas(width, height);
+    /// #endif
+}
+
+export function drawImageAtPos(
+    image: WorkerCanvas,
+    ctx: WorkerCanvasRenderingContext2D,
+    x: number,
+    y: number
+) {
+    /// #if WORKER
+    if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
+        ctx.drawImage(image, x, y);
+    }
+    /// #else
+    if (ctx instanceof CanvasRenderingContext2D && image instanceof Canvas) {
+        ctx.drawImage(image, x, y);
+    }
+    /// #endif
+}
+
+export function putImageAtPos(
+    imageData: WorkerImageData,
+    ctx: WorkerCanvasRenderingContext2D,
+    x: number,
+    y: number
+) {
+    /// #if WORKER
+    if (ctx instanceof OffscreenCanvasRenderingContext2D && imageData instanceof ImageData) {
+        ctx.putImageData(imageData, x, y);
+    }
+    /// #else
+    if (ctx instanceof CanvasRenderingContext2D) {
+        ctx.putImageData(imageData, x, y);
+    }
+    /// #endif
+}
+
+function drawChunk(ctx: WorkerCanvasRenderingContext2D, image: WorkerCanvas, chunk: DrawChunk) {
+    const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
+    /// #if WORKER
+    if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
+        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+    /// #else
+    if (ctx instanceof CanvasRenderingContext2D && image instanceof Canvas) {
+        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+    /// #endif
 }

@@ -72,6 +72,9 @@ module.exports = (env) => {
                     }
                 }),
             ],
+            externals: {
+                canvas: "commonjs canvas" // Important (2)
+            },
             output: {
                 path: path.join(__dirname, distPath),
                 filename: libName + ".worker.js",

@@ -58,7 +58,9 @@ if (typeof onmessage === "undefined") {
     // Library is not running as a Worker
     const length = dataBufferIndex + dataBufferSize;
     let sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-    shared.set("buffer", new Int32Array(sharedBuffer));
+    let sharedArray = new Int32Array(sharedBuffer);
+    sharedArray.fill(-1);
+    shared.set("buffer", sharedArray);
 }
 /**
  * Support postMessage when not running as Worker.

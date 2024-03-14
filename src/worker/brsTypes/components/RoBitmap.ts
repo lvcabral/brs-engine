@@ -7,7 +7,16 @@ import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { drawImageToContext, drawObjectToComponent, drawRotatedObject } from "../draw2d";
+import {
+    WorkerCanvas,
+    WorkerCanvasRenderingContext2D,
+    createNewCanvas,
+    drawImageAtPos,
+    drawImageToContext,
+    drawObjectToComponent,
+    drawRotatedObject,
+    putImageAtPos,
+} from "../draw2d";
 import URL from "url-parse";
 import { RoByteArray } from "./RoByteArray";
 import { GifReader } from "omggif";
@@ -20,9 +29,9 @@ import { WebPRiffParser, WebPDecoder } from "libwebpjs";
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private alphaEnable: boolean;
-    private canvas: OffscreenCanvas;
-    private context: OffscreenCanvasRenderingContext2D;
-    private rgbaCanvas?: OffscreenCanvas;
+    private canvas: WorkerCanvas;
+    private context: WorkerCanvasRenderingContext2D;
+    private rgbaCanvas?: WorkerCanvas;
     private rgbaLast: number;
     private rgbaRedraw: boolean;
     private valid: boolean;
@@ -76,11 +85,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             postMessage(`warning,Invalid roBitmap param:${param}`);
             this.valid = false;
         }
-        this.canvas = new OffscreenCanvas(width, height);
+        this.canvas = createNewCanvas(width, height);
         //TODO: Review alpha enable, it should only affect bitmap as destination.
         this.context = this.canvas.getContext("2d", {
             alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
+        }) as WorkerCanvasRenderingContext2D;
         if (image) {
             try {
                 if (image instanceof Uint8Array || image instanceof ArrayBuffer) {
@@ -134,7 +143,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         this.canvas.width = width;
                         this.canvas.height = height;
                         imageData.data.set(new Uint8Array(data));
-                        this.context.putImageData(imageData, 0, 0);
+                        putImageAtPos(imageData, this.context, 0, 0);
                     } else {
                         postMessage(`warning,Invalid image format: ${type?.mime}`);
                         this.valid = false;
@@ -194,7 +203,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
     }
 
-    drawImageToContext(image: OffscreenCanvas, x: number, y: number): boolean {
+    drawImageToContext(image: WorkerCanvas, x: number, y: number): boolean {
         const ctx = this.context;
         return drawImageToContext(ctx, image, this.alphaEnable, x, y);
     }
@@ -207,11 +216,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         return this.canvas.height;
     }
 
-    getCanvas(): OffscreenCanvas {
+    getCanvas(): WorkerCanvas {
         return this.canvas;
     }
 
-    getContext(): OffscreenCanvasRenderingContext2D {
+    getContext(): WorkerCanvasRenderingContext2D {
         return this.context;
     }
 
@@ -219,9 +228,9 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         return this.alphaEnable;
     }
 
-    getRgbaCanvas(rgba: number): OffscreenCanvas {
+    getRgbaCanvas(rgba: number): WorkerCanvas {
         if (!this.rgbaCanvas) {
-            this.rgbaCanvas = new OffscreenCanvas(this.canvas.width, this.canvas.height);
+            this.rgbaCanvas = createNewCanvas(this.canvas.width, this.canvas.height);
         } else if (!this.rgbaRedraw && rgba === this.rgbaLast) {
             return this.rgbaCanvas;
         } else {
@@ -230,13 +239,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         }
         const ctx = this.rgbaCanvas.getContext("2d", {
             alpha: true,
-        }) as OffscreenCanvasRenderingContext2D;
-        ctx.drawImage(this.canvas, 0, 0);
+        }) as WorkerCanvasRenderingContext2D;
+        drawImageAtPos(this.canvas, ctx, 0, 0);
         ctx.globalCompositeOperation = "multiply";
         ctx.fillStyle = rgbaIntToHex(rgba);
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         ctx.globalCompositeOperation = "destination-in";
-        ctx.drawImage(this.canvas, 0, 0);
+        drawImageAtPos(this.canvas, ctx, 0, 0);
         ctx.globalCompositeOperation = "source-over";
         this.rgbaLast = rgba;
         this.rgbaRedraw = false;
