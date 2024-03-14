@@ -245,10 +245,10 @@ function setupDeviceFonts(device: any, interpreter: Interpreter) {
             fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
         } else if (device.fonts) {
             // Running locally as CLI
-            fontRegular = device.fonts.get("regular");
-            fontBold = device.fonts.get("bold");
-            fontItalic = device.fonts.get("italic");
-            fontBoldIt = device.fonts.get("bold-italic");
+            fontRegular = device.fonts.get("regular").buffer;
+            fontBold = device.fonts.get("bold").buffer;
+            fontItalic = device.fonts.get("italic").buffer;
+            fontBoldIt = device.fonts.get("bold-italic").buffer;
         }
         if (fontRegular) {
             volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
