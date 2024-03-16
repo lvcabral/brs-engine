@@ -49,6 +49,10 @@ export enum RemoteType {
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on device controls)
 
+// Debug prompt
+export const debugPrompt = "Brightscript Debugger> ";
+
+// Debug commands enumerator
 export enum DebugCommand {
     BT,
     CONT,

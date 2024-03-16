@@ -30,9 +30,10 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 | --- | --- |
 | `app/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be imported and used by the client applications hosting the Simulator.|
 | `app/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform.|
-|`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application that can be used from the terminal as a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), running `brs` files or packaging encrypted apps.|
+|`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application that can be used from the terminal: <br/>- As a language shell - [REPL (read-eval-print loop)](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop)<br/>- Executing `brs`, `zip` or `bpk` files<br/>- Packaging `zip` files into encrypted `bpk` packages.|
+|`bin/brs.node.js`| A **[NodeJS Worker](https://nodejs.org/api/worker_threads.html)** library, similar to the Browser one, but this is used by the CLI to run apps in a background thread on NodeJS environment.|
 
-The worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
+The Web Worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
 
 1. [Chromium](https://www.chromium.org/Home)/[Chrome](https://www.google.com/chrome) version 69 or newer.
 1. [Chrome Android](https://www.google.com/chrome) version 89 or newer.

@@ -7,75 +7,15 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, context } from "./util";
 import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots } from "../worker/enums";
+/// #if BROWSER
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
+/// #endif
 
 // Control Mapping
 // References:
 // https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
 // https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
 // https://w3c.github.io/gamepad/#remapping
-
-// Keyboard Mapping
-const keysMap: Map<string, string> = new Map();
-keysMap.set("ArrowUp", "up");
-keysMap.set("ArrowDown", "down");
-keysMap.set("ArrowLeft", "left");
-keysMap.set("ArrowRight", "right");
-keysMap.set("Enter", "select");
-keysMap.set("Escape", "back");
-keysMap.set("Delete", "back");
-keysMap.set("Home", "home");
-keysMap.set("Shift+Escape", "home");
-keysMap.set("Control+Escape", "home");
-keysMap.set("Backspace", "instantreplay");
-keysMap.set("End", "play");
-if (context.inApple) {
-    keysMap.set("Command+Backspace", "backspace");
-    keysMap.set("Command+Enter", "play");
-    keysMap.set("Command+ArrowLeft", "rev");
-    keysMap.set("Command+ArrowRight", "fwd");
-    keysMap.set("Command+Digit8", "info");
-    keysMap.set("Control+KeyC", "break");
-} else {
-    keysMap.set("Control+Backspace", "backspace");
-    keysMap.set("Control+Enter", "play");
-    keysMap.set("Control+ArrowLeft", "rev");
-    keysMap.set("Control+ArrowRight", "fwd");
-    keysMap.set("Control+Digit8", "info");
-    keysMap.set("Control+Pause", "break");
-}
-keysMap.set("PageDown", "rev");
-keysMap.set("PageUp", "fwd");
-keysMap.set("Insert", "info");
-keysMap.set("Control+KeyA", "a");
-keysMap.set("Control+KeyZ", "b");
-keysMap.set("F10", "volumemute");
-
-// Game Pad Mapping
-const axesMap = new Map([
-    [0, ["up", "down", "left", "right"]],
-    [1, ["up", "down", "left", "right"]],
-]);
-const buttonsMap = new Map([
-    [0, "select"],
-    [1, "back"],
-    [2, "rev"],
-    [3, "fwd"],
-    [4, "info"],
-    [5, "play"],
-    [6, "instantreplay"],
-    [7, "info"],
-    [8, "home"],
-    [9, "play"],
-    [10, "a"],
-    [11, "b"],
-    [12, "up"],
-    [13, "down"],
-    [14, "left"],
-    [15, "right"],
-    [16, "instantreplay"],
-    [17, "volumemute"],
-]);
 
 // Roku Remote Mapping
 const rokuKeys: Map<string, number> = new Map([
@@ -110,6 +50,7 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     if (typeof options.disableDebug === "boolean") {
         disableDebug = options.disableDebug;
     }
+    /// #if BROWSER
     if (typeof options.disableKeys === "boolean") {
         controls.keyboard = !options.disableKeys;
     }
@@ -124,6 +65,7 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     }
     gameControl.on("connect", gamePadOnHandler);
     gameControl.on("disconnect", gamePadOffHandler);
+    /// #endif
 }
 
 // Observers Handling
@@ -141,22 +83,6 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Control API
-export function setCustomKeys(newKeys: Map<string, string>) {
-    newKeys.forEach((value: string, key: string) => {
-        key = key.replace(/Windows|Command/gi, "Meta");
-        key = key.replace("Option", "Alt");
-        keysMap.set(key, value);
-    });
-}
-
-export function setCustomPadButtons(newButtons: Map<number, string>) {
-    newButtons.forEach((value: string, button: number) => {
-        if (button >= 0 && button < 32 && value.length) {
-            buttonsMap.set(button, value);
-        }
-    });
-}
-
 export function setControlMode(newState: object) {
     Object.assign(controls, newState);
 }
@@ -166,6 +92,7 @@ export function getControlMode() {
 }
 
 export function enableSendKeys(enable: boolean) {
+    /// #if BROWSER
     if (enable) {
         document.addEventListener("keydown", keyDownHandler);
         document.addEventListener("keyup", keyUpHandler);
@@ -173,6 +100,7 @@ export function enableSendKeys(enable: boolean) {
         document.removeEventListener("keydown", keyDownHandler);
         document.removeEventListener("keyup", keyUpHandler);
     }
+    /// #endif
     sendKeysEnabled = enable;
 }
 
@@ -230,6 +158,53 @@ function getNext() {
     return (keyBufferSize - 1) * keyArraySpots;
 }
 
+/// #if BROWSER
+
+// Keyboard Mapping
+const keysMap: Map<string, string> = new Map();
+keysMap.set("ArrowUp", "up");
+keysMap.set("ArrowDown", "down");
+keysMap.set("ArrowLeft", "left");
+keysMap.set("ArrowRight", "right");
+keysMap.set("Enter", "select");
+keysMap.set("Escape", "back");
+keysMap.set("Delete", "back");
+keysMap.set("Home", "home");
+keysMap.set("Shift+Escape", "home");
+keysMap.set("Control+Escape", "home");
+keysMap.set("Backspace", "instantreplay");
+keysMap.set("End", "play");
+if (context.inApple) {
+    keysMap.set("Command+Backspace", "backspace");
+    keysMap.set("Command+Enter", "play");
+    keysMap.set("Command+ArrowLeft", "rev");
+    keysMap.set("Command+ArrowRight", "fwd");
+    keysMap.set("Command+Digit8", "info");
+    keysMap.set("Control+KeyC", "break");
+} else {
+    keysMap.set("Control+Backspace", "backspace");
+    keysMap.set("Control+Enter", "play");
+    keysMap.set("Control+ArrowLeft", "rev");
+    keysMap.set("Control+ArrowRight", "fwd");
+    keysMap.set("Control+Digit8", "info");
+    keysMap.set("Control+Pause", "break");
+}
+keysMap.set("PageDown", "rev");
+keysMap.set("PageUp", "fwd");
+keysMap.set("Insert", "info");
+keysMap.set("Control+KeyA", "a");
+keysMap.set("Control+KeyZ", "b");
+keysMap.set("F10", "volumemute");
+
+// Keyboard API
+export function setCustomKeys(newKeys: Map<string, string>) {
+    newKeys.forEach((value: string, key: string) => {
+        key = key.replace(/Windows|Command/gi, "Meta");
+        key = key.replace("Option", "Alt");
+        keysMap.set(key, value);
+    });
+}
+
 // Keyboard handlers
 function keyDownHandler(event: KeyboardEvent) {
     if (!event.repeat) {
@@ -260,6 +235,41 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
             event.preventDefault();
         }
     }
+}
+
+// Game Pad Mapping
+const axesMap = new Map([
+    [0, ["up", "down", "left", "right"]],
+    [1, ["up", "down", "left", "right"]],
+]);
+const buttonsMap = new Map([
+    [0, "select"],
+    [1, "back"],
+    [2, "rev"],
+    [3, "fwd"],
+    [4, "info"],
+    [5, "play"],
+    [6, "instantreplay"],
+    [7, "info"],
+    [8, "home"],
+    [9, "play"],
+    [10, "a"],
+    [11, "b"],
+    [12, "up"],
+    [13, "down"],
+    [14, "left"],
+    [15, "right"],
+    [16, "instantreplay"],
+    [17, "volumemute"],
+]);
+
+// Game Pad API
+export function setCustomPadButtons(newButtons: Map<number, string>) {
+    newButtons.forEach((value: string, button: number) => {
+        if (button >= 0 && button < 32 && value.length) {
+            buttonsMap.set(button, value);
+        }
+    });
 }
 
 // GamePad handlers
@@ -300,3 +310,4 @@ function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: numbe
 function gamePadOffHandler(id: number) {
     console.info(`GamePad ${id} disconnected!`);
 }
+/// #endif

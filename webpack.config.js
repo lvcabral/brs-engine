@@ -16,12 +16,13 @@ module.exports = (env) => {
     const ifdef_opts = {
         DEBUG: mode === "development",
         WORKER: true,
+        BROWSER: true,
         "ifdef-verbose": false,
     };
     return [
         {
             entry: "./src/worker/index.ts",
-            target: "web",
+            target: "webworker",
             mode: mode,
             devtool: sourceMap,
             module: {

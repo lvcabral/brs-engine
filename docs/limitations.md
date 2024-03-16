@@ -5,7 +5,8 @@ There are several features from the **BrightScript** language and components tha
 ## In Scope (to be developed/fixed in future releases)
 
 * RSG (Roku SceneGraph) SDK components are not yet supported.
-* Statements `Goto` and `Throw` are not supported.
+* The components `roSystemLog` and `roStreamSocket` are not yet supported.
+* Statements `Goto` and `Throw` are not yet supported.
 * Statements `Try..Catch` are partially supported, only the `Try` section is executed, `Catch` part is ignored and the exception is still raised.
 * It's not possible to compare events like `roUniversalControlEvent` to an integer (implicit `GetInt()`).
 * Multi-dimensional arrays cannot be accessed as `array[x, y]` use the notation `array[x][y]` instead.
@@ -16,11 +17,11 @@ There are several features from the **BrightScript** language and components tha
   * No `Timed Metadata` support.
 * Video playback via `roVideoPlayer` is implemented, but with some limitations:
   * If the `roVideoPlayer` instance is destroyed the video keeps playing, make sure to call `.stop()` before discarding the object.
-  * The following methods aree not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
-  * Check what formats (container and coded) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
+  * The following methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
+  * Check what formats (container and codec) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
+  * DASH streams are not yet supported.
 * The component `roUrlTransfer` is implemented with basic functionality but has some limitations:
-  * To make the **web app** access urls from domains other than the one it is hosted, add the domains to the `Content-Security-Policy` tag in `app/index.html`.
-  * The configuration above requires the web server called to respond with the proper header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
+  * To make a **web app** access urls from domains other than the one it is hosted requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
   * The _async_ methods are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
   * If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
   * Custom/Self-Signed SSL certificates are not supported, the engine will use default browser client certificate database.
@@ -29,8 +30,8 @@ There are several features from the **BrightScript** language and components tha
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
   * The method `GetTargetIpAddress` from `roUrlEvent` always returns an empty string.
-* Reserved words like `Mod` cannot be used as function parameters (Roku does allow that).
-* SDK 1.0 deprecated components are not implemented, but could be done in the future for legacy apps support.
+* Reserved words like `Mod` cannot be used as function parameters (Roku devices allows that).
+* SDK 1.0 deprecated components are not supported, but could be implemented in the future for legacy apps preservation.
 
 ## In Scope (mocked)
 
