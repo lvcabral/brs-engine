@@ -73,16 +73,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.canvas = new Array<WorkerCanvas>(this.doubleBuffer ? 2 : 1);
         this.context = new Array<WorkerCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
         if (interpreter.supportCanvas) {
-            for (let index = 0; index < this.canvas.length; index++) {
-                this.canvas[index] = createNewCanvas(this.width, this.height);
-                if (this.canvas[index]) {
-                    this.context[index] = this.canvas[index].getContext("2d", {
-                        alpha: true,
-                    }) as WorkerCanvasRenderingContext2D;
-                    this.canvas[index].width = this.width;
-                    this.canvas[index].height = this.height;
-                }
-            }
+            this.createDisplayBuffer();
         }
         this.alphaEnable = false;
         const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
@@ -110,6 +101,19 @@ export class RoScreen extends BrsComponent implements BrsValue {
             ifSetMessagePort: [this.setMessagePort, this.setPort],
             ifGetMessagePort: [this.getMessagePort],
         });
+    }
+
+    createDisplayBuffer() {
+        for (let index = 0; index < this.canvas.length; index++) {
+            this.canvas[index] = createNewCanvas(this.width, this.height);
+            if (this.canvas[index]) {
+                this.context[index] = this.canvas[index].getContext("2d", {
+                    alpha: true,
+                }) as WorkerCanvasRenderingContext2D;
+                this.canvas[index].width = this.width;
+                this.canvas[index].height = this.height;
+            }
+        }
     }
 
     getImageWidth(): number {
