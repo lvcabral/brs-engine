@@ -18,11 +18,10 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand } from "../enums";
-const prompt = "Brightscript Debugger> ";
+import { DataType, DebugCommand, debugPrompt } from "../enums";
 /// #if !WORKER
 import readline from "readline-sync";
-readline.setDefaultOptions({ prompt: prompt });
+readline.setDefaultOptions({ prompt: debugPrompt });
 /// #endif
 
 // Debug Constants
@@ -72,7 +71,7 @@ export function runDebugger(
     while (true) {
         let line = "";
         /// #if WORKER
-        postMessage(`print,\r\n${prompt}`);
+        postMessage(`print,\r\n${debugPrompt}`);
         Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
         const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
         Atomics.store(interpreter.sharedArray, DataType.DBG, -1);

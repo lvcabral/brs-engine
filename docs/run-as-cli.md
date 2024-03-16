@@ -13,6 +13,19 @@ For a list of options run:
 
 ```shell
 $ brs-cli --help
+Usage: brs-cli [options] [brsFiles...]
+
+BrightScript Simulation Engine CLI
+
+Options:
+  -a, --ascii <columns>  Enable ASCII screen mode passing the width in columns. (default: 0)
+  -c, --colors <level>   Define the console color level (0 to disable). (default: 3)
+  -p, --pack <password>  The password to generate the encrypted package. (default: "")
+  -o, --out <directory>  The directory to save the encrypted package file. (default: "./")
+  -d, --debug            Open the micro debugger on a crash.
+  -w, --worker           Run the app in a worker thread. (beta)
+  -v, --version          output the version number
+  -h, --help             output usage information
 ```
 
 ### REPL
@@ -47,8 +60,6 @@ $ brs-cli --color 0
 | `2` | 256 color support |
 | `3` | Truecolor support (16 million colors) |
 
-
-
 ### Executing files
 
 The CLI can execute an arbitrary list of BrightScript files (`.brs`) as well!  Simply pass the file(s) to the `brs-cli` executable, e.g.:
@@ -61,11 +72,25 @@ $ brs hello-world.brs
 Dennis Ritchie said "Hello, World!"
 ```
 
-It is also possible to run a full BrightScript application `.zip` or `.bpk` file, however it does not support Draw2D objects yet, so only pure BrigtScript code. e.g:
+It is also possible to run a full BrightScript application `.zip` or `.bpk` file, e.g:
 
 ```shell
 $ brs-cli ../tests/test-sandbox.zip
 ```
+
+#### Notes
+
+* If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
+* As the `node-canvas` package still can't run in a NodeJS worker thread, the apps with `ifDraw2D` can't use the `--worker` option.
+
+### Showing Screen as ASCII Art on the Terminal
+
+If you pass the `--ascii <columns>` option, the CLI will run the application and show a representation of the screen bitmap as ASCII Art on the terminal screen.
+
+```shell
+$ brs-cli ../apps/collisions.zip --ascii 170
+```
+The `<columns>` defines the width in number of character columns, the height will follow the screen proportion.
 
 ### Creating an encrypted App package file
 
@@ -87,3 +112,30 @@ Package file created as ./release/test-sandbox.bpk with 528 KB.
 
 ```
 
+### Running the Engine as a Worker
+
+By default the CLI will run the BrightScript Engine on the Main Thread (both REPL and file execution), but there is now an option (still in beta) to run it on a worker thread (just like the Browser version), allowing the usage of control emulation.
+Unfortunately the [node-canvas](https://github.com/Automattic/node-canvas) component has a [known issue](https://github.com/Automattic/node-canvas/issues/1394) that prevents it to run in a worker thread. This way, currently, it's not possible to run an app that uses `ifDraw2D` components (`roScreen`, `roBitmap`, etc.) with this option enabled.
+
+Below is an example of code, that can be executed with the `--worker` option, to demonstrate the control simulation with keyboard keys on the CLI, the `roScreen` is used only to receive `roMessagePort` events, no draw methods are supported.
+
+```brs
+sub main()
+  port = CreateObject("roMessagePort")
+  audioPlayer = CreateObject("roScreen")
+  audioPlayer.SetMessagePort(port)
+  while true
+    msg = wait(0, port)
+    if type(msg) = "roUniversalControlEvent"
+      key = msg.getInt()
+      if key = 0 '<BACK>
+        exit while
+      else if key = 5 '<RIGHT>
+        print "device uptime:"; UpTime(0)
+      else if key < 100
+        print "key:"; key
+      end if
+    end if
+  end while
+end sub
+```

@@ -69,6 +69,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     };
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
+    private _supportCanvas = true;
+
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
@@ -93,6 +95,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get singleKeyEvents() {
         return this._singleKeyEvents;
+    }
+
+    get supportCanvas() {
+        return this._supportCanvas;
     }
 
     public audioId: number = 0;
@@ -173,6 +179,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             .forEach((func: Callable) =>
                 this._environment.define(Scope.Global, func.name ?? "", func)
             );
+        /// #if WORKER
+        this._supportCanvas = typeof OffscreenCanvas !== "undefined";
+        if (!this._supportCanvas) {
+            postMessage(
+                "warning,WARNING: Canvas not supported, ifDraw2D operations will not be available."
+            );
+        }
+        /// #endif
     }
 
     /**

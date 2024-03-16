@@ -55,4 +55,5 @@
         "plugins": []
     },
     "include": ["./src/"],
+    "exclude": ["./src/api/index.ts"]
 }
