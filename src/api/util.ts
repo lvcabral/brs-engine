@@ -96,6 +96,11 @@ export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
     return base64url.slice(base64url.indexOf(",") + 1);
 }
 
+// Check if a variable is number
+export function isNumber(value?: string | number): boolean {
+    return value != null && value !== "" && !isNaN(Number(value.toString()));
+}
+
 /** Parse CSV string into a Map with first column as the key and the value contains the other columns into an array
  * @param csv the string containing the comma-separated values
  */

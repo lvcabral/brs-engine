@@ -72,13 +72,17 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.lastBuffer = 0;
         this.canvas = new Array<WorkerCanvas>(this.doubleBuffer ? 2 : 1);
         this.context = new Array<WorkerCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
-        for (let index = 0; index < this.canvas.length; index++) {
-            this.canvas[index] = createNewCanvas(this.width, this.height);
-            this.context[index] = this.canvas[index].getContext("2d", {
-                alpha: true,
-            }) as WorkerCanvasRenderingContext2D;
-            this.canvas[index].width = this.width;
-            this.canvas[index].height = this.height;
+        if (interpreter.supportCanvas) {
+            for (let index = 0; index < this.canvas.length; index++) {
+                this.canvas[index] = createNewCanvas(this.width, this.height);
+                if (this.canvas[index]) {
+                    this.context[index] = this.canvas[index].getContext("2d", {
+                        alpha: true,
+                    }) as WorkerCanvasRenderingContext2D;
+                    this.canvas[index].width = this.width;
+                    this.canvas[index].height = this.height;
+                }
+            }
         }
         this.alphaEnable = false;
         const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
