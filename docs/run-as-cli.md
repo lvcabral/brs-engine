@@ -122,8 +122,8 @@ Below is an example of code, that can be executed with the `--worker` option, to
 ```brs
 sub main()
   port = CreateObject("roMessagePort")
-  audioPlayer = CreateObject("roScreen")
-  audioPlayer.SetMessagePort(port)
+  screen = CreateObject("roScreen")
+  screen.SetMessagePort(port)
   while true
     msg = wait(0, port)
     if type(msg) = "roUniversalControlEvent"
