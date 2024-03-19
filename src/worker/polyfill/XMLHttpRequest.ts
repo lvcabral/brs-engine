@@ -21,6 +21,7 @@ import * as fs from "fs";
 import * as Url from "url";
 import * as http from "http";
 import * as https from "https";
+import * as crypto from "crypto";
 import { spawn } from "child_process";
 
 /**
@@ -212,7 +213,7 @@ export class XMLHttpRequest {
      * @return boolean Header added
      */
     setRequestHeader(header: string, value: string) {
-        if (this.readyState != this.OPENED) {
+        if (this.readyState !== this.OPENED) {
             throw new Error(
                 "INVALID_STATE_ERR: setRequestHeader can only be called when state is OPEN"
             );
@@ -260,7 +261,7 @@ export class XMLHttpRequest {
         for (let i in this._response.headers) {
             // Cookie headers are excluded
             if (i !== "set-cookie" && i !== "set-cookie2") {
-                result += i + ": " + this._response.headers[i] + "\r\n";
+                result += `${i}: ${this._response.headers[i]}\r\n`;
             }
         }
         return result.slice(0, -2);
@@ -287,7 +288,7 @@ export class XMLHttpRequest {
      * @param string data Optional data to send as request body.
      */
     send(data?: string | Buffer | null) {
-        if (this.readyState != this.OPENED) {
+        if (this.readyState !== this.OPENED) {
             throw new Error("INVALID_STATE_ERR: connection must be opened before send() is called");
         }
 
@@ -360,20 +361,17 @@ export class XMLHttpRequest {
         // to use http://localhost:port/path
         const port = url.port || (ssl ? 443 : 80);
         // Add query string if one is used
-        const uri = url.pathname + (url.search ? url.search : "");
+        const uri = `${url.pathname}${url.search ?? ""}`;
 
         // Set the Host header or the server may reject the request
         this._headers["Host"] = host;
         if (!((ssl && port === 443) || port === 80)) {
-            this._headers["Host"] += ":" + url.port;
+            this._headers["Host"] += `:${url.port}`;
         }
 
         // Set Basic Auth if necessary
         if (this._settings.user) {
-            if (typeof this._settings.password == "undefined") {
-                this._settings.password = "";
-            }
-            let authBuf = Buffer.from(this._settings.user + ":" + this._settings.password);
+            let authBuf = Buffer.from(`${this._settings.user}:${this._settings.password ?? ""}`);
             this._headers["Authorization"] = "Basic " + authBuf.toString("base64");
         }
 
@@ -531,8 +529,8 @@ export class XMLHttpRequest {
         } else {
             // Synchronous
             // Create a temporary file for communication with the other Node process
-            const contentFile = ".node-xmlhttprequest-content-" + process.pid;
-            const syncFile = ".node-xmlhttprequest-sync-" + process.pid;
+            const contentFile = `.node-xhr-content-${crypto.randomUUID()}`;
+            const syncFile = `.node-xhr-sync-${crypto.randomUUID()}`;
             fs.writeFileSync(syncFile, "", "utf8");
             // The async request the other Node process executes
             const execString =
