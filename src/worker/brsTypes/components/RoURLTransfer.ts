@@ -10,7 +10,9 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 import { FileSystem } from "../../interpreter/FileSystem";
 import { audioExt, videoExt } from "../../enums";
 import fileType from "file-type";
-
+/// #if !BROWSER
+import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
+/// #endif
 export class RoURLTransfer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private identity: number;
@@ -92,6 +94,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             ifGetMessagePort: [this.getMessagePort, this.getPort],
         });
     }
+
     getConnection(methodParam: string, typeParam: XMLHttpRequestResponseType) {
         if (this.freshConnection) {
             this.xhr = new XMLHttpRequest();
@@ -187,7 +190,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const path = new URL(filePath);
             const volume = this.interpreter.fileSystem.get(path.protocol);
             if (volume) {
-                let body = volume.readFileSync(path.pathname, xhr.response);
+                let body = volume.readFileSync(path.pathname);
                 xhr.send(body);
                 this.failureReason = xhr.statusText;
             } else {
@@ -221,7 +224,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const inPath = new URL(inputPath);
             const inVolume = this.interpreter.fileSystem.get(inPath.protocol);
             if (inVolume) {
-                let body = inVolume.readFileSync(inPath.pathname, xhr.response);
+                let body = inVolume.readFileSync(inPath.pathname);
                 xhr.send(body);
                 const outPath = new URL(outputPath);
                 const outVolume = this.interpreter.fileSystem.get(outPath.protocol);
@@ -385,7 +388,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("filePath", ValueKind.String)],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter, filePath: BrsString) => {
+        impl: (_: Interpreter, filePath: BrsString) => {
             const reply = this.getToFileSync(filePath.value);
             if (reply instanceof RoURLEvent) {
                 return new Int32(reply.getStatus());
@@ -738,7 +741,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
 
     /** Add the specified HTTP header to the list of headers that will be sent in the HTTP request.
      *  If "x-roku-reserved-dev-id" is passed as a name, the value parameter is ignored and in its place,
-     *  the devid of the currently running channel is used as the value.
+     *  the devId of the currently running channel is used as the value.
      */
     private addHeader = new Callable("addHeader", {
         signature: {
