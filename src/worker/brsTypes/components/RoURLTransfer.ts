@@ -11,7 +11,7 @@ import { FileSystem } from "../../interpreter/FileSystem";
 import { audioExt, videoExt } from "../../enums";
 import fileType from "file-type";
 /// #if !BROWSER
-import { XMLHttpRequest } from "xmlhttprequest-ssl";
+import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 /// #endif
 export class RoURLTransfer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -114,11 +114,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = this.getConnection("GET", "text");
             xhr.send();
             this.failureReason = xhr.statusText;
-            const status = this.getStatusCode(xhr.status);
             return new RoURLEvent(
                 this.identity,
                 xhr.responseText,
-                status,
+                xhr.status,
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
@@ -135,14 +134,13 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = this.getConnection("GET", "arraybuffer");
             xhr.send();
             this.failureReason = xhr.statusText;
-            const status = this.getStatusCode(xhr.status);
-            if (status === 200 && volume) {
+            if (xhr.status === 200 && volume) {
                 this.saveDownloadedFile(volume, path, xhr.response);
             }
             return new RoURLEvent(
                 this.identity,
                 "",
-                status,
+                xhr.status,
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
@@ -165,11 +163,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = this.getConnection("POST", "text");
             xhr.send(body);
             this.failureReason = xhr.statusText;
-            const status = this.getStatusCode(xhr.status);
             return new RoURLEvent(
                 this.identity,
                 xhr.responseText || "",
-                status,
+                xhr.status,
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
@@ -193,18 +190,17 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const path = new URL(filePath);
             const volume = this.interpreter.fileSystem.get(path.protocol);
             if (volume) {
-                let body = volume.readFileSync(path.pathname, xhr.response);
+                let body = volume.readFileSync(path.pathname);
                 xhr.send(body);
                 this.failureReason = xhr.statusText;
             } else {
                 postMessage(`warning,[postFromFileSync] Invalid volume: ${filePath}`);
                 return BrsInvalid.Instance;
             }
-            const status = this.getStatusCode(xhr.status);
             return new RoURLEvent(
                 this.identity,
                 xhr.responseText || "",
-                status,
+                xhr.status,
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
@@ -228,7 +224,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const inPath = new URL(inputPath);
             const inVolume = this.interpreter.fileSystem.get(inPath.protocol);
             if (inVolume) {
-                let body = inVolume.readFileSync(inPath.pathname, xhr.response);
+                let body = inVolume.readFileSync(inPath.pathname);
                 xhr.send(body);
                 const outPath = new URL(outputPath);
                 const outVolume = this.interpreter.fileSystem.get(outPath.protocol);
@@ -240,11 +236,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 postMessage(`warning,[postFromFileToFileSync] Invalid volume: ${inputPath}`);
                 return BrsInvalid.Instance;
             }
-            const status = this.getStatusCode(xhr.status);
             return new RoURLEvent(
                 this.identity,
                 "",
-                status,
+                xhr.status,
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
@@ -292,11 +287,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const xhr = this.getConnection("HEAD", "text");
             xhr.send();
             this.failureReason = xhr.statusText;
-            const status = this.getStatusCode(xhr.status);
             return new RoURLEvent(
                 this.identity,
                 xhr.responseText,
-                status,
+                xhr.status,
                 xhr.statusText,
                 xhr.getAllResponseHeaders()
             );
@@ -304,24 +298,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             postMessage(`warning,[requestHead] Error requesting from ${this.url}: ${e.message}`);
             return BrsInvalid.Instance;
         }
-    }
-
-    getStatusCode(status: any): number {
-        let statusCode = 0;
-        if (typeof status === "number") {
-            statusCode = status;
-        } else if (typeof status === "string" && status.startsWith("{") && status.endsWith("}")) {
-            try {
-                // NodeJS module return a string with the full reply instead of the numeric status
-                const reply = JSON.parse(status);
-                if (reply?.data?.statusCode) {
-                    statusCode = reply?.data?.statusCode;
-                }
-            } catch (error) {
-                // Do nothing
-            }
-        }
-        return statusCode;
     }
 
     toString(parent?: BrsType): string {
