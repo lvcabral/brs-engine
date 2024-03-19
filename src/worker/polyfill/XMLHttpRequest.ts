@@ -126,7 +126,7 @@ export class XMLHttpRequest {
 
     constructor(opts?: any) {
         this._opts = opts ?? {};
-        this._headers = Object.assign({}, defaultHeaders);
+        this._headers = { ...defaultHeaders };
         this._request = null;
         this._response = null;
 
@@ -587,7 +587,7 @@ export class XMLHttpRequest {
             syncProc.stdin.end();
             // Remove the temporary file
             fs.unlinkSync(contentFile);
-            if (this.responseText.match(/^NODE-XMLHTTPREQUEST-ERROR:/)) {
+            if (/^NODE-XMLHTTPREQUEST-ERROR:/.exec(this.responseText)) {
                 // If the file returned an error, handle it
                 const errorObj = JSON.parse(
                     this.responseText.replace(/^NODE-XMLHTTPREQUEST-ERROR:/, "")
@@ -615,7 +615,7 @@ export class XMLHttpRequest {
      * @param  status  {number}    HTTP status code to use rather than the default (0) for XHR errors.
      */
     handleError(error: any, status?: number) {
-        this.status = status || 0;
+        this.status = status ?? 0;
         this.statusText = error;
         this.responseText = error.stack;
         this._errorFlag = true;
@@ -631,7 +631,7 @@ export class XMLHttpRequest {
             this._request = null;
         }
 
-        this._headers = Object.assign({}, defaultHeaders);
+        this._headers = { ...defaultHeaders };
         this.responseText = "";
         this.responseXML = "";
         this.response = Buffer.alloc(0);
