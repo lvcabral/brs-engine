@@ -86,7 +86,8 @@
     "upng-js": "lvcabral/UPNG.js",
     "url-parse": "^1.5.10",
     "uuid": "^9.0.1",
-    "xml2js": "^0.5.0"
+    "xml2js": "^0.5.0",
+    "xmlhttprequest-ssl": "^2.1.1"
   },
   "devDependencies": {
     "@types/crc": "^3.4.0",
