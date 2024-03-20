@@ -69,7 +69,7 @@ let brsWorker: Worker;
 let home: Howl;
 
 // Package API
-export { deviceData, loadAppZip, updateAppZip } from "./package";
+export { deviceData, loadAppZip, updateAppZip, getSerialNumber } from "./package";
 
 // Control API
 export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons } from "./control";
@@ -284,17 +284,6 @@ export function terminate(reason: string) {
 // Returns API library version
 export function getVersion() {
     return packageInfo.version;
-}
-
-// Returns Device Serial Number based on Device Model and library version
-export function getSerialNumber() {
-    const device = deviceData.models.get(deviceData.deviceModel);
-    const prefix = device ? device[4] : "X0";
-    let verPlain = "";
-    packageInfo.version.split(".").forEach((element) => {
-        verPlain += element.replace(/\D/g, "").padStart(2, "0");
-    });
-    return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }
 
 // Display API

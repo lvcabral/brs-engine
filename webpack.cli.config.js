@@ -1,4 +1,3 @@
-const webpack = require("webpack");
 const path = require("path");
 const ShebangPlugin = require('webpack-shebang-plugin');
 
@@ -13,15 +12,8 @@ module.exports = (env) => {
         mode = "development";
         sourceMap = "inline-cheap-module-source-map";
     }
-    const ifdef_cli_opts = {
+    const ifdef_opts = {
         DEBUG: mode === "development",
-        WORKER: false,
-        BROWSER: false,
-        "ifdef-verbose": false,
-    };
-    const ifdef_worker_opts = {
-        DEBUG: mode === "development",
-        WORKER: true,
         BROWSER: false,
         "ifdef-verbose": false,
     };
@@ -44,7 +36,7 @@ module.exports = (env) => {
                     {
                         test: /\.tsx?$/,
                         loader: "ifdef-loader",
-                        options: ifdef_cli_opts,
+                        options: ifdef_opts,
                         exclude: /node_modules/,
                     },
                     {
@@ -73,7 +65,7 @@ module.exports = (env) => {
             },
         },
         {
-            entry: "./src/worker/index.ts",
+            entry: "./src/cli/ecp.ts",
             target: "node",
             mode: mode,
             devtool: sourceMap,
@@ -82,17 +74,16 @@ module.exports = (env) => {
                     {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
+                        options: {
+                            configFile: "tsconfig.cli.json",
+                        },
                         exclude: /node_modules/,
                     },
                     {
                         test: /\.tsx?$/,
                         loader: "ifdef-loader",
-                        options: ifdef_worker_opts,
+                        options: ifdef_opts,
                         exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.brs$/,
-                        type: "asset/source",
                     },
                 ],
             },
@@ -101,15 +92,12 @@ module.exports = (env) => {
                 extensions: [".tsx", ".ts", ".js"],
             },
             externals: {
-                canvas: "commonjs canvas" // Important (2)
+                bufferutil: "bufferutil",
+                "utf-8-validate": "utf-8-validate",
             },
             output: {
-                path: path.join(__dirname, cliPath),
-                filename: libName + ".node.js",
-                library: libName + "-node",
-                libraryTarget: "umd",
-                umdNamedDefine: true,
-                globalObject: "typeof self !== 'undefined' ? self : this",
+                filename: libName + ".ecp.js",
+                path: path.resolve(__dirname, cliPath),
             },
         },
     ];

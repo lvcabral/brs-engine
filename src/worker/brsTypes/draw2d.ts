@@ -287,7 +287,7 @@ export function drawRotatedObject(
 }
 
 export function createNewCanvas(width: number, height: number) {
-    /// #if WORKER
+    /// #if BROWSER
     return new OffscreenCanvas(width, height);
     /// #else
     return createCanvas(width, height);
@@ -300,7 +300,7 @@ export function drawImageAtPos(
     x: number,
     y: number
 ) {
-    /// #if WORKER
+    /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
         ctx.drawImage(image, x, y);
     }
@@ -317,7 +317,7 @@ export function putImageAtPos(
     x: number,
     y: number
 ) {
-    /// #if WORKER
+    /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && imageData instanceof ImageData) {
         ctx.putImageData(imageData, x, y);
     }
@@ -330,7 +330,7 @@ export function putImageAtPos(
 
 function drawChunk(ctx: WorkerCanvasRenderingContext2D, image: WorkerCanvas, chunk: DrawChunk) {
     const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
-    /// #if WORKER
+    /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
         ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     }
