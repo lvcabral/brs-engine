@@ -14,7 +14,13 @@ import stripAnsi from "strip-ansi";
 import * as fs from "fs";
 import * as path from "path";
 import readline from "readline";
-import { deviceData, loadAppZip, updateAppZip, subscribePackage } from "../api/package";
+import {
+    deviceData,
+    loadAppZip,
+    updateAppZip,
+    subscribePackage,
+    getSerialNumber,
+} from "../api/package";
 import { enableSendKeys, initControlModule, sendKey } from "../api/control";
 import {
     DataType,
@@ -33,7 +39,10 @@ import packageInfo from "../../package.json";
 const program = new Command();
 const defaultLevel = chalk.level;
 let zipFileName = "";
-// Shared Array Buffer
+// Setting Device Data
+deviceData.deviceModel = "4400X";
+// Worker and Shared Array Buffer
+let brsWorker: Worker;
 const length = dataBufferIndex + dataBufferSize;
 let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 let sharedArray = new Int32Array(sharedBuffer);
@@ -41,6 +50,7 @@ sharedArray.fill(-1);
 // Debug Mode
 const stdin = process.stdin;
 let debugMode = false;
+let workerReady = false;
 
 /**
  * CLI program, params definition and action processing.
@@ -53,7 +63,8 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
-    .option("-d, --debug", "Open the micro debugger on a crash.", false)
+    .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
+    .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
     .option("-w, --worker", "Run the app in a worker thread. (beta)", false)
     .action(async (brsFiles, program) => {
         if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
@@ -79,7 +90,7 @@ program
             deviceData.fonts = getFonts(deviceData.defaultFont);
         }
         subscribePackage("cli", packageCallback);
-        registerCallback(messageCallback);
+        registerCallback(messageCallback, sharedBuffer);
         if (brsFiles.length > 0) {
             try {
                 // Run App Zip file
@@ -176,8 +187,28 @@ function runApp(payload: any) {
     if (program.worker) {
         runAppOnWorker(payload);
         return;
+    } else if (program.ecp && !workerReady) {
+        const workerPath = path.join(__dirname, "brs.ecp.js");
+        const workerData = { device: { ...deviceData, serialNumber: getSerialNumber() } };
+        brsWorker = new Worker(workerPath, { workerData: workerData });
+        brsWorker.once("message", (value: any) => {
+            if (value?.ready) {
+                console.log(chalk.blueBright(value?.msg));
+                workerReady = true;
+                runApp(payload);
+            } else {
+                brsWorker?.terminate();
+                console.error(chalk.red(value?.msg));
+                process.exitCode = 1;
+            }
+        });
+        brsWorker.postMessage(sharedBuffer);
+        return;
     }
     const pkg = executeFile(payload);
+    if (program.ecp) {
+        brsWorker?.terminate();
+    }
     if (pkg?.cipherText instanceof Uint8Array && pkg.iv) {
         const filePath = path.join(program.out, zipFileName.replace(/.zip/gi, ".bpk"));
         try {
@@ -238,7 +269,7 @@ function runAppOnWorker(payload: object) {
 }
 
 function sendKeyPress(key: string, delay = 300, remote?: RemoteType, index?: number) {
-    setTimeout(function () {
+    setTimeout(() => {
         sendKey(key, 100, remote ?? RemoteType.ECP, index);
     }, delay);
     sendKey(key, 0, remote ?? RemoteType.ECP, index);

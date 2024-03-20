@@ -12,6 +12,7 @@ import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
 import { audioExt, videoExt } from "../worker/enums";
 import models from "../worker/common/models.csv";
+import packageInfo from "../../package.json";
 
 // Default Device Data
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
@@ -232,6 +233,17 @@ function parseManifest(contents: string) {
         });
 
     return new Map<string, string>(keyValuePairs);
+}
+
+// Returns Device Serial Number based on Device Model and library version
+export function getSerialNumber() {
+    const device = deviceData.models.get(deviceData.deviceModel);
+    const prefix = device ? device[4] : "X0";
+    let verPlain = "";
+    packageInfo.version.split(".").forEach((element) => {
+        verPlain += element.replace(/\D/g, "").padStart(2, "0");
+    });
+    return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }
 
 // Remove the source code and replace by encrypted pcode returning new zip

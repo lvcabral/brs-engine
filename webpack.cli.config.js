@@ -73,6 +73,42 @@ module.exports = (env) => {
             },
         },
         {
+            entry: "./src/cli/ecp.ts",
+            target: "node",
+            mode: mode,
+            devtool: sourceMap,
+            module: {
+                rules: [
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ts-loader",
+                        options: {
+                            configFile: "tsconfig.cli.json",
+                        },
+                        exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ifdef-loader",
+                        options: ifdef_cli_opts,
+                        exclude: /node_modules/,
+                    },
+                ],
+            },
+            resolve: {
+                modules: [path.resolve("./node_modules"), path.resolve("./src")],
+                extensions: [".tsx", ".ts", ".js"],
+            },
+            externals: {
+                bufferutil: "bufferutil",
+                "utf-8-validate": "utf-8-validate",
+            },
+            output: {
+                filename: libName + ".ecp.js",
+                path: path.resolve(__dirname, cliPath),
+            },
+        },
+        {
             entry: "./src/worker/index.ts",
             target: "node",
             mode: mode,

@@ -90,9 +90,10 @@ if (isMainThread) {
 declare global {
     function postMessage(message: any, options?: any): void;
 }
-export function registerCallback(messageCallback: any) {
+export function registerCallback(messageCallback: any, sharedBuffer: SharedArrayBuffer) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;
+        shared.set("buffer", new Int32Array(sharedBuffer));
     }
 }
 /**
