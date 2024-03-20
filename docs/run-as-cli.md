@@ -20,10 +20,10 @@ BrightScript Simulation Engine CLI
 Options:
   -a, --ascii <columns>  Enable ASCII screen mode passing the width in columns. (default: 0)
   -c, --colors <level>   Define the console color level (0 to disable). (default: 3)
+  -d, --debug            Open the micro debugger if the app crashes.
+  -e, --ecp              Enable the ECP server for control simulation.
   -p, --pack <password>  The password to generate the encrypted package. (default: "")
   -o, --out <directory>  The directory to save the encrypted package file. (default: "./")
-  -d, --debug            Open the micro debugger on a crash.
-  -w, --worker           Run the app in a worker thread. (beta)
   -v, --version          output the version number
   -h, --help             output usage information
 ```
@@ -81,7 +81,7 @@ $ brs-cli ../tests/test-sandbox.zip
 #### Notes
 
 * If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
-* As the `node-canvas` package still can't run in a NodeJS worker thread, the apps with `ifDraw2D` can't use the `--worker` option.
+* As the CLI will run on a single thread, if you need to control the app you will have to enable the `--ecp` option (see below).
 
 ### Showing Screen as ASCII Art on the Terminal
 
@@ -112,30 +112,7 @@ Package file created as ./release/test-sandbox.bpk with 528 KB.
 
 ```
 
-### Running the Engine as a Worker
+### Controlling the App
 
-By default the CLI will run the BrightScript Engine on the Main Thread (both REPL and file execution), but there is now an option (still in beta) to run it on a worker thread (just like the Browser version), allowing the usage of control emulation.
-Unfortunately the [node-canvas](https://github.com/Automattic/node-canvas) component has a [known issue](https://github.com/Automattic/node-canvas/issues/1394) that prevents it to run in a worker thread. This way, currently, it's not possible to run an app that uses `ifDraw2D` components (`roScreen`, `roBitmap`, etc.) with this option enabled.
+The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
 
-Below is an example of code, that can be executed with the `--worker` option, to demonstrate the control simulation with keyboard keys on the CLI, the `roScreen` is used only to receive `roMessagePort` events, no draw methods are supported.
-
-```brs
-sub main()
-  port = CreateObject("roMessagePort")
-  screen = CreateObject("roScreen")
-  screen.SetMessagePort(port)
-  while true
-    msg = wait(0, port)
-    if type(msg) = "roUniversalControlEvent"
-      key = msg.getInt()
-      if key = 0 '<BACK>
-        exit while
-      else if key = 5 '<RIGHT>
-        print "device uptime:"; UpTime(0)
-      else if key < 100
-        print "key:"; key
-      end if
-    end if
-  end while
-end sub
-```

@@ -5,7 +5,6 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { dataBufferIndex, dataBufferSize } from "./enums";
 import { Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import { FileSystem } from "./interpreter/FileSystem";
@@ -25,7 +24,6 @@ import bslCore from "./common/v30/bslCore.brs";
 import bslDefender from "./common/v30/bslDefender.brs";
 import Roku_Ads from "./common/Roku_Ads.brs";
 import packageInfo from "../../package.json";
-import { isMainThread, parentPort } from "worker_threads";
 
 export { _lexer as lexer };
 export { BrsTypes as types };
@@ -55,33 +53,6 @@ if (typeof onmessage !== "undefined") {
     };
 }
 /// #else
-if (isMainThread) {
-    // Library is not running as a Worker
-    const length = dataBufferIndex + dataBufferSize;
-    let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-    let sharedArray = new Int32Array(sharedBuffer);
-    sharedArray.fill(-1);
-    shared.set("buffer", sharedArray);
-} else if (typeof parentPort !== "undefined") {
-    // Library is running as a Worker in NodeJS
-    parentPort?.on("message", (event: any) => {
-        if (event.device) {
-            executeFile(event);
-        } else if (typeof event === "string" && event === "getVersion") {
-            parentPort?.postMessage(`version,${packageInfo.version}`);
-        } else if (event instanceof ArrayBuffer || event instanceof SharedArrayBuffer) {
-            // Setup Control Shared Array
-            shared.set("buffer", new Int32Array(event));
-        } else {
-            parentPort?.postMessage(`warning,[worker] Invalid message received: ${event}`);
-        }
-    });
-    globalThis.postMessage = function (message: any, options?: any) {
-        parentPort?.postMessage(message, options);
-    };
-}
-/// #endif
-/// #if !WORKER
 /**
  * Support postMessage when not running as Worker.
  * @param messageCallback function that will receive and process the messages.
@@ -90,9 +61,10 @@ if (isMainThread) {
 declare global {
     function postMessage(message: any, options?: any): void;
 }
-export function registerCallback(messageCallback: any) {
+export function registerCallback(messageCallback: any, sharedBuffer: SharedArrayBuffer) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;
+        shared.set("buffer", new Int32Array(sharedBuffer));
     }
 }
 /**
