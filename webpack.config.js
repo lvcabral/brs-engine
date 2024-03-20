@@ -15,7 +15,6 @@ module.exports = (env) => {
     }
     const ifdef_opts = {
         DEBUG: mode === "development",
-        WORKER: true,
         BROWSER: true,
         "ifdef-verbose": false,
     };
@@ -53,6 +52,7 @@ module.exports = (env) => {
                     stream: require.resolve("stream-browserify"),
                     "process/browser": require.resolve("process/browser"),
                     timers: false,
+                    vm: false,
                 },
                 modules: [path.resolve("./node_modules"), path.resolve("./src")],
                 extensions: [".tsx", ".ts", ".js"],

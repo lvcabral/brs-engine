@@ -19,7 +19,7 @@ import {
     While,
 } from "../parser/Statement";
 import { DataType, DebugCommand, debugPrompt } from "../enums";
-/// #if !WORKER
+/// #if !BROWSER
 import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
 /// #endif
@@ -70,7 +70,7 @@ export function runDebugger(
     // Debugger Loop
     while (true) {
         let line = "";
-        /// #if WORKER
+        /// #if BROWSER
         postMessage(`print,\r\n${debugPrompt}`);
         Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
         const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);

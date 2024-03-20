@@ -21,17 +21,9 @@ import {
     subscribePackage,
     getSerialNumber,
 } from "../api/package";
-import { enableSendKeys, initControlModule, sendKey } from "../api/control";
-import {
-    DataType,
-    DebugCommand,
-    RemoteType,
-    debugPrompt,
-    dataBufferIndex,
-    dataBufferSize,
-} from "../worker/enums";
-import { isNumber, saveDataBuffer } from "../api/util";
+import { isNumber } from "../api/util";
 import { registerCallback, getInterpreter, executeLine, executeFile } from "../worker";
+import { debugPrompt, dataBufferIndex, dataBufferSize } from "../worker/enums";
 import { PrimitiveKinds, ValueKind, isIterable } from "../worker/brsTypes";
 import { Environment, Scope } from "../worker/interpreter/Environment";
 import packageInfo from "../../package.json";
@@ -43,14 +35,11 @@ let zipFileName = "";
 deviceData.deviceModel = "4400X";
 // Worker and Shared Array Buffer
 let brsWorker: Worker;
+let workerReady = false;
 const length = dataBufferIndex + dataBufferSize;
 let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 let sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
-// Debug Mode
-const stdin = process.stdin;
-let debugMode = false;
-let workerReady = false;
 
 /**
  * CLI program, params definition and action processing.
@@ -61,11 +50,10 @@ program
     .arguments(`brs-cli [brsFiles...]`)
     .option("-a, --ascii <columns>", "Enable ASCII screen mode passing the width in columns.", 0)
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
-    .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
-    .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
-    .option("-w, --worker", "Run the app in a worker thread. (beta)", false)
+    .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
+    .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .action(async (brsFiles, program) => {
         if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
             chalk.level = Math.trunc(program.colors) as ColorSupportLevel;
@@ -184,10 +172,7 @@ function runBrsFiles(files: any[]) {
 function runApp(payload: any) {
     payload.stopOnCrash = program.debug ?? false;
     payload.password = program.pack;
-    if (program.worker) {
-        runAppOnWorker(payload);
-        return;
-    } else if (program.ecp && !workerReady) {
+    if (program.ecp && !workerReady) {
         const workerPath = path.join(__dirname, "brs.ecp.js");
         const workerData = { device: { ...deviceData, serialNumber: getSerialNumber() } };
         brsWorker = new Worker(workerPath, { workerData: workerData });
@@ -226,71 +211,6 @@ function runApp(payload: any) {
             process.exitCode = 1;
         }
     }
-}
-
-// Execute Engine Web Worker
-function runAppOnWorker(payload: object) {
-    initControlModule(sharedArray);
-    const brsWorker = new Worker(path.join(__dirname, "brs.node.js"));
-    brsWorker.on("message", messageCallback);
-    brsWorker.postMessage(sharedBuffer);
-    brsWorker.postMessage(payload);
-
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.setEncoding("utf8");
-    readline.emitKeypressEvents(process.stdin);
-    stdin.on("data", function (line) {
-        if (!stdin.isRaw) {
-            debug(line.toString());
-        }
-    });
-    stdin.on("keypress", (str, key) => {
-        if (stdin.isRaw) {
-            if (["up", "down", "left", "right"].includes(key.name)) {
-                sendKeyPress(key.name);
-            } else if (key.name === "return") {
-                sendKeyPress("select");
-            } else if (["escape", "delete"].includes(key.name)) {
-                sendKeyPress("back");
-            } else if (key.name === "insert") {
-                sendKeyPress("info");
-            } else if (key.name === "backspace") {
-                sendKeyPress("instantreplay");
-            } else if (key.name === "space") {
-                sendKeyPress("play");
-            } else if (key.name === "c" && key.ctrl) {
-                debug("break");
-            } else {
-                console.log("keypress", key);
-            }
-        }
-    });
-}
-
-function sendKeyPress(key: string, delay = 300, remote?: RemoteType, index?: number) {
-    setTimeout(() => {
-        sendKey(key, 100, remote ?? RemoteType.ECP, index);
-    }, delay);
-    sendKey(key, 0, remote ?? RemoteType.ECP, index);
-}
-
-function debug(command: string): boolean {
-    let handled = false;
-    if (command?.length) {
-        const exprs = command.trim().split(/(?<=^\S+)\s/);
-        if (exprs.length === 1 && ["break", "pause"].includes(exprs[0].toLowerCase())) {
-            const cmd = exprs[0].toUpperCase() as keyof typeof DebugCommand;
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand[cmd]);
-            Atomics.notify(sharedArray, DataType.DBG);
-            handled = true;
-        } else {
-            saveDataBuffer(sharedArray, command.trim());
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
-            handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
-        }
-    }
-    return handled;
 }
 
 /**
@@ -373,29 +293,13 @@ function messageCallback(message: any, _?: any) {
         } else if (mType === "error") {
             console.error(chalk.red(message.slice(6).trimEnd()));
             process.exitCode = 1;
-        } else if (mType === "start") {
-            enableSendKeys(true);
         } else if (mType === "end") {
             const msg = message.slice(mType.length + 1).trimEnd();
             if (msg !== "EXIT_USER_NAV") {
                 console.info(chalk.redBright(msg));
                 process.exitCode = 1;
             }
-            if (program.worker) {
-                process.exit();
-            }
-        } else if (mType === "debug") {
-            debugMode = message.split(",")[1].trimEnd() === "stop";
-            enableSendKeys(!debugMode);
-            if (program.worker) {
-                if (stdin.isRaw && debugMode) {
-                    stdin.setRawMode(false);
-                } else if (!stdin.isRaw && !debugMode) {
-                    stdin.setRawMode(true);
-                }
-                stdin.resume();
-            }
-        } else if (!["reset", "video", "audio"].includes(mType)) {
+        } else if (!["start", "debug", "reset", "video", "audio"].includes(mType)) {
             console.info(chalk.blueBright(message.trimEnd()));
         }
     } else if (program.ascii && message instanceof ImageData) {
