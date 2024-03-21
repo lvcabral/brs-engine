@@ -22,6 +22,7 @@ Options:
   -c, --colors <level>   Define the console color level (0 to disable). (default: 3)
   -d, --debug            Open the micro debugger if the app crashes.
   -e, --ecp              Enable the ECP server for control simulation.
+  -r, --registry         Persist the simulated device registry on disk.
   -p, --pack <password>  The password to generate the encrypted package. (default: "")
   -o, --out <directory>  The directory to save the encrypted package file. (default: "./")
   -v, --version          output the version number
@@ -82,6 +83,7 @@ $ brs-cli ../tests/test-sandbox.zip
 
 * If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
 * As the CLI will run on a single thread, if you need to control the app you will have to enable the `--ecp` option (see below).
+* Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions.
 
 ### Showing Screen as ASCII Art on the Terminal
 

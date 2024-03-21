@@ -10,9 +10,10 @@ import { DataType, DebugCommand } from "../worker/enums";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
 import xmlbuilder from "xmlbuilder";
-import fs from "fs";
-import path from "path";
-import url from "url";
+import os from "node:os";
+import fs from "node:fs";
+import path from "node:path";
+import url from "node:url";
 import restana from "restana";
 import WebSocket, { RawData } from "ws";
 import packageInfo from "../../package.json";
@@ -27,14 +28,20 @@ let ssdp: any;
 let device: any;
 let sharedArray: Int32Array;
 let isECPEnabled = false;
+let cliRegistry = new Map<string, string>();
 
 if (!isMainThread && parentPort) {
     device = workerData.device;
+    if (device.registry instanceof Map) {
+        cliRegistry = device.registry;
+    }
     parentPort.on("message", (data) => {
         if (data instanceof SharedArrayBuffer) {
             sharedArray = new Int32Array(data);
             initControlModule(sharedArray);
             enableECP();
+        } else if (data instanceof Map) {
+            cliRegistry = data;
         }
     });
     parentPort.on("exit", disableECP);
@@ -434,8 +441,40 @@ function genActiveApp(encrypt: boolean) {
 
 function genAppRegistry(plugin: string, encrypt: boolean) {
     const xml = xmlbuilder.create("plugin-registry");
-    xml.ele("status", {}, "FAILED");
-    xml.ele("error", {}, `Plugin ${plugin} not found`);
+    if (plugin.toLowerCase() === "dev") {
+        const regXml = xml.ele("registry");
+        regXml.ele("dev-id", {}, device.developerId);
+        regXml.ele("plugins", {}, plugin);
+        regXml.ele("space-available", {}, 32768);
+        const secsXml = regXml.ele("sections");
+        let curSection = "";
+        let scXml: xmlbuilder.XMLElementOrXMLNode;
+        let itsXml: xmlbuilder.XMLElementOrXMLNode;
+        let itXml: xmlbuilder.XMLElementOrXMLNode;
+        const registry = new Map([...cliRegistry].sort());
+        registry.forEach((value, key) => {
+            const sections = key.split(".");
+            if (sections.length > 2 && sections[0] === device.developerId) {
+                if (sections[1] !== curSection) {
+                    curSection = sections[1];
+                    scXml = secsXml.ele("section");
+                    scXml.ele("name", {}, curSection);
+                    itsXml = scXml.ele("items");
+                }
+                itXml = itsXml.ele("item");
+                let key = sections[2];
+                if (sections.length > 3) {
+                    key = sections.slice(2).join(".");
+                }
+                itXml.ele("key", {}, key);
+                itXml.ele("value", {}, value);
+            }
+        });
+        xml.ele("status", {}, "OK");
+    } else {
+        xml.ele("status", {}, "FAILED");
+        xml.ele("error", {}, `Plugin ${plugin} not found`);
+    }
     const strXml = xml.end({ pretty: true });
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
@@ -447,7 +486,6 @@ function launchApp(appID: string) {
 }
 
 function getMacAddress() {
-    const os = require("os");
     const ifaces = os.networkInterfaces();
     let mac = "";
     Object.keys(ifaces).forEach(function (ifname) {
@@ -458,7 +496,7 @@ function getMacAddress() {
         ) {
             return;
         }
-        ifaces[ifname].forEach(function (iface: any) {
+        ifaces[ifname]?.forEach(function (iface: any) {
             if ("IPv4" !== iface.family || iface.internal !== false) {
                 // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
                 return;
