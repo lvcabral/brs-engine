@@ -1,5 +1,20 @@
 # Changelog
 
+<a name="v1.4.0"></a>
+
+## [v1.4.0 - CLI: Canvas and HTTP support](https://github.com/lvcabral/brs-engine/releases/tag/v1.4.0) - 21 Mar 2024
+
+### Release Changes
+
+* Added: Support for `ifDraw2D` in CLI with flag to show screen as ASCII Art by [@lvcabral](https://github.com/lvcabral) in [284](https://github.com/lvcabral/brs-engine/pull/284)
+* Added: Support for `roUrlTransfer` in CLI by [@lvcabral](https://github.com/lvcabral) in [289](https://github.com/lvcabral/brs-engine/pull/289)
+* Added: ECP and SSDP services to the CLI by [@lvcabral](https://github.com/lvcabral) in [290](https://github.com/lvcabral/brs-engine/pull/290)
+* Added: New `ascii_rendering` custom feature (only on CLI) by [@lvcabral](https://github.com/lvcabral) in [291](https://github.com/lvcabral/brs-engine/pull/291)
+* Added: Option to CLI persist the registry to the disk by [@lvcabral](https://github.com/lvcabral) in [292](https://github.com/lvcabral/brs-engine/pull/292)
+* Fixed: CLI Font Loading by [@lvcabral](https://github.com/lvcabral) in [285](https://github.com/lvcabral/brs-engine/pull/285)
+
+[Full Changelog][v1.4.0]
+
 <a name="v1.3.2"></a>
 
 ## [v1.3.2 - Custom Features](https://github.com/lvcabral/brs-engine/releases/tag/v1.3.2) - 09 Mar 2024
@@ -600,6 +615,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.4.0]: https://github.com/lvcabral/brs-engine/compare/v1.3.2...v1.4.0
 [v1.3.2]: https://github.com/lvcabral/brs-engine/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/lvcabral/brs-engine/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/lvcabral/brs-engine/compare/v1.2.11...v1.3.0
