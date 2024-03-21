@@ -23,7 +23,7 @@ const deviceInfo = {
   defaultFont: "Asap",
   fontPath: "../fonts/",
   maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
-  customFeatures: [],
+  customFeatures: [], // String array with custom features (see below)
   connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
   localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
   startTime: Date.now(),
@@ -45,7 +45,7 @@ In the example above, there is an `Array` parameter named `customFeatures`, that
   end if
 ```
 
-By default, the feature `simulation_engine` is defined internally in the library, to allow the apps identify that it's running under `brs-engine`.
+By default, the feature `simulation_engine` is defined internally in the library, to allow the apps identify that it's running under `brs-engine` and the CLI will add the `ascii_rendering` feature so the apps can adapt to the ASCII Art rendering, see [CLI documentation](run-as-cli.md) to learn more details.
 
 ## App Manifest
 

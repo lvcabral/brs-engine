@@ -1691,13 +1691,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
-        if (this.checkBreakCommand()) {
+        const cmd = this.checkBreakCommand();
+        if (cmd === DebugCommand.BREAK) {
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this._currLoc)) {
                     this.options.stopOnCrash = false;
                     throw new BlockEnd("debug-exit", statement.location);
                 }
             }
+        } else if (cmd === DebugCommand.EXIT) {
+            this.options.stopOnCrash = false;
+            throw new BlockEnd("debug-exit", statement.location);
         }
         this._currLoc = statement.location;
         return statement.accept<BrsType>(this);
@@ -1720,9 +1724,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
     }
 
-    checkBreakCommand(): boolean {
+    checkBreakCommand(): number {
+        let cmd = this.debugMode ? DebugCommand.BREAK : -1;
         if (!this.debugMode) {
-            const cmd = Atomics.load(this.sharedArray, DataType.DBG);
+            cmd = Atomics.load(this.sharedArray, DataType.DBG);
             if (cmd === DebugCommand.BREAK) {
                 Atomics.store(this.sharedArray, DataType.DBG, -1);
                 this.debugMode = true;
@@ -1730,10 +1735,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 postMessage("debug,pause");
                 Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
                 Atomics.store(this.sharedArray, DataType.DBG, -1);
+                cmd = -1;
                 postMessage("debug,continue");
             }
         }
-        return this.debugMode;
+        return cmd;
     }
 
     readDataBuffer(): string {

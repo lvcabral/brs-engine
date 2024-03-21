@@ -5,7 +5,8 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { enableSendKeys, initControlModule, sendKey } from "../api/control";
+import { enableSendKeys, initControlModule, sendKey, subscribeControl } from "../api/control";
+import { DataType, DebugCommand } from "../worker/enums";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
 import xmlbuilder from "xmlbuilder";
@@ -36,9 +37,8 @@ if (!isMainThread && parentPort) {
             enableECP();
         }
     });
-    parentPort.on("close", () => {
-        disableECP();
-    });
+    parentPort.on("exit", disableECP);
+    parentPort.on("close", disableECP);
 }
 
 function enableECP() {
@@ -97,6 +97,11 @@ function enableECP() {
                     });
                 })
                 .then(() => {
+                    subscribeControl("ecp", (event: string) => {
+                        if (event === "home" || event === "poweroff") {
+                            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
+                        }
+                    });
                     enableSendKeys(true);
                     isECPEnabled = true;
                     parentPort?.postMessage({
