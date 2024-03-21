@@ -92,6 +92,12 @@ $ brs-cli ../apps/collisions.zip --ascii 170
 ```
 The `<columns>` defines the width in number of character columns, the height will follow the screen proportion.
 
+<p align="center"><img alt="Screen Rendering as ASCII Art" title="Screen Rendering as ASCII Art" src="images/screen-as-ascii-art.gif?raw=true"/></p>
+
+### Controlling the App
+
+The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
+
 ### Creating an encrypted App package file
 
 If you want to protect your BrightScript application source code, you can create an encrypted package using the CLI, using the parameters:
@@ -111,8 +117,3 @@ Packaging ../tests/test-sandbox.zip...
 Package file created as ./release/test-sandbox.bpk with 528 KB.
 
 ```
-
-### Controlling the App
-
-The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
-
