@@ -6,13 +6,15 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Command } from "commander";
+import os from "node:os";
+import fs from "node:fs";
+import path from "node:path";
 import { Worker } from "node:worker_threads";
+import envPaths from "env-paths";
 import { Canvas, ImageData, createCanvas } from "canvas";
 import chalk, { ColorSupportLevel } from "chalk";
+import { Command } from "commander";
 import stripAnsi from "strip-ansi";
-import * as fs from "fs";
-import * as path from "path";
 import readline from "readline";
 import {
     deviceData,
@@ -28,16 +30,16 @@ import { PrimitiveKinds, ValueKind, isIterable } from "../worker/brsTypes";
 import { Environment, Scope } from "../worker/interpreter/Environment";
 import packageInfo from "../../package.json";
 
+// Constants
 const program = new Command();
+const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
+const length = dataBufferIndex + dataBufferSize;
+
+// Variables
 let appFileName = "";
-// Setting Device Data
-deviceData.deviceModel = "4400X";
-deviceData.customFeatures.push("ascii_rendering");
-// Worker and Shared Array Buffer
 let brsWorker: Worker;
 let workerReady = false;
-const length = dataBufferIndex + dataBufferSize;
 let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 let sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
@@ -53,6 +55,7 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
+    .option("-r, --registry", "Persist the simulated device registry on disk.", false)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .action(async (brsFiles, program) => {
@@ -77,6 +80,12 @@ program
         }
         if (typeof deviceData === "object") {
             deviceData.fonts = getFonts(deviceData.defaultFont);
+            deviceData.deviceModel = "4400X";
+            deviceData.customFeatures.push("ascii_rendering");
+            deviceData.localIps = getLocalIps();
+            if (program.registry) {
+                deviceData.registry = getRegistry();
+            }
         }
         subscribePackage("cli", packageCallback);
         registerCallback(messageCallback, sharedBuffer);
@@ -240,6 +249,48 @@ function getFonts(fontFamily: string) {
     return fonts;
 }
 
+/** Get the computer local Ips
+ * @returns an Array of IPs
+ */
+function getLocalIps() {
+    const ifaces = os.networkInterfaces();
+    const ips = new Array<string>();
+    Object.keys(ifaces).forEach(function (ifname) {
+        let alias = 0;
+        ifaces[ifname]?.forEach(function (iface) {
+            if ("IPv4" !== iface.family || iface.internal !== false) {
+                // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+                return;
+            }
+            if (alias >= 1) {
+                // this single interface has multiple ipv4 addresses
+                ips.push(`${ifname}:${alias},${iface.address}`);
+            } else {
+                // this interface has only one ipv4 address
+                ips.push(`${ifname},${iface.address}`);
+            }
+            ++alias;
+        });
+    });
+    return ips;
+}
+
+/**
+ * Get the Registry data from disk
+ * @returns the Map containing the persisted registry content
+ */
+function getRegistry() {
+    try {
+        const strRegistry = fs.readFileSync(path.resolve(paths.data, "registry.json"));
+        if (strRegistry?.length) {
+            return new Map(JSON.parse(strRegistry.toString()));
+        }
+    } catch (err: any) {
+        console.error(chalk.red(err.message));
+    }
+    return new Map<string, string>();
+}
+
 /**
  * Launches an interactive read-execute-print loop, which reads input from
  * `stdin` and executes it.
@@ -319,6 +370,19 @@ function messageCallback(message: any, _?: any) {
         canvas.height = message.height;
         ctx.putImageData(message, 0, 0);
         printAsciiScreen(program.ascii, canvas);
+    } else if (program.ecp && message instanceof Map) {
+        brsWorker?.postMessage(message);
+        if (program.registry) {
+            const strRegistry = JSON.stringify([...message]);
+            try {
+                if (!fs.existsSync(paths.data)) {
+                    fs.mkdirSync(paths.data, { recursive: true });
+                }
+                fs.writeFileSync(path.resolve(paths.data, "registry.json"), strRegistry);
+            } catch (err: any) {
+                console.error(chalk.red(err.message));
+            }
+        }
     }
 }
 
