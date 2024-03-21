@@ -10,6 +10,7 @@ import { Int32 } from "../Int32";
 import {
     BufferType,
     DataType,
+    DebugCommand,
     MediaEvent,
     RemoteType,
     keyArraySpots,
@@ -102,7 +103,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 this.updateMessageQueue(interpreter);
                 if (this.messageQueue.length > 0) {
                     return this.messageQueue.shift();
-                } else if (interpreter.checkBreakCommand()) {
+                }
+                const cmd = interpreter.checkBreakCommand();
+                if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                     return BrsInvalid.Instance;
                 }
             }
@@ -121,7 +124,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 );
                 while (true) {
                     // Loop forever
-                    if (interpreter.checkBreakCommand()) {
+                    const cmd = interpreter.checkBreakCommand();
+                    if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                         return BrsInvalid.Instance;
                     }
                 }
@@ -130,7 +134,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 ms += performance.now();
                 while (performance.now() < ms) {
                     //wait the timeout time
-                    if (interpreter.checkBreakCommand()) {
+                    const cmd = interpreter.checkBreakCommand();
+                    if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                         return BrsInvalid.Instance;
                     }
                 }

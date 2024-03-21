@@ -30,9 +30,10 @@ import packageInfo from "../../package.json";
 
 const program = new Command();
 const defaultLevel = chalk.level;
-let zipFileName = "";
+let appFileName = "";
 // Setting Device Data
 deviceData.deviceModel = "4400X";
+deviceData.customFeatures.push("ascii_rendering");
 // Worker and Shared Array Buffer
 let brsWorker: Worker;
 let workerReady = false;
@@ -85,7 +86,7 @@ program
                 const filePath = brsFiles[0];
                 const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
                 const fileExt = fileName.split(".").pop()?.toLowerCase();
-                zipFileName = "";
+                appFileName = "";
                 if (fileExt === "zip" || fileExt === "bpk") {
                     showAppTitle();
                     if (program.pack.length > 0 && fileExt === "zip") {
@@ -93,7 +94,7 @@ program
                     } else {
                         console.log(chalk.blueBright(`Executing ${filePath}...\n`));
                     }
-                    zipFileName = fileName;
+                    appFileName = fileName;
                     loadAppZip(fileName, fs.readFileSync(filePath), runApp);
                     return;
                 }
@@ -142,6 +143,9 @@ function runBrsFiles(files: any[]) {
         const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
         const fileExt = fileName.split(".").pop();
         if (fileExt?.toLowerCase() === "brs") {
+            if (appFileName === "") {
+                appFileName = fileName;
+            }
             const sourceCode = fs.readFileSync(filePath);
             if (sourceCode) {
                 source.push(sourceCode.toString());
@@ -195,7 +199,7 @@ function runApp(payload: any) {
         brsWorker?.terminate();
     }
     if (pkg?.cipherText instanceof Uint8Array && pkg.iv) {
-        const filePath = path.join(program.out, zipFileName.replace(/.zip/gi, ".bpk"));
+        const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
         try {
             const buffer = updateAppZip(pkg.cipherText, pkg.iv);
             fs.writeFileSync(filePath, buffer);
@@ -209,6 +213,13 @@ function runApp(payload: any) {
         } catch (err: any) {
             console.error(chalk.red(`Error generating the file ${filePath}: ${err.message}`));
             process.exitCode = 1;
+        }
+    } else if (pkg?.endReason) {
+        const msg = `------ Finished '${appFileName}' execution [${pkg.endReason}] ------\n`;
+        if (pkg.endReason === "EXIT_USER_NAV") {
+            console.log(chalk.blueBright(msg));
+        } else {
+            console.log(chalk.redBright(msg));
         }
     }
 }
@@ -248,7 +259,7 @@ function repl() {
         } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
             process.stdout.write("\x1Bc");
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
-            showHelp();
+            printHelp();
         } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
             printLocalVariables(replInterpreter.environment);
         } else {
@@ -296,7 +307,6 @@ function messageCallback(message: any, _?: any) {
         } else if (mType === "end") {
             const msg = message.slice(mType.length + 1).trimEnd();
             if (msg !== "EXIT_USER_NAV") {
-                console.info(chalk.redBright(msg));
                 process.exitCode = 1;
             }
         } else if (!["start", "debug", "reset", "video", "audio"].includes(mType)) {
@@ -341,7 +351,7 @@ function colorize(log: string) {
 /**
  * Display the help message on the console.
  */
-function showHelp() {
+function printHelp() {
     let helpMsg = "\r\n";
     helpMsg += "REPL Command List:\r\n";
     helpMsg += "   print|?         Print variable value or expression\r\n";
