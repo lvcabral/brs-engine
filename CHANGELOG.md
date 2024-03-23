@@ -1,5 +1,18 @@
 # Changelog
 
+<a name="v1.4.1"></a>
+
+## [v1.4.1 - CLI: Removed Flicker on ASCII Mode](https://github.com/lvcabral/brs-engine/releases/tag/v1.4.1) - 22 Mar 2024
+
+### Release Changes
+
+* Updated: Flicker on CLI ASCII mode was removed by [@lvcabral](https://github.com/lvcabral) in [294](https://github.com/lvcabral/brs-engine/pull/294)
+* Updated: IIS config file was added for the sample web app by [@lvcabral](https://github.com/lvcabral) in [294](https://github.com/lvcabral/brs-engine/pull/294)
+* Fixed: Invalid BRS files are now handled correctly by [@lvcabral](https://github.com/lvcabral) in [294](https://github.com/lvcabral/brs-engine/pull/294)
+* build(deps): bump webpack-dev-middleware from 5.3.3 to 5.3.4 by **@dependabot** in [293](https://github.com/lvcabral/brs-engine/pull/293)
+
+[Full Changelog][v1.4.1]
+
 <a name="v1.4.0"></a>
 
 ## [v1.4.0 - CLI: Canvas and HTTP support](https://github.com/lvcabral/brs-engine/releases/tag/v1.4.0) - 21 Mar 2024
@@ -615,6 +628,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.4.1]: https://github.com/lvcabral/brs-engine/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/lvcabral/brs-engine/compare/v1.3.2...v1.4.0
 [v1.3.2]: https://github.com/lvcabral/brs-engine/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/lvcabral/brs-engine/compare/v1.3.0...v1.3.1
