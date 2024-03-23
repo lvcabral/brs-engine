@@ -155,26 +155,34 @@ function runBrsFiles(files: any[]) {
             if (appFileName === "") {
                 appFileName = fileName;
             }
-            const sourceCode = fs.readFileSync(filePath);
-            if (sourceCode) {
-                source.push(sourceCode.toString());
-                paths.push({ url: `source/${fileName}`, id: id, type: "source" });
-                id++;
+            try {
+                const sourceCode = fs.readFileSync(filePath);
+                if (sourceCode) {
+                    source.push(sourceCode.toString());
+                    paths.push({ url: `source/${fileName}`, id: id, type: "source" });
+                    id++;
+                }
+            } catch (err: any) {
+                console.error(chalk.red(err.message));
             }
         }
     });
-    const payload = {
-        device: deviceData,
-        manifest: new Map(),
-        input: [],
-        paths: paths,
-        brs: source,
-        texts: [],
-        binaries: [],
-        entryPoint: false,
-        stopOnCrash: false,
-    };
-    runApp(payload);
+    if (id > 0) {
+        const payload = {
+            device: deviceData,
+            manifest: new Map(),
+            input: [],
+            paths: paths,
+            brs: source,
+            texts: [],
+            binaries: [],
+            entryPoint: false,
+            stopOnCrash: false,
+        };
+        runApp(payload);
+    } else {
+        console.error(chalk.red("Invalid or inexistent file(s)!"));
+    }
 }
 
 /**
