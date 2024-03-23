@@ -491,7 +491,7 @@ function printAsciiScreen(columns: number, image: Canvas) {
                 stringColor += "\n";
             }
         }
-        process.stdout.write(`\x1Bc\u001B[?25l${program.colors ? stringColor : string}`);
+        process.stdout.write(`\x1b[H\u001B[?25l${program.colors ? stringColor : string}`);
         process.stdout.write(`\u001B[?25h`); // show cursor
     }
 }
