@@ -72,6 +72,14 @@ describe("end to end syntax", () => {
             "-5", // unary + and -
             "5",
             "-5",
+            "Float",
+            " 1",
+            "Float",
+            " 1",
+            "Float",
+            " 1",
+            "Integer",
+            " 1",
         ]);
     });
 

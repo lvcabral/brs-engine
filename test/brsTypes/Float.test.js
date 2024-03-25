@@ -159,14 +159,14 @@ describe("Float", () => {
             let two = new Int32(2);
             let result = tenPointFive.modulo(two);
             expect(result.kind).toBe(ValueKind.Float);
-            expect(result.getValue()).toBe(0.5);
+            expect(result.getValue()).toBe(0);
         });
 
         it("modulos Int64 right-hand sides", () => {
             let three = new Int64(3);
             let result = tenPointFive.modulo(three);
             expect(result.kind).toBe(ValueKind.Float);
-            expect(result.getValue()).toBe(1.5);
+            expect(result.getValue()).toBe(1);
         });
 
         it("modulos Float right-hand sides", () => {
@@ -180,7 +180,7 @@ describe("Float", () => {
             let twoPointFive = new Double(2.5);
             let result = tenPointFive.modulo(twoPointFive);
             expect(result.kind).toBe(ValueKind.Double);
-            expect(result.getValue()).toBe(0.5);
+            expect(result.getValue()).toBe(0);
         });
     });
 

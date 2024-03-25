@@ -89,9 +89,9 @@ export class Double implements Numeric, Comparable, Boxable {
             case ValueKind.Int32:
             case ValueKind.Float:
             case ValueKind.Double:
-                return new Double(this.getValue() % rhs.getValue());
+                return new Double(Math.trunc(this.getValue() % rhs.getValue()));
             case ValueKind.Int64:
-                return new Double(this.getValue() % rhs.getValue().toNumber());
+                return new Double(Math.trunc(this.getValue() % rhs.getValue().toNumber()));
         }
     }
 

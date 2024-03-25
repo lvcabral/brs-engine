@@ -99,11 +99,11 @@ export class Float implements Numeric, Comparable, Boxable {
         switch (rhs.kind) {
             case ValueKind.Int32:
             case ValueKind.Float:
-                return new Float(this.getValue() % rhs.getValue());
+                return new Float(Math.trunc(this.getValue() % rhs.getValue()));
             case ValueKind.Double:
-                return new Double(this.getValue() % rhs.getValue());
+                return new Double(Math.trunc(this.getValue() % rhs.getValue()));
             case ValueKind.Int64:
-                return new Float(this.getValue() % rhs.getValue().toNumber());
+                return new Float(Math.trunc(this.getValue() % rhs.getValue().toNumber()));
         }
     }
 

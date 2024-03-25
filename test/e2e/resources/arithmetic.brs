@@ -44,3 +44,13 @@ print 214748364 * 20
 print -5 ' => -5
 print +5 ' => 5
 print -+-+-+5 ' => -5
+
+' modulo operations
+print type(7.6 mod 3.0) 'Float
+print 7.6 mod 3.0 ' 1
+print type(7 mod 3.0) 'Float
+print 7 mod 3.0 ' 1
+print type(7.6 mod 3) 'Float
+print 7.6 mod 3 ' 1
+print type(7 mod 3) 'Integer
+print 7 mod 3 ' 1

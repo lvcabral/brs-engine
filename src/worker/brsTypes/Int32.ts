@@ -103,9 +103,9 @@ export class Int32 implements Numeric, Comparable, Boxable {
             case ValueKind.Int32:
                 return new Int32(this.getValue() % rhs.getValue());
             case ValueKind.Float:
-                return new Float(this.getValue() % rhs.getValue());
+                return new Float(Math.trunc(this.getValue() % rhs.getValue()));
             case ValueKind.Double:
-                return new Double(this.getValue() % rhs.getValue());
+                return new Double(Math.trunc(this.getValue() % rhs.getValue()));
             case ValueKind.Int64:
                 return new Int64(this.getValue()).modulo(rhs);
         }
