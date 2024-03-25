@@ -333,8 +333,8 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         impl: (_interpreter, separator: BrsString) => {
             let parts;
             if (separator.value === "") {
-                // split characters apart, preserving multi-character unicode structures
-                parts = Array.from(this.intrinsic.value);
+                // return the string with no splitting as a single-element list
+                parts = [this.intrinsic.value];
             } else {
                 parts = this.intrinsic.value.split(separator.value).filter(function (el) {
                     return el.length !== 0;
