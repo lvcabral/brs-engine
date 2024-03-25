@@ -3,7 +3,7 @@ const stream = require("stream");
 
 /** Returns the path to a file in `resources/`. */
 exports.resourceFile = function (...filenameParts) {
-    return path.join(__dirname, "resources", ...filenameParts);
+    return path.join("test", "e2e", "resources", ...filenameParts);
 };
 
 /**

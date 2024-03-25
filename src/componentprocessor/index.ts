@@ -91,7 +91,9 @@ export async function getComponentDefinitionMap(
     if (additionalDirs.length) {
         searchString = `{components,${additionalDirs.join(",")}}`;
     }
-    const componentsPattern = path.join(rootDir, searchString, "**", "*.xml");
+    const componentsPattern = path
+        .join(rootDir, searchString, "**", "*.xml")
+        .replace(/[\/\\]+/g, path.posix.sep);
     const xmlFiles: string[] = fg.sync(componentsPattern, {});
 
     let defs = xmlFiles.map((file) => new ComponentDefinition(file));
@@ -263,8 +265,18 @@ async function getScripts(
 
     for (let script of scripts) {
         let absoluteUri: URL;
+        let posixRoot = rootDir.replace(/[\/\\]+/g, path.posix.sep);
+        let posixPath = xmlPath.replace(/[\/\\]+/g, path.posix.sep);
+
         try {
-            absoluteUri = new URL(script.attr.uri, `pkg:/${path.posix.relative(rootDir, xmlPath)}`);
+            if (process.platform === "win32") {
+                posixRoot = posixRoot.replace(/^[a-zA-Z]:/, "");
+                posixPath = posixPath.replace(/^[a-zA-Z]:/, "");
+            }
+            absoluteUri = new URL(
+                script.attr.uri,
+                `pkg:/${path.posix.relative(posixRoot, posixPath)}`
+            );
         } catch (err) {
             let file = await readFile(xmlPath, "utf-8");
 

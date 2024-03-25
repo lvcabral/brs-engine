@@ -49,11 +49,11 @@ export function getPath(fileUri: string) {
 export function getScopedPath(interpreter: Interpreter, fileUri: string) {
     let url = new URL(fileUri);
     let filePath = getPath(fileUri);
+    let scopedPath = filePath;
     if (url.protocol === "pkg:") {
-        return path.join(interpreter.options.root, filePath);
+        scopedPath = path.join(interpreter.options.root, filePath);
     }
-
-    return filePath;
+    return scopedPath.replace(/[\/\\]+/g, path.posix.sep);
 }
 
 /** Copies a file from src to dst, return true if successful */

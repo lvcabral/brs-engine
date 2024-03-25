@@ -281,7 +281,7 @@ describe("global file I/O functions", () => {
                     "baz.brs",
                     "car.brs",
                     "directory",
-                    "b*a?d n\\a[me",
+                    "b*a?d na[me",
                 ]);
             });
 
@@ -353,10 +353,10 @@ describe("global file I/O functions", () => {
                 let result = MatchFiles.call(
                     interpreter,
                     new BrsString("pkg:/source"),
-                    new BrsString(String.raw`*\**\?*\\*\[*`)
+                    new BrsString(String.raw`*\**\?**\[*`)
                 );
                 expect(result).toBeInstanceOf(RoArray);
-                expect(result.elements).toEqual([new BrsString("b*a?d n\\a[me")]);
+                expect(result.elements).toEqual([new BrsString("b*a?d na[me")]);
             });
         });
     });
