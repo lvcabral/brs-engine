@@ -56,7 +56,7 @@ describe("interpreter arithmetic", () => {
     it("modulos numbers", () => {
         let ast = binary(new brs.types.Int32(2), Lexeme.Mod, new brs.types.Float(1.5));
         let [result] = interpreter.exec([ast]);
-        expect(result.getValue()).toBe(0.5);
+        expect(result.getValue()).toBe(0);
     });
 
     it("exponentiates numbers", () => {

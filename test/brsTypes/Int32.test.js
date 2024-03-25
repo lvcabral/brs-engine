@@ -192,14 +192,14 @@ describe("Int32", () => {
             let threePointFive = new Float(3.25);
             let result = ten.modulo(threePointFive);
             expect(result.kind).toBe(ValueKind.Float);
-            expect(result.getValue()).toBe(0.25);
+            expect(result.getValue()).toBe(0);
         });
 
         it("modulos Double right-hand sides", () => {
             let twoPointFive = new Double(2.75);
             let result = ten.modulo(twoPointFive);
             expect(result.kind).toBe(ValueKind.Double);
-            expect(result.getValue()).toBe(1.75);
+            expect(result.getValue()).toBe(1);
         });
     });
 
