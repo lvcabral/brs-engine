@@ -50,29 +50,25 @@ function sortCompare(
             compare = -1;
         } else if (bSortOrder < aSortOrder) {
             compare = 1;
+        } else if (sortInsideTypes && isBrsNumber(a)) {
+            // two numbers are in numeric order
+            compare = (a as Comparable).greaterThan(b).toBoolean() ? 1 : -1;
+        } else if (sortInsideTypes && isBrsString(a)) {
+            // two strings are in alphabetical order
+            let aStr = a.toString();
+            let bStr = b.toString();
+            if (caseInsensitive) {
+                aStr = aStr.toLowerCase();
+                bStr = bStr.toLowerCase();
+            }
+            // roku does not use locale for sorting strings
+            compare = aStr > bStr ? 1 : -1;
         } else {
-            // a and b have the same type
-            if (sortInsideTypes && isBrsNumber(a)) {
-                // two numbers are in numeric order
-                compare = (a as Comparable).greaterThan(b).toBoolean() ? 1 : -1;
-            } else if (sortInsideTypes && isBrsString(a)) {
-                // two strings are in alphabetical order
-                let aStr = a.toString();
-                let bStr = b.toString();
-                if (caseInsensitive) {
-                    aStr = aStr.toLowerCase();
-                    bStr = bStr.toLowerCase();
-                }
-                // roku does not use locale for sorting strings
-                compare = aStr > bStr ? 1 : -1;
-            } else {
-                // everything else is in the same order as the original
-
-                const aOriginalIndex = originalArray.indexOf(a);
-                const bOriginalIndex = originalArray.indexOf(b);
-                if (aOriginalIndex > -1 && bOriginalIndex > -1) {
-                    compare = aOriginalIndex - bOriginalIndex;
-                }
+            // everything else is in the same order as the original
+            const aOriginalIndex = originalArray.indexOf(a);
+            const bOriginalIndex = originalArray.indexOf(b);
+            if (aOriginalIndex > -1 && bOriginalIndex > -1) {
+                compare = aOriginalIndex - bOriginalIndex;
             }
         }
     }
@@ -136,11 +132,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     get(index: BrsType) {
         switch (index.kind) {
             case ValueKind.Float:
-                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+                return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
             case ValueKind.Int32:
-                return this.getElements()[index.getValue()] || BrsInvalid.Instance;
+                return this.getElements()[index.getValue()] ?? BrsInvalid.Instance;
             case ValueKind.String:
-                return this.getMethod(index.value) || BrsInvalid.Instance;
+                return this.getMethod(index.value) ?? BrsInvalid.Instance;
             default:
                 throw new Error(
                     "Array indexes must be 32-bit integers or Float, or method names must be strings"
@@ -426,6 +422,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             return BrsInvalid.Instance;
         },
     });
+
     // ifEnum
 
     /** Checks whether the array contains no elements. */

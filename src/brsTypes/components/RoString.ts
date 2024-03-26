@@ -3,7 +3,7 @@ import { RoArray } from "./RoArray";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BrsType } from "..";
+import { BrsType, RoList } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
@@ -343,11 +343,24 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("delim", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (_interpreter) => {
-            _interpreter.stderr.write(
-                "WARNING: tokenize not yet implemented, because it returns an RoList.  Returning `invalid`."
-            );
-            return BrsInvalid.Instance;
+        impl: (_interpreter, delim: BrsString) => {
+            let str = this.intrinsic.value;
+            let token: string[] = [];
+            let tokens: BrsString[] = [];
+            for (let char of str) {
+                if (delim.value.includes(char)) {
+                    if (token.length > 0) {
+                        tokens.push(new BrsString(token.join("")));
+                        token = [];
+                    }
+                } else {
+                    token.push(char);
+                }
+            }
+            if (token.length > 0) {
+                tokens.push(new BrsString(token.join("")));
+            }
+            return new RoList(tokens);
         },
     });
 

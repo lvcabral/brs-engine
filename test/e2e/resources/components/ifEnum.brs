@@ -1,5 +1,6 @@
 sub main()
     testArray()
+    testList()
     testAA()
 end sub
 
@@ -23,6 +24,38 @@ sub testArray()
     next
     arr.unshift("x")
     print arr.next()
+end sub
+
+sub testList()
+    print "testing Linked List"
+    list = CreateObject("roList")
+    print "isEmpty = "; list.isEmpty()
+    print "isNext Empty = "; list.isNext()
+    list.AddTail("a")
+    list.AddTail("b")
+    list.AddTail("c")
+    list.AddTail("d")
+    print "getIndex() "; list.GetIndex()
+    print "next() "; list.next()
+    print "isEmpty = "; list.isEmpty()
+    print "isNext before Reset = "; list.isNext()
+    list.ResetIndex()
+    print "isNext after ResetIndex() = "; list.isNext()
+    list.reset()
+    print "isNext after Reset() = "; list.isNext()
+    x= list.GetIndex()
+    while x <> invalid
+        print x
+        x = list.GetIndex()
+    end while
+    print list[2]
+    print "isNext = "; list.isNext()
+    for i = 1 to 3
+        x = list.next()
+        print x
+    next
+    list.addHead("x")
+    print list.next()
 end sub
 
 sub testAA()

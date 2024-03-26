@@ -15,7 +15,7 @@ const {
 } = require("../../lib/stdlib/index");
 const { Interpreter } = require("../../lib/interpreter");
 const brs = require("../../lib");
-const { BrsString, RoArray } = brs.types;
+const { BrsString, RoList } = brs.types;
 
 const fs = require("fs");
 jest.mock("fs");
@@ -255,7 +255,7 @@ describe("global file I/O functions", () => {
                 new BrsString("cat:/kitten.cute"),
                 new BrsString("*")
             );
-            expect(result).toBeInstanceOf(RoArray);
+            expect(result).toBeInstanceOf(RoList);
             expect(result.elements).toEqual([]);
         });
 
@@ -269,7 +269,7 @@ describe("global file I/O functions", () => {
                 new BrsString("pkg:/does-not-exist"),
                 new BrsString("*")
             );
-            expect(result).toBeInstanceOf(RoArray);
+            expect(result).toBeInstanceOf(RoList);
             expect(result.elements).toEqual([]);
         });
 
@@ -291,7 +291,7 @@ describe("global file I/O functions", () => {
                     new BrsString("pkg:/source"),
                     new BrsString("")
                 );
-                expect(result).toBeInstanceOf(RoArray);
+                expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([]);
             });
 
@@ -301,7 +301,7 @@ describe("global file I/O functions", () => {
                     new BrsString("pkg:/source"),
                     new BrsString("*.brs")
                 );
-                expect(result).toBeInstanceOf(RoArray);
+                expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
                     new BrsString("foo.brs"),
                     new BrsString("bar.brs"),
@@ -316,7 +316,7 @@ describe("global file I/O functions", () => {
                     new BrsString("pkg:/source"),
                     new BrsString("ba?.brs")
                 );
-                expect(result).toBeInstanceOf(RoArray);
+                expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
                     new BrsString("bar.brs"),
                     new BrsString("baz.brs"),
@@ -329,7 +329,7 @@ describe("global file I/O functions", () => {
                     new BrsString("pkg:/source"),
                     new BrsString("[a-c]ar.brs")
                 );
-                expect(result).toBeInstanceOf(RoArray);
+                expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
                     new BrsString("bar.brs"),
                     new BrsString("car.brs"),
@@ -342,7 +342,7 @@ describe("global file I/O functions", () => {
                     new BrsString("pkg:/source"),
                     new BrsString("[^d-zD-Z]ar.brs")
                 );
-                expect(result).toBeInstanceOf(RoArray);
+                expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
                     new BrsString("bar.brs"),
                     new BrsString("car.brs"),
@@ -355,7 +355,7 @@ describe("global file I/O functions", () => {
                     new BrsString("pkg:/source"),
                     new BrsString(String.raw`*\**\?**\[*`)
                 );
-                expect(result).toBeInstanceOf(RoArray);
+                expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([new BrsString("b*a?d na[me")]);
             });
         });
