@@ -330,17 +330,24 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("delim", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (_interpreter, separator: BrsString) => {
-            let parts;
-            if (separator.value === "") {
-                // return the string with no splitting as a single-element list
-                parts = [this.intrinsic.value];
-            } else {
-                parts = this.intrinsic.value.split(separator.value).filter(function (el) {
-                    return el.length !== 0;
-                });
+        impl: (_interpreter, delim: BrsString) => {
+            let str = this.intrinsic.value;
+            let token: string[] = [];
+            let tokens: BrsString[] = [];
+            for (let i = 0; i < str.length; i++) {
+                if (delim.value.includes(str[i])) {
+                    if (token.length > 0) {
+                        tokens.push(new BrsString(token.join("")));
+                        token = [];
+                    }
+                } else {
+                    token.push(str[i]);
+                }
             }
-            return new RoList(parts.map((part) => new BrsString(part)));
+            if (token.length > 0) {
+                tokens.push(new BrsString(token.join("")));
+            }
+            return new RoList(tokens);
         },
     });
 
