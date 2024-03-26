@@ -334,14 +334,14 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             let str = this.intrinsic.value;
             let token: string[] = [];
             let tokens: BrsString[] = [];
-            for (let i = 0; i < str.length; i++) {
-                if (delim.value.includes(str[i])) {
+            for (let char of str) {
+                if (delim.value.includes(char)) {
                     if (token.length > 0) {
                         tokens.push(new BrsString(token.join("")));
                         token = [];
                     }
                 } else {
-                    token.push(str[i]);
+                    token.push(char);
                 }
             }
             if (token.length > 0) {
