@@ -410,14 +410,49 @@ describe("RoString", () => {
             let tokenize;
 
             beforeEach(() => {
-                let s = new RoString(new BrsString("good dog"));
+                let s = new RoString(new BrsString("🐶good dog🐶"));
                 tokenize = s.getMethod("tokenize");
                 expect(tokenize).toBeInstanceOf(Callable);
             });
 
-            // TODO: implement after RoList exists
-            it.todo("splits by single-character delimiter");
-            it.todo("splits by multi-character delimiter");
+            it("splits characters with an empty string", () => {
+                let result = tokenize.call(interpreter, new BrsString(""));
+                expect(result).toBeInstanceOf(RoList);
+                expect(result.elements).toEqual([new BrsString("🐶good dog🐶")]);
+            });
+
+            it("returns one section for not-found delimiters", () => {
+                let result = tokenize.call(interpreter, new BrsString("/"));
+                expect(result).toBeInstanceOf(RoList);
+                expect(result.elements).toEqual([new BrsString("🐶good dog🐶")]);
+            });
+
+            it("split with leading and trailing matches", () => {
+                let result = tokenize.call(interpreter, new BrsString("🐶"));
+                expect(result).toBeInstanceOf(RoList);
+                expect(result.elements).toEqual([new BrsString("good dog")]);
+            });
+
+            it("splits on multi-character sequences", () => {
+                let result = tokenize.call(interpreter, new BrsString("oo"));
+                expect(result).toBeInstanceOf(RoList);
+                expect(result.elements).toEqual([
+                    new BrsString("🐶g"),
+                    new BrsString("d d"),
+                    new BrsString("g🐶"),
+                ]);
+            });
+
+            it("splits on different character delimiters", () => {
+                let result = tokenize.call(interpreter, new BrsString("o "));
+                expect(result).toBeInstanceOf(RoList);
+                expect(result.elements).toEqual([
+                    new BrsString("🐶g"),
+                    new BrsString("d"),
+                    new BrsString("d"),
+                    new BrsString("g🐶"),
+                ]);
+            });
         });
 
         describe("split", () => {

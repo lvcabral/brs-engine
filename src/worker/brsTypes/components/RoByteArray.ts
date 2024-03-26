@@ -96,7 +96,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 return this.getMethod(index.value) ?? BrsInvalid.Instance;
             default:
                 postMessage(
-                    "warning,Array indexes must be 32-bit integers, or method names must be strings"
+                    "warning,Array indexes must be 32-bit integers or Float, method names must be strings"
                 );
                 return BrsInvalid.Instance;
         }
@@ -104,7 +104,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     set(index: BrsType, value: BrsType) {
         if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
-            postMessage("warning,Array indexes must be 32-bit integers.");
+            postMessage("warning,Array indexes must be 32-bit integers or Float.");
         } else if (value.kind !== ValueKind.Int32) {
             postMessage("warning,Byte array values must be 32-bit integers");
         } else {
