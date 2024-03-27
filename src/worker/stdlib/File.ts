@@ -1,7 +1,6 @@
 import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { FileSystem } from "../interpreter/FileSystem";
-import URL from "url-parse";
 import * as nanomatch from "nanomatch";
 
 type Volume = FileSystem;

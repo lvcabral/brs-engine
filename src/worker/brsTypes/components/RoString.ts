@@ -59,11 +59,12 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         if (other.kind === ValueKind.String) {
             return BrsBoolean.from(other.value === this.intrinsic.value);
         }
-
         if (other instanceof RoString) {
             return BrsBoolean.from(other.intrinsic.value === this.intrinsic.value);
         }
-
+        if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(other.toString() === this.intrinsic.value);
+        }
         return BrsBoolean.False;
     }
 
@@ -71,11 +72,12 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         if (other.kind === ValueKind.String) {
             return this.unbox().lessThan(other);
         }
-
         if (other instanceof RoString) {
             return this.unbox().lessThan(other.unbox());
         }
-
+        if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.intrinsic.value < other.toString());
+        }
         return BrsBoolean.False;
     }
 
@@ -83,11 +85,12 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         if (other.kind === ValueKind.String) {
             return this.unbox().greaterThan(other);
         }
-
         if (other instanceof RoString) {
             return this.unbox().greaterThan(other.unbox());
         }
-
+        if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.intrinsic.value > other.toString());
+        }
         return BrsBoolean.False;
     }
 
