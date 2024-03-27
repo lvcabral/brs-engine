@@ -62,10 +62,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         if (other instanceof RoString) {
             return BrsBoolean.from(other.intrinsic.value === this.intrinsic.value);
         }
-        if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(other.toString() === this.intrinsic.value);
-        }
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.intrinsic.value === other.toString());
     }
 
     lessThan(other: BrsType): BrsBoolean {
@@ -75,10 +72,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         if (other instanceof RoString) {
             return this.unbox().lessThan(other.unbox());
         }
-        if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.intrinsic.value < other.toString());
-        }
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.intrinsic.value < other.toString());
     }
 
     greaterThan(other: BrsType): BrsBoolean {
@@ -88,10 +82,17 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         if (other instanceof RoString) {
             return this.unbox().greaterThan(other.unbox());
         }
-        if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.intrinsic.value > other.toString());
+        return BrsBoolean.from(this.intrinsic.value > other.toString());
+    }
+
+    concat(other: BrsType): BrsString {
+        if (other.kind === ValueKind.String) {
+            return new BrsString(this.intrinsic.value + other.value);
         }
-        return BrsBoolean.False;
+        if (other instanceof RoString) {
+            return new BrsString(this.intrinsic.value + other.getValue());
+        }
+        return new BrsString(this.intrinsic.value + other.toString());
     }
 
     unbox() {

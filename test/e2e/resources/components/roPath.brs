@@ -7,6 +7,8 @@ sub main()
     x = "mypath = "
     x += myPath
     print x
+    y = mypath + " suffix"
+    print y
     print strPath = myPath.getString()
     print myPath < strPathG
     print myPath > strPathL
@@ -24,4 +26,7 @@ sub main()
     print myPath > strPath
     print "change to invalid: "; myPath.change("&***#&$&$(%(%))")
     print myPath.split()
+    myPath += "appMain.brs"
+    print myPath
+    print type(myPath)
 end sub

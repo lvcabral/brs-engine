@@ -1,11 +1,11 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoAssociativeArray, AAMember, RoString } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import path from "path";
 
-export class RoPath extends BrsComponent implements BrsValue {
+export class RoPath extends BrsComponent implements BrsValue, Comparable {
     readonly kind = ValueKind.Object;
     private fullPath: string = "";
     private parsedPath: any;
@@ -53,7 +53,7 @@ export class RoPath extends BrsComponent implements BrsValue {
 
     lessThan(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.fullPath < other.value);
+            return BrsBoolean.from(this.toString() < other.value);
         } else if (other instanceof RoString) {
             return this.lessThan(other.unbox());
         } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
@@ -65,11 +65,11 @@ export class RoPath extends BrsComponent implements BrsValue {
 
     greaterThan(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.fullPath > other.value);
+            return BrsBoolean.from(this.toString() > other.value);
         } else if (other instanceof RoString) {
             return this.greaterThan(other.unbox());
         } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.fullPath > other.toString());
+            return BrsBoolean.from(this.toString() > other.toString());
         }
 
         return BrsBoolean.False;
@@ -77,13 +77,23 @@ export class RoPath extends BrsComponent implements BrsValue {
 
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.fullPath === other.value);
+            return BrsBoolean.from(this.toString() === other.value);
         } else if (other instanceof RoString) {
             return this.equalTo(other.unbox());
         } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.fullPath === other.toString());
+            return BrsBoolean.from(this.toString() === other.toString());
         }
         return BrsBoolean.False;
+    }
+
+    concat(other: BrsType): BrsString {
+        if (other.kind === ValueKind.String) {
+            return new BrsString(this.toString() + other.value);
+        }
+        if (other instanceof RoString) {
+            return new BrsString(this.toString() + other.getValue());
+        }
+        return new BrsString(this.toString() + other.toString());
     }
 
     /** Modifies or changes the current path via the relative or absolute path passed as a string. */
