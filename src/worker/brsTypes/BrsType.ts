@@ -5,7 +5,6 @@ import { Int32 } from "./Int32";
 import { Float } from "./Float";
 import { roBoolean } from "./components/RoBoolean";
 import { roInvalid } from "./components/RoInvalid";
-import { BrsComponent } from "./components/BrsComponent";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
@@ -191,11 +190,8 @@ export class BrsString implements BrsValue, Comparable, Boxable {
             return BrsBoolean.from(this.value < other.value);
         } else if (other instanceof RoString) {
             return this.lessThan(other.unbox());
-        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.value < other.toString());
         }
-
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.value < other.toString());
     }
 
     greaterThan(other: BrsType): BrsBoolean {
@@ -203,11 +199,8 @@ export class BrsString implements BrsValue, Comparable, Boxable {
             return BrsBoolean.from(this.value > other.value);
         } else if (other instanceof RoString) {
             return this.greaterThan(other.unbox());
-        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.value > other.toString());
         }
-
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.value > other.toString());
     }
 
     equalTo(other: BrsType): BrsBoolean {
@@ -215,10 +208,8 @@ export class BrsString implements BrsValue, Comparable, Boxable {
             return BrsBoolean.from(this.value === other.value);
         } else if (other instanceof RoString) {
             return this.equalTo(other.unbox());
-        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.value === other.toString());
         }
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.value === other.toString());
     }
 
     toString(parent?: BrsType) {
@@ -226,8 +217,13 @@ export class BrsString implements BrsValue, Comparable, Boxable {
         return this.value;
     }
 
-    concat(other: BrsString) {
-        return new BrsString(this.value + other.value);
+    concat(other: BrsType): BrsString {
+        if (other.kind === ValueKind.String) {
+            return new BrsString(this.value + other.value);
+        } else if (other instanceof RoString) {
+            return this.concat(other.unbox());
+        }
+        return new BrsString(this.value + other.toString());
     }
 
     box() {

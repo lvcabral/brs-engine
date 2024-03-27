@@ -30,4 +30,16 @@ sub main()
     print "1234567890".endsWith("890") ' => true
     print "1234567890".startsWith("567", 4) ' => true
     print "1234567890".endsWith("567", 7) ' => true
+
+    ' concatenation
+    myStr1 = createObject("roString")
+    myStr1.setString("1st.")
+    myStr2 = createObject("roString")
+    myStr2.setString("2nd.")
+    print type(myStr1); " "; myStr1
+    print type(myStr2); " "; myStr2
+    myStr2 = MyStr1 + MyStr2
+    print type(myStr2); " "; myStr2
+    myStr1 = "prefix " + myStr1
+    print type(myStr1); " "; myStr1
 end sub
