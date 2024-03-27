@@ -5,7 +5,6 @@ import { Int32 } from "./Int32";
 import { Float } from "./Float";
 import { roBoolean } from "./components/RoBoolean";
 import { roInvalid } from "./components/RoInvalid";
-import { BrsComponent } from "./components/BrsComponent";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
