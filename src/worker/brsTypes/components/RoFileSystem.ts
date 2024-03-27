@@ -6,7 +6,6 @@ import { Interpreter } from "../../interpreter";
 import { FileSystem } from "../../interpreter/FileSystem";
 import { RoList } from "./RoList";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import URL from "url-parse";
 import * as nanomatch from "nanomatch";
 import * as path from "path";
 

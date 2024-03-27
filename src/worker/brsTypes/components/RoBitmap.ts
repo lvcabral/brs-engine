@@ -17,7 +17,6 @@ import {
     drawRotatedObject,
     putImageAtPos,
 } from "../draw2d";
-import URL from "url-parse";
 import { RoByteArray } from "./RoByteArray";
 import { GifReader } from "omggif";
 import fileType from "file-type";

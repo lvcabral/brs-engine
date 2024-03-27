@@ -39,7 +39,6 @@ import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
-import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, dataBufferIndex } from "../enums";
@@ -509,8 +508,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
 
             return (
-                (left.kind < ValueKind.Dynamic || isUnboxable(left)) &&
-                (right.kind < ValueKind.Dynamic || isUnboxable(right))
+                (left.kind < ValueKind.Dynamic || isUnboxable(left) || canCompareAsString(left)) &&
+                (right.kind < ValueKind.Dynamic || isUnboxable(right) || canCompareAsString(right))
+            );
+        }
+
+        function canCompareAsString(value: BrsType): value is BrsString {
+            return (
+                isBrsString(value) ||
+                (value instanceof BrsComponent && value.hasInterface("ifString"))
             );
         }
 
@@ -656,7 +662,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
                 return this.addError(
                     new TypeMismatch({
-                        message: "Attempting to dividie non-numeric values.",
+                        message: "Attempting to divide non-numeric values.",
                         left: {
                             type: left,
                             location: expression.left.location,
@@ -710,12 +716,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.add(right);
                 } else if (isBrsString(left) && isBrsString(right)) {
                     return left.concat(right);
-                } else if (isBrsString(left) && right instanceof RoPath) {
+                } else if (isBrsString(left) && canCompareAsString(right)) {
                     return left.concat(new BrsString(right.toString()));
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: "Attempting to add non-homogeneous values.",
+                            message: `Type Mismatch. Operator "+" can't be applied to non-homogeneous values.`,
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -729,8 +735,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             case Lexeme.Greater:
                 if (
-                    (isBrsNumber(left) || isBrsString(left)) &&
-                    (isBrsNumber(right) || isBrsString(right))
+                    (isBrsNumber(left) || canCompareAsString(left)) &&
+                    (isBrsNumber(right) || canCompareAsString(right))
                 ) {
                     return left.greaterThan(right);
                 }
@@ -751,8 +757,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             case Lexeme.GreaterEqual:
                 if (
-                    (isBrsNumber(left) || isBrsString(left)) &&
-                    (isBrsNumber(right) || isBrsString(right))
+                    (isBrsNumber(left) || canCompareAsString(left)) &&
+                    (isBrsNumber(right) || canCompareAsString(right))
                 ) {
                     return left.greaterThan(right).or(left.equalTo(right));
                 } else if (canCheckEquality(left, lexeme, right)) {
@@ -775,8 +781,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             case Lexeme.Less:
                 if (
-                    (isBrsNumber(left) || isBrsString(left)) &&
-                    (isBrsNumber(right) || isBrsString(right))
+                    (isBrsNumber(left) || canCompareAsString(left)) &&
+                    (isBrsNumber(right) || canCompareAsString(right))
                 ) {
                     return left.lessThan(right);
                 }
@@ -796,8 +802,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.LessEqual:
                 if (
-                    (isBrsNumber(left) || isBrsString(left)) &&
-                    (isBrsNumber(right) || isBrsString(right))
+                    (isBrsNumber(left) || canCompareAsString(left)) &&
+                    (isBrsNumber(right) || canCompareAsString(right))
                 ) {
                     return left.lessThan(right).or(left.equalTo(right));
                 } else if (canCheckEquality(left, lexeme, right)) {

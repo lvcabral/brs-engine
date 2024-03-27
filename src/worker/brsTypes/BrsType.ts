@@ -5,6 +5,7 @@ import { Int32 } from "./Int32";
 import { Float } from "./Float";
 import { roBoolean } from "./components/RoBoolean";
 import { roInvalid } from "./components/RoInvalid";
+import { BrsComponent } from "./components/BrsComponent";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
@@ -190,6 +191,8 @@ export class BrsString implements BrsValue, Comparable, Boxable {
             return BrsBoolean.from(this.value < other.value);
         } else if (other instanceof RoString) {
             return this.lessThan(other.unbox());
+        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.value < other.toString());
         }
 
         return BrsBoolean.False;
@@ -200,6 +203,8 @@ export class BrsString implements BrsValue, Comparable, Boxable {
             return BrsBoolean.from(this.value > other.value);
         } else if (other instanceof RoString) {
             return this.greaterThan(other.unbox());
+        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.value > other.toString());
         }
 
         return BrsBoolean.False;
@@ -210,6 +215,8 @@ export class BrsString implements BrsValue, Comparable, Boxable {
             return BrsBoolean.from(this.value === other.value);
         } else if (other instanceof RoString) {
             return this.equalTo(other.unbox());
+        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.value === other.toString());
         }
         return BrsBoolean.False;
     }
