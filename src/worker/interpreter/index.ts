@@ -39,7 +39,6 @@ import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
-import { RoPath } from "../brsTypes/components/RoPath";
 import { RoXMLList } from "../brsTypes/components/RoXMLList";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, dataBufferIndex } from "../enums";
