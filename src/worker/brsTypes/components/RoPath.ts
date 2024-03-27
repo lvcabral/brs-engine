@@ -1,41 +1,88 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoAssociativeArray, AAMember } from "..";
+import { BrsType, RoAssociativeArray, AAMember, RoString } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import * as path from "path";
-import pathParse from "path-parse";
-import URLParse, { QueryParser } from "url-parse";
+import path from "path";
 
 export class RoPath extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private fullPath: string;
+    private fullPath: string = "";
     private parsedPath: any;
-    private parsedUrl: URLParse<QueryParser>;
-    private valid: boolean;
-    private check: RegExp;
+    private parsedUrl: URL;
+    private valid: boolean = false;
 
     constructor(pathName: BrsString) {
-        super("roPath"); // TODO: Implement ifString
-        // TODO: Validate path
-        this.parsedUrl = new URLParse<QueryParser>(pathName.value);
-        this.check = new RegExp(/^([a-zA-Z]:)?(\/[^<>:"/\/|?*]+)+\/?$/, "i");
-        if (!this.check.test(this.parsedUrl.pathname)) {
+        super("roPath");
+        this.parsedUrl = this.setPath(pathName.value);
+        this.registerMethods({
+            ifPath: [this.change, this.isValid, this.split],
+            ifString: [this.setString, this.getString, this.isEmpty],
+        });
+    }
+
+    setPath(pathName: string) {
+        pathName = pathName.replace(/[\/\\]+/g, path.posix.sep);
+        let newUrl: URL;
+        if (canParseURL(pathName)) {
+            newUrl = new URL(pathName);
+            this.fullPath = pathName;
+            this.parsedPath = path.parse(`${newUrl.host}${newUrl.pathname}`);
+            this.valid = true;
+        } else {
+            newUrl = new URL("tmp:/blank");
             this.fullPath = "";
             this.valid = false;
-        } else {
-            this.fullPath = pathName.value;
-            this.valid = true;
         }
-        this.parsedPath = pathParse(this.parsedUrl.pathname);
-        this.registerMethods({ ifPath: [this.change, this.isValid, this.split] });
+        return newUrl;
+    }
+    getParentPart(): string {
+        if (typeof this.parsedPath?.base !== "string") {
+            return this.fullPath;
+        }
+        const index = this.fullPath.indexOf(this.parsedPath.base);
+        if (index === -1) {
+            return this.fullPath;
+        }
+        return this.fullPath.slice(0, index);
     }
 
     toString(parent?: BrsType): string {
         return this.fullPath;
     }
 
-    equalTo(other: BrsType) {
+    lessThan(other: BrsType): BrsBoolean {
+        if (other.kind === ValueKind.String) {
+            return BrsBoolean.from(this.fullPath < other.value);
+        } else if (other instanceof RoString) {
+            return this.lessThan(other.unbox());
+        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.fullPath < other.toString());
+        }
+
+        return BrsBoolean.False;
+    }
+
+    greaterThan(other: BrsType): BrsBoolean {
+        if (other.kind === ValueKind.String) {
+            return BrsBoolean.from(this.fullPath > other.value);
+        } else if (other instanceof RoString) {
+            return this.greaterThan(other.unbox());
+        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.fullPath > other.toString());
+        }
+
+        return BrsBoolean.False;
+    }
+
+    equalTo(other: BrsType): BrsBoolean {
+        if (other.kind === ValueKind.String) {
+            return BrsBoolean.from(this.fullPath === other.value);
+        } else if (other instanceof RoString) {
+            return this.equalTo(other.unbox());
+        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
+            return BrsBoolean.from(this.fullPath === other.toString());
+        }
         return BrsBoolean.False;
     }
 
@@ -46,23 +93,7 @@ export class RoPath extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, newPath: BrsString) => {
-            let pathName = "";
-            let newUrl = new URLParse<QueryParser>(newPath.value);
-            if (newUrl.protocol === "http:" && newPath.value.startsWith("http:")) {
-                // no protocol passed (parser used default)
-                pathName = path.join(this.parsedPath.dir, this.parsedPath.base, newPath.value);
-            } else {
-                this.parsedUrl = newUrl;
-                pathName = newUrl.pathname;
-            }
-            if (!this.check.test(pathName)) {
-                this.fullPath = "";
-                this.valid = false;
-            } else {
-                this.parsedPath = pathParse(pathName);
-                this.fullPath = this.parsedUrl.protocol + pathName;
-                this.valid = true;
-            }
+            this.setPath(newPath.value);
             return BrsBoolean.from(this.valid);
         },
     });
@@ -103,7 +134,7 @@ export class RoPath extends BrsComponent implements BrsValue {
             });
             parts.push({
                 name: new BrsString("parent"),
-                value: new BrsString(`${this.parsedUrl.protocol}${this.parsedPath.dir}/`),
+                value: new BrsString(this.getParentPart()),
             });
             parts.push({
                 name: new BrsString("phy"),
@@ -112,4 +143,47 @@ export class RoPath extends BrsComponent implements BrsValue {
             return new RoAssociativeArray(parts);
         },
     });
+
+    /** Sets the path string . */
+    private setString = new Callable("SetString", {
+        signature: {
+            args: [new StdlibArgument("path", ValueKind.String)],
+            returns: ValueKind.Void,
+        },
+        impl: (_interpreter, path: BrsString) => {
+            this.parsedUrl = this.setPath(path.value);
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** returns string with full path */
+    private getString = new Callable("GetString", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_interpreter) => {
+            return new BrsString(this.fullPath);
+        },
+    });
+
+    /** returns whether string is empty or not */
+    private isEmpty = new Callable("isEmpty", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_interpreter) => {
+            return BrsBoolean.from(this.fullPath.length === 0);
+        },
+    });
+}
+
+function canParseURL(string: string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (err) {
+        return false;
+    }
 }

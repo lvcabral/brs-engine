@@ -42,7 +42,7 @@ import { Int32 } from "../Int32";
 import { Int64 } from "../Int64";
 import { roInvalid } from "./RoInvalid";
 
-/** Map containing a list of brightscript components that can be created. */
+/** Map containing a list of BrightScript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
     ["roappmanager", (interpreter: Interpreter) => new RoAppManager()],
     ["roassociativearray", (interpreter: Interpreter) => new RoAssociativeArray([])],
