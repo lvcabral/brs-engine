@@ -32,6 +32,7 @@ export * from "./BrsInterface";
 export * from "./components/BrsComponent";
 export * from "./components/RoArray";
 export * from "./components/RoByteArray";
+export * from "./components/RoEVPDigest";
 export * from "./components/RoList";
 export * from "./components/RoAssociativeArray";
 export * from "./components/RoDateTime";
