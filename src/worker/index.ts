@@ -227,7 +227,7 @@ function setupDeviceFonts(device: any, interpreter: Interpreter) {
 
     let volume = interpreter.fileSystem.get("common:");
     if (!volume) {
-        postMessage("warning,Common file system not found");
+        postMessage("error,Common file system not found");
         return;
     }
     volume.mkdirSync("/Fonts");
@@ -293,7 +293,7 @@ function setupPackageFiles(
                 try {
                     mkdirTreeSync(volume, pathDirName);
                 } catch (err: any) {
-                    postMessage(`warning,Error creating directory ${pathDirName} - ${err.message}`);
+                    postMessage(`error,Error creating directory ${pathDirName} - ${err.message}`);
                 }
             }
             try {
@@ -319,7 +319,7 @@ function setupPackageFiles(
                     volume.writeFileSync(`/${filePath.url}`, brs[filePath.id]);
                 }
             } catch (err: any) {
-                postMessage(`warning,Error writing file ${filePath.url} - ${err.message}`);
+                postMessage(`error,Error writing file ${filePath.url} - ${err.message}`);
             }
         }
         // Load Translations
@@ -342,7 +342,7 @@ function setupPackageFiles(
                 let xmlParser = new xml2js.Parser(xmlOptions);
                 xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
                     if (err) {
-                        postMessage(`warning,Error parsing XML: ${err.message}`);
+                        postMessage(`error,Error parsing XML: ${err.message}`);
                     } else if (parsed) {
                         if (Object.keys(parsed).length > 0) {
                             let trArray;
@@ -363,13 +363,13 @@ function setupPackageFiles(
                             }
                         }
                     } else {
-                        postMessage("warning,Error parsing translation XML: Empty input");
+                        postMessage("error,Error parsing translation XML: Empty input");
                     }
                 });
             }
         } catch (err: any) {
             const badPath = `pkg:/locale/${locale}/`;
-            postMessage(`warning,Invalid path: ${badPath} - ${err.message}`);
+            postMessage(`error,Invalid path: ${badPath} - ${err.message}`);
         }
     }
 }
@@ -634,11 +634,11 @@ function download(url: string, type: XMLHttpRequestResponseType) {
         xhr.responseType = type;
         xhr.send();
         if (xhr.status !== 200) {
-            postMessage(`warning,HTTP Error downloading ${url}: ${xhr.statusText}`);
+            postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText}`);
             return undefined;
         }
         return xhr.response;
     } catch (err: any) {
-        postMessage(`warning,Error downloading ${url}: ${err.message}`);
+        postMessage(`error,Error downloading ${url}: ${err.message}`);
     }
 }
