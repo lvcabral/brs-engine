@@ -1,4 +1,4 @@
-import { BrsType, BrsBoolean } from "./";
+import { BrsType, BrsBoolean, isNumberComp } from "./";
 import { ValueKind, Comparable } from "./BrsType";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
@@ -164,42 +164,30 @@ export class Double implements Numeric, Comparable, Boxable {
     }
 
     lessThan(other: BrsType): BrsBoolean {
-        switch (other.kind) {
-            case ValueKind.Int64:
-                return BrsBoolean.from(this.getValue() < other.getValue().toNumber());
-            case ValueKind.Int32:
-            case ValueKind.Float:
-            case ValueKind.Double:
-                return BrsBoolean.from(this.getValue() < other.getValue());
-            default:
-                return BrsBoolean.False;
+        if (other.kind === ValueKind.Int64) {
+            return BrsBoolean.from(this.getValue() < other.getValue().toNumber());
+        } else if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue() < other.getValue());
         }
+        return BrsBoolean.False;
     }
 
     greaterThan(other: BrsType): BrsBoolean {
-        switch (other.kind) {
-            case ValueKind.Int64:
-                return BrsBoolean.from(this.getValue() > other.getValue().toNumber());
-            case ValueKind.Int32:
-            case ValueKind.Float:
-            case ValueKind.Double:
-                return BrsBoolean.from(this.getValue() > other.getValue());
-            default:
-                return BrsBoolean.False;
+        if (other.kind === ValueKind.Int64) {
+            return BrsBoolean.from(this.getValue() > other.getValue().toNumber());
+        } else if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue() > other.getValue());
         }
+        return BrsBoolean.False;
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        switch (other.kind) {
-            case ValueKind.Int64:
-                return BrsBoolean.from(this.getValue() === other.getValue().toNumber());
-            case ValueKind.Int32:
-            case ValueKind.Float:
-            case ValueKind.Double:
-                return BrsBoolean.from(this.getValue() === other.getValue());
-            default:
-                return BrsBoolean.False;
+        if (other.kind === ValueKind.Int64) {
+            return BrsBoolean.from(this.getValue() === other.getValue().toNumber());
+        } else if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue() === other.getValue());
         }
+        return BrsBoolean.False;
     }
 
     toString(parent?: BrsType): string {

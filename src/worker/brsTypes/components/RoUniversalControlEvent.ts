@@ -1,17 +1,23 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import {
+    BrsType,
+    BrsValue,
+    ValueKind,
+    BrsString,
+    BrsBoolean,
+    Int32,
+    Callable,
+    Comparable,
+    isNumberComp,
+} from "..";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
-import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
-
 export interface KeyEvent {
     remote: string; // Remote Id (Remote Type:Remote Index)
     key: number; // Key Code
     mod: number; // Modifier (0 = press, 100 = release)
 }
 
-export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
+export class RoUniversalControlEvent extends BrsComponent implements BrsValue, Comparable {
     readonly kind = ValueKind.Object;
     private event: KeyEvent;
     constructor(keyEvent: KeyEvent) {
@@ -20,21 +26,48 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue {
 
         this.registerMethods({
             ifUniversalControlEvent: [
-                this.getInt,
                 this.getKey,
                 this.getRemoteID,
                 this.getID,
                 this.isPress,
                 this.getChar,
             ],
+            ifInt: [this.getInt],
         });
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roUniversalControlEvent>";
+        return this.event.key.toString();
     }
 
-    equalTo(other: BrsType) {
+    getValue(): number {
+        return this.event.key;
+    }
+
+    lessThan(other: BrsType): BrsBoolean {
+        if (other.kind === ValueKind.Int64) {
+            return BrsBoolean.from(this.getValue() < other.getValue().toNumber());
+        } else if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue() < other.getValue());
+        }
+        return BrsBoolean.False;
+    }
+
+    greaterThan(other: BrsType): BrsBoolean {
+        if (other.kind === ValueKind.Int64) {
+            return BrsBoolean.from(this.getValue() > other.getValue().toNumber());
+        } else if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue() > other.getValue());
+        }
+        return BrsBoolean.False;
+    }
+
+    equalTo(other: BrsType): BrsBoolean {
+        if (other.kind === ValueKind.Int64) {
+            return BrsBoolean.from(this.getValue() === other.getValue().toNumber());
+        } else if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue() === other.getValue());
+        }
         return BrsBoolean.False;
     }
 

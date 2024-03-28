@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray, RoString } from "..";
+import { BrsType, RoArray, RoAssociativeArray, RoString, isStringComp } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -41,45 +41,40 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
         return this.responseCode;
     }
 
+    getValue() {
+        return this.responseString;
+    }
+
     toString(parent?: BrsType): string {
         return this.responseString;
     }
 
     lessThan(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.toString() < other.value);
-        } else if (other instanceof RoString) {
-            return this.lessThan(other.unbox());
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.getValue() < other.getValue());
         }
-        return BrsBoolean.from(this.toString() < other.toString());
+        return BrsBoolean.False;
     }
 
     greaterThan(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.toString() > other.value);
-        } else if (other instanceof RoString) {
-            return this.greaterThan(other.unbox());
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.getValue() > other.getValue());
         }
-        return BrsBoolean.from(this.toString() > other.toString());
+        return BrsBoolean.False;
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.toString() === other.value);
-        } else if (other instanceof RoString) {
-            return this.equalTo(other.unbox());
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.getValue() === other.getValue());
         }
-        return BrsBoolean.from(this.toString() === other.toString());
+        return BrsBoolean.False;
     }
 
     concat(other: BrsType): BrsString {
-        if (other.kind === ValueKind.String) {
-            return new BrsString(this.toString() + other.value);
+        if (isStringComp(other)) {
+            return new BrsString(this.getValue() + other.getValue());
         }
-        if (other instanceof RoString) {
-            return new BrsString(this.toString() + other.getValue());
-        }
-        return new BrsString(this.toString() + other.toString());
+        return new BrsString(this.getValue() + other.toString());
     }
 
     /** Returns the type of event. */

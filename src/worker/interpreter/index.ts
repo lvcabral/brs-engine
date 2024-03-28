@@ -17,6 +17,7 @@ import {
     isComparable,
     isBoxable,
     isUnboxable,
+    isNumberComp,
     isStringComp,
     Int32,
     Int64,
@@ -370,7 +371,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 let toPrint = this.evaluate(printable);
-                if (isBrsNumber(toPrint) && this.isPositive(toPrint.getValue())) {
+                if (isNumberComp(toPrint) && this.isPositive(toPrint.getValue())) {
                     printStream += " ";
                 }
                 printStream += toPrint.toString();
@@ -730,7 +731,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             case Lexeme.Greater:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
+                    (isNumberComp(left) && isNumberComp(right)) ||
                     (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.greaterThan(right);
@@ -752,7 +753,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             case Lexeme.GreaterEqual:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
+                    (isNumberComp(left) && isNumberComp(right)) ||
                     (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.greaterThan(right).or(left.equalTo(right));
@@ -774,7 +775,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             case Lexeme.Less:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
+                    (isNumberComp(left) && isNumberComp(right)) ||
                     (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.lessThan(right);
@@ -795,7 +796,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.LessEqual:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
+                    (isNumberComp(left) && isNumberComp(right)) ||
                     (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.lessThan(right).or(left.equalTo(right));
