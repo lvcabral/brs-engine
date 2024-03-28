@@ -56,11 +56,8 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
             return BrsBoolean.from(this.toString() < other.value);
         } else if (other instanceof RoString) {
             return this.lessThan(other.unbox());
-        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.fullPath < other.toString());
         }
-
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.toString() < other.toString());
     }
 
     greaterThan(other: BrsType): BrsBoolean {
@@ -68,11 +65,8 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
             return BrsBoolean.from(this.toString() > other.value);
         } else if (other instanceof RoString) {
             return this.greaterThan(other.unbox());
-        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.toString() > other.toString());
         }
-
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.toString() > other.toString());
     }
 
     equalTo(other: BrsType): BrsBoolean {
@@ -80,10 +74,8 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
             return BrsBoolean.from(this.toString() === other.value);
         } else if (other instanceof RoString) {
             return this.equalTo(other.unbox());
-        } else if (other instanceof BrsComponent && other.hasInterface("ifString")) {
-            return BrsBoolean.from(this.toString() === other.toString());
         }
-        return BrsBoolean.False;
+        return BrsBoolean.from(this.toString() === other.toString());
     }
 
     concat(other: BrsType): BrsString {
