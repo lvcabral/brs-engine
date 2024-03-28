@@ -140,6 +140,10 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
     return returnValue;
 }
 
+export function isComparable(value: BrsType): value is BrsType & Comparable {
+    return "lessThan" in value && "greaterThan" in value;
+}
+
 /** The base for all BrightScript types. */
 export interface BrsValue {
     /**

@@ -8,9 +8,9 @@ import {
     RoAssociativeArray,
     Int32,
     BrsInterface,
+    BrsComponent,
+    isBoxable,
 } from "../brsTypes";
-import { isBoxable } from "../brsTypes/Boxing";
-import { BrsComponent } from "../brsTypes/components/BrsComponent";
 import { Interpreter } from "../interpreter";
 
 /** Request the system to perform a soft reboot. */
