@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.45.5](https://github.com/rokucommunity/brs/compare/v0.45.4...v0.45.5) - 2024-03-28
+### Added
+ - implemented `roString` methods `startsWith()` and `endsWith()` ([#44](https://github.com/rokucommunity/brs/pull/44))
+ - implemented component `roList` ([#48](https://github.com/rokucommunity/brs/pull/48))
+### Fixed
+ - path handling for Windows #27 ([#45](https://github.com/rokucommunity/brs/pull/45))
+ - arithmetic Operator Modulo behavior to match Roku ([#46](https://github.com/rokucommunity/brs/pull/46))
+
+
+
 ## [0.45.4](https://github.com/rokucommunity/brs/compare/v0.45.3...v0.45.4) - 2024-01-18
 ### Fixed
  - fixed #41 - Global functions `GetInterface()` and `FindMemberFunction()` are not properly boxing parameters ([#42](https://github.com/rokucommunity/brs/pull/42))
