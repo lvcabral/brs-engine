@@ -52,11 +52,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     image = volume.readFileSync(url.pathname);
                     this.alphaEnable = false;
                 } catch (err: any) {
-                    postMessage(`warning,Error loading bitmap:${url.pathname} - ${err.message}`);
+                    postMessage(`error,Error loading bitmap:${url.pathname} - ${err.message}`);
                     this.valid = false;
                 }
             } else {
-                postMessage(`warning,Invalid volume:${url.pathname}`);
+                postMessage(`error,Invalid volume:${url.pathname}`);
                 this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
@@ -152,7 +152,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     this.valid = false;
                 }
             } catch (err: any) {
-                postMessage(`warning,Error drawing image on canvas: ${err.message}`);
+                postMessage(`error,Error drawing image on canvas: ${err.message}`);
                 this.valid = false;
             }
         }
