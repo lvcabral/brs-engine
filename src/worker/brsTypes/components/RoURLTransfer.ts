@@ -376,7 +376,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const reply = this.getToStringSync();
             if (reply instanceof RoURLEvent) {
-                return new BrsString(reply.getResponseText());
+                return new BrsString(reply.toString());
             }
             return new BrsString("");
         },

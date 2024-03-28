@@ -3,6 +3,7 @@ import * as path from "path";
 import * as brs from "../";
 import {
     BrsType,
+    BrsComponent,
     ValueKind,
     Callable,
     BrsString,
@@ -13,7 +14,6 @@ import {
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { getVolumeByPath, getPath } from "./File";
-import { BrsComponent } from "../brsTypes/components/BrsComponent";
 
 /**
  * Runs a file (or set of files) with the provided arguments, returning either the value returned by those files'

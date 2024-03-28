@@ -13,8 +13,8 @@ import {
     Int64,
     ValueKind,
     StdlibArgument,
+    isUnboxable,
 } from "../brsTypes";
-import { isUnboxable } from "../brsTypes/Boxing";
 
 /**
  * Converts a value to its representation as a BrsType. If no such

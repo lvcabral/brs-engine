@@ -1,5 +1,5 @@
 import Long from "long";
-import { BrsType, BrsBoolean } from "./";
+import { BrsType, BrsBoolean, isNumberComp } from "./";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { ValueKind, Comparable } from "./BrsType";
 import { Float } from "./Float";
@@ -183,9 +183,11 @@ export class Int64 implements Numeric, Comparable, Boxable {
                 return new Float(this.getValue().toNumber()).lessThan(other);
             case ValueKind.Double:
                 return new Double(this.getValue().toNumber()).lessThan(other);
-            default:
-                return BrsBoolean.False;
         }
+        if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue().lessThan(other.getValue()));
+        }
+        return BrsBoolean.False;
     }
 
     greaterThan(other: BrsType): BrsBoolean {
@@ -197,9 +199,11 @@ export class Int64 implements Numeric, Comparable, Boxable {
                 return new Float(this.getValue().toNumber()).greaterThan(other);
             case ValueKind.Double:
                 return new Double(this.getValue().toNumber()).greaterThan(other);
-            default:
-                return BrsBoolean.False;
         }
+        if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue().greaterThan(other.getValue()));
+        }
+        return BrsBoolean.False;
     }
 
     equalTo(other: BrsType): BrsBoolean {
@@ -211,9 +215,11 @@ export class Int64 implements Numeric, Comparable, Boxable {
                 return new Float(this.getValue().toNumber()).equalTo(other);
             case ValueKind.Double:
                 return new Double(this.getValue().toNumber()).equalTo(other);
-            default:
-                return BrsBoolean.False;
         }
+        if (isNumberComp(other)) {
+            return BrsBoolean.from(this.getValue().equals(other.getValue()));
+        }
+        return BrsBoolean.False;
     }
 
     toString(parent?: BrsType): string {
