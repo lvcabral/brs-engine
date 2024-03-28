@@ -60,14 +60,6 @@ function fetch(options)
         body = "(TIMEOUT)"
         headers = {}
         if (type(msg) = "roUrlEvent")
-			xx = msg.getString()
-			print msg
-			print msg = xx
-			print msg > xx
-			print msg < xx
-			print msg >= xx
-			print msg <= xx
-            print msg <> xx
 			print "prefix -> " + msg
             print msg + " <- suffix"
             print "getInt: "; msg.getInt()
