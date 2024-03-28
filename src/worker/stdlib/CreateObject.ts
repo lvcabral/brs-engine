@@ -1,5 +1,12 @@
-import { Callable, ValueKind, BrsInvalid, BrsString, BrsType, StdlibArgument } from "../brsTypes";
-import { BrsObjects } from "../brsTypes/components/BrsObjects";
+import {
+    Callable,
+    ValueKind,
+    BrsInvalid,
+    BrsString,
+    BrsType,
+    BrsObjects,
+    StdlibArgument,
+} from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
 /** Creates a new instance of a given brightscript component (e.g. roAssociativeArray) */

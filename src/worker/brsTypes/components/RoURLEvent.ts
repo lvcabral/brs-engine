@@ -1,11 +1,11 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray } from "..";
+import { BrsType, RoArray, RoAssociativeArray, isStringComp } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
-export class RoURLEvent extends BrsComponent implements BrsValue {
+export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     readonly kind = ValueKind.Object;
     private id: number;
     private responseCode: number;
@@ -25,15 +25,15 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
 
         this.registerMethods({
             ifUrlEvent: [
-                this.getInt,
                 this.getResponseCode,
                 this.getFailureReason,
-                this.getString,
                 this.getSourceIdentity,
                 this.getResponseHeaders,
                 this.getResponseHeadersArray,
                 this.getTargetIpAddress,
             ],
+            ifString: [this.getString],
+            ifInt: [this.getInt],
         });
     }
 
@@ -41,16 +41,40 @@ export class RoURLEvent extends BrsComponent implements BrsValue {
         return this.responseCode;
     }
 
-    getResponseText() {
+    getValue() {
         return this.responseString;
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roUrlEvent>";
+        return this.responseString;
     }
 
-    equalTo(other: BrsType) {
+    lessThan(other: BrsType): BrsBoolean {
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.getValue() < other.getValue());
+        }
         return BrsBoolean.False;
+    }
+
+    greaterThan(other: BrsType): BrsBoolean {
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.getValue() > other.getValue());
+        }
+        return BrsBoolean.False;
+    }
+
+    equalTo(other: BrsType): BrsBoolean {
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.getValue() === other.getValue());
+        }
+        return BrsBoolean.False;
+    }
+
+    concat(other: BrsType): BrsString {
+        if (isStringComp(other)) {
+            return new BrsString(this.getValue() + other.getValue());
+        }
+        return new BrsString(this.getValue() + other.toString());
     }
 
     /** Returns the type of event. */

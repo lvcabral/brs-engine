@@ -2,27 +2,35 @@ import { EventEmitter } from "events";
 
 import {
     BrsType,
-    ValueKind,
+    BrsBoolean,
+    BrsNumber,
+    BrsString,
+    BrsComponent,
     BrsInvalid,
+    ValueKind,
     isBrsNumber,
     isBrsString,
-    BrsBoolean,
-    BrsString,
     isBrsBoolean,
+    isBrsCallable,
+    isNumberKind,
+    isIterable,
+    isComparable,
+    isBoxable,
+    isUnboxable,
+    isNumberComp,
+    isStringComp,
     Int32,
     Int64,
-    isBrsCallable,
+    Float,
+    Double,
     Uninitialized,
     RoArray,
-    isIterable,
+    RoAssociativeArray,
     SignatureAndMismatches,
     MismatchReason,
     Callable,
-    BrsNumber,
-    Float,
-    Double,
     RoXMLElement,
-    isNumberKind,
+    RoXMLList,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -31,18 +39,14 @@ import { Expr, Stmt } from "../parser";
 import { BrsError, TypeMismatch } from "../Error";
 
 import * as StdLib from "../stdlib";
+import Long from "long";
 
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { Runtime, BlockEnd } from "../parser/Statement";
-import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
-import { BrsComponent } from "../brsTypes/components/BrsComponent";
-import { isBoxable, isUnboxable } from "../brsTypes/Boxing";
 import { FileSystem } from "./FileSystem";
-import { RoXMLList } from "../brsTypes/components/RoXMLList";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, dataBufferIndex } from "../enums";
-import Long from "long";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -367,7 +371,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 let toPrint = this.evaluate(printable);
-                if (isBrsNumber(toPrint) && this.isPositive(toPrint.getValue())) {
+                if (isNumberComp(toPrint) && this.isPositive(toPrint.getValue())) {
                     printStream += " ";
                 }
                 printStream += toPrint.toString();
@@ -508,15 +512,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
 
             return (
-                (left.kind < ValueKind.Dynamic || isUnboxable(left) || handleAsString(left)) &&
-                (right.kind < ValueKind.Dynamic || isUnboxable(right) || handleAsString(right))
-            );
-        }
-
-        function handleAsString(value: BrsType): value is BrsString {
-            return (
-                isBrsString(value) ||
-                (value instanceof BrsComponent && value.hasInterface("ifString"))
+                (left.kind < ValueKind.Dynamic || isUnboxable(left) || isComparable(left)) &&
+                (right.kind < ValueKind.Dynamic || isUnboxable(right) || isComparable(right))
             );
         }
 
@@ -534,7 +531,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return this.addError(
                         new TypeMismatch({
                             message:
-                                "In a bitshift expression the right value must be >= 0 and < 32.",
+                                "Type Mismatch. In a bit shift expression the right value must be >= 0 and < 32.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -548,7 +545,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: "Attempting to bitshift non-numeric values.",
+                            message: "Type Mismatch. Attempting to bit shift non-numeric values.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -573,7 +570,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return this.addError(
                         new TypeMismatch({
                             message:
-                                "Type Mismatch. In a bitshift expression the right value must be >= 0 and < 32.",
+                                "Type Mismatch. In a bit shift expression the right value must be >= 0 and < 32.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -587,7 +584,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: "Type Mismatch. Attempting to bitshift non-numeric values.",
+                            message: "Type Mismatch. Attempting to bit shift non-numeric values.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -715,7 +712,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.PlusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.add(right);
-                } else if (handleAsString(left) && handleAsString(right)) {
+                } else if (isStringComp(left) && isStringComp(right)) {
                     return left.concat(right);
                 } else {
                     return this.addError(
@@ -734,8 +731,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             case Lexeme.Greater:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
-                    (handleAsString(left) && handleAsString(right))
+                    (isNumberComp(left) && isNumberComp(right)) ||
+                    (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.greaterThan(right);
                 }
@@ -756,8 +753,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             case Lexeme.GreaterEqual:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
-                    (handleAsString(left) && handleAsString(right))
+                    (isNumberComp(left) && isNumberComp(right)) ||
+                    (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.greaterThan(right).or(left.equalTo(right));
                 }
@@ -778,8 +775,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             case Lexeme.Less:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
-                    (handleAsString(left) && handleAsString(right))
+                    (isNumberComp(left) && isNumberComp(right)) ||
+                    (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.lessThan(right);
                 }
@@ -799,8 +796,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.LessEqual:
                 if (
-                    (isBrsNumber(left) && isBrsNumber(right)) ||
-                    (handleAsString(left) && handleAsString(right))
+                    (isNumberComp(left) && isNumberComp(right)) ||
+                    (isStringComp(left) && isStringComp(right))
                 ) {
                     return left.lessThan(right).or(left.equalTo(right));
                 }

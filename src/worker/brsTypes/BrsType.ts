@@ -1,4 +1,4 @@
-import { BrsType } from ".";
+import { BrsType, isStringComp } from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
@@ -140,6 +140,10 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
     return returnValue;
 }
 
+export function isComparable(value: BrsType): value is BrsType & Comparable {
+    return "lessThan" in value && "greaterThan" in value;
+}
+
 /** The base for all BrightScript types. */
 export interface BrsValue {
     /**
@@ -178,6 +182,12 @@ export interface Comparable {
      * @returns `true` if this value is greater than the `other` value, otherwise `false`.
      */
     greaterThan(other: BrsType): BrsBoolean;
+
+    /**
+     * Returns the value to be used on comparisons
+     * @returns the current value, the type will depend on the object
+     */
+    getValue(): any;
 }
 
 /** Internal representation of a string in BrightScript. */
@@ -186,30 +196,28 @@ export class BrsString implements BrsValue, Comparable, Boxable {
     constructor(readonly value: string) {}
 
     lessThan(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.value < other.value);
-        } else if (other instanceof RoString) {
-            return this.lessThan(other.unbox());
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.value < other.getValue());
         }
-        return BrsBoolean.from(this.value < other.toString());
+        return BrsBoolean.False;
     }
 
     greaterThan(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.value > other.value);
-        } else if (other instanceof RoString) {
-            return this.greaterThan(other.unbox());
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.value > other.getValue());
         }
-        return BrsBoolean.from(this.value > other.toString());
+        return BrsBoolean.False;
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.String) {
-            return BrsBoolean.from(this.value === other.value);
-        } else if (other instanceof RoString) {
-            return this.equalTo(other.unbox());
+        if (isStringComp(other)) {
+            return BrsBoolean.from(this.value === other.getValue());
         }
-        return BrsBoolean.from(this.value === other.toString());
+        return BrsBoolean.False;
+    }
+
+    getValue() {
+        return this.value;
     }
 
     toString(parent?: BrsType) {
@@ -218,10 +226,8 @@ export class BrsString implements BrsValue, Comparable, Boxable {
     }
 
     concat(other: BrsType): BrsString {
-        if (other.kind === ValueKind.String) {
-            return new BrsString(this.value + other.value);
-        } else if (other instanceof RoString) {
-            return this.concat(other.unbox());
+        if (isStringComp(other)) {
+            return new BrsString(this.value + other.getValue());
         }
         return new BrsString(this.value + other.toString());
     }
@@ -263,6 +269,10 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
             return BrsBoolean.from(this === other);
         }
         return BrsBoolean.False;
+    }
+
+    getValue() {
+        return this.value;
     }
 
     toString(parent?: BrsType) {
@@ -327,6 +337,10 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
         return BrsBoolean.False;
     }
 
+    getValue() {
+        return BrsInvalid.Instance;
+    }
+
     toString(parent?: BrsType) {
         return "invalid";
     }
@@ -349,6 +363,10 @@ export class Uninitialized implements BrsValue, Comparable {
     greaterThan(other: BrsType): BrsBoolean {
         // uninitialized values aren't less than anything
         return BrsBoolean.False;
+    }
+
+    getValue() {
+        return null;
     }
 
     equalTo(other: BrsType): BrsBoolean {
