@@ -106,7 +106,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, data: RoByteArray) => {
-            if (this.hash !== null || this.setupHash(this.algorithmName) === 0) {
+            if (this.algorithmName !== "" && this.setupHash(this.algorithmName) === 0) {
                 if (this.updateData(data.getByteArray())) {
                     return new BrsString(this.finalResult());
                 }
