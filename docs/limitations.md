@@ -12,7 +12,6 @@ There are several features from the **BrightScript** language and components tha
   * `roDataGramSocket`
   * `roDeviceCrypto`
   * `roDSA`
-  * `roEVPCipher`
   * `roFunction`
   * `roHdmiStatus`
   * `roHMAC`
