@@ -3,6 +3,7 @@ import { RoAppManager } from "./RoAppManager";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { RoByteArray } from "./RoByteArray";
+import { RoEVPCipher } from "./RoEVPCipher";
 import { RoEVPDigest } from "./RoEVPDigest";
 import { RoChannelStore } from "./RoChannelStore";
 import { RoAppMemoryMonitor } from "./RoAppMemoryMonitor";
@@ -49,6 +50,7 @@ export const BrsObjects = new Map<string, Function>([
     ["roassociativearray", (interpreter: Interpreter) => new RoAssociativeArray([])],
     ["roarray", (interpreter: Interpreter) => new RoArray([])],
     ["robytearray", (interpreter: Interpreter) => new RoByteArray()],
+    ["roevpcipher", (interpreter: Interpreter) => new RoEVPCipher()],
     ["roevpdigest", (interpreter: Interpreter) => new RoEVPDigest()],
     ["rochannelstore", (interpreter: Interpreter) => new RoChannelStore()],
     ["rodatetime", (interpreter: Interpreter) => new RoDateTime()],

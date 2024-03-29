@@ -50,19 +50,27 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
 
     updateData(data: Uint8Array) {
         if (this.hash) {
-            this.hash.update(Buffer.from(data));
-            return true;
+            try {
+                this.hash.update(Buffer.from(data));
+                return true;
+            } catch (e) {
+                return false;
+            }
         }
         return false;
     }
 
     finalResult() {
         if (this.hash) {
-            let digest = this.hash.digest("hex");
-            this.hash = null;
-            return new BrsString(digest);
+            try {
+                let digest = this.hash.digest("hex");
+                this.hash = null;
+                return digest;
+            } catch (e) {
+                return "";
+            }
         }
-        return new BrsString("");
+        return "";
     }
 
     /** Initializes a new message digest context. */
@@ -77,14 +85,17 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Re-initializes an existing message digest context, to reuse an existing object to digest new data. */
+    /** Re-initializes an existing message digest context, to reuse it to digest new data. */
     private reinit = new Callable("reinit", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.setupHash(this.algorithmName));
+            if (this.algorithmName !== "") {
+                return new Int32(this.setupHash(this.algorithmName));
+            }
+            return new Int32(-1);
         },
     });
 
@@ -97,7 +108,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, data: RoByteArray) => {
             if (this.hash !== null || this.setupHash(this.algorithmName) === 0) {
                 if (this.updateData(data.getByteArray())) {
-                    return this.finalResult();
+                    return new BrsString(this.finalResult());
                 }
             }
             return new BrsString("");
@@ -123,7 +134,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return this.finalResult();
+            return new BrsString(this.finalResult());
         },
     });
 }
