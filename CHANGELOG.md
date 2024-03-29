@@ -2,7 +2,7 @@
 
 <a name="v1.5.0"></a>
 
-## [v1.5.0 - Encrypt/Decrypt components](https://github.com/lvcabral/brs-engine/releases/tag/v1.4.1) - 28 Mar 2024
+## [v1.5.0 - Encrypt/Decrypt components](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.0) - 28 Mar 2024
 
 ### Release Changes
 
