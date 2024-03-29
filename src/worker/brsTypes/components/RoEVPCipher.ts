@@ -162,7 +162,9 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, data: RoByteArray) => {
             if (
-                this.cipher !== null ||
+                this.cipherFormat !== "" &&
+                this.cipherKey !== "" &&
+                this.cipherIV !== "" &&
                 this.setupCipher(
                     this.cipherEncrypt,
                     this.cipherFormat,
