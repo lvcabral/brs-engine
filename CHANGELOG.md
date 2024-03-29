@@ -1,15 +1,34 @@
 # Changelog
 
+<a name="v1.5.0"></a>
+
+## [v1.5.0 - Encrypt/Decrypt components](https://github.com/lvcabral/brs-engine/releases/tag/v1.4.1) - 28 Mar 2024
+
+### Release Changes
+
+* Added: `roEVPDigest` component by [@lvcabral](https://github.com/lvcabral) in [#301](https://github.com/lvcabral/brs-engine/pull/301)
+* Added: `roEVPCipher` component by [@lvcabral](https://github.com/lvcabral) in [#303](https://github.com/lvcabral/brs-engine/pull/303)
+* Added: `roHMAC` component by [@lvcabral](https://github.com/lvcabral) in [#305](https://github.com/lvcabral/brs-engine/pull/305)
+* Changed: Improvements to `roPath` by [@lvcabral](https://github.com/lvcabral) in [#296](https://github.com/lvcabral/brs-engine/pull/296)
+* Changed: `roUrlEvent` and `roUniversalControlEvent` to be comparable by [@lvcabral](https://github.com/lvcabral) in [#299](https://github.com/lvcabral/brs-engine/pull/299)
+* Changed: Updated Limitations document by [@lvcabral](https://github.com/lvcabral) in [#302](https://github.com/lvcabral/brs-engine/pull/302)
+* Changed: Only raise HTTP Errors in development mode and other exception handling improvements [@lvcabral](https://github.com/lvcabral) in [#300](https://github.com/lvcabral/brs-engine/pull/300)
+* Fixed: `ifString.tokenize()` behavior to match Roku by [@lvcabral](https://github.com/lvcabral) in [#295](https://github.com/lvcabral/brs-engine/pull/295)
+* Fixed: `String` comparison and concatenation by [@lvcabral](https://github.com/lvcabral) in [#298](https://github.com/lvcabral/brs-engine/pull/298)
+* build(deps): bump express from 4.18.3 to 4.19.2 by **@dependabot** in [#297](https://github.com/lvcabral/brs-engine/pull/297)
+
+[Full Changelog][v1.5.0]
+
 <a name="v1.4.1"></a>
 
 ## [v1.4.1 - CLI: Removed Flicker on ASCII Mode](https://github.com/lvcabral/brs-engine/releases/tag/v1.4.1) - 22 Mar 2024
 
 ### Release Changes
 
-* Updated: Flicker on CLI ASCII mode was removed by [@lvcabral](https://github.com/lvcabral) in [294](https://github.com/lvcabral/brs-engine/pull/294)
-* Updated: IIS config file was added for the sample web app by [@lvcabral](https://github.com/lvcabral) in [294](https://github.com/lvcabral/brs-engine/pull/294)
-* Fixed: Invalid BRS files are now handled correctly by [@lvcabral](https://github.com/lvcabral) in [294](https://github.com/lvcabral/brs-engine/pull/294)
-* build(deps): bump webpack-dev-middleware from 5.3.3 to 5.3.4 by **@dependabot** in [293](https://github.com/lvcabral/brs-engine/pull/293)
+* Updated: Flicker on CLI ASCII mode was removed by [@lvcabral](https://github.com/lvcabral) in [#294](https://github.com/lvcabral/brs-engine/pull/294)
+* Updated: IIS config file was added for the sample web app by [@lvcabral](https://github.com/lvcabral) in [#294](https://github.com/lvcabral/brs-engine/pull/294)
+* Fixed: Invalid BRS files are now handled correctly by [@lvcabral](https://github.com/lvcabral) in [#294](https://github.com/lvcabral/brs-engine/pull/294)
+* build(deps): bump webpack-dev-middleware from 5.3.3 to 5.3.4 by **@dependabot** in [#293](https://github.com/lvcabral/brs-engine/pull/293)
 
 [Full Changelog][v1.4.1]
 
@@ -19,12 +38,12 @@
 
 ### Release Changes
 
-* Added: Support for `ifDraw2D` in CLI with flag to show screen as ASCII Art by [@lvcabral](https://github.com/lvcabral) in [284](https://github.com/lvcabral/brs-engine/pull/284)
-* Added: Support for `roUrlTransfer` in CLI by [@lvcabral](https://github.com/lvcabral) in [289](https://github.com/lvcabral/brs-engine/pull/289)
-* Added: ECP and SSDP services to the CLI by [@lvcabral](https://github.com/lvcabral) in [290](https://github.com/lvcabral/brs-engine/pull/290)
-* Added: New `ascii_rendering` custom feature (only on CLI) by [@lvcabral](https://github.com/lvcabral) in [291](https://github.com/lvcabral/brs-engine/pull/291)
-* Added: Option to CLI persist the registry to the disk by [@lvcabral](https://github.com/lvcabral) in [292](https://github.com/lvcabral/brs-engine/pull/292)
-* Fixed: CLI Font Loading by [@lvcabral](https://github.com/lvcabral) in [285](https://github.com/lvcabral/brs-engine/pull/285)
+* Added: Support for `ifDraw2D` in CLI with flag to show screen as ASCII Art by [@lvcabral](https://github.com/lvcabral) in [#284](https://github.com/lvcabral/brs-engine/pull/284)
+* Added: Support for `roUrlTransfer` in CLI by [@lvcabral](https://github.com/lvcabral) in [#289](https://github.com/lvcabral/brs-engine/pull/289)
+* Added: ECP and SSDP services to the CLI by [@lvcabral](https://github.com/lvcabral) in [#290](https://github.com/lvcabral/brs-engine/pull/290)
+* Added: New `ascii_rendering` custom feature (only on CLI) by [@lvcabral](https://github.com/lvcabral) in [#291](https://github.com/lvcabral/brs-engine/pull/291)
+* Added: Option to CLI persist the registry to the disk by [@lvcabral](https://github.com/lvcabral) in [#292](https://github.com/lvcabral/brs-engine/pull/292)
+* Fixed: CLI Font Loading by [@lvcabral](https://github.com/lvcabral) in [#285](https://github.com/lvcabral/brs-engine/pull/285)
 
 [Full Changelog][v1.4.0]
 
@@ -34,7 +53,7 @@
 
 ### Release Changes
 
-* Add custom features by [@lvcabral](https://github.com/lvcabral) in [283](https://github.com/lvcabral/brs-engine/pull/283)
+* Add custom features by [@lvcabral](https://github.com/lvcabral) in [#283](https://github.com/lvcabral/brs-engine/pull/283)
   * Added a way to add custom features to be checked by `roDeviceInfo.hasFeatures()`
   * Created new document [docs/customization.md](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md)
   * Updated default game pad mapping
@@ -47,14 +66,14 @@
 
 ### Release Changes
 
-* Micro debugger improvements by [@lvcabral](https://github.com/lvcabral) in [280](https://github.com/lvcabral/brs-engine/pull/280)
+* Micro debugger improvements by [@lvcabral](https://github.com/lvcabral) in [#280](https://github.com/lvcabral/brs-engine/pull/280)
   * Added to the API `initialize` method a new option: `disableDebug`
   * Added to the MicroDebugger support for `Function`, `If`,  `For` and `While`
   * Added support for MicroDebugger on CLI
   * Fixed MicroDebugger formatting issues and the handling of linefeed
   * Moved command parsing code from API to MicroDebugger
   * Added `quit` command to the MicroDebugger
-* Added #278 - Support to ECP control keys `VolumeMute` and `PowerOff` by [@lvcabral](https://github.com/lvcabral) in [279](https://github.com/lvcabral/brs-engine/pull/279)
+* Added #278 - Support to ECP control keys `VolumeMute` and `PowerOff` by [@lvcabral](https://github.com/lvcabral) in [#279](https://github.com/lvcabral/brs-engine/pull/279)
 
 [Full Changelog][v1.3.1]
 
@@ -628,6 +647,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.0]: https://github.com/lvcabral/brs-engine/compare/v1.4.1...v1.5.0
 [v1.4.1]: https://github.com/lvcabral/brs-engine/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/lvcabral/brs-engine/compare/v1.3.2...v1.4.0
 [v1.3.2]: https://github.com/lvcabral/brs-engine/compare/v1.3.1...v1.3.2
