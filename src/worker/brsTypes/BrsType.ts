@@ -366,7 +366,7 @@ export class Uninitialized implements BrsValue, Comparable {
     }
 
     getValue() {
-        return null;
+        return undefined;
     }
 
     equalTo(other: BrsType): BrsBoolean {

@@ -439,4 +439,45 @@ describe("end to end brightscript functions", () => {
             "true",
         ]);
     });
+
+    test("components/roPath.brs", async () => {
+        await execute([resourceFile("components", "roPath.brs")], outputStreams);
+        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+            "appMain",
+            ".brs",
+            "appMain.brs",
+            "pkg:/source/",
+            "pkg:",
+            "prefix:pkg:/source/appMain.brs",
+            "pkg:/source/appMain.brs:suffix",
+            "true",
+            "true",
+            "false",
+            "false",
+            "calc",
+            ".exe",
+            "calc.exe",
+            "c:/windows/system32/",
+            "c:",
+            "baby.",
+            ".zip",
+            "baby.zip",
+            "http:/www.google.com/",
+            "http:",
+            "true",
+            "www.google",
+            ".com",
+            "www.google.com",
+            "http:/",
+            "http:",
+            "false",
+            "invalid",
+            "invalid",
+            "invalid",
+            "invalid",
+            "invalid",
+            "String",
+        ]);
+    });
 });
