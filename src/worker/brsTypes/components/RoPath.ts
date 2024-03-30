@@ -17,7 +17,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
         this.parsedUrl = this.setPath(pathName.value);
         this.registerMethods({
             ifPath: [this.change, this.isValid, this.split],
-            ifString: [this.setString, this.getString, this.isEmpty],
+            ifString: [this.setString, this.getString],
         });
     }
 
@@ -161,17 +161,6 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
         },
         impl: (_interpreter) => {
             return new BrsString(this.fullPath);
-        },
-    });
-
-    /** returns whether string is empty or not */
-    private isEmpty = new Callable("isEmpty", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_interpreter) => {
-            return BrsBoolean.from(this.fullPath.length === 0);
         },
     });
 }

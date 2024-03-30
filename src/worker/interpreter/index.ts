@@ -825,7 +825,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return this.addError(
                     new TypeMismatch({
-                        message: "Type Mismatch. Attempting to compare non-primitive values.",
+                        message: "Type Mismatch. Attempting to compare non-homogeneous values.",
                         left: {
                             type: left,
                             location: expression.left.location,
@@ -846,7 +846,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return this.addError(
                     new TypeMismatch({
-                        message: "Type Mismatch. Attempting to compare non-primitive values.",
+                        message: "Type Mismatch. Attempting to compare non-homogeneous values.",
                         left: {
                             type: left,
                             location: expression.left.location,
@@ -1009,7 +1009,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitCall(expression: Expr.Call) {
         let functionName = "[anonymous function]";
-        // TODO: autobox
+        // TODO: auto-box
         if (
             expression.callee instanceof Expr.Variable ||
             expression.callee instanceof Expr.DottedGet
