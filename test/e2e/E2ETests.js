@@ -1,9 +1,10 @@
 const path = require("path");
 const stream = require("stream");
+const chalk = require("chalk");
 
 /** Returns the path to a file in `resources/`. */
 exports.resourceFile = function (...filenameParts) {
-    return path.join(__dirname, "resources", ...filenameParts);
+    return path.join("test", "e2e", "resources", ...filenameParts);
 };
 
 /**
@@ -21,10 +22,14 @@ exports.allArgs = function (jestMock) {
 
 /** Creates a set of mocked streams, suitable for use in place of `process.stdout` and `process.stderr`. */
 exports.createMockStreams = function () {
+    chalk.level = 0;
     const stdout = Object.assign(new stream.PassThrough(), process.stdout);
     const stderr = Object.assign(new stream.PassThrough(), process.stderr);
-    jest.spyOn(stdout, "write").mockImplementation(() => {});
-    jest.spyOn(stderr, "write").mockImplementation(() => {});
 
-    return { stdout, stderr };
+    return {
+        stdout,
+        stderr,
+        stdoutSpy: jest.spyOn(stdout, "write").mockImplementation(() => {}),
+        stderrSpy: jest.spyOn(stderr, "write").mockImplementation(() => {}),
+    };
 };

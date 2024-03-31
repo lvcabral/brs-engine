@@ -22,6 +22,10 @@ export class Float implements Numeric, Comparable, Boxable {
         return this.value;
     }
 
+    toBoolean(): boolean {
+        return Math.trunc(this.value) !== 0;
+    }
+
     /**
      * Creates a new BrightScript floating-point value representing the provided `value`.
      * @param value the value to store in the BrightScript float, rounded to 32-bit floating point
@@ -153,7 +157,7 @@ export class Float implements Numeric, Comparable, Boxable {
         }
     }
 
-    and(rhs: BrsNumber): BrsNumber {
+    and(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean {
         switch (rhs.kind) {
             case ValueKind.Int64:
                 return new Int64(this.getValue()).and(rhs);
@@ -161,10 +165,12 @@ export class Float implements Numeric, Comparable, Boxable {
             case ValueKind.Float:
             case ValueKind.Double:
                 return new Int32(this.getValue() & rhs.getValue());
+            case ValueKind.Boolean:
+                return BrsBoolean.from(this.toBoolean() && rhs.getValue());
         }
     }
 
-    or(rhs: BrsNumber): BrsNumber {
+    or(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean {
         switch (rhs.kind) {
             case ValueKind.Int64:
                 return new Int64(this.getValue()).or(rhs);
@@ -172,6 +178,8 @@ export class Float implements Numeric, Comparable, Boxable {
             case ValueKind.Float:
             case ValueKind.Double:
                 return new Int32(this.getValue() | rhs.getValue());
+            case ValueKind.Boolean:
+                return BrsBoolean.from(this.toBoolean() || rhs.getValue());
         }
     }
 

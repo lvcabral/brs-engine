@@ -335,41 +335,48 @@ describe("Double", () => {
     describe("equal to", () => {
         const lhs = new Double(2);
 
-        function testGreaterThan(operands) {
+        function testEqualTo(operands) {
             expect(lhs.equalTo(operands.same)).toBe(BrsBoolean.True);
             expect(lhs.equalTo(operands.diff)).toBe(BrsBoolean.False);
         }
 
         it("compares to Int32 right-hand sides", () =>
-            testGreaterThan({
+            testEqualTo({
                 lhs: lhs,
                 same: lhs,
                 diff: new Int32(3),
             }));
 
         it("compares to Int64 right-hand sides", () =>
-            testGreaterThan({
+            testEqualTo({
                 lhs: lhs,
                 same: new Int64(2),
                 diff: new Int64(Math.pow(10, 18)),
             }));
 
         it("compares to Float right-hand sides", () =>
-            testGreaterThan({
+            testEqualTo({
                 lhs: lhs,
                 same: new Float(2),
                 diff: new Float(2.001),
             }));
 
         it("compares to Double right-hand sides", () =>
-            testGreaterThan({
+            testEqualTo({
                 lhs: lhs,
                 same: new Double(2),
                 diff: new Double(2.000000001),
             }));
 
+        it("compares to Boolean right-hand sides", () =>
+            testEqualTo({
+                lhs: lhs,
+                same: BrsBoolean.True,
+                diff: BrsBoolean.False,
+            }));
+
         it("returns false for all other types", () => {
-            let nonNumbers = [new BrsString("hello"), BrsBoolean.True, BrsInvalid.Instance];
+            let nonNumbers = [new BrsString("hello"), BrsInvalid.Instance];
             nonNumbers.forEach((rhs) => expect(lhs.equalTo(rhs)).toBe(BrsBoolean.False));
         });
     });
@@ -392,6 +399,10 @@ describe("Double", () => {
         it("ANDs with Int64 right-hand sides", () => {
             expect(six.and(new Double(5.32323))).toEqual(new Int32(4));
         });
+
+        it("ANDs with Boolean right-hand sides", () => {
+            expect(six.and(BrsBoolean.True)).toBe(BrsBoolean.True);
+        });
     });
 
     describe("bitwise OR", () => {
@@ -411,6 +422,10 @@ describe("Double", () => {
 
         it("ORs with Int64 right-hand sides", () => {
             expect(six.or(new Double(3.4444))).toEqual(new Int32(7));
+        });
+
+        it("ORs with Boolean right-hand sides", () => {
+            expect(six.or(BrsBoolean.False)).toBe(BrsBoolean.True);
         });
     });
 });

@@ -9,6 +9,7 @@ describe("cli", () => {
         let rootDir = path.join(__dirname, "resources");
 
         let command = [
+            "FORCE_COLOR=0",
             "node",
             path.join(process.cwd(), "bin", "cli.js"),
             "--root",
@@ -22,6 +23,7 @@ describe("cli", () => {
 
     it("defaults --root to process.cwd()", async () => {
         let command = [
+            "FORCE_COLOR=0",
             "node",
             path.join(process.cwd(), "bin", "cli.js"),
             "requires-manifest.brs",
@@ -31,5 +33,39 @@ describe("cli", () => {
             cwd: path.join(__dirname, "resources"),
         });
         expect(stdout.trim()).toEqual("hi from foo()");
+    });
+
+    it("prints syntax errors once", async () => {
+        let filename = "errors/syntax-error.brs";
+        let command = [
+            "FORCE_COLOR=0",
+            "node",
+            path.join(process.cwd(), "bin", "cli.js"),
+            filename,
+        ].join(" ");
+        try {
+            await exec(command, {
+                cwd: path.join(__dirname, "resources"),
+            });
+            throw `Script ran without error: ${filename}`;
+        } catch (err) {
+            let errors = err.stderr.split(filename).filter((line) => line !== "");
+            expect(errors.length).toEqual(2);
+        }
+    });
+
+    it("prints eval errors once", async () => {
+        let filename = "errors/uninitialized-object.brs";
+        let command = [
+            "FORCE_COLOR=0",
+            "node",
+            path.join(process.cwd(), "bin", "cli.js"),
+            filename,
+        ].join(" ");
+        let { stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        let errors = stderr.split(filename).filter((line) => line !== "");
+        expect(errors.length).toEqual(1);
     });
 });

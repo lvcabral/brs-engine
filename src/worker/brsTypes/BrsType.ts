@@ -1,4 +1,4 @@
-import { BrsType, isStringComp } from ".";
+import { BrsNumber, BrsType, isStringComp } from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
@@ -140,6 +140,10 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
     return returnValue;
 }
 
+/** Check if the passed value implements the Comparable interface
+ * @param value the BrightScript value to be checked.
+ * @returns `true` if `value` is comparable, otherwise `false`.
+ */
 export function isComparable(value: BrsType): value is BrsType & Comparable {
     return "lessThan" in value && "greaterThan" in value;
 }
@@ -289,7 +293,10 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
      * @returns `BrsBoolean.True` if both this value and the other are true, otherwise
      *          `BrsBoolean.False`.
      */
-    and(other: BrsBoolean): BrsBoolean {
+    and(other: BrsBoolean | BrsNumber): BrsBoolean {
+        if (other.kind !== ValueKind.Boolean) {
+            return BrsBoolean.from(this.value && other.toBoolean());
+        }
         return BrsBoolean.from(this.value && other.value);
     }
 
@@ -299,7 +306,10 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
      * @returns `BrsBoolean.True` if either this value or the other are true, otherwise
      *          `BrsBoolean.False`.
      */
-    or(other: BrsBoolean): BrsBoolean {
+    or(other: BrsBoolean | BrsNumber): BrsBoolean {
+        if (other.kind !== ValueKind.Boolean) {
+            return BrsBoolean.from(this.value || other.toBoolean());
+        }
         return BrsBoolean.from(this.value || other.value);
     }
 
