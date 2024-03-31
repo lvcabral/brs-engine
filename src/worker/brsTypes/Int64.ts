@@ -15,6 +15,10 @@ export class Int64 implements Numeric, Comparable, Boxable {
         return this.value;
     }
 
+    toBoolean(): boolean {
+        return this.value.toNumber() !== 0;
+    }
+
     /**
      * Creates a new BrightScript 64-bit integer value representing the provided `value`.
      * @param value the value to store in the BrightScript integer.
@@ -154,24 +158,18 @@ export class Int64 implements Numeric, Comparable, Boxable {
         }
     }
 
-    and(rhs: BrsNumber): BrsNumber {
-        switch (rhs.kind) {
-            case ValueKind.Int32:
-            case ValueKind.Int64:
-            case ValueKind.Float:
-            case ValueKind.Double:
-                return new Int64(this.getValue().and(rhs.getValue()));
+    and(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean {
+        if (rhs.kind === ValueKind.Boolean) {
+            return BrsBoolean.from(this.toBoolean() && rhs.getValue());
         }
+        return new Int64(this.getValue().and(rhs.getValue()));
     }
 
-    or(rhs: BrsNumber): BrsNumber {
-        switch (rhs.kind) {
-            case ValueKind.Int32:
-            case ValueKind.Int64:
-            case ValueKind.Float:
-            case ValueKind.Double:
-                return new Int64(this.getValue().or(rhs.getValue()));
+    or(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean {
+        if (rhs.kind === ValueKind.Boolean) {
+            return BrsBoolean.from(this.toBoolean() || rhs.getValue());
         }
+        return new Int64(this.getValue().or(rhs.getValue()));
     }
 
     lessThan(other: BrsType): BrsBoolean {

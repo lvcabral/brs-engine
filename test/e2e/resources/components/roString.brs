@@ -9,13 +9,18 @@ sub main()
     print s.getString() ' => "bar"
     print s.toStr() ' => "bar" (again)
 
-    r.setString("boo!", 1)
+    r.setString("foo") ' setString in the ifString interface
+    print r.getString() ' => "foo"
+
+    r.setString("boo!", 1) ' setString in the ifStringOps interface, replaces old value
     r.appendString("ar", 10)
 
     ' comparisons
     print r = s ' => true
-    print r > s
-    print s <= r
+    print r > s ' => false
+    print r < s ' => false
+    print s <= r ' => true
+    print s >= r ' => true
 
     ' autoboxing
     t = "a/b/c"
@@ -32,16 +37,4 @@ sub main()
     print "1234567890".endsWith("890") ' => true
     print "1234567890".startsWith("567", 4) ' => true
     print "1234567890".endsWith("567", 7) ' => true
-
-    ' concatenation
-    myStr1 = createObject("roString")
-    myStr1.setString("1st.")
-    myStr2 = createObject("roString")
-    myStr2.setString("2nd.")
-    print type(myStr1); " "; myStr1
-    print type(myStr2); " "; myStr2
-    myStr2 = MyStr1 + MyStr2
-    print type(myStr2); " "; myStr2
-    myStr1 = "prefix " + myStr1
-    print type(myStr1); " "; myStr1
 end sub

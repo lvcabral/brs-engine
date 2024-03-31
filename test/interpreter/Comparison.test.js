@@ -1,6 +1,6 @@
 const { binary } = require("./InterpreterTests");
 const { Interpreter } = require("../../lib/interpreter");
-const brs = require("brs");
+const brs = require("../../lib");
 const { Lexeme } = brs.lexer;
 const {
     Int32,
@@ -110,7 +110,7 @@ describe("interpreter comparisons", () => {
                 let arr = new RoArray([]);
 
                 expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow(
-                    /Attempting to compare non-primitive values/
+                    /Attempting to compare non-homogeneous values/
                 );
             });
         });
@@ -142,11 +142,11 @@ describe("interpreter comparisons", () => {
                 [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach(
                     (operator) => {
                         expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow(
-                            /Attempting to compare non-primitive values/
+                            /Attempting to compare non-homogeneous values/
                         );
 
                         expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow(
-                            /Attempting to compare non-primitive values/
+                            /Attempting to compare non-homogeneous values/
                         );
                     }
                 );
@@ -177,22 +177,9 @@ describe("interpreter comparisons", () => {
             let greaterEqual = binary(int32, Lexeme.GreaterEqual, str);
             let equal = binary(int32, Lexeme.Equal, str);
             let notEqual = binary(int32, Lexeme.LessGreater, str);
-            let results = interpreter.exec([
-                less,
-                lessEqual,
-                greater,
-                greaterEqual,
-                equal,
-                notEqual,
-            ]);
-            expect(results).toEqual([
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.True,
-            ]);
+            expect(() =>
+                interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
+            ).toThrow(/Attempting to compare non-homogeneous values/);
         });
 
         test("roString and 64-bit int", () => {
@@ -202,22 +189,9 @@ describe("interpreter comparisons", () => {
             let greaterEqual = binary(rostr, Lexeme.GreaterEqual, int64);
             let equal = binary(rostr, Lexeme.Equal, int64);
             let notEqual = binary(rostr, Lexeme.LessGreater, int64);
-            let results = interpreter.exec([
-                less,
-                lessEqual,
-                greater,
-                greaterEqual,
-                equal,
-                notEqual,
-            ]);
-            expect(results).toEqual([
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.False,
-                BrsBoolean.True,
-            ]);
+            expect(() =>
+                interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
+            ).toThrow(/Attempting to compare non-homogeneous values/);
         });
     });
 });

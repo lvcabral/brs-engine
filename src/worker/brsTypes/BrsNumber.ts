@@ -1,5 +1,5 @@
 import Long from "long";
-import { BrsValue } from "./BrsType";
+import { BrsBoolean, BrsValue } from "./BrsType";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
@@ -12,6 +12,11 @@ export interface Numeric extends BrsValue {
      * @returns the current value contained in this instance.
      */
     getValue(): number | Long;
+
+    /**
+     * Returns the current value as a boolean.
+     */
+    toBoolean(): boolean;
 
     /**
      * Adds `rhs` to the current number and returns the result.
@@ -83,18 +88,18 @@ export interface Numeric extends BrsValue {
     pow(exponent: BrsNumber): BrsNumber;
 
     /**
-     * Bitwise ANDs the current value with `rhs`.
-     * @param rhs The right-hand side value to bitwise AND the current value with.
+     * Bitwise/Boolean ANDs the current value with `rhs`.
+     * @param rhs The right-hand side value to bitwise/boolean AND the current value with.
      * @returns The current value ANDed with `rhs`.
      */
-    and(rhs: BrsNumber): BrsNumber;
+    and(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean;
 
     /**
-     * Bitwise ORs the current value with `rhs`.
-     * @param rhs The right-hand side value to bitwise OR the current value with.
+     * Bitwise/Boolean ORs the current value with `rhs`.
+     * @param rhs The right-hand side value to bitwise/boolean OR the current value with.
      * @returns The current value ORed with `rhs`.
      */
-    or(rhs: BrsNumber): BrsNumber;
+    or(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean;
 }
 
 /** The union of all supported BrightScript number types. */
