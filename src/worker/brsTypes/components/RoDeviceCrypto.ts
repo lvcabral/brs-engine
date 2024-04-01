@@ -36,7 +36,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
         let devId = interpreter.deviceInfo.get("developerId");
         this.keys.set("channel", this.format256BitKey(devId));
         let model = interpreter.deviceInfo.get("deviceModel");
-        this.keys.set("model", this.format256BitKey(model + devId));
+        this.keys.set("model", this.format256BitKey(`${model}${devId}`));
 
         this.registerMethods({ ifDeviceCrypto: [this.encrypt, this.decrypt] });
     }
