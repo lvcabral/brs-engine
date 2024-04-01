@@ -1,6 +1,7 @@
 Function Main()
-	s1 = sub(): return "anonymous sub": end sub
-	print "s1 "; type(s1); "="; s1
+	a1 = function(): return "anonymous": end function
+	print "s1 "; type(a1); "="; a1
+    print "s1() "; a1()
 
     f1 = Foo
     print "f1 "; Type(f1); "="; f1
