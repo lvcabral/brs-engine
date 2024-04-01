@@ -10,7 +10,6 @@ There are several features from the **BrightScript** language and components tha
   * `roAudioGuide`
   * `roAudioMetadata`
   * `roDataGramSocket`
-  * `roDeviceCrypto`
   * `roDSA`
   * `roFunction`
   * `roHdmiStatus`

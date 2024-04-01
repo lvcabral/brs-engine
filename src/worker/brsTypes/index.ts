@@ -35,6 +35,7 @@ export * from "./components/RoByteArray";
 export * from "./components/RoEVPCipher";
 export * from "./components/RoEVPDigest";
 export * from "./components/RoHMAC";
+export * from "./components/RoDeviceCrypto";
 export * from "./components/RoList";
 export * from "./components/RoAssociativeArray";
 export * from "./components/RoDateTime";
