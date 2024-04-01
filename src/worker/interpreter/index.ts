@@ -31,6 +31,7 @@ import {
     Callable,
     RoXMLElement,
     RoXMLList,
+    RoFunction,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -1015,7 +1016,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         // evaluate the function to call (it could be the result of another function call)
-        const callee = this.evaluate(expression.callee);
+        const evaluated = this.evaluate(expression.callee);
+        const callee = evaluated instanceof RoFunction ? evaluated.unbox() : evaluated;
         // evaluate all of the arguments as well (they could also be function calls)
         const args = expression.args.map(this.evaluate, this);
 

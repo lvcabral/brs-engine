@@ -45,6 +45,8 @@ import { Float } from "../Float";
 import { Int32 } from "../Int32";
 import { Int64 } from "../Int64";
 import { roInvalid } from "./RoInvalid";
+import { RoFunction } from "./RoFunction";
+import { Callable } from "../Callable";
 
 /** Map containing a list of BrightScript components that can be created. */
 export const BrsObjects = new Map<string, Function>([
@@ -71,6 +73,7 @@ export const BrsObjects = new Map<string, Function>([
     ["rofloat", (interpreter: Interpreter, literal: Float) => new roFloat(literal)],
     ["roint", (interpreter: Interpreter, literal: Int32) => new roInt(literal)],
     ["rolonginteger", (interpreter: Interpreter, literal: Int64) => new roLongInteger(literal)],
+    ["rofunction", (interpreter: Interpreter, sub: Callable) => new RoFunction(sub)],
     ["ropath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
     [
         "robitmap",

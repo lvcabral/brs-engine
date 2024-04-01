@@ -447,15 +447,19 @@ function printLocalVariables(environment: Environment) {
     let fnc = environment.getList(Scope.Function);
     fnc.forEach((value, key) => {
         if (PrimitiveKinds.has(value.kind)) {
-            debugMsg += `${key.padEnd(16)} ${ValueKind.toString(
+            debugMsg += `${key.padEnd(17)}${ValueKind.toString(
                 value.kind
             )} val:${value.toString()}\r\n`;
         } else if (isIterable(value)) {
-            debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
+            debugMsg += `${key.padEnd(17)}${value.getComponentName()} count:${
                 value.getElements().length
             }\r\n`;
         } else if (value.kind === ValueKind.Object) {
             debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
+        } else if (value.kind === ValueKind.Callable) {
+            debugMsg += `${key.padEnd(17)}${ValueKind.toString(
+                value.kind
+            )} val:${value.getName()}\r\n`;
         } else {
             debugMsg += `${key.padEnd(17)}${value.toString()}\r\n`;
         }
