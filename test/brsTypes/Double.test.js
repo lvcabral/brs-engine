@@ -428,4 +428,22 @@ describe("Double", () => {
             expect(six.or(BrsBoolean.False)).toBe(BrsBoolean.True);
         });
     });
+
+    describe("bitwise NOT", () => {
+        let minusOne = new Double(-1.333);
+        let zero = new Double(0.777);
+        let one = new Double(1.99999);
+
+        it("NOT -1.333", () => {
+            expect(minusOne.not()).toEqual(new Int32(0));
+        });
+
+        it("NOT 0.777", () => {
+            expect(zero.not()).toEqual(new Int32(-1));
+        });
+
+        it("NOT 1.99999", () => {
+            expect(one.not()).toEqual(new Int32(-2));
+        });
+    });
 });

@@ -191,6 +191,15 @@ describe("interpreter arithmetic", () => {
         expect(result.getValue()).toBe(7);
     });
 
+    it("bitwise NOTs integer", () => {
+        let ast = new Stmt.Expression(
+            new Expr.Unary(token(Lexeme.Not), new Expr.Literal(new brs.types.Int32(6)))
+        );
+
+        let [result] = interpreter.exec([ast]);
+        expect(result.getValue()).toBe(-7);
+    });
+
     it("bitwise left shift with integers", () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(

@@ -20,7 +20,7 @@ export enum Lexeme {
     PlusPlus = "PlusPlus", // ++
     MinusMinus = "MinusMinus", // --
 
-    // bitshift
+    // bit shift
     LeftShift = "LeftShift", // <<
     RightShift = "RightShift", // >>
 

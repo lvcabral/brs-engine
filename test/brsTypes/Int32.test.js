@@ -447,4 +447,22 @@ describe("Int32", () => {
             expect(six.or(BrsBoolean.False)).toBe(BrsBoolean.True);
         });
     });
+
+    describe("bitwise NOT", () => {
+        let minusOne = new Int32(-1);
+        let zero = new Int32(0);
+        let one = new Int32(1);
+
+        it("NOT -1", () => {
+            expect(minusOne.not()).toEqual(new Int32(0));
+        });
+
+        it("NOT 0", () => {
+            expect(zero.not()).toEqual(new Int32(-1));
+        });
+
+        it("NOT 1", () => {
+            expect(one.not()).toEqual(new Int32(-2));
+        });
+    });
 });

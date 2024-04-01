@@ -100,6 +100,12 @@ export interface Numeric extends BrsValue {
      * @returns The current value ORed with `rhs`.
      */
     or(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean;
+
+    /**
+     * Bitwise NOTs the current value.
+     * @returns The current value NOTed.
+     */
+    not(): BrsNumber;
 }
 
 /** The union of all supported BrightScript number types. */

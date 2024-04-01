@@ -430,4 +430,27 @@ describe("Int64", () => {
             expect(six.or(BrsBoolean.False)).toBe(BrsBoolean.True);
         });
     });
+
+    describe("bitwise NOT", () => {
+        let minusOne = new Int64(-1);
+        let zero = new Int64(0);
+        let one = new Int64(1);
+        let large = new Int64(9876543210);
+
+        it("NOT -1", () => {
+            expect(minusOne.not()).toEqual(new Int64(0));
+        });
+
+        it("NOT 0", () => {
+            expect(zero.not()).toEqual(new Int64(-1));
+        });
+
+        it("NOT 1", () => {
+            expect(one.not()).toEqual(new Int64(-2));
+        });
+
+        it("NOT Large", () => {
+            expect(large.not()).toEqual(new Int64(-9876543211));
+        });
+    });
 });

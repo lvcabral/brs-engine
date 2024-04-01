@@ -81,7 +81,7 @@ describe("lexer", () => {
             expect(tokens.filter((t) => !!t.literal).length).toBe(0);
         });
 
-        it("reads bitshift operators", () => {
+        it("reads bit shift operators", () => {
             let { tokens } = Lexer.scan("<< >> <<");
             expect(tokens.map((t) => t.kind)).toEqual([
                 Lexeme.LeftShift,
@@ -92,7 +92,7 @@ describe("lexer", () => {
             expect(tokens.filter((t) => !!t.literal).length).toBe(0);
         });
 
-        it("reads bitshift assignment operators", () => {
+        it("reads bit shift assignment operators", () => {
             let { tokens } = Lexer.scan("<<= >>=");
             expect(tokens.map((t) => t.kind)).toEqual([
                 Lexeme.LeftShiftEqual,
