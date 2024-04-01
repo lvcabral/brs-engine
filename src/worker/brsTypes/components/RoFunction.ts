@@ -34,8 +34,6 @@ export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic.toString();
     }
 
-    // -------------- ifBoolean -------------- //
-
     private getSub = new Callable("getSub", {
         signature: {
             args: [],
