@@ -6,6 +6,7 @@ import { RoByteArray } from "./RoByteArray";
 import { RoEVPCipher } from "./RoEVPCipher";
 import { RoEVPDigest } from "./RoEVPDigest";
 import { RoHMAC } from "./RoHMAC";
+import { RoDeviceCrypto } from "./RoDeviceCrypto";
 import { RoChannelStore } from "./RoChannelStore";
 import { RoAppMemoryMonitor } from "./RoAppMemoryMonitor";
 import { RoDateTime } from "./RoDateTime";
@@ -54,6 +55,7 @@ export const BrsObjects = new Map<string, Function>([
     ["roevpcipher", (interpreter: Interpreter) => new RoEVPCipher()],
     ["roevpdigest", (interpreter: Interpreter) => new RoEVPDigest()],
     ["rohmac", (interpreter: Interpreter) => new RoHMAC()],
+    ["rodevicecrypto", (interpreter: Interpreter) => new RoDeviceCrypto(interpreter)],
     ["rochannelstore", (interpreter: Interpreter) => new RoChannelStore()],
     ["rodatetime", (interpreter: Interpreter) => new RoDateTime()],
     ["rolist", (interpreter: Interpreter) => new RoList()],
