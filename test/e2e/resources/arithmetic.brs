@@ -28,7 +28,7 @@ print 2& ^ 3&
 print 2! ^ 3!
 print 2d0 ^ 3d0
 
-' bitshift operations
+' bit shift operations
 print 32 << 1
 print 32 << 2
 print 32 << 3

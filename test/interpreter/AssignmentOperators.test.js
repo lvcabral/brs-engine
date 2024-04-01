@@ -83,7 +83,6 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(1));
     });
 
-    // TODO: unskip once bitshift operators are supported
     it.skip("left-shifts numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(4)),
@@ -93,7 +92,6 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(8));
     });
 
-    // TODO: unskip once bitshift operators are supported
     it.skip("right-shifts numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(8)),

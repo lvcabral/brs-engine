@@ -1651,13 +1651,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Not:
-                if (isBrsBoolean(right)) {
+                if (isBrsBoolean(right) || isBrsNumber(right)) {
                     return right.not();
                 } else {
                     return this.addError(
                         new BrsError(
-                            `Attempting to NOT non-boolean value.
-                            value type: ${ValueKind.toString(right.kind)}`,
+                            `Type Mismatch. Operator "not" can't be applied to "${ValueKind.toString(
+                                right.kind
+                            )}".`,
                             expression.operator.location
                         )
                     );

@@ -172,6 +172,10 @@ export class Int64 implements Numeric, Comparable, Boxable {
         return new Int64(this.getValue().or(rhs.getValue()));
     }
 
+    not(): BrsNumber {
+        return new Int64(this.getValue().not());
+    }
+
     lessThan(other: BrsType): BrsBoolean {
         switch (other.kind) {
             case ValueKind.Int32:
