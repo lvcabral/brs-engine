@@ -409,7 +409,7 @@ function colorize(log: string) {
         .replace(/\S+@\S+\.\S+/g, (match: string) => {
             return chalk.blueBright(stripAnsi(match)); // E-Mail
         })
-        .replace(/\b([a-z])+:((\/\/)|((\/\/)?(\S)))+/gi, (match: string) => {
+        .replace(/\b([a-z]+):\/{1,2}[^\/].*/gi, (match: string) => {
             return chalk.blue.underline(stripAnsi(match)); // URL
         })
         .replace(/<(.*?)>/g, (match: string) => {
