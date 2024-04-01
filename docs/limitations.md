@@ -11,7 +11,6 @@ There are several features from the **BrightScript** language and components tha
   * `roAudioMetadata`
   * `roDataGramSocket`
   * `roDSA`
-  * `roFunction`
   * `roHdmiStatus`
   * `roHttpAgent`
   * `roImageMetadata`

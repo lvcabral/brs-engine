@@ -41,6 +41,7 @@ export * from "./components/RoAssociativeArray";
 export * from "./components/RoDateTime";
 export * from "./components/RoTimespan";
 export * from "./components/BrsObjects";
+export * from "./components/RoFunction";
 export * from "./components/RoRegex";
 export * from "./components/RoString";
 export * from "./components/RoBitmap";

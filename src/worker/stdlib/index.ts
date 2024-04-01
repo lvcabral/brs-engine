@@ -8,8 +8,24 @@ import {
     RoMessagePort,
     BrsString,
     Float,
+    isBoxable,
+    BrsType,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
+
+/** Returns an object version of an intrinsic type, or pass through an object if given one. */
+export const Box = new Callable("Box", {
+    signature: {
+        args: [new StdlibArgument("value", ValueKind.Dynamic)],
+        returns: ValueKind.Object,
+    },
+    impl: (_: Interpreter, value: BrsType) => {
+        if (isBoxable(value)) {
+            return value.box();
+        }
+        return value;
+    },
+});
 
 /** Returns the uptime of the system since the last reboot in seconds. */
 export const UpTime = new Callable("UpTime", {
