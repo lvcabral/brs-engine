@@ -272,13 +272,17 @@ function debugLocalVariables(environment: Environment) {
             if (value.kind === ValueKind.String) {
                 text = `"${text.substring(0, 94)}"`;
             }
-            debugMsg += `${key.padEnd(16)} ${ValueKind.toString(value.kind)} val:${text}${lf}`;
+            debugMsg += `${key.padEnd(17)}${ValueKind.toString(value.kind)} val:${text}${lf}`;
         } else if (isIterable(value)) {
-            debugMsg += `${key.padEnd(16)} ${value.getComponentName()} count:${
+            debugMsg += `${key.padEnd(17)}${value.getComponentName()} count:${
                 value.getElements().length
             }\r\n`;
         } else if (value.kind === ValueKind.Object) {
             debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
+        } else if (value.kind === ValueKind.Callable) {
+            debugMsg += `${key.padEnd(17)}${ValueKind.toString(
+                value.kind
+            )} val:${value.getName()}\r\n`;
         } else {
             debugMsg += `${key.padEnd(17)}${value.toString().substring(0, 94)}\r\n`;
         }

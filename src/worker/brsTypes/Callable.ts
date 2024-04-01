@@ -8,6 +8,8 @@ import { Float } from "./Float";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
 
+let anonCounter = 0;
+
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
     /** Where the argument exists in the parsed source file(s). */
@@ -131,7 +133,7 @@ export type SignatureAndMismatches = {
 export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) => Brs.BrsType;
 
 /** A `function` or `sub` (either "native" or implemented in BrightScript) that can be called in a BrightScript file. */
-export class Callable implements Brs.BrsValue {
+export class Callable implements Brs.BrsValue, Brs.Boxable {
     readonly kind = Brs.ValueKind.Callable;
 
     /** The name of this function within the BrightScript runtime. */
@@ -197,6 +199,9 @@ export class Callable implements Brs.BrsValue {
     constructor(name: string | undefined, ...signatures: SignatureAndImplementation[]) {
         this.name = name;
         this.signatures = signatures;
+        if (!this.name || this.name === "[Function]") {
+            this.name = `$anon_${++anonCounter}`;
+        }
     }
 
     lessThan(other: Brs.BrsType): Brs.BrsBoolean {
@@ -212,11 +217,11 @@ export class Callable implements Brs.BrsValue {
     }
 
     toString(parent?: Brs.BrsType): string {
-        if (this.name) {
-            return `[Function ${this.name}]`;
-        } else {
-            return "[anonymous function]";
-        }
+        return `<Function: ${this.name?.toLowerCase()}>`;
+    }
+
+    box() {
+        return new Brs.RoFunction(this);
     }
 
     getName(): string {
