@@ -66,7 +66,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 .slice(0, 100)
                 .map((el: BrsValue) => `    ${el.toString(this)}`),
             this.elements.length > 100 ? "    ...\n]" : "]",
-        ].join("\r\n");
+        ].join("\n");
     }
 
     equalTo(other: BrsType) {
@@ -106,12 +106,18 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.Int32 && index.kind !== ValueKind.Float) {
-            postMessage("warning,Array indexes must be 32-bit integers or Float.");
-        } else if (value.kind !== ValueKind.Int32) {
-            postMessage("warning,Byte array values must be 32-bit integers");
-        } else {
-            this.elements[Math.trunc(index.getValue())] = value.getValue();
+        if (isBrsNumber(index) && value.kind === ValueKind.Int32) {
+            if (index.kind === ValueKind.Int64) {
+                index = new Int32(index.getValue());
+            }
+            const idx = Math.trunc(index.getValue());
+            // Expand the array if the index is out of bounds
+            if (idx >= this.elements.length) {
+                const elements = new Uint8Array(idx + 1);
+                elements.set(this.elements);
+                this.elements = elements;
+            }
+            this.elements[idx] = value.getValue();
         }
         return BrsInvalid.Instance;
     }
@@ -536,15 +542,15 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Deletes the indicated array entry, and shifts all entries up. This decreases the array length by one. */
     private delete = new Callable("delete", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32)],
+            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, index: Int32) => {
-            if (index.lessThan(new Int32(0)).toBoolean()) {
+        impl: (_: Interpreter, index: Int32 | Float) => {
+            const idx = Math.trunc(index.getValue());
+            if (idx < 0 || idx >= this.elements.length) {
                 return BrsBoolean.False;
             }
             let array = new Uint8Array(this.elements.length + 1);
-            const idx = index.getValue();
             array.set(this.elements.slice(0, idx), 0);
             array.set(this.elements.slice(idx + 1, this.elements.length), idx);
             return BrsBoolean.True;
@@ -581,9 +587,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("array", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, array: BrsComponent) => {
+        impl: (interpreter: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoByteArray)) {
-                // TODO: validate against RBI
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roByteArray.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
+                );
                 return BrsInvalid.Instance;
             }
             if (this._resizable || this.elements.length + array.elements.length <= this._capacity) {
@@ -600,14 +608,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Returns an array entry based on the provided index. */
     private getEntry = new Callable("getEntry", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Dynamic)],
+            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: BrsType) => {
-            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-                return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
-            }
-            return BrsInvalid.Instance;
+        impl: (_: Interpreter, index: Int32 | Float) => {
+            return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
         },
     });
 
@@ -617,12 +622,17 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private setEntry = new Callable("setEntry", {
         signature: {
             args: [
-                new StdlibArgument("index", ValueKind.Dynamic),
+                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
                 new StdlibArgument("value", ValueKind.Dynamic),
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, index: BrsType, value: BrsType) => {
+        impl: (interpreter: Interpreter, index: Int32 | Float, value: BrsType) => {
+            if (!isBrsNumber(value)) {
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roByteArray.SetEntry: set ignored for non-numeric value: ${interpreter.formatLocation()}`
+                );
+            }
             return this.set(index, value);
         },
     });

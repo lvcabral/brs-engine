@@ -9,6 +9,8 @@ import {
 } from "./BrsType";
 import { RoArray } from "./components/RoArray";
 import { RoAssociativeArray } from "./components/RoAssociativeArray";
+import { RoList } from "./components/RoList";
+import { RoByteArray } from "./components/RoByteArray";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
@@ -176,7 +178,13 @@ export type BrsNumber = Int32 | Int64 | Float | Double;
 export type BrsPrimitive = BrsInterface | BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 
 /** The set of BrightScript iterable types. */
-export type Iterable = RoArray | RoAssociativeArray | RoXMLList | RoXMLElement;
+export type Iterable =
+    | RoArray
+    | RoAssociativeArray
+    | RoList
+    | RoByteArray
+    | RoXMLList
+    | RoXMLElement;
 
 // this is getting weird - we need a lesThan and greaterThan function?!
 export type AllComponents = { kind: ValueKind.Object } & BrsComponent & BrsValue;
