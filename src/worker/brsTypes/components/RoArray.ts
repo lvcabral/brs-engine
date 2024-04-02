@@ -1,4 +1,4 @@
-import { BrsType, isBrsString, isBrsNumber, Int32 } from "..";
+import { BrsType, isBrsString, isBrsNumber, Int32, Float } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -113,9 +113,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         return [
             "<Component: roArray> =",
             "[",
-            ...this.elements.map((el: BrsValue) => `    ${el.toString(this)}`),
+            ...Array.from(this.elements, (el: BrsType) =>
+                el === undefined ? "    invalid" : `    ${el.toString(this)}`
+            ),
             "]",
-        ].join("\r\n");
+        ].join("\n");
     }
 
     equalTo(other: BrsType) {
@@ -301,8 +303,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("array", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, array: BrsComponent) => {
+        impl: (interpreter: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoArray)) {
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roArray.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
+                );
                 return BrsInvalid.Instance;
             }
 
@@ -318,14 +323,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifArrayGet
     private getEntry = new Callable("getEntry", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Dynamic)],
+            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: BrsType) => {
-            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-                return this.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
-            }
-            return BrsInvalid.Instance;
+        impl: (_: Interpreter, index: Int32 | Float) => {
+            return this.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
         },
     });
 
@@ -333,12 +335,12 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     private setEntry = new Callable("setEntry", {
         signature: {
             args: [
-                new StdlibArgument("index", ValueKind.Dynamic),
+                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
                 new StdlibArgument("tvalue", ValueKind.Dynamic),
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+        impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
             return this.set(index, tvalue);
         },
     });
