@@ -1,4 +1,4 @@
-import { BrsType, Int32 } from "..";
+import { BrsType, Float, Int32 } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -371,14 +371,11 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     /** Returns an array entry based on the provided index. */
     private getEntry = new Callable("getEntry", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Dynamic)],
+            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: BrsType) => {
-            if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-                return this.roList.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
-            }
-            return BrsInvalid.Instance;
+        impl: (_: Interpreter, index: Int32 | Float) => {
+            return this.roList.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
         },
     });
 
@@ -387,12 +384,12 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     private setEntry = new Callable("setEntry", {
         signature: {
             args: [
-                new StdlibArgument("index", ValueKind.Dynamic),
+                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
                 new StdlibArgument("tvalue", ValueKind.Dynamic),
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+        impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
             return this.set(index, tvalue);
         },
     });
