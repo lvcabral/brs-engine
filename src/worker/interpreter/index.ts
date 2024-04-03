@@ -357,7 +357,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitPrint(statement: Stmt.Print): BrsType {
-
         let printStream = "";
         statement.expressions.forEach((printable, index) => {
             if (isToken(printable)) {
@@ -654,7 +653,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: "Type Mismatch. Attempting to exponentiate non-numeric values.",
+                            message:
+                                "Type Mismatch. Attempting to exponentiate non-numeric values.",
                             left: {
                                 type: left,
                                 location: expression.left.location,

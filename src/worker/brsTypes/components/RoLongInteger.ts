@@ -17,7 +17,7 @@ export class roLongInteger extends BrsComponent implements BrsValue, Unboxable {
     constructor(initialValue: Int64) {
         super("roLongInteger");
 
-        this.intrinsic =  new Int64(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
+        this.intrinsic = new Int64(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
         this.registerMethods({
             ifLongInt: [this.getLongInt, this.setLongInt],
             ifToStr: [this.toStr],

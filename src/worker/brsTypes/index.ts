@@ -177,7 +177,12 @@ export function isStringComp(value: BrsType): value is BrsString & Comparable {
  * @returns `true` if `value` is a boxed number, otherwise `false`.
  */
 export function isBoxedNumber(value: BrsType): value is BoxedNumber {
-    return value instanceof roInt || value instanceof roFloat || value instanceof roDouble || value instanceof roLongInteger;
+    return (
+        value instanceof roInt ||
+        value instanceof roFloat ||
+        value instanceof roDouble ||
+        value instanceof roLongInteger
+    );
 }
 
 /** The set of BrightScript numeric types. */
