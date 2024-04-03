@@ -1,9 +1,9 @@
 import { Interpreter } from ".";
-import { BackTrace, Environment, Scope } from "./Environment";
+import { BackTrace } from "./Environment";
 import { source } from "..";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
-import { isIterable, PrimitiveKinds, ValueKind } from "../brsTypes";
+import { ValueKind } from "../brsTypes";
 import {
     Statement,
     Assignment,
@@ -36,7 +36,6 @@ export function runDebugger(
     // TODO:
     // - Implement step over and step out
     // - Implement classes, bsc(s) and stats
-    const env = interpreter.environment;
     const lastLines = parseTextFile(source.get(lastLoc.file));
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
