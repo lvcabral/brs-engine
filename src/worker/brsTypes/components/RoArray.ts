@@ -101,6 +101,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             ifArrayJoin: [this.join],
             ifArraySort: [this.sort, this.sortBy, this.reverse],
             // ifArraySizeInfo: [this.capacity, this.isResizable],
+            ifArraySlice: [this.slice],
             ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
         });
     }
@@ -425,6 +426,26 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter, separator: BrsString) => {
             this.elements = this.elements.reverse();
             return BrsInvalid.Instance;
+        },
+    });
+
+    // ifArraySlice
+
+    /** Returns a copy of a portion of an array into a new array selected from start to end (end not included) */
+    private slice = new Callable("slice", {
+        signature: {
+            args: [
+                new StdlibArgument("start", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
+                new StdlibArgument("end", ValueKind.Int32 | ValueKind.Float, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter, start: Int32 | Float, end: Int32 | Float | BrsInvalid) => {
+            if (end instanceof BrsInvalid) {
+                return new RoArray(this.elements.slice(start.getValue()));
+            } else {
+                return new RoArray(this.elements.slice(start.getValue(), end.getValue()));
+            }
         },
     });
 
