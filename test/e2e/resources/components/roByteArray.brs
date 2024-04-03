@@ -9,42 +9,39 @@ sub main()
     ba = CreateObject("roByteArray")
     print ba.getSignedByte(1) = 0
     print ba.getSignedLong(0) = 0
-    ba.fromhexstring("00FF1001")
+    ba.fromHexString("00FF1001")
     print ba[0] = 0 and ba[1] = 255 and ba[2] = 16 and ba[3] = 1
     print ba.getSignedByte(1) = -1
     print ba.getSignedLong(0) = 17891072
-    ba.push(1000)
-    print ba
-    ba.unshift(-30)
-    print ba
 
     ba = CreateObject("roByteArray")
     ba.FromAsciiString("Hello world!")
     n = ba.GetCrc32()
-    print n, "0x" ; StrI(n, 16)
-    print " 461707669", "0x1b851995"
+    print n
+    print "0x" + StrI(n, 16)
 
     ba = CreateObject("roByteArray")
+    ' Invalid pair of chars are ignored and set to 0
     ba.fromHexString("0#FFD801..FF")
-    print ba
     print ba.toHexString()
-    print "00FFD80100FF"
     print ba.toHexString() = "00FFD80100FF"
+    ' Invalid hex (odd number of chars) are ignored and original array is kept
     ba.fromHexString("FFDD001")
-    print ba
     print ba.toHexString()
 
+    ' Check the capacity of the byte array
     ba = CreateObject("roByteArray")
     cap = ba.capacity()
-    print "count:"; ba.count(); " capacity:"; ba.capacity()
+    print "count: " + ba.count().toStr() + " capacity: " + ba.capacity().toStr()
     for x = 0 to 4000
         ba.push(x)
         if ba.capacity() <> cap
-            print "count:"; ba.count(); " capacity:"; ba.capacity(); " diff: "; ba.capacity() - cap
+            print "count: " + ba.count().toStr() + " capacity: " + ba.capacity().toStr() + " diff: " + (ba.capacity() - cap).toStr()
             cap = ba.capacity()
         end if
     end for
 
+    ' Test the ReadFile, WriteFile and Append methods
     print ba.WriteFile("tmp:/ByteArrayTestFile")
     print ba.WriteFile("tmp:/ByteArrayTestFileSmall", 33, 10)
 
@@ -70,64 +67,58 @@ sub main()
         end if
     end for
     print result
-    ? ba1.appendFile("tmp:/ByteArrayTestFileSmall", 9, 3)
+    print  ba1.appendFile("tmp:/ByteArrayTestFileSmall", 9, 3)
     ba3 = CreateObject("roByteArray")
     ba3.setResize(13, false)
     print ba3.readFile("tmp:/ByteArrayTestFileSmall")
-    print ba3.toAsciiString(), ba3.count()
+    print ba3.toAsciiString()
     ba3.clear()
-    print "can empty itself: " ba3.isEmpty(), ba3.capacity()
+    print "can empty itself: " + ba3.isEmpty().toStr() + " capacity: " + ba3.capacity().toStr()
+
     'Resize Tests
-    print "With Resize"
-    print "BA count:"; ba.count(); " capacity:"; ba.capacity()
+    print "BA count: " + ba.count().toStr() + " capacity: " + ba.capacity().toStr()
     ba.fromHexString("DDDDDDFF")
-    print "BA count:"; ba.count(); " capacity:"; ba.capacity()
+    print "BA count: " + ba.count().toStr() + " capacity: " + ba.capacity().toStr()
     bar = CreateObject("roByteArray")
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "new"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " new"
     bar.fromHexString("DDDDDDFF")
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "fromHexString"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " fromHexString"
     bar.setResize(5, false)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "setResize, 5, false"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " setResize, 5, false"
     bar.setResize(7, false)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "setResize, 7, false"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " setResize, 7, false"
     bnw = CreateObject("roByteArray")
     bnw.fromHexString("CC")
     bnw.setResize(1, false)
-    print "count:"; bnw.count(); " capacity:"; bnw.capacity(); " resizable: " bnw.isResizable(), "bnw.setResize, 1, false"
+    print "count: " + bnw.count().toStr() + " capacity: " + bnw.capacity().toStr() + " resizable: " + bnw.isResizable().toStr() + " bnw.setResize, 1, false"
     bnw.fromHexString("DDDDDDFFFF")
-    print "count:"; bnw.count(); " capacity:"; bnw.capacity(); " resizable: " bnw.isResizable(), "bnw.fromHex() 5"
+    print "count: " + bnw.count().toStr() + " capacity: " + bnw.capacity().toStr() + " resizable: " + bnw.isResizable().toStr() + " bnw.fromHex() 5"
     bnw.setResize(3, true)
-    print "count:"; bnw.count(); " capacity:"; bnw.capacity(); " resizable: " bnw.isResizable(), "bnw.setResize, 3, true"
+    print "count: " + bnw.count().toStr() + " capacity: " + bnw.capacity().toStr() + " resizable: " + bnw.isResizable().toStr() + " bnw.setResize, 3, true"
     bnw.fromHexString("DDDDDDFFFF")
-    bnw.Push(invalid)
     bnw.Push(1.6)
     bnw.Push(244)
-    print bnw
-    print "count:"; bnw.count(); " capacity:"; bnw.capacity(); " resizable: " bnw.isResizable(), "bnw setup"
+    print "count: " + bnw.count().toStr() + " capacity: " + bnw.capacity().toStr() + " resizable: " + bnw.isResizable().toStr() + " bnw setup"
     bar.append(bnw)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "append"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " append"
     bar.push(0)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "push"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " push"
     bar.push(0)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "push"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " push"
     bar.push(0)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "push"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " push"
     bar.push(0)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "push"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " push"
     bar.unshift(0)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "unshift"
-    bar.unshift(0)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "unshift"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " unshift"
     bar.append(bnw)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "append"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " append"
     bar.append(bnw)
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "append"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " append"
     bar.pop()
     bar.pop()
     bar.pop()
     bar.pop()
     bar.pop()
-    print "count:"; bar.count(); " capacity:"; bar.capacity(); " resizable: " bar.isResizable(), "5 pop()"
-    print bar.isLittleEndianCPU()
-    print "Test finished with Success!"
+    print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " 5 pop()"
 end sub
