@@ -13,4 +13,25 @@ sub Main()
     print "can delete elements: " arr.delete(1) ' => true
     arr.clear()
     print "can empty itself: " arr.isEmpty()    ' => true
+
+    animals = ["ant", "bison", "camel", "duck", "elephant"]
+
+    ' slice tests
+    print animals.slice(2).join(",")
+    ' Expected output: camel,duck,elephant
+
+    print animals.slice(2, 4).join(",")
+    ' Expected output: camel,duck
+
+    print animals.slice(1, 5).join(",")
+    ' Expected output: bison,camel,duck,elephant
+
+    print animals.slice(-2).join(",")
+    ' Expected output: duck,elephant
+
+    print animals.slice(2, -1).join(",")
+    ' Expected output: camel,duck
+
+    print animals.slice().join(",")
+    ' Expected output: ant,bison,camel,duck,elephant
 end sub

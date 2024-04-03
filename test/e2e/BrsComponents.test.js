@@ -42,6 +42,12 @@ describe("end to end brightscript functions", () => {
             "true",
             "can empty itself: ",
             "true",
+            "camel,duck,elephant",
+            "camel,duck",
+            "bison,camel,duck,elephant",
+            "duck,elephant",
+            "camel,duck",
+            "ant,bison,camel,duck,elephant",
         ]);
     });
 
