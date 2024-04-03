@@ -1718,35 +1718,34 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     debugLocalVariables(): string {
-
         let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
         debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
             this.environment.getM().getElements().length
         }\r\n`;
         let fnc = this.environment.getList(Scope.Function);
         fnc.forEach((value, key) => {
+            const varName = key.padEnd(17);
             if (PrimitiveKinds.has(value.kind)) {
                 let text = value.toString();
                 let lf = text.length <= 94 ? "\r\n" : "...\r\n";
                 if (value.kind === ValueKind.String) {
                     text = `"${text.substring(0, 94)}"`;
                 }
-                debugMsg += `${key.padEnd(17)}${ValueKind.toString(value.kind)} val:${text}${lf}`;
+                debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${text}${lf}`;
             } else if (isIterable(value)) {
-                debugMsg += `${key.padEnd(17)}${value.getComponentName()} count:${
-                    value.getElements().length
-                }\r\n`;
+                const count = value.getElements().length;
+                debugMsg += `${varName}${value.getComponentName()} count:${count}\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {
                 const unboxed = value.unbox();
-                debugMsg += `${key.padEnd(16)} ${value.getComponentName()} val:${unboxed.toString()}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} val:${unboxed.toString()}\r\n`;
             } else if (value.kind === ValueKind.Object) {
-                debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()}\r\n`;
             } else if (value.kind === ValueKind.Callable) {
-                debugMsg += `${key.padEnd(17)}${ValueKind.toString(
+                debugMsg += `${varName}${ValueKind.toString(
                     value.kind
                 )} val:${value.getName()}\r\n`;
             } else {
-                debugMsg += `${key.padEnd(17)}${value.toString().substring(0, 94)}\r\n`;
+                debugMsg += `${varName}${value.toString().substring(0, 94)}\r\n`;
             }
         });
         return debugMsg;
