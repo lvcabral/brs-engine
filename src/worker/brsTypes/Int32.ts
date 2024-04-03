@@ -19,6 +19,7 @@ export class Int32 implements Numeric, Comparable, Boxable {
     toBoolean(): boolean {
         return this.value !== 0;
     }
+
     /**
      * Creates a new BrightScript 32-bit integer value representing the provided `value`.
      * @param value the value to store in the BrightScript number, truncated to a 32-bit
@@ -216,6 +217,8 @@ export class Int32 implements Numeric, Comparable, Boxable {
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.Int64) {
             return BrsBoolean.from(this.getValue() === other.getValue().toNumber());
+        } else if (other.kind === ValueKind.Boolean) {
+            return other.equalTo(BrsBoolean.from(this.toBoolean()));
         } else if (isNumberComp(other)) {
             return BrsBoolean.from(this.getValue() === other.getValue());
         }

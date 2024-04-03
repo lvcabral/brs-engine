@@ -1,4 +1,4 @@
-import { BrsNumber, BrsType, isStringComp } from ".";
+import { BrsNumber, BrsType, isBrsNumber, isStringComp } from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
@@ -258,19 +258,17 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 
     lessThan(other: BrsType): BrsBoolean {
         // booleans aren't less than anything
-        // TODO: Validate on a Roku
         return BrsBoolean.False;
     }
 
     greaterThan(other: BrsType): BrsBoolean {
         // but isn't greater than anything either
-        // TODO: Validate on a Roku
         return BrsBoolean.False;
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.Boolean) {
-            return BrsBoolean.from(this === other);
+        if (other.kind === ValueKind.Boolean || isBrsNumber(other)) {
+            return BrsBoolean.from(this.toBoolean() === other.toBoolean());
         }
         return BrsBoolean.False;
     }
@@ -341,7 +339,7 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.Invalid) {
+        if (other.kind === ValueKind.Invalid || other instanceof roInvalid) {
             return BrsBoolean.True;
         }
         return BrsBoolean.False;

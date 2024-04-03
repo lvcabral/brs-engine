@@ -1,7 +1,7 @@
 import { BrsComponent } from "./BrsComponent";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
-import { BrsType } from "..";
+import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Float } from "../Float";
 import { vsprintf } from "sprintf-js";
@@ -10,14 +10,14 @@ export class roFloat extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Float;
 
-    public getValue(): Float {
-        return this.intrinsic;
+    public getValue(): number {
+        return this.intrinsic.getValue();
     }
 
     constructor(initialValue: Float) {
         super("roFloat");
 
-        this.intrinsic = initialValue;
+        this.intrinsic = new Float(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
         this.registerMethods({
             ifFloat: [this.getFloat, this.setFloat],
             ifToStr: [this.toStr],
