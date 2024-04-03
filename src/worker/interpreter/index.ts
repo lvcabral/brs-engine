@@ -33,6 +33,7 @@ import {
     RoXMLList,
     RoFunction,
     isBoxedNumber,
+    PrimitiveKinds,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -1714,6 +1715,40 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         this._currLoc = statement.location;
         return statement.accept<BrsType>(this);
+    }
+
+    debugLocalVariables(): string {
+        let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
+        debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
+            this.environment.getM().getElements().length
+        }\r\n`;
+        let fnc = this.environment.getList(Scope.Function);
+        fnc.forEach((value, key) => {
+            const varName = key.padEnd(17);
+            if (PrimitiveKinds.has(value.kind)) {
+                let text = value.toString();
+                let lf = text.length <= 94 ? "\r\n" : "...\r\n";
+                if (value.kind === ValueKind.String) {
+                    text = `"${text.substring(0, 94)}"`;
+                }
+                debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${text}${lf}`;
+            } else if (isIterable(value)) {
+                const count = value.getElements().length;
+                debugMsg += `${varName}${value.getComponentName()} count:${count}\r\n`;
+            } else if (value instanceof BrsComponent && isUnboxable(value)) {
+                const unboxed = value.unbox();
+                debugMsg += `${varName}${value.getComponentName()} val:${unboxed.toString()}\r\n`;
+            } else if (value.kind === ValueKind.Object) {
+                debugMsg += `${varName}${value.getComponentName()}\r\n`;
+            } else if (value.kind === ValueKind.Callable) {
+                debugMsg += `${varName}${ValueKind.toString(
+                    value.kind
+                )} val:${value.getName()}\r\n`;
+            } else {
+                debugMsg += `${varName}${value.toString().substring(0, 94)}\r\n`;
+            }
+        });
+        return debugMsg;
     }
 
     formatLocation(location: Location = this._currLoc) {
