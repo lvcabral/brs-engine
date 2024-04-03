@@ -1,7 +1,7 @@
 import { BrsComponent } from "./BrsComponent";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
-import { BrsType } from "..";
+import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Double } from "../Double";
 import { vsprintf } from "sprintf-js";
@@ -10,14 +10,14 @@ export class roDouble extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Double;
 
-    public getValue(): Double {
-        return this.intrinsic;
+    public getValue(): number {
+        return this.intrinsic.getValue();
     }
 
     constructor(initialValue: Double) {
         super("roDouble");
 
-        this.intrinsic = initialValue;
+        this.intrinsic = new Double(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
         this.registerMethods({
             ifDouble: [this.getDouble, this.setDouble],
             ifToStr: [this.toStr],

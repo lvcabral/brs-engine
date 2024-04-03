@@ -36,10 +36,6 @@ print 32 >> 1
 print 32 >> 2
 print 32 >> 3
 
-' 32 bit overflow
-print 2147483647 + 1
-print -2147483648 - 1
-print 214748364 * 20
 ' unary operations
 print -5 ' => -5
 print +5 ' => 5
@@ -54,3 +50,31 @@ print type(7.6 mod 3) 'Float
 print 7.6 mod 3 ' 1
 print type(7 mod 3) 'Integer
 print 7 mod 3 ' 1
+
+' boxed operations
+print box(7) + box(3)
+print box(7) - box(3)
+print box(7) * box(3)
+print box(7) / box(3)
+x = 1
+b = box(100)
+z = box(0.1)
+print type(x)
+print type(b)
+print type(z)
+print b > x
+print z = 0
+print z >= 0
+print not x
+print not b
+x += b
+b++
+z.setFloat(0.7)
+print x
+print b
+print z
+
+' 32 bit overflow
+print 2147483647 + 1
+print -2147483648 - 1
+print 214748364 * 20
