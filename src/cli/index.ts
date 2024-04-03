@@ -26,8 +26,6 @@ import {
 import { isNumber } from "../api/util";
 import { registerCallback, getInterpreter, executeLine, executeFile } from "../worker";
 import { debugPrompt, dataBufferIndex, dataBufferSize } from "../worker/enums";
-import { PrimitiveKinds, ValueKind, isIterable } from "../worker/brsTypes";
-import { Environment, Scope } from "../worker/interpreter/Environment";
 import packageInfo from "../../package.json";
 
 // Constants
@@ -311,7 +309,7 @@ function repl() {
         input: process.stdin,
         output: process.stdout,
     });
-    rl.setPrompt(`${chalk.magenta("brs")}> `);
+    rl.setPrompt(`\n${chalk.magenta("brs")}> `);
     rl.on("line", (line) => {
         if (["exit", "quit", "q"].includes(line.toLowerCase().trim())) {
             process.exit();
@@ -320,13 +318,14 @@ function repl() {
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
         } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
-            printLocalVariables(replInterpreter.environment);
+            console.log(chalk.cyanBright(`\r\nLocal variables:\r\n`));
+            console.log(chalk.cyanBright(replInterpreter.debugLocalVariables().trimEnd()));
         } else {
             executeLine(line, replInterpreter);
         }
         rl.prompt();
     });
-    console.log(colorize("type `help` to see the list of valid REPL commands.\r\n"));
+    console.log(colorize("type `help` to see the list of valid REPL commands."));
     rl.prompt();
 }
 
@@ -431,40 +430,8 @@ function printHelp() {
     helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
     helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";
-    helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
+    helpMsg += "   Type any valid BrightScript expression for a live compile and run.";
     console.log(chalk.cyanBright(helpMsg));
-}
-
-/**
- * Display the local variables on the console.
- * @param environment an object with the Interpreter Environment data
- */
-function printLocalVariables(environment: Environment) {
-    let debugMsg = "\r\nLocal variables:\r\n";
-    debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
-        environment.getM().getElements().length
-    }\r\n`;
-    let fnc = environment.getList(Scope.Function);
-    fnc.forEach((value, key) => {
-        if (PrimitiveKinds.has(value.kind)) {
-            debugMsg += `${key.padEnd(17)}${ValueKind.toString(
-                value.kind
-            )} val:${value.toString()}\r\n`;
-        } else if (isIterable(value)) {
-            debugMsg += `${key.padEnd(17)}${value.getComponentName()} count:${
-                value.getElements().length
-            }\r\n`;
-        } else if (value.kind === ValueKind.Object) {
-            debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
-        } else if (value.kind === ValueKind.Callable) {
-            debugMsg += `${key.padEnd(17)}${ValueKind.toString(
-                value.kind
-            )} val:${value.getName()}\r\n`;
-        } else {
-            debugMsg += `${key.padEnd(17)}${value.toString()}\r\n`;
-        }
-    });
-    console.log(chalk.cyanBright(debugMsg));
 }
 
 /**

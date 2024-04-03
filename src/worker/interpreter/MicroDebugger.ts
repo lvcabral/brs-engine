@@ -64,7 +64,7 @@ export function runDebugger(
         postMessage(`print,${debugMsg}`);
         debugBackTrace(interpreter, nextLoc);
         postMessage(`print,Local variables:\r\n`);
-        debugLocalVariables(env);
+        postMessage(`print,${interpreter.debugLocalVariables()}`);
     }
 
     // Debugger Loop
@@ -214,7 +214,7 @@ function debugHandleCommand(
             postMessage(`print,${debugMsg}\r\n`);
             break;
         case DebugCommand.VAR:
-            debugLocalVariables(env);
+            postMessage(`print,${interpreter.debugLocalVariables()}`);
             break;
         case DebugCommand.BREAK:
             postMessage(`warning,Micro Debugger already running!\r\n`);
@@ -257,37 +257,6 @@ function debugList(backTrace: BackTrace[], currLines: string[], flagLine: number
             postMessage(`print,${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`);
         }
     }
-}
-
-function debugLocalVariables(environment: Environment) {
-    let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
-    debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
-        environment.getM().getElements().length
-    }\r\n`;
-    let fnc = environment.getList(Scope.Function);
-    fnc.forEach((value, key) => {
-        if (PrimitiveKinds.has(value.kind)) {
-            let text = value.toString();
-            let lf = text.length <= 94 ? "\r\n" : "...\r\n";
-            if (value.kind === ValueKind.String) {
-                text = `"${text.substring(0, 94)}"`;
-            }
-            debugMsg += `${key.padEnd(17)}${ValueKind.toString(value.kind)} val:${text}${lf}`;
-        } else if (isIterable(value)) {
-            debugMsg += `${key.padEnd(17)}${value.getComponentName()} count:${
-                value.getElements().length
-            }\r\n`;
-        } else if (value.kind === ValueKind.Object) {
-            debugMsg += `${key.padEnd(17)}${value.getComponentName()}\r\n`;
-        } else if (value.kind === ValueKind.Callable) {
-            debugMsg += `${key.padEnd(17)}${ValueKind.toString(
-                value.kind
-            )} val:${value.getName()}\r\n`;
-        } else {
-            debugMsg += `${key.padEnd(17)}${value.toString().substring(0, 94)}\r\n`;
-        }
-    });
-    postMessage(`print,${debugMsg}`);
 }
 
 function debugHelp() {
