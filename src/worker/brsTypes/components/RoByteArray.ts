@@ -158,6 +158,13 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
+    isLittleEndian() {
+        // Solution from: https://abdulapopoola.com/2019/01/20/check-endianness-with-javascript/
+        const uInt32 = new Uint32Array([0x11223344]);
+        const uInt8 = new Uint8Array(uInt32.buffer);
+        return uInt8[0] === 0x44;
+    }
+
     // ifByteArray ---------------------------------------------------------------------
 
     /** Reads the specified file into the Byte Array. Any data currently in the Byte Array is discarded. */
@@ -307,7 +314,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, hexStr: BrsString) => {
             const value = hexStr.value.replace(/[^0-9A-Fa-f]/g, "0");
-            if (this._resizable || (value.length % 2 === 0 && value.length / 2 <= this._capacity)) {
+            if (value.length % 2 === 0 && (this._resizable || value.length / 2 <= this._capacity)) {
                 this.elements = new Uint8Array(Buffer.from(value, "hex"));
                 this.updateNext();
                 this.updateCapacity();
@@ -359,28 +366,30 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Returns the signed byte at the specified zero-based index in the Byte Array. */
     private getSignedByte = new Callable("getSignedByte", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32)],
+            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, index: Int32) => {
-            if (index.getValue() < this.elements.length) {
-                let byte = (this.elements[index.getValue()] << 24) >> 24;
+        impl: (_: Interpreter, index: Int32 | Float) => {
+            const idx = Math.trunc(index.getValue());
+            if (idx < this.elements.length) {
+                let byte = (this.elements[idx] << 24) >> 24;
                 return new Int32(byte);
             }
             return new Int32(0);
         },
     });
 
-    /** Returns the signed long (four bytes) starting at the specified zero-based index in the Byte Array. */
+    /** Returns the signed long (four bytes) starting at the specified zero-based long index. */
     private getSignedLong = new Callable("getSignedLong", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32)],
+            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, index: Int32) => {
-            if (index.getValue() < this.elements.length - 3) {
-                const dataView = new DataView(this.elements.buffer, index.getValue(), 4);
-                const long = dataView.getInt32(0, true);
+        impl: (_: Interpreter, index: Int32 | Float) => {
+            const idx = Math.trunc(index.getValue()) * 4; // Multiply index by 4
+            if (idx < this.elements.length - 3) {
+                const dataView = new DataView(this.elements.buffer, idx, 4);
+                const long = dataView.getInt32(0, this.isLittleEndian());
                 return new Int32(long);
             }
             return new Int32(0);
@@ -391,16 +400,17 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private getCRC32 = new Callable("getCRC32", {
         signature: {
             args: [
-                new StdlibArgument("index", ValueKind.Int32, new Int32(0)),
-                new StdlibArgument("length", ValueKind.Int32, new Int32(-1)),
+                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
+                new StdlibArgument("length", ValueKind.Int32 | ValueKind.Float, new Int32(-1)),
             ],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, index: Int32, length: Int32) => {
-            if (index.getValue() > 0 || length.getValue() > 0) {
-                let start = index.getValue();
-                let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                return new Int32(crc32(Buffer.from(this.elements.slice(start, end))));
+        impl: (_: Interpreter, index: Int32 | Float, length: Int32 | Float) => {
+            const idx = Math.trunc(index.getValue());
+            const len = Math.trunc(length.getValue());
+            if (idx > 0 || len > 0) {
+                const end = len < 1 ? undefined : idx + len;
+                return new Int32(crc32(Buffer.from(this.elements.slice(idx, end))));
             }
             return new Int32(crc32(Buffer.from(this.elements)));
         },
@@ -410,13 +420,13 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private setResize = new Callable("setResize", {
         signature: {
             args: [
-                new StdlibArgument("minSize", ValueKind.Int32),
+                new StdlibArgument("minSize", ValueKind.Int32 | ValueKind.Float),
                 new StdlibArgument("autoResize", ValueKind.Boolean),
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, minSize: Int32, autoResize: BrsBoolean) => {
-            this._capacity = Math.max(minSize.getValue(), this.elements.length);
+        impl: (_: Interpreter, minSize: Int32 | Float, autoResize: BrsBoolean) => {
+            this._capacity = Math.max(Math.trunc(minSize.getValue()), this.elements.length);
             this._resizable = autoResize.toBoolean();
             return BrsInvalid.Instance;
         },
@@ -429,10 +439,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            // Solution from: https://abdulapopoola.com/2019/01/20/check-endianness-with-javascript/
-            const uInt32 = new Uint32Array([0x11223344]);
-            const uInt8 = new Uint8Array(uInt32.buffer);
-            return BrsBoolean.from(uInt8[0] === 0x44);
+            return BrsBoolean.from(this.isLittleEndian());
         },
     });
 
@@ -457,6 +464,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
+            if (this.elements.length === 0) {
+                return BrsInvalid.Instance;
+            }
             const index = this.elements.length - 1;
             const item = this.elements[index];
             let array = new Uint8Array(index);
@@ -502,9 +512,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
+            if (this.elements.length === 0) {
+                return BrsInvalid.Instance;
+            }
             const item = this.elements[0];
             let array = new Uint8Array(this.elements.length - 1);
-            array.set(array.slice(1, this.elements.length), 0);
+            array.set(this.elements.slice(1));
             this.elements = array;
             return item ? new Int32(item) : BrsInvalid.Instance;
         },
@@ -550,9 +563,10 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             if (idx < 0 || idx >= this.elements.length) {
                 return BrsBoolean.False;
             }
-            let array = new Uint8Array(this.elements.length + 1);
+            let array = new Uint8Array(this.elements.length - 1);
             array.set(this.elements.slice(0, idx), 0);
-            array.set(this.elements.slice(idx + 1, this.elements.length), idx);
+            array.set(this.elements.slice(idx + 1), idx);
+            this.elements = array;
             return BrsBoolean.True;
         },
     });
