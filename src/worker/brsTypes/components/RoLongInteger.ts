@@ -1,7 +1,7 @@
 import { BrsComponent } from "./BrsComponent";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
-import { BrsType } from "..";
+import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
 import { vsprintf } from "sprintf-js";
@@ -10,14 +10,14 @@ export class roLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Int64;
 
-    public getValue(): Int64 {
-        return this.intrinsic;
+    public getValue(): Long {
+        return this.intrinsic.getValue();
     }
 
     constructor(initialValue: Int64) {
         super("roLongInteger");
 
-        this.intrinsic = initialValue;
+        this.intrinsic =  new Int64(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
         this.registerMethods({
             ifLongInt: [this.getLongInt, this.setLongInt],
             ifToStr: [this.toStr],

@@ -32,6 +32,7 @@ import {
     RoXMLElement,
     RoXMLList,
     RoFunction,
+    isBoxedNumber,
 } from "../brsTypes";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
@@ -185,10 +186,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * passes the sub-interpreter to the provided JavaScript function. Always
      * reverts the current interpreter's environment to its original value.
      * @param func the JavaScript function to execute with the sub interpreter.
+     * @param environment (Optional) the environment to run the interpreter in.
      */
-    inSubEnv(func: (interpreter: Interpreter) => BrsType): BrsType {
+    inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
-        let newEnv = this._environment.createSubEnvironment();
+        let newEnv = environment ?? this._environment.createSubEnvironment();
         let btArray = originalEnvironment.getBackTrace();
         btArray.forEach((bt) => {
             newEnv.addBackTrace(bt.functionName, bt.functionLoc, bt.callLoc, bt.signature);
@@ -306,6 +308,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         throw new NotFound(`${functionName} was not found in scope`);
     }
 
+    visitLibrary(statement: Stmt.Library): BrsInvalid {
+        // ignore during run time, already handled by lexer/parser
+        return BrsInvalid.Instance;
+    }
+
     visitNamedFunction(statement: Stmt.Function): BrsType {
         if (statement.name.isReserved) {
             return this.addError(
@@ -350,8 +357,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitPrint(statement: Stmt.Print): BrsType {
-        // the `tab` function is only in-scope while executing print statements
-        //this.environment.define(Scope.Function, "Tab", StdLib.Tab);
 
         let printStream = "";
         statement.expressions.forEach((printable, index) => {
@@ -495,6 +500,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             // behavior found in other languages. e.g. `foo() && bar()` won't execute `bar()` if
             // `foo()` returns `false`.
             right = this.evaluate(expression.right);
+        }
+
+        // Unbox Numeric components to intrinsic types
+        if (isBoxedNumber(left)) {
+            left = left.unbox();
+        }
+        if (isBoxedNumber(right)) {
+            right = right.unbox();
         }
 
         /**
@@ -641,7 +654,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: "Type Mismatch. Attempting to potentiate non-numeric values.",
+                            message: "Type Mismatch. Attempting to exponentiate non-numeric values.",
                             left: {
                                 type: left,
                                 location: expression.left.location,
@@ -818,9 +831,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.Equal:
                 if (canCheckEquality(left, lexeme, right)) {
-                    if (left.kind === ValueKind.Invalid) {
-                        return right.equalTo(left);
-                    }
                     return left.equalTo(right);
                 }
 
@@ -839,9 +849,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.LessGreater:
                 if (canCheckEquality(left, lexeme, right)) {
-                    if (left.kind === ValueKind.Invalid) {
-                        return right.equalTo(left).not();
-                    }
                     return left.equalTo(right).not();
                 }
 
@@ -1576,6 +1583,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitIncrement(expression: Stmt.Increment) {
         let target = this.evaluate(expression.value);
+        if (isBoxedNumber(target)) {
+            target = target.unbox();
+        }
 
         if (!isBrsNumber(target)) {
             let operation = expression.token.kind === Lexeme.PlusPlus ? "increment" : "decrement";
@@ -1626,6 +1636,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitUnary(expression: Expr.Unary) {
         let right = this.evaluate(expression.right);
+        if (isBoxedNumber(right)) {
+            right = right.unbox();
+        }
 
         switch (expression.operator.kind) {
             case Lexeme.Minus:
@@ -1680,11 +1693,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             throw err;
         }
-    }
-
-    visitLibrary(statement: Stmt.Library) {
-        // ignore during run time, already handled by lexer/parser
-        return BrsInvalid.Instance;
     }
 
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {

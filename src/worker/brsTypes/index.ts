@@ -24,6 +24,10 @@ import { RoXMLElement } from "./components/RoXMLElement";
 import { RoPath } from "./components/RoPath";
 import { RoURLEvent } from "./components/RoURLEvent";
 import { RoUniversalControlEvent } from "./components/RoUniversalControlEvent";
+import { roInt } from "./components/RoInt";
+import { roFloat } from "./components/RoFloat";
+import { roDouble } from "./components/RoDouble";
+import { roLongInteger } from "./components/RoLongInteger";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -156,7 +160,7 @@ export function isIterable(value: BrsType): value is Iterable {
  * @returns `true` if `value` can be compared as a number, otherwise `false`.
  */
 export function isNumberComp(value: BrsType): value is BrsType & Comparable {
-    return isBrsNumber(value) || value instanceof RoUniversalControlEvent;
+    return isBrsNumber(value) || isBoxedNumber(value) || value instanceof RoUniversalControlEvent;
 }
 
 /**
@@ -168,8 +172,19 @@ export function isStringComp(value: BrsType): value is BrsString & Comparable {
     return isBrsString(value) || value instanceof RoPath || value instanceof RoURLEvent;
 }
 
+/** Determines whether or not the given value is a BrightScript boxed number.
+ * @param value the BrightScript value in question.
+ * @returns `true` if `value` is a boxed number, otherwise `false`.
+ */
+export function isBoxedNumber(value: BrsType): value is BoxedNumber {
+    return value instanceof roInt || value instanceof roFloat || value instanceof roDouble || value instanceof roLongInteger;
+}
+
 /** The set of BrightScript numeric types. */
 export type BrsNumber = Int32 | Int64 | Float | Double;
+
+/** The set of BrightScript boxed numeric types. */
+export type BoxedNumber = roInt | roFloat | roDouble | roLongInteger;
 
 /**
  * The set of all comparable BrightScript types. Only primitive (i.e. intrinsic * and unboxed)

@@ -80,6 +80,24 @@ describe("end to end syntax", () => {
             " 1",
             "Integer",
             " 1",
+            " 10", // boxed operations
+            " 4",
+            " 21",
+            " 2.333333",
+            "Integer",
+            "roInt",
+            "roFloat",
+            "true",
+            "false",
+            "true",
+            "-2",
+            "-101",
+            " 101",
+            " 101",
+            " 0.7",
+            " 2147483648", // integer overflow
+            "-2147483649",
+            "-16",
         ]);
     });
 

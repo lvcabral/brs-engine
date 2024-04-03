@@ -196,6 +196,8 @@ export class Double implements Numeric, Comparable, Boxable {
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.Int64) {
             return BrsBoolean.from(this.getValue() === other.getValue().toNumber());
+        } else if (other.kind === ValueKind.Boolean) {
+            return other.equalTo(BrsBoolean.from(this.toBoolean()));
         } else if (isNumberComp(other)) {
             return BrsBoolean.from(this.getValue() === other.getValue());
         }

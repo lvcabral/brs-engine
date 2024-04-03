@@ -2,15 +2,15 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BrsType } from "..";
+import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 
 export class roBoolean extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: BrsBoolean;
 
-    public getValue(): BrsBoolean {
-        return this.intrinsic;
+    public getValue(): boolean {
+        return this.intrinsic.toBoolean();
     }
 
     constructor(initialValue: BrsBoolean) {
@@ -29,7 +29,9 @@ export class roBoolean extends BrsComponent implements BrsValue, Unboxable {
 
     equalTo(other: BrsType): BrsBoolean {
         if (other instanceof roBoolean) {
-            return BrsBoolean.from(other.getValue().toBoolean() === this.intrinsic.toBoolean());
+            return BrsBoolean.from(other.getValue() === this.getValue());
+        } else if (isBrsNumber(other) || other instanceof BrsBoolean) {
+            return BrsBoolean.from(other.toBoolean() === this.intrinsic.toBoolean());
         }
 
         return BrsBoolean.False;

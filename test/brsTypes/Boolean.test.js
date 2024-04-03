@@ -3,10 +3,10 @@ const BrsTypes = require("../../lib/brsTypes");
 describe("Boolean", () => {
     test("true equals true", () => {
         const notTrue = [
-            new BrsTypes.Int32(1),
-            new BrsTypes.Int64(2),
-            new BrsTypes.Float(1.5),
-            new BrsTypes.Double(2.5),
+            new BrsTypes.Int32(0),
+            new BrsTypes.Int64(0),
+            new BrsTypes.Float(0.5),
+            new BrsTypes.Double(0.5),
             new BrsTypes.BrsString("i'm not a boolean"),
             BrsTypes.BrsBoolean.False,
             BrsTypes.BrsInvalid.Instance,
@@ -23,7 +23,7 @@ describe("Boolean", () => {
 
     test("false equals false", () => {
         const notFalse = [
-            new BrsTypes.Int32(1),
+            new BrsTypes.Int32(-1),
             new BrsTypes.Int64(2),
             new BrsTypes.Float(1.5),
             new BrsTypes.Double(2.5),
