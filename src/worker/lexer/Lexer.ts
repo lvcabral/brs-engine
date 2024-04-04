@@ -64,6 +64,7 @@ export class Lexer {
      * @returns an object containing an array of `errors` and an array of `tokens` to be passed to a parser.
      */
     public scan(toScan: string, filename: string): ScanResults {
+        console.time("lex");
         /** The zero-indexed position at which the token under consideration begins. */
         let start = 0;
         /** The zero-indexed position being examined for the token under consideration. */
@@ -108,7 +109,7 @@ export class Lexer {
                 file: filename,
             },
         });
-
+        console.timeEnd("lex");
         return { tokens, errors };
 
         /**
@@ -127,7 +128,52 @@ export class Lexer {
          */
         function scanToken(): void {
             let c = advance();
+            if (isAlpha(c)) {
+                identifier();
+                return
+            }
             switch (c.toLowerCase()) {
+                case " ":
+                case "\r":
+                case "\t":
+                    // ignore whitespace; indentation isn't significant in BrightScript
+                    break;
+                case "\n":
+                    // consecutive newlines aren't significant, because they're just blank lines
+                    // so only add blank lines when they're not consecutive
+                    let previous = lastToken();
+                    if (previous && previous.kind !== Lexeme.Newline) {
+                        addToken(Lexeme.Newline);
+                    }
+                    // but always advance the line counter
+                    line++;
+                    // and always reset the column counter
+                    column = 0;
+                    break;
+                case ".":
+                    // this might be a float/double literal, because decimals without a leading 0
+                    // are allowed
+                    if (isDecimalDigit(peek())) {
+                        decimalNumber(true);
+                    } else {
+                        addToken(Lexeme.Dot);
+                    }
+                    break;
+                case "=":
+                    addToken(Lexeme.Equal);
+                    break;
+                case '"':
+                    string();
+                    break;
+                case "'":
+                    // BrightScript doesn't have block comments; only line
+                    while (peek() !== "\n" && !isAtEnd()) {
+                        advance();
+                    }
+                    break;
+                case ",":
+                    addToken(Lexeme.Comma);
+                    break;
                 case "(":
                     addToken(Lexeme.LeftParen);
                     break;
@@ -145,18 +191,6 @@ export class Lexer {
                     break;
                 case "]":
                     addToken(Lexeme.RightSquare);
-                    break;
-                case ",":
-                    addToken(Lexeme.Comma);
-                    break;
-                case ".":
-                    // this might be a float/double literal, because decimals without a leading 0
-                    // are allowed
-                    if (isDecimalDigit(peek())) {
-                        decimalNumber(true);
-                    } else {
-                        addToken(Lexeme.Dot);
-                    }
                     break;
                 case "@":
                     addToken(Lexeme.AtSymbol);
@@ -226,9 +260,6 @@ export class Lexer {
                             addToken(Lexeme.Backslash);
                             break;
                     }
-                    break;
-                case "=":
-                    addToken(Lexeme.Equal);
                     break;
                 case ":":
                     addToken(Lexeme.Colon);
@@ -309,32 +340,6 @@ export class Lexer {
                             break;
                     }
                     break;
-                case "'":
-                    // BrightScript doesn't have block comments; only line
-                    while (peek() !== "\n" && !isAtEnd()) {
-                        advance();
-                    }
-                    break;
-                case " ":
-                case "\r":
-                case "\t":
-                    // ignore whitespace; indentation isn't significant in BrightScript
-                    break;
-                case "\n":
-                    // consecutive newlines aren't significant, because they're just blank lines
-                    // so only add blank lines when they're not consecutive
-                    let previous = lastToken();
-                    if (previous && previous.kind !== Lexeme.Newline) {
-                        addToken(Lexeme.Newline);
-                    }
-                    // but always advance the line counter
-                    line++;
-                    // and always reset the column counter
-                    column = 0;
-                    break;
-                case '"':
-                    string();
-                    break;
                 case "#":
                     preProcessedConditional();
                     break;
@@ -344,8 +349,6 @@ export class Lexer {
                     } else if (c === "&" && peek().toLowerCase() === "h") {
                         advance(); // move past 'h'
                         hexadecimalNumber();
-                    } else if (isAlpha(c)) {
-                        identifier();
                     } else {
                         addError(new BrsError(`Unexpected character '${c}'`, locationOf(c)));
                     }
@@ -818,5 +821,6 @@ export class Lexer {
                 file: filename,
             };
         }
+
     }
 }
