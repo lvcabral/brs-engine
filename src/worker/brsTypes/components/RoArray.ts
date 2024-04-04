@@ -5,85 +5,33 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 
-/**
- * Gives the order for sorting different types in a mixed array
- *
- * Mixed Arrays seem to get sorted in this order (tested with Roku OS 9.4):
- *
- * numbers in numeric order
- * strings in alphabetical order,
- * assocArrays in original order
- * everything else in original order
- */
-function getTypeSortIndex(a: BrsType): number {
-    if (isBrsNumber(a)) {
-        return 0;
-    } else if (isBrsString(a)) {
-        return 1;
-    } else if (a instanceof RoAssociativeArray) {
-        return 2;
-    }
-    return 3;
-}
-
-/**
- * Sorts two BrsTypes in the order that Roku would sort them
- * @param originalArray A copy of the original array. Used to get the order of items
- * @param a
- * @param b
- * @param caseInsensitive Should strings be compared case insensitively? defaults to false
- * @param sortInsideTypes Should two numbers or two strings be sorted? defaults to true
- * @return compare value for array.sort()
- */
-function sortCompare(
-    originalArray: BrsType[],
-    a: BrsType,
-    b: BrsType,
-    caseInsensitive: boolean = false,
-    sortInsideTypes: boolean = true
-): number {
-    let compare = 0;
-    if (a !== undefined && b !== undefined) {
-        const aSortOrder = getTypeSortIndex(a);
-        const bSortOrder = getTypeSortIndex(b);
-        if (aSortOrder < bSortOrder) {
-            compare = -1;
-        } else if (bSortOrder < aSortOrder) {
-            compare = 1;
-        } else if (sortInsideTypes && isBrsNumber(a)) {
-            // two numbers are in numeric order
-            compare = (a as Comparable).greaterThan(b).toBoolean() ? 1 : -1;
-        } else if (sortInsideTypes && isBrsString(a)) {
-            // two strings are in alphabetical order
-            let aStr = a.toString();
-            let bStr = b.toString();
-            if (caseInsensitive) {
-                aStr = aStr.toLowerCase();
-                bStr = bStr.toLowerCase();
-            }
-            // roku does not use locale for sorting strings
-            compare = aStr > bStr ? 1 : -1;
-        } else {
-            // everything else is in the same order as the original
-            const aOriginalIndex = originalArray.indexOf(a);
-            const bOriginalIndex = originalArray.indexOf(b);
-            if (aOriginalIndex > -1 && bOriginalIndex > -1) {
-                compare = aOriginalIndex - bOriginalIndex;
-            }
-        }
-    }
-    return compare;
-}
-
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
+    private maxSize = 0;
+    private resizable = true;
     elements: BrsType[];
     enumIndex: number;
 
-    constructor(elements: BrsType[]) {
+    constructor(elements: BrsType[]);
+    constructor(capacity: Int32 | Float, resizable: BrsBoolean);
+    constructor(...args: any) {
         super("roArray");
-        this.elements = elements;
-        this.enumIndex = elements.length ? 0 : -1;
+        this.elements = [];
+        if (args.length === 1 && Array.isArray(args[0])) {
+            this.elements = args[0];
+        } else if (
+            args.length === 2 &&
+            (args[0] instanceof Int32 || args[0] instanceof Float) &&
+            (args[1] instanceof BrsBoolean || isBrsNumber(args[1]))
+        ) {
+            this.maxSize = args[0].getValue();
+            this.resizable = args[1].toBoolean();
+        } else {
+            throw new Error(
+                `BRIGHTSCRIPT: ERROR: Runtime: "roArray": invalid number of parameters:`
+            );
+        }
+        this.enumIndex = this.elements.length ? 0 : -1;
         this.registerMethods({
             ifArray: [
                 this.peek,
@@ -100,7 +48,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             ifArraySet: [this.setEntry],
             ifArrayJoin: [this.join],
             ifArraySort: [this.sort, this.sortBy, this.reverse],
-            // ifArraySizeInfo: [this.capacity, this.isResizable],
+            ifArraySizeInfo: [this.capacity, this.isResizable],
             ifArraySlice: [this.slice],
             ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
         });
@@ -178,6 +126,22 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
+    updateCapacity(growthFactor = 0) {
+        if (this.resizable && growthFactor > 0) {
+            if (this.elements.length > 0 && this.elements.length > this.maxSize) {
+                let count = this.elements.length - 1;
+                let newCap = Math.trunc(count * growthFactor);
+                if (newCap - this.maxSize < 10) {
+                    this.maxSize = Math.trunc(10 * (count / 10 + 1));
+                } else {
+                    this.maxSize = newCap;
+                }
+            }
+        } else {
+            this.maxSize = Math.max(this.elements.length, this.maxSize);
+        }
+    }
+
     aaCompare(
         fieldName: BrsString,
         flags: BrsString,
@@ -231,9 +195,16 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("talue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, tvalue: BrsType) => {
-            this.elements.push(tvalue);
-            this.updateNext();
+        impl: (interpreter: Interpreter, tvalue: BrsType) => {
+            if (this.resizable || this.elements.length < this.maxSize) {
+                this.elements.push(tvalue);
+                this.updateNext();
+                this.updateCapacity(1.25);
+            } else {
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roArray.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
+                );
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -255,9 +226,16 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, tvalue: BrsType) => {
-            this.elements.unshift(tvalue);
-            this.updateNext();
+        impl: (interpreter: Interpreter, tvalue: BrsType) => {
+            if (this.resizable || this.elements.length < this.maxSize) {
+                this.elements.unshift(tvalue);
+                this.updateNext();
+                this.updateCapacity(1.25);
+            } else {
+                postMessage(
+                    `warning,BRIGHTSCRIPT: ERROR: roArray.Unshift: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
+                );
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -312,11 +290,14 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsInvalid.Instance;
             }
 
-            this.elements = [
-                ...this.elements,
-                ...array.elements.filter((element) => !!element), // don't copy "holes" where no value exists
-            ];
-            this.updateNext();
+            if (this.resizable || this.elements.length + array.elements.length <= this.maxSize) {
+                this.elements = [
+                    ...this.elements,
+                    ...array.elements.filter((element) => !!element), // don't copy "holes" where no value exists
+                ];
+                this.updateNext();
+                this.updateCapacity();
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -449,6 +430,30 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
+    // ifArraySizeInfo
+
+    /** Returns the maximum number of entries that can be stored in the array. */
+    private capacity = new Callable("capacity", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(this.maxSize);
+        },
+    });
+
+    /** Returns true if the array can be resized. */
+    private isResizable = new Callable("isResizable", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.resizable);
+        },
+    });
+
     // ifEnum
 
     /** Checks whether the array contains no elements. */
@@ -495,4 +500,74 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             return this.getNext() ?? BrsInvalid.Instance;
         },
     });
+}
+
+/**
+ * Gives the order for sorting different types in a mixed array
+ *
+ * Mixed Arrays seem to get sorted in this order (tested with Roku OS 9.4):
+ *
+ * numbers in numeric order
+ * strings in alphabetical order,
+ * assocArrays in original order
+ * everything else in original order
+ */
+function getTypeSortIndex(a: BrsType): number {
+    if (isBrsNumber(a)) {
+        return 0;
+    } else if (isBrsString(a)) {
+        return 1;
+    } else if (a instanceof RoAssociativeArray) {
+        return 2;
+    }
+    return 3;
+}
+
+/**
+ * Sorts two BrsTypes in the order that Roku would sort them
+ * @param originalArray A copy of the original array. Used to get the order of items
+ * @param a
+ * @param b
+ * @param caseInsensitive Should strings be compared case insensitively? defaults to false
+ * @param sortInsideTypes Should two numbers or two strings be sorted? defaults to true
+ * @return compare value for array.sort()
+ */
+function sortCompare(
+    originalArray: BrsType[],
+    a: BrsType,
+    b: BrsType,
+    caseInsensitive: boolean = false,
+    sortInsideTypes: boolean = true
+): number {
+    let compare = 0;
+    if (a !== undefined && b !== undefined) {
+        const aSortOrder = getTypeSortIndex(a);
+        const bSortOrder = getTypeSortIndex(b);
+        if (aSortOrder < bSortOrder) {
+            compare = -1;
+        } else if (bSortOrder < aSortOrder) {
+            compare = 1;
+        } else if (sortInsideTypes && isBrsNumber(a)) {
+            // two numbers are in numeric order
+            compare = (a as Comparable).greaterThan(b).toBoolean() ? 1 : -1;
+        } else if (sortInsideTypes && isBrsString(a)) {
+            // two strings are in alphabetical order
+            let aStr = a.toString();
+            let bStr = b.toString();
+            if (caseInsensitive) {
+                aStr = aStr.toLowerCase();
+                bStr = bStr.toLowerCase();
+            }
+            // roku does not use locale for sorting strings
+            compare = aStr > bStr ? 1 : -1;
+        } else {
+            // everything else is in the same order as the original
+            const aOriginalIndex = originalArray.indexOf(a);
+            const bOriginalIndex = originalArray.indexOf(b);
+            if (aOriginalIndex > -1 && bOriginalIndex > -1) {
+                compare = aOriginalIndex - bOriginalIndex;
+            }
+        }
+    }
+    return compare;
 }
