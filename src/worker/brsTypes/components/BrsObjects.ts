@@ -52,7 +52,11 @@ import { Callable } from "../Callable";
 export const BrsObjects = new Map<string, Function>([
     ["roappmanager", (interpreter: Interpreter) => new RoAppManager()],
     ["roassociativearray", (interpreter: Interpreter) => new RoAssociativeArray([])],
-    ["roarray", (interpreter: Interpreter) => new RoArray([])],
+    [
+        "roarray",
+        (interpreter: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) =>
+            new RoArray(capacity, resizable),
+    ],
     ["robytearray", (interpreter: Interpreter) => new RoByteArray()],
     ["roevpcipher", (interpreter: Interpreter) => new RoEVPCipher()],
     ["roevpdigest", (interpreter: Interpreter) => new RoEVPDigest()],

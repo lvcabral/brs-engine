@@ -33,7 +33,13 @@ export const CreateObject = new Callable("CreateObject", {
                 msg = `WARNING: Attempt to create object "${objName.value}". SceneGraph components are still not supported!`;
             }
             postMessage(`warning,${msg}`);
+        } else {
+            try {
+                return ctor(interpreter, ...additionalArgs);
+            } catch (err: any) {
+                postMessage(`warning,${err.message} ${interpreter.formatLocation()}`);
+            }
         }
-        return ctor ? ctor(interpreter, ...additionalArgs) : BrsInvalid.Instance;
+        return BrsInvalid.Instance;
     },
 });
