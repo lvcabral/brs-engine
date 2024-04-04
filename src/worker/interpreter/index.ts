@@ -1717,6 +1717,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return statement.accept<BrsType>(this);
     }
 
+    // Helper methods
+
+    /**
+     * Method to return the current scope of the interpreter for the REPL and Micro Debugger
+     * @returns a string representation of the local variables in the current scope
+     */
     debugLocalVariables(): string {
         let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
         debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
@@ -1751,6 +1757,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return debugMsg;
     }
 
+    /**
+     * Method to return a string with the current source code location
+     * @returns a string representation of the location
+     */
     formatLocation(location: Location = this._currLoc) {
         let formattedLocation: string;
         if (location.start.line) {
@@ -1761,6 +1771,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return formattedLocation;
     }
 
+    /**
+     * Method to return the current channel formatted version
+     * @returns the current channel version
+     */
     getChannelVersion(): string {
         let majorVersion = parseInt(this.manifest.get("major_version")) || 0;
         let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
@@ -1768,6 +1782,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
     }
 
+    /**
+     * Method to check if the Break Command is set in the sharedArray
+     * @returns the last debug command
+     */
     checkBreakCommand(): number {
         let cmd = this.debugMode ? DebugCommand.BREAK : -1;
         if (!this.debugMode) {
@@ -1786,6 +1804,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return cmd;
     }
 
+    /**
+     * Method to extract the data buffer from the sharedArray
+     * @returns the data buffer as a string
+     */
     readDataBuffer(): string {
         let data = "";
         this.sharedArray.slice(dataBufferIndex).every((char) => {
@@ -1796,6 +1818,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         });
         return data;
     }
+
     /**
      * Emits an error via this processor's `events` property, then throws it.
      * @param err the ParseError to emit then throw
@@ -1806,10 +1829,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         throw err;
     }
 
+    /**
+     * Check if the parameter fromKind can be auto-casted to toKind
+     * @param fromKind value kind to cast
+     * @param toKind value kind to cast to
+     * @returns boolean indicating if the cast is possible
+     */
     private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
         return isNumberKind(fromKind) && isNumberKind(toKind);
     }
 
+    /**
+     * Auto-cast a value from one kind to another
+     * @param value value to cast
+     * @param requiredType value kind to cast to
+     * @returns the casted value or Invalid if the cast is not possible
+     */
     private autoCast(value: BrsType, requiredType: ValueKind): BrsType {
         if (value instanceof Float || value instanceof Double || value instanceof Int32) {
             if (requiredType === ValueKind.Double) {
@@ -1825,6 +1860,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
+    /**
+     * Method to evaluate if a number is positive
+     * @param value number to evaluate
+     * @returns boolean indicating if the number is positive
+     */
     private isPositive(value: number | Long): boolean {
         if (value instanceof Long) {
             return value.isPositive();
@@ -1832,6 +1872,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return value >= 0;
     }
 
+    /**
+     * Method to evaluate if a number is less than compare
+     * @param value number to evaluate
+     * @param compare number to compare
+     * @returns boolean indicating if the number is less than compare
+     */
     private lessThan(value: number | Long, compare: number): boolean {
         if (value instanceof Long) {
             return value.lessThan(compare);
