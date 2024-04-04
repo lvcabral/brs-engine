@@ -1,5 +1,23 @@
 # Changelog
 
+<a name="v1.5.1"></a>
+
+## [v1.5.1 - New: box(), roFunction and roDeviceCrypto](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.1) - 03 Apr 2024
+
+### Release Changes
+* Removed `isEmpty` from `roPath` to match Roku behavior by [@lvcabral](https://github.com/lvcabral) in [#306](https://github.com/lvcabral/brs-engine/pull/306)
+* Allow to use AND/OR between Boolean and Numbers by [@lvcabral](https://github.com/lvcabral) in [#307](https://github.com/lvcabral/brs-engine/pull/307)
+* Improved `roEVPCipher` error handling by [@lvcabral](https://github.com/lvcabral) in [#308](https://github.com/lvcabral/brs-engine/pull/308)
+* Implemented `roDeviceCrypto` component by [@lvcabral](https://github.com/lvcabral) in [#309](https://github.com/lvcabral/brs-engine/pull/309)
+* Implemented `roFunction` component and `Box()` runtime function by [@lvcabral](https://github.com/lvcabral) in [#310](https://github.com/lvcabral/brs-engine/pull/310)
+* Improved Iterable objects to behave as Roku devices by [@lvcabral](https://github.com/lvcabral) in [#311](https://github.com/lvcabral/brs-engine/pull/311)
+* Fixed Boxing on Numbers and Booleans by [@lvcabral](https://github.com/lvcabral) in [#313](https://github.com/lvcabral/brs-engine/pull/313)
+* Fixed issues with `roByteArray` by [@lvcabral](https://github.com/lvcabral) in [#314](https://github.com/lvcabral/brs-engine/pull/314)
+* Improve print variables by [@lvcabral](https://github.com/lvcabral) in [#315](https://github.com/lvcabral/brs-engine/pull/315)
+* Implemented `slice()` method in `roArray` under `ifArraySlice`
+
+[Full Changelog][v1.5.1]
+
 <a name="v1.5.0"></a>
 
 ## [v1.5.0 - Encrypt/Decrypt components](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.0) - 28 Mar 2024
@@ -647,6 +665,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.1]: https://github.com/lvcabral/brs-engine/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/lvcabral/brs-engine/compare/v1.4.1...v1.5.0
 [v1.4.1]: https://github.com/lvcabral/brs-engine/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/lvcabral/brs-engine/compare/v1.3.2...v1.4.0
