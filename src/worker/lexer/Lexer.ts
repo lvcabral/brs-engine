@@ -128,7 +128,7 @@ export class Lexer {
             let c = advance();
             if (isAlpha(c)) {
                 identifier();
-                return
+                return;
             }
             switch (c.toLowerCase()) {
                 case " ":
@@ -819,6 +819,5 @@ export class Lexer {
                 file: filename,
             };
         }
-
     }
 }
