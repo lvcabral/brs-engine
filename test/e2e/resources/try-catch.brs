@@ -19,7 +19,7 @@ sub main()
 end sub
 
 function subFunc(a)
-	' throw "subFunc error"
+	throw "subFunc error"
     print "[subFunc] a = " a
     a = a * "" ' force a type error
 end function
