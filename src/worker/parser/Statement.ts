@@ -90,7 +90,7 @@ export class Dim implements Statement {
 }
 
 export class Block implements Statement {
-    constructor(readonly statements: ReadonlyArray<Statement>, readonly location: Location) {}
+    constructor(readonly statements: Statement[], readonly location: Location) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitBlock(this);

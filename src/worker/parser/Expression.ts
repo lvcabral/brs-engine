@@ -70,7 +70,7 @@ export class Call implements Expression {
 
 export class Function implements Expression {
     constructor(
-        readonly parameters: ReadonlyArray<Argument>,
+        readonly parameters: Argument[],
         readonly returns: ValueKind,
         readonly body: Block,
         readonly keyword: Token,

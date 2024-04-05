@@ -176,7 +176,7 @@ export class Parser {
      * @returns an array of `Statement` objects that together form the abstract syntax tree of the
      *          program
      */
-    static parse(toParse: ReadonlyArray<Token>) {
+    static parse(toParse: readonly Token[]) {
         return new Parser().parse(toParse);
     }
 
@@ -208,7 +208,7 @@ export class Parser {
      * @returns an array of `Statement` objects that together form the abstract syntax tree of the
      *          program
      */
-    parse(toParse: ReadonlyArray<Token>): ParseResults {
+    parse(toParse: readonly Token[]): ParseResults {
         let current = 0;
         let tokens = toParse;
 

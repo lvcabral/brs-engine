@@ -210,7 +210,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    exec(statements: ReadonlyArray<Stmt.Statement>, ...args: BrsType[]) {
+    exec(statements: readonly Stmt.Statement[], ...args: BrsType[]) {
         let results = statements.map((statement) => this.execute(statement));
         try {
             let mainVariable = new Expr.Variable({

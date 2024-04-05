@@ -7,9 +7,9 @@ import * as CC from "./Chunk";
 /** The results of a chunk-parser's parsing pass. */
 export interface ChunkParserResult {
     /** The chunks produced by the chunk-parser. */
-    chunks: ReadonlyArray<CC.Chunk>;
+    readonly chunks: CC.Chunk[];
     /** The errors encountered by the chunk-parser. */
-    errors: ReadonlyArray<ParseError>;
+    readonly errors: ParseError[];
 }
 
 /** * Parses `Tokens` into chunks of tokens, excluding conditional compilation directives. */
@@ -24,7 +24,7 @@ export class Parser {
      * @returns an array of chunks (conditional compilation directives and the associated BrightScript) to be later
      *          executed.
      */
-    parse(toParse: ReadonlyArray<Token>): ChunkParserResult {
+    parse(toParse: readonly Token[]): ChunkParserResult {
         let current = 0;
         let tokens = toParse;
         let errors: ParseError[] = [];

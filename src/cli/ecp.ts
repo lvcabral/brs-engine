@@ -179,14 +179,14 @@ function processRequest(ws: WebSocket, message: RawData) {
             return;
         }
         const statusOK = `"response":"${msg["request"]}","response-id":"${msg["request-id"]}","status":"200","status-msg":"OK"`;
-        if (msg["request"] == "authenticate" && msg["param-response"]) {
+        if (msg["request"] === "authenticate" && msg["param-response"]) {
             reply = `{${statusOK}}`;
         } else if (msg["request"]?.startsWith("query")) {
             reply = queryReply(msg, statusOK);
-        } else if (msg["request"] == "launch") {
+        } else if (msg["request"] === "launch") {
             launchApp(msg["param-channel-id"]);
             reply = `{${statusOK}}`;
-        } else if (msg["request"] == "key-press") {
+        } else if (msg["request"] === "key-press") {
             sendKeyPress(msg["param-key"], null);
             reply = `{${statusOK}}`;
         } else {
@@ -206,24 +206,24 @@ function queryReply(msg: any, statusOK: string) {
     const xml64 = Buffer.from(xml).toString("base64");
     const template = `{"content-data":"$data","content-type":"text/xml; charset='utf-8'",${statusOK}}`;
     let reply = `{${statusOK}}`;
-    if (request == "query-device-info") {
+    if (request === "query-device-info") {
         reply = template.replace("$data", genDeviceInfoXml(true));
-    } else if (request == "query-themes") {
+    } else if (request === "query-themes") {
         reply = template.replace("$data", genThemesXml(true));
-    } else if (request == "query-screensavers") {
+    } else if (request === "query-screensavers") {
         reply = template.replace("$data", genScrsvXml(true));
-    } else if (request == "query-apps") {
+    } else if (request === "query-apps") {
         reply = template.replace("$data", genAppsXml(true));
-    } else if (request == "query-icon") {
+    } else if (request === "query-icon") {
         reply = template.replace("$data", genAppIcon(true) as string);
         reply = reply.replace("text/xml", "image/png");
-    } else if (request == "query-tv-active-channel") {
+    } else if (request === "query-tv-active-channel") {
         reply = template.replace("$data", genActiveApp(true));
-    } else if (msg["request"] == "query-media-player") {
+    } else if (msg["request"] === "query-media-player") {
         reply = template.replace("$data", xml64);
-    } else if (msg["request"] == "query-audio-device") {
+    } else if (msg["request"] === "query-audio-device") {
         reply = template.replace("$data", xml64);
-    } else if (msg["request"] == "query-textedit-state") {
+    } else if (msg["request"] === "query-textedit-state") {
         const content = Buffer.from(`{"textedit-state":{"textedit-id":"none"}}`).toString("base64");
         reply = template.replace("$data", content);
         reply = reply.replace("text/xml", "application/json");
@@ -448,9 +448,9 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
         regXml.ele("space-available", {}, 32768);
         const secsXml = regXml.ele("sections");
         let curSection = "";
-        let scXml: xmlbuilder.XMLElementOrXMLNode;
-        let itsXml: xmlbuilder.XMLElementOrXMLNode;
-        let itXml: xmlbuilder.XMLElementOrXMLNode;
+        let scXml: xmlbuilder.XMLNode;
+        let itsXml: xmlbuilder.XMLNode;
+        let itXml: xmlbuilder.XMLNode;
         const registry = new Map([...cliRegistry].sort());
         registry.forEach((value, key) => {
             const sections = key.split(".");
