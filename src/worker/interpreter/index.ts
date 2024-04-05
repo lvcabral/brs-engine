@@ -276,8 +276,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value ?? BrsInvalid.Instance];
             } else if (err instanceof BrsError) {
-                postMessage(`error,${err.format()}`)
-                throw new Error(`BackTrace:\n${this.formatBacktrace(err.location, true, err.backtrace)}`);
+                const backtrace = this.formatBacktrace(err.location, true, err.backtrace);
+                throw new Error(`${err.format()}\nBackTrace:\n${backtrace}`);
             } else {
                 throw err;
             }
@@ -1777,7 +1777,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param bt the backtrace array
      * @returns a string or an array with the backtrace formatted
      */
-    formatBacktrace(loc: Location, asString = true, bt?: Array<BackTrace>): Array<BrsType> | string {
+    formatBacktrace(
+        loc: Location,
+        asString = true,
+        bt?: Array<BackTrace>
+    ): Array<BrsType> | string {
         const backTrace = bt ?? this.environment.getBackTrace();
         let debugMsg = "";
         const btArray = new Array<BrsType>();
