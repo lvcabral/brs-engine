@@ -28,7 +28,7 @@ export function formatMessage(obj: { message: string; location: Location }): str
 }
 
 export class BrsError extends Error {
-    constructor(message: string, readonly location: Location, public backtrace?: Array<BackTrace>) {
+    constructor(message: string, readonly location: Location, public backtrace?: BackTrace[]) {
         super(message);
     }
 
@@ -480,7 +480,7 @@ export class Runtime extends BrsError {
         readonly errCode: ErrorCode,
         message: string,
         location: Location,
-        public backtrace?: Array<BackTrace>
+        public backtrace?: BackTrace[]
     ) {
         super(message, location, backtrace);
     }

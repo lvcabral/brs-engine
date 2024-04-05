@@ -1777,14 +1777,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param bt the backtrace array
      * @returns a string or an array with the backtrace formatted
      */
-    formatBacktrace(
-        loc: Location,
-        asString = true,
-        bt?: Array<BackTrace>
-    ): Array<BrsType> | string {
+    formatBacktrace(loc: Location, asString = true, bt?: BackTrace[]): BrsType[] | string {
         const backTrace = bt ?? this.environment.getBackTrace();
         let debugMsg = "";
-        const btArray = new Array<BrsType>();
+        const btArray: BrsType[] = [];
         for (let index = backTrace.length - 1; index >= 0; index--) {
             const func = backTrace[index];
             const kind = ValueKind.toString(func.signature.returns);
