@@ -39,14 +39,14 @@ import { shared } from "..";
 import { Lexeme } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
-import { BrsError, TypeMismatch } from "../Error";
+import { BrsError, TypeMismatch, Runtime, RuntimeErrorCode } from "../Error";
 
 import * as StdLib from "../stdlib";
 import Long from "long";
 
-import { Scope, Environment, NotFound } from "./Environment";
+import { Scope, Environment, NotFound, BackTrace } from "./Environment";
 import { toCallable } from "./BrsFunction";
-import { Runtime, BlockEnd } from "../parser/Statement";
+import { BlockEnd } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, dataBufferIndex } from "../enums";
@@ -275,8 +275,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value ?? BrsInvalid.Instance];
-            } else if (!(err instanceof BrsError)) {
-                // Swallow BrsErrors, because they should have been exposed to the user downstream.
+            } else if (err instanceof BrsError) {
+                postMessage(`error,${err.format()}`)
+                throw new Error(`BackTrace:\n${this.formatBacktrace(err.location, true, err.backtrace)}`);
+            } else {
                 throw err;
             }
         }
@@ -996,8 +998,61 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitTryCatch(statement: Stmt.TryCatch): BrsInvalid {
-        this.visitBlock(statement.tryBlock);
+        try {
+            // TODO: check scoping rules of try/catch
+            // are variables first-defined outside of try available in try and/or catch? both!
+            // are variables first-defined in try available in catch? yes!
+            // are variables first-defined in try available after end of catch? yes!
+            // are variables first-defined in catch available outside of catch? yes!
+            // tl;dr: this all operates on the current environment, _not_ a subenv
+            this.visitBlock(statement.tryBlock);
+        } catch (err: any) {
+            if (err instanceof BrsError) {
+                // TODO: figure out how we'll get that error — probably attach it to Stmt.Runtime —
+                // then bind it to a variable with
+                // TODO: move this into BrsError or BlockEndReason or something
+                const btArray = err.backtrace
+                    ? (this.formatBacktrace(err.location, false, err.backtrace) as BrsType[])
+                    : new Array<BrsType>();
+                let errorCode = RuntimeErrorCode.UserDefined;
+                if (err instanceof Runtime) {
+                    errorCode = err.errCode;
+                }
+
+                const errorAA = new RoAssociativeArray([
+                    { name: new BrsString("backtrace"), value: new RoArray(btArray) },
+                    { name: new BrsString("message"), value: new BrsString(err.message) },
+                    { name: new BrsString("number"), value: new Int32(errorCode.errno) },
+                    { name: new BrsString("rethrown"), value: BrsBoolean.False },
+                ]);
+                this.environment.define(Scope.Function, statement.errorBinding.name.text, errorAA);
+                this.visitBlock(statement.catchBlock);
+            } else {
+                throw err;
+            }
+        }
+
         return BrsInvalid.Instance;
+    }
+
+    visitThrow(statement: Stmt.Throw): never {
+        let errMessage = "";
+        if (statement?.value) {
+            let toThrow = this.evaluate(statement.value);
+            if (isStringComp(toThrow)) {
+                errMessage = toThrow.getValue();
+            }
+            // TODO: Support an AA with a backtrace
+        }
+
+        // Create Backtrace array
+        const err = new Runtime(
+            RuntimeErrorCode.UserDefined,
+            errMessage,
+            statement.location,
+            this.environment.getBackTrace()
+        );
+        throw err;
     }
 
     visitBlock(block: Stmt.Block): BrsType {
@@ -1064,6 +1119,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     try {
                         return callee.call(this, ...args);
                     } catch (err: any) {
+                        // TODO: Only start the debugger if the error is not under TryCatch
                         if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                             // Enable Micro Debugger on app crash
                             runDebugger(this, this._currLoc, this._currLoc, err.message);
@@ -1076,25 +1132,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (!(reason instanceof Stmt.BlockEnd)) {
                     if (reason.message === "debug-exit") {
                         throw new Error(reason.message);
+                    } else if (reason instanceof BrsError) {
+                        throw reason;
+                    } else if (
+                        process.env.NODE_ENV === "development" &&
+                        reason.message.length > 0
+                    ) {
+                        // Expose the Javascript error stack trace on `development` mode
+                        console.error(reason);
+                        throw new Error("");
                     }
-                    let message = `${reason.message}\n`;
-                    if (!message.startsWith("Backtrace:") && !message.startsWith("-->")) {
-                        if (reason instanceof BrsError) {
-                            message = "Backtrace:\n";
-                        } else if (process.env.NODE_ENV === "development") {
-                            message = "";
-                            // Expose the Javascript error stack trace on `development` mode
-                            console.error(reason);
-                        } else {
-                            message = `--> Engine Error: ${reason.message}\n`;
-                        }
-                    }
-                    if (expression.location.start.line > 0) {
-                        message += `--> Function ${functionName}() called at:\n   file/line: ${expression.location.file}(${expression.location.start.line})`;
-                    } else {
-                        message += `--> Function ${functionName}()`;
-                    }
-                    throw new Error(message);
+                    throw new Error(reason.message);
                 } else if (reason.message === "debug-exit") {
                     throw new Error(reason.message);
                 }
@@ -1105,7 +1153,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (returnedValue && signatureKind === ValueKind.Void) {
                     this.addError(
-                        new Stmt.Runtime(
+                        new Runtime(
+                            RuntimeErrorCode.TypeMismatch,
                             `Attempting to return value of non-void type ${ValueKind.toString(
                                 returnedValue.kind
                             )} ` + `from function ${callee.getName()} with void return type.`,
@@ -1116,7 +1165,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (!returnedValue && signatureKind !== ValueKind.Void) {
                     this.addError(
-                        new Stmt.Runtime(
+                        new Runtime(
+                            RuntimeErrorCode.TypeMismatch,
                             `Attempting to return void value from function ${callee.getName()} with non-void return type.`,
                             returnLocation
                         )
@@ -1141,7 +1191,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     returnedValue.kind !== ValueKind.Invalid
                 ) {
                     this.addError(
-                        new Stmt.Runtime(
+                        new Runtime(
+                            RuntimeErrorCode.TypeMismatch,
                             `Attempting to return value of type ${ValueKind.toString(
                                 returnedValue.kind
                             )}, ` +
@@ -1720,10 +1771,48 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     // Helper methods
 
     /**
+     * Returns the Backtrace formatted as a string or an array
+     * @param loc the location of the error
+     * @param asString a boolean, if true returns the backtrace as a string, otherwise as an array
+     * @param bt the backtrace array
+     * @returns a string or an array with the backtrace formatted
+     */
+    formatBacktrace(loc: Location, asString = true, bt?: Array<BackTrace>): Array<BrsType> | string {
+        const backTrace = bt ?? this.environment.getBackTrace();
+        let debugMsg = "";
+        const btArray = new Array<BrsType>();
+        for (let index = backTrace.length - 1; index >= 0; index--) {
+            const func = backTrace[index];
+            const kind = ValueKind.toString(func.signature.returns);
+            let args = "";
+            func.signature.args.forEach((arg) => {
+                args += args !== "" ? "," : "";
+                args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
+            });
+            const funcSign = `${func.functionName}(${args}) As ${kind}`;
+            if (asString) {
+                debugMsg += `#${index}  Function ${funcSign}\r\n`;
+                debugMsg += `   file/line: ${this.formatLocation(loc)}\r\n`;
+            } else {
+                const line = loc.start.line;
+                btArray.unshift(
+                    new RoAssociativeArray([
+                        { name: new BrsString("filename"), value: new BrsString(loc.file) },
+                        { name: new BrsString("function"), value: new BrsString(funcSign) },
+                        { name: new BrsString("line_number"), value: new Int32(line) },
+                    ])
+                );
+            }
+            loc = func.callLoc;
+        }
+        return asString ? debugMsg : btArray;
+    }
+
+    /**
      * Method to return the current scope of the interpreter for the REPL and Micro Debugger
      * @returns a string representation of the local variables in the current scope
      */
-    debugLocalVariables(): string {
+    formatLocalVariables(): string {
         let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
         debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
             this.environment.getM().getElements().length
@@ -1824,8 +1913,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param err the ParseError to emit then throw
      */
     private addError(err: BrsError): never {
+        if (!err.backtrace) {
+            err.backtrace = this.environment.getBackTrace();
+        }
         this.errors.push(err);
-        this.events.emit("err", err);
+        //this.events.emit("err", err);
         throw err;
     }
 

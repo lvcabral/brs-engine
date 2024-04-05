@@ -604,8 +604,7 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
  * @param err the error to log
  */
 function logError(err: BrsError.BrsError) {
-    postMessage(`error,${err.format()}`);
-    endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+    postMessage(`error,${err.format()}`); // TODO: Maybe not needed if try catch is used
 }
 
 /**

@@ -635,6 +635,10 @@ export class Parser {
                 return returnStatement();
             }
 
+            if (match(Lexeme.Throw)) {
+                return throwStatement();
+            }
+
             if (check(Lexeme.Dim)) {
                 return dimStatement();
             }
@@ -1198,6 +1202,19 @@ export class Parser {
             while (match(Lexeme.Newline, Lexeme.Colon));
 
             return new Stmt.Return(tokens, toReturn);
+        }
+
+        /**
+         * Parses a `throw` statement with an error value.
+         * @returns an AST representation of a throw statement.
+         */
+        function throwStatement(): Stmt.Throw {
+            let tokens = { throw: previous() };
+
+            let toThrow = expression();
+            while (match(Lexeme.Newline, Lexeme.Colon));
+
+            return new Stmt.Throw(tokens, toThrow);
         }
 
         /**

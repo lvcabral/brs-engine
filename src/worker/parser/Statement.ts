@@ -27,6 +27,7 @@ export interface Visitor<T> {
     visitIncrement(expression: Increment): BrsInvalid;
     visitLibrary(statement: Library): BrsInvalid;
     visitTryCatch(statement: TryCatch): BrsInvalid;
+    visitThrow(statement: Throw): never;
 }
 
 /** A BrightScript statement */
@@ -529,6 +530,27 @@ export class TryCatch implements Statement {
             file: this.tokens.try.location.file,
             start: this.tokens.endtry.location.start,
             end: this.tokens.endtry.location.end,
+        };
+    }
+}
+
+export class Throw implements Statement {
+    constructor(
+        readonly tokens: {
+            throw: Token;
+        },
+        readonly value: Expr.Expression
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitThrow(this);
+    }
+
+    get location() {
+        return {
+            file: this.tokens.throw.location.file,
+            start: this.tokens.throw.location.start,
+            end: this.value?.location.end ?? this.tokens.throw.location.end,
         };
     }
 }

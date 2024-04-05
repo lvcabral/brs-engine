@@ -104,6 +104,13 @@ export class Environment {
         return this.rootM;
     }
 
+    /**
+     * Add a Back Trace to the environment
+     * @param name The name of the function
+     * @param functionLoc The location of the function
+     * @param callLoc The location of the call
+     * @param signature The signature of the function
+     */
     public addBackTrace(
         name: string,
         functionLoc: Location,
@@ -118,6 +125,10 @@ export class Environment {
         });
     }
 
+    /**
+     * Retrieves the back trace of the environment
+     * @returns the array containing the current back trace
+     */
     public getBackTrace() {
         return this.backTrace;
     }

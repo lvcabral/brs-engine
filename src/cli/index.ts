@@ -319,7 +319,7 @@ function repl() {
             printHelp();
         } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
             console.log(chalk.cyanBright(`\r\nLocal variables:\r\n`));
-            console.log(chalk.cyanBright(replInterpreter.debugLocalVariables().trimEnd()));
+            console.log(chalk.cyanBright(replInterpreter.formatLocalVariables().trimEnd()));
         } else {
             executeLine(line, replInterpreter);
         }
