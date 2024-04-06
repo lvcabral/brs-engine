@@ -1676,7 +1676,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(right)) {
                     return right.multiply(new Int32(-1));
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "-" can't be applied to`,
                             left: {
