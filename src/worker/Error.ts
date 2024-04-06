@@ -122,7 +122,7 @@ type ErrorCode = {
  * @returns the error code
  */
 export function findErrorCode(errno: number): ErrorCode | null {
-    for (const [key, value] of Object.entries(RuntimeErrorCode)) {
+    for (const [_, value] of Object.entries(RuntimeErrorCode)) {
         if (value.errno === errno) {
             return value;
         }
