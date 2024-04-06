@@ -1,6 +1,5 @@
 import { BrsType } from "../brsTypes";
 import { BrsError, formatMessage } from "../Error";
-import { BackTrace } from "../interpreter/Environment";
 import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */

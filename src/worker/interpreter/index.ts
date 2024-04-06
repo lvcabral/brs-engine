@@ -1009,36 +1009,41 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitThrow(statement: Stmt.Throw): never {
-        let errCode = RuntimeErrorCode.MalformedThrow;
+        // TODO:
+        // - Support to send custom valid backtrace
+        // - Support to send custom fields on AA
+        let errCode = RuntimeErrorCode.UserDefined;
         let errMessage = "";
         if (statement?.value) {
             let toThrow = this.evaluate(statement.value);
             if (isStringComp(toThrow)) {
                 errMessage = toThrow.getValue();
-                errCode = RuntimeErrorCode.UserDefined;
             } else if (toThrow instanceof RoAssociativeArray) {
                 let message = toThrow.get(new BrsString("message"));
-                if (message instanceof BrsString) {
-                    errMessage = message.toString();
-                }
-                if (message instanceof BrsString || message instanceof BrsInvalid) {
-                    let number = toThrow.get(new BrsString("number"));
-                    if (number instanceof Int32 || number instanceof Float) {
-                        const foundErr = findErrorCode(number.getValue());
-                        if (foundErr) {
-                            errCode = foundErr;
-                        } else if (errMessage.length === 0) {
-                            errMessage = "UNKNOWN ERROR";
-                        }
-                    } else if (number instanceof BrsInvalid) {
-                        errCode = RuntimeErrorCode.UserDefined;
+                let number = toThrow.get(new BrsString("number"));
+                if (number instanceof Int32) {
+                    const foundErr = findErrorCode(number.getValue());
+                    if (foundErr) {
+                        errCode = foundErr;
+                    } else {
+                        errMessage = "UNKNOWN ERROR";
+                        errCode = { errno: number.getValue(), message: errMessage };
                     }
                 }
+                if (!(number instanceof Int32 || number instanceof BrsInvalid)) {
+                    errCode = RuntimeErrorCode.MalformedThrow;
+                    errMessage = `Thrown "number" is not an integer.`;
+                } else if (message instanceof BrsString) {
+                    errMessage = message.toString();
+                } else if (!(message instanceof BrsInvalid)) {
+                    errCode = RuntimeErrorCode.MalformedThrow;
+                    errMessage = `Thrown "message" is not a string.`;
+                }
+            } else {
+                errCode = RuntimeErrorCode.MalformedThrow;
+                errMessage = `Thrown value neither string nor roAssociativeArray.`;
             }
         }
-        // TODO:
-        // - Support to send custom valid backtrace
-        // - Support to send custom fields on AA
         throw new RuntimeError(
             errCode,
             errMessage,
@@ -1890,7 +1895,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             err.backtrace = this.environment.getBackTrace();
         }
         this.errors.push(err);
-        //this.events.emit("err", err);
         throw err;
     }
 

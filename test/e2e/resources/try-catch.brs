@@ -18,7 +18,7 @@ sub main()
 end sub
 
 function subFunc(a)
-	throw "subFunc custom error message!"
+	throw {message: "subFunc custom error message!", number: -2}
     print "[subFunc] a = " a
     a = a * "" ' force a type error
 end function
