@@ -3,7 +3,6 @@ import { BackTrace } from "./Environment";
 import { source } from "..";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
-import { ValueKind } from "../brsTypes";
 import {
     Statement,
     Assignment,
@@ -31,7 +30,8 @@ export function runDebugger(
     interpreter: Interpreter,
     nextLoc: Location,
     lastLoc: Location,
-    error?: string
+    errMessage?: string,
+    errCode?: number
 ) {
     // TODO:
     // - Implement step over and step out
@@ -57,13 +57,15 @@ export function runDebugger(
         debugMsg += "Source Digest(s):\r\n";
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
         debugMsg += `${interpreter.manifest.get("title") || "brs"}\r\n\r\n`;
-        debugMsg += `${error ?? "STOP"} (runtime error &hf7) in ${interpreter.formatLocation()}`;
+        debugMsg += `${errMessage ?? "STOP"} (runtime error &h${
+            errCode?.toString(16) ?? "f7"
+        }) in ${interpreter.formatLocation()}`;
 
         debugMsg += "\r\nBacktrace: \r\n";
         postMessage(`print,${debugMsg}`);
-        debugBackTrace(interpreter, nextLoc);
+        postMessage(`print,${interpreter.formatBacktrace(nextLoc)}`);
         postMessage(`print,Local variables:\r\n`);
-        postMessage(`print,${interpreter.debugLocalVariables()}`);
+        postMessage(`print,${interpreter.formatLocalVariables()}`);
     }
 
     // Debugger Loop
@@ -88,7 +90,7 @@ export function runDebugger(
         }
         switch (command.cmd) {
             case DebugCommand.CONT:
-                if (error) {
+                if (errMessage) {
                     postMessage("print,Can't continue");
                     continue;
                 }
@@ -97,7 +99,7 @@ export function runDebugger(
                 postMessage("debug,continue");
                 return true;
             case DebugCommand.STEP:
-                if (error) {
+                if (errMessage) {
                     postMessage("print,Can't continue");
                     continue;
                 }
@@ -181,7 +183,7 @@ function debugHandleCommand(
     let debugMsg: string;
     switch (cmd) {
         case DebugCommand.BT:
-            debugBackTrace(interpreter, currLoc);
+            postMessage(`print,${interpreter.formatBacktrace(currLoc)}`);
             break;
         case DebugCommand.HELP:
             debugHelp();
@@ -213,7 +215,7 @@ function debugHandleCommand(
             postMessage(`print,${debugMsg}\r\n`);
             break;
         case DebugCommand.VAR:
-            postMessage(`print,${interpreter.debugLocalVariables()}`);
+            postMessage(`print,${interpreter.formatLocalVariables()}`);
             break;
         case DebugCommand.BREAK:
             postMessage(`warning,Micro Debugger already running!\r\n`);
@@ -224,25 +226,6 @@ function debugHandleCommand(
             postMessage(`warning,Invalid Debug command/expression!\r\n`);
             break;
     }
-}
-
-function debugBackTrace(interpreter: Interpreter, stmtLoc: Location) {
-    const backTrace = interpreter.environment.getBackTrace();
-    let debugMsg = "";
-    let loc = stmtLoc;
-    for (let index = backTrace.length - 1; index >= 0; index--) {
-        const func = backTrace[index];
-        const kind = ValueKind.toString(func.signature.returns);
-        let args = "";
-        func.signature.args.forEach((arg) => {
-            args += args !== "" ? "," : "";
-            args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
-        });
-        debugMsg += `#${index}  Function ${func.functionName}(${args}) As ${kind}\r\n`; // TODO: Correct signature
-        debugMsg += `   file/line: ${interpreter.formatLocation(loc)}\r\n`;
-        loc = func.callLoc;
-    }
-    postMessage(`print,${debugMsg}`);
 }
 
 function debugList(backTrace: BackTrace[], currLines: string[], flagLine: number) {

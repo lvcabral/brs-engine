@@ -45,7 +45,7 @@ export class Preprocessor {
      * @param manifest the data stored in the found manifest file
      * @returns an array of processed tokens representing a subset of the provided ones
      */
-    preprocess(tokens: ReadonlyArray<Token>, manifest: Map<string, string>): FilterResults {
+    preprocess(tokens: readonly Token[], manifest: Map<string, string>): FilterResults {
         let parserResults = this.parser.parse(tokens);
         if (parserResults.errors.length > 0) {
             return {

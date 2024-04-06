@@ -8,9 +8,9 @@ import { BrsError } from "../Error";
 /** The results of a Preprocessor's filtering pass. */
 export interface FilterResults {
     /** The tokens remaining after preprocessing. */
-    processedTokens: ReadonlyArray<Token>;
+    readonly processedTokens: Token[];
     /** The encountered during preprocessing. */
-    errors: ReadonlyArray<BrsError>;
+    readonly errors: BrsError[];
 }
 
 /**
@@ -43,7 +43,7 @@ export class Preprocessor implements CC.Visitor {
      * @returns an object containing an array of `errors` and an array of `processedTokens` filtered by conditional
      *          compilation directives included within
      */
-    filter(chunks: ReadonlyArray<CC.Chunk>, bsConst: Map<string, boolean>): FilterResults {
+    filter(chunks: readonly CC.Chunk[], bsConst: Map<string, boolean>): FilterResults {
         this.constants = new Map(bsConst);
         return {
             processedTokens: chunks

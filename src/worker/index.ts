@@ -605,7 +605,6 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
  */
 function logError(err: BrsError.BrsError) {
     postMessage(`error,${err.format()}`);
-    endReason = "EXIT_BRIGHTSCRIPT_CRASH";
 }
 
 /**

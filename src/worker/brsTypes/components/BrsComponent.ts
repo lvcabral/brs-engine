@@ -59,7 +59,7 @@ export interface BrsIterable {
      * Returns the set of iterable elements contained in this component.
      * @returns an array of elements contained in this component.
      */
-    getElements(): ReadonlyArray<BrsType>;
+    getElements(): readonly BrsType[];
 
     /**
      * Retrieves an element from this component at the provided `index`.

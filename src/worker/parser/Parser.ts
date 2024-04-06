@@ -176,7 +176,7 @@ export class Parser {
      * @returns an array of `Statement` objects that together form the abstract syntax tree of the
      *          program
      */
-    static parse(toParse: ReadonlyArray<Token>) {
+    static parse(toParse: readonly Token[]) {
         return new Parser().parse(toParse);
     }
 
@@ -208,7 +208,7 @@ export class Parser {
      * @returns an array of `Statement` objects that together form the abstract syntax tree of the
      *          program
      */
-    parse(toParse: ReadonlyArray<Token>): ParseResults {
+    parse(toParse: readonly Token[]): ParseResults {
         let current = 0;
         let tokens = toParse;
 
@@ -633,6 +633,10 @@ export class Parser {
 
             if (match(Lexeme.Return)) {
                 return returnStatement();
+            }
+
+            if (match(Lexeme.Throw)) {
+                return throwStatement();
             }
 
             if (check(Lexeme.Dim)) {
@@ -1198,6 +1202,19 @@ export class Parser {
             while (match(Lexeme.Newline, Lexeme.Colon));
 
             return new Stmt.Return(tokens, toReturn);
+        }
+
+        /**
+         * Parses a `throw` statement with an error value.
+         * @returns an AST representation of a throw statement.
+         */
+        function throwStatement(): Stmt.Throw {
+            let tokens = { throw: previous() };
+
+            let toThrow = expression();
+            while (match(Lexeme.Newline, Lexeme.Colon));
+
+            return new Stmt.Throw(tokens, toThrow);
         }
 
         /**
