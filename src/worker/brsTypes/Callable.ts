@@ -68,7 +68,7 @@ export class StdlibArgument implements Argument {
 /** A BrightScript `function` or `sub`'s signature. */
 export interface Signature {
     /** The set of arguments a function accepts. */
-    readonly args: ReadonlyArray<Argument>;
+    readonly args: Argument[];
     /** The type of BrightScript value the function will return. `sub`s must use `ValueKind.Void`. */
     readonly returns: Brs.ValueKind;
 }
