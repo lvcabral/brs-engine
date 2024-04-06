@@ -37,6 +37,21 @@ export class BrsError extends Error {
     }
 }
 
+/** An error thrown when a BrightScript runtime error is encountered. */
+export class RuntimeError extends BrsError {
+    constructor(
+        readonly errCode: ErrorCode,
+        message: string,
+        location: Location,
+        public backtrace?: BackTrace[]
+    ) {
+        if (message.trim() === "") {
+            message = errCode.message;
+        }
+        super(message, location, backtrace);
+    }
+}
+
 /** Wraps up the metadata associated with a type mismatch error. */
 export interface TypeMismatchMetadata {
     /**
@@ -48,6 +63,7 @@ export interface TypeMismatchMetadata {
     left: TypeAndLocation;
     /** The value on the right-hand side of a binary operator. */
     right?: TypeAndLocation;
+    cast?: boolean;
 }
 
 export type TypeAndLocation = {
@@ -61,23 +77,21 @@ export type TypeAndLocation = {
  * Creates a "type mismatch"-like error message, but with the appropriate types specified.
  * @return a type mismatch error that will be tracked by this module.
  */
-export class TypeMismatch extends BrsError {
+export class TypeMismatch extends RuntimeError {
     constructor(mismatchMetadata: TypeMismatchMetadata) {
-        let messageLines = [
-            mismatchMetadata.message,
-            `    left: ${ValueKind.toString(getKind(mismatchMetadata.left.type))}`,
-        ];
-        let location = mismatchMetadata.left.location;
-
-        if (mismatchMetadata.right) {
-            messageLines.push(
-                `    right: ${ValueKind.toString(getKind(mismatchMetadata.right.type))}`
-            );
-
-            location.end = mismatchMetadata.right.location.end;
+        const errCode = RuntimeErrorCode.TypeMismatch;
+        let errMessage = `${errCode.message} ${mismatchMetadata.message} `;
+        if (!mismatchMetadata.cast) {
+            errMessage += `"${ValueKind.toString(getKind(mismatchMetadata.left.type))}"`;
+            if (mismatchMetadata.right) {
+                errMessage += ` and "${ValueKind.toString(getKind(mismatchMetadata.right.type))}"`;
+            }
+        } else if (mismatchMetadata.right) {
+            errMessage += `"${ValueKind.toString(getKind(mismatchMetadata.right.type))}"`;
+            errMessage += ` to "${ValueKind.toString(getKind(mismatchMetadata.left.type))}"`;
         }
-
-        super(messageLines.join("\n"), location);
+        errMessage += ".";
+        super(errCode, errMessage, mismatchMetadata.left.location);
     }
 }
 
@@ -102,386 +116,388 @@ type ErrorCode = {
     message: string;
 };
 
+/**
+ * Function to find the error code by the errno
+ * @param errno number of the error code
+ * @returns the error code
+ */
+export function findErrorCode(errno: number): ErrorCode | null {
+    for (const [key, value] of Object.entries(RuntimeErrorCode)) {
+        if (value.errno === errno) {
+            return value;
+        }
+    }
+    return null;
+}
+
+/** Enumerator with the Roku Runtime Error codes */
 export const RuntimeErrorCode = {
     NextWithoutFor: {
         errno: 0,
-        message: "Attempted to use `next` keyword outside the context of a `for` loop.",
+        message: "Next Without For.",
     },
     BadSyntax: {
-        message: "A syntax error not covered by any other error code.",
+        message: "Syntax Error.",
         errno: 2,
     },
     ReturnedWithoutGosub: {
-        message: "Attempted to use a Gosub statement without a return inside the subroutine.",
+        message: "Return Without Gosub.",
         errno: 4,
     },
     OutOfData: {
-        message: "Ran out of data while performing read operation.",
+        message: "Out of Data on READ.",
         errno: 6,
     },
     BadFunctionOrArrayParam: {
-        message: "Attempted to use a definitely-not-valid function or array parameter ()",
+        message: "Invalid parameter passed to function/array (e.g neg matrix dim or sqr root).",
         errno: 8,
     },
     OutOfMemory: {
-        message: "The BrightScript runtime has run out of memory.",
+        message: "Out Of Memory.",
         errno: 12,
     },
     MissingLineNumber: {
-        message: "Meaning unclear; not documented in RBI.",
-        errno: 15,
+        message: "Label/Line Not Found.",
+        errno: 14,
     },
     IndexOutOfBounds: {
-        message: "Attempted to use out-of-bounds index into array.",
+        message: "Array subscript out of bounds.",
         errno: 16,
     },
     RedimensionArray: {
-        message: "Attempted to re-`dim` an array that was already `dim`-ed.",
+        message: "Attempted to redimension an array.",
         errno: 18,
     },
     DivideByZero: {
-        message: "Attempted to divide any value by zero.",
+        message: "Divide by Zero.",
         errno: 20,
     },
     TypeMismatch: {
-        message: "Attempted to use type A where type B explicitly required.",
+        message: "Type Mismatch.",
         errno: 24,
     },
-    BadFormatSpec: {
-        message: "Attempted to use a format specifier that isn't valid.",
-        errno: 24,
-    },
-    OutOfStorage: {
-        message: "Unable to write to persistent storage, because the device has run out of space.",
+    OutOfMemoryStringOp: {
+        message: "Out of Memory when doing string operation.",
         errno: 26,
     },
-    StringToLong: {
-        message: "Meaning unclear; not documented in RBI.",
+    StringTooLong: {
+        message: "String Too Long.",
         errno: 28,
     },
     BadBitShift: {
-        message: "Attempted to perform a bitshift operation with a disallowed shift distance.",
+        message: "Invalid Bitwise Shift.",
         errno: 30,
     },
     NoContinue: {
-        message: "Attempted to use `continue` statement, but it isn't supported.",
+        message: "Continue Not Allowed.",
         errno: 32,
     },
     OutOfRange: {
-        message: "Attempted to declare a constant with a value outside the allowed range.",
+        message: "Constant Out Of Range",
         errno: 34,
     },
     ExecutionTimeout: {
-        message: "Execution of a statement took too long on the main or render thread.",
+        message: "Execution timeout",
         errno: 35,
     },
+    InvalidFormatSpecifier: {
+        message: "Invalid Format Specifier",
+        errno: 36,
+    },
     MalformedThrow: {
-        message: "Attempted to throw an error that isn't structured properly.",
+        message: "Invalid argument to Throw",
         errno: 38,
     },
     UserDefined: {
-        message: "Any user-defined error.",
+        message: "User-specified exception",
         errno: 40,
     },
+    TooManyTasks: {
+        message: "Too many task threads",
+        errno: 41,
+    },
+    RunNotSupported: {
+        message: "run() is unsupported.",
+        errno: 140,
+    },
+    ContinueForWithoutFor: {
+        message: "Continue For is not inside a For loop",
+        errno: 141,
+    },
+    ContinueWhileWithoutWhile: {
+        message: "Continue While is not inside a While",
+        errno: 142,
+    },
     TryContainsLabel: {
-        message: "Encountered a `goto`-style label within a `try` block, which is not supported.",
+        message: "Labels are illegal inside a TRY clause.",
         errno: 143,
     },
     EvalDisabled: {
-        message: "Encountered a call to `eval()`, but that function has been disabled.",
+        message: "eval() is deprecated. You must eliminate usage of eval().",
         errno: 144,
     },
     FunctionNotFound: {
-        message: "Attempted to access a function that doesn't exist in the requested object.",
+        message: "Function is not defined in component's namespace",
         errno: 145,
     },
     NameShadowsBuiltin: {
-        message: "Encountered a variable or function name that shadows a built-in function.",
+        message: "Syntax Error. Builtin function call expected.",
         errno: 157,
     },
-    FoldingConstant: {
-        message: "Meaning unclear; not documented in RBI.",
-        errno: 158,
-    },
-    BadConstName: {
-        message: "Encountered a malformed conditional-compilation constant.",
-        errno: 159,
-    },
     VarShadowsFunctionName: {
-        message:
-            "Encountered a variable declaration that has the same name as a subroutine in the same scope.",
+        message: "Variable name cannot be the same as that of a declared function.",
         errno: 160,
     },
     LabelLimitExceeded: {
-        message: "More `goto`-style labels were created than are currently supported.",
+        message: "Too Many Labels. Internal Label table size exceeded.",
         errno: 161,
     },
-    MissingRo: {
-        message: "Meaning unclear; not documented in RBI.",
+    ClassNotFound: {
+        message: "Class Not Found.",
         errno: 162,
     },
     InterfaceTooLarge: {
-        message: "Meaning unclear; not documented in RBI.",
+        message: "Interface has too many functions for bytecode.",
         errno: 163,
     },
     NoInitializer: {
-        message: "Expected a variable initializer, but one wasn't found.",
+        message: "Assignment initializer missing.",
         errno: 164,
     },
     ExitForWithoutFor: {
-        message: "Encountered an `exit for` statement outside the context of a `for` loop.",
+        message: "Exit For is not inside a For loop.",
         errno: 165,
     },
     Deprecated: {
-        message: "Executed a statement or evaluated an expression that's not supported anymore.",
+        message: "Statement type no longer supported.",
         errno: 166,
     },
     BadType: {
-        message: "Encountered a type declaration that uses a malformed type name.",
+        message: "Type is Invalid.",
         errno: 167,
     },
     MissingReturnType: {
-        message: "Encountered a function declaration without a return type where one is required.",
+        message: "Function must have a return type.",
         errno: 168,
     },
     ReturnWithoutValue: {
-        message: "Encountered a  `return` statement without a return value where one is required.",
+        message: "Return must return a value.",
         errno: 169,
     },
     ReturnWithValue: {
-        message: "Encountered a `return` statement with a return value where one isn't allowed.",
+        message:
+            "Return can not have a return-value if inside a Sub or Function with Void return type.",
         errno: 170,
     },
     TypeMismatchForEachIndex: {
-        message:
-            "Attempted to perform a `for each` loop across an object that can't be indexed with integers.",
+        message: "For-Each index variable must be 'dynamic' type.",
         errno: 171,
     },
     MissingMainFunction: {
-        message: "Unable to find a `main` function to execute.",
+        message: "No Main() Found.",
         errno: 172,
     },
     DuplicateSub: {
-        message: "Encountered a `sub` name that's already declared elsewhere in this scope.",
+        message: "SUB or FUNCTION defined twice.",
         errno: 173,
     },
     LimitExceeded: {
-        message:
-            "Exceeded some implementation-specific limit, e.g. encountered too many conditions in a single `if` expression.",
+        message: "Internal limit size exceeded.",
         errno: 174,
     },
     ExitWhileWithoutWhile: {
-        message: "Encountered an `exit while` statement outside the context of a `while` block.",
+        message: "Exit While is not inside a While.",
         errno: 175,
     },
     TooManyVariables: {
-        message: "More variables were initialized than are currently supported.",
+        message: "Variable table size exceeded.",
         errno: 176,
     },
     TooManyConstants: {
-        message: "More constants were declared than are currently supported.",
+        message: "Constant table size exceeded.",
         errno: 177,
     },
     FunctionNotExpected: {
-        message: "Encountered a function declaration where one wasn't expected.",
+        message: "Function not expected here.",
         errno: 178,
     },
     UnterminatedString: {
-        message: `Encountered a string that wasn't closed by a second '"' before the end of its line.`,
+        message: `String missing ending quote.`,
         errno: 179,
     },
     DuplicateLabel: {
-        message: "Encountered `goto`-style label that was already declared elsewhere.",
+        message: "Label/LineNumber defined more than once.",
         errno: 180,
     },
-    UnteriminatedBlock: {
-        message:
-            "Encountered a block (`if`, `while`, `function`, etc.) that isn't properly terminated.",
+    UnterminatedBlock: {
+        message: "A block (such as FOR/NEXT or IF/ENDIF) was not terminated correctly.",
         errno: 181,
     },
     BadNext: {
-        message:
-            "Attempted to use `next var`, but `var` isn't the enclosing `for` statement's loop variable.",
+        message: "Variable in NEXT does not match correct FOR.",
         errno: 182,
     },
     EndOfFile: {
-        message:
-            "Detected the end of the current file when it wasn't expected (typically while parsing other constructs).",
+        message: "Unexpected End-Of-File.",
         errno: 183,
     },
-    BadMatch: {
-        message: "Encountered a `match` statement that didn't match its intended target.",
-        errno: 184,
-    },
     CannotReadFile: {
-        message: "Encountered an error while reading a file.",
+        message: "Error loading file.",
         errno: 185,
     },
     LineNumberSequenceError: {
-        message: "Encountered a file with line numbers out of order.",
+        message: "Classic BASIC style line number is out of sequence.",
         errno: 186,
     },
     NoLineNumber: {
-        message: "Unable to find a line number for a particular statement.",
+        message: "Line Number not found where expected.",
         errno: 187,
     },
     IfWithoutEndIf: {
-        message: "Encountered an `if` block that wasn't terminated by an `end if` statement.",
+        message: "ENDIF Missing.",
         errno: 189,
     },
     WhileWithoutEndWhile: {
-        message: "Encountered a `while` block that wasn't terminated by an `end while` statement.",
+        message: "While Statement is missing a matching EndWhile.",
         errno: 190,
     },
     EndWhileWithoutWhile: {
-        message: "Encountered an `end while` statement outside the context of a `while` block.",
+        message: "EndWhile Without While.",
         errno: 191,
     },
     ExceptionThrownOnStack: {
-        message: "Use is unclear and nearly undocumented in RBI.",
+        message: "UNEXPECTED INTERNAL (Exception on stack)",
         errno: 222,
     },
     StackOverflow: {
-        message: "~Uploaded ~/Pictures to stackoverflow.com~ Call stack exceeded maximum height.",
+        message: "Stack overflow.",
         errno: 223,
     },
     NotAFunction: {
-        message: "Attempted to call a value that isn't actually a function.",
+        message: "Function Call Operator ( ) attempted on non-function.",
         errno: 224,
     },
     UnsupportedUnicode: {
-        message: "Attempted to use a unicode character in an unsupported way.",
+        message: "Error: Unicode not supported.",
         errno: 225,
     },
     ValueReturn: {
-        message:
-            "Any return statement that pops a function call off the call stack (including void returns).",
+        message: "Return from non-function.",
         errno: 226,
     },
     BadNumberOfIndexes: {
-        message: "Attempted to use an unsupported number of indexes into an array.",
+        message: "Invalid number of Array indexes.",
         errno: 227,
     },
     BadLHS: {
-        message: "Attempted to use invalid left-hand side for a binary expression.",
+        message: "Invalid value for left-side of expression.",
         errno: 228,
     },
     MissingReturnValue: {
-        message: "Detected a function that requires a `return` statement but doesn't have one.",
+        message: "Function does not have a required return.",
         errno: 229,
     },
     UninitializedFunction: {
-        message: "Attempted to reference an uninitialized function.",
+        message: "Use of a reference to a function/sub that is not initialized.",
         errno: 230,
     },
     UndimmedArray: {
-        message: "Attempted to use an array that was never `dim`d or otherwise initialized.",
+        message: "Array operation attempted on variable not DIM'd.",
         errno: 231,
     },
     NonNumericArrayIndex: {
-        message: "Attempted to index into an array with non-numeric value.",
+        message: "Attempt to use a non-numeric array index not allowed.",
         errno: 232,
     },
     UninitializedVariable: {
-        message: "Attempted to use an uninitialized variable in an unsupported way.",
+        message: "Use of uninitialized variable.",
         errno: 233,
     },
     TypelessOperation: {
-        message: "Attempted to perform operation on two operands without types.",
+        message: "Operation on UnTyped operand(s) attempted.",
         errno: 235,
     },
     DotOnNonObject: {
         message:
-            "Attempted to use a dot (`.`) to dereference a non-object, non-interface variable.",
+            "'Dot' Operator attempted with invalid BrightScript Component or interface reference.",
         errno: 236,
     },
     NonStaticInterfaceCall: {
-        message: "Attempted to call non-static function defined on an roInterface.",
+        message: "Interface function calls from type rotINTERFACE must by static.",
         errno: 237,
     },
     NotWaitable: {
         message:
-            "Called `wait` on an object that doesn't implement ifMessagePort, and thus can't be waited for.",
+            "Tried to Wait on an BrightScript Component that does not have MessagePort interface.",
         errno: 238,
     },
     NotPrintable: {
-        message: "Attempted to `print` a value that can't be printed.",
+        message: "Non printable value.",
         errno: 239,
     },
     ReturnValueIgnored: {
-        message: "Called function returns a value, but that value isn't used here.",
+        message: "Function returns a value that is ignored.",
         errno: 240,
     },
     WrongNumberOfParams: {
-        message: "Attempted to call function with incorrect number of parameters.",
+        message: "Wrong number of function parameters.",
         errno: 241,
     },
     TooManyParams: {
-        message: "Encountered more function parameters than are supported.",
+        message: "Too many function parameters (internal limit exceeded).",
         errno: 242,
     },
-    InterfaceIsntAMember: {
-        message: "Attempted to operate on an interface that isn't a member of an object.",
+    InterfaceNotAMember: {
+        message: "Interface not a member of BrightScript Component",
         errno: 243,
     },
     MemberFunctionNotFound: {
-        message: "Attempted to call interface or member function that does not exist.",
+        message: "Member function not found in BrightScript Component or interface.",
         errno: 244,
     },
     RoWrongNumberOfParams: {
-        message: "Attempted to call ro function with incorrect number of parameters.",
+        message:
+            "BrightScript Component function call does not have the correct number of parameters.",
         errno: 245,
     },
     ObjectClassNotFound: {
-        message: "Could not create new component, because the object class could not be found.",
+        message: "BrightScript Component Class not Found.",
         errno: 246,
     },
     Stop: {
-        message: "Executed a `stop` statement (unimplemented in this project)",
+        message: "STOP",
         errno: 247,
     },
     Break: {
-        message: "Called scriptBreak() function (unimplemented in this project).",
+        message: "BREAK",
         errno: 248,
     },
     StackUnderflow: {
-        message: "Attempted to pop something off the call stack, but there's nothing to pop.",
+        message: "Stack Underflow.",
         errno: 249,
     },
     MissingParenthesis: {
-        message: "Detected a missing parenthesis during parsing.",
+        message: "Missing Parentheses",
         errno: 250,
     },
     UndefinedOperator: {
-        message: "Encountered an unsupported expression operator.",
+        message: "Unsupported expression operator.",
         errno: 251,
     },
     NormalEnd: {
-        message: "Execution has ended, typically via the `END` keyword.",
+        message: "Normal End.",
         errno: 252,
     },
-    UndfefinedOpCode: {
-        message: "Encountered an opcode that isn't supported in this project.",
+    UndefinedOpCode: {
+        message: "Undefined Op Code.",
         errno: 253,
     },
     Internal: {
-        message: "Any issue internal to the interpreter itself.",
+        message: "UNEXPECTED INTERNAL.",
         errno: 254,
     },
     Okay: {
-        message: "Everything is fine.",
+        message: "OKAY",
         errno: 255,
     },
 };
-
-/** An error thrown when a BrightScript runtime error is encountered. */
-export class Runtime extends BrsError {
-    constructor(
-        readonly errCode: ErrorCode,
-        message: string,
-        location: Location,
-        public backtrace?: BackTrace[]
-    ) {
-        super(message, location, backtrace);
-    }
-}

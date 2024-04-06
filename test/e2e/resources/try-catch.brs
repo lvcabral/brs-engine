@@ -5,7 +5,6 @@ sub main()
     try
         a = a * 2
         print "[in_try] a = " a
-        ' a = a * "" ' force a type error
 		subFunc(a)
     catch e
         ' currently unimplemented
@@ -19,7 +18,7 @@ sub main()
 end sub
 
 function subFunc(a)
-	throw "subFunc error"
+	throw "subFunc custom error message!"
     print "[subFunc] a = " a
     a = a * "" ' force a type error
 end function

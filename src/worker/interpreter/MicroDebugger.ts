@@ -30,7 +30,8 @@ export function runDebugger(
     interpreter: Interpreter,
     nextLoc: Location,
     lastLoc: Location,
-    error?: string
+    errMessage?: string,
+    errCode?: number
 ) {
     // TODO:
     // - Implement step over and step out
@@ -56,7 +57,9 @@ export function runDebugger(
         debugMsg += "Source Digest(s):\r\n";
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
         debugMsg += `${interpreter.manifest.get("title") || "brs"}\r\n\r\n`;
-        debugMsg += `${error ?? "STOP"} (runtime error &hf7) in ${interpreter.formatLocation()}`;
+        debugMsg += `${errMessage ?? "STOP"} (runtime error &h${
+            errCode?.toString(16) ?? "f7"
+        }) in ${interpreter.formatLocation()}`;
 
         debugMsg += "\r\nBacktrace: \r\n";
         postMessage(`print,${debugMsg}`);
@@ -87,7 +90,7 @@ export function runDebugger(
         }
         switch (command.cmd) {
             case DebugCommand.CONT:
-                if (error) {
+                if (errMessage) {
                     postMessage("print,Can't continue");
                     continue;
                 }
@@ -96,7 +99,7 @@ export function runDebugger(
                 postMessage("debug,continue");
                 return true;
             case DebugCommand.STEP:
-                if (error) {
+                if (errMessage) {
                     postMessage("print,Can't continue");
                     continue;
                 }
