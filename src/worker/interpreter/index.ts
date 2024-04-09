@@ -1006,11 +1006,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (err instanceof RuntimeError && err.extraFields?.size) {
                 for (const [key, value] of err.extraFields) {
                     errorAA.set(new BrsString(key), value);
-                    if (
-                        key === "rethrown" &&
-                        value instanceof BrsBoolean &&
-                        value.toBoolean()
-                    ) {
+                    if (key === "rethrown" && toBool(value)) {
                         errorAA.set(new BrsString("rethrow_backtrace"), btArray);
                     }
                 }
@@ -1019,6 +1015,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.visitBlock(statement.catchBlock);
         }
         return BrsInvalid.Instance;
+        // Helper Function
+        function toBool(value: BrsType): boolean {
+            return isBrsBoolean(value) && value.toBoolean();
+        }
     }
 
     visitThrow(statement: Stmt.Throw): never {
