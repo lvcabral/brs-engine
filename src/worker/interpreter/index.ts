@@ -988,38 +988,35 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         try {
             this.visitBlock(statement.tryBlock);
         } catch (err: any) {
-            if (err instanceof BrsError) {
-                const btArray = err.backtrace
-                    ? (this.formatBacktrace(err.location, false, err.backtrace) as BrsType[])
-                    : new Array<BrsType>();
-                let errCode = RuntimeErrorCode.Internal;
-                let errMessage = err.message;
-                if (err instanceof RuntimeError) {
-                    errCode = err.errCode;
-                }
-                const errorAA = new RoAssociativeArray([
-                    { name: new BrsString("backtrace"), value: new RoArray(btArray) },
-                    { name: new BrsString("message"), value: new BrsString(errMessage) },
-                    { name: new BrsString("number"), value: new Int32(errCode.errno) },
-                    { name: new BrsString("rethrown"), value: BrsBoolean.False },
-                ]);
-                if (err instanceof RuntimeError && err.extraFields?.size) {
-                    for (const [key, value] of err.extraFields) {
-                        errorAA.set(new BrsString(key), value);
-                        if (
-                            key === "rethrown" &&
-                            value instanceof BrsBoolean &&
-                            value.toBoolean()
-                        ) {
-                            errorAA.set(new BrsString("rethrow_backtrace"), new RoArray(btArray));
-                        }
-                    }
-                }
-                this.environment.define(Scope.Function, statement.errorBinding.name.text, errorAA);
-                this.visitBlock(statement.catchBlock);
-            } else {
+            if (!(err instanceof BrsError)) {
                 throw err;
             }
+            const btArray = this.formatBacktrace(err.location, false, err.backtrace) as RoArray;
+            let errCode = RuntimeErrorCode.Internal;
+            let errMessage = err.message;
+            if (err instanceof RuntimeError) {
+                errCode = err.errCode;
+            }
+            const errorAA = new RoAssociativeArray([
+                { name: new BrsString("backtrace"), value: btArray },
+                { name: new BrsString("message"), value: new BrsString(errMessage) },
+                { name: new BrsString("number"), value: new Int32(errCode.errno) },
+                { name: new BrsString("rethrown"), value: BrsBoolean.False },
+            ]);
+            if (err instanceof RuntimeError && err.extraFields?.size) {
+                for (const [key, value] of err.extraFields) {
+                    errorAA.set(new BrsString(key), value);
+                    if (
+                        key === "rethrown" &&
+                        value instanceof BrsBoolean &&
+                        value.toBoolean()
+                    ) {
+                        errorAA.set(new BrsString("rethrow_backtrace"), btArray);
+                    }
+                }
+            }
+            this.environment.define(Scope.Function, statement.errorBinding.name.text, errorAA);
+            this.visitBlock(statement.catchBlock);
         }
         return BrsInvalid.Instance;
     }
@@ -1796,7 +1793,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param bt the backtrace array
      * @returns a string or an array with the backtrace formatted
      */
-    formatBacktrace(loc: Location, asString = true, bt?: BackTrace[]): BrsType[] | string {
+    formatBacktrace(loc: Location, asString = true, bt?: BackTrace[]): RoArray | string {
         const backTrace = bt ?? this.environment.getBackTrace();
         let debugMsg = "";
         const btArray: BrsType[] = [];
@@ -1824,7 +1821,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             loc = func.callLoc;
         }
-        return asString ? debugMsg : btArray;
+        return asString ? debugMsg : new RoArray(btArray);
     }
 
     /**
