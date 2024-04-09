@@ -58,9 +58,8 @@ export function runDebugger(
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
         debugMsg += `${interpreter.manifest.get("title") || "brs"}\r\n\r\n`;
         debugMsg += `${errMessage ?? "STOP"} (runtime error &h${
-            errCode?.toString(16) ?? "f7"
+            errCode ? numberToHex(errCode) : "f7"
         }) in ${interpreter.formatLocation()}`;
-
         debugMsg += "\r\nBacktrace: \r\n";
         postMessage(`print,${debugMsg}`);
         postMessage(`print,${interpreter.formatBacktrace(nextLoc)}`);
@@ -324,4 +323,8 @@ function parseCommand(command: string): any {
         }
     }
     return result;
+}
+
+function numberToHex(value: number, pad: string = "") {
+    return (value >>> 0).toString(16).padStart(8, pad);
 }

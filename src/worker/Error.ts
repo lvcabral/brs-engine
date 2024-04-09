@@ -43,7 +43,8 @@ export class RuntimeError extends BrsError {
         readonly errCode: ErrorCode,
         message: string,
         location: Location,
-        public backtrace?: BackTrace[]
+        readonly extraFields?: Map<string, BrsType>,
+        readonly backtrace?: BackTrace[]
     ) {
         if (message.trim() === "") {
             message = errCode.message;
@@ -109,7 +110,7 @@ function getKind(maybeType: BrsType | ValueKind): ValueKind {
 }
 
 /** Any error code provided by the reference brightscript implementation. */
-type ErrorCode = {
+export type ErrorCode = {
     /** The unique ID of the error. */
     errno: number;
     /** The human-readable version */
