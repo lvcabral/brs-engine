@@ -18,7 +18,18 @@ sub main()
 end sub
 
 function subFunc(a)
-	throw {message: "subFunc custom error message!", number: -2}
-    print "[subFunc] a = " a
-    a = a * "" ' force a type error
+	try
+		print "[subFunc] a = " a
+		thirdLevel()
+		a = a * "" ' force a type error
+	catch e
+		print e
+        e.customField = false
+		throw e
+    endtry
 end function
+
+sub thirdLevel()
+	print "[thirdLevel]"
+	throw {message: "subFunc custom error message!", number: 6502, customField: true}
+end sub
