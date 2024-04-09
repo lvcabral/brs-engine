@@ -39,7 +39,14 @@ import { shared } from "..";
 import { Lexeme } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
-import { BrsError, TypeMismatch, RuntimeError, RuntimeErrorCode, findErrorCode } from "../Error";
+import {
+    BrsError,
+    TypeMismatch,
+    RuntimeError,
+    RuntimeErrorCode,
+    findErrorCode,
+    ErrorCode,
+} from "../Error";
 
 import * as StdLib from "../stdlib";
 import Long from "long";
@@ -982,7 +989,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.visitBlock(statement.tryBlock);
         } catch (err: any) {
             if (err instanceof BrsError) {
-                // TODO: Figure out how to support rethrowing
                 const btArray = err.backtrace
                     ? (this.formatBacktrace(err.location, false, err.backtrace) as BrsType[])
                     : new Array<BrsType>();
@@ -991,65 +997,100 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (err instanceof RuntimeError) {
                     errCode = err.errCode;
                 }
-
                 const errorAA = new RoAssociativeArray([
                     { name: new BrsString("backtrace"), value: new RoArray(btArray) },
                     { name: new BrsString("message"), value: new BrsString(errMessage) },
                     { name: new BrsString("number"), value: new Int32(errCode.errno) },
                     { name: new BrsString("rethrown"), value: BrsBoolean.False },
                 ]);
+                if (err instanceof RuntimeError && err.extraFields?.size) {
+                    for (const [key, value] of err.extraFields) {
+                        errorAA.set(new BrsString(key), value);
+                        if (
+                            key === "rethrown" &&
+                            value instanceof BrsBoolean &&
+                            value.toBoolean()
+                        ) {
+                            errorAA.set(new BrsString("rethrow_backtrace"), new RoArray(btArray));
+                        }
+                    }
+                }
                 this.environment.define(Scope.Function, statement.errorBinding.name.text, errorAA);
                 this.visitBlock(statement.catchBlock);
             } else {
                 throw err;
             }
         }
-
         return BrsInvalid.Instance;
     }
 
     visitThrow(statement: Stmt.Throw): never {
-        // TODO:
-        // - Support to send custom valid backtrace
-        // - Support to send custom fields on AA
         let errCode = RuntimeErrorCode.UserDefined;
-        let errMessage = "";
-        if (statement?.value) {
-            let toThrow = this.evaluate(statement.value);
-            if (isStringComp(toThrow)) {
-                errMessage = toThrow.getValue();
-            } else if (toThrow instanceof RoAssociativeArray) {
-                let message = toThrow.get(new BrsString("message"));
-                let number = toThrow.get(new BrsString("number"));
-                if (number instanceof Int32) {
-                    const foundErr = findErrorCode(number.getValue());
-                    if (foundErr) {
-                        errCode = foundErr;
+        errCode.message = "";
+        const extraFields: Map<string, BrsType> = new Map<string, BrsType>();
+        let toThrow = this.evaluate(statement.value);
+        if (isStringComp(toThrow)) {
+            errCode.message = toThrow.getValue();
+        } else if (toThrow instanceof RoAssociativeArray) {
+            for (const [key, element] of toThrow.elements) {
+                if (key.toLowerCase() === "number") {
+                    errCode = validateErrorNumber(element, errCode);
+                } else if (key.toLowerCase() === "message") {
+                    errCode = validateErrorMessage(element, errCode);
+                } else if (key.toLowerCase() === "backtrace") {
+                    if (element instanceof RoArray) {
+                        extraFields.set("backtrace", element);
+                        extraFields.set("rethrown", BrsBoolean.True);
                     } else {
-                        errMessage = "UNKNOWN ERROR";
-                        errCode = { errno: number.getValue(), message: errMessage };
+                        errCode = RuntimeErrorCode.MalformedThrow;
+                        errCode.message = `Thrown "backtrace" is not an object.`;
                     }
+                } else if (key.toLowerCase() !== "rethrown") {
+                    extraFields.set(key, element);
                 }
-                if (!(number instanceof Int32 || number instanceof BrsInvalid)) {
-                    errCode = RuntimeErrorCode.MalformedThrow;
-                    errMessage = `Thrown "number" is not an integer.`;
-                } else if (message instanceof BrsString) {
-                    errMessage = message.toString();
-                } else if (!(message instanceof BrsInvalid)) {
-                    errCode = RuntimeErrorCode.MalformedThrow;
-                    errMessage = `Thrown "message" is not a string.`;
+                if (errCode.errno === RuntimeErrorCode.MalformedThrow.errno) {
+                    extraFields.clear();
+                    break;
                 }
-            } else {
-                errCode = RuntimeErrorCode.MalformedThrow;
-                errMessage = `Thrown value neither string nor roAssociativeArray.`;
             }
+        } else {
+            errCode = RuntimeErrorCode.MalformedThrow;
+            errCode.message = `Thrown value neither string nor roAssociativeArray.`;
         }
         throw new RuntimeError(
             errCode,
-            errMessage,
+            errCode.message,
             statement.location,
+            extraFields,
             this.environment.getBackTrace()
         );
+        // Validation Functions
+        function validateErrorNumber(element: BrsType, errCode: ErrorCode): ErrorCode {
+            if (element instanceof Int32) {
+                errCode.errno = element.getValue();
+                if (errCode.message === "") {
+                    const foundErr = findErrorCode(element.getValue());
+                    errCode.message = foundErr ? foundErr.message : "UNKNOWN ERROR";
+                }
+            } else if (!(element instanceof BrsInvalid)) {
+                return {
+                    errno: RuntimeErrorCode.MalformedThrow.errno,
+                    message: `Thrown "number" is not an integer.`,
+                };
+            }
+            return errCode;
+        }
+        function validateErrorMessage(element: BrsType, errCode: ErrorCode): ErrorCode {
+            if (element instanceof BrsString) {
+                errCode.message = element.toString();
+            } else if (!(element instanceof BrsInvalid)) {
+                return {
+                    errno: RuntimeErrorCode.MalformedThrow.errno,
+                    message: `Thrown "message" is not a string.`,
+                };
+            }
+            return errCode;
+        }
     }
 
     visitBlock(block: Stmt.Block): BrsType {
