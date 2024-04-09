@@ -1,5 +1,18 @@
 # Changelog
 
+<a name="v1.5.2"></a>
+
+## [v1.5.2 - Try..Catch and Throw](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.2) - 09 Apr 2024
+
+### Release Changes
+
+* Implement `try...catch` and `throw` by [@lvcabral](https://github.com/lvcabral) in [#318](https://github.com/lvcabral/brs-engine/pull/318)
+* Implemented support for `rethrown` and custom fields on `throw` statement by [@lvcabral](https://github.com/lvcabral) in [#319](https://github.com/lvcabral/brs-engine/pull/319)
+* Implemented `ifArraySizeInfo` in `roArray` by [@lvcabral](https://github.com/lvcabral) in [#316](https://github.com/lvcabral/brs-engine/pull/316)
+* Improve Lexer performance by [@lvcabral](https://github.com/lvcabral) in [317](https://github.com/lvcabral/brs-engine/pull/317)
+
+[Full Changelog][v1.5.2]
+
 <a name="v1.5.1"></a>
 
 ## [v1.5.1 - New: box(), roFunction and roDeviceCrypto](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.1) - 03 Apr 2024
@@ -13,7 +26,7 @@
 * Improved Iterable objects to behave as Roku devices by [@lvcabral](https://github.com/lvcabral) in [#311](https://github.com/lvcabral/brs-engine/pull/311)
 * Fixed Boxing on Numbers and Booleans by [@lvcabral](https://github.com/lvcabral) in [#313](https://github.com/lvcabral/brs-engine/pull/313)
 * Fixed issues with `roByteArray` by [@lvcabral](https://github.com/lvcabral) in [#314](https://github.com/lvcabral/brs-engine/pull/314)
-* Improve print variables by [@lvcabral](https://github.com/lvcabral) in [#315](https://github.com/lvcabral/brs-engine/pull/315)
+* Improved print variables by [@lvcabral](https://github.com/lvcabral) in [#315](https://github.com/lvcabral/brs-engine/pull/315)
 * Implemented `slice()` method in `roArray` under `ifArraySlice`
 
 [Full Changelog][v1.5.1]
@@ -665,6 +678,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.2]: https://github.com/lvcabral/brs-engine/compare/v1.5.1...v1.5.2s
 [v1.5.1]: https://github.com/lvcabral/brs-engine/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/lvcabral/brs-engine/compare/v1.4.1...v1.5.0
 [v1.4.1]: https://github.com/lvcabral/brs-engine/compare/v1.4.0...v1.4.1
