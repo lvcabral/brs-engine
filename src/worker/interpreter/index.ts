@@ -985,9 +985,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitTryCatch(statement: Stmt.TryCatch): BrsInvalid {
+        let stopState = this.options.stopOnCrash;
         try {
+            this.options.stopOnCrash = false;
             this.visitBlock(statement.tryBlock);
+            this.options.stopOnCrash = stopState;
         } catch (err: any) {
+            this.options.stopOnCrash = stopState;
             if (!(err instanceof BrsError)) {
                 throw err;
             }
