@@ -73,6 +73,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             default:
                 if (tag.value instanceof Buffer) {
                     tagValue = this.processBufferTag(tagType, tag.value);
+                } else if (tag.value instanceof ArrayBuffer) {
+                    tagValue = this.processBufferTag(tagType, Buffer.from(tag.value));
                 } else if (tag.value instanceof Array) {
                     if (tagType === "GPSTimeStamp") {
                         tagValue = tag.value.join(":");
@@ -250,7 +252,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 const result = parser.parse();
                 if (result.hasThumbnail("image/jpeg")) {
                     const thumbnail = result.getThumbnailBuffer();
-                    if (thumbnail?.length) {
+                    if (thumbnail) {
                         return new RoAssociativeArray([
                             {
                                 name: new BrsString("bytes"),
