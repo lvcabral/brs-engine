@@ -12,7 +12,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private markTime = Date.now();
 
-    constructor() {
+    constructor(seconds?: number) {
         super("roDateTime");
         dayjs.extend(utc);
         dayjs.extend(customParseFormat);
@@ -39,8 +39,11 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 this.toLocalTime,
             ],
         });
-
-        this.resetTime();
+        if (!seconds) {
+            this.resetTime();
+        } else {
+            this.markTime = seconds * 1000;
+        }
     }
 
     resetTime() {
