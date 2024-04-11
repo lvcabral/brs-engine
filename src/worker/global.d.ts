@@ -17,6 +17,9 @@ declare module "exif-parser" {
     export interface Result {
         tags: any;
         getImageSize(): { width: number; height: number } | null;
+        hasThumbnail(format: string): boolean;
+        getThumbnailSize(): { width: number; height: number } | null;
+        getThumbnailBuffer(): Buffer | null;
     }
 }
 

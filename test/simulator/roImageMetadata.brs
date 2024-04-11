@@ -19,6 +19,10 @@ Sub Main()
     'https://upload.wikimedia.org/wikipedia/commons/5/5a/Metadata_test_file_-_includes_data_in_IIM%2C_XMP%2C_and_Exif.jpg
     'http://www.ksky.ne.jp/~yamama/jpggpsmap/sample/AkihabaraKousaten.JPG
     'https://theme.zdassets.com/theme_assets/67413/45532dadfd9c8ca95288b732e841e4f21009f479.png
+	'https://raw.githubusercontent.com/haraldk/TwelveMonkeys/master/imageio/imageio-jpeg/src/test/resources/jpeg/exif-jpeg-thumbnail-sony-dsc-p150-inverted-colors.jpg
+	'https://raw.githubusercontent.com/haraldk/TwelveMonkeys/master/imageio/imageio-jpeg/src/test/resources/jpeg/exif-rgb-thumbnail-bad-exif-kodak-dc210.jpg
+	'https://raw.githubusercontent.com/haraldk/TwelveMonkeys/master/imageio/imageio-jpeg/src/test/resources/jpeg/jfif-jfxx-thumbnail-olympus-d320l.jpg
+	'https://raw.githubusercontent.com/haraldk/TwelveMonkeys/master/imageio/imageio-jpeg/src/test/resources/jpeg/jfif-grayscale-thumbnail.jpg
      image = CacheFile("https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/hdr/iphone_hdr_NO.jpg", "jpeg420exif.jpg")
     meta = CreateObject("roImageMetadata")
     meta.SetUrl(image)
@@ -35,10 +39,27 @@ Sub Main()
     print meta.GetRawExifTag(2, &h9214)
     print meta.GetRawExifTag(3, 2)
 
-	'cover = SaveCoverArtFile("tmp:/podcast.mp3")
+    print "------------- GetThumbnail() -------------------------"
+    thumbnail = meta.GetThumbnail()
+    print thumbnail
+    image = ""
+    if (thumbnail?.bytes <> invalid)
+        imgtype = thumbnail.type
+        image_ext=""
+        if (imgtype = "image/jpeg" or imgtype = "jpg")
+            image_ext = "jpg"
+        else if (imgtype = "image/png" or imgtype = "png")
+            image_ext = "png"
+        else
+            image_ext = "jpg"
+        end if
+        image = "tmp:/Thumbnail" + "." + image_ext
+        thumbnail.bytes.Writefile(image)
+    end if
+    'cover = SaveCoverArtFile("tmp:/podcast.mp3")
 	if (image <> "")
 		bmp = CreateObject("roBitmap", image)
-		screen.DrawObject(0,0, scaleBitmap(bmp, 0.5))
+		screen.DrawObject(0,0, bmp)
 		screen.swapbuffers()
 	end if
     while true
@@ -73,124 +94,6 @@ function CacheFile(url as string, file as string, overwrite = false as boolean) 
     return tmpFile
 end function
 
-Function SaveCoverArtFile(filename As String) as String
-    tmp_img = ""
-    meta = CreateObject("roAudioMetadata")
-    meta.SetUrl(filename)
-    print "------------- GetTags() -------------------------"
-    tags = meta.GetTags()
-    printAA(tags)
-    print "------------- GetAudioProperties() --------------"
-    properties = meta.GetAudioProperties()
-    printAA(properties)
-    print "------------- GetCoverArt() ---------------------"
-    thumbnail = meta.GetCoverArt()
-    if (thumbnail <> invalid) then
-            if (thumbnail.bytes = invalid) then
-            return tmp_img
-        end if
-        imgtype = thumbnail.type
-        image_ext=""
-        if (imgtype = "image/jpeg" or imgtype = "jpg") then
-            image_ext = "jpg"
-        else if (imgtype = "image/png" or imgtype = "png") then
-            image_ext = "png"
-        else
-            image_ext = "jpg"
-        end if
-        tmp_img = "tmp:/CoverArtImage" + "." + image_ext
-        if (tmp_img <> invalid) then
-            DeleteFile(tmp_img)
-        end if
-        thumbnail.bytes.Writefile(tmp_img)
-    end if
-	return tmp_img
-End Function
-
-function ScaleBitmap(bitmap as object, scale as float, simpleMode = false as boolean)
-    if bitmap = invalid then return bitmap
-    if scale = 1.0
-        scaled = bitmap
-    else if scale = int(scale) or simpleMode
-        scaled = CreateObject("roBitmap", { width: int(bitmap.GetWidth() * scale), height: int(bitmap.GetHeight() * scale), alphaenable: true })
-        scaled.DrawScaledObject(0, 0, scale, scale, bitmap)
-    else
-        region = CreateObject("roRegion", bitmap, 0, 0, bitmap.GetWidth(), bitmap.GetHeight())
-        region.SetScaleMode(1)
-        scaled = CreateObject("roBitmap", { width: int(bitmap.GetWidth() * scale), height: int(bitmap.GetHeight() * scale), alphaenable: true })
-        scaled.DrawScaledObject(0, 0, scale, scale, region)
-        region = invalid
-    end if
-    return scaled
-end function
-
-'**********************************************************
-'**  Video Player Example Application - General Utilities
-'**  November 2009
-'**  Copyright (c) 2009 Roku Inc. All Rights Reserved.
-'**********************************************************
-
-'******************************************************
-'Registry Helper Functions
-'******************************************************
-Function RegRead(key, section=invalid)
-    if section = invalid then section = "Default"
-    sec = CreateObject("roRegistrySection", section)
-    if sec.Exists(key) then return sec.Read(key)
-    return invalid
-End Function
-
-Function RegWrite(key, val, section=invalid)
-    if section = invalid then section = "Default"
-    sec = CreateObject("roRegistrySection", section)
-    sec.Write(key, val)
-    sec.Flush() 'commit it
-End Function
-
-Function RegDelete(key, section=invalid)
-    if section = invalid then section = "Default"
-    sec = CreateObject("roRegistrySection", section)
-    sec.Delete(key)
-    sec.Flush()
-End Function
-
-
-'******************************************************
-'Insertion Sort
-'Will sort an array directly, or use a key function
-'******************************************************
-Sub Sort(A as Object, key=invalid as dynamic)
-
-    if type(A)<>"roArray" then return
-
-    if (key=invalid) then
-        for i = 1 to A.Count()-1
-            value = A[i]
-            j = i-1
-            while j>= 0 and A[j] > value
-                A[j + 1] = A[j]
-                j = j-1
-            end while
-            A[j+1] = value
-        next
-
-    else
-        if type(key)<>"Function" then return
-        for i = 1 to A.Count()-1
-            valuekey = key(A[i])
-            value = A[i]
-            j = i-1
-            while j>= 0 and key(A[j]) > valuekey
-                A[j + 1] = A[j]
-                j = j-1
-            end while
-            A[j+1] = value
-        next
-
-    end if
-
-End Sub
-
 
 '******************************************************
 'Convert anything to a string
@@ -202,27 +105,6 @@ Function tostr(any)
     if ret = invalid ret = type(any)
     if ret = invalid ret = "unknown" 'failsafe
     return ret
-End Function
-
-
-'******************************************************
-'Get a " char as a string
-'******************************************************
-Function Quote()
-    q$ = Chr(34)
-    return q$
-End Function
-
-
-'******************************************************
-'isxmlelement
-'
-'Determine if the given object supports the ifXMLElement interface
-'******************************************************
-Function isxmlelement(obj as dynamic) As Boolean
-    if obj = invalid return false
-    if GetInterface(obj, "ifXMLElement") = invalid return false
-    return true
 End Function
 
 
@@ -324,25 +206,6 @@ End Function
 
 
 '******************************************************
-'strtobool
-'
-'Convert string to boolean safely. Don't crash
-'Looks for certain string values
-'******************************************************
-Function strtobool(obj As dynamic) As Boolean
-    if obj = invalid return false
-    if type(obj) <> "roString" and type(obj) <> "String" return false
-    o = strTrim(obj)
-    o = Lcase(o)
-    if o = "true" return true
-    if o = "t" return true
-    if o = "y" return true
-    if o = "1" return true
-    return false
-End Function
-
-
-'******************************************************
 'itostr
 '
 'Convert int to string. This is necessary because
@@ -355,52 +218,12 @@ End Function
 
 
 '******************************************************
-'Get remaining hours from a total seconds
-'******************************************************
-Function hoursLeft(seconds As Integer) As Integer
-    hours% = seconds / 3600
-    return hours%
-End Function
-
-
-'******************************************************
-'Get remaining minutes from a total seconds
-'******************************************************
-Function minutesLeft(seconds As Integer) As Integer
-    hours% = seconds / 3600
-    mins% = seconds - (hours% * 3600)
-    mins% = mins% / 60
-    return mins%
-End Function
-
-
-'******************************************************
-'Pluralize simple strings like "1 minute" or "2 minutes"
-'******************************************************
-Function Pluralize(val As Integer, str As String) As String
-    ret = itostr(val) + " " + str
-    if val <> 1 ret = ret + "s"
-    return ret
-End Function
-
-
-'******************************************************
 'Trim a string
 '******************************************************
 Function strTrim(str As String) As String
     st=CreateObject("roString")
     st.SetString(str)
     return st.Trim()
-End Function
-
-
-'******************************************************
-'Tokenize a string. Return roList of strings
-'******************************************************
-Function strTokenize(str As String, delim As String) As Object
-    st=CreateObject("roString")
-    st.SetString(str)
-    return st.Tokenize(delim)
 End Function
 
 
@@ -648,61 +471,7 @@ End Sub
 
 
 '******************************************************
-'Print an object as a string for debugging. If it is
-'very long print the first 500 chars.
-'******************************************************
-Sub Dbg(pre As Dynamic, o=invalid As Dynamic)
-    p = AnyToString(pre)
-    if p = invalid p = ""
-    if o = invalid o = ""
-    s = AnyToString(o)
-    if s = invalid s = "???: " + type(o)
-    if Len(s) > 4000
-        s = Left(s, 4000)
-    endif
-    print p + s
-End Sub
-
-
-'******************************************************
 'Try to convert anything to a string. Only works on simple items.
-'
-'Test with this script...
-'
-'    s$ = "yo1"
-'    ss = "yo2"
-'    i% = 111
-'    ii = 222
-'    f! = 333.333
-'    ff = 444.444
-'    d# = 555.555
-'    dd = 555.555
-'    bb = true
-'
-'    so = CreateObject("roString")
-'    so.SetString("strobj")
-'    io = CreateObject("roInt")
-'    io.SetInt(666)
-'    tm = CreateObject("roTimespan")
-'
-'    Dbg("", s$ ) 'call the Dbg() function which calls AnyToString()
-'    Dbg("", ss )
-'    Dbg("", "yo3")
-'    Dbg("", i% )
-'    Dbg("", ii )
-'    Dbg("", 2222 )
-'    Dbg("", f! )
-'    Dbg("", ff )
-'    Dbg("", 3333.3333 )
-'    Dbg("", d# )
-'    Dbg("", dd )
-'    Dbg("", so )
-'    Dbg("", io )
-'    Dbg("", bb )
-'    Dbg("", true )
-'    Dbg("", tm )
-'
-'try to convert an object to a string. return invalid if can't
 '******************************************************
 Function AnyToString(any As Dynamic) As dynamic
     if any = invalid return "invalid"
@@ -744,45 +513,3 @@ Sub PrintXML(element As Object, depth As Integer)
     endif
     print
 end sub
-
-
-'******************************************************
-'Dump the bytes of a string
-'******************************************************
-Sub DumpString(str As String)
-    print "DUMP STRING"
-    print "---------------------------"
-    print str
-    print "---------------------------"
-    l = Len(str)-1
-    i = 0
-    for i = 0 to l
-        c = Mid(str, i)
-        val = Asc(c)
-        print itostr(val)
-    next
-    print "---------------------------"
-End Sub
-
-
-'******************************************************
-'Validate parameter is the correct type
-'******************************************************
-Function validateParam(param As Object, paramType As String,functionName As String, allowInvalid = false) As Boolean
-    if paramType = "roString" or paramType = "String" then
-        if type(param) = "roString" or type(param) = "String" then
-            return true
-        end if
-    else if type(param) = paramType then
-        return true
-    endif
-
-    if allowInvalid = true then
-        if type(param) = invalid then
-            return true
-        endif
-    endif
-
-    print "invalid parameter of type "; type(param); " for "; paramType; " in function "; functionName
-    return false
-End Function

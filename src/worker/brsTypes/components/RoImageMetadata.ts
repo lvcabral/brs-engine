@@ -1,5 +1,5 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType, Float, Int32, RoAssociativeArray, RoDateTime } from "..";
+import { BrsType, Float, Int32, RoAssociativeArray, RoByteArray, RoDateTime } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
@@ -244,10 +244,30 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
-            // Implementation to retrieve thumbnail from the image at this.url
-            // This is a placeholder and should be replaced with actual implementation
-            return new RoAssociativeArray([]);
+        impl: (_: Interpreter) => {
+            if (!this.fileData) {
+                return BrsInvalid.Instance;
+            }
+            try {
+                const parser = exifParser.create(this.fileData);
+                parser.enableReturnTags(false);
+                const result = parser.parse();
+                if (result.hasThumbnail("image/jpeg")) {
+                    const thumbnail = result.getThumbnailBuffer();
+                    if (thumbnail?.length) {
+                        return new RoAssociativeArray([
+                            {
+                                name: new BrsString("bytes"),
+                                value: new RoByteArray(new Uint8Array(thumbnail)),
+                            },
+                            { name: new BrsString("type"), value: new BrsString("image/jpeg") },
+                        ]);
+                    }
+                }
+            } catch (err: any) {
+                return BrsInvalid.Instance;
+            }
+            return BrsInvalid.Instance;
         },
     });
 
@@ -342,7 +362,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     1: ExifSections.Thumbnail,
                     2: ExifSections.EXIF,
                     3: ExifSections.GPS,
-                    4: ExifSections.EXIF,
+                    4: ExifSections.EXIF, // the exif-parser library mix interoperability tags with exif tags
                 };
                 const sectionId = sectionIdMap[ifd.getValue()] ?? ExifSections.EXIF;
                 const tag = this.findValue(result.tags, sectionId, tagnum.getValue());
