@@ -611,8 +611,8 @@ enum ExifCompression {
     "T4/Group 3 Fax" = 3,
     "T6/Group 4 Fax" = 4,
     "LZW" = 5,
-    "JPEG (old-style)" = 6,
-    "JPEG compression" = 7,
+    "JPEG compression" = 6,
+    "JPEG (new)" = 7,
     "Adobe Deflate" = 8,
     "JBIG B&W" = 9,
     "JBIG Color" = 10,
@@ -687,6 +687,25 @@ enum ExifYCbCrPositioning {
     "Co-sited" = 2,
 }
 
+enum ExifGPSAltitudeRef {
+    "Sea level" = 0,
+    "Below sea level" = 1,
+}
+enum ExifGPSMeasureMode {
+    "2-dimensional measurement" = 2,
+    "3-dimensional measurement" = 3,
+}
+
+enum ExifGPSDifferential {
+    "No differential correction" = 0,
+    "Differential corrected" = 1,
+}
+
+enum ExifGPSStatus {
+    "Measurement active" = "A",
+    "Measurement void" = "V",
+}
+
 export interface ExifTagEnums {
     [key: string]: any;
 }
@@ -712,4 +731,8 @@ export const exifTagEnums: ExifTagEnums = {
     ResolutionUnit: ExifResolutionUnit,
     CustomRendered: ExifCustomRendered,
     YCbCrPositioning: ExifYCbCrPositioning,
+    GPSAltitudeRef: ExifGPSAltitudeRef,
+    GPSMeasureMode: ExifGPSMeasureMode,
+    GPSDifferential: ExifGPSDifferential,
+    GPSStatus: ExifGPSStatus,
 };

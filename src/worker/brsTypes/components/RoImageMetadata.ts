@@ -105,7 +105,12 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                             tagValue = new BrsString(`${tag.value.length} bytes undefined data`);
                     }
                 } else if (Array.isArray(tag.value)) {
-                    tagValue = new BrsString(tag.value.join(", "));
+                    const tagType: string = tags.get(tag.type) ?? "";
+                    if (tagType === "GPSTimeStamp") {
+                        tagValue = new BrsString(tag.value.join(":"));
+                    } else {
+                        tagValue = new BrsString(tag.value.join(", "));
+                    }
                 } else {
                     tagValue = new BrsString(tag.value.toString());
                 }

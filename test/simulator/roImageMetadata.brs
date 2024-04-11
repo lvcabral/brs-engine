@@ -13,8 +13,12 @@ Sub Main()
 	'https://github.com/ianare/exif-samples/blob/master/jpg/Canon_PowerShot_S40.jpg?raw=true
 	'https://github.com/ianare/exif-samples/blob/master/jpg/invalid/image00971.jpg?raw=true
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/PaintTool_sample.jpg
-    'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/gps/DSCN0040.jpg
-     image = CacheFile("https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/gps/DSCN0040.jpg", "jpeg420exif.jpg")
+	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/gps/DSCN0040.jpg
+	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/corrupted.jpg
+    'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/hdr/iphone_hdr_NO.jpg
+    'https://upload.wikimedia.org/wikipedia/commons/5/5a/Metadata_test_file_-_includes_data_in_IIM%2C_XMP%2C_and_Exif.jpg
+    'http://www.ksky.ne.jp/~yamama/jpggpsmap/sample/AkihabaraKousaten.JPG
+     image = CacheFile("https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/hdr/iphone_hdr_NO.jpg", "jpeg420exif.jpg")
     meta = CreateObject("roImageMetadata")
     meta.SetUrl(image)
     print "------------- GetRawExif() ----------------------"
@@ -105,8 +109,6 @@ Function SaveCoverArtFile(filename As String) as String
 	return tmp_img
 End Function
 
-
-		
 function ScaleBitmap(bitmap as object, scale as float, simpleMode = false as boolean)
     if bitmap = invalid then return bitmap
     if scale = 1.0
@@ -123,8 +125,7 @@ function ScaleBitmap(bitmap as object, scale as float, simpleMode = false as boo
     end if
     return scaled
 end function
-		
-		
+
 '**********************************************************
 '**  Video Player Example Application - General Utilities
 '**  November 2009
