@@ -1,7 +1,7 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int32, RoAssociativeArray, RoDateTime } from "..";
+import { BrsType, Float, Int32, RoAssociativeArray, RoDateTime } from "..";
 import { Callable, StdlibArgument } from "../Callable";
+import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { ExifSections, exifTags, exifTagEnums } from "../ExifTags";
 import * as exifParser from "exif-parser";
@@ -271,10 +271,13 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
 
     private getRawExifTag = new Callable("getRawExifTag", {
         signature: {
-            args: [new StdlibArgument("tag", ValueKind.String)],
+            args: [
+                new StdlibArgument("ifd", ValueKind.Int32 | ValueKind.Float),
+                new StdlibArgument("tagnum", ValueKind.Int32 | ValueKind.Float),
+            ],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, tag: BrsString) => {
+        impl: (interpreter: Interpreter, ifd: Int32 | Float, tag: Int32 | Float) => {
             // Implementation to retrieve a specific raw Exif tag from the image at this.url
             // This is a placeholder and should be replaced with actual implementation
             return BrsInvalid.Instance;
