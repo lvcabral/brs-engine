@@ -22,6 +22,7 @@ import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
 import { createRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
+import { RoImageMetadata } from "./RoImageMetadata";
 import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoVideoPlayer } from "./RoVideoPlayer";
 import { RoXMLElement } from "./RoXMLElement";
@@ -83,6 +84,7 @@ export const BrsObjects = new Map<string, Function>([
         "robitmap",
         (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
     ],
+    ["roimagemetadata", (interpreter: Interpreter) => new RoImageMetadata()],
     ["romessageport", (interpreter: Interpreter) => new RoMessagePort()],
     ["roinput", (interpreter: Interpreter) => new RoInput()],
     ["rofilesystem", (interpreter: Interpreter) => new RoFileSystem()],

@@ -55,6 +55,7 @@ export * from "./components/RoRegion";
 export * from "./components/RoScreen";
 export * from "./components/RoSprite";
 export * from "./components/RoCompositor";
+export * from "./components/RoImageMetadata";
 export * from "./components/RoMessagePort";
 export * from "./components/RoFontRegistry";
 export * from "./components/RoFont";
