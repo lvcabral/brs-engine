@@ -478,19 +478,18 @@ export enum ExifSections {
     EXIF = 5,
 }
 
-export enum ExifResolutionUnit {
+enum ExifResolutionUnit {
     None = 1,
     Inch = 2,
     Centimeter = 3,
 }
 
-export enum ExifColorSpace {
+enum ExifColorSpace {
     sRGB = 1,
     Uncalibrated = 65535,
 }
 
-
-export enum ExifLightSource {
+enum ExifLightSource {
     Unknown = 0,
     Daylight = 1,
     Fluorescent = 2,
@@ -514,7 +513,7 @@ export enum ExifLightSource {
     OtherLightSource = 255,
 }
 
-export enum ExifGainControl {
+enum ExifGainControl {
     Normal = 0,
     LowUp = 1,
     HighUp = 2,
@@ -522,32 +521,32 @@ export enum ExifGainControl {
     HighDown = 4,
 }
 
-export enum ExifSceneCaptureType {
+enum ExifSceneCaptureType {
     Standard = 0,
     Landscape = 1,
     Portrait = 2,
     NightScene = 3,
 }
 
-export enum ExifWhiteBalance {
+enum ExifWhiteBalance {
     Auto = 0,
     Manual = 1,
 }
 
-export enum ExifImageAdjustmentLevel {
+enum ExifImageAdjustmentLevel {
     Normal = 0,
     Soft = 1,
     Hard = 2,
 }
 
-export enum ExifSubjectDistanceRange {
+enum ExifSubjectDistanceRange {
     Unknown = 0,
     Macro = 1,
     CloseView = 2,
     DistantView = 3,
 }
 
-export enum ExifSensingMethod {
+enum ExifSensingMethod {
     Unknown = 1,
     OneChipColorArea = 2,
     TwoChipColorArea = 3,
@@ -557,7 +556,7 @@ export enum ExifSensingMethod {
     ColorSequentialLinear = 8,
 }
 
-export enum ExifMeteringMode {
+enum ExifMeteringMode {
     Unknown = 0,
     Average = 1,
     "Center-weighted average" = 2,
@@ -568,12 +567,23 @@ export enum ExifMeteringMode {
     Other = 255,
 }
 
-export enum ExifExposureMode {
+enum ExifOrientation {
+    "Top-left" = 1,
+    "Top-right" = 2,
+    "Bottom-right" = 3,
+    "Bottom-left" = 4,
+    "Left-top" = 5,
+    "Right-top" = 6,
+    "Right-bottom" = 7,
+    "Left-bottom" = 8,
+}
+
+enum ExifExposureMode {
     "Auto exposure" = 0,
     "Manual exposure" = 1,
     "Auto bracket" = 2,
 }
-export enum ExifExposureProgram {
+enum ExifExposureProgram {
     "Not defined" = 0,
     "Manual" = 1,
     "Normal program" = 2,
@@ -585,17 +595,17 @@ export enum ExifExposureProgram {
     "Landscape mode" = 8,
 }
 
-export enum ExifWhiteBalance {
+enum ExifWhiteBalance {
     "Auto white balance" = 0,
     "Manual white balance" = 1,
 }
 
-export enum ExifCustomRendered {
+enum ExifCustomRendered {
     "Normal process" = 0,
     "Custom process" = 1,
 }
 
-export enum ExifCompression {
+enum ExifCompression {
     "Uncompressed" = 1,
     "CCITT 1D" = 2,
     "T4/Group 3 Fax" = 3,
@@ -647,7 +657,7 @@ export enum ExifCompression {
     "Pentax PEF Compressed" = 65535,
 }
 
-export enum ExifFlash {
+enum ExifFlash {
     "Flash did not fire" = 0x0,
     "Flash fired" = 0x1,
     "Strobe return light not detected" = 0x5,
@@ -672,8 +682,34 @@ export enum ExifFlash {
     "Flash fired, auto mode, return light detected, red-eye reduction mode" = 0x5f,
 }
 
-export enum ExifYCbCrPositioning {
+enum ExifYCbCrPositioning {
     "Centered" = 1,
     "Co-sited" = 2,
 }
 
+export interface ExifTagEnums {
+    [key: string]: any; // replace 'any' with the type of your enum values if needed
+}
+
+export const exifTagEnums: ExifTagEnums = {
+    "ColorSpace": ExifColorSpace,
+    "Compression": ExifCompression,
+    "Flash": ExifFlash,
+    "LightSource": ExifLightSource,
+    "Brightness": ExifImageAdjustmentLevel,
+    "Contrast": ExifImageAdjustmentLevel,
+    "Saturation": ExifImageAdjustmentLevel,
+    "Sharpness": ExifImageAdjustmentLevel,
+    "GainControl": ExifGainControl,
+    "ExposureMode": ExifExposureMode,
+    "ExposureProgram": ExifExposureProgram,
+    "WhiteBalance": ExifWhiteBalance,
+    "SceneCaptureType": ExifSceneCaptureType,
+    "SubjectDistanceRange": ExifSubjectDistanceRange,
+    "SensingMethod": ExifSensingMethod,
+    "MeteringMode": ExifMeteringMode,
+    "Orientation": ExifOrientation,
+    "ResolutionUnit": ExifResolutionUnit,
+    "CustomRendered": ExifCustomRendered,
+    "YCbCrPositioning": ExifYCbCrPositioning,
+}

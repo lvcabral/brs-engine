@@ -3,41 +3,12 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, Int32, RoAssociativeArray, RoDateTime } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import {
-    ExifColorSpace,
-    ExifCompression,
-    ExifFlash,
-    ExifLightSource,
-    ExifImageAdjustmentLevel,
-    ExifGainControl,
-    ExifExposureMode,
-    ExifExposureProgram,
-    ExifWhiteBalance,
-    ExifSceneCaptureType,
-    ExifSubjectDistanceRange,
-    ExifSensingMethod,
-    ExifMeteringMode,
-    ExifResolutionUnit,
-    ExifCustomRendered,
-    ExifSections,
-    ExifTags,
-    ExifYCbCrPositioning,
-} from "../ExifTags";
+import { ExifSections, ExifTags, exifTagEnums } from "../ExifTags";
 import * as exifParser from "exif-parser";
 
 export class RoImageMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
-    readonly ExifOrientation = new Map<number, string>([
-        [1, "Top-left"],
-        [2, "Top-right"],
-        [3, "Bottom-right"],
-        [4, "Bottom-left"],
-        [5, "Left-top"],
-        [6, "Right-top"],
-        [7, "Right-bottom"],
-        [8, "Left-bottom"],
-    ]);
     private fields = new RoAssociativeArray([]);
     private url: BrsString = new BrsString("");
 
@@ -86,93 +57,12 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 tagValue = new BrsString(tag.value);
                 break;
             case "number":
-                switch (tags.get(tag.type)) {
-                    case "Orientation":
-                        tagValue = new BrsString(
-                            this.ExifOrientation.get(tag.value) ?? tag.value.toString()
-                        );
-                        break;
-                    case "Compression":
-                        tagValue = new BrsString(
-                            ExifCompression[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "ResolutionUnit":
-                        tagValue = new BrsString(
-                            ExifResolutionUnit[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "ColorSpace":
-                        tagValue = new BrsString(ExifColorSpace[tag.value] ?? tag.value.toString());
-                        break;
-                    case "Flash":
-                        tagValue = new BrsString(ExifFlash[tag.value] ?? tag.value.toString());
-                        break;
-                    case "Brightness":
-                    case "Contrast":
-                    case "Saturation":
-                    case "Sharpness":
-                        tagValue = new BrsString(
-                            ExifImageAdjustmentLevel[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "GainControl":
-                        tagValue = new BrsString(
-                            ExifGainControl[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "ExposureMode":
-                        tagValue = new BrsString(
-                            ExifExposureMode[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "ExposureProgram":
-                        tagValue = new BrsString(
-                            ExifExposureProgram[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "WhiteBalance":
-                        tagValue = new BrsString(
-                            ExifWhiteBalance[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "SceneCaptureType":
-                        tagValue = new BrsString(
-                            ExifSceneCaptureType[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "SubjectDistanceRange":
-                        tagValue = new BrsString(
-                            ExifSubjectDistanceRange[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "LightSource":
-                        tagValue = new BrsString(
-                            ExifLightSource[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "MeteringMode":
-                        tagValue = new BrsString(
-                            ExifMeteringMode[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "SensingMethod":
-                        tagValue = new BrsString(
-                            ExifSensingMethod[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "CustomRendered":
-                        tagValue = new BrsString(
-                            ExifCustomRendered[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    case "YCbCrPositioning":
-                        tagValue = new BrsString(
-                            ExifYCbCrPositioning[tag.value] ?? tag.value.toString()
-                        );
-                        break;
-                    default:
-                        tagValue = new BrsString(tag.value.toString());
+                const tagType: string = tags.get(tag.type) ?? "";
+                const tagEnum = exifTagEnums[tagType];
+                if (tagEnum !== undefined) {
+                    tagValue = new BrsString(tagEnum[tag.value] ?? tag.value.toString());
+                } else {
+                    tagValue = new BrsString(tag.value.toString());
                 }
                 break;
             default:
@@ -304,12 +194,12 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                         new RoDateTime(result.tags["CreateDate"])
                     );
                 }
-
+                const tagEnum = exifTagEnums["Orientation"];
                 this.fields.set(new BrsString("width"), new Int32(imageSize?.width ?? 0));
                 this.fields.set(new BrsString("height"), new Int32(imageSize?.height ?? 0));
                 this.fields.set(
                     new BrsString("orientation"),
-                    new BrsString(this.ExifOrientation.get(result.tags["Orientation"] ?? 0) ?? "")
+                    new BrsString(tagEnum[result.tags["Orientation"] ?? 0] ?? "")
                 );
             }
             return this.fields;
@@ -352,22 +242,19 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             result.tags.forEach((tag: any) => {
                 const tagsMap = tag.section === ExifSections.GPS ? ExifTags.gps : ExifTags.exif;
                 const tagTypeName = tagsMap.get(tag.type as number) ?? "";
-
                 if (tagTypeName === "") {
                     return;
                 }
-                if (tag.section === ExifSections.EXIF) {
-                    sectionExif.set(new BrsString(tagTypeName), this.getTagData(tag), true);
-                } else if (tag.section === ExifSections.GPS) {
-                    sectionGPS.set(new BrsString(tagTypeName), this.getTagData(tag, tagsMap), true);
-                } else if (tag.section === ExifSections.Image) {
-                    sectionImage.set(new BrsString(tagTypeName), this.getTagData(tag), true);
-                } else if (tag.section === ExifSections.Interop) {
+                if (tag.section === ExifSections.EXIF || tag.section === ExifSections.Interop) {
                     if (tagTypeName.startsWith("Interop")) {
                         sectionInterop.set(new BrsString(tagTypeName), this.getTagData(tag), true);
                     } else {
                         sectionExif.set(new BrsString(tagTypeName), this.getTagData(tag), true);
                     }
+                } else if (tag.section === ExifSections.GPS) {
+                    sectionGPS.set(new BrsString(tagTypeName), this.getTagData(tag, tagsMap), true);
+                } else if (tag.section === ExifSections.Image) {
+                    sectionImage.set(new BrsString(tagTypeName), this.getTagData(tag), true);
                 } else if (tag.section === ExifSections.Thumbnail) {
                     sectionThumbnail.set(new BrsString(tagTypeName), this.getTagData(tag), true);
                 }
