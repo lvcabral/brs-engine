@@ -688,7 +688,7 @@ enum ExifYCbCrPositioning {
 }
 
 export interface ExifTagEnums {
-    [key: string]: any; // replace 'any' with the type of your enum values if needed
+    [key: string]: any;
 }
 
 export const exifTagEnums: ExifTagEnums = {
