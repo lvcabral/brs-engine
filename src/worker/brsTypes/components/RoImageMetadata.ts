@@ -56,14 +56,14 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     }
 
     getTagData(tag: any, tags: Map<number, string> = exifTags.exif) {
-        let tagValue = new BrsString("");
+        let tagValue: BrsString;
+        const tagType: string = tags.get(tag.type) ?? "";
+        const tagEnum = exifTagEnums[tagType];
         switch (typeof tag.value) {
             case "string":
                 tagValue = new BrsString(tag.value);
                 break;
             case "number":
-                const tagType: string = tags.get(tag.type) ?? "";
-                const tagEnum = exifTagEnums[tagType];
                 if (tagEnum !== undefined) {
                     tagValue = new BrsString(tagEnum[tag.value] ?? tag.value.toString());
                 } else {
@@ -72,45 +72,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 break;
             default:
                 if (tag.value instanceof Buffer) {
-                    switch (tags.get(tag.type)) {
-                        case "UserComment":
-                            tagValue = new BrsString(this.decodeUserComment(tag.value));
-                            break;
-                        case "ComponentsConfiguration":
-                            tagValue = new BrsString(this.decodeComponentsConfiguration(tag.value));
-                            break;
-                        case "FileSource":
-                            tagValue = new BrsString(
-                                tag.value.toString("ascii") === "\x03"
-                                    ? "DSC"
-                                    : tag.value.toString()
-                            );
-                            break;
-                        case "SceneType":
-                            tagValue = new BrsString(
-                                tag.value.toString("ascii") === "\x01"
-                                    ? "Directly photographed"
-                                    : tag.value.toString()
-                            );
-                            break;
-                        case "ExifVersion":
-                            tagValue = new BrsString(
-                                `Exif Version ${this.decodeVersion(tag.value)}`
-                            );
-                            break;
-                        case "FlashpixVersion":
-                            tagValue = new BrsString(
-                                `Flashpix Version ${this.decodeVersion(tag.value)}`
-                            );
-                            break;
-                        case "InteroperabilityVersion":
-                            tagValue = new BrsString(tag.value.toString("ascii"));
-                            break;
-                        default:
-                            tagValue = new BrsString(`${tag.value.length} bytes undefined data`);
-                    }
+                    tagValue = this.processBufferTag(tagType, tag.value);
                 } else if (Array.isArray(tag.value)) {
-                    const tagType: string = tags.get(tag.type) ?? "";
                     if (tagType === "GPSTimeStamp") {
                         tagValue = new BrsString(tag.value.join(":"));
                     } else if (tagType === "SubjectArea") {
@@ -126,6 +89,48 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             { name: new BrsString("tag"), value: new Int32(tag.type) },
             { name: new BrsString("value"), value: tagValue },
         ]);
+    }
+
+    processBufferTag(tagType: string, buffer: Buffer): BrsString {
+        let tagValue: BrsString;
+        switch (tagType) {
+            case "UserComment":
+                tagValue = new BrsString(this.decodeUserComment(buffer));
+                break;
+            case "ComponentsConfiguration":
+                tagValue = new BrsString(this.decodeComponentsConfiguration(buffer));
+                break;
+            case "FileSource":
+                tagValue = new BrsString(
+                    buffer.toString("ascii") === "\x03"
+                        ? "DSC"
+                        : buffer.toString()
+                );
+                break;
+            case "SceneType":
+                tagValue = new BrsString(
+                    buffer.toString("ascii") === "\x01"
+                        ? "Directly photographed"
+                        : buffer.toString()
+                );
+                break;
+            case "ExifVersion":
+                tagValue = new BrsString(
+                    `Exif Version ${this.decodeVersion(buffer)}`
+                );
+                break;
+            case "FlashpixVersion":
+                tagValue = new BrsString(
+                    `Flashpix Version ${this.decodeVersion(buffer)}`
+                );
+                break;
+            case "InteroperabilityVersion":
+                tagValue = new BrsString(buffer.toString("ascii"));
+                break;
+            default:
+                tagValue = new BrsString(`${buffer.length} bytes undefined data`);
+        }
+        return tagValue;
     }
 
     decodeComponentsConfiguration(buffer: Buffer): string {
