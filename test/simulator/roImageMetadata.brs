@@ -5,11 +5,11 @@ Sub Main()
     screen.SetMessagePort(port)
 	print "App Manifest"
 	print ReadAsciiFile("pkg:/manifest")
-	print "Downloading MP3"
+	print "Downloading JPEG with EXIF"
 	'https://www.w3.org/MarkUp/Test/xhtml-print/20050519/tests/jpeg420exif.jpg
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/long_description.jpg
-	'https://github.com/ianare/exif-samples/blob/master/jpg/tests/35-empty.jpg?raw=true
-	'https://github.com/ianare/exif-samples/blob/master/jpg/xmp/no_exif.jpg?raw=true
+	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/tests/35-empty.jpg
+	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/xmp/no_exif.jpg
 	'https://github.com/ianare/exif-samples/blob/master/jpg/Canon_PowerShot_S40.jpg?raw=true
 	'https://github.com/ianare/exif-samples/blob/master/jpg/invalid/image00971.jpg?raw=true
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/PaintTool_sample.jpg
@@ -18,27 +18,22 @@ Sub Main()
     'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/hdr/iphone_hdr_NO.jpg
     'https://upload.wikimedia.org/wikipedia/commons/5/5a/Metadata_test_file_-_includes_data_in_IIM%2C_XMP%2C_and_Exif.jpg
     'http://www.ksky.ne.jp/~yamama/jpggpsmap/sample/AkihabaraKousaten.JPG
+    'https://theme.zdassets.com/theme_assets/67413/45532dadfd9c8ca95288b732e841e4f21009f479.png
      image = CacheFile("https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/hdr/iphone_hdr_NO.jpg", "jpeg420exif.jpg")
     meta = CreateObject("roImageMetadata")
     meta.SetUrl(image)
     print "------------- GetRawExif() ----------------------"
     allexif = meta.GetRawExif()
     printAA(allexif)
-'     print allexif
-'     print allexif.image
-'     print allexif.thumbnail
-'     print allexif.exif
-' 	print allexif.exif["makernote"]
-'     print allexif.interoperability
-'     print allexif.gps
     print "------------- GetMetadata() ---------------------"
     simple = meta.GetMetadata()
     print simple
-    if simple.datetime <> invalid
+    if simple?.datetime <> invalid
         print simple.datetime.toISOString()
     end if
     print "------------- GetRawExifTag() -------------------------"
     print meta.GetRawExifTag(2, &h9214)
+    print meta.GetRawExifTag(3, 2)
 
 	'cover = SaveCoverArtFile("tmp:/podcast.mp3")
 	if (image <> "")

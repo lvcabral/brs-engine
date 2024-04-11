@@ -1,3 +1,9 @@
+export type ExifTag = {
+    section: number;
+    type: number;
+    value: any;
+};
+
 export interface ExifTagType {
     exif: keyof typeof exifTags.exif;
     gps: keyof typeof exifTags.gps;
