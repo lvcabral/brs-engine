@@ -37,6 +37,9 @@ Sub Main()
     if simple.datetime <> invalid
         print simple.datetime.toISOString()
     end if
+    print "------------- GetRawExifTag() -------------------------"
+    print meta.GetRawExifTag(2, &h9214)
+
 	'cover = SaveCoverArtFile("tmp:/podcast.mp3")
 	if (image <> "")
 		bmp = CreateObject("roBitmap", image)

@@ -288,6 +288,16 @@ export const exifTags = {
         [0xa433, "LensMake"],
         [0xa434, "LensModel"],
         [0xa435, "LensSerialNumber"],
+        [0xa436, "Title"],
+        [0xa437, "Photographer"],
+        [0xa438, "ImageEditor"],
+        [0xa439, "CameraFirmware"],
+        [0xa43a, "RAWDevelopingSoftware"],
+        [0xa43b, "ImageEditingSoftware"],
+        [0xa43c, "MetadataEditingSoftware"],
+        [0xa460, "CompositeImage"],
+        [0xa461, "CompositeImageCount"],
+        [0xa462, "CompositeImageExposureTimes"],
         [0xa480, "GDALMetadata"],
         [0xa481, "GDALNoData"],
         [0xa500, "Gamma"],
@@ -484,87 +494,67 @@ enum ExifResolutionUnit {
     Centimeter = 3,
 }
 
-enum ExifColorSpace {
-    sRGB = 1,
-    Uncalibrated = 65535,
-}
-
-enum ExifLightSource {
-    Unknown = 0,
-    Daylight = 1,
-    Fluorescent = 2,
-    Tungsten = 3,
-    Flash = 4,
-    FineWeather = 9,
-    CloudyWeather = 10,
-    Shade = 11,
-    DaylightFluorescent = 12,
-    DayWhiteFluorescent = 13,
-    CoolWhiteFluorescent = 14,
-    WhiteFluorescent = 15,
-    StandardLightA = 17,
-    StandardLightB = 18,
-    StandardLightC = 19,
-    D55 = 20,
-    D65 = 21,
-    D75 = 22,
-    D50 = 23,
-    ISOStudioTungsten = 24,
-    OtherLightSource = 255,
-}
-
-enum ExifGainControl {
-    Normal = 0,
-    LowUp = 1,
-    HighUp = 2,
-    LowDown = 3,
-    HighDown = 4,
-}
-
-enum ExifSceneCaptureType {
-    Standard = 0,
-    Landscape = 1,
-    Portrait = 2,
-    NightScene = 3,
-}
-
-enum ExifWhiteBalance {
-    Auto = 0,
-    Manual = 1,
-}
-
 enum ExifImageAdjustmentLevel {
     Normal = 0,
     Soft = 1,
     Hard = 2,
 }
 
-enum ExifSubjectDistanceRange {
-    Unknown = 0,
-    Macro = 1,
-    CloseView = 2,
-    DistantView = 3,
+enum ExifLightSource {
+    "Unknown" = 0,
+    "Daylight" = 1,
+    "Fluorescent" = 2,
+    "Tungsten incandescent light" = 3,
+    "Flash" = 4,
+    "Fine weather" = 9,
+    "Cloudy weather" = 10,
+    "Shade" = 11,
+    "Daylight fluorescent" = 12,
+    "Day white fluorescent" = 13,
+    "Cool white fluorescent" = 14,
+    "White fluorescent" = 15,
+    "Standard light A" = 17,
+    "Standard light B" = 18,
+    "Standard light C" = 19,
+    "D55" = 20,
+    "D65" = 21,
+    "D75" = 22,
+    "ISO studio tungsten" = 24,
+    "Other" = 255,
 }
 
 enum ExifSensingMethod {
-    Unknown = 1,
-    OneChipColorArea = 2,
-    TwoChipColorArea = 3,
-    ThreeChipColorArea = 4,
-    ColorSequentialArea = 5,
-    Trilinear = 7,
-    ColorSequentialLinear = 8,
+    "Not defined" = 1,
+    "One-chip color area sensor" = 2,
+    "Two-chip color area sensor" = 3,
+    "Three-chip color area sensor" = 4,
+    "Color sequential area sensor" = 5,
+    "Trilinear sensor" = 7,
+    "Color sequential linear sensor" = 8,
 }
 
 enum ExifMeteringMode {
-    Unknown = 0,
-    Average = 1,
+    "Unknown" = 0,
+    "Average" = 1,
     "Center-weighted average" = 2,
-    Spot = 3,
-    MultiSpot = 4,
-    Pattern = 5,
-    Partial = 6,
-    Other = 255,
+    "Spot" = 3,
+    "Multi spot" = 4,
+    "Pattern" = 5,
+    "Partial" = 6,
+    "Other" = 255,
+}
+
+enum ExifColorSpace {
+    "sRGB" = 1,
+    "Adobe RGB" = 2,
+    "Uncalibrated" = 65535,
+}
+
+enum ExifCompositeImage {
+    "Unknown" = 0,
+    "No a composite image" = 1,
+    "General composite image" = 2,
+    "Composite image captured while shooting" = 3,
 }
 
 enum ExifOrientation {
@@ -589,15 +579,34 @@ enum ExifExposureProgram {
     "Normal program" = 2,
     "Aperture priority" = 3,
     "Shutter priority" = 4,
-    "Creative program" = 5,
-    "Action program" = 6,
-    "Portrait mode" = 7,
-    "Landscape mode" = 8,
+    "Creative program (biased toward depth of field)" = 5,
+    "Creative program (biased toward fast shutter speed)" = 6,
+    "Portrait mode (for closeup photos with the background out of focus)" = 7,
+    "Landscape mode (for landscape photos with the background in focus)" = 8,
+}
+
+enum ExifSensitivityType {
+    "Unknown" = 0,
+    "Standard output sensitivity (SOS)" = 1,
+    "Recommended exposure index (REI)" = 2,
+    "ISO speed" = 3,
+    "Standard output sensitivity (SOS) and recommended exposure index (REI)" = 4,
+    "Standard output sensitivity (SOS) and ISO speed" = 5,
+    "Recommended exposure index (REI) and ISO speed" = 6,
+    "Standard output sensitivity (SOS) and recommended exposure index (REI) and ISO speed" = 7,
 }
 
 enum ExifWhiteBalance {
     "Auto white balance" = 0,
     "Manual white balance" = 1,
+}
+
+enum ExifGainControl {
+    "Normal" = 0,
+    "Low gain up" = 1,
+    "High gain Up" = 2,
+    "Low gain down" = 3,
+    "High gain down" = 4,
 }
 
 enum ExifCustomRendered {
@@ -610,10 +619,10 @@ enum ExifCompression {
     "CCITT 1D" = 2,
     "T4/Group 3 Fax" = 3,
     "T6/Group 4 Fax" = 4,
-    "LZW" = 5,
+    "LZW compression" = 5,
     "JPEG compression" = 6,
-    "JPEG (new)" = 7,
-    "Adobe Deflate" = 8,
+    "JPEG compression (new)" = 7,
+    "Deflate/ZIP compression" = 8,
     "JBIG B&W" = 9,
     "JBIG Color" = 10,
     "JPEG" = 99,
@@ -623,7 +632,7 @@ enum ExifCompression {
     "Samsung SRW Compressed" = 32770,
     "CCIRLEW" = 32771,
     "Samsung SRW Compressed 2" = 32772,
-    "PackBits" = 32773,
+    "PackBits compression" = 32773,
     "Thunderscan" = 32809,
     "Kodak KDC Compressed" = 32867,
     "IT8CTPAD" = 32895,
@@ -682,14 +691,38 @@ enum ExifFlash {
     "Flash fired, auto mode, return light detected, red-eye reduction mode" = 0x5f,
 }
 
+enum ExifSubjectDistanceRange {
+    "Unknown" = 0,
+    "Macro" = 1,
+    "Close view" = 2,
+    "Distant view" = 3,
+}
+
 enum ExifYCbCrPositioning {
     "Centered" = 1,
     "Co-sited" = 2,
 }
 
+enum ExifPhotometricInterpretation {
+    "Reversed mono" = 0,
+    "Normal mono" = 1,
+    "RGB" = 2,
+    "Palette" = 3,
+    "CMYK" = 5,
+    "YCbCr" = 6,
+    "CieLAB" = 8,
+}
+
+enum ExifSceneCaptureType {
+    "Standard" = 0,
+    "Landscape" = 1,
+    "Portrait" = 2,
+    "Night scene" = 3,
+}
+
 enum ExifGPSAltitudeRef {
     "Sea level" = 0,
-    "Below sea level" = 1,
+    "Sea level reference" = 1,
 }
 enum ExifGPSMeasureMode {
     "2-dimensional measurement" = 2,
@@ -715,13 +748,15 @@ export const exifTagEnums: ExifTagEnums = {
     Compression: ExifCompression,
     Flash: ExifFlash,
     LightSource: ExifLightSource,
-    Brightness: ExifImageAdjustmentLevel,
     Contrast: ExifImageAdjustmentLevel,
     Saturation: ExifImageAdjustmentLevel,
     Sharpness: ExifImageAdjustmentLevel,
     GainControl: ExifGainControl,
     ExposureMode: ExifExposureMode,
     ExposureProgram: ExifExposureProgram,
+    SensitivityType: ExifSensitivityType,
+    PhotometricInterpretation: ExifPhotometricInterpretation,
+    CompositeImage: ExifCompositeImage,
     WhiteBalance: ExifWhiteBalance,
     SceneCaptureType: ExifSceneCaptureType,
     SubjectDistanceRange: ExifSubjectDistanceRange,
@@ -729,6 +764,7 @@ export const exifTagEnums: ExifTagEnums = {
     MeteringMode: ExifMeteringMode,
     Orientation: ExifOrientation,
     ResolutionUnit: ExifResolutionUnit,
+    FocalPlaneResolutionUnit: ExifResolutionUnit,
     CustomRendered: ExifCustomRendered,
     YCbCrPositioning: ExifYCbCrPositioning,
     GPSAltitudeRef: ExifGPSAltitudeRef,

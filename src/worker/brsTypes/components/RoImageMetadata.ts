@@ -108,6 +108,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     const tagType: string = tags.get(tag.type) ?? "";
                     if (tagType === "GPSTimeStamp") {
                         tagValue = new BrsString(tag.value.join(":"));
+                    } else if (tagType === "SubjectArea") {
+                        tagValue = new BrsString(this.decodeExifSubjectArea(tag.value));
                     } else {
                         tagValue = new BrsString(tag.value.join(", "));
                     }
@@ -148,6 +150,19 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             }
         } catch (err: any) {
             return "";
+        }
+    }
+
+    decodeExifSubjectArea(subjectArea: number[]): string {
+        switch (subjectArea.length) {
+            case 2:
+                return `(x,y) = (${subjectArea[0]}, ${subjectArea[1]})`;
+            case 3:
+                return `Within distance ${subjectArea[2]} of (x, y) = (${subjectArea[0]}, ${subjectArea[1]})`;
+            case 4:
+                return `Within rectangle (width ${subjectArea[0]}, height ${subjectArea[1]}) around (x,y) = (${subjectArea[2]}, ${subjectArea[3]})`;
+            default:
+                return `Unexpected number of components (${subjectArea.length}, expected 2, 3, or 4). ${subjectArea.join(", ")}`;
         }
     }
 
