@@ -3,7 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, Int32, RoAssociativeArray, RoDateTime } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { ExifSections, ExifTags, exifTagEnums } from "../ExifTags";
+import { ExifSections, exifTags, exifTagEnums } from "../ExifTags";
 import * as exifParser from "exif-parser";
 
 export class RoImageMetadata extends BrsComponent implements BrsValue {
@@ -50,7 +50,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         return image;
     }
 
-    getTagData(tag: any, tags: Map<number, string> = ExifTags.exif) {
+    getTagData(tag: any, tags: Map<number, string> = exifTags.exif) {
         let tagValue = new BrsString("");
         switch (typeof tag.value) {
             case "string":
@@ -240,7 +240,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             parser.enableTagNames(false);
             const result = parser.parse();
             result.tags.forEach((tag: any) => {
-                const tagsMap = tag.section === ExifSections.GPS ? ExifTags.gps : ExifTags.exif;
+                const tagsMap = tag.section === ExifSections.GPS ? exifTags.gps : exifTags.exif;
                 const tagTypeName = tagsMap.get(tag.type as number) ?? "";
                 if (tagTypeName === "") {
                     return;

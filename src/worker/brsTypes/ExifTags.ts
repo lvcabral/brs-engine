@@ -1,8 +1,8 @@
 export interface ExifTagType {
-    exif: keyof typeof ExifTags.exif;
-    gps: keyof typeof ExifTags.gps;
+    exif: keyof typeof exifTags.exif;
+    gps: keyof typeof exifTags.gps;
 }
-export const ExifTags = {
+export const exifTags = {
     exif: new Map<number, string>([
         [0x0001, "InteroperabilityIndex"],
         [0x0002, "InteroperabilityVersion"],
