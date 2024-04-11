@@ -56,81 +56,72 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     }
 
     getTagData(tag: any, tags: Map<number, string> = exifTags.exif) {
-        let tagValue: BrsString;
+        let tagValue: string;
         const tagType: string = tags.get(tag.type) ?? "";
         const tagEnum = exifTagEnums[tagType];
         switch (typeof tag.value) {
             case "string":
-                tagValue = new BrsString(tag.value);
+                tagValue = tag.value;
                 break;
             case "number":
                 if (tagEnum !== undefined) {
-                    tagValue = new BrsString(tagEnum[tag.value] ?? tag.value.toString());
+                    tagValue = tagEnum[tag.value] ?? tag.value.toString();
                 } else {
-                    tagValue = new BrsString(tag.value.toString());
+                    tagValue = tag.value.toString();
                 }
                 break;
             default:
                 if (tag.value instanceof Buffer) {
                     tagValue = this.processBufferTag(tagType, tag.value);
-                } else if (Array.isArray(tag.value)) {
+                } else if (tag.value instanceof Array) {
                     if (tagType === "GPSTimeStamp") {
-                        tagValue = new BrsString(tag.value.join(":"));
+                        tagValue = tag.value.join(":");
                     } else if (tagType === "SubjectArea") {
-                        tagValue = new BrsString(this.decodeExifSubjectArea(tag.value));
+                        tagValue = this.decodeExifSubjectArea(tag.value);
                     } else {
-                        tagValue = new BrsString(tag.value.join(", "));
+                        tagValue = tag.value.join(", ");
                     }
                 } else {
-                    tagValue = new BrsString(tag.value.toString());
+                    tagValue = tag.value.toString();
                 }
         }
         return new RoAssociativeArray([
             { name: new BrsString("tag"), value: new Int32(tag.type) },
-            { name: new BrsString("value"), value: tagValue },
+            { name: new BrsString("value"), value: new BrsString(tagValue) },
         ]);
     }
 
-    processBufferTag(tagType: string, buffer: Buffer): BrsString {
-        let tagValue: BrsString;
+    processBufferTag(tagType: string, tagValue: Buffer): string {
+        let value: string;
         switch (tagType) {
             case "UserComment":
-                tagValue = new BrsString(this.decodeUserComment(buffer));
+                value = this.decodeUserComment(tagValue);
                 break;
             case "ComponentsConfiguration":
-                tagValue = new BrsString(this.decodeComponentsConfiguration(buffer));
+                value = this.decodeComponentsConfiguration(tagValue);
                 break;
             case "FileSource":
-                tagValue = new BrsString(
-                    buffer.toString("ascii") === "\x03"
-                        ? "DSC"
-                        : buffer.toString()
-                );
+                value = tagValue.toString("ascii") === "\x03" ? "DSC" : tagValue.toString();
                 break;
             case "SceneType":
-                tagValue = new BrsString(
-                    buffer.toString("ascii") === "\x01"
+                value =
+                    tagValue.toString("ascii") === "\x01"
                         ? "Directly photographed"
-                        : buffer.toString()
-                );
+                        : tagValue.toString();
                 break;
             case "ExifVersion":
-                tagValue = new BrsString(
-                    `Exif Version ${this.decodeVersion(buffer)}`
-                );
+                value = `Exif Version ${this.decodeVersion(tagValue)}`;
                 break;
             case "FlashpixVersion":
-                tagValue = new BrsString(
-                    `Flashpix Version ${this.decodeVersion(buffer)}`
-                );
+                value = `Flashpix Version ${this.decodeVersion(tagValue)}`;
                 break;
             case "InteroperabilityVersion":
-                tagValue = new BrsString(buffer.toString("ascii"));
+                value = tagValue.toString("ascii");
                 break;
             default:
-                tagValue = new BrsString(`${buffer.length} bytes undefined data`);
+                value = `${tagValue.length} bytes undefined data`;
         }
-        return tagValue;
+        return value;
     }
 
     decodeComponentsConfiguration(buffer: Buffer): string {
