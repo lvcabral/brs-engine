@@ -104,7 +104,6 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 return BrsInvalid.Instance;
             }
             try {
-                const properties = new RoAssociativeArray([]);
                 const dataView = new DataView(this.fileData.buffer);
                 const audioProps = mp3Parser.readTags(dataView);
                 if (this.devMode) {
@@ -112,6 +111,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     console.log(util.inspect(audioProps, { depth: 5, colors: true }));
                 }
                 if (audioProps instanceof Array && audioProps.length > 0) {
+                    const properties = new RoAssociativeArray([]);
                     for (let section of audioProps) {
                         if (section?._section?.type !== "frame") {
                             continue;
@@ -129,8 +129,10 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                         properties.set(new BrsString("channels"), new Int32(channels));
                         break;
                     }
+                    return properties;
+                } else {
+                    return BrsInvalid.Instance;
                 }
-                return properties;
             } catch (err: any) {
                 if (this.devMode) {
                     postMessage(`warning,Error reading audio properties:${err.message}`);
@@ -149,20 +151,30 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
-            const options = {
-                include: ["APIC"],
-                noRaw: true,
-            };
-            const iD3tags = NodeID3.read(this.fileData, options);
-            if (typeof iD3tags?.image !== "object") {
-                return BrsInvalid.Instance;
+            const dataView = new DataView(this.fileData.buffer);
+            const audioProps = mp3Parser.readTags(dataView);
+            if (audioProps instanceof Array && audioProps.length > 0) {
+                for (let section of audioProps) {
+                    if (section?._section?.type !== "ID3v2") {
+                        continue;
+                    }
+                    for (let frame of section.frames) {
+                        if (frame?.header?.id === "APIC") {
+                            const cover = new RoAssociativeArray([]);
+                            const imageArray = new Uint8Array(
+                                frame.content.pictureData.buffer,
+                                frame.content.pictureData.byteOffset,
+                                frame.content.pictureData.byteLength
+                            );
+                            cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
+                            cover.set(new BrsString("type"), new BrsString(frame.content.mimeType));
+                            return cover;
+                        }
+                    }
+                    break;
+                }
             }
-            const image = iD3tags.image;
-            const cover = new RoAssociativeArray([]);
-            const imageArray = new Uint8Array(Buffer.from(image.imageBuffer));
-            cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
-            cover.set(new BrsString("type"), new BrsString(image.mime));
-            return cover;
+            return BrsInvalid.Instance;
         },
     });
 }
