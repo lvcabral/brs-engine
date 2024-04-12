@@ -356,6 +356,11 @@ function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
     reader.onload = function (_) {
         manifestMap.clear();
+        manifestMap.set("title", "BRS File");
+        manifestMap.set("major_version", "1");
+        manifestMap.set("minor_version", "0");
+        manifestMap.set("build_version", "0");
+        manifestMap.set("requires_audiometadata", "1");
         currentApp.id = "brs";
         currentApp.title = fileName;
         paths.length = 0;

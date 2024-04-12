@@ -74,6 +74,7 @@
     "libwebpjs": "lvcabral/libwebpjs",
     "long": "^3.2.0",
     "memory-fs": "lvcabral/memory-fs",
+    "mp3-parser": "^0.3.0",
     "nanomatch": "^1.2.13",
     "node-ssdp": "^4.0.1",
     "omggif": "^1.0.10",

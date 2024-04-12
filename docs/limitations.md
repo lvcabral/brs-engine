@@ -8,12 +8,10 @@ There are several features from the **BrightScript** language and components tha
 * The following components are also not implemented yet:
   * `roCECStatus`
   * `roAudioGuide`
-  * `roAudioMetadata`
   * `roDataGramSocket`
   * `roDSA`
   * `roHdmiStatus`
   * `roHttpAgent`
-  * `roImageMetadata`
   * `roMicrophone`
   * `roRemoteInfo`
   * `roRSA`
@@ -30,6 +28,8 @@ There are several features from the **BrightScript** language and components tha
   * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
   * If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
   * No `Timed Metadata` support.
+* The component `roAudioMetadata` only supports MP3 (for now) and the manifest entry `requires_audiometadata=1` needs to be used.
+* The component `roImageMetadata` only supports JPEG images (for now).
 * Video playback via `roVideoPlayer` is implemented, but with some limitations:
   * If the `roVideoPlayer` instance is destroyed the video keeps playing, make sure to call `.stop()` before discarding the object.
   * The following methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
