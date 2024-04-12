@@ -11,13 +11,11 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     private fileData: Buffer | undefined;
-    private url: BrsString = new BrsString("");
     private devMode = false;
 
     constructor() {
         super("roAudioMetadata");
         if (process.env.NODE_ENV === "development") {
-            // Only raise errors when in development mode
             this.devMode = true;
         }
 
@@ -57,7 +55,6 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, url: BrsString) => {
             this.fileData = this.loadFile(interpreter, url.value);
-            this.url = url;
             return BrsBoolean.from(this.fileData !== undefined);
         },
     });
@@ -130,15 +127,13 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                         break;
                     }
                     return properties;
-                } else {
-                    return BrsInvalid.Instance;
                 }
             } catch (err: any) {
                 if (this.devMode) {
                     postMessage(`warning,Error reading audio properties:${err.message}`);
                 }
-                return BrsInvalid.Instance;
             }
+            return BrsInvalid.Instance;
         },
     });
 
@@ -151,27 +146,36 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
-            const dataView = new DataView(this.fileData.buffer);
-            const audioProps = mp3Parser.readTags(dataView);
-            if (audioProps instanceof Array && audioProps.length > 0) {
-                for (let section of audioProps) {
-                    if (section?._section?.type !== "ID3v2") {
-                        continue;
-                    }
-                    for (let frame of section.frames) {
-                        if (frame?.header?.id === "APIC") {
-                            const cover = new RoAssociativeArray([]);
-                            const imageArray = new Uint8Array(
-                                frame.content.pictureData.buffer,
-                                frame.content.pictureData.byteOffset,
-                                frame.content.pictureData.byteLength
-                            );
-                            cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
-                            cover.set(new BrsString("type"), new BrsString(frame.content.mimeType));
-                            return cover;
+            try {
+                const dataView = new DataView(this.fileData.buffer);
+                const audioProps = mp3Parser.readTags(dataView);
+                if (audioProps instanceof Array && audioProps.length > 0) {
+                    for (let section of audioProps) {
+                        if (section?._section?.type !== "ID3v2") {
+                            continue;
                         }
+                        for (let frame of section.frames) {
+                            if (frame?.header?.id === "APIC") {
+                                const cover = new RoAssociativeArray([]);
+                                const imageArray = new Uint8Array(
+                                    frame.content.pictureData.buffer,
+                                    frame.content.pictureData.byteOffset,
+                                    frame.content.pictureData.byteLength
+                                );
+                                cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
+                                cover.set(
+                                    new BrsString("type"),
+                                    new BrsString(frame.content.mimeType)
+                                );
+                                return cover;
+                            }
+                        }
+                        break;
                     }
-                    break;
+                }
+            } catch (err: any) {
+                if (this.devMode) {
+                    postMessage(`warning,Error getting cover art:${err.message}`);
                 }
             }
             return BrsInvalid.Instance;

@@ -11,7 +11,7 @@ Sub Main()
     'https://d3ctxlq1ktw2nl.cloudfront.net/staging/2022-9-24/292843230-44100-2-bf48d8c7c375fb79.mp3
     'https://d3ctxlq1ktw2nl.cloudfront.net/staging/2022-9-24/292843228-44100-2-28d72575538b0e22.mp3
     'https://ia600800.us.archive.org/28/items/ConversandoMioloDePotePodcastT01E01/Conversando-Miolo-de-Pote-Podcast-T01E01.mp3
-	mp3 = CacheFile("https://ia600800.us.archive.org/28/items/ConversandoMioloDePotePodcastT01E01/Conversando-Miolo-de-Pote-Podcast-T01E01.mp3", "podcast.mp3")
+	mp3 = CacheFile("https://d3ctxlq1ktw2nl.cloudfront.net/staging/2022-9-24/292843228-44100-2-28d72575538b0e22.mp3", "podcast.mp3")
     image = SaveCoverArtFile(mp3)
 	if (image <> "")
 		bmp = CreateObject("roBitmap", image)

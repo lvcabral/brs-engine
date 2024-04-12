@@ -10,7 +10,6 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     private fileData: Buffer | undefined;
-    private url: BrsString = new BrsString("");
 
     constructor() {
         super("roImageMetadata");
@@ -183,8 +182,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, url: BrsString) => {
-            this.url = url;
-            this.fileData = this.loadFile(interpreter, this.url.value);
+            this.fileData = this.loadFile(interpreter, url.value);
             return BrsInvalid.Instance;
         },
     });
