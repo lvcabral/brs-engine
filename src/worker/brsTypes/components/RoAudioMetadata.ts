@@ -4,15 +4,22 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import NodeID3 from "node-id3";
+import mp3Parser from "mp3-parser";
+import util from "util";
 
 export class RoAudioMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     private fileData: Buffer | undefined;
     private url: BrsString = new BrsString("");
+    private devMode = false;
 
     constructor() {
         super("roAudioMetadata");
+        if (process.env.NODE_ENV === "development") {
+            // Only raise errors when in development mode
+            this.devMode = true;
+        }
 
         this.registerMethods({
             ifAudioMetadata: [this.setUrl, this.getTags, this.getAudioProperties, this.getCoverArt],
@@ -96,10 +103,40 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
-            // Parse the audio file data and return the audio properties as a RoAssociativeArray.
-            // This is a placeholder implementation and may need to be adjusted based on your specific requirements.
-            let properties = new RoAssociativeArray([]);
-            return properties;
+            try {
+                const properties = new RoAssociativeArray([]);
+                const dataView = new DataView(this.fileData.buffer);
+                const audioProps = mp3Parser.readTags(dataView);
+                if (this.devMode) {
+                    console.log("\nTags:\n-----");
+                    console.log(util.inspect(audioProps, { depth: 5, colors: true }));
+                }
+                if (audioProps instanceof Array && audioProps.length > 0) {
+                    for (let section of audioProps) {
+                        if (section?._section?.type !== "frame") {
+                            continue;
+                        }
+                        const fileSizeInBytes = this.fileData.byteLength;
+                        const headerSize = section._section?.offset ?? 0;
+                        const bitrateInKbps = section.header?.bitrate ?? 48;
+                        const lengthInSeconds =
+                            ((fileSizeInBytes - headerSize) * 8) / (bitrateInKbps * 1000);
+                        properties.set(new BrsString("length"), new Int32(lengthInSeconds));
+                        properties.set(new BrsString("bitrate"), new Int32(bitrateInKbps));
+                        const sampleRate = audioProps[1]?.header?.samplingRate ?? 0;
+                        properties.set(new BrsString("samplerate"), new Int32(sampleRate));
+                        const channels = audioProps[1]?.header?.channelModeBits === "11" ? 1 : 2;
+                        properties.set(new BrsString("channels"), new Int32(channels));
+                        break;
+                    }
+                }
+                return properties;
+            } catch (err: any) {
+                if (this.devMode) {
+                    postMessage(`warning,Error reading audio properties:${err.message}`);
+                }
+                return BrsInvalid.Instance;
+            }
         },
     });
 
@@ -122,7 +159,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             }
             const image = iD3tags.image;
             const cover = new RoAssociativeArray([]);
-            const imageArray = new Uint8Array(Buffer.from(image.imageBuffer))
+            const imageArray = new Uint8Array(Buffer.from(image.imageBuffer));
             cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
             cover.set(new BrsString("type"), new BrsString(image.mime));
             return cover;
