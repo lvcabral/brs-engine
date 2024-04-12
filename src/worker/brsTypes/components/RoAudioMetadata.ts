@@ -8,7 +8,7 @@ import mp3Parser from "mp3-parser";
 export class RoAudioMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
-    private fileData: Buffer | undefined;
+    private fileData: DataView | undefined;
     private devMode = false;
 
     constructor() {
@@ -30,7 +30,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    loadFile(interpreter: Interpreter, file: string) {
+    private loadFile(interpreter: Interpreter, file: string) {
         let url = new URL(file);
         let audio: Buffer | undefined;
         const volume = interpreter.fileSystem.get(url.protocol);
@@ -38,19 +38,46 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             try {
                 audio = volume.readFileSync(url.pathname);
             } catch (err: any) {
-                postMessage(`error,Error loading audio:${url.pathname} - ${err.message}`);
+                if (this.devMode) {
+                    postMessage(
+                        `warning,[roAudioMetadata] Error loading audio:${url.pathname} - ${err.message}`
+                    );
+                }
             }
-        } else {
-            postMessage(`error,Invalid volume:${url.pathname}`);
+        } else if (this.devMode) {
+            postMessage(`warning,[roAudioMetadata] Invalid volume:${url.pathname}`);
         }
-        return audio ? Buffer.from(audio) : undefined;
+        if (audio instanceof Buffer) {
+            return new DataView(audio.buffer);
+        }
+        return audio ? new DataView(audio as ArrayBuffer) : undefined;
     }
 
-    parseIntSafe(str: string): number {
+    private getCoverArtFromFrame(frame: any): RoAssociativeArray | null {
+        if (frame?.header?.id === "APIC") {
+            const cover = new RoAssociativeArray([]);
+            const imageArray = new Uint8Array(
+                frame.content.pictureData.buffer,
+                frame.content.pictureData.byteOffset,
+                frame.content.pictureData.byteLength
+            );
+            cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
+            cover.set(new BrsString("type"), new BrsString(frame.content.mimeType));
+            return cover;
+        }
+        return null;
+    }
+
+    private parseIntSafe(str: string): number {
         const result = parseInt(str, 10);
         return isNaN(result) ? 0 : result;
     }
 
+    // ifAudioMetadata -------------------------------------------
+
+    /**
+     * Sets the URL to the audio file. Only file URLs are initially supported.
+     */
     setUrl = new Callable("setUrl", {
         signature: {
             args: [new StdlibArgument("url", ValueKind.String)],
@@ -62,6 +89,9 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
         },
     });
 
+    /**
+     * Returns an associative array that contains a simple set of tags that are common to most audio formats.
+     */
     getTags = new Callable("getTags", {
         signature: {
             args: [],
@@ -73,8 +103,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             }
 
             try {
-                const dataView = new DataView(this.fileData.buffer);
-                const audioProps = mp3Parser.readTags(dataView);
+                const audioProps = mp3Parser.readTags(this.fileData);
                 let tags = new RoAssociativeArray([
                     { name: new BrsString("genre"), value: new BrsString("") },
                     { name: new BrsString("title"), value: new BrsString("") },
@@ -86,51 +115,32 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     { name: new BrsString("track"), value: new Int32(0) },
                 ]);
                 if (audioProps instanceof Array && audioProps.length > 0) {
+                    const idToTagMap = new Map([
+                        ["TCON", "genre"],
+                        ["TIT2", "title"],
+                        ["TPE1", "artist"],
+                        ["TALB", "album"],
+                        ["TCOM", "composer"],
+                        ["COMM", "comment"],
+                        ["TYER", "year"],
+                        ["TRCK", "track"],
+                    ]);
                     for (let section of audioProps) {
                         if (section?._section?.type !== "ID3v2") {
                             continue;
                         }
                         for (let frame of section.frames) {
-                            if (frame?.header?.id === "TCON") {
-                                tags.set(
-                                    new BrsString("genre"),
-                                    new BrsString(frame.content.value)
-                                );
-                            } else if (frame?.header?.id === "TIT2") {
-                                tags.set(
-                                    new BrsString("title"),
-                                    new BrsString(frame.content.value)
-                                );
-                            } else if (frame?.header?.id === "TPE1") {
-                                tags.set(
-                                    new BrsString("artist"),
-                                    new BrsString(frame.content.value)
-                                );
-                            } else if (frame?.header?.id === "TALB") {
-                                tags.set(
-                                    new BrsString("album"),
-                                    new BrsString(frame.content.value)
-                                );
-                            } else if (frame?.header?.id === "TCOM") {
-                                tags.set(
-                                    new BrsString("composer"),
-                                    new BrsString(frame.content.value)
-                                );
-                            } else if (frame?.header?.id === "COMM") {
-                                tags.set(
-                                    new BrsString("comment"),
-                                    new BrsString(frame.content.text)
-                                );
-                            } else if (frame?.header?.id === "TYER") {
-                                tags.set(
-                                    new BrsString("year"),
-                                    new Int32(this.parseIntSafe(frame.content.value))
-                                );
-                            } else if (frame?.header?.id === "TRCK") {
-                                tags.set(
-                                    new BrsString("track"),
-                                    new Int32(this.parseIntSafe(frame.content.value))
-                                );
+                            const tagName = idToTagMap.get(frame?.header?.id);
+                            const tagContent = frame?.content?.value;
+                            if (typeof tagName === "string" && typeof tagContent === "string") {
+                                if (["year", "track"].includes(tagName)) {
+                                    tags.set(
+                                        new BrsString(tagName),
+                                        new Int32(this.parseIntSafe(tagContent))
+                                    );
+                                } else {
+                                    tags.set(new BrsString(tagName), new BrsString(tagContent));
+                                }
                             }
                         }
                         break;
@@ -139,13 +149,18 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (this.devMode) {
-                    postMessage(`warning,Error getting audio tags:${err.message}`);
+                    postMessage(
+                        `warning,[roAudioMetadata] Error getting audio tags:${err.message}`
+                    );
                 }
             }
             return BrsInvalid.Instance;
         },
     });
 
+    /**
+     * Returns an associative array with a simple set of audio properties.
+     */
     getAudioProperties = new Callable("getAudioProperties", {
         signature: {
             args: [],
@@ -156,8 +171,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 return BrsInvalid.Instance;
             }
             try {
-                const dataView = new DataView(this.fileData.buffer);
-                const audioProps = mp3Parser.readTags(dataView);
+                const audioProps = mp3Parser.readTags(this.fileData);
                 if (audioProps instanceof Array && audioProps.length > 0) {
                     const properties = new RoAssociativeArray([]);
                     for (let section of audioProps) {
@@ -181,13 +195,18 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (this.devMode) {
-                    postMessage(`warning,Error reading audio properties:${err.message}`);
+                    postMessage(
+                        `warning,[roAudioMetadata] Error reading audio properties:${err.message}`
+                    );
                 }
             }
             return BrsInvalid.Instance;
         },
     });
 
+    /**
+     * Returns the cover art, if available.
+     */
     getCoverArt = new Callable("getCoverArt", {
         signature: {
             args: [],
@@ -198,27 +217,16 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 return BrsInvalid.Instance;
             }
             try {
-                const dataView = new DataView(this.fileData.buffer);
-                const audioProps = mp3Parser.readTags(dataView);
+                const audioProps = mp3Parser.readTags(this.fileData);
                 if (audioProps instanceof Array && audioProps.length > 0) {
                     for (let section of audioProps) {
                         if (section?._section?.type !== "ID3v2") {
                             continue;
                         }
                         for (let frame of section.frames) {
-                            if (frame?.header?.id === "APIC") {
-                                const cover = new RoAssociativeArray([]);
-                                const imageArray = new Uint8Array(
-                                    frame.content.pictureData.buffer,
-                                    frame.content.pictureData.byteOffset,
-                                    frame.content.pictureData.byteLength
-                                );
-                                cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
-                                cover.set(
-                                    new BrsString("type"),
-                                    new BrsString(frame.content.mimeType)
-                                );
-                                return cover;
+                            const coverArt = this.getCoverArtFromFrame(frame);
+                            if (coverArt) {
+                                return coverArt;
                             }
                         }
                         break;
@@ -226,7 +234,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (this.devMode) {
-                    postMessage(`warning,Error getting cover art:${err.message}`);
+                    postMessage(`warning,[roAudioMetadata] Error getting cover art:${err.message}`);
                 }
             }
             return BrsInvalid.Instance;
