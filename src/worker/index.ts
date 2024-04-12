@@ -304,10 +304,15 @@ function setupPackageFiles(
                 } else if (["audio", "video"].includes(filePath.type)) {
                     // As the media files are played on the renderer process we need to
                     // save a mock file to allow file exist checking and save the index
-                    volume.writeFileSync(`/${filePath.url}`, filePath.id.toString());
+                    let fileData = filePath.id.toString();
                     if (filePath.type === "audio") {
                         interpreter.audioId = filePath.id;
+                        if (filePath.binId) {
+                            // If audio metadata is enabled we have the audio file data
+                            fileData = binaries[filePath.binId];
+                        }
                     }
+                    volume.writeFileSync(`/${filePath.url}`, fileData);
                 } else if (filePath.type === "text" && Array.isArray(texts)) {
                     if (filePath.url === "source/var") {
                         iv = texts[filePath.id];

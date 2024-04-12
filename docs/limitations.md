@@ -8,12 +8,10 @@ There are several features from the **BrightScript** language and components tha
 * The following components are also not implemented yet:
   * `roCECStatus`
   * `roAudioGuide`
-  * `roAudioMetadata`
   * `roDataGramSocket`
   * `roDSA`
   * `roHdmiStatus`
   * `roHttpAgent`
-  * `roImageMetadata`
   * `roMicrophone`
   * `roRemoteInfo`
   * `roRSA`

@@ -166,9 +166,15 @@ function runBrsFiles(files: any[]) {
         }
     });
     if (id > 0) {
+        const manifest = new Map();
+        manifest.set("title", "CLI App");
+        manifest.set("major_version", "1");
+        manifest.set("minor_version", "0");
+        manifest.set("build_version", "0");
+        manifest.set("requires_audiometadata", "1");
         const payload = {
             device: deviceData,
-            manifest: new Map(),
+            manifest: manifest,
             input: [],
             paths: paths,
             brs: source,

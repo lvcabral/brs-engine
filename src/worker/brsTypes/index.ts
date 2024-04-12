@@ -75,6 +75,7 @@ export * from "./components/RoURLEvent";
 export * from "./components/RoAudioPlayer";
 export * from "./components/RoAudioPlayerEvent";
 export * from "./components/RoAudioResource";
+export * from "./components/RoAudioMetadata";
 export * from "./components/RoVideoPlayer";
 export * from "./components/RoVideoPlayerEvent";
 export * from "./components/RoInput";

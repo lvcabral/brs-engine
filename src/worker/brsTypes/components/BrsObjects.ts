@@ -23,6 +23,7 @@ import { RoBitmap, createBitmap } from "./RoBitmap";
 import { createRegion } from "./RoRegion";
 import { RoScreen } from "./RoScreen";
 import { RoImageMetadata } from "./RoImageMetadata";
+import { RoAudioMetadata } from "./RoAudioMetadata";
 import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoVideoPlayer } from "./RoVideoPlayer";
 import { RoXMLElement } from "./RoXMLElement";
@@ -104,6 +105,7 @@ export const BrsObjects = new Map<string, Function>([
         "roaudioresource",
         (interpreter: Interpreter, name: BrsString) => createAudioResource(interpreter, name),
     ],
+    ["roaudiometadata", (interpreter: Interpreter) => new RoAudioMetadata()],
     ["rovideoplayer", (interpreter: Interpreter) => new RoVideoPlayer()],
     ["rocompositor", (interpreter: Interpreter) => new RoCompositor()],
     [

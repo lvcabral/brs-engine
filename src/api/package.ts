@@ -131,7 +131,13 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         txts.push(strFromU8(fileData));
         txtId++;
     } else if (audioExt.has(ext)) {
-        paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
+        if (currentApp.audioMetadata) {
+            paths.push({ url: relativePath, id: audId, binId: binId, type: "audio", format: ext });
+            bins.push(fileData.buffer);
+            binId++;
+        } else {
+            paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
+        }
         if (context.inBrowser) {
             addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
         }
@@ -154,6 +160,7 @@ function processManifest(content: string) {
 
     currentApp.title = manifestMap.get("title") || "No Title";
     currentApp.subtitle = manifestMap.get("subtitle") || "";
+    currentApp.audioMetadata = manifestMap.get("requires_audiometadata") === "1";
 
     const majorVersion = parseInt(manifestMap.get("major_version")) || 0;
     const minorVersion = parseInt(manifestMap.get("minor_version")) || 0;
@@ -304,6 +311,7 @@ function createCurrentApp() {
         password: "",
         clearDisplay: true,
         debugOnCrash: false,
+        audioMetadata: false,
         running: false,
     };
 }
