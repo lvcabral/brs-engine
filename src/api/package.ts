@@ -120,33 +120,59 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     if (relativePath.endsWith("/")) {
         // ignore directory
     } else if (lcasePath.startsWith("source") && ext === "brs") {
-        paths.push({ url: relativePath, id: srcId, type: "source" });
-        source.push(strFromU8(fileData));
-        srcId++;
+        processSourceFile(relativePath, fileData);
     } else if (
         ["manifest", "source/var"].includes(lcasePath) ||
-        ["csv", "xml", "json", "txt", "ts"].includes(ext)
+        ["csv", "xml", "json", "txt", "ts", "yaml", "md", "htm", "html"].includes(ext)
     ) {
-        paths.push({ url: relativePath, id: txtId, type: "text" });
-        txts.push(strFromU8(fileData));
-        txtId++;
+        processTextFile(relativePath, fileData);
     } else if (audioExt.has(ext)) {
-        paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
-        if (context.inBrowser) {
-            addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
-        }
-        audId++;
+        processAudioFile(relativePath, fileData, ext);
     } else if (videoExt.has(ext)) {
-        paths.push({ url: relativePath, id: 0, type: "video", format: ext });
-        if (context.inBrowser) {
-            addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
-        }
+        processVideoFile(relativePath, fileData, ext);
     } else {
         const binType = lcasePath === "source/data" ? "pcode" : "binary";
-        paths.push({ url: relativePath, id: binId, type: binType });
+        processBinaryFile(relativePath, fileData, binType);
+    }
+}
+
+function processSourceFile(relativePath: string, fileData: Uint8Array) {
+    paths.push({ url: relativePath, id: srcId, type: "source" });
+    source.push(strFromU8(fileData));
+    srcId++;
+}
+
+function processTextFile(relativePath: string, fileData: Uint8Array) {
+    paths.push({ url: relativePath, id: txtId, type: "text" });
+    txts.push(strFromU8(fileData));
+    txtId++;
+}
+
+function processAudioFile(relativePath: string, fileData: Uint8Array, ext: string) {
+    if (currentApp.audioMetadata) {
+        paths.push({ url: relativePath, id: audId, binId: binId, type: "audio", format: ext });
         bins.push(fileData.buffer);
         binId++;
+    } else {
+        paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
     }
+    if (context.inBrowser) {
+        addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
+    }
+    audId++;
+}
+
+function processVideoFile(relativePath: string, fileData: Uint8Array, ext: string) {
+    paths.push({ url: relativePath, id: 0, type: "video", format: ext });
+    if (context.inBrowser) {
+        addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
+    }
+}
+
+function processBinaryFile(relativePath: string, fileData: Uint8Array, binType: string) {
+    paths.push({ url: relativePath, id: binId, type: binType });
+    bins.push(fileData.buffer);
+    binId++;
 }
 
 function processManifest(content: string) {
@@ -154,6 +180,7 @@ function processManifest(content: string) {
 
     currentApp.title = manifestMap.get("title") || "No Title";
     currentApp.subtitle = manifestMap.get("subtitle") || "";
+    currentApp.audioMetadata = manifestMap.get("requires_audiometadata") === "1";
 
     const majorVersion = parseInt(manifestMap.get("major_version")) || 0;
     const minorVersion = parseInt(manifestMap.get("minor_version")) || 0;
@@ -304,6 +331,7 @@ function createCurrentApp() {
         password: "",
         clearDisplay: true,
         debugOnCrash: false,
+        audioMetadata: false,
         running: false,
     };
 }

@@ -282,7 +282,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         const type = fileType(bytes);
         if (type && audioExt.has(type.ext)) {
             this.interpreter.audioId++;
-            volume.writeFileSync(path.pathname, this.interpreter.audioId.toString());
+            if (this.interpreter.manifest.get("requires_audiometadata") === "1") {
+                volume.writeFileSync(path.pathname, data);
+            } else {
+                volume.writeFileSync(path.pathname, this.interpreter.audioId.toString());
+            }
             postMessage({
                 audioPath: path.protocol + path.pathname,
                 audioFormat: type.ext,

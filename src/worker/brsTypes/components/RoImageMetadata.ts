@@ -10,10 +10,14 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     private fileData: Buffer | undefined;
-    private url: BrsString = new BrsString("");
+    private devMode = false;
 
     constructor() {
         super("roImageMetadata");
+
+        if (process.env.NODE_ENV === "development") {
+            this.devMode = true;
+        }
 
         this.registerMethods({
             ifImageMetadata: [
@@ -34,7 +38,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    loadFile(interpreter: Interpreter, file: string) {
+    private loadFile(interpreter: Interpreter, file: string) {
         let url = new URL(file);
         let image: Buffer | undefined;
         const volume = interpreter.fileSystem.get(url.protocol);
@@ -42,20 +46,24 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             try {
                 image = volume.readFileSync(url.pathname);
             } catch (err: any) {
-                postMessage(`error,Error loading bitmap:${url.pathname} - ${err.message}`);
+                if (this.devMode) {
+                    postMessage(
+                        `warning,[roImageMetadata] Error loading bitmap:${url.pathname} - ${err.message}`
+                    );
+                }
             }
-        } else {
-            postMessage(`error,Invalid volume:${url.pathname}`);
+        } else if (this.devMode) {
+            postMessage(`warning,[roImageMetadata] Invalid volume:${url.pathname}`);
         }
         return image;
     }
 
-    findValue(tags: ExifTag[], section: number, type: number): any {
+    private findValue(tags: ExifTag[], section: number, type: number): any {
         const tag = tags.find((tag) => tag.section === section && tag.type === type);
         return tag ?? null;
     }
 
-    getTagData(tag: any, tags: Map<number, string> = exifTags.exif) {
+    private getTagData(tag: any, tags: Map<number, string> = exifTags.exif) {
         let tagValue: string;
         const tagType: string = tags.get(tag.type) ?? "";
         const tagEnum = exifTagEnums[tagType];
@@ -93,7 +101,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         ]);
     }
 
-    processBufferTag(tagType: string, tagValue: Buffer): string {
+    private processBufferTag(tagType: string, tagValue: Buffer): string {
         let value: string;
         switch (tagType) {
             case "UserComment":
@@ -126,7 +134,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         return value;
     }
 
-    decodeComponentsConfiguration(buffer: Buffer): string {
+    private decodeComponentsConfiguration(buffer: Buffer): string {
         const components = ["-", "Y", "Cb", "Cr", "R", "G", "B"];
         let configuration = "";
         for (let i = 0; i < Math.max(buffer.length, 4); i++) {
@@ -135,7 +143,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         return configuration.trim();
     }
 
-    decodeUserComment(buffer: Buffer): string {
+    private decodeUserComment(buffer: Buffer): string {
         let encoding = buffer.toString("ascii", 0, 8);
         let commentBuffer = buffer.subarray(8);
 
@@ -156,7 +164,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         }
     }
 
-    decodeExifSubjectArea(subjectArea: number[]): string {
+    private decodeExifSubjectArea(subjectArea: number[]): string {
         switch (subjectArea.length) {
             case 2:
                 return `(x,y) = (${subjectArea[0]}, ${subjectArea[1]})`;
@@ -171,24 +179,31 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         }
     }
 
-    decodeVersion(buffer: Buffer) {
+    private decodeVersion(buffer: Buffer) {
         let decoded = new TextDecoder("ascii").decode(buffer);
         let version = parseFloat(`${decoded.slice(0, 2)}.${decoded.slice(2)}`);
         return Number.isInteger(version) ? version + ".0" : version.toString();
     }
 
+    // ifImageMetadata -------------------------------------------
+
+    /**
+     * Set the URL of the image file to read metadata from.
+     */
     private setUrl = new Callable("setUrl", {
         signature: {
             args: [new StdlibArgument("url", ValueKind.String)],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, url: BrsString) => {
-            this.url = url;
-            this.fileData = this.loadFile(interpreter, this.url.value);
+            this.fileData = this.loadFile(interpreter, url.value);
             return BrsInvalid.Instance;
         },
     });
 
+    /**
+     * Returns a set of simple and common image metadata
+     */
     private getMetadata = new Callable("getMetadata", {
         signature: {
             args: [],
@@ -228,6 +243,9 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     );
                 }
             } catch (err: any) {
+                if (this.devMode) {
+                    postMessage(`warning,[roImageMetadata] Error reading metadata:${err.message}`);
+                }
                 fields.set(new BrsString("width"), new Int32(0));
                 fields.set(new BrsString("height"), new Int32(0));
                 fields.set(new BrsString("comment"), new BrsString(""));
@@ -237,6 +255,9 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         },
     });
 
+    /**
+     * Returns a thumbnail image if one is embedded in the image metadata and the corresponding associative array with image data.
+     */
     private getThumbnail = new Callable("getThumbnail", {
         signature: {
             args: [],
@@ -263,12 +284,17 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     }
                 }
             } catch (err: any) {
-                return BrsInvalid.Instance;
+                if (this.devMode) {
+                    postMessage(`warning,[roImageMetadata] Error getting thumbnail:${err.message}`);
+                }
             }
             return BrsInvalid.Instance;
         },
     });
 
+    /**
+     * Returns all of the raw EXIF metadata.
+     */
     private getRawExif = new Callable("getRawExif", {
         signature: {
             args: [],
@@ -330,11 +356,17 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     { name: new BrsString("thumbnail"), value: sectionThumbnail },
                 ]);
             } catch (err: any) {
+                if (this.devMode) {
+                    postMessage(`warning,[roImageMetadata] Error getting raw exif:${err.message}`);
+                }
                 return new RoAssociativeArray([]);
             }
         },
     });
 
+    /**
+     * Returns the raw data for an Exif tag. The method provides direct access to a specific raw EXIF tag.
+     */
     private getRawExifTag = new Callable("getRawExifTag", {
         signature: {
             args: [
@@ -366,6 +398,11 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 const tag = this.findValue(result.tags, sectionId, tagnum.getValue());
                 return tag ? this.getTagData(tag, tagsMap) : new RoAssociativeArray([]);
             } catch (err: any) {
+                if (this.devMode) {
+                    postMessage(
+                        `warning,[roImageMetadata] Error getting raw exif tag:${err.message}`
+                    );
+                }
                 return new RoAssociativeArray([]);
             }
         },
