@@ -53,17 +53,43 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
         return audio ? new DataView(audio as ArrayBuffer) : undefined;
     }
 
-    private getCoverArtFromFrame(frame: any): RoAssociativeArray | null {
-        if (frame?.header?.id === "APIC") {
-            const cover = new RoAssociativeArray([]);
-            const imageArray = new Uint8Array(
-                frame.content.pictureData.buffer,
-                frame.content.pictureData.byteOffset,
-                frame.content.pictureData.byteLength
-            );
-            cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
-            cover.set(new BrsString("type"), new BrsString(frame.content.mimeType));
-            return cover;
+    private updateTagsFromSection(tags: RoAssociativeArray, frames: any) {
+        const idToTagMap = new Map([
+            ["TCON", "genre"],
+            ["TIT2", "title"],
+            ["TPE1", "artist"],
+            ["TALB", "album"],
+            ["TCOM", "composer"],
+            ["COMM", "comment"],
+            ["TYER", "year"],
+            ["TRCK", "track"],
+        ]);
+        for (let frame of frames) {
+            const tagName = idToTagMap.get(frame?.header?.id);
+            const tagContent = frame?.content?.value;
+            if (typeof tagName === "string" && typeof tagContent === "string") {
+                if (["year", "track"].includes(tagName)) {
+                    tags.set(new BrsString(tagName), new Int32(this.parseIntSafe(tagContent)));
+                } else {
+                    tags.set(new BrsString(tagName), new BrsString(tagContent));
+                }
+            }
+        }
+    }
+
+    private getCoverArtFromSection(frames: any): RoAssociativeArray | null {
+        for (let frame of frames) {
+            if (frame?.header?.id === "APIC") {
+                const cover = new RoAssociativeArray([]);
+                const imageArray = new Uint8Array(
+                    frame.content.pictureData.buffer,
+                    frame.content.pictureData.byteOffset,
+                    frame.content.pictureData.byteLength
+                );
+                cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
+                cover.set(new BrsString("type"), new BrsString(frame.content.mimeType));
+                return cover;
+            }
         }
         return null;
     }
@@ -115,35 +141,11 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     { name: new BrsString("track"), value: new Int32(0) },
                 ]);
                 if (audioProps instanceof Array && audioProps.length > 0) {
-                    const idToTagMap = new Map([
-                        ["TCON", "genre"],
-                        ["TIT2", "title"],
-                        ["TPE1", "artist"],
-                        ["TALB", "album"],
-                        ["TCOM", "composer"],
-                        ["COMM", "comment"],
-                        ["TYER", "year"],
-                        ["TRCK", "track"],
-                    ]);
                     for (let section of audioProps) {
-                        if (section?._section?.type !== "ID3v2") {
-                            continue;
+                        if (section?._section?.type === "ID3v2") {
+                            this.updateTagsFromSection(tags, section.frames);
+                            break;
                         }
-                        for (let frame of section.frames) {
-                            const tagName = idToTagMap.get(frame?.header?.id);
-                            const tagContent = frame?.content?.value;
-                            if (typeof tagName === "string" && typeof tagContent === "string") {
-                                if (["year", "track"].includes(tagName)) {
-                                    tags.set(
-                                        new BrsString(tagName),
-                                        new Int32(this.parseIntSafe(tagContent))
-                                    );
-                                } else {
-                                    tags.set(new BrsString(tagName), new BrsString(tagContent));
-                                }
-                            }
-                        }
-                        break;
                     }
                     return tags;
                 }
@@ -220,16 +222,10 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 const audioProps = mp3Parser.readTags(this.fileData);
                 if (audioProps instanceof Array && audioProps.length > 0) {
                     for (let section of audioProps) {
-                        if (section?._section?.type !== "ID3v2") {
-                            continue;
+                        if (section?._section?.type === "ID3v2") {
+                            const coverArt = this.getCoverArtFromSection(section.frames);
+                            return coverArt ?? BrsInvalid.Instance;
                         }
-                        for (let frame of section.frames) {
-                            const coverArt = this.getCoverArtFromFrame(frame);
-                            if (coverArt) {
-                                return coverArt;
-                            }
-                        }
-                        break;
                     }
                 }
             } catch (err: any) {
