@@ -3,9 +3,7 @@ import { BrsType, Int32, RoAssociativeArray, RoByteArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
-import NodeID3 from "node-id3";
 import mp3Parser from "mp3-parser";
-import util from "util";
 
 export class RoAudioMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -48,6 +46,11 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
         return audio ? Buffer.from(audio) : undefined;
     }
 
+    parseIntSafe(str: string): number {
+        const result = parseInt(str, 10);
+        return isNaN(result) ? 0 : result;
+    }
+
     setUrl = new Callable("setUrl", {
         signature: {
             args: [new StdlibArgument("url", ValueKind.String)],
@@ -68,26 +71,78 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
-            const options = {
-                exclude: ["APIC"],
-                noRaw: true,
-            };
-            const iD3tags = NodeID3.read(this.fileData, options);
-            if (!iD3tags || Object.keys(iD3tags).length === 0) {
-                return BrsInvalid.Instance;
+
+            try {
+                const dataView = new DataView(this.fileData.buffer);
+                const audioProps = mp3Parser.readTags(dataView);
+                let tags = new RoAssociativeArray([
+                    { name: new BrsString("genre"), value: new BrsString("") },
+                    { name: new BrsString("title"), value: new BrsString("") },
+                    { name: new BrsString("artist"), value: new BrsString("") },
+                    { name: new BrsString("album"), value: new BrsString("") },
+                    { name: new BrsString("composer"), value: new BrsString("") },
+                    { name: new BrsString("comment"), value: new BrsString("") },
+                    { name: new BrsString("year"), value: new Int32(0) },
+                    { name: new BrsString("track"), value: new Int32(0) },
+                ]);
+                if (audioProps instanceof Array && audioProps.length > 0) {
+                    for (let section of audioProps) {
+                        if (section?._section?.type !== "ID3v2") {
+                            continue;
+                        }
+                        for (let frame of section.frames) {
+                            if (frame?.header?.id === "TCON") {
+                                tags.set(
+                                    new BrsString("genre"),
+                                    new BrsString(frame.content.value)
+                                );
+                            } else if (frame?.header?.id === "TIT2") {
+                                tags.set(
+                                    new BrsString("title"),
+                                    new BrsString(frame.content.value)
+                                );
+                            } else if (frame?.header?.id === "TPE1") {
+                                tags.set(
+                                    new BrsString("artist"),
+                                    new BrsString(frame.content.value)
+                                );
+                            } else if (frame?.header?.id === "TALB") {
+                                tags.set(
+                                    new BrsString("album"),
+                                    new BrsString(frame.content.value)
+                                );
+                            } else if (frame?.header?.id === "TCOM") {
+                                tags.set(
+                                    new BrsString("composer"),
+                                    new BrsString(frame.content.value)
+                                );
+                            } else if (frame?.header?.id === "COMM") {
+                                tags.set(
+                                    new BrsString("comment"),
+                                    new BrsString(frame.content.text)
+                                );
+                            } else if (frame?.header?.id === "TYER") {
+                                tags.set(
+                                    new BrsString("year"),
+                                    new Int32(this.parseIntSafe(frame.content.value))
+                                );
+                            } else if (frame?.header?.id === "TRCK") {
+                                tags.set(
+                                    new BrsString("track"),
+                                    new Int32(this.parseIntSafe(frame.content.value))
+                                );
+                            }
+                        }
+                        break;
+                    }
+                    return tags;
+                }
+            } catch (err: any) {
+                if (this.devMode) {
+                    postMessage(`warning,Error getting audio tags:${err.message}`);
+                }
             }
-            let tags = new RoAssociativeArray([]);
-            tags.set(new BrsString("title"), new BrsString(iD3tags.title ?? ""));
-            tags.set(new BrsString("artist"), new BrsString(iD3tags.artist ?? ""));
-            tags.set(new BrsString("album"), new BrsString(iD3tags.album ?? ""));
-            tags.set(new BrsString("composer"), new BrsString(iD3tags.composer ?? ""));
-            tags.set(new BrsString("comment"), new BrsString(iD3tags.comment?.text ?? ""));
-            tags.set(new BrsString("genre"), new BrsString(iD3tags.genre ?? ""));
-            const year = iD3tags.year ? parseInt(iD3tags.year) : 0;
-            tags.set(new BrsString("year"), new Int32(year));
-            const track = iD3tags.trackNumber ? parseInt(iD3tags.trackNumber) : 0;
-            tags.set(new BrsString("track"), new Int32(track));
-            return tags;
+            return BrsInvalid.Instance;
         },
     });
 
@@ -103,10 +158,6 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             try {
                 const dataView = new DataView(this.fileData.buffer);
                 const audioProps = mp3Parser.readTags(dataView);
-                if (this.devMode) {
-                    console.log("\nTags:\n-----");
-                    console.log(util.inspect(audioProps, { depth: 5, colors: true }));
-                }
                 if (audioProps instanceof Array && audioProps.length > 0) {
                     const properties = new RoAssociativeArray([]);
                     for (let section of audioProps) {

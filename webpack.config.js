@@ -51,7 +51,6 @@ module.exports = (env) => {
                     path: require.resolve("path-browserify"),
                     stream: require.resolve("stream-browserify"),
                     "process/browser": require.resolve("process/browser"),
-                    zlib: require.resolve("browserify-zlib"),
                     timers: false,
                     vm: false,
                 },
