@@ -23,7 +23,6 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
     private cipherKey: string;
     private cipherIV: string;
     private cipherPadding: boolean;
-    private raiseCryptoErrors = false;
 
     constructor() {
         super("roEVPCipher");
@@ -33,10 +32,6 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         this.cipherKey = "";
         this.cipherIV = "";
         this.cipherPadding = false;
-        if (process.env.NODE_ENV === "development") {
-            // Only raise HTTP errors when in development mode
-            this.raiseCryptoErrors = true;
-        }
         this.registerMethods({
             ifEVPCipher: [this.setup, this.update, this.reinit, this.process, this.final],
         });
@@ -50,7 +45,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    setupCipher(encrypt: boolean, format: string, key: string, iv: string, padding: boolean) {
+    setupCipher(interpreter: Interpreter, encrypt: boolean, format: string, key: string, iv: string, padding: boolean) {
         try {
             this.cipherEncrypt = encrypt;
             this.cipherFormat = format;
@@ -76,8 +71,8 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             }
             return 0;
         } catch (err: any) {
-            if (this.raiseCryptoErrors) {
-                postMessage(`error,[roEVPCipher] Setup error: ${err.message}`);
+            if (interpreter.isDevMode) {
+                postMessage(`warning,[roEVPCipher] Setup error: ${err.message}`);
             }
             this.cipher = null;
             this.cipherFormat = "";
@@ -98,14 +93,14 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         return Buffer.from("");
     }
 
-    finalResult() {
+    finalResult(interpreter: Interpreter) {
         if (this.cipher) {
             try {
                 let encrypted = this.cipher.final();
                 this.cipher = null;
                 return encrypted;
             } catch (err: any) {
-                if (this.raiseCryptoErrors) {
+                if (interpreter.isDevMode) {
                     postMessage(`error,[roEVPCipher] Error: ${err.message}`);
                 }
                 this.cipher = null;
@@ -128,7 +123,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (
-            _: Interpreter,
+            interpreter: Interpreter,
             encrypt: BrsBoolean,
             format: BrsString,
             key: BrsString,
@@ -137,6 +132,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         ) => {
             return new Int32(
                 this.setupCipher(
+                    interpreter,
                     encrypt.toBoolean(),
                     format.value,
                     key.value,
@@ -153,10 +149,11 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.cipherFormat !== "" && this.cipherKey !== "" && this.cipherIV !== "") {
                 return new Int32(
                     this.setupCipher(
+                        interpreter,
                         this.cipherEncrypt,
                         this.cipherFormat,
                         this.cipherKey,
@@ -175,12 +172,13 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, data: RoByteArray) => {
+        impl: (interpreter: Interpreter, data: RoByteArray) => {
             if (
                 this.cipherFormat !== "" &&
                 this.cipherKey !== "" &&
                 this.cipherIV !== "" &&
                 this.setupCipher(
+                    interpreter,
                     this.cipherEncrypt,
                     this.cipherFormat,
                     this.cipherKey,
@@ -189,7 +187,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
                 ) === 0
             ) {
                 let result = this.updateData(data.getByteArray());
-                let finalResult = this.finalResult();
+                let finalResult = this.finalResult(interpreter);
                 if (finalResult) {
                     return new RoByteArray(new Uint8Array([...result, ...finalResult]));
                 }
@@ -216,8 +214,8 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
-            const finalResult = this.finalResult();
+        impl: (interpreter: Interpreter) => {
+            const finalResult = this.finalResult(interpreter);
             return finalResult ? new RoByteArray(finalResult) : BrsInvalid.Instance;
         },
     });

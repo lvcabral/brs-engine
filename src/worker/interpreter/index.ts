@@ -26,8 +26,6 @@ import {
     Uninitialized,
     RoArray,
     RoAssociativeArray,
-    SignatureAndMismatches,
-    MismatchReason,
     Callable,
     RoXMLElement,
     RoXMLList,
@@ -39,15 +37,9 @@ import { shared } from "..";
 import { Lexeme } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
-import {
-    BrsError,
-    TypeMismatch,
-    RuntimeError,
-    RuntimeErrorCode,
-    findErrorCode,
-    ErrorCode,
-} from "../Error";
-
+import { BrsError, RuntimeError, RuntimeErrorCode, findErrorCode, ErrorCode } from "../Error";
+import { TypeMismatch } from "./TypeMismatch";
+import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import * as StdLib from "../stdlib";
 import Long from "long";
 
@@ -90,6 +82,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
     readonly sharedArray = shared.get("buffer") || new Int32Array([]);
+    readonly isDevMode = process.env.NODE_ENV === "development";
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -1189,10 +1182,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         throw new Error(reason.message);
                     } else if (reason instanceof BrsError) {
                         throw reason;
-                    } else if (
-                        process.env.NODE_ENV === "development" &&
-                        reason.message.length > 0
-                    ) {
+                    } else if (this.isDevMode && reason.message.length > 0) {
                         // Expose the Javascript error stack trace on `development` mode
                         console.error(reason);
                         throw new Error("");
@@ -1254,57 +1244,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 return returnedValue ?? BrsInvalid.Instance;
             }
         } else {
-            function formatMismatch(mismatchedSignature: SignatureAndMismatches) {
-                let sig = mismatchedSignature.signature;
-                let mismatches = mismatchedSignature.mismatches;
-
-                let messageParts: string[] = [];
-
-                let args = sig.args
-                    .map((a) => {
-                        let requiredArg = `${a.name.text} as ${ValueKind.toString(a.type.kind)}`;
-                        if (a.defaultValue) {
-                            return `[${requiredArg}]`;
-                        } else {
-                            return requiredArg;
-                        }
-                    })
-                    .join(", ");
-                messageParts.push(
-                    `function ${functionName}(${args}) as ${ValueKind.toString(sig.returns)}:`
-                );
-                messageParts.push(
-                    ...mismatches
-                        .map((mm) => {
-                            switch (mm.reason) {
-                                case MismatchReason.TooFewArguments:
-                                    return `* ${functionName} requires at least ${mm.expected} arguments, but received ${mm.received}.`;
-                                case MismatchReason.TooManyArguments:
-                                    return `* ${functionName} accepts at most ${mm.expected} arguments, but received ${mm.received}.`;
-                                case MismatchReason.ArgumentTypeMismatch:
-                                    return `* Argument '${mm.argName}' must be of type ${mm.expected}, but received ${mm.received}.`;
-                            }
-                        })
-                        .map((line) => `    ${line}`)
-                );
-
-                return messageParts.map((line) => `    ${line}`).join("\n");
-            }
-
-            let mismatchedSignatures = callee.getAllSignatureMismatches(args);
-
-            let header;
-            let messages;
-            if (mismatchedSignatures.length === 1) {
-                header = `Provided arguments don't match ${functionName}'s signature.`;
-                messages = [formatMismatch(mismatchedSignatures[0])];
-            } else {
-                header = `Provided arguments don't match any of ${functionName}'s signatures.`;
-                messages = mismatchedSignatures.map(formatMismatch);
-            }
-
-            this.addError(
-                new BrsError([header, ...messages].join("\n"), expression.closingParen.location)
+            return this.addError(
+                generateArgumentMismatchError(callee, args, expression.closingParen.location)
             );
         }
     }
