@@ -3,13 +3,11 @@ import {
     ValueKind,
     BrsInvalid,
     BrsString,
-    BrsType,
     StdlibArgument,
     RoAssociativeArray,
     Int32,
     BrsInterface,
     BrsComponent,
-    isBoxable,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
@@ -47,12 +45,8 @@ export const GetInterface = new Callable("GetInterface", {
         ],
         returns: ValueKind.Interface,
     },
-    impl: (_: Interpreter, object: BrsType, ifname: BrsString): BrsInterface | BrsInvalid => {
-        const boxedObj = isBoxable(object) ? object.box() : object;
-        if (boxedObj instanceof BrsComponent) {
-            return boxedObj.interfaces.get(ifname.value.toLowerCase()) || BrsInvalid.Instance;
-        }
-        return BrsInvalid.Instance;
+    impl: (_: Interpreter, object: BrsComponent, ifname: BrsString): BrsInterface | BrsInvalid => {
+        return object.interfaces.get(ifname.value.toLowerCase()) || BrsInvalid.Instance;
     },
 });
 
@@ -64,13 +58,10 @@ export const FindMemberFunction = new Callable("FindMemberFunction", {
         ],
         returns: ValueKind.Interface,
     },
-    impl: (_: Interpreter, object: BrsType, funName: BrsString): BrsInterface | BrsInvalid => {
-        const boxedObj = isBoxable(object) ? object.box() : object;
-        if (boxedObj instanceof BrsComponent) {
-            for (let [_, iface] of boxedObj.interfaces) {
-                if (iface.hasMethod(funName.value)) {
-                    return iface;
-                }
+    impl: (_: Interpreter, object: BrsComponent, funName: BrsString): BrsInterface | BrsInvalid => {
+        for (let [_, iface] of object.interfaces) {
+            if (iface.hasMethod(funName.value)) {
+                return iface;
             }
         }
         return BrsInvalid.Instance;

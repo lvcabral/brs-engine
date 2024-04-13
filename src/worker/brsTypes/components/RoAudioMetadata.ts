@@ -9,13 +9,9 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
     private fileData: DataView | undefined;
-    private devMode = false;
 
     constructor() {
         super("roAudioMetadata");
-        if (process.env.NODE_ENV === "development") {
-            this.devMode = true;
-        }
 
         this.registerMethods({
             ifAudioMetadata: [this.setUrl, this.getTags, this.getAudioProperties, this.getCoverArt],
@@ -38,13 +34,13 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             try {
                 audio = volume.readFileSync(url.pathname);
             } catch (err: any) {
-                if (this.devMode) {
+                if (interpreter.isDevMode) {
                     postMessage(
                         `warning,[roAudioMetadata] Error loading audio:${url.pathname} - ${err.message}`
                     );
                 }
             }
-        } else if (this.devMode) {
+        } else if (interpreter.isDevMode) {
             postMessage(`warning,[roAudioMetadata] Invalid volume:${url.pathname}`);
         }
         if (audio instanceof Buffer) {
@@ -123,7 +119,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -150,7 +146,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     return tags;
                 }
             } catch (err: any) {
-                if (this.devMode) {
+                if (interpreter.isDevMode) {
                     postMessage(
                         `warning,[roAudioMetadata] Error getting audio tags:${err.message}`
                     );
@@ -168,7 +164,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -196,7 +192,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     return properties;
                 }
             } catch (err: any) {
-                if (this.devMode) {
+                if (interpreter.isDevMode) {
                     postMessage(
                         `warning,[roAudioMetadata] Error reading audio properties:${err.message}`
                     );
@@ -214,7 +210,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -229,7 +225,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     }
                 }
             } catch (err: any) {
-                if (this.devMode) {
+                if (interpreter.isDevMode) {
                     postMessage(`warning,[roAudioMetadata] Error getting cover art:${err.message}`);
                 }
             }
