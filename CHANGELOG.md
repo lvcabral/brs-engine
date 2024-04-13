@@ -1,15 +1,29 @@
 # Changelog
 
+<a name="v1.5.3"></a>
+
+## [v1.5.3 - Metadata components and Coercion](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.3) - 12 Apr 2024
+
+### Release Changes
+
+* Implemented `roImageMetadata` component by [@lvcabral](https://github.com/lvcabral) in [#325](https://github.com/lvcabral/brs-engine/pull/325)
+* Implemented `roAudioMetadata` component by [@lvcabral](https://github.com/lvcabral) in [#326](https://github.com/lvcabral/brs-engine/pull/326)
+* Fixed Boxing for Callable parameters and implemented Coercion properly by [@lvcabral](https://github.com/lvcabral) in [#327](https://github.com/lvcabral/brs-engine/pull/327)
+* Fixed #323 MicroDebugger is stopping on handled exceptions (try..catch) by [@lvcabral](https://github.com/lvcabral) in [#324](https://github.com/lvcabral/brs-engine/pull/324)
+* Upgraded dependencies
+
+[Full Changelog][v1.5.2]
+
 <a name="v1.5.2"></a>
 
 ## [v1.5.2 - Try..Catch and Throw](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.2) - 09 Apr 2024
 
 ### Release Changes
 
-* Implement `try...catch` and `throw` by [@lvcabral](https://github.com/lvcabral) in [#318](https://github.com/lvcabral/brs-engine/pull/318)
+* Implemented `try...catch` and `throw` by [@lvcabral](https://github.com/lvcabral) in [#318](https://github.com/lvcabral/brs-engine/pull/318)
 * Implemented support for `rethrown` and custom fields on `throw` statement by [@lvcabral](https://github.com/lvcabral) in [#319](https://github.com/lvcabral/brs-engine/pull/319)
 * Implemented `ifArraySizeInfo` in `roArray` by [@lvcabral](https://github.com/lvcabral) in [#316](https://github.com/lvcabral/brs-engine/pull/316)
-* Improve Lexer performance by [@lvcabral](https://github.com/lvcabral) in [317](https://github.com/lvcabral/brs-engine/pull/317)
+* Improved Lexer performance by [@lvcabral](https://github.com/lvcabral) in [317](https://github.com/lvcabral/brs-engine/pull/317)
 
 [Full Changelog][v1.5.2]
 
@@ -678,6 +692,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.3]: https://github.com/lvcabral/brs-engine/compare/v1.5.2...v1.5.3
 [v1.5.2]: https://github.com/lvcabral/brs-engine/compare/v1.5.1...v1.5.2s
 [v1.5.1]: https://github.com/lvcabral/brs-engine/compare/v1.5.0...v1.5.1
 [v1.5.0]: https://github.com/lvcabral/brs-engine/compare/v1.4.1...v1.5.0
