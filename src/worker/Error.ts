@@ -1,4 +1,4 @@
-import { BrsType, ValueKind } from "./brsTypes";
+import { BrsType } from "./brsTypes";
 import { BackTrace } from "./interpreter/Environment";
 import { Location } from "./lexer";
 
