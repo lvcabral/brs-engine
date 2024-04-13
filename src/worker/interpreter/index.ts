@@ -12,7 +12,6 @@ import {
     isBrsString,
     isBrsBoolean,
     isBrsCallable,
-    isNumberKind,
     isIterable,
     isComparable,
     isBoxable,
@@ -20,9 +19,7 @@ import {
     isNumberComp,
     isStringComp,
     Int32,
-    Int64,
     Float,
-    Double,
     Uninitialized,
     RoArray,
     RoAssociativeArray,
@@ -33,6 +30,7 @@ import {
     isBoxedNumber,
     PrimitiveKinds,
 } from "../brsTypes";
+import { tryCoerce } from "../brsTypes/coercion";
 import { shared } from "..";
 import { Lexeme } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
@@ -67,13 +65,14 @@ export const defaultExecutionOptions: ExecutionOptions = {
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _startTime = Date.now();
-    private _currLoc: Location = {
+    private _dotLevel = 0;
+    private _singleKeyEvents = true; // Default Roku behavior is `true`
+
+    location: Location = {
         file: "",
         start: { line: 0, column: 0 },
         end: { line: 0, column: 0 },
     };
-    private _dotLevel = 0;
-    private _singleKeyEvents = true; // Default Roku behavior is `true`
 
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
@@ -418,9 +417,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         };
         let requiredType = typeDesignators[name.charAt(name.length - 1)];
 
-        if (requiredType && requiredType !== value.kind) {
-            if (this.canAutoCast(value.kind, requiredType)) {
-                value = this.autoCast(value, requiredType);
+        if (requiredType) {
+            let coercedValue = tryCoerce(value, requiredType);
+            if (coercedValue != null) {
+                value = coercedValue;
             } else {
                 this.addError(
                     new TypeMismatch({
@@ -1170,7 +1170,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             if (err instanceof RuntimeError) {
                                 errCode = err.errCode.errno;
                             }
-                            runDebugger(this, this._currLoc, this._currLoc, err.message, errCode);
+                            runDebugger(this, this.location, this.location, err.message, errCode);
                             this.options.stopOnCrash = false;
                         }
                         throw err;
@@ -1208,22 +1208,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
 
-                if (
-                    returnedValue &&
-                    isBoxable(returnedValue) &&
-                    returnedValue.kind !== ValueKind.Invalid &&
-                    signatureKind === ValueKind.Object
-                ) {
-                    returnedValue = returnedValue.box();
+                if (returnedValue) {
+                    let coercedValue = tryCoerce(returnedValue, signatureKind);
+                    if (coercedValue != null) {
+                        return coercedValue;
+                    }
                 }
 
-                if (returnedValue && this.canAutoCast(returnedValue.kind, signatureKind)) {
-                    returnedValue = this.autoCast(returnedValue, signatureKind);
-                } else if (
+                if (
                     returnedValue &&
                     signatureKind !== ValueKind.Dynamic &&
-                    signatureKind !== returnedValue.kind &&
-                    returnedValue.kind !== ValueKind.Invalid
+                    signatureKind !== returnedValue.kind
                 ) {
                     return this.addError(
                         new TypeMismatch({
@@ -1720,6 +1715,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {
+        this.location = expression.location;
         return expression.accept<BrsType>(this);
     }
 
@@ -1727,7 +1723,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         const cmd = this.checkBreakCommand();
         if (cmd === DebugCommand.BREAK) {
             if (!(statement instanceof Stmt.Block)) {
-                if (!runDebugger(this, statement.location, this._currLoc)) {
+                if (!runDebugger(this, statement.location, this.location)) {
                     this.options.stopOnCrash = false;
                     throw new BlockEnd("debug-exit", statement.location);
                 }
@@ -1736,7 +1732,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.options.stopOnCrash = false;
             throw new BlockEnd("debug-exit", statement.location);
         }
-        this._currLoc = statement.location;
+        this.location = statement.location;
         return statement.accept<BrsType>(this);
     }
 
@@ -1822,7 +1818,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Method to return a string with the current source code location
      * @returns a string representation of the location
      */
-    formatLocation(location: Location = this._currLoc) {
+    formatLocation(location: Location = this.location) {
         let formattedLocation: string;
         if (location.start.line) {
             formattedLocation = `pkg:/${location.file}(${location.start.line})`;
@@ -1884,43 +1880,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Emits an error via this processor's `events` property, then throws it.
      * @param err the ParseError to emit then throw
      */
-    private addError(err: BrsError): never {
+    public addError(err: BrsError): never {
         if (!err.backtrace) {
             err.backtrace = this.environment.getBackTrace();
         }
         this.errors.push(err);
         throw err;
-    }
-
-    /**
-     * Check if the parameter fromKind can be auto-casted to toKind
-     * @param fromKind value kind to cast
-     * @param toKind value kind to cast to
-     * @returns boolean indicating if the cast is possible
-     */
-    private canAutoCast(fromKind: ValueKind, toKind: ValueKind): boolean {
-        return isNumberKind(fromKind) && isNumberKind(toKind);
-    }
-
-    /**
-     * Auto-cast a value from one kind to another
-     * @param value value to cast
-     * @param requiredType value kind to cast to
-     * @returns the casted value or Invalid if the cast is not possible
-     */
-    private autoCast(value: BrsType, requiredType: ValueKind): BrsType {
-        if (value instanceof Float || value instanceof Double || value instanceof Int32) {
-            if (requiredType === ValueKind.Double) {
-                return new Double(value.getValue());
-            } else if (requiredType === ValueKind.Float) {
-                return new Float(value.getValue());
-            } else if (requiredType === ValueKind.Int32) {
-                return new Int32(value.getValue());
-            } else if (requiredType === ValueKind.Int64) {
-                return new Int64(value.getValue());
-            }
-        }
-        return BrsInvalid.Instance;
     }
 
     /**

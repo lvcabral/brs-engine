@@ -45,7 +45,14 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    setupCipher(interpreter: Interpreter, encrypt: boolean, format: string, key: string, iv: string, padding: boolean) {
+    setupCipher(
+        interpreter: Interpreter,
+        encrypt: boolean,
+        format: string,
+        key: string,
+        iv: string,
+        padding: boolean
+    ) {
         try {
             this.cipherEncrypt = encrypt;
             this.cipherFormat = format;

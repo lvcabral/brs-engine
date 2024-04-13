@@ -214,7 +214,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
-                postMessage(`warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`);
+                postMessage(
+                    `warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`
+                );
             }
             return BrsInvalid.Instance;
         }
@@ -312,7 +314,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
-                postMessage(`warning,[requestHead] Error requesting from ${this.url}: ${e.message}`);
+                postMessage(
+                    `warning,[requestHead] Error requesting from ${this.url}: ${e.message}`
+                );
             }
             return BrsInvalid.Instance;
         }
