@@ -136,7 +136,7 @@ export const FormatJson = new Callable("FormatJson", {
     signature: {
         returns: ValueKind.String,
         args: [
-            new StdlibArgument("x", ValueKind.Object),
+            new StdlibArgument("x", ValueKind.Dynamic),
             new StdlibArgument("flags", ValueKind.Int32, new Int32(0)),
         ],
     },
