@@ -46,7 +46,7 @@ export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefine
             case ValueKind.Double:
                 return new Double(value.getValue());
         }
-    } else if (target == ValueKind.Boolean && isBrsNumber(value)) {
+    } else if (target === ValueKind.Boolean && isBrsNumber(value)) {
         // numeric types can be cast to boolean
         return BrsBoolean.from(value.toBoolean());
     }
