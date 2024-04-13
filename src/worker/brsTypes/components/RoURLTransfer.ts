@@ -30,7 +30,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private interpreter: Interpreter;
     private user?: string;
     private password?: string;
-    private raiseHttpErrors = false;
 
     // Constructor can only be used by RoFontRegistry()
     constructor(interpreter: Interpreter) {
@@ -47,10 +46,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
         this.interpreter = interpreter;
-        if (process.env.NODE_ENV === "development") {
-            // Only raise HTTP errors when in development mode
-            this.raiseHttpErrors = true;
-        }
         this.registerMethods({
             ifUrlTransfer: [
                 this.getIdentity,
@@ -127,8 +122,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.getAllResponseHeaders()
             );
         } catch (e: any) {
-            if (this.raiseHttpErrors) {
-                postMessage(`error,[getToStringSync] Error getting ${this.url}: ${e.message}`);
+            if (this.interpreter.isDevMode) {
+                postMessage(`warning,[getToStringSync] Error getting ${this.url}: ${e.message}`);
             }
             return BrsInvalid.Instance;
         }
@@ -152,8 +147,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.getAllResponseHeaders()
             );
         } catch (e: any) {
-            if (this.raiseHttpErrors) {
-                postMessage(`error,[getToFileSync] Error getting ${this.url}: ${e.message}`);
+            if (this.interpreter.isDevMode) {
+                postMessage(`warning,[getToFileSync] Error getting ${this.url}: ${e.message}`);
             }
             return BrsInvalid.Instance;
         }
@@ -180,9 +175,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.getAllResponseHeaders()
             );
         } catch (e: any) {
-            if (this.raiseHttpErrors) {
+            if (this.interpreter.isDevMode) {
                 postMessage(
-                    `error,[postFromStringSync] Error posting to ${this.url}: ${e.message}`
+                    `warning,[postFromStringSync] Error posting to ${this.url}: ${e.message}`
                 );
             }
             return BrsInvalid.Instance;
@@ -218,8 +213,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.getAllResponseHeaders()
             );
         } catch (e: any) {
-            if (this.raiseHttpErrors) {
-                postMessage(`error,[postFromFileSync] Error posting to ${this.url}: ${e.message}`);
+            if (this.interpreter.isDevMode) {
+                postMessage(
+                    `warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`
+                );
             }
             return BrsInvalid.Instance;
         }
@@ -259,9 +256,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.getAllResponseHeaders()
             );
         } catch (e: any) {
-            if (this.raiseHttpErrors) {
+            if (this.interpreter.isDevMode) {
                 postMessage(
-                    `error,[postFromFileToFileSync] Error posting to ${this.url}: ${e.message}`
+                    `warning,[postFromFileToFileSync] Error posting to ${this.url}: ${e.message}`
                 );
             }
             return BrsInvalid.Instance;
@@ -316,8 +313,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.getAllResponseHeaders()
             );
         } catch (e: any) {
-            if (this.raiseHttpErrors) {
-                postMessage(`error,[requestHead] Error requesting from ${this.url}: ${e.message}`);
+            if (this.interpreter.isDevMode) {
+                postMessage(
+                    `warning,[requestHead] Error requesting from ${this.url}: ${e.message}`
+                );
             }
             return BrsInvalid.Instance;
         }

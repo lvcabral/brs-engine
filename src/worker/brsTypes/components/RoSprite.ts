@@ -167,7 +167,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     private checkCollision = new Callable("checkCollision", {
         signature: {
             args: [],
-            returns: ValueKind.Object,
+            returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
             return this.compositor.checkCollision(this, false);
@@ -178,7 +178,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     private checkMultipleCollisions = new Callable("checkMultipleCollisions", {
         signature: {
             args: [],
-            returns: ValueKind.Object,
+            returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
             return this.compositor.checkCollision(this, true);
@@ -222,7 +222,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     private getData = new Callable("getData", {
         signature: {
             args: [],
-            returns: ValueKind.Object,
+            returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
             return this.data;
@@ -345,7 +345,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     /** Associate user defined data with the sprite. The data can be any type including intrinsic types or objects. */
     private setData = new Callable("setData", {
         signature: {
-            args: [new StdlibArgument("data", ValueKind.Object)],
+            args: [new StdlibArgument("data", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, data: BrsType) => {
