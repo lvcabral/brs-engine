@@ -1115,7 +1115,7 @@ export class Parser {
 
                     return new Stmt.IndexedSet(
                         left.obj,
-                        left.index,
+                        left.indexes,
                         operator.kind === Lexeme.Equal
                             ? right
                             : new Expr.Binary(left, operator, right),
@@ -1483,18 +1483,29 @@ export class Parser {
             let expr = primary();
 
             function indexedGet() {
-                while (match(Lexeme.Newline));
-
-                let index = expression();
+                let elements: Expression[] = [];
 
                 while (match(Lexeme.Newline));
-                // TODO: The array multi-dimension access will be done here
-                let closingSquare = consume(
-                    "Expected ']' after array or object index",
-                    Lexeme.RightSquare
-                );
 
-                expr = new Expr.IndexedGet(expr, index, closingSquare);
+                if (!match(Lexeme.RightSquare)) {
+                    elements.push(expression());
+
+                    while (match(Lexeme.Comma, Lexeme.Newline)) {
+                        while (match(Lexeme.Newline));
+
+                        if (check(Lexeme.RightSquare)) {
+                            break;
+                        }
+
+                        elements.push(expression());
+                    }
+                }
+                if (elements.length === 0) {
+                    throw addError(peek(), "Expected expression inside brackets []");
+                }
+                let closingSquare = consume("Expected ']' after array or object index", Lexeme.RightSquare);
+
+                expr = new Expr.IndexedGet(expr, elements, closingSquare);
             }
 
             while (true) {

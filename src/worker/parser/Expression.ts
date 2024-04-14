@@ -125,7 +125,7 @@ export class DottedGet implements Expression {
 export class IndexedGet implements Expression {
     constructor(
         readonly obj: Expression,
-        readonly index: Expression,
+        readonly indexes: Expression[],
         readonly closingSquare: Token
     ) {}
 
