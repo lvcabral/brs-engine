@@ -21,8 +21,7 @@ There are several features from the **BrightScript** language and components tha
   * `roTextToSpeech`
   * `roTextureManager`
   * `roTextureRequest`
-* Statement `Goto` not yet supported.
-* Multi-dimensional arrays cannot be accessed as `array[x, y]` use the notation `array[x][y]` instead.
+* Statements `Goto`, `Continue For` and `Continue While` not yet supported.
 * Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
   * Audio format `wma` is not supported (old versions of Roku firmware supported it).
   * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
