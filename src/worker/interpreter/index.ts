@@ -18,17 +18,19 @@ import {
     isUnboxable,
     isNumberComp,
     isStringComp,
+    isBoxedNumber,
+    PrimitiveKinds,
+    Callable,
     Int32,
     Float,
     Uninitialized,
     RoArray,
+    RoByteArray,
+    RoList,
     RoAssociativeArray,
-    Callable,
     RoXMLElement,
     RoXMLList,
     RoFunction,
-    isBoxedNumber,
-    PrimitiveKinds,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/coercion";
 import { shared } from "..";
@@ -454,10 +456,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return BrsInvalid.Instance;
         }
 
-        // NOTE: Roku's dim implementation creates a resizable, empty array for the
-        //   bottom children. Resizable arrays aren't implemented yet (issue #530),
-        //   so when that's added this code should be updated so the bottom-level arrays
-        //   are resizable, but empty
         let dimensionValues: number[] = [];
         statement.dimensions.forEach((expr) => {
             let val = this.evaluate(expr);
@@ -1326,35 +1324,70 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             );
         }
 
-        let index = this.evaluate(expression.index);
-
         if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
+            if (expression.indexes.length !== 1) {
+                this.addError(
+                    new RuntimeError(
+                        RuntimeErrorCode.WrongNumberOfParams,
+                        "",
+                        expression.closingSquare.location
+                    )
+                );
+            }
+            let index = this.evaluate(expression.indexes[0]);
             if (!isBrsString(index)) {
                 this.addError(
                     new TypeMismatch({
                         message: `"String" should be used as key, but received`,
                         left: {
                             type: index,
-                            location: expression.index.location,
+                            location: expression.indexes[0].location,
                         },
                     })
                 );
             }
-        } else if (!isBrsNumber(index) && !isBrsString(index)) {
-            this.addError(
-                new RuntimeError(
-                    RuntimeErrorCode.NonNumericArrayIndex,
-                    "",
-                    expression.index.location
-                )
-            );
+            try {
+                return source.get(index, true);
+            } catch (err: any) {
+                this.addError(new BrsError(err.message, expression.closingSquare.location));
+            }
         }
-
-        try {
-            return source.get(index, true);
-        } catch (err: any) {
-            this.addError(new BrsError(err.message, expression.closingSquare.location));
+        if (source instanceof RoByteArray) {
+            if (expression.indexes.length !== 1) {
+                this.addError(
+                    new RuntimeError(
+                        RuntimeErrorCode.BadNumberOfIndexes,
+                        "",
+                        expression.closingSquare.location
+                    )
+                );
+            }
         }
+        let current: BrsType = source;
+        for (let index of expression.indexes) {
+            let dimIndex = this.evaluate(index);
+            if (!isBrsNumber(dimIndex)) {
+                this.addError(
+                    new RuntimeError(RuntimeErrorCode.NonNumericArrayIndex, "", index.location)
+                );
+            }
+            if (
+                current instanceof RoArray ||
+                current instanceof RoByteArray ||
+                current instanceof RoList
+            ) {
+                try {
+                    current = current.get(dimIndex);
+                } catch (err: any) {
+                    this.addError(new BrsError(err.message, index.location));
+                }
+            } else {
+                this.addError(
+                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, "", expression.location)
+                );
+            }
+        }
+        return current;
     }
 
     visitGrouping(expr: Expr.Grouping) {
@@ -1547,8 +1580,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitDottedSet(statement: Stmt.DottedSet) {
-        let source = this.evaluate(statement.obj);
         let value = this.evaluate(statement.value);
+        let source = this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
             this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, "", statement.name.location));
@@ -1564,42 +1597,104 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitIndexedSet(statement: Stmt.IndexedSet) {
+        let value = this.evaluate(statement.value);
         let source = this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
             this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, "", statement.obj.location));
         }
 
-        let index = this.evaluate(statement.index);
-
         if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
+            if (statement.indexes.length !== 1) {
+                this.addError(
+                    new RuntimeError(
+                        RuntimeErrorCode.WrongNumberOfParams,
+                        "",
+                        statement.closingSquare.location
+                    )
+                );
+            }
+            let index = this.evaluate(statement.indexes[0]);
             if (!isBrsString(index)) {
                 this.addError(
                     new TypeMismatch({
                         message: `"String" should be used as key, but received`,
                         left: {
                             type: index,
-                            location: statement.index.location,
+                            location: statement.indexes[0].location,
                         },
                     })
                 );
             }
-        } else if (!isBrsNumber(index) && !isBrsString(index)) {
-            this.addError(
-                new RuntimeError(
-                    RuntimeErrorCode.NonNumericArrayIndex,
-                    "",
-                    statement.index.location
-                )
-            );
+            try {
+                source.set(index, value, true);
+            } catch (err: any) {
+                return this.addError(new BrsError(err.message, statement.closingSquare.location));
+            }
+            return BrsInvalid.Instance;
+        }
+        if (source instanceof RoByteArray) {
+            if (statement.indexes.length !== 1) {
+                this.addError(
+                    new RuntimeError(
+                        RuntimeErrorCode.BadNumberOfIndexes,
+                        "",
+                        statement.closingSquare.location
+                    )
+                );
+            }
         }
 
-        let value = this.evaluate(statement.value);
+        let current: BrsType = source;
+        for (let i = 0; i < statement.indexes.length; i++) {
+            let index = this.evaluate(statement.indexes[i]);
+            if (!isBrsNumber(index)) {
+                this.addError(
+                    new RuntimeError(
+                        RuntimeErrorCode.NonNumericArrayIndex,
+                        "",
+                        statement.indexes[i].location
+                    )
+                );
+            }
 
-        try {
-            source.set(index, value, true);
-        } catch (err: any) {
-            return this.addError(new BrsError(err.message, statement.closingSquare.location));
+            if (i < statement.indexes.length - 1) {
+                if (
+                    current instanceof RoArray ||
+                    current instanceof RoByteArray ||
+                    current instanceof RoList
+                ) {
+                    try {
+                        current = current.get(index);
+                    } catch (err: any) {
+                        this.addError(new BrsError(err.message, statement.closingSquare.location));
+                    }
+                } else {
+                    this.addError(
+                        new RuntimeError(
+                            RuntimeErrorCode.BadNumberOfIndexes,
+                            "",
+                            statement.location
+                        )
+                    );
+                }
+            } else if (
+                current instanceof RoArray ||
+                current instanceof RoByteArray ||
+                current instanceof RoList
+            ) {
+                try {
+                    current.set(index, value);
+                } catch (err: any) {
+                    return this.addError(
+                        new BrsError(err.message, statement.closingSquare.location)
+                    );
+                }
+            } else {
+                this.addError(
+                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, "", statement.location)
+                );
+            }
         }
 
         return BrsInvalid.Instance;
@@ -1648,7 +1743,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.execute(
                 new Stmt.IndexedSet(
                     expression.value.obj,
-                    expression.value.index,
+                    expression.value.indexes,
                     new Expr.Literal(result, expression.location),
                     expression.value.closingSquare
                 )
@@ -1885,6 +1980,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             err.backtrace = this.environment.getBackTrace();
         }
         this.errors.push(err);
+        this.events.emit("err", err);
         throw err;
     }
 

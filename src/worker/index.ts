@@ -134,7 +134,6 @@ export function executeFile(payload: any): RunResult {
         entryPoint: payload.entryPoint ?? true,
         stopOnCrash: payload.stopOnCrash ?? false,
     });
-    interpreter.onError(logError);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
