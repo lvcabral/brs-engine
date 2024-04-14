@@ -1678,28 +1678,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     );
                 }
-            } else {
-                if (
-                    current instanceof RoArray ||
-                    current instanceof RoByteArray ||
-                    current instanceof RoList
-                ) {
-                    try {
-                        current.set(index, value);
-                    } catch (err: any) {
-                        return this.addError(
-                            new BrsError(err.message, statement.closingSquare.location)
-                        );
-                    }
-                } else {
-                    this.addError(
-                        new RuntimeError(
-                            RuntimeErrorCode.BadNumberOfIndexes,
-                            "",
-                            statement.location
-                        )
+            } else if (
+                current instanceof RoArray ||
+                current instanceof RoByteArray ||
+                current instanceof RoList
+            ) {
+                try {
+                    current.set(index, value);
+                } catch (err: any) {
+                    return this.addError(
+                        new BrsError(err.message, statement.closingSquare.location)
                     );
                 }
+            } else {
+                this.addError(
+                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, "", statement.location)
+                );
             }
         }
 

@@ -163,11 +163,11 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
             postMessage(`print,Debug command/expression not supported!\r\n`);
         }
     } catch (err: any) {
+        let msg = err.message;
         if (err instanceof BrsError) {
-            postMessage(`error,${err.format()}`);
-        } else {
-            postMessage(`error,${err.message}`);
+            msg = err.format();
         }
+        postMessage(`error,${msg}`);
     }
 }
 

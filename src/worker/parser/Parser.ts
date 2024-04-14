@@ -1503,7 +1503,10 @@ export class Parser {
                 if (elements.length === 0) {
                     throw addError(peek(), "Expected expression inside brackets []");
                 }
-                let closingSquare = consume("Expected ']' after array or object index", Lexeme.RightSquare);
+                let closingSquare = consume(
+                    "Expected ']' after array or object index",
+                    Lexeme.RightSquare
+                );
 
                 expr = new Expr.IndexedGet(expr, elements, closingSquare);
             }
