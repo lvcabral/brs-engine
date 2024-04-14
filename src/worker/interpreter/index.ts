@@ -456,10 +456,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return BrsInvalid.Instance;
         }
 
-        // NOTE: Roku's dim implementation creates a resizable, empty array for the
-        //   bottom children. Resizable arrays aren't implemented yet (issue #530),
-        //   so when that's added this code should be updated so the bottom-level arrays
-        //   are resizable, but empty
         let dimensionValues: number[] = [];
         statement.dimensions.forEach((expr) => {
             let val = this.evaluate(expr);
