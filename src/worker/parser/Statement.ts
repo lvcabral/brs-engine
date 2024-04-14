@@ -469,7 +469,7 @@ export class DottedSet implements Statement {
 export class IndexedSet implements Statement {
     constructor(
         readonly obj: Expr.Expression,
-        readonly index: Expr.Expression,
+        readonly indexes: Expr.Expression[],
         readonly value: Expr.Expression,
         readonly closingSquare: Token
     ) {}

@@ -3,6 +3,7 @@ import { BackTrace } from "./Environment";
 import { source } from "..";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
+import { BrsError } from "../Error";
 import {
     Statement,
     Assignment,
@@ -162,7 +163,11 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
             postMessage(`print,Debug command/expression not supported!\r\n`);
         }
     } catch (err: any) {
-        // ignore to avoid crash
+        let msg = err.message;
+        if (err instanceof BrsError) {
+            msg = err.format();
+        }
+        postMessage(`error,${msg}`);
     }
 }
 

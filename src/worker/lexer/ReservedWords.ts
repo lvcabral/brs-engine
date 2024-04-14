@@ -8,6 +8,7 @@ import { Lexeme as L } from "./Lexeme";
 export const ReservedWords = new Set([
     "and",
     "box",
+    "catch",
     "createobject",
     "dim",
     "each",
@@ -43,8 +44,9 @@ export const ReservedWords = new Set([
     "sub",
     "tab",
     "then",
-    "to",
     "throw",
+    "to",
+    "try",
     "true",
     "type",
     "while",
@@ -72,7 +74,7 @@ export const KeyWords: { [key: string]: L } = {
     endsub: L.EndSub,
     "end sub": L.EndSub,
     endtry: L.EndTry,
-    "end try": L.EndTry, // note: 'endtry' (no space) is *not* a keyword
+    "end try": L.EndTry,
     endwhile: L.EndWhile,
     "end while": L.EndWhile,
     exit: L.Exit,
