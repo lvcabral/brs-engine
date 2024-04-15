@@ -1090,8 +1090,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
+    visitContinueFor(statement: Stmt.ContinueFor): never {
+        throw new Stmt.ContinueForReason(statement.location);
+    }
+
     visitExitFor(statement: Stmt.ExitFor): never {
         throw new Stmt.ExitForReason(statement.location);
+    }
+
+    visitContinueWhile(expression: Stmt.ContinueWhile): never {
+        throw new Stmt.ContinueWhileReason(expression.location);
     }
 
     visitExitWhile(expression: Stmt.ExitWhile): never {
@@ -1450,7 +1458,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
-                    } else {
+                    } else if (!(reason instanceof Stmt.ContinueForReason)) {
                         // re-throw returns, runtime errors, etc.
                         throw reason;
                     }
@@ -1472,7 +1480,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
-                    } else {
+                    } else if (!(reason instanceof Stmt.ContinueForReason)) {
                         // re-throw returns, runtime errors, etc.
                         throw reason;
                     }
@@ -1508,7 +1516,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (reason instanceof Stmt.ExitForReason) {
                     // break out of the loop
                     return false;
-                } else {
+                } else if (!(reason instanceof Stmt.ContinueForReason)) {
                     // re-throw returns, runtime errors, etc.
                     throw reason;
                 }
@@ -1528,7 +1536,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     break;
-                } else {
+                } else if (!(reason instanceof Stmt.ContinueWhileReason)) {
                     // re-throw returns, runtime errors, etc.
                     throw reason;
                 }

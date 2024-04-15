@@ -13,11 +13,25 @@ export class BlockEnd extends BrsError {
     }
 }
 
+/** An error thrown to continue a for loop. */
+export class ContinueForReason extends BlockEnd {
+    constructor(location: Location) {
+        super("`continue for` encountered", location);
+    }
+}
+
 //
 /** An error thrown to exit a for loop early. */
 export class ExitForReason extends BlockEnd {
     constructor(location: Location) {
         super("`exit for` encountered", location);
+    }
+}
+
+/** An error thrown to continue a while loop. */
+export class ContinueWhileReason extends BlockEnd {
+    constructor(location: Location) {
+        super("`continue while` encountered", location);
     }
 }
 

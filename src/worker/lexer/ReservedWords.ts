@@ -9,6 +9,7 @@ export const ReservedWords = new Set([
     "and",
     "box",
     "catch",
+    "continue",
     "createobject",
     "dim",
     "each",
@@ -61,6 +62,8 @@ export const ReservedWords = new Set([
 export const KeyWords: { [key: string]: L } = {
     and: L.And,
     catch: L.Catch,
+    "continue for": L.ContinueFor, // note: 'continuefor' (no space) is *not* a keyword
+    "continue while": L.ContinueWhile, // note: 'continuewhile' (no space) is *not* a keyword
     dim: L.Dim,
     else: L.Else,
     elseif: L.ElseIf,
