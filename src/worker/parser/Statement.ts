@@ -9,6 +9,8 @@ export * from "./BlockEndReason";
 
 export interface Visitor<T> {
     visitAssignment(statement: Assignment): BrsType;
+    visitContinueFor(statement: ContinueFor): never;
+    visitContinueWhile(statement: ContinueWhile): never;
     visitDim(statement: Dim): BrsType;
     visitExpression(statement: Expression): BrsType;
     visitExitFor(statement: ExitFor): never;
@@ -106,6 +108,38 @@ export class Expression implements Statement {
 
     get location() {
         return this.expression.location;
+    }
+}
+
+export class ContinueFor implements Statement {
+    constructor(
+        readonly tokens: {
+            continueFor: Token;
+        }
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitContinueFor(this);
+    }
+
+    get location() {
+        return this.tokens.continueFor.location;
+    }
+}
+
+export class ContinueWhile implements Statement {
+    constructor(
+        readonly tokens: {
+            continueWhile: Token;
+        }
+    ) {}
+
+    accept<R>(visitor: Visitor<R>): BrsType {
+        return visitor.visitContinueWhile(this);
+    }
+
+    get location() {
+        return this.tokens.continueWhile.location;
     }
 }
 

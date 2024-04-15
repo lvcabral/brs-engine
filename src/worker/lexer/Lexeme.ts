@@ -71,7 +71,8 @@ export enum Lexeme {
     Box = "Box",
     Catch = "Catch",
     CreateObject = "CreateObject",
-    // TODO: Support Continue For and Continue While
+    ContinueFor = "ContinueFor",
+    ContinueWhile = "ContinueWhile",
     Dim = "Dim",
     Else = "Else",
     ElseIf = "ElseIf",
