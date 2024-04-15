@@ -1,5 +1,17 @@
 # Changelog
 
+<a name="v1.5.4"></a>
+
+## [v1.5.4 - Continue For/While statements](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.4) - 14 Apr 2024
+
+### Release Changes
+
+* Implemented support for multi-dimensional indexes of `roArray` and `roList` by[@lvcabral](https://github.com/lvcabral) in [#331](https://github.com/lvcabral/brs-engine/pull/331)
+* Implemented `Continue For` and `Continue While` statements by [@lvcabral](https://github.com/lvcabral) in [#332](https://github.com/lvcabral/brs-engine/pull/332)
+* Fixed CLI: REPL was not showing any error messages.
+
+[Full Changelog][v1.5.4]
+
 <a name="v1.5.3"></a>
 
 ## [v1.5.3 - Metadata components and Coercion](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.3) - 12 Apr 2024
@@ -12,7 +24,7 @@
 * Fixed #323 MicroDebugger is stopping on handled exceptions (try..catch) by [@lvcabral](https://github.com/lvcabral) in [#324](https://github.com/lvcabral/brs-engine/pull/324)
 * Upgraded dependencies
 
-[Full Changelog][v1.5.2]
+[Full Changelog][v1.5.3]
 
 <a name="v1.5.2"></a>
 
@@ -692,6 +704,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.4]: https://github.com/lvcabral/brs-engine/compare/v1.5.3...v1.5.4
 [v1.5.3]: https://github.com/lvcabral/brs-engine/compare/v1.5.2...v1.5.3
 [v1.5.2]: https://github.com/lvcabral/brs-engine/compare/v1.5.1...v1.5.2s
 [v1.5.1]: https://github.com/lvcabral/brs-engine/compare/v1.5.0...v1.5.1
