@@ -28,9 +28,10 @@ import packageInfo from "../../package.json";
 export * as lexer from "./lexer";
 export * as parser from "./parser";
 export * as stdlib from "./stdlib";
-export { Interpreter } from "./interpreter";
 export { BrsTypes as types };
 export { PP as preprocessor };
+export { Preprocessor } from "./preprocessor/Preprocessor";
+export { Interpreter } from "./interpreter";
 export const shared = new Map<string, Int32Array>();
 
 const algorithm = "aes-256-ctr";
