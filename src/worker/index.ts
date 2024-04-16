@@ -13,9 +13,7 @@ import { Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
-import * as _lexer from "./lexer";
 import * as BrsTypes from "./brsTypes";
-import * as _parser from "./parser";
 import * as path from "path";
 import * as xml2js from "xml2js";
 import * as crypto from "crypto";
@@ -27,10 +25,12 @@ import bslDefender from "./common/v30/bslDefender.brs";
 import Roku_Ads from "./common/Roku_Ads.brs";
 import packageInfo from "../../package.json";
 
-export { _lexer as lexer };
+export * as lexer from "./lexer";
+export * as parser from "./parser";
+export * as stdlib from "./stdlib";
+export { Interpreter } from "./interpreter";
 export { BrsTypes as types };
 export { PP as preprocessor };
-export { _parser as parser };
 export const shared = new Map<string, Int32Array>();
 
 const algorithm = "aes-256-ctr";
@@ -665,7 +665,7 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
     // Execute the decrypted source code
     const lexer = new Lexer();
     const parser = new Parser();
-    const allStatements = new Array<_parser.Stmt.Statement>();
+    const allStatements = new Array<Stmt.Statement>();
     const lib = new Map<string, string>();
     lib.set("v30/bslDefender.brs", "");
     lib.set("v30/bslCore.brs", "");

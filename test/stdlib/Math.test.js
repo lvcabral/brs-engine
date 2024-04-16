@@ -1,3 +1,4 @@
+const brs = require("../../bin/brs.node");
 const {
     Abs,
     Cdbl,
@@ -14,9 +15,9 @@ const {
     Log,
     Sqr,
     Rnd,
-} = require("../../lib/stdlib/index");
-const { Interpreter } = require("../../lib/interpreter");
-const { Int32, Float, ValueKind } = require("../../lib/brsTypes");
+} = brs.stdlib;
+const { Interpreter } = brs;
+const { Int32, Float, ValueKind } = brs.types;
 
 const interpreter = new Interpreter();
 

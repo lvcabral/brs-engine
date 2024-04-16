@@ -1,7 +1,7 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { RoAssociativeArray, BrsString, BrsInvalid, BrsInterface } = brs.types;
-const { GetInterface } = require("../../lib/stdlib");
-const { Interpreter } = require("../../lib/interpreter");
+const { GetInterface } = brs.stdlib;
+const { Interpreter } = brs;
 
 describe("global utility functions", () => {
     let interpreter = new Interpreter();
