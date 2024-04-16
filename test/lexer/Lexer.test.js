@@ -1,4 +1,4 @@
-const { lexer, types } = require("brs");
+const { lexer, types } = require("../../app/lib/brs.worker");
 const { Lexer, Lexeme } = lexer;
 const { BrsString, Int32, Int64, Float, Double } = types;
 

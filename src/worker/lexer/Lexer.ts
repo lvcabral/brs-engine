@@ -145,7 +145,7 @@ export class Lexer {
                 case "\n":
                     // consecutive newlines aren't significant, because they're just blank lines
                     // so only add blank lines when they're not consecutive
-                    let previous = lastToken();
+                    let previous = peekPrevious();
                     if (previous && previous.kind !== Lexeme.Newline) {
                         addToken(Lexeme.Newline);
                     }
@@ -170,10 +170,12 @@ export class Lexer {
                     string();
                     break;
                 case "'":
-                    // BrightScript doesn't have block comments; only line
-                    while (peek() !== "\n" && !isAtEnd()) {
-                        advance();
-                    }
+                    // BrightScript doesn't _technically_ have block comments, but some external
+                    // tools expect a distinction between the two.  Consider any comment with
+                    // non-whitespace characters ahead of it a "line" comment.  Everything else
+                    // (comments starting at zero or indented with only whitespace ahead) is a
+                    // "block" comment.
+                    comment("'");
                     break;
                 case ",":
                     addToken(Lexeme.Comma);
@@ -344,34 +346,6 @@ export class Lexer {
                             addToken(Lexeme.Greater);
                             break;
                     }
-                    break;
-                case "'":
-                    // BrightScript doesn't _technically_ have block comments, but some external
-                    // tools expect a distinction between the two.  Consider any comment with
-                    // non-whitespace characters ahead of it a "line" comment.  Everything else
-                    // (comments starting at zero or indented with only whitespace ahead) is a
-                    // "block" comment.
-                    comment("'");
-                    break;
-                case " ":
-                case "\r":
-                case "\t":
-                    // ignore whitespace; indentation isn't signficant in BrightScript
-                    break;
-                case "\n":
-                    // consecutive newlines aren't significant, because they're just blank lines
-                    // so only add blank lines when they're not consecutive
-                    let previous = peekPrevious();
-                    if (previous && previous.kind !== Lexeme.Newline) {
-                        addToken(Lexeme.Newline);
-                    }
-                    // but always advance the line counter
-                    line++;
-                    // and always reset the column counter
-                    column = 0;
-                    break;
-                case '"':
-                    string();
                     break;
                 case "#":
                     preProcessedConditional();
