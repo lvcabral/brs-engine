@@ -1,4 +1,4 @@
-const brs = require("brs");
+const brs = require("../../../app/lib/brs.worker");
 
 const { deindent } = require("../ParserTests");
 

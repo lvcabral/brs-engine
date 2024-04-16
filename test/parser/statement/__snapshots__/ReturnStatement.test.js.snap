@@ -1,34 +1,34 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser return statements parses expression returns 1`] = `
-Array [
+[
   Function {
     "func": Function {
       "body": Block {
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
           "file": undefined,
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
-        "statements": Array [
+        "statements": [
           Return {
-            "tokens": Object {
-              "return": Object {
+            "tokens": {
+              "return": {
                 "isReserved": true,
                 "kind": "Return",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": -9,
                     "line": -9,
                   },
-                  "start": Object {
+                  "start": {
                     "column": -9,
                     "line": -9,
                   },
@@ -37,18 +37,18 @@ Array [
               },
             },
             "value": Call {
-              "args": Array [],
+              "args": [],
               "callee": Variable {
-                "name": Object {
+                "name": {
                   "isReserved": false,
                   "kind": "Identifier",
                   "literal": undefined,
-                  "location": Object {
-                    "end": Object {
+                  "location": {
+                    "end": {
                       "column": -9,
                       "line": -9,
                     },
-                    "start": Object {
+                    "start": {
                       "column": -9,
                       "line": -9,
                     },
@@ -56,16 +56,16 @@ Array [
                   "text": "RebootSystem",
                 },
               },
-              "closingParen": Object {
+              "closingParen": {
                 "isReserved": false,
                 "kind": "RightParen",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": -9,
                     "line": -9,
                   },
-                  "start": Object {
+                  "start": {
                     "column": -9,
                     "line": -9,
                   },
@@ -76,51 +76,51 @@ Array [
           },
         ],
       },
-      "end": Object {
+      "end": {
         "isReserved": false,
         "kind": "EndFunction",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end function",
       },
-      "keyword": Object {
+      "keyword": {
         "isReserved": true,
         "kind": "Function",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "function",
       },
-      "parameters": Array [],
+      "parameters": [],
       "returns": 10,
     },
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -132,34 +132,34 @@ Array [
 `;
 
 exports[`parser return statements parses literal returns 1`] = `
-Array [
+[
   Function {
     "func": Function {
       "body": Block {
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
           "file": undefined,
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
-        "statements": Array [
+        "statements": [
           Return {
-            "tokens": Object {
-              "return": Object {
+            "tokens": {
+              "return": {
                 "isReserved": true,
                 "kind": "Return",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": -9,
                     "line": -9,
                   },
-                  "start": Object {
+                  "start": {
                     "column": -9,
                     "line": -9,
                   },
@@ -177,51 +177,51 @@ Array [
           },
         ],
       },
-      "end": Object {
+      "end": {
         "isReserved": false,
         "kind": "EndFunction",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end function",
       },
-      "keyword": Object {
+      "keyword": {
         "isReserved": true,
         "kind": "Function",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "function",
       },
-      "parameters": Array [],
+      "parameters": [],
       "returns": 10,
     },
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -233,34 +233,34 @@ Array [
 `;
 
 exports[`parser return statements parses void returns 1`] = `
-Array [
+[
   Function {
     "func": Function {
       "body": Block {
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
           "file": undefined,
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
-        "statements": Array [
+        "statements": [
           Return {
-            "tokens": Object {
-              "return": Object {
+            "tokens": {
+              "return": {
                 "isReserved": true,
                 "kind": "Return",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": -9,
                     "line": -9,
                   },
-                  "start": Object {
+                  "start": {
                     "column": -9,
                     "line": -9,
                   },
@@ -272,51 +272,51 @@ Array [
           },
         ],
       },
-      "end": Object {
+      "end": {
         "isReserved": false,
         "kind": "EndFunction",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end function",
       },
-      "keyword": Object {
+      "keyword": {
         "isReserved": true,
         "kind": "Function",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "function",
       },
-      "parameters": Array [],
+      "parameters": [],
       "returns": 10,
     },
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },

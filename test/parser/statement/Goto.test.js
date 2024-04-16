@@ -1,4 +1,4 @@
-const brs = require("brs");
+const brs = require("../../../app/lib/brs.worker");
 const { token, identifier, EOF } = require("../ParserTests");
 const { Lexeme } = brs.lexer;
 
