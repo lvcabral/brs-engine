@@ -1,4 +1,15 @@
-import { Callable, ValueKind, Int32, Float, StdlibArgument } from "../brsTypes";
+import { RuntimeError, RuntimeErrorCode } from "../Error";
+import {
+    Callable,
+    ValueKind,
+    Int32,
+    Float,
+    StdlibArgument,
+    BrsType,
+    isUnboxable,
+    BrsNumber,
+    isBrsNumber,
+} from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
 /** Returns the absolute value of a float. */
@@ -7,7 +18,7 @@ export const Abs = new Callable("Abs", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.abs(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.abs(x.getValue())),
 });
 
 /*
@@ -20,16 +31,26 @@ export const Cdbl = new Callable("Cdbl", {
         args: [new StdlibArgument("x", ValueKind.Int32)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Int32) => new Float(x.getValue()),
+    impl: (_: Interpreter, x: Int32) => new Float(x.getValue()),
 });
 
 /** Returns an integer from a float rounding up from midpoints */
 export const Cint = new Callable("Cint", {
     signature: {
-        args: [new StdlibArgument("x", ValueKind.Float)],
+        args: [new StdlibArgument("x", ValueKind.Dynamic)],
         returns: ValueKind.Int32,
     },
-    impl: (interpreter: Interpreter, x: Int32) => new Int32(Math.round(x.getValue())),
+    impl: (interpreter: Interpreter, x: BrsType) => {
+        if (isUnboxable(x)) {
+            x = x.unbox();
+        }
+        if (isBrsNumber(x)) {
+            return toInt32(x, "round");
+        }
+        interpreter.addError(
+            new RuntimeError(RuntimeErrorCode.TypeMismatch, "", interpreter.location)
+        );
+    },
 });
 
 /** Returns the integer as a 32-bit float. */
@@ -38,28 +59,69 @@ export const Csng = new Callable("Csng", {
         args: [new StdlibArgument("x", ValueKind.Int32)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Int32) => new Float(x.getValue()),
+    impl: (_: Interpreter, x: Int32) => new Float(x.getValue()),
 });
 
 /** Returns an integer from a float removing fractional parts. */
 export const Fix = new Callable("Fix", {
     signature: {
-        args: [new StdlibArgument("x", ValueKind.Float)],
+        args: [new StdlibArgument("x", ValueKind.Dynamic)],
         returns: ValueKind.Int32,
     },
-    impl: (interpreter: Interpreter, x: Int32) => new Int32(Math.trunc(x.getValue())),
+    impl: (interpreter: Interpreter, x: BrsType) => {
+        if (isUnboxable(x)) {
+            x = x.unbox();
+        }
+        if (isBrsNumber(x)) {
+            return toInt32(x, "trunc");
+        }
+        interpreter.addError(
+            new RuntimeError(RuntimeErrorCode.TypeMismatch, "", interpreter.location)
+        );
+    },
 });
 
 /** Returns an integer from a float. */
 export const Int = new Callable("Int", {
     signature: {
-        args: [new StdlibArgument("x", ValueKind.Float)],
+        args: [new StdlibArgument("x", ValueKind.Dynamic)],
         returns: ValueKind.Int32,
     },
-    impl: (interpreter: Interpreter, x: Int32) => new Int32(Math.floor(x.getValue())),
+    impl: (interpreter: Interpreter, x: BrsType) => {
+        if (isUnboxable(x)) {
+            x = x.unbox();
+        }
+        if (isBrsNumber(x)) {
+            return toInt32(x);
+        }
+        interpreter.addError(
+            new RuntimeError(RuntimeErrorCode.TypeMismatch, "", interpreter.location)
+        );
+    },
 });
 
-function SgnImpl(interpreter: Interpreter, x: Int32 | Float) {
+function toInt32(x: BrsNumber, decimal = "floor"): Int32 {
+    if (x.kind === ValueKind.Float || x.kind === ValueKind.Double) {
+        if (decimal === "round") {
+            return new Int32(Math.round(x.getValue()));
+        } else if (decimal === "trunc") {
+            return new Int32(Math.trunc(x.getValue()));
+        }
+        return new Int32(Math.floor(x.getValue()));
+    } else if (x.kind === ValueKind.Int64) {
+        const maxInt = 0x80000000;
+        if (x.getValue().lessThan(maxInt) && x.getValue().greaterThan(-maxInt)) {
+            return new Int32(x.getValue());
+        } else if (x.getValue().greaterThan(maxInt - 1)) {
+            return new Int32(maxInt - 1);
+        } else {
+            return new Int32(-maxInt);
+        }
+    }
+    return x;
+}
+
+function SgnImpl(_: Interpreter, x: Int32 | Float) {
     let val = x.getValue();
     if (val > 0.0) return new Int32(1);
     else if (val < 0.0) return new Int32(-1);
@@ -91,7 +153,7 @@ export const Atn = new Callable("Atn", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.atan(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.atan(x.getValue())),
 });
 
 /** Returns the cosine of a float (argument must be provided in radians). */
@@ -100,7 +162,7 @@ export const Cos = new Callable("Cos", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.cos(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.cos(x.getValue())),
 });
 
 /** Returns the sine of a float (argument must be provided in radians). */
@@ -109,7 +171,7 @@ export const Sin = new Callable("Sin", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.sin(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.sin(x.getValue())),
 });
 
 /** Returns the tangent float (argument must be provided in radians). */
@@ -118,7 +180,7 @@ export const Tan = new Callable("Tan", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.tan(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.tan(x.getValue())),
 });
 
 /** Returns the natural exponent of a float. */
@@ -127,7 +189,7 @@ export const Exp = new Callable("Exp", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.exp(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.exp(x.getValue())),
 });
 
 /** Returns the log of a float. */
@@ -136,7 +198,7 @@ export const Log = new Callable("Log", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.log(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.log(x.getValue())),
 });
 
 /** Returns the square root of a float. */
@@ -145,7 +207,7 @@ export const Sqr = new Callable("Sqr", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter, x: Float) => new Float(Math.sqrt(x.getValue())),
+    impl: (_: Interpreter, x: Float) => new Float(Math.sqrt(x.getValue())),
 });
 
 /**
@@ -163,7 +225,7 @@ export const Rnd = new Callable("Rnd", {
         args: [new StdlibArgument("range", ValueKind.Int32)],
         returns: ValueKind.Dynamic,
     },
-    impl: (interpreter: Interpreter, range: Int32) => {
+    impl: (_: Interpreter, range: Int32) => {
         if (range.getValue() === 0) return new Float(Math.random());
         else return new Int32(Math.floor(Math.random() * range.getValue() + 1));
     },
