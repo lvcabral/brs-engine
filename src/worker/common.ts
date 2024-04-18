@@ -6,6 +6,34 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// Default Device Information
+// Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
+export const defaultDeviceInfo = {
+    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
+    friendlyName: "BrightScript Engine Library",
+    deviceModel: "8000X", // Roku TV (Midland)
+    firmwareVersion: "BSC.00E04193A", // v11.0
+    clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
+    RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
+    countryCode: "US", // App Store Country
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    locale: "en_US", // Used if app supports localization
+    captionLanguage: "eng",
+    clockFormat: "12h",
+    displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
+    defaultFont: "Asap",
+    fontPath: "../fonts/",
+    fonts: new Map(),
+    maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
+    customFeatures: new Array<string>(),
+    connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
+    localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
+    startTime: Date.now(),
+    audioVolume: 40,
+    registry: new Map(),
+    maxFps: 60,
+};
+
 // Shared array data types enumerator
 export enum DataType {
     DBG, // Debug Command

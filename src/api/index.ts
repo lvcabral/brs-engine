@@ -13,7 +13,7 @@ import {
     RemoteType,
     dataBufferIndex,
     dataBufferSize,
-} from "../worker/enums";
+} from "../worker/common";
 
 import {
     source,

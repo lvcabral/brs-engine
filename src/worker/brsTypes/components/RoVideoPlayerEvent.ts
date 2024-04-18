@@ -4,7 +4,7 @@ import { AAMember, BrsType, RoAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { MediaEvent } from "../../enums";
+import { MediaEvent } from "../../common";
 
 export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

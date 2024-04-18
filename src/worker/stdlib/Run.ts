@@ -26,6 +26,7 @@ import { getVolumeByPath, getPath } from "./File";
  * @returns the value returned by the executed file(s) if no errors are detected, otherwise `invalid`
  */
 function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
+    /// #if !BROWSER
     let volumes = filenames.map((filename) => getVolumeByPath(interpreter, filename.value));
     let pathsToFiles = filenames.map((filename) =>
         path.join(interpreter.options.root ?? process.cwd(), getPath(filename.value))
@@ -37,15 +38,18 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
     }
 
     try {
-        let ast = brs.lexParseSync(interpreter, pathsToFiles);
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
-        let sandbox = new Interpreter(interpreter.options);
-        return sandbox.exec(ast, ...args)[0] || BrsInvalid.Instance;
+        const sandbox = new Interpreter(interpreter.options);
+        const sourceMap = brs.setupPayload(sandbox, brs.createPayload(pathsToFiles));
+        const parseResult = brs.lexParseSync(sourceMap, sandbox.manifest);
+        const result = sandbox.exec(parseResult.statements, sourceMap, ...args);
+        return result[0] || BrsInvalid.Instance;
     } catch (err: any) {
         // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
         // syntax errors, etc.
-        return BrsInvalid.Instance;
     }
+    /// #endif
+    return BrsInvalid.Instance;
 }
 
 export const Run = new Callable(

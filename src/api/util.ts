@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { dataBufferIndex, dataBufferSize } from "../worker/enums";
+import { dataBufferIndex, dataBufferSize } from "../worker/common";
 import packageInfo from "../../package.json";
 
 // Module callback function definition

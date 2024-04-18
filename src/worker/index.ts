@@ -7,6 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
+import { dataBufferIndex, dataBufferSize, defaultDeviceInfo } from "./common";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
 import { Parser } from "./parser";
@@ -18,6 +19,7 @@ import * as _parser from "./parser";
 import * as path from "path";
 import * as xml2js from "xml2js";
 import * as crypto from "crypto";
+import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
 import bslCore from "./common/v30/bslCore.brs";
@@ -30,7 +32,7 @@ export { BrsTypes as types };
 export { PP as preprocessor };
 export { _parser as parser };
 export const shared = new Map<string, Int32Array>();
-export const source = new Map<string, string>();
+
 const algorithm = "aes-256-ctr";
 let pcode: Buffer;
 let iv: string;
@@ -66,6 +68,10 @@ declare global {
  * Default implementation of the callback, only handles console messages
  * @param message the message to front-end
  */
+const arrayLength = dataBufferIndex + dataBufferSize;
+const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
+shared.set("buffer", new Int32Array(sharedBuffer));
+
 globalThis.postMessage = (message: any) => {
     if (typeof message === "string") {
         const mType = message.split(",")[0];
@@ -79,12 +85,18 @@ globalThis.postMessage = (message: any) => {
     }
 };
 
-export function registerCallback(messageCallback: any, sharedBuffer: SharedArrayBuffer) {
+/**
+ * Setup the callback function to handle messages from interpreter
+ * @param messageCallback callback function to handle messages from interpreter
+ * @param sharedBuffer shared buffer to control the interpreter
+ */
+export function registerCallback(messageCallback: any, sharedBuffer?: SharedArrayBuffer) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;
-        shared.set("buffer", new Int32Array(sharedBuffer));
+        if (sharedBuffer) shared.set("buffer", new Int32Array(sharedBuffer));
     }
 }
+
 /**
  * Returns a new instance of the Interpreter for REPL
  *
@@ -139,6 +151,82 @@ export function executeLine(contents: string, interpreter: Interpreter) {
         }
     }
 }
+
+/**
+ * Create the payload to run the app with the provided files.
+ * @param files Code files to be executed
+ * @param deviceData optional object with device info data
+ *
+ * @returns object with the payload to run the app.
+ */
+export function createPayload(files: any[], deviceData?: any) {
+    const paths: Object[] = [];
+    const source: string[] = [];
+    let id = 0;
+    files.map((filePath) => {
+        const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
+        const fileExt = fileName.split(".").pop();
+        if (fileExt?.toLowerCase() === "brs") {
+            try {
+                const sourceCode = fs.readFileSync(filePath);
+                if (sourceCode) {
+                    source.push(sourceCode.toString());
+                    paths.push({ url: `source/${fileName}`, id: id, type: "source" });
+                    id++;
+                }
+            } catch (err: any) {
+                throw err;
+            }
+        }
+    });
+    if (id > 0) {
+        if (deviceData === undefined) {
+            deviceData = defaultDeviceInfo;
+        }
+        if (deviceData.fonts.size === 0) {
+            deviceData.fonts = getFonts(deviceData.defaultFont);
+        }
+        const manifest = new Map();
+        manifest.set("title", "BRS App");
+        manifest.set("major_version", "0");
+        manifest.set("minor_version", "0");
+        manifest.set("build_version", "1");
+        manifest.set("requires_audiometadata", "1");
+        return {
+            device: deviceData,
+            manifest: manifest,
+            input: [],
+            paths: paths,
+            brs: source,
+            texts: [],
+            binaries: [],
+            entryPoint: false,
+            stopOnCrash: false,
+        };
+    } else {
+        throw new Error("Invalid or inexistent file(s)!");
+    }
+}
+
+/**
+ * Get the fonts map for the device.
+ * @param fontFamily a string with the font family name.
+ * @returns a Map with the fonts.
+ */
+
+function getFonts(fontFamily: string) {
+    const fonts = new Map();
+    const fontsPath = path.join(__dirname, "../app/fonts", `${fontFamily}`);
+    try {
+        fonts.set("regular", fs.readFileSync(`${fontsPath}-Regular.ttf`));
+        fonts.set("bold", fs.readFileSync(`${fontsPath}-Bold.ttf`));
+        fonts.set("italic", fs.readFileSync(`${fontsPath}-Italic.ttf`));
+        fonts.set("bold-italic", fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
+    } catch (err: any) {
+        postMessage(`error,Error loading fonts: ${err.message}`);
+    }
+    return fonts;
+}
 /// #endif
 
 /**
@@ -157,18 +245,14 @@ export function executeFile(payload: any): RunResult {
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
-    interpreter.setManifest(payload.manifest);
-    interpreter.setRegistry(payload.device.registry);
-    setupDeviceData(payload.device, interpreter);
-    setupDeviceFonts(payload.device, interpreter);
-    setupPackageFiles(payload.paths, payload.binaries, payload.texts, payload.brs, interpreter);
+    const sourceMap = setupPayload(interpreter, payload);
     // Run App
     const password = payload.password ?? "";
     let input = new RoAssociativeArray(inputArray);
     if (pcode instanceof Buffer) {
         runBinary(password, interpreter, input);
     } else {
-        const result = runSource(source, interpreter, input, password);
+        const result = runSource(interpreter, sourceMap, input, password);
         if (result?.cipherText) {
             return result;
         }
@@ -176,6 +260,27 @@ export function executeFile(payload: any): RunResult {
     }
     postMessage(`end,${endReason}`);
     return { endReason: endReason };
+}
+
+/**
+ * Setup the interpreter with the provided payload.
+ * @param interpreter The interpreter instance to setup
+ * @param payload The payload with the source code and all the assets of the app.
+ *
+ * @returns a Map with the source code files content.
+ */
+export function setupPayload(interpreter: Interpreter, payload: any): Map<string, string> {
+    interpreter.setManifest(payload.manifest);
+    interpreter.setRegistry(payload.device.registry);
+    setupDeviceData(payload.device, interpreter);
+    setupDeviceFonts(payload.device, interpreter);
+    return setupPackageFiles(
+        payload.paths,
+        payload.binaries,
+        payload.texts,
+        payload.brs,
+        interpreter
+    );
 }
 
 interface SerializedPCode {
@@ -258,7 +363,7 @@ function setupDeviceFonts(device: any, interpreter: Interpreter) {
         fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
         fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
     } else if (device.fonts) {
-        // Running locally as CLI
+        // Running locally in NodeJS
         fontRegular = device.fonts.get("regular")?.buffer;
         fontBold = device.fonts.get("bold")?.buffer;
         fontItalic = device.fonts.get("italic")?.buffer;
@@ -303,7 +408,8 @@ function setupPackageFiles(
     texts: any,
     brs: any,
     interpreter: Interpreter
-) {
+): Map<string, string> {
+    const sourceMap = new Map<string, string>();
     let volume = interpreter.fileSystem.get("pkg:");
     if (volume && Array.isArray(paths)) {
         for (let filePath of paths) {
@@ -339,7 +445,7 @@ function setupPackageFiles(
                         volume.writeFileSync(`/${filePath.url}`, texts[filePath.id]);
                     }
                 } else if (filePath.type === "source" && Array.isArray(brs)) {
-                    source.set(filePath.url, brs[filePath.id]);
+                    sourceMap.set(filePath.url, brs[filePath.id]);
                     volume.writeFileSync(`/${filePath.url}`, brs[filePath.id]);
                 }
             } catch (err: any) {
@@ -396,54 +502,28 @@ function setupPackageFiles(
             postMessage(`error,Invalid path: ${badPath} - ${err.message}`);
         }
     }
+    return sourceMap;
 }
 
 /**
  * A synchronous version of the lexer-parser flow.
  *
- * @param filename the paths to BrightScript files to lex and parse synchronously
- * @param options configuration for the execution, including the streams to use for `stdout` and
- *                `stderr` and the base directory for path resolution
- *
- * @returns the AST produced from lexing and parsing the provided files
- */
-export function lexParseSync(interpreter: Interpreter, filenames: string[]) {
-    let volume = interpreter.fileSystem.get("pkg:") as FileSystem;
-
-    return filenames
-        .map((filename) => {
-            let contents = volume.readFileSync(filename, "utf8");
-            let scanResults = Lexer.scan(contents, filename);
-            let preprocessor = new PP.Preprocessor();
-            let preprocessorResults = preprocessor.preprocess(
-                scanResults.tokens,
-                interpreter.manifest
-            );
-            return Parser.parse(preprocessorResults.processedTokens).statements;
-        })
-        .reduce((allStatements, statements) => [...allStatements, ...statements], []);
-}
-
-/**
- * Runs an arbitrary string of BrightScript code.
- * @param source array of BrightScript code to lex, parse, and interpret.
- * @param interpreter an interpreter to use when executing `contents`. Required
- *                    for `repl` to have persistent state between user inputs.
- * @param input associative array with the input parameters
+ * @param interpreter the interpreter to use when executing the provided files
  * @param password string with the encryption password (optional)
- * @returns interface RunResult.
+ *
+ * @returns the AST produced from lexing and parsing the provided files or the tokens for encryption if password is provided.
  */
-export interface RunResult {
+export interface ParseResult {
     endReason: string;
-    cipherText?: Uint8Array;
-    iv?: string;
+    tokens: Token[];
+    statements: Stmt.Statement[];
 }
-function runSource(
-    source: Map<string, string>,
-    interpreter: Interpreter,
-    input: RoAssociativeArray,
-    password: string = ""
-): RunResult {
+
+export function lexParseSync(
+    sourceMap: Map<string, string>,
+    manifest: Map<string, any>,
+    password = ""
+): ParseResult {
     const lexer = new Lexer();
     const parser = new Parser();
     const preprocessor = new PP.Preprocessor();
@@ -455,13 +535,13 @@ function runSource(
     lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
-    for (let [path, code] of source) {
+    for (let [path, code] of sourceMap) {
         const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
             endReason = "EXIT_BRIGHTSCRIPT_CRASH";
             break;
         }
-        let preprocessorResults = preprocessor.preprocess(scanResults.tokens, interpreter.manifest);
+        let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
         if (preprocessorResults.errors.length > 0) {
             endReason = "EXIT_BRIGHTSCRIPT_CRASH";
             break;
@@ -486,7 +566,46 @@ function runSource(
         }
         allStatements.push(...parseResults.statements);
     }
+    if (password.length === 0) {
+        lib.forEach((value: string, key: string) => {
+            if (value !== "") {
+                const libScan = lexer.scan(value, key);
+                const libParse = parser.parse(libScan.tokens);
+                allStatements.push(...libParse.statements);
+            }
+        });
+    }
+    return {
+        endReason: endReason,
+        tokens: tokens,
+        statements: allStatements,
+    };
+}
+
+/**
+ * Runs an arbitrary string of BrightScript code.
+ * @param interpreter an interpreter to use when executing `contents`. Required
+ *                    for `repl` to have persistent state between user inputs.
+ * @param sourceMap Map with the source code files content.
+ * @param input associative array with the input parameters
+ * @param password string with the encryption password (optional)
+ * @returns interface RunResult.
+ */
+export interface RunResult {
+    endReason: string;
+    cipherText?: Uint8Array;
+    iv?: string;
+}
+function runSource(
+    interpreter: Interpreter,
+    sourceMap: Map<string, string>,
+    input: RoAssociativeArray,
+    password: string = ""
+): RunResult {
+    const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
+    endReason = parseResult.endReason;
     if (password.length > 0) {
+        const tokens = parseResult.tokens;
         const iv = crypto.randomBytes(12).toString("base64");
         const cipher = crypto.createCipheriv(algorithm, password, iv);
         const deflated = zlibSync(encode({ pcode: tokens }));
@@ -494,17 +613,10 @@ function runSource(
         const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
         return { endReason: "EXIT_PACKAGER_DONE", cipherText: cipherText, iv: iv };
     }
-    lib.forEach((value: string, key: string) => {
-        if (value !== "") {
-            const libScan = lexer.scan(value, key);
-            const libParse = parser.parse(libScan.tokens);
-            allStatements.push(...libParse.statements);
-        }
-    });
     try {
         if (endReason !== "EXIT_BRIGHTSCRIPT_CRASH") {
             endReason = "EXIT_USER_NAV";
-            interpreter.exec(allStatements, input);
+            interpreter.exec(parseResult.statements, sourceMap, input);
         }
     } catch (err: any) {
         endReason = "EXIT_USER_NAV";
@@ -614,7 +726,7 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
     });
     endReason = "EXIT_USER_NAV";
     try {
-        interpreter.exec(allStatements, input);
+        interpreter.exec(allStatements, undefined, input);
     } catch (err: any) {
         if (err.message !== "debug-exit") {
             postMessage(`error,${err.message}`);
