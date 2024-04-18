@@ -90,9 +90,6 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             case ValueKind.String:
                 return this.getMethod(index.value) ?? this.namedElements(index.value, true);
             default:
-                postMessage(
-                    "warning,List indexes must be 32-bit integers, or method names must be strings."
-                );
                 return BrsInvalid.Instance;
         }
     }
@@ -100,8 +97,6 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     set(index: BrsType, value: BrsType) {
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             this.roList.elements[Math.trunc(index.getValue())] = value;
-        } else {
-            postMessage("warning,List indexes must be 32-bit integers.");
         }
         return BrsInvalid.Instance;
     }

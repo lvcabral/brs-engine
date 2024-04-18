@@ -79,7 +79,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             return 0;
         } catch (err: any) {
             if (interpreter.isDevMode) {
-                postMessage(`warning,[roEVPCipher] Setup error: ${err.message}`);
+                interpreter.stdout.write(`warning,[roEVPCipher] Setup error: ${err.message}`);
             }
             this.cipher = null;
             this.cipherFormat = "";
@@ -108,7 +108,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
                 return encrypted;
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    postMessage(`error,[roEVPCipher] Error: ${err.message}`);
+                    interpreter.stderr.write(`error,[roEVPCipher] Error: ${err.message}`);
                 }
                 this.cipher = null;
                 return null;

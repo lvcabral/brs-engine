@@ -85,9 +85,6 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             case ValueKind.String:
                 return this.getMethod(index.value) ?? BrsInvalid.Instance;
             default:
-                postMessage(
-                    "warning,List indexes must be 32-bit integers or Float, method names must be strings."
-                );
                 return BrsInvalid.Instance;
         }
     }
@@ -95,8 +92,6 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     set(index: BrsType, value: BrsType) {
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             this.elements[Math.trunc(index.getValue())] = value;
-        } else {
-            postMessage("warning,List indexes must be 32-bit integers or Float.");
         }
         return BrsInvalid.Instance;
     }
@@ -386,7 +381,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoList)) {
-                postMessage(
+                interpreter.stdout.write(
                     `warning,BRIGHTSCRIPT: ERROR: roList.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
                 );
                 return BrsInvalid.Instance;

@@ -33,11 +33,13 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
                         this.audioId = id + systemwav.length;
                     }
                 } catch (err: any) {
-                    postMessage(`error,Error loading audio file: ${url.pathname} - ${err.message}`);
+                    interpreter.stderr.write(
+                        `error,Error loading audio file: ${url.pathname} - ${err.message}`
+                    );
                     this.valid = false;
                 }
             } else {
-                postMessage(`error,Invalid volume:${name}`);
+                interpreter.stderr.write(`error,Invalid volume:${name}`);
                 this.valid = false;
             }
         }

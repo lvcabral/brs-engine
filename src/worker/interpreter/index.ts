@@ -40,6 +40,7 @@ import { Expr, Stmt } from "../parser";
 import { BrsError, RuntimeError, RuntimeErrorCode, findErrorCode, ErrorCode } from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
+import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
 
@@ -55,6 +56,10 @@ export interface ExecutionOptions {
     root?: string;
     entryPoint?: boolean;
     stopOnCrash?: boolean;
+    /** The stdout stream that brs should use. Default: process.stdout. */
+    stdout: NodeJS.WriteStream;
+    /** The stderr stream that brs should use. Default: process.stderr. */
+    stderr: NodeJS.WriteStream;
 }
 
 /** The default set of execution options.  */
@@ -62,6 +67,8 @@ export const defaultExecutionOptions: ExecutionOptions = {
     root: process.cwd(),
     entryPoint: false,
     stopOnCrash: false,
+    stdout: process.stdout,
+    stderr: process.stderr,
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -84,6 +91,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly translations: Map<string, string> = new Map<string, string>();
     readonly sharedArray = shared.get("buffer") || new Int32Array([]);
     readonly isDevMode = process.env.NODE_ENV === "development";
+
+    readonly stdout: OutputProxy;
+    readonly stderr: OutputProxy;
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -164,6 +174,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     constructor(options?: ExecutionOptions) {
         Object.assign(this.options, options);
+        this.stdout = new OutputProxy(this.options.stdout);
+        this.stderr = new OutputProxy(this.options.stderr);
         this.fileSystem.set("common:", new FileSystem());
         this.fileSystem.set("pkg:", new FileSystem());
         this.fileSystem.set("tmp:", new FileSystem());
@@ -361,12 +373,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitPrint(statement: Stmt.Print): BrsType {
+        // the `tab` function is only in-scope while executing print statements
+        this.environment.define(Scope.Function, "Tab", StdLib.Tab);
         let printStream = "";
         statement.expressions.forEach((printable, index) => {
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        printStream += "\t";
+                        printStream += " ".repeat(16 - (this.stdout.position() % 16));
                         break;
                     case Lexeme.Semicolon:
                         break;
@@ -379,14 +393,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                 }
             } else {
-                let toPrint = this.evaluate(printable);
-                if (isNumberComp(toPrint) && this.isPositive(toPrint.getValue())) {
-                    printStream += " ";
-                }
-                printStream += toPrint.toString();
+                const obj = this.evaluate(printable);
+                const str =
+                    isNumberComp(obj) && this.isPositive(obj.getValue())
+                        ? " " + obj.toString()
+                        : obj.toString();
+                this.stdout.position(str);
+                printStream += str;
             }
         });
-        postMessage(`print,${printStream}\r\n`);
+        let lastExpression = statement.expressions[statement.expressions.length - 1];
+        if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
+            printStream += "\r\n";
+        }
+
+        this.stdout.write(`print,${printStream}`);
+
+        // `tab` is only in-scope when executing print statements, so remove it before we leave
+        this.environment.remove("Tab");
+
         return BrsInvalid.Instance;
     }
 
@@ -1169,7 +1194,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     try {
                         return callee.call(this, ...args);
                     } catch (err: any) {
-                        // TODO: Only start the debugger if the error is not under TryCatch
                         if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                             // Enable Micro Debugger on app crash
                             let errCode = RuntimeErrorCode.Internal.errno;
@@ -1502,7 +1526,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 target.kind
             )}`;
             const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
-            postMessage(`warning,${message}: ${location}`);
+            this.stdout.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
         }
 

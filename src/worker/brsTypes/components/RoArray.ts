@@ -90,9 +90,6 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             case ValueKind.String:
                 return this.getMethod(index.value) ?? BrsInvalid.Instance;
             default:
-                postMessage(
-                    "warning,Array indexes must be 32-bit integers or Float, method names must be strings."
-                );
                 return BrsInvalid.Instance;
         }
     }
@@ -100,8 +97,6 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     set(index: BrsType, value: BrsType) {
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             this.elements[Math.trunc(index.getValue())] = value;
-        } else {
-            postMessage("warning,Array indexes must be 32-bit integers or Float.");
         }
         return BrsInvalid.Instance;
     }
@@ -201,7 +196,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.updateNext();
                 this.updateCapacity(1.25);
             } else {
-                postMessage(
+                interpreter.stdout.write(
                     `warning,BRIGHTSCRIPT: ERROR: roArray.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
                 );
             }
@@ -232,7 +227,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.updateNext();
                 this.updateCapacity(1.25);
             } else {
-                postMessage(
+                interpreter.stdout.write(
                     `warning,BRIGHTSCRIPT: ERROR: roArray.Unshift: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
                 );
             }
@@ -284,7 +279,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoArray)) {
-                postMessage(
+                interpreter.stdout.write(
                     `warning,BRIGHTSCRIPT: ERROR: roArray.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
                 );
                 return BrsInvalid.Instance;
@@ -333,13 +328,17 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("separator", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter, separator: BrsString) => {
+        impl: (interpreter: Interpreter, separator: BrsString) => {
             if (
                 this.elements.some(function (element) {
                     return !(element instanceof BrsString);
                 })
             ) {
-                postMessage("warning,roArray.Join: Array contains non-string value(s).");
+                if (interpreter.isDevMode) {
+                    interpreter.stdout.write(
+                        "warning,roArray.Join: Array contains non-string value(s)."
+                    );
+                }
                 return new BrsString("");
             }
             return new BrsString(this.elements.join(separator.value));
@@ -352,9 +351,13 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("flags", ValueKind.String, new BrsString(""))],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, flags: BrsString) => {
+        impl: (interpreter: Interpreter, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                postMessage("warning,roArray.Sort: Flags contains invalid option(s).");
+                if (interpreter.isDevMode) {
+                    interpreter.stdout.write(
+                        "warning,roArray.Sort: Flags contains invalid option(s)."
+                    );
+                }
             } else {
                 const caseInsensitive = flags.toString().indexOf("i") > -1;
                 const originalArrayCopy = [...this.elements];
@@ -377,9 +380,13 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, fieldName: BrsString, flags: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                postMessage("warning,roArray.SortBy: Flags contains invalid option(s).");
+                if (interpreter.isDevMode) {
+                    interpreter.stdout.write(
+                        "warning,roArray.SortBy: Flags contains invalid option(s)."
+                    );
+                }
             } else {
                 const originalArrayCopy = [...this.elements];
                 this.elements = this.elements.sort((a, b) => {

@@ -32,12 +32,12 @@ export const CreateObject = new Callable("CreateObject", {
             if (["rosgscreen", "rosgnode"].includes(objName.value.toLowerCase())) {
                 msg = `WARNING: Attempt to create object "${objName.value}". SceneGraph components are still not supported!`;
             }
-            postMessage(`warning,${msg}`);
+            interpreter.stdout.write(`warning,${msg}`);
         } else {
             try {
                 return ctor(interpreter, ...additionalArgs);
             } catch (err: any) {
-                postMessage(`warning,${err.message} ${interpreter.formatLocation()}`);
+                interpreter.stderr.write(`error,${err.message} ${interpreter.formatLocation()}`);
             }
         }
         return BrsInvalid.Instance;
