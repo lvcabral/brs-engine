@@ -88,10 +88,12 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                     this.fontRegistry.set(fontFamily, [fontMetrics]);
                 }
             } catch (err: any) {
-                postMessage(`error,Error loading font:${url.pathname} - ${err.message}`);
+                interpreter.stderr.write(
+                    `error,Error loading font:${url.pathname} - ${err.message}`
+                );
             }
         } else {
-            postMessage(`error,Invalid volume in font path: ${url.pathname}`);
+            interpreter.stderr.write(`error,Invalid volume in font path: ${url.pathname}`);
         }
         return BrsBoolean.True;
     }

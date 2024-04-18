@@ -87,7 +87,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
                     }
                 } catch (err: any) {
                     const badPath = `pkg:/locale/${this.locale}/${dirName.value}/${fileName.value}`;
-                    postMessage(`error,Invalid path: ${badPath} ${err.message}`);
+                    interpreter.stderr.write(`error,Invalid path: ${badPath} ${err.message}`);
                 }
             }
             return new BrsString(assetPath);

@@ -71,7 +71,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
             try {
                 const key = this.keys.get(type.value.toLowerCase());
                 if (!key) {
-                    postMessage(
+                    interpreter.stdout.write(
                         `warning,BRIGHTSCRIPT: ERROR: roDeviceCrypto.Encrypt: invalid encryption type ${
                             type.value
                         }: ${interpreter.formatLocation()}`
@@ -102,7 +102,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, encryptedData: RoByteArray, type: BrsString) => {
             const key = this.keys.get(type.value.toLowerCase());
             if (!key) {
-                postMessage(
+                interpreter.stdout.write(
                     `warning;BRIGHTSCRIPT: ERROR: roDeviceCrypto.Decrypt: invalid encryption type ${
                         type.value
                     }: ${interpreter.formatLocation()}`
