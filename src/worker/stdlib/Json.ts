@@ -125,11 +125,15 @@ function jsonOf(
     throw new Error(`jsonOf not implemented for: ${x}`);
 }
 
-function logBrsErr(functionName: string, err: Error, location: string): void {
+function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
     if (process.env.NODE_ENV === "test") {
         return;
     }
-    postMessage(`warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${err.message}: ${location}`);
+    interpreter.stdout.write(
+        `warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${
+            err.message
+        }: ${interpreter.formatLocation()}`
+    );
 }
 
 export const FormatJson = new Callable("FormatJson", {
@@ -146,7 +150,7 @@ export const FormatJson = new Callable("FormatJson", {
         } catch (err: any) {
             // example RBI error:
             // "BRIGHTSCRIPT: ERROR: FormatJSON: Value type not supported: roFunction: pkg:/source/main.brs(14)"
-            logBrsErr("FormatJSON", err, interpreter.formatLocation());
+            logBrsErr(interpreter, "FormatJSON", err);
             return new BrsString("");
         }
     },
@@ -169,7 +173,7 @@ export const ParseJson = new Callable("ParseJson", {
         } catch (err: any) {
             // example RBI error:
             // "BRIGHTSCRIPT: ERROR: ParseJSON: Unknown identifier 'x': pkg:/source/main.brs(25)"
-            logBrsErr("ParseJSON", err, interpreter.formatLocation());
+            logBrsErr(interpreter, "ParseJSON", err);
             return BrsInvalid.Instance;
         }
     },

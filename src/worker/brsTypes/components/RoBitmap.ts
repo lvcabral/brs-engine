@@ -52,11 +52,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     image = volume.readFileSync(url.pathname);
                     this.alphaEnable = false;
                 } catch (err: any) {
-                    postMessage(`error,Error loading bitmap:${url.pathname} - ${err.message}`);
+                    interpreter.stderr.write(
+                        `error,Error loading bitmap:${url.pathname} - ${err.message}`
+                    );
                     this.valid = false;
                 }
             } else {
-                postMessage(`error,Invalid volume:${url.pathname}`);
+                interpreter.stderr.write(`error,Invalid volume:${url.pathname}`);
                 this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
@@ -81,7 +83,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
         } else {
-            postMessage(`warning,Invalid roBitmap param:${param}`);
+            interpreter.stdout.write(`warning,Invalid roBitmap param:${param}`);
             this.valid = false;
         }
         this.canvas = createNewCanvas(width, height);
@@ -144,15 +146,15 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         imageData.data.set(new Uint8Array(data));
                         putImageAtPos(imageData, this.context, 0, 0);
                     } else {
-                        postMessage(`warning,Invalid image format: ${type?.mime}`);
+                        interpreter.stdout.write(`warning,Invalid image format: ${type?.mime}`);
                         this.valid = false;
                     }
                 } else {
-                    postMessage(`warning,Invalid bitmap file format: ${image}`);
+                    interpreter.stdout.write(`warning,Invalid bitmap file format: ${image}`);
                     this.valid = false;
                 }
             } catch (err: any) {
-                postMessage(`error,Error drawing image on canvas: ${err.message}`);
+                interpreter.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
                 this.valid = false;
             }
         }

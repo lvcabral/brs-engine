@@ -61,6 +61,24 @@ if (typeof onmessage !== "undefined") {
 declare global {
     function postMessage(message: any, options?: any): void;
 }
+
+/**
+ * Default implementation of the callback, only handles console messages
+ * @param message the message to front-end
+ */
+globalThis.postMessage = (message: any) => {
+    if (typeof message === "string") {
+        const mType = message.split(",")[0];
+        if (mType === "print") {
+            process.stdout.write(message.slice(6));
+        } else if (mType === "warning") {
+            console.warn(message.slice(8).trimEnd());
+        } else if (mType === "error") {
+            console.error(message.slice(6).trimEnd());
+        }
+    }
+};
+
 export function registerCallback(messageCallback: any, sharedBuffer: SharedArrayBuffer) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;
@@ -133,6 +151,8 @@ export function executeFile(payload: any): RunResult {
     const interpreter = new Interpreter({
         entryPoint: payload.entryPoint ?? true,
         stopOnCrash: payload.stopOnCrash ?? false,
+        stdout: process.stdout,
+        stderr: process.stderr,
     });
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);

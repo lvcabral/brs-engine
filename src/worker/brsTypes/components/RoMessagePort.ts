@@ -119,7 +119,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 }
             }
             if (ms === 0) {
-                postMessage(
+                interpreter.stdout.write(
                     "warning,[roMessagePort] No message in the queue, engine will loop forever!"
                 );
                 while (true) {
@@ -130,7 +130,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                     }
                 }
             } else {
-                postMessage("warning,[roMessagePort] No message in the queue!");
+                interpreter.stdout.write("warning,[roMessagePort] No message in the queue!");
                 ms += performance.now();
                 while (performance.now() < ms) {
                     //wait the timeout time

@@ -32,6 +32,7 @@ import packageInfo from "../../package.json";
 const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
+const maxColumns = Math.max(process.stdout.columns, 32);
 const length = dataBufferIndex + dataBufferSize;
 
 // Variables
@@ -49,7 +50,7 @@ sharedArray.fill(-1);
 program
     .description(`${packageInfo.description} CLI`)
     .arguments(`brs-cli [brsFiles...]`)
-    .option("-a, --ascii <columns>", "Enable ASCII screen mode passing the width in columns.", 0)
+    .option("-a, --ascii <columns>", "Enable ASCII screen mode with # of columns.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
@@ -66,15 +67,20 @@ program
                 )
             );
         }
-        if (
-            !isNumber(program.ascii) ||
-            program.ascii < 0 ||
-            (program.ascii > 0 && program.ascii < 10)
-        ) {
-            program.ascii = 0;
-            console.warn(
-                chalk.yellow(`Invalid # of columns! Valid values are 10+, ASCII mode disabled.`)
-            );
+        if (program.ascii) {
+            if (isNumber(program.ascii)) {
+                program.ascii = +program.ascii;
+            } else {
+                program.ascii = 0;
+            }
+            if (program.ascii < 32) {
+                program.ascii = maxColumns;
+                console.warn(
+                    chalk.yellow(
+                        `Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`
+                    )
+                );
+            }
         }
         if (typeof deviceData === "object") {
             deviceData.fonts = getFonts(deviceData.defaultFont);
@@ -324,14 +330,17 @@ function repl() {
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
         } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
-            console.log(chalk.cyanBright(`\r\nLocal variables:\r\n`));
-            console.log(chalk.cyanBright(replInterpreter.formatLocalVariables().trimEnd()));
+            process.stdout.write(chalk.cyanBright(`\r\nLocal variables:\n\n`));
+            process.stdout.write(
+                chalk.cyanBright(replInterpreter.formatLocalVariables().trimEnd())
+            );
+            process.stdout.write("\n");
         } else {
             executeLine(line, replInterpreter);
         }
         rl.prompt();
     });
-    console.log(colorize("type `help` to see the list of valid REPL commands."));
+    process.stdout.write(colorize("type `help` to see the list of valid REPL commands.\n"));
     rl.prompt();
 }
 
@@ -361,7 +370,7 @@ function messageCallback(message: any, _?: any) {
             if (log.endsWith(debugPrompt)) {
                 process.stdout.write(log);
             } else {
-                console.log(colorize(log.trimEnd()));
+                process.stdout.write(colorize(log));
             }
         } else if (mType === "warning") {
             console.warn(chalk.yellow(message.slice(8).trimEnd()));
@@ -436,8 +445,8 @@ function printHelp() {
     helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
     helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";
-    helpMsg += "   Type any valid BrightScript expression for a live compile and run.";
-    console.log(chalk.cyanBright(helpMsg));
+    helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
+    process.stdout.write(chalk.cyanBright(helpMsg));
 }
 
 /**
@@ -451,7 +460,7 @@ function printAsciiScreen(columns: number, image: Canvas) {
     const ratio = (image.width / image.height) * 1.7;
     let string = "";
     let stringColor = "";
-    let cols = columns * 1;
+    let cols = Math.min(columns, maxColumns);
     let lines = Math.trunc(cols / ratio);
     const canvas = createCanvas(cols, lines);
     const context = canvas.getContext("2d");
