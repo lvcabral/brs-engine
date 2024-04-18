@@ -5,7 +5,6 @@ import { Scope } from "../interpreter/Environment";
 import { Location } from "../lexer";
 import { tryCoerce } from "./coercion";
 import { generateArgumentMismatchError } from "../interpreter/ArgumentMismatch";
-import { ValueKind } from "./BrsType";
 
 let anonCounter = 0;
 
@@ -72,25 +71,12 @@ export interface Signature {
     readonly returns: Brs.ValueKind;
 }
 
-function getStackFrameFormatter(sig: Signature, args: Brs.BrsType[]): (name: string) => string {
-    let arg_list = sig.args
-        .slice(0, Math.min(sig.args.length, args.length))
-        .map((a) => `${a.name} as ${ValueKind.toString(a.type.kind)}`)
-        .join(", ");
-
-    return (name: string) => `${name}(${arg_list}) as ${ValueKind.toString(sig.returns)}`;
-}
-
 /** A BrightScript function signature paired with its implementation. */
 export type SignatureAndImplementation = {
     /** A BrightScript function's signature. */
     signature: Signature;
     /** The implementation corresponding to `signature`. */
     impl: CallableImplementation;
-};
-
-export type CalledSignatureAndImplementation = SignatureSatisfaction & {
-    signatureAsStackFrame: (name: string) => string;
 };
 
 type SignatureMismatch = AnonymousMismatch | ArgumentMismatch;
@@ -264,24 +250,14 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
      * @returns the signature, implementation, type mismatches, and coerced arguments for the first encountered
      *          signature satisfied by the provide arguments.
      */
-    getFirstSatisfiedSignature(args: Brs.BrsType[]): CalledSignatureAndImplementation | undefined {
-        let maybeSatisfied: SignatureSatisfaction | undefined;
+    getFirstSatisfiedSignature(args: Brs.BrsType[]): SignatureSatisfaction | undefined {
         for (let sigAndImpl of this.signatures) {
-            maybeSatisfied = this.trySatisfySignature(sigAndImpl, args);
-            if (maybeSatisfied.mismatches.length === 0) {
-                break;
+            let satisfaction = this.trySatisfySignature(sigAndImpl, args);
+            if (satisfaction.mismatches.length === 0) {
+                return satisfaction;
             }
         }
-        if (maybeSatisfied == null) {
-            return undefined;
-        }
-
-        return {
-            ...maybeSatisfied,
-            ...{
-                signatureAsStackFrame: getStackFrameFormatter(maybeSatisfied.signature, args),
-            },
-        };
+        return undefined;
     }
 
     /**
