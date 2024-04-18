@@ -39,7 +39,6 @@ export class OutputProxy {
     position(str?: string) {
         if (str) {
             const lines = str.split("\n");
-            //console.log(lines, this.currentLineLength);
             if (lines.length > 1) {
                 // the length of the most recent line is now the current line length
                 this.currentLineLength = lines[lines.length - 1].length;
