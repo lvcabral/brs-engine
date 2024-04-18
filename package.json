@@ -57,7 +57,7 @@
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
     "canvas": "^2.11.2",
-    "chalk": "^5.3.0",
+    "chalk": "^4.1.2",
     "commander": "^2.12.2",
     "crc": "^3.8.0",
     "crypto-browserify": "^3.12.0",
