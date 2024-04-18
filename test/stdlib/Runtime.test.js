@@ -1,4 +1,4 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const {
     RoAssociativeArray,
     RoArray,
@@ -12,8 +12,8 @@ const {
     Double,
     Uninitialized,
 } = brs.types;
-const { CreateObject, Type } = require("../../lib/stdlib");
-const { Interpreter } = require("../../lib/interpreter");
+const { CreateObject, Type } = brs.stdlib;
+const { Interpreter } = brs;
 
 describe("global runtime functions", () => {
     let interpreter = new Interpreter();
