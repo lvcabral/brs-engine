@@ -10,7 +10,7 @@ import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } 
 import { dataBufferIndex, dataBufferSize, defaultDeviceInfo } from "./common";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
-import { Parser } from "./parser";
+import { Parser, Stmt } from "./parser";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
 import * as _lexer from "./lexer";
@@ -164,7 +164,7 @@ export function createPayload(files: any[], deviceData?: any) {
     const source: string[] = [];
     let id = 0;
     files.map((filePath) => {
-        const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
+        const fileName = path.basename(filePath) ?? filePath;
         const fileExt = fileName.split(".").pop();
         if (fileExt?.toLowerCase() === "brs") {
             try {
@@ -527,7 +527,7 @@ export function lexParseSync(
     const lexer = new Lexer();
     const parser = new Parser();
     const preprocessor = new PP.Preprocessor();
-    const allStatements = new Array<_parser.Stmt.Statement>();
+    const allStatements = new Array<Stmt.Statement>();
     const lib = new Map<string, string>();
     let tokens: Token[] = [];
     lib.set("v30/bslDefender.brs", "");
