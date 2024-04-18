@@ -1,7 +1,7 @@
 const brs = require("../../bin/brs.node");
 const { Pos, Tab } = brs.stdlib;
 const { Interpreter } = brs;
-const { BrsString, BrsBoolean, Int32 } = brs.types;
+const { BrsString, Int32 } = brs.types;
 
 const { createMockStreams } = require("../e2e/E2ETests");
 
