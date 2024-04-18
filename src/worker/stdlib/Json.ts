@@ -129,7 +129,7 @@ function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): 
     if (process.env.NODE_ENV === "test") {
         return;
     }
-    interpreter.stdout.write(
+    console.error(
         `warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${
             err.message
         }: ${interpreter.formatLocation()}`

@@ -1,8 +1,9 @@
-const { Interpreter } = require("../../lib/interpreter");
-const { FormatJson, ParseJson } = require("../../lib/stdlib/index");
-const { RoArray } = require("../../lib/brsTypes/components/RoArray");
-const { RoAssociativeArray } = require("../../lib/brsTypes/components/RoAssociativeArray");
+const brs = require("../../bin/brs.node");
+const { Interpreter } = brs;
+const { FormatJson, ParseJson } = brs.stdlib;
 const {
+    RoArray,
+    RoAssociativeArray,
     BrsBoolean,
     BrsInvalid,
     BrsString,
@@ -11,7 +12,7 @@ const {
     Int64,
     Uninitialized,
     roInt,
-} = require("../../lib/brsTypes");
+} = brs.types;
 
 const { allArgs } = require("../e2e/E2ETests");
 
