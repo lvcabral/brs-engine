@@ -17,6 +17,7 @@ const { Interpreter } = brs;
 
 describe("global runtime functions", () => {
     let interpreter = new Interpreter();
+    brs.registerCallback(() => {}); // register a callback to avoid display errors
 
     describe("CreateObject", () => {
         it("creates a new instance of associative array", () => {
