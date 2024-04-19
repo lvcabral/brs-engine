@@ -1,6 +1,6 @@
-const brs = require("brs");
-const { BrsBoolean, BrsInvalid, BrsString, Int32, RoRegex, ValueKind } = brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
+const { BrsBoolean, BrsString, Int32, RoRegex, ValueKind } = brs.types;
 
 describe("RoRegex", () => {
     let interpreter;
