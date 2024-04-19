@@ -1,6 +1,6 @@
-const brs = require("brs");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
 const { RoArray, RoAssociativeArray, BrsBoolean, BrsString, Int32, BrsInvalid, Float } = brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
 const { createMockStreams } = require("../../e2e/E2ETests");
 
 describe("RoArray", () => {
@@ -79,11 +79,7 @@ describe("RoArray", () => {
         let interpreter;
 
         beforeEach(() => {
-            let mockStreams = createMockStreams();
-            interpreter = new Interpreter({
-                stdout: mockStreams.stdout,
-                stderr: mockStreams.stderr,
-            });
+            interpreter = new Interpreter(createMockStreams());
         });
 
         describe("peek", () => {

@@ -1,6 +1,6 @@
-const brs = require("../../../lib");
-const { RoList, BrsBoolean, BrsString, Int32, BrsInvalid, Float } = brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
+const { RoList, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
 const { createMockStreams } = require("../../e2e/E2ETests");
 
 describe("RoList", () => {
@@ -79,11 +79,7 @@ describe("RoList", () => {
         let interpreter;
 
         beforeEach(() => {
-            let mockStreams = createMockStreams();
-            interpreter = new Interpreter({
-                stdout: mockStreams.stdout,
-                stderr: mockStreams.stderr,
-            });
+            interpreter = new Interpreter(createMockStreams());
         });
 
         describe("peek", () => {
