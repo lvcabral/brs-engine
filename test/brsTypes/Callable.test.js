@@ -1,5 +1,6 @@
-const BrsTypes = require("../../lib/brsTypes");
-const { UCase, LCase } = require("../../lib/stdlib");
+const brs = require("../../bin/brs.node");
+const BrsTypes = brs.types;
+const { UCase, LCase } = brs.stdlib;
 
 describe("Callable", () => {
     it("is less than nothing", () => {

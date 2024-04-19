@@ -1,3 +1,4 @@
+const brs = require("../../bin/brs.node");
 const {
     ValueKind,
     Int32,
@@ -7,7 +8,7 @@ const {
     BrsString,
     BrsBoolean,
     BrsInvalid,
-} = require("../../lib/brsTypes");
+} = brs.types;
 
 describe("Float", () => {
     it("doesn't rounds initial values", () => {

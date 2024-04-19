@@ -1,5 +1,5 @@
-const { RoAssociativeArray, BrsObjects } = require("../../lib/brsTypes");
-const BrsError = require("../../lib/Error");
+const brs = require("../../bin/brs.node");
+const { RoAssociativeArray, BrsObjects } = brs.types;
 
 describe("BrsObjects", () => {
     describe("new object instances", () => {
