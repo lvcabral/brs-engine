@@ -61,7 +61,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
                 el === undefined ? "    invalid" : `    ${el.toString(this)}`
             ),
             ")",
-        ].join("\r");
+        ].join("\n");
     }
 
     equalTo(_other: BrsType) {
