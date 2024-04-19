@@ -91,6 +91,7 @@ export * from "./components/RoChannelStoreEvent";
 export * from "./components/RoUniversalControlEvent";
 export * from "./Boxing";
 export * from "./Callable";
+export * from "./coercion";
 
 /**
  * Determines whether or not the given value is a number.
@@ -118,6 +119,7 @@ export const PrimitiveKinds = new Set([
     ValueKind.Boolean,
     ...NumberKinds,
     ValueKind.String,
+    ValueKind.Callable,
 ]);
 
 /**
