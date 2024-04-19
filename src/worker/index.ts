@@ -184,7 +184,7 @@ export function createPayload(files: any[], deviceData?: any) {
             deviceData = defaultDeviceInfo;
         }
         if (deviceData.fonts.size === 0) {
-            deviceData.fonts = getFonts(deviceData.defaultFont);
+            deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
         }
         const manifest = new Map();
         manifest.set("title", "BRS App");
@@ -214,9 +214,9 @@ export function createPayload(files: any[], deviceData?: any) {
  * @returns a Map with the fonts.
  */
 
-function getFonts(fontFamily: string) {
+export function getFonts(fontPath: string, fontFamily: string) {
     const fonts = new Map();
-    const fontsPath = path.join(__dirname, "../app/fonts", `${fontFamily}`);
+    const fontsPath = path.join(__dirname, fontPath, `${fontFamily}`);
     try {
         fonts.set("regular", fs.readFileSync(`${fontsPath}-Regular.ttf`));
         fonts.set("bold", fs.readFileSync(`${fontsPath}-Bold.ttf`));

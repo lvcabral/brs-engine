@@ -27,6 +27,7 @@ import { isNumber } from "../api/util";
 import {
     registerCallback,
     getInterpreter,
+    getFonts,
     executeLine,
     executeFile,
     createPayload,
@@ -91,6 +92,8 @@ program
         if (typeof deviceData === "object") {
             deviceData.deviceModel = "4400X";
             deviceData.customFeatures.push("ascii_rendering");
+            deviceData.fontPath = "../app/fonts";
+            deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
             deviceData.localIps = getLocalIps();
             if (program.registry) {
                 deviceData.registry = getRegistry();
