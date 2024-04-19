@@ -1,6 +1,6 @@
-const brs = require("../../../lib");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
 const { RoPath, BrsBoolean, BrsString, Callable } = brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoPath", () => {
     describe("comparisons", () => {
