@@ -10,40 +10,16 @@ import { bufferToBase64, parseCSV, SubscribeCallback, context } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
-import { audioExt, videoExt } from "../worker/enums";
+import { defaultDeviceInfo, audioExt, videoExt } from "../worker/common";
 import models from "../worker/common/models.csv";
 import packageInfo from "../../package.json";
 
 // Default Device Data
-// Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
-export const deviceData = {
-    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
-    friendlyName: "BrightScript Engine Library",
-    deviceModel: "8000X", // Roku TV (Midland)
-    firmwareVersion: "BSC.00E04193A", // v11.0
-    clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
-    RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
-    countryCode: "US", // App Store Country
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    locale: "en_US", // Used if app supports localization
-    captionLanguage: "eng",
-    clockFormat: "12h",
-    displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-    defaultFont: "Asap",
-    fontPath: "../fonts/",
-    fonts: new Map(),
-    maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
+export const deviceData = Object.assign(defaultDeviceInfo, {
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
-    customFeatures: new Array<string>(),
-    connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
-    localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
-    startTime: Date.now(),
-    audioVolume: 40,
     models: parseCSV(models),
-    registry: new Map(),
-    maxFps: 60,
-};
+});
 
 // App Data
 const defaultSplashTime = 1600;

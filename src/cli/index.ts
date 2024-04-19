@@ -24,8 +24,14 @@ import {
     getSerialNumber,
 } from "../api/package";
 import { isNumber } from "../api/util";
-import { registerCallback, getInterpreter, executeLine, executeFile } from "../worker";
-import { debugPrompt, dataBufferIndex, dataBufferSize } from "../worker/enums";
+import {
+    registerCallback,
+    getInterpreter,
+    executeLine,
+    executeFile,
+    createPayload,
+} from "../worker";
+import { debugPrompt, dataBufferIndex, dataBufferSize } from "../worker/common";
 import packageInfo from "../../package.json";
 
 // Constants
@@ -83,7 +89,6 @@ program
             }
         }
         if (typeof deviceData === "object") {
-            deviceData.fonts = getFonts(deviceData.defaultFont);
             deviceData.deviceModel = "4400X";
             deviceData.customFeatures.push("ascii_rendering");
             deviceData.localIps = getLocalIps();
@@ -99,7 +104,7 @@ program
                 const filePath = brsFiles[0];
                 const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
                 const fileExt = fileName.split(".").pop()?.toLowerCase();
-                appFileName = "";
+                appFileName = fileName;
                 if (fileExt === "zip" || fileExt === "bpk") {
                     showAppTitle();
                     if (program.pack.length > 0 && fileExt === "zip") {
@@ -107,11 +112,12 @@ program
                     } else {
                         console.log(chalk.blueBright(`Executing ${filePath}...\n`));
                     }
-                    appFileName = fileName;
                     loadAppZip(fileName, fs.readFileSync(filePath), runApp);
                     return;
                 }
-                runBrsFiles(brsFiles);
+                // Run BrightScript files
+                const payload = createPayload(brsFiles);
+                runApp(payload);
             } catch (err: any) {
                 if (err.messages?.length) {
                     err.messages.forEach((message: string) => console.error(chalk.red(message)));
@@ -140,59 +146,6 @@ function showAppTitle() {
     /// #else
     console.log(`\n${appTitle} [${chalk.cyanBright(appVersion)}]\n`);
     /// #endif
-}
-
-/**
- * Execute the a list of Brs files passed via
- * the command line.
- *
- */
-function runBrsFiles(files: any[]) {
-    // Run list of Brs files
-    const paths: Object[] = [];
-    const source: string[] = [];
-    let id = 0;
-    files.map((filePath) => {
-        const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
-        const fileExt = fileName.split(".").pop();
-        if (fileExt?.toLowerCase() === "brs") {
-            if (appFileName === "") {
-                appFileName = fileName;
-            }
-            try {
-                const sourceCode = fs.readFileSync(filePath);
-                if (sourceCode) {
-                    source.push(sourceCode.toString());
-                    paths.push({ url: `source/${fileName}`, id: id, type: "source" });
-                    id++;
-                }
-            } catch (err: any) {
-                console.error(chalk.red(err.message));
-            }
-        }
-    });
-    if (id > 0) {
-        const manifest = new Map();
-        manifest.set("title", "CLI App");
-        manifest.set("major_version", "1");
-        manifest.set("minor_version", "0");
-        manifest.set("build_version", "0");
-        manifest.set("requires_audiometadata", "1");
-        const payload = {
-            device: deviceData,
-            manifest: manifest,
-            input: [],
-            paths: paths,
-            brs: source,
-            texts: [],
-            binaries: [],
-            entryPoint: false,
-            stopOnCrash: false,
-        };
-        runApp(payload);
-    } else {
-        console.error(chalk.red("Invalid or inexistent file(s)!"));
-    }
 }
 
 /**
@@ -249,22 +202,6 @@ function runApp(payload: any) {
             console.log(chalk.redBright(msg));
         }
     }
-}
-
-/**
- * Get the fonts map for the device.
- * @param fontFamily a string with the font family name.
- * @returns a Map with the fonts.
- */
-
-function getFonts(fontFamily: string) {
-    const fonts = new Map();
-    const fontsPath = path.join(__dirname, "../app/fonts", `${fontFamily}`);
-    fonts.set("regular", fs.readFileSync(`${fontsPath}-Regular.ttf`));
-    fonts.set("bold", fs.readFileSync(`${fontsPath}-Bold.ttf`));
-    fonts.set("italic", fs.readFileSync(`${fontsPath}-Italic.ttf`));
-    fonts.set("bold-italic", fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
-    return fonts;
 }
 
 /** Get the computer local Ips

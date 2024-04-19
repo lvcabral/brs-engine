@@ -24,7 +24,6 @@ sub main()
     print di.CanDecodeVideo({"codec": "mpeg4 avc"})
     print di.CanDecodeAudio({"codec": "mp3"})
     codecs = di.CanDecodeAudio({})
-    stop
     print codecs
     if not codecs.result
         print codecs.codec

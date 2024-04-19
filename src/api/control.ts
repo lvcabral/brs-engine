@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, context } from "./util";
-import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots } from "../worker/enums";
+import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots } from "../worker/common";
 /// #if BROWSER
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 /// #endif
