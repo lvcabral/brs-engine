@@ -2,6 +2,7 @@ import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } fr
 import { Interpreter } from "../interpreter";
 import { FileSystem } from "../interpreter/FileSystem";
 import * as nanomatch from "nanomatch";
+import * as path from "path";
 
 type Volume = FileSystem;
 
@@ -31,6 +32,25 @@ export function getVolumeByPath(interpreter: Interpreter, path: string): Volume 
 export function getPath(fileUri: string) {
     return new URL(fileUri).pathname;
 }
+
+/*
+ * Returns a memfs file path from a brs file uri. If the brs file uri
+ * has the "pkg" protocol, append the file path with our root directory
+ * so that we're searching the correct place.
+ *   ex. "tmp:/test/test1.txt" -> "/test/test1.txt"
+ *   ex. "pkg:/test/test1.txt" -> "/path/to/proj/test/test1.txt"
+ *
+ */
+export function getScopedPath(interpreter: Interpreter, fileUri: string) {
+    let url = new URL(fileUri);
+    let filePath = getPath(fileUri);
+    let scopedPath = filePath;
+    if (url.protocol === "pkg:") {
+        scopedPath = path.join(interpreter.options.root ?? "", filePath);
+    }
+    return scopedPath.replace(/[\/\\]+/g, path.posix.sep);
+}
+
 
 export function createDir(interpreter: Interpreter, dir: string) {
     const volume = getVolumeByPath(interpreter, dir);
