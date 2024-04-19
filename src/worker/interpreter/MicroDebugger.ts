@@ -1,6 +1,5 @@
 import { Interpreter } from ".";
 import { BackTrace } from "./Environment";
-import { source } from "..";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { BrsError } from "../Error";
@@ -18,7 +17,7 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand, debugPrompt } from "../enums";
+import { DataType, DebugCommand, debugPrompt } from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
@@ -37,7 +36,7 @@ export function runDebugger(
     // TODO:
     // - Implement step over and step out
     // - Implement classes, bsc(s) and stats
-    const lastLines = parseTextFile(source.get(lastLoc.file));
+    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
     if (stepMode) {
@@ -179,8 +178,8 @@ function debugHandleCommand(
 ) {
     const env = interpreter.environment;
     const backTrace = env.getBackTrace();
-    const lastLines = parseTextFile(source.get(lastLoc.file));
-    const currLines = parseTextFile(source.get(currLoc.file));
+    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
+    const currLines = parseTextFile(interpreter.sourceMap.get(currLoc.file));
     let lastLine: number = lastLoc.start.line;
     let currLine: number = currLoc.start.line;
     let lineText: string = "";

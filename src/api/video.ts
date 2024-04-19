@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, context, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent } from "../worker/enums";
+import { BufferType, DataType, MediaEvent } from "../worker/common";
 import Hls from "hls.js";
 
 // Video Objects

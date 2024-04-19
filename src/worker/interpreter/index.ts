@@ -49,7 +49,7 @@ import { toCallable } from "./BrsFunction";
 import { BlockEnd } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, dataBufferIndex } from "../enums";
+import { DataType, DebugCommand, dataBufferIndex } from "../common";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -73,6 +73,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
+    private _sourceMap = new Map<string, string>();
     private _startTime = Date.now();
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
@@ -103,6 +104,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get environment() {
         return this._environment;
+    }
+
+    get sourceMap() {
+        return this._sourceMap;
     }
 
     get startTime() {
@@ -223,8 +228,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    exec(statements: readonly Stmt.Statement[], ...args: BrsType[]) {
+    exec(
+        statements: readonly Stmt.Statement[],
+        sourceMap?: Map<string, string>,
+        ...args: BrsType[]
+    ) {
         let results = statements.map((statement) => this.execute(statement));
+        if (sourceMap) {
+            this._sourceMap = sourceMap;
+        }
         try {
             let mainVariable = new Expr.Variable({
                 kind: Lexeme.Identifier,
@@ -281,8 +293,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ];
             } else if (this.options.entryPoint) {
                 // Generate an exception when Entry Point is required
-                throw new Error(
-                    "No entry point found! You must define a function Main() or RunUserInterface()"
+                throw new RuntimeError(
+                    RuntimeErrorCode.MissingMainFunction,
+                    "No entry point found! You must define a function Main() or RunUserInterface()",
+                    mainVariable.location
                 );
             }
         } catch (err: any) {

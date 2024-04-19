@@ -15,7 +15,7 @@ import {
     RemoteType,
     keyArraySpots,
     keyBufferSize,
-} from "../../enums";
+} from "../../common";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

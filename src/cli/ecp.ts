@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { enableSendKeys, initControlModule, sendKey, subscribeControl } from "../api/control";
-import { DataType, DebugCommand } from "../worker/enums";
+import { DataType, DebugCommand } from "../worker/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
 import xmlbuilder from "xmlbuilder";
