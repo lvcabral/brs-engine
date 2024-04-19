@@ -1,10 +1,10 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
+const brs = require("../../bin/brs.node");
+const { Expr, Stmt } = brs.parser;
+
 const { token } = require("../parser/ParserTests");
 const { binary } = require("./InterpreterTests");
-const brs = require("../../lib");
 const { Lexeme } = brs.lexer;
-const { Interpreter } = require("../../lib/interpreter");
+const { Interpreter } = brs;
 
 let interpreter;
 
@@ -146,7 +146,7 @@ describe("interpreter arithmetic", () => {
             new Expr.Unary(token(Lexeme.Minus), new Expr.Literal(new brs.types.BrsString("four")))
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(/Attempting to negate non-numeric value/);
+        expect(() => interpreter.exec([ast])).toThrow("Type Mismatch.");
     });
 
     it("doesn't allow mixed-type arithmetic", () => {
@@ -158,7 +158,7 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(/Attempting to add non-homogeneous values/);
+        expect(() => interpreter.exec([ast])).toThrow("Type Mismatch.");
     });
 
     it("bitwise ANDs integers", () => {
@@ -250,7 +250,7 @@ describe("interpreter arithmetic", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(
-            /In a bit shift expression the right value must be >= 0 and < 32/
+            /Invalid Bitwise Shift./
         );
     });
 
@@ -264,7 +264,7 @@ describe("interpreter arithmetic", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(
-            /In a bit shift expression the right value must be >= 0 and < 32/
+            /Invalid Bitwise Shift./
         );
     });
 
@@ -278,7 +278,7 @@ describe("interpreter arithmetic", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(
-            /In a bit shift expression the right value must be >= 0 and < 32/
+            /Invalid Bitwise Shift./
         );
     });
 
@@ -331,7 +331,7 @@ describe("interpreter arithmetic", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(
-            /In a bit shift expression the right value must be >= 0 and < 32/
+            /Invalid Bitwise Shift./
         );
     });
 
@@ -345,7 +345,7 @@ describe("interpreter arithmetic", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(
-            /In a bit shift expression the right value must be >= 0 and < 32/
+            /Invalid Bitwise Shift./
         );
     });
 
@@ -359,7 +359,7 @@ describe("interpreter arithmetic", () => {
         );
 
         expect(() => interpreter.exec([ast])).toThrow(
-            /In a bit shift expression the right value must be >= 0 and < 32/
+            /Invalid Bitwise Shift./
         );
     });
 });

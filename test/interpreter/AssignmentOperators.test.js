@@ -1,8 +1,8 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { Expr, Stmt } = brs.parser;
 const { Lexeme } = brs.lexer;
 const { BrsString, Int32, Float } = brs.types;
-const { Interpreter } = require("../../lib/interpreter");
+const { Interpreter } = brs;
 
 const { token, identifier } = require("../parser/ParserTests");
 

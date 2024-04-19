@@ -105,6 +105,14 @@ export class Environment {
     }
 
     /**
+     * Sets the the special `m` variable from the root Environment.
+     * @param newMPointer the new value to be used for the `m` pointer
+     */
+    public setRootM(newMPointer: RoAssociativeArray): void {
+        this.rootM = newMPointer;
+    }
+
+    /**
      * Add a Back Trace to the environment
      * @param name The name of the function
      * @param functionLoc The location of the function

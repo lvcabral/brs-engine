@@ -1,7 +1,7 @@
-const { binary } = require("./InterpreterTests");
-const { Interpreter } = require("../../lib/interpreter");
-const brs = require("../../lib");
+const brs = require("../../bin/brs.node");
+const { Interpreter } = brs;
 const { Lexeme } = brs.lexer;
+const { binary } = require("./InterpreterTests");
 const {
     Int32,
     Int64,
@@ -109,9 +109,7 @@ describe("interpreter comparisons", () => {
             test(name, () => {
                 let arr = new RoArray([]);
 
-                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow(
-                    /Attempting to compare non-homogeneous values/
-                );
+                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow("Type Mismatch.");
             });
         });
     });
@@ -141,13 +139,9 @@ describe("interpreter comparisons", () => {
 
                 [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach(
                     (operator) => {
-                        expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow(
-                            /Attempting to compare non-homogeneous values/
-                        );
+                        expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow("Type Mismatch.");
 
-                        expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow(
-                            /Attempting to compare non-homogeneous values/
-                        );
+                        expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow("Type Mismatch.");
                     }
                 );
             });
@@ -179,7 +173,7 @@ describe("interpreter comparisons", () => {
             let notEqual = binary(int32, Lexeme.LessGreater, str);
             expect(() =>
                 interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
-            ).toThrow(/Attempting to compare non-homogeneous values/);
+            ).toThrow("Type Mismatch.");
         });
 
         test("roString and 64-bit int", () => {
@@ -191,7 +185,7 @@ describe("interpreter comparisons", () => {
             let notEqual = binary(rostr, Lexeme.LessGreater, int64);
             expect(() =>
                 interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
-            ).toThrow(/Attempting to compare non-homogeneous values/);
+            ).toThrow("Type Mismatch.");
         });
     });
 });

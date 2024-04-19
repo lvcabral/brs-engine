@@ -1,9 +1,8 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-const { token } = require("../parser/ParserTests");
-const brs = require("../../lib");
+const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
-const { Interpreter } = require("../../lib/interpreter");
+const { Expr, Stmt } = brs.parser;
+const { token } = require("../parser/ParserTests");
+const { Interpreter } = brs;
 
 let interpreter;
 
@@ -72,7 +71,7 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'and' boolean/);
+        expect(() => interpreter.exec([ast])).toThrow("Type Mismatch.");
     });
 
     it("mixed-type ORs with Number non-zero", () => {
@@ -110,6 +109,6 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(/Attempting to 'or' boolean/);
+        expect(() => interpreter.exec([ast])).toThrow("Type Mismatch.");
     });
 });

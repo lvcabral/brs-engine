@@ -1,11 +1,13 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-const { Interpreter } = require("../../lib/interpreter");
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
+const { Expr, Stmt } = brs.parser;
+const { Interpreter } = brs;
 const { BrsString, Int32, roInt, ValueKind, BrsInvalid, roInvalid } = brs.types;
 
-const { token, identifier } = require("../parser/ParserTests");
+const { token, identifier, fakeLocation } = require("../parser/ParserTests");
+
+const FUNCTION = token(Lexeme.Function, "function");
+const END_FUNCTION = token(Lexeme.EndFunction, "end function");
 
 let interpreter;
 
@@ -17,7 +19,7 @@ describe("interpreter calls", () => {
     it("calls functions", () => {
         const call = new Stmt.Expression(
             new Expr.Call(new Expr.Variable(identifier("UCase")), token(Lexeme.RightParen, ")"), [
-                new Expr.Literal(new BrsString("h@lL0")),
+                new Expr.Literal(new BrsString("h@lL0"), fakeLocation),
             ])
         );
         const [result] = interpreter.exec([call]);
@@ -29,22 +31,28 @@ describe("interpreter calls", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("foo"),
-                new Expr.AALiteral([
-                    {
-                        name: new BrsString("setMId"),
-                        value: new Expr.Function(
-                            [],
-                            ValueKind.Void,
-                            new Stmt.Block([
-                                new Stmt.DottedSet(
-                                    new Expr.Variable(identifier("m")),
-                                    identifier("id"),
-                                    new Expr.Literal(new BrsString("this is an ID"))
-                                ),
-                            ])
-                        ),
-                    },
-                ])
+                new Expr.AALiteral(
+                    [
+                        {
+                            name: new BrsString("setMId"),
+                            value: new Expr.Function(
+                                [],
+                                ValueKind.Void,
+                                new Stmt.Block([
+                                    new Stmt.DottedSet(
+                                        new Expr.Variable(identifier("m")),
+                                        identifier("id"),
+                                        new Expr.Literal(new BrsString("this is an ID"))
+                                    ),
+                                ]),
+                                FUNCTION,
+                                END_FUNCTION
+                            ),
+                        },
+                    ],
+                    token(Lexeme.LeftBrace, "{"),
+                    token(Lexeme.RightBrace, "}")
+                )
             ),
             new Stmt.Expression(
                 new Expr.Call(
@@ -73,11 +81,13 @@ describe("interpreter calls", () => {
                         [
                             new Stmt.Return(
                                 { return: token(Lexeme.Return, "return") },
-                                new Expr.Literal(new Int32(5))
+                                new Expr.Literal(new Int32(5), fakeLocation)
                             ),
                         ],
                         token(Lexeme.Newline, "\n")
-                    )
+                    ),
+                    FUNCTION,
+                    END_FUNCTION
                 )
             ),
             new Stmt.Assignment(
@@ -98,6 +108,30 @@ describe("interpreter calls", () => {
         let result = interpreter.environment.get(identifier("result"));
         expect(result.kind).toBe(ValueKind.Object);
         expect(result.value).toEqual(new roInt(new Int32(5)).value);
+    });
+
+    it("automatically boxes arguments when appropriate", () => {
+        const ast = [
+            new Stmt.Assignment(
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("result"),
+                new Stmt.Expression(
+                    new Expr.Call(
+                        new Expr.Variable(identifier("GetInterface")),
+                        token(Lexeme.RightParen, ")"),
+                        [
+                            new Expr.Literal(new BrsString("primitive")), // brsString doesn't implement ifString, but roString does!
+                            new Expr.Literal(new BrsString("ifString")),
+                        ]
+                    )
+                )
+            ),
+        ];
+
+        interpreter.exec(ast);
+
+        let result = interpreter.environment.get(identifier("result"));
+        expect(result.kind).toBe(ValueKind.Interface);
     });
 
     it("errors when not enough arguments provided", () => {
@@ -144,11 +178,13 @@ describe("interpreter calls", () => {
                         [
                             new Stmt.Return(
                                 { return: token(Lexeme.Return, "return") },
-                                new Expr.Literal(new Int32(5))
+                                new Expr.Literal(new Int32(5), fakeLocation)
                             ),
                         ],
                         token(Lexeme.Newline, "\n")
-                    )
+                    ),
+                    FUNCTION,
+                    END_FUNCTION
                 )
             ),
             new Stmt.Expression(
@@ -160,9 +196,7 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(
-            /Attempting to return value of type Integer, but function foo declares return value of type String/
-        );
+        expect(() => interpreter.exec(ast)).toThrow("Type Mismatch.");
     });
 
     it("boxes invalid when return type is Object", () => {
@@ -176,11 +210,13 @@ describe("interpreter calls", () => {
                         [
                             new Stmt.Return(
                                 { return: token(Lexeme.Return, "return") },
-                                new Expr.Literal(BrsInvalid.Instance)
+                                new Expr.Literal(BrsInvalid.Instance, fakeLocation)
                             ),
                         ],
                         token(Lexeme.Newline, "\n")
-                    )
+                    ),
+                    FUNCTION,
+                    END_FUNCTION
                 )
             ),
             new Stmt.Assignment(
@@ -212,11 +248,13 @@ describe("interpreter calls", () => {
                         [
                             new Stmt.Return(
                                 { return: token(Lexeme.Return, "return") },
-                                new Expr.Literal(new Int32(5))
+                                new Expr.Literal(new Int32(5), fakeLocation)
                             ),
                         ],
                         token(Lexeme.Newline, "\n")
-                    )
+                    ),
+                    FUNCTION,
+                    END_FUNCTION
                 )
             ),
             new Stmt.Expression(
@@ -228,7 +266,7 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(/Attempting to return value of non-void type/);
+        expect(() => interpreter.exec(ast)).toThrow(/Return can not have a return-value if inside a Sub or Function with Void return type./);
     });
 
     it("errors when returning void from a non-void return", () => {
@@ -241,7 +279,9 @@ describe("interpreter calls", () => {
                     new Stmt.Block(
                         [new Stmt.Return({ return: token(Lexeme.Return, "return") })],
                         token(Lexeme.Newline, "\n")
-                    )
+                    ),
+                    FUNCTION,
+                    END_FUNCTION
                 )
             ),
             new Stmt.Expression(
@@ -253,6 +293,6 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(/Attempting to return void value/);
+        expect(() => interpreter.exec(ast)).toThrow(/Return must return a value./);
     });
 });

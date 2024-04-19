@@ -1,10 +1,9 @@
-const brs = require("brs");
-const { Expr, Stmt } = brs.parser;
+const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
+const { Expr, Stmt } = brs.parser;
+const { Interpreter } = brs;
+const { identifier, token } = require("../parser/ParserTests");
 const { Int32, BrsString } = brs.types;
-const { Interpreter } = require("../../lib/interpreter");
-
-const { token, identifier } = require("../parser/ParserTests");
 
 let interpreter;
 
@@ -87,7 +86,7 @@ describe("interpreter increment/decrement operators", () => {
             new Stmt.Increment(
                 new Expr.IndexedGet(
                     new Expr.Variable(identifier("arr")),
-                    new Expr.Literal(new Int32(0)),
+                    [new Expr.Literal(new Int32(0))],
                     token(Lexeme.RightSquare, "]")
                 ),
                 token(Lexeme.MinusMinus, "--")
@@ -97,7 +96,7 @@ describe("interpreter increment/decrement operators", () => {
                 identifier("result"),
                 new Expr.IndexedGet(
                     new Expr.Variable(identifier("arr")),
-                    new Expr.Literal(new Int32(0)),
+                    [new Expr.Literal(new Int32(0))],
                     token(Lexeme.RightSquare, "]")
                 )
             ),

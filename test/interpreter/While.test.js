@@ -1,8 +1,7 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-const { Interpreter } = require("../../lib/interpreter");
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
+const { Expr, Stmt } = brs.parser;
+const { Interpreter } = brs;
 const { Int32 } = brs.types;
 
 const { token, identifier } = require("../parser/ParserTests");
@@ -107,4 +106,5 @@ describe("interpreter while loops", () => {
         interpreter.exec(statements);
         expect(decrementSpy).toHaveBeenCalledTimes(1);
     });
+    it.todo("add continue while tests");
 });

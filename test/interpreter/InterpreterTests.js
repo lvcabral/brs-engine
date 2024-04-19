@@ -1,6 +1,6 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-
+const brs = require("../../bin/brs.node");
+const { Expr, Stmt } = brs.parser;
+const { token, fakeLocation } = require("../parser/ParserTests");
 /**
  * Creates an expression AST that performs binary operation `operator` on left` and `right`.
  *
@@ -13,9 +13,9 @@ const Stmt = require("../../lib/parser/Statement");
 exports.binary = function (left, operator, right) {
     return new Stmt.Expression(
         new Expr.Binary(
-            new Expr.Literal(left),
-            { kind: operator, line: 1 },
-            new Expr.Literal(right)
+            new Expr.Literal(left, fakeLocation),
+            token(operator),
+            new Expr.Literal(right, fakeLocation)
         )
     );
 };

@@ -32,6 +32,7 @@ export { BrsTypes as types };
 export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
+export { Environment, Scope } from "./interpreter/Environment";
 export const shared = new Map<string, Int32Array>();
 
 const algorithm = "aes-256-ctr";
