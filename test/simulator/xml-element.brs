@@ -1,11 +1,13 @@
 Sub Main()
     print "Test roXMLElement"
     m.http = CreateObject("roUrlTransfer")
-    rsp = GetString("https://lvcabral.com/highscores.xml")
+    m.http.SetCertificatesFile("common:/certs/ca-bundle.crt")
+    rsp = GetString("https://brsfiddle.net/highscores.xml")
     xml=CreateObject("roXMLElement")
+    print "GetName(): "; xml.GetName()
+    scoretable = []
     if xml.Parse(rsp)
-        scoretable = []
-        print xml.GetName()
+        print "GetName(): "; xml.GetName()
         childelements = xml.GetChildElements()
         print "childelements: "; childelements
         for each item in childelements
@@ -15,7 +17,7 @@ Sub Main()
             Print "name: "; o.name
             print "score: "; o.score
             scoretable.Push(o)
-        next
+            next
     end if
     print "total items:"; scoretable.count()
 End Sub

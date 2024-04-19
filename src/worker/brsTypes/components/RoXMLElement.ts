@@ -13,7 +13,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     private parsedXML: any;
     constructor() {
         super("roXMLElement");
-        this.parsedXML = { root: {} };
+        this.parsedXML = { _root_: {} };
         this.registerMethods({
             ifXMLElement: [
                 this.parse,
@@ -72,7 +72,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element attribute must be strings");
         }
-        if (Object.keys(this.parsedXML).length > 0) {
+        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
             let root = Object.keys(this.parsedXML)[0];
             if (this.parsedXML[root].$) {
                 let attrs = this.parsedXML[root].$;
@@ -90,7 +90,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     attributes() {
         let attributes = new RoAssociativeArray([]);
-        if (Object.keys(this.parsedXML).length > 0) {
+        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
             let root = Object.keys(this.parsedXML)[0];
             if (this.parsedXML[root].$) {
                 let attrs = this.parsedXML[root].$;
@@ -106,8 +106,11 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     name() {
         let name = "";
-        if (Object.keys(this.parsedXML).length > 0) {
+        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
             name = Object.keys(this.parsedXML)[0];
+            if (name === "_root_") {
+                name = "";
+            }
         }
         return new BrsString(name);
     }
@@ -125,7 +128,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     childElements() {
         let elements = new RoXMLList();
-        if (Object.keys(this.parsedXML).length > 0) {
+        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
             let root = Object.keys(this.parsedXML)[0];
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 if (key !== "$" && key !== "_") {
@@ -144,7 +147,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     childNodes() {
         let nodes = new RoList();
-        if (Object.keys(this.parsedXML).length > 0) {
+        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
             let root = Object.keys(this.parsedXML)[0];
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 if (key !== "$") {
@@ -168,7 +171,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         if (ci) {
             name = name.toLocaleLowerCase();
         }
-        if (Object.keys(this.parsedXML).length > 0) {
+        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
             let root = Object.keys(this.parsedXML)[0];
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 let cKey = ci ? key.toLocaleLowerCase() : key;
@@ -176,7 +179,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                     if (value instanceof Array) {
                         value.forEach((item) => {
                             let element = new RoXMLElement();
-                            element.parsedXML = { [cKey]: item };
+                            element.parsedXML = { [key]: item };
                             elements.add(element);
                         });
                     }
@@ -222,7 +225,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let elements = this.childElements();
             if (elements.length() > 0) {
                 return elements;
@@ -239,7 +242,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let elements = this.childElements();
             if (elements.length() > 0) {
                 return elements;
@@ -269,7 +272,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             return this.namedElements(name.value, false);
         },
     });
@@ -280,7 +283,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             return this.namedElements(name.value, true);
         },
     });
@@ -291,7 +294,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return this.attributes();
         },
     });
@@ -302,7 +305,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return this.name();
         },
     });
@@ -313,7 +316,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return this.text();
         },
     });
@@ -324,7 +327,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             return BrsBoolean.from(this.name().value === name.value);
         },
     });
@@ -335,7 +338,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("attr", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, attr: BrsString) => {
+        impl: (_: Interpreter, attr: BrsString) => {
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
                 if (this.parsedXML[root].$) {
@@ -353,7 +356,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("body", ValueKind.String)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, body: BrsString) => {
+        impl: (_: Interpreter, body: BrsString) => {
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
                 if (this.parsedXML[root]["_"]) {
@@ -372,7 +375,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("text", ValueKind.String)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, text: BrsString) => {
+        impl: (_: Interpreter, text: BrsString) => {
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
                 if (this.parsedXML[root]["_"]) {
@@ -391,7 +394,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let element = new RoXMLElement();
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
@@ -409,7 +412,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             let element = new RoXMLElement();
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
@@ -430,7 +433,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             ],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, name: BrsString, body: BrsString) => {
+        impl: (_: Interpreter, name: BrsString, body: BrsString) => {
             let element = new RoXMLElement();
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
@@ -451,7 +454,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             ],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, attr: BrsString, value: BrsString) => {
+        impl: (_: Interpreter, attr: BrsString, value: BrsString) => {
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
                 if (this.parsedXML[root]["$"]) {
@@ -470,7 +473,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             if (Object.keys(this.parsedXML).length > 0) {
                 const root = Object.keys(this.parsedXML)[0];
                 delete Object.assign(this.parsedXML, { [name.value]: this.parsedXML[root] })[root];
@@ -487,7 +490,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("header", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, header: BrsString) => {
+        impl: (_: Interpreter, header: BrsString) => {
             let options = {
                 headless: true,
                 renderOpts: { pretty: false },
@@ -503,7 +506,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("gen_header", ValueKind.Boolean)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, gen_header: BrsBoolean) => {
+        impl: (_: Interpreter, gen_header: BrsBoolean) => {
             let options = {
                 headless: !gen_header.toBoolean(),
                 renderOpts: { pretty: false },
@@ -523,7 +526,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             this.parsedXML = { root: {} };
             return BrsInvalid.Instance;
         },
