@@ -31,5 +31,6 @@ exports.createMockStreams = function () {
         stderr,
         stdoutSpy: jest.spyOn(stdout, "write").mockImplementation(() => {}),
         stderrSpy: jest.spyOn(stderr, "write").mockImplementation(() => {}),
+        message: false,
     };
 };

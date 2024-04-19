@@ -237,16 +237,24 @@ function getLocalIps() {
  * Get the Registry data from disk
  * @returns the Map containing the persisted registry content
  */
-function getRegistry() {
+function getRegistry(): Map<string, string> {
+    const registry = new Map<string, string>();
     try {
         const strRegistry = fs.readFileSync(path.resolve(paths.data, "registry.json"));
         if (strRegistry?.length) {
-            return new Map(JSON.parse(strRegistry.toString()));
+            const parsed = JSON.parse(strRegistry.toString());
+            if (typeof parsed === "object" && parsed !== null) {
+                Object.entries(parsed).forEach(([key, value]) => {
+                    if (typeof key === 'string' && typeof value === 'string') {
+                        registry.set(key, value);
+                    }
+                });
+            }
         }
     } catch (err: any) {
         console.error(chalk.red(err.message));
     }
-    return new Map<string, string>();
+    return registry;
 }
 
 /**

@@ -8,7 +8,34 @@
 
 // Default Device Information
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
-export const defaultDeviceInfo = {
+export interface DeviceInfo {
+    [key: string]: any;
+    developerId: string;
+    friendlyName: string;
+    deviceModel: string;
+    firmwareVersion: string;
+    clientId: string;
+    RIDA: string;
+    countryCode: string;
+    timeZone: string;
+    locale: string;
+    captionLanguage: string;
+    clockFormat: string;
+    displayMode: string;
+    defaultFont: string;
+    fontPath: string;
+    fonts?: Map<string, string>;
+    maxSimulStreams: number;
+    customFeatures: Array<string>;
+    connectionType: string;
+    localIps: Array<string>;
+    startTime: number;
+    audioVolume: number;
+    maxFps: number;
+    registry?: Map<string, string>;
+}
+
+export const defaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)

@@ -49,7 +49,7 @@ import { toCallable } from "./BrsFunction";
 import { BlockEnd } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, dataBufferIndex } from "../common";
+import { DataType, DebugCommand, dataBufferIndex, defaultDeviceInfo } from "../common";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -60,6 +60,8 @@ export interface ExecutionOptions {
     stdout: NodeJS.WriteStream;
     /** The stderr stream that brs should use. Default: process.stderr. */
     stderr: NodeJS.WriteStream;
+    /** If enabled makes OutputProxy print output via postMessage(). Default: true */
+    message?: boolean;
 }
 
 /** The default set of execution options.  */
@@ -177,14 +179,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param options configuration for the execution
      */
-    constructor(options?: ExecutionOptions, postMessage = true) {
+    constructor(options?: ExecutionOptions) {
         Object.assign(this.options, options);
-        this.stdout = new OutputProxy(this.options.stdout, postMessage);
-        this.stderr = new OutputProxy(this.options.stderr, postMessage);
+        this.stdout = new OutputProxy(this.options.stdout, this.options.message);
+        this.stderr = new OutputProxy(this.options.stderr, this.options.message);
         this.fileSystem.set("common:", new FileSystem());
         this.fileSystem.set("pkg:", new FileSystem());
         this.fileSystem.set("tmp:", new FileSystem());
         this.fileSystem.set("cachefs:", new FileSystem());
+        Object.keys(defaultDeviceInfo).forEach((key) => {
+            if (!["registry", "fonts"].includes(key)) {
+                this.deviceInfo.set(key, defaultDeviceInfo[key]);
+            }
+        });
         Object.keys(StdLib)
             .map((name) => (StdLib as any)[name])
             .filter((func) => func instanceof Callable)

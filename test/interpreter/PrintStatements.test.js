@@ -16,7 +16,7 @@ describe("interpreter print statements", () => {
 
     beforeEach(() => {
         const outputStreams = createMockStreams();
-        interpreter = new Interpreter(outputStreams, false);
+        interpreter = new Interpreter(outputStreams);
 
         stdout = outputStreams.stdout;
         stderr = outputStreams.stderr;
