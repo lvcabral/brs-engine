@@ -196,7 +196,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.updateNext();
                 this.updateCapacity(1.25);
             } else {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roArray.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
                 );
             }
@@ -227,7 +227,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.updateNext();
                 this.updateCapacity(1.25);
             } else {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roArray.Unshift: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
                 );
             }
@@ -279,7 +279,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoArray)) {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roArray.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
                 );
                 return BrsInvalid.Instance;

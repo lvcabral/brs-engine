@@ -381,7 +381,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoList)) {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roList.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
                 );
                 return BrsInvalid.Instance;

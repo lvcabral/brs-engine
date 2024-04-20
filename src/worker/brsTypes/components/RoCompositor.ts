@@ -235,7 +235,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 this.setSpriteLayer(sprite, z.getValue());
                 return sprite;
             } else {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid: ${interpreter.formatLocation()}`
                 );
             }
@@ -274,7 +274,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 warning = "invalid regionArray parameter type roInvalid";
             }
             if (warning.length) {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: ${warning}: ${interpreter.formatLocation()}`
                 );
             }
