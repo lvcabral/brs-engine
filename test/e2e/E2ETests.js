@@ -1,6 +1,10 @@
 const path = require("path");
 const stream = require("stream");
 const chalk = require("chalk");
+const brs = require("../../bin/brs.node");
+const { createPayload, executeFile } = brs;
+
+brs.registerCallback(() => { }); // register a callback to avoid display errors
 
 /** Returns the path to a file in `resources/`. */
 exports.resourceFile = function (...filenameParts) {
@@ -34,3 +38,9 @@ exports.createMockStreams = function () {
         message: false,
     };
 };
+
+/** Executes the specified BrightScript files, capturing their output in the provided streams. */
+exports.execute = async function (filenames, options) {
+    const payload = createPayload(filenames);
+    executeFile(payload, options);
+}

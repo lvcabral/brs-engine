@@ -1,6 +1,4 @@
-const { execute } = require("../../lib/");
-
-const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
+const { createMockStreams, resourceFile, allArgs, execute } = require("./E2ETests");
 
 describe("end to end brightscript functions", () => {
     let outputStreams;
@@ -25,7 +23,7 @@ describe("end to end brightscript functions", () => {
 
         await execute(resourceFiles, outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
             "function in same file: from sameFileFunc()",
             "function in different file: from differentFileFunc()",
             "function with dependency: from dependentFunc() with help from: from dependencyFunc()",

@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Interpreter } from "./interpreter";
+import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import { dataBufferIndex, dataBufferSize, defaultDeviceInfo } from "./common";
 import { FileSystem } from "./interpreter/FileSystem";
@@ -234,16 +234,19 @@ export function getFonts(fontPath: string, fontFamily: string) {
 /**
  * Runs a Brightscript app with full zip folder structure.
  * @param payload with the source code and all the assets of the app.
+ * @param customOptions optional object with the output streams.
+ *
  * @returns void.
  */
 
-export function executeFile(payload: any): RunResult {
-    const interpreter = new Interpreter({
+export function executeFile(payload: any, customOptions?: Partial<ExecutionOptions>): RunResult {
+    const options = {
         entryPoint: payload.entryPoint ?? true,
         stopOnCrash: payload.stopOnCrash ?? false,
         stdout: process.stdout,
         stderr: process.stderr,
-    });
+    }
+    const interpreter = new Interpreter(Object.assign({}, options, customOptions));
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
