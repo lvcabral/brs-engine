@@ -55,7 +55,6 @@ describe("cli", () => {
             });
         } catch (err) {
             let errors = err.stderr.match(new RegExp(filename, "g"));
-            console.log(errors);
             expect(errors.length).toEqual(2);
         }
     });

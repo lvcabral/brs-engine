@@ -17,7 +17,6 @@ describe("preprocessor", () => {
         ];
 
         let pp = new Preprocessor();
-        console.log("Preprocessor=", pp);
         let { processedTokens } = pp.filter([new Chunk.BrightScript(unprocessed)]);
         expect(processedTokens).toEqual(unprocessed);
     });
