@@ -159,7 +159,7 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
         } else if (exprStmt instanceof Function) {
             interpreter.visitNamedFunction(exprStmt);
         } else {
-            interpreter.stdout.write(`warning,Debug command/expression not supported!\r\n`);
+            interpreter.stderr.write(`warning,Debug command/expression not supported!\r\n`);
         }
     } catch (err: any) {
         let msg = err.message;

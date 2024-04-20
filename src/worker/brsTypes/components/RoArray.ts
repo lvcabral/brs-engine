@@ -335,7 +335,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 })
             ) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         "warning,roArray.Join: Array contains non-string value(s)."
                     );
                 }
@@ -354,7 +354,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         "warning,roArray.Sort: Flags contains invalid option(s)."
                     );
                 }
@@ -383,7 +383,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, fieldName: BrsString, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         "warning,roArray.SortBy: Flags contains invalid option(s)."
                     );
                 }

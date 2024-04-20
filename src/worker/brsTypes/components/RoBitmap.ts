@@ -83,7 +83,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
         } else {
-            interpreter.stdout.write(`warning,Invalid roBitmap param:${param}`);
+            interpreter.stderr.write(`warning,Invalid roBitmap param:${param}`);
             this.valid = false;
         }
         this.canvas = createNewCanvas(width, height);
@@ -146,11 +146,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         imageData.data.set(new Uint8Array(data));
                         putImageAtPos(imageData, this.context, 0, 0);
                     } else {
-                        interpreter.stdout.write(`warning,Invalid image format: ${type?.mime}`);
+                        interpreter.stderr.write(`warning,Invalid image format: ${type?.mime}`);
                         this.valid = false;
                     }
                 } else {
-                    interpreter.stdout.write(`warning,Invalid bitmap file format: ${image}`);
+                    interpreter.stderr.write(`warning,Invalid bitmap file format: ${image}`);
                     this.valid = false;
                 }
             } catch (err: any) {

@@ -1547,7 +1547,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 target.kind
             )}`;
             const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
-            this.stdout.write(`warning,${message}: ${location}`);
+            this.stderr.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
         }
 

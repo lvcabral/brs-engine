@@ -35,13 +35,13 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 audio = volume.readFileSync(url.pathname);
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roAudioMetadata] Error loading audio:${url.pathname} - ${err.message}`
                     );
                 }
             }
         } else if (interpreter.isDevMode) {
-            interpreter.stdout.write(`warning,[roAudioMetadata] Invalid volume:${url.pathname}`);
+            interpreter.stderr.write(`warning,[roAudioMetadata] Invalid volume:${url.pathname}`);
         }
         if (audio instanceof Buffer) {
             return new DataView(audio.buffer);
@@ -147,7 +147,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roAudioMetadata] Error getting audio tags:${err.message}`
                     );
                 }
@@ -193,7 +193,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roAudioMetadata] Error reading audio properties:${err.message}`
                     );
                 }
@@ -226,7 +226,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roAudioMetadata] Error getting cover art:${err.message}`
                     );
                 }

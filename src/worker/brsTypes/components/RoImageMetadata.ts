@@ -42,13 +42,13 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 image = volume.readFileSync(url.pathname);
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roImageMetadata] Error loading bitmap:${url.pathname} - ${err.message}`
                     );
                 }
             }
         } else if (interpreter.isDevMode) {
-            interpreter.stdout.write(`warning,[roImageMetadata] Invalid volume:${url.pathname}`);
+            interpreter.stderr.write(`warning,[roImageMetadata] Invalid volume:${url.pathname}`);
         }
         return image;
     }
@@ -239,7 +239,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roImageMetadata] Error reading metadata:${err.message}`
                     );
                 }
@@ -282,7 +282,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roImageMetadata] Error getting thumbnail:${err.message}`
                     );
                 }
@@ -356,7 +356,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 ]);
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roImageMetadata] Error getting raw exif:${err.message}`
                     );
                 }
@@ -400,7 +400,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 return tag ? this.getTagData(tag, tagsMap) : new RoAssociativeArray([]);
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,[roImageMetadata] Error getting raw exif tag:${err.message}`
                     );
                 }

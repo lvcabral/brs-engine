@@ -206,7 +206,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                     parsedXML = parsed;
                     result = true;
                 } else {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         "warning,Warning: Empty input was provided to parse XML."
                     );
                 }
