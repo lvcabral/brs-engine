@@ -95,7 +95,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const model = interpreter.deviceInfo.get("deviceModel");
-            const device = interpreter.deviceInfo.get("models").get(model);
+            const device = interpreter.deviceInfo?.get("models")?.get(model);
             return new BrsString(
                 device ? device[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`
             );
@@ -110,8 +110,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const device = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"));
+                ?.get("models")
+                ?.get(interpreter.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[1] : "STB");
         },
     });
@@ -490,8 +490,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 result.push({ name: new BrsString("width"), value: new Int32(1920) });
             }
             const device = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"));
+                ?.get("models")
+                ?.get(interpreter.deviceInfo.get("deviceModel"));
             let model = device ? device[3] : "HD";
             result.push({
                 name: new BrsString("name"),
@@ -509,8 +509,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const device = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"));
+                ?.get("models")
+                ?.get(interpreter.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[2] : "opengl");
         },
     });
@@ -551,9 +551,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
+                const result = new Array<AAMember>();
                 const codecs = interpreter.deviceInfo.get("audioCodecs") as string[];
                 const codec = options.get(new BrsString("codec"));
-                const result = new Array<AAMember>();
                 if (codec instanceof BrsString && codecs.includes(codec.value.toLowerCase())) {
                     result.push({ name: new BrsString("result"), value: BrsBoolean.True });
                 } else {
@@ -588,8 +588,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
                 const formats = interpreter.deviceInfo.get("videoFormats") as Map<string, string[]>;
-                const codecs = formats.get("codecs") ?? [];
-                const containers = formats.get("containers") ?? [];
+                const codecs = formats?.get("codecs") ?? [];
+                const containers = formats?.get("containers") ?? [];
                 const codec = options.get(new BrsString("codec"));
                 const container = options.get(new BrsString("container"));
                 const result = new Array<AAMember>();
