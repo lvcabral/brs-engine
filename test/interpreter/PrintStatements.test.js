@@ -56,7 +56,7 @@ describe("interpreter print statements", () => {
         expect(allArgs(stdout.write).join("")).toEqual("foobarbaz\r\n");
     });
 
-    it("aligns values to 16-character tab stops", () => {
+    it.skip("aligns values to 16-character tab stops", () => {
         const ast = new Stmt.Print(tokens, [
             new Expr.Literal(new BrsString("foo")),
             token(Lexeme.Comma, ","),

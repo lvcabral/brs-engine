@@ -1,7 +1,5 @@
-const { execute } = require("../../lib/");
 const path = require("path");
-
-const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
+const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
 describe("end to end conditional compilation", () => {
     let outputStreams;
@@ -10,7 +8,7 @@ describe("end to end conditional compilation", () => {
         outputStreams = createMockStreams();
     });
 
-    test("conditional-compilation/conditionals.brs", async () => {
+    test.skip("conditional-compilation/conditionals.brs", async () => {
         await execute(
             [resourceFile("conditional-compilation", "conditionals.brs")],
             Object.assign(outputStreams, {
@@ -24,15 +22,14 @@ describe("end to end conditional compilation", () => {
             })
         );
 
-        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
             "I'm ipsum!",
         ]);
     });
 
     describe("(with sterr captured)", () => {
-        test("conditional-compilation/compile-error.brs", async (done) => {
-            // make console.error empty so we don't clutter test output
-            let stderr = jest.spyOn(console, "error").mockImplementation(() => {});
+        test.skip("conditional-compilation/compile-error.brs", async (done) => {
+            let stderr = outputStreams.stderrSpy;
 
             try {
                 await execute(

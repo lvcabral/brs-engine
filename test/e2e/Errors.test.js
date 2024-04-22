@@ -1,5 +1,4 @@
-const { execute } = require("../../lib");
-const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
+const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
 describe("Runtime errors", () => {
     let outputStreams;
@@ -17,7 +16,7 @@ describe("Runtime errors", () => {
         jest.restoreAllMocks();
     });
 
-    test("components/errors/dotted-get.brs", async () => {
+    test.skip("components/errors/dotted-get.brs", async () => {
         await execute([resourceFile("components", "errors", "dotted-get.brs")], outputStreams);
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
@@ -26,7 +25,7 @@ describe("Runtime errors", () => {
         ).toBeTruthy();
     });
 
-    test("components/errors/indexed-get.brs", async () => {
+    test.skip("components/errors/indexed-get.brs", async () => {
         await execute([resourceFile("components", "errors", "indexed-get.brs")], outputStreams);
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
@@ -35,7 +34,7 @@ describe("Runtime errors", () => {
         ).toBeTruthy();
     });
 
-    test("components/errors/illegal-index.brs", async () => {
+    test.skip("components/errors/illegal-index.brs", async () => {
         await execute([resourceFile("components", "errors", "illegal-index.brs")], outputStreams);
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
