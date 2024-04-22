@@ -713,7 +713,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             let status = true;
-            if (typeof navigator === "object") {
+            if (typeof navigator === "object" && typeof navigator.onLine === "boolean") {
                 status = navigator.onLine;
             }
             return BrsBoolean.from(status);
@@ -728,7 +728,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             let status = true;
-            if (typeof navigator === "object") {
+            if (typeof navigator === "object"  && typeof navigator.onLine === "boolean") {
                 status = navigator.onLine;
             }
             return BrsBoolean.from(status);
