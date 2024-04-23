@@ -26,9 +26,9 @@ export interface DeviceInfo {
     fontPath: string;
     fonts?: Map<string, string>;
     maxSimulStreams: number;
-    customFeatures: Array<string>;
+    customFeatures: string[];
     connectionType: string;
-    localIps: Array<string>;
+    localIps: string[];
     startTime: number;
     audioVolume: number;
     maxFps: number;
