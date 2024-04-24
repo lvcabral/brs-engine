@@ -14,37 +14,33 @@ const {
     roInt,
 } = brs.types;
 
-const { allArgs } = require("../e2e/E2ETests");
+const { allArgs, createMockStreams } = require("../e2e/E2ETests");
 
-function withEnv(k, v, fn) {
-    let save = process.env[k];
-    try {
-        process.env[k] = v;
-        return fn();
-    } finally {
-        process.env[k] = save;
-    }
-}
+let interpreter;
+let outputStreams;
 
 function expectConsoleError(expected, fn) {
-    let consoleError = jest.spyOn(console, "error").mockImplementation(() => {
-        /* no op */
-    });
-    return withEnv("NODE_ENV", "force test!", () => {
-        fn();
-        expect(allArgs(consoleError)).toEqual([expect.stringMatching(expected)]);
-    });
+    fn();
+    const output = allArgs(outputStreams.stderr.write);
+    return expect(output[0]).toMatch(expected);
 }
 
 describe("global JSON functions", () => {
-    let interpreter = new Interpreter();
+    beforeAll(() => {
+        outputStreams = createMockStreams();
+        interpreter = new Interpreter(outputStreams);
+    });
 
     afterEach(() => {
+        jest.resetAllMocks();
+    });
+
+    afterAll(() => {
         jest.restoreAllMocks();
     });
 
     describe("FormatJson", () => {
-        it.skip("rejects non-convertible types", () => {
+        it("rejects non-convertible types", () => {
             expectConsoleError(/BRIGHTSCRIPT: ERROR: FormatJSON: /, () => {
                 expect(FormatJson.call(interpreter, Uninitialized.Instance)).toEqual(
                     new BrsString("")
@@ -52,7 +48,7 @@ describe("global JSON functions", () => {
             });
         });
 
-        it.skip("rejects nested associative array references", () => {
+        it("rejects nested associative array references", () => {
             let aa = new RoAssociativeArray([
                 { name: new BrsString("foo"), value: new BrsString("bar") },
                 { name: new BrsString("lorem"), value: Float.fromString("1.234") },
@@ -63,7 +59,7 @@ describe("global JSON functions", () => {
             });
         });
 
-        it.skip("rejects nested array references", () => {
+        it("rejects nested array references", () => {
             let a = new RoArray([new BrsString("bar"), Float.fromString("1.234")]);
             a.getMethod("push").call(interpreter, a);
             expectConsoleError(/BRIGHTSCRIPT: ERROR: FormatJSON: Nested object reference/, () => {
@@ -153,7 +149,7 @@ describe("global JSON functions", () => {
     });
 
     describe("ParseJson", () => {
-        it.skip("rejects empty strings with special case message", () => {
+        it("rejects empty strings with special case message", () => {
             expectConsoleError(/BRIGHTSCRIPT: ERROR: ParseJSON: Data is empty/, () => {
                 expect(ParseJson.call(interpreter, new BrsString(""))).toBe(BrsInvalid.Instance);
             });

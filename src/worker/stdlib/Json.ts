@@ -126,9 +126,6 @@ function jsonOf(
 }
 
 function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
-    if (process.env.NODE_ENV === "test") {
-        return;
-    }
     interpreter.stderr.write(
         `warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${
             err.message
