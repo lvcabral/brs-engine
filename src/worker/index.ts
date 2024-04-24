@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
-import { dataBufferIndex, dataBufferSize, defaultDeviceInfo } from "./common";
+import { dataBufferIndex, dataBufferSize, defaultDeviceInfo, parseManifest } from "./common";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -163,6 +163,9 @@ export function executeLine(contents: string, interpreter: Interpreter) {
 export function createPayload(files: any[], deviceData?: any) {
     const paths: Object[] = [];
     const source: string[] = [];
+    const texts: string[] = [];
+    let manifest: Map<string, string> | undefined;
+
     let id = 0;
     files.map((filePath) => {
         const fileName = path.basename(filePath) ?? filePath;
@@ -178,6 +181,17 @@ export function createPayload(files: any[], deviceData?: any) {
             } catch (err: any) {
                 throw err;
             }
+        } else if (fileName === "manifest") {
+            try {
+                const fileData = fs.readFileSync(filePath);
+                if (fileData) {
+                    manifest = parseManifest(fileData.toString());
+                    texts.push(fileData.toString());
+                    paths.push({ url: "manifest", id: 0, type: "text" });
+                }
+            } catch (err: any) {
+                throw err;
+            }
         }
     });
     if (id > 0) {
@@ -187,19 +201,21 @@ export function createPayload(files: any[], deviceData?: any) {
         if (deviceData.fonts.size === 0) {
             deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
         }
-        const manifest = new Map();
-        manifest.set("title", "BRS App");
-        manifest.set("major_version", "0");
-        manifest.set("minor_version", "0");
-        manifest.set("build_version", "1");
-        manifest.set("requires_audiometadata", "1");
+        if (manifest === undefined) {
+            manifest = new Map();
+            manifest.set("title", "BRS App");
+            manifest.set("major_version", "0");
+            manifest.set("minor_version", "0");
+            manifest.set("build_version", "1");
+            manifest.set("requires_audiometadata", "1");
+        }
         return {
             device: deviceData,
             manifest: manifest,
             input: [],
             paths: paths,
             brs: source,
-            texts: [],
+            texts: texts,
             binaries: [],
             entryPoint: false,
             stopOnCrash: false,

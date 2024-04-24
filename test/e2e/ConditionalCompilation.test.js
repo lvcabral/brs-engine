@@ -8,45 +8,31 @@ describe("end to end conditional compilation", () => {
         outputStreams = createMockStreams();
     });
 
-    test.skip("conditional-compilation/conditionals.brs", async () => {
+    test("conditional-compilation/conditionals.brs", async () => {
         await execute(
-            [resourceFile("conditional-compilation", "conditionals.brs")],
-            Object.assign(outputStreams, {
-                root: path.join(
-                    process.cwd(),
-                    "test",
-                    "e2e",
-                    "resources",
-                    "conditional-compilation"
-                ),
-            })
+            [
+                resourceFile("conditional-compilation", "manifest"),
+                resourceFile("conditional-compilation", "conditionals.brs"),
+            ],
+            outputStreams
         );
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "I'm ipsum!",
         ]);
     });
 
     describe("(with sterr captured)", () => {
-        test.skip("conditional-compilation/compile-error.brs", async (done) => {
-            let stderr = outputStreams.stderrSpy;
-
-            try {
-                await execute(
-                    [resourceFile("conditional-compilation", "compile-error.brs")],
-                    outputStreams
-                );
-
-                stderr.mockRestore();
-                done.fail("execute() should have rejected");
-            } catch (err) {
-                expect(allArgs(stderr).filter((arg) => arg !== "\n")).toEqual([
-                    expect.stringContaining("I'm a compile-time error!"),
-                ]);
-
-                stderr.mockRestore();
-                done();
-            }
+        test("conditional-compilation/compile-error.brs", async () => {
+            await execute(
+                [
+                    resourceFile("conditional-compilation", "manifest"),
+                    resourceFile("conditional-compilation", "compile-error.brs"),
+                ],
+                outputStreams
+            ).catch((err) => {
+                expect(err.message).toEqual("I'm a compile-time error!");
+            });
         });
     });
 });

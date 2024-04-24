@@ -161,3 +161,37 @@ export const audioExt = new Set<string>([
 ]);
 
 export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
+
+export function parseManifest(contents: string) {
+    let keyValuePairs = contents
+        // for each line
+        .split("\n")
+        // remove leading/trailing whitespace
+        .map((line) => line.trim())
+        // separate keys and values
+        .map((line, index) => {
+            // skip empty lines and comments
+            if (line === "" || line.startsWith("#")) {
+                return ["", ""];
+            }
+
+            let equals = line.indexOf("=");
+            if (equals === -1) {
+                const pos = `${index + 1},0-${line.length}`;
+                console.warn(
+                    `manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`
+                );
+            }
+            return [line.slice(0, equals), line.slice(equals + 1)];
+        })
+        // keep only non-empty keys and values
+        .filter(([key, value]) => key && value)
+        // remove leading/trailing whitespace from keys and values
+        .map(([key, value]) => [key.trim(), value.trim()])
+        // convert value to boolean, integer, or leave as string
+        .map(([key, value]): [string, string] => {
+            return [key, value];
+        });
+
+    return new Map<string, string>(keyValuePairs);
+}
