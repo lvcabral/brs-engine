@@ -61,7 +61,7 @@ export interface ExecutionOptions {
     /** The stderr stream that brs should use. Default: process.stderr. */
     stderr: NodeJS.WriteStream;
     /** If enabled makes OutputProxy print output via postMessage(). Default: true */
-    message?: boolean;
+    post: boolean;
 }
 
 /** The default set of execution options.  */
@@ -71,6 +71,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
     stopOnCrash: false,
     stdout: process.stdout,
     stderr: process.stderr,
+    post: true,
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -179,10 +180,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param options configuration for the execution
      */
-    constructor(options?: ExecutionOptions) {
+    constructor(options?: Partial<ExecutionOptions>) {
         Object.assign(this.options, options);
-        this.stdout = new OutputProxy(this.options.stdout, this.options.message);
-        this.stderr = new OutputProxy(this.options.stderr, this.options.message);
+        this.stdout = new OutputProxy(this.options.stdout, this.options.post);
+        this.stderr = new OutputProxy(this.options.stderr, this.options.post);
         this.fileSystem.set("common:", new FileSystem());
         this.fileSystem.set("pkg:", new FileSystem());
         this.fileSystem.set("tmp:", new FileSystem());

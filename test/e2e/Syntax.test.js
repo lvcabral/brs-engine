@@ -160,7 +160,7 @@ describe("end to end syntax", () => {
         ]);
     });
 
-    test.skip("dim.brs", async () => {
+    test("dim.brs", async () => {
         await execute([resourceFile("dim.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([

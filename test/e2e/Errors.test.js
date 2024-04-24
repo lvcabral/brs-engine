@@ -16,32 +16,30 @@ describe("Runtime errors", () => {
         jest.restoreAllMocks();
     });
 
-    test.skip("components/errors/dotted-get.brs", async () => {
+    test("components/errors/dotted-get.brs", async () => {
         await execute([resourceFile("components", "errors", "dotted-get.brs")], outputStreams);
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes("Attempting to retrieve property from non-iterable value")
+            errOutput[0].includes("'Dot' Operator attempted with invalid BrightScript Component or interface reference.")
         ).toBeTruthy();
     });
 
-    test.skip("components/errors/indexed-get.brs", async () => {
+    test("components/errors/indexed-get.brs", async () => {
         await execute([resourceFile("components", "errors", "indexed-get.brs")], outputStreams);
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes("Attempting to retrieve property from non-iterable value")
+            errOutput[0].includes("'Dot' Operator attempted with invalid BrightScript Component or interface reference.")
         ).toBeTruthy();
     });
 
-    test.skip("components/errors/illegal-index.brs", async () => {
+    test("components/errors/illegal-index.brs", async () => {
         await execute([resourceFile("components", "errors", "illegal-index.brs")], outputStreams);
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes(
-                "Attempting to retrieve property from iterable with illegal index type"
-            )
+            errOutput[0].includes("Attempt to use a non-numeric array index not allowed.")
         ).toBeTruthy();
     });
 });

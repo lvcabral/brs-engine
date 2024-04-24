@@ -202,6 +202,7 @@ function runApp(payload: any) {
         if (pkg.endReason === "EXIT_USER_NAV") {
             console.log(chalk.blueBright(msg));
         } else {
+            process.exitCode = 1;
             console.log(chalk.redBright(msg));
         }
     }

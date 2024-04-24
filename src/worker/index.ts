@@ -38,7 +38,6 @@ export const shared = new Map<string, Int32Array>();
 const algorithm = "aes-256-ctr";
 let pcode: Buffer;
 let iv: string;
-let endReason: string;
 
 /// #if BROWSER
 if (typeof onmessage !== "undefined") {
@@ -240,22 +239,24 @@ export function getFonts(fontPath: string, fontFamily: string) {
  */
 
 export function executeFile(payload: any, customOptions?: Partial<ExecutionOptions>): RunResult {
-    const options = {
-        entryPoint: payload.entryPoint ?? true,
-        stopOnCrash: payload.stopOnCrash ?? false,
-        stdout: process.stdout,
-        stderr: process.stderr,
-    }
-    const interpreter = new Interpreter(Object.assign({}, options, customOptions));
+    const options = Object.assign(
+        {
+            entryPoint: payload.entryPoint ?? true,
+            stopOnCrash: payload.stopOnCrash ?? false,
+        },
+        customOptions
+    );
+    const interpreter = new Interpreter(options);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
     const sourceMap = setupPayload(interpreter, payload);
     // Run App
     const password = payload.password ?? "";
+    let endReason = "EXIT_USER_NAV";
     let input = new RoAssociativeArray(inputArray);
     if (pcode instanceof Buffer) {
-        runBinary(password, interpreter, input);
+        runBinary(interpreter, input, password);
     } else {
         const result = runSource(interpreter, sourceMap, input, password);
         if (result?.cipherText) {
@@ -540,6 +541,7 @@ export function lexParseSync(
     lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
+    let endReason = "EXIT_USER_NAV";
     for (let [path, code] of sourceMap) {
         const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
@@ -608,7 +610,7 @@ function runSource(
     password: string = ""
 ): RunResult {
     const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
-    endReason = parseResult.endReason;
+    let endReason = parseResult.endReason;
     if (password.length > 0) {
         const tokens = parseResult.tokens;
         const iv = crypto.randomBytes(12).toString("base64");
@@ -626,7 +628,11 @@ function runSource(
     } catch (err: any) {
         endReason = "EXIT_USER_NAV";
         if (err.message !== "debug-exit") {
-            postMessage(`error,${err.message}`);
+            if (interpreter.options.post ?? true) {
+                postMessage(`error,${err.message}`);
+            } else {
+                interpreter.options.stderr.write(err.message);
+            }
             endReason = "EXIT_BRIGHTSCRIPT_CRASH";
         }
     }
@@ -635,15 +641,19 @@ function runSource(
 
 /**
  * Runs a binary package of BrightScript code.
- * @param password decryption password.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  * @param input associative array with the input parameters
+ * @param password decryption password.
  * @returns an array of statement execution results, indicating why each
  *          statement exited and what its return value was, or `undefined` if
  *          `interpreter` threw an Error.
  */
-function runBinary(password: string, interpreter: Interpreter, input: RoAssociativeArray) {
+function runBinary(
+    interpreter: Interpreter,
+    input: RoAssociativeArray,
+    password: string
+): RunResult {
     let decodedTokens: Map<string, any>;
     // Decode Source PCode
     try {
@@ -655,17 +665,14 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
                 decodedTokens = new Map(Object.entries(spcode.pcode));
                 pcode = Buffer.from([]);
             } else {
-                endReason = "EXIT_INVALID_PCODE";
-                return;
+                return { endReason: "EXIT_INVALID_PCODE" };
             }
         } else {
-            endReason = "EXIT_MISSING_PASSWORD";
-            return;
+            return { endReason: "EXIT_MISSING_PASSWORD" };
         }
     } catch (err: any) {
         postMessage(`error,Error unpacking the app: ${err.message}`);
-        endReason = "EXIT_UNPACK_ERROR";
-        return;
+        return { endReason: "EXIT_UNPACK_ERROR" };
     }
     // Execute the decrypted source code
     const lexer = new Lexer();
@@ -701,13 +708,8 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
         tokens.push(token);
         if (token.kind === "Eof") {
             const parseResults = parser.parse(tokens);
-            if (parseResults.errors.length > 0) {
-                endReason = "EXIT_BRIGHTSCRIPT_CRASH";
-                return;
-            }
-            if (parseResults.statements.length === 0) {
-                endReason = "EXIT_BRIGHTSCRIPT_CRASH";
-                return;
+            if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
+                return { endReason: "EXIT_BRIGHTSCRIPT_CRASH" };
             }
             if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
                 lib.set("v30/bslDefender.brs", bslDefender);
@@ -729,7 +731,7 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
             allStatements.push(...libParse.statements);
         }
     });
-    endReason = "EXIT_USER_NAV";
+    let endReason = "EXIT_USER_NAV";
     try {
         interpreter.exec(allStatements, undefined, input);
     } catch (err: any) {
@@ -738,6 +740,7 @@ function runBinary(password: string, interpreter: Interpreter, input: RoAssociat
             endReason = "EXIT_BRIGHTSCRIPT_CRASH";
         }
     }
+    return { endReason: endReason };
 }
 
 /**

@@ -1,6 +1,5 @@
 const path = require("path");
 const stream = require("stream");
-const chalk = require("chalk");
 const brs = require("../../bin/brs.node");
 const { createPayload, executeFile } = brs;
 
@@ -26,7 +25,6 @@ exports.allArgs = function (jestMock) {
 
 /** Creates a set of mocked streams, suitable for use in place of `process.stdout` and `process.stderr`. */
 exports.createMockStreams = function () {
-    chalk.level = 0;
     const stdout = Object.assign(new stream.PassThrough(), process.stdout);
     const stderr = Object.assign(new stream.PassThrough(), process.stderr);
 
@@ -35,7 +33,7 @@ exports.createMockStreams = function () {
         stderr,
         stdoutSpy: jest.spyOn(stdout, "write").mockImplementation(() => {}),
         stderrSpy: jest.spyOn(stderr, "write").mockImplementation(() => {}),
-        message: false,
+        post: false,
     };
 };
 
