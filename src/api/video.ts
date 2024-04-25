@@ -366,12 +366,12 @@ function nextVideo() {
     if (playNext < playList.length) {
         playIndex = playNext;
     } else if (playLoop) {
+        playIndex = 0;
         if (playList.length === 1) {
-            seekVideo(0);
+            player.currentTime = startPosition;
             resumeVideo(false);
             return;
         }
-        playIndex = 0;
     } else {
         Atomics.store(sharedArray, DataType.VDX, playIndex);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.FULL);
@@ -432,6 +432,7 @@ function seekVideo(position: number) {
     const video = playList[playIndex];
     if (video && player) {
         if (playerState === "stop") {
+            // Seek before play set the start of the video to a specific position
             // Replicate Roku behavior and start a few seconds before the seek position
             startPosition = position < 3 ? 0 : position - 2;
         } else if (playNext === -1 || playNext === playIndex) {
@@ -440,12 +441,15 @@ function seekVideo(position: number) {
                 position = videoDuration - 2;
             }
             player.currentTime = position;
+            if (playerState === "pause") {
+                resumeVideo();
+            }
         } else {
             startPosition = position;
             nextVideo();
         }
     } else if (video) {
-        notifyAll("warning", `[video] Can't find audio to seek: ${playIndex} - ${video}`);
+        notifyAll("warning", `[video] Can't find video to seek: ${playIndex} - ${video}`);
     }
 }
 
