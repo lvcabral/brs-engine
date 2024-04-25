@@ -56,7 +56,15 @@ To build and start the web application on your default browser just execute `yar
 
 ### Testing
 
-Tests are currently broken, the ones we have in the repository came with the fork from `brs`, and were written in plain-old JavaScript with [Facebook's Jest](http://facebook.github.io/jest/). If you are a test expert, or just want to help, this is a great area to collaborate.
+Tests are written in plain-old JavaScript with [Facebook's Jest](http://facebook.github.io/jest/), and can be run with the `test` target:
+
+```shell
+$ yarn test
+
+# tests start running
+```
+
+Note that only test files ending in `.test.js` will be executed by `yarn test`.
 
 ### Cleaning
 
