@@ -1919,7 +1919,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const line = loc.start.line;
                 btArray.unshift(
                     new RoAssociativeArray([
-                        { name: new BrsString("filename"), value: new BrsString(loc?.file ?? "()") },
+                        {
+                            name: new BrsString("filename"),
+                            value: new BrsString(loc?.file ?? "()"),
+                        },
                         { name: new BrsString("function"), value: new BrsString(funcSign) },
                         { name: new BrsString("line_number"), value: new Int32(line) },
                     ])

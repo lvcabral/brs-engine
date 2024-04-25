@@ -21,7 +21,9 @@ describe("Runtime errors", () => {
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes("'Dot' Operator attempted with invalid BrightScript Component or interface reference.")
+            errOutput[0].includes(
+                "'Dot' Operator attempted with invalid BrightScript Component or interface reference."
+            )
         ).toBeTruthy();
     });
 
@@ -30,7 +32,9 @@ describe("Runtime errors", () => {
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes("'Dot' Operator attempted with invalid BrightScript Component or interface reference.")
+            errOutput[0].includes(
+                "'Dot' Operator attempted with invalid BrightScript Component or interface reference."
+            )
         ).toBeTruthy();
     });
 

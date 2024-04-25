@@ -51,7 +51,6 @@ export function getScopedPath(interpreter: Interpreter, fileUri: string) {
     return scopedPath.replace(/[\/\\]+/g, path.posix.sep);
 }
 
-
 export function createDir(interpreter: Interpreter, dir: string) {
     const volume = getVolumeByPath(interpreter, dir);
     if (volume === null) {

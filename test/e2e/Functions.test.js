@@ -18,7 +18,7 @@ describe("end to end functions", () => {
     test("function/arguments.brs", async () => {
         await execute([resourceFile("function", "arguments.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "noArgsFunc",
             "requiredArgsFunc:",
             " 1",
@@ -37,7 +37,7 @@ describe("end to end functions", () => {
     test("function/return.brs", async () => {
         await execute([resourceFile("function", "return.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "staticReturn",
             "conditionalReturn:",
             " 5",
@@ -57,7 +57,7 @@ describe("end to end functions", () => {
     test("function/expressions.brs", async () => {
         await execute([resourceFile("function", "expressions.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "anonymous function",
             "immediately-invoked function expression (IIFE)",
             "pre-callback",
@@ -70,7 +70,7 @@ describe("end to end functions", () => {
     test("function/m-pointer.brs", async () => {
         await execute([resourceFile("function", "m-pointer.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "carpenter.safetyGlassesOn = true",
             "m.houseAge = old",
         ]);
@@ -79,7 +79,7 @@ describe("end to end functions", () => {
     test("function/m-pointer-global.brs", async () => {
         await execute([resourceFile("function", "m-pointer-global.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "old: value 1",
             "new: value 2",
             "glb: value 2",
@@ -92,7 +92,7 @@ describe("end to end functions", () => {
     test("function/m-pointer-func.brs", async () => {
         await execute([resourceFile("function", "m-pointer-func.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "not root",
             "root",
         ]);
@@ -101,7 +101,7 @@ describe("end to end functions", () => {
     test("function/scoping.brs", async () => {
         await execute([resourceFile("function", "scoping.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Global: true",
             "Module: true",
             "Function: false",
@@ -111,7 +111,7 @@ describe("end to end functions", () => {
     test("function/casing.brs", async () => {
         await execute([resourceFile("function", "casing.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "but I'm only interested in...",
         ]);
     });

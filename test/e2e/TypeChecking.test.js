@@ -24,7 +24,9 @@ describe("function argument type checking", () => {
     it("errors when too many args are passed", async () => {
         await execute([resourceFile("type-checking", "too-many-args.brs")], outputStreams);
         const output = allArgs(outputStreams.stderr.write);
-        expect(output[0] ?? "").toMatch(/RebootSystem accepts at most 0 arguments, but received 1\./);
+        expect(output[0] ?? "").toMatch(
+            /RebootSystem accepts at most 0 arguments, but received 1\./
+        );
     });
 
     it("errors when mismatched types are provided as arguments", async () => {
@@ -40,7 +42,10 @@ describe("function argument type checking", () => {
     });
 
     it("errors when assigning a mismatched type ", async () => {
-        await execute([resourceFile("type-checking", "assignment-type-mismatch.brs")], outputStreams);
+        await execute(
+            [resourceFile("type-checking", "assignment-type-mismatch.brs")],
+            outputStreams
+        );
         const output = allArgs(outputStreams.stderr.write);
         expect(output[0]).toMatch(/Type Mismatch./);
     });

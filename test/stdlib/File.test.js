@@ -239,9 +239,7 @@ describe("global file I/O functions", () => {
                 ).value
             ).toBeTruthy();
 
-            expect(tempVolume.readFileSync("/hello.txt").toString()).toEqual(
-                "test contents"
-            );
+            expect(tempVolume.readFileSync("/hello.txt").toString()).toEqual("test contents");
         });
     });
 

@@ -7,7 +7,13 @@
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
-import { DeviceInfo, dataBufferIndex, dataBufferSize, defaultDeviceInfo, parseManifest } from "./common";
+import {
+    DeviceInfo,
+    dataBufferIndex,
+    dataBufferSize,
+    defaultDeviceInfo,
+    parseManifest,
+} from "./common";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -160,7 +166,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  *
  * @returns object with the payload to run the app.
  */
-export function createPayload(files: any[], customDeviceData?: Partial <DeviceInfo>) {
+export function createPayload(files: any[], customDeviceData?: Partial<DeviceInfo>) {
     const paths: Object[] = [];
     const source: string[] = [];
     const texts: string[] = [];

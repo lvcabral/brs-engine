@@ -3,21 +3,14 @@ global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
     return {
         resolvedOptions: () => {
             return {
-                timeZone: 'America/Fortaleza'
-            }
-        }
-    }
+                timeZone: "America/Fortaleza",
+            };
+        },
+    };
 });
 const brs = require("../../../bin/brs.node");
 const { Interpreter } = brs;
-const {
-    RoDeviceInfo,
-    RoAssociativeArray,
-    RoArray,
-    BrsBoolean,
-    BrsString,
-    Int32,
-} = brs.types;
+const { RoDeviceInfo, RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32 } = brs.types;
 
 describe("RoDeviceInfo", () => {
     const OLD_ENV = process.env;
@@ -47,7 +40,6 @@ describe("RoDeviceInfo", () => {
     describe("methods", () => {
         beforeEach(() => {
             interpreter = new Interpreter();
-
         });
 
         describe("getModel", () => {
@@ -93,7 +85,9 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getFriendlyName");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("BrightScript Engine Library"));
+                expect(method.call(interpreter)).toEqual(
+                    new BrsString("BrightScript Engine Library")
+                );
             });
         });
         describe("getOSVersion", () => {
@@ -125,7 +119,9 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getRIDA");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("f51ac698-bc60-4409-aae3-8fc3abc025c4"));
+                expect(method.call(interpreter)).toEqual(
+                    new BrsString("f51ac698-bc60-4409-aae3-8fc3abc025c4")
+                );
             });
         });
         describe("isRIDADisabled", () => {
@@ -143,7 +139,9 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getChannelClientId");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("6c5bf3a5-b2a5-4918-824d-7691d5c85364"));
+                expect(method.call(interpreter)).toEqual(
+                    new BrsString("6c5bf3a5-b2a5-4918-824d-7691d5c85364")
+                );
             });
         });
         describe("getUserCountryCode", () => {
@@ -273,7 +271,9 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("setCaptionsMode");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("Instant replay"))).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, new BrsString("Instant replay"))).toEqual(
+                    BrsBoolean.True
+                );
             });
         });
         describe("setCaptionsMode", () => {
@@ -291,7 +291,9 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getCaptionsOption");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("text/color"))).toEqual(new BrsString("Default"));
+                expect(method.call(interpreter, new BrsString("text/color"))).toEqual(
+                    new BrsString("Default")
+                );
             });
         });
         describe("getCaptionsOption", () => {
@@ -300,7 +302,9 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getCaptionsOption");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("foobar"))).toEqual(new BrsString(""));
+                expect(method.call(interpreter, new BrsString("foobar"))).toEqual(
+                    new BrsString("")
+                );
             });
         });
         describe("getClockFormat", () => {

@@ -109,7 +109,9 @@ describe("interpreter comparisons", () => {
             test(name, () => {
                 let arr = new RoArray([]);
 
-                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow("Type Mismatch.");
+                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow(
+                    "Type Mismatch."
+                );
             });
         });
     });
@@ -139,9 +141,13 @@ describe("interpreter comparisons", () => {
 
                 [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach(
                     (operator) => {
-                        expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow("Type Mismatch.");
+                        expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow(
+                            "Type Mismatch."
+                        );
 
-                        expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow("Type Mismatch.");
+                        expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow(
+                            "Type Mismatch."
+                        );
                     }
                 );
             });

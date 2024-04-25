@@ -2,7 +2,7 @@ const brs = require("../../../bin/brs.node");
 const { Interpreter } = brs;
 const { BrsString, RoXMLElement } = brs.types;
 
-brs.registerCallback(() => { }); // register a callback to avoid display errors
+brs.registerCallback(() => {}); // register a callback to avoid display errors
 
 describe("RoXMLElement", () => {
     let xmlParser;
@@ -26,7 +26,9 @@ describe("RoXMLElement", () => {
 
         it("getNamedElementsCi", () => {
             let getNamedElementsCi = xmlParser.getMethod("getNamedElementsCi");
-            expect(getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()).toEqual([]);
+            expect(
+                getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()
+            ).toEqual([]);
 
             let children = getNamedElementsCi.call(interpreter, new BrsString("CHiLd1"));
             expect(children.getElements().length).toEqual(2);
@@ -51,7 +53,7 @@ describe("RoXMLElement", () => {
     });
 
     describe.each([
-        ["test methods for object with no parsed xml", () => { }],
+        ["test methods for object with no parsed xml", () => {}],
         [
             "test methods for object with failed parsing of xml",
             () => {
@@ -73,7 +75,9 @@ describe("RoXMLElement", () => {
         it("getNamedElementsCi", () => {
             let getNamedElementsCi = xmlParser.getMethod("getNamedElementsCi");
             expect(getNamedElementsCi).toBeTruthy();
-            expect(getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()).toEqual([]);
+            expect(
+                getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()
+            ).toEqual([]);
         });
 
         it("getAttributes", () => {

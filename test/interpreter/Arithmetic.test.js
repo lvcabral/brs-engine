@@ -249,9 +249,7 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(
-            /Invalid Bitwise Shift./
-        );
+        expect(() => interpreter.exec([ast])).toThrow(/Invalid Bitwise Shift./);
     });
 
     it("bitwise left shift with right == 32", () => {
@@ -263,9 +261,7 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(
-            /Invalid Bitwise Shift./
-        );
+        expect(() => interpreter.exec([ast])).toThrow(/Invalid Bitwise Shift./);
     });
 
     it("bitwise left shift with right > 32", () => {
@@ -277,9 +273,7 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(
-            /Invalid Bitwise Shift./
-        );
+        expect(() => interpreter.exec([ast])).toThrow(/Invalid Bitwise Shift./);
     });
 
     it("bitwise right shift with integers", () => {
@@ -330,9 +324,7 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(
-            /Invalid Bitwise Shift./
-        );
+        expect(() => interpreter.exec([ast])).toThrow(/Invalid Bitwise Shift./);
     });
 
     it("bitwise right shift with right == 32", () => {
@@ -344,9 +336,7 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(
-            /Invalid Bitwise Shift./
-        );
+        expect(() => interpreter.exec([ast])).toThrow(/Invalid Bitwise Shift./);
     });
 
     it("bitwise right shift with right > 32", () => {
@@ -358,8 +348,6 @@ describe("interpreter arithmetic", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow(
-            /Invalid Bitwise Shift./
-        );
+        expect(() => interpreter.exec([ast])).toThrow(/Invalid Bitwise Shift./);
     });
 });

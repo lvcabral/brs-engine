@@ -246,7 +246,7 @@ function getRegistry(): Map<string, string> {
             const parsed = JSON.parse(strRegistry.toString());
             if (typeof parsed === "object" && parsed !== null) {
                 Object.entries(parsed).forEach(([key, value]) => {
-                    if (typeof key === 'string' && typeof value === 'string') {
+                    if (typeof key === "string" && typeof value === "string") {
                         registry.set(key, value);
                     }
                 });

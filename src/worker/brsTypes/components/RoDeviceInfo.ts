@@ -643,7 +643,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 } else {
                     result.push({ name: new BrsString("result"), value: BrsBoolean.False });
                     if (codecs) {
-                        result.push({ name: new BrsString("updated"), value: new BrsString("codec") });
+                        result.push({
+                            name: new BrsString("updated"),
+                            value: new BrsString("codec"),
+                        });
                         const roCodecs = new RoArray(codecs.map((c: string) => new BrsString(c)));
                         result.push({ name: new BrsString("codec"), value: roCodecs });
                     }

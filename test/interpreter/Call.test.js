@@ -266,7 +266,9 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(/Return can not have a return-value if inside a Sub or Function with Void return type./);
+        expect(() => interpreter.exec(ast)).toThrow(
+            /Return can not have a return-value if inside a Sub or Function with Void return type./
+        );
     });
 
     it("errors when returning void from a non-void return", () => {
