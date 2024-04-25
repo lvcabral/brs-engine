@@ -1,10 +1,10 @@
 # Contributions Welcome
 
-Any contributions you're willing to make are _super_ appreciated.  That includes a wide variety of things &ndash; not just code!
+Any contributions you're willing to make are _super_ appreciated. That includes a wide variety of things &ndash; not just code!
 
 ## Types of Contributions
 
-Since this project is still maturing, many of its initial contributions will take the form of new features or bug fixes.  Even if you're not familiar with TypeScript, you can still help make `brs-engine` a more accurate interpreter for the BrightScript language.  You can:
+Since this project is still maturing, many of its initial contributions will take the form of new features or bug fixes. Even if you're not familiar with TypeScript, you can still help make `brs-engine` a more accurate interpreter for the BrightScript language.  You can:
 
 1. Improve documentation for BrightScript's quirks (even minor typos fixes are helpful!)
 2. File issues demonstrating where this implementation diverges from the reference one (i.e. on a Roku device)
@@ -15,7 +15,7 @@ Since this project is still maturing, many of its initial contributions will tak
 
 ## Submitting Issues
 
-If you find something wrong with `brs-engine`, or something doesn't seem right, feel free to [open a new issue](https://github.com/lvcabral/brs-engine/issues/new).  
+If you find something wrong with `brs-engine`, or something doesn't seem right, feel free to [open a new issue](https://github.com/lvcabral/brs-engine/issues/new).
 If the issue is related to how the **parser** or the **interpreter** handles the _BrightScript_ language, then you should consider [open the issue on the original `brs` project](https://github.com/rokucommunity/brs/issues/new), not in this fork, as I am keeping it synchronized, the fix will eventually be merged to `brs-engine`.
 Please try to avoid "how do I X in BrightScript" questions however &mdash; those are best suited for [StackOverflow](https://stackoverflow.com) or similar Q&A sites.
 
@@ -41,9 +41,9 @@ Have you found something that this project is missing?  That's great!  We'd love
 
 ## Fixing Issues / Adding Features
 
-Regardless of whether you're fixing bugs or implementing new features, there's a few things you'll want to do make theprocess as easy as possible:
+Regardless of whether you're fixing bugs or implementing new features, there's a few things you'll want to do make the process as easy as possible:
 
-1. Comment on the issue and tell us that you're intereseted in working on it.  This should lower the (admittedly rare) chances of someone stealing your that bug/feature from you :smile:.
+1. Comment on the issue and tell us that you're interested in working on it.  This should lower the (admittedly rare) chances of someone stealing your that bug/feature from you :smile:.
 1. Create a fork of this repo if you haven't already
 1. Send us a [pull request](https://github.com/lvcabral/brs-engine/pulls)!
 

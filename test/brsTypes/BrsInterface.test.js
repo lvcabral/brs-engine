@@ -1,5 +1,5 @@
-const Brs = require("brs");
-const { BrsInterface, BrsBoolean, Callable } = Brs.types;
+const brs = require("../../bin/brs.node");
+const { BrsInterface, BrsBoolean, Callable } = brs.types;
 
 describe("Interface", () => {
     it("doesn't equal anything", () => {

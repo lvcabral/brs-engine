@@ -1,11 +1,15 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-const { Interpreter } = require("../../lib/interpreter");
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
+const { Expr, Stmt } = brs.parser;
+const { Interpreter } = brs;
 const { Int32, BrsString } = brs.types;
 
-const { token, identifier } = require("../parser/ParserTests");
+const { token, identifier, fakeLocation } = require("../parser/ParserTests");
+
+const LEFT_SQUARE = token(Lexeme.LeftSquare, "[");
+const RIGHT_SQUARE = token(Lexeme.RightSquare, "]");
+const LEFT_BRACE = token(Lexeme.LeftBrace, "{");
+const RIGHT_BRACE = token(Lexeme.RightBrace, "}");
 
 let interpreter;
 
@@ -20,25 +24,29 @@ describe("property setting", () => {
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
                     identifier("array"),
-                    new Expr.ArrayLiteral([
-                        new Expr.Literal(new BrsString("index0")),
-                        new Expr.Literal(new BrsString("index1")),
-                        new Expr.Literal(new BrsString("index2")),
-                    ])
+                    new Expr.ArrayLiteral(
+                        [
+                            new Expr.Literal(new BrsString("index0"), fakeLocation),
+                            new Expr.Literal(new BrsString("index1"), fakeLocation),
+                            new Expr.Literal(new BrsString("index2"), fakeLocation),
+                        ],
+                        LEFT_SQUARE,
+                        RIGHT_SQUARE
+                    )
                 ),
                 new Stmt.IndexedSet(
                     new Expr.Variable(identifier("array")),
-                    new Expr.Literal(new Int32(0)),
-                    new Expr.Literal(new BrsString("new index0")),
-                    token(Lexeme.RightSquare, "]")
+                    [new Expr.Literal(new Int32(0), fakeLocation)],
+                    new Expr.Literal(new BrsString("new index0"), fakeLocation),
+                    RIGHT_SQUARE
                 ),
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
                     identifier("result"),
                     new Expr.IndexedGet(
                         new Expr.Variable(identifier("array")),
-                        new Expr.Literal(new Int32(0)),
-                        token(Lexeme.RightSquare, "]")
+                        [new Expr.Literal(new Int32(0), fakeLocation)],
+                        RIGHT_SQUARE
                     )
                 ),
             ];
@@ -55,32 +63,49 @@ describe("property setting", () => {
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
                     identifier("array"),
-                    new Expr.ArrayLiteral([
-                        new Expr.ArrayLiteral([
-                            new Expr.Literal(new BrsString("(0,0)")),
-                            new Expr.Literal(new BrsString("(0,1)")),
-                            new Expr.Literal(new BrsString("(0,2)")),
-                        ]),
-                        new Expr.ArrayLiteral([
-                            new Expr.Literal(new BrsString("(1,0)")),
-                            new Expr.Literal(new BrsString("(1,1)")),
-                            new Expr.Literal(new BrsString("(1,2)")),
-                        ]),
-                        new Expr.ArrayLiteral([
-                            new Expr.Literal(new BrsString("(2,0)")),
-                            new Expr.Literal(new BrsString("(2,1)")),
-                            new Expr.Literal(new BrsString("(2,2)")),
-                        ]),
-                    ])
+                    new Expr.ArrayLiteral(
+                        [
+                            new Expr.ArrayLiteral(
+                                [
+                                    new Expr.Literal(new BrsString("(0,0)"), fakeLocation),
+                                    new Expr.Literal(new BrsString("(0,1)"), fakeLocation),
+                                    new Expr.Literal(new BrsString("(0,2)"), fakeLocation),
+                                ],
+                                LEFT_SQUARE,
+                                RIGHT_SQUARE
+                            ),
+                            new Expr.ArrayLiteral(
+                                [
+                                    new Expr.Literal(new BrsString("(1,0)"), fakeLocation),
+                                    new Expr.Literal(new BrsString("(1,1)"), fakeLocation),
+                                    new Expr.Literal(new BrsString("(1,2)"), fakeLocation),
+                                ],
+                                LEFT_SQUARE,
+                                RIGHT_SQUARE
+                            ),
+                            new Expr.ArrayLiteral(
+                                [
+                                    new Expr.Literal(new BrsString("(2,0)"), fakeLocation),
+                                    new Expr.Literal(new BrsString("(2,1)"), fakeLocation),
+                                    new Expr.Literal(new BrsString("(2,2)"), fakeLocation),
+                                ],
+                                LEFT_SQUARE,
+                                RIGHT_SQUARE
+                            ),
+                        ],
+                        LEFT_SQUARE,
+                        RIGHT_SQUARE
+                    )
                 ),
                 new Stmt.IndexedSet(
                     new Expr.IndexedGet(
                         new Expr.Variable(identifier("array")),
-                        new Expr.Literal(new Int32(2))
+                        [new Expr.Literal(new Int32(2), fakeLocation)],
+                        RIGHT_SQUARE
                     ),
-                    new Expr.Literal(new Int32(1)),
-                    new Expr.Literal(new BrsString("new (2,1)")),
-                    token(Lexeme.RightSquare, "]")
+                    [new Expr.Literal(new Int32(1), fakeLocation)],
+                    new Expr.Literal(new BrsString("new (2,1)"), fakeLocation),
+                    RIGHT_SQUARE
                 ),
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -88,11 +113,11 @@ describe("property setting", () => {
                     new Expr.IndexedGet(
                         new Expr.IndexedGet(
                             new Expr.Variable(identifier("array")),
-                            new Expr.Literal(new Int32(2)),
-                            token(Lexeme.RightSquare, "]")
+                            [new Expr.Literal(new Int32(2), fakeLocation)],
+                            RIGHT_SQUARE
                         ),
-                        new Expr.Literal(new Int32(1)),
-                        token(Lexeme.RightSquare, "]")
+                        [new Expr.Literal(new Int32(1), fakeLocation)],
+                        RIGHT_SQUARE
                     )
                 ),
             ];
@@ -111,23 +136,27 @@ describe("property setting", () => {
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
                     identifier("aa"),
-                    new Expr.AALiteral([
-                        {
-                            name: new BrsString("foo"),
-                            value: new Expr.Literal(new BrsString("foo's value")),
-                        },
-                    ])
+                    new Expr.AALiteral(
+                        [
+                            {
+                                name: new BrsString("foo"),
+                                value: new Expr.Literal(new BrsString("foo's value"), fakeLocation),
+                            },
+                        ],
+                        LEFT_BRACE,
+                        RIGHT_BRACE
+                    )
                 ),
                 new Stmt.DottedSet(
                     new Expr.Variable(identifier("aa")),
                     identifier("foo"),
-                    new Expr.Literal(new BrsString("new foo"))
+                    new Expr.Literal(new BrsString("new foo"), fakeLocation)
                 ),
                 new Stmt.IndexedSet(
                     new Expr.Variable(identifier("aa")),
-                    new Expr.Literal(new BrsString("bar")),
-                    new Expr.Literal(new BrsString("added bar")),
-                    token(Lexeme.RightSquare, "]")
+                    [new Expr.Literal(new BrsString("bar"), fakeLocation)],
+                    new Expr.Literal(new BrsString("added bar"), fakeLocation),
+                    RIGHT_BRACE
                 ),
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -156,32 +185,43 @@ describe("property setting", () => {
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
                     identifier("aa"),
-                    new Expr.AALiteral([
-                        {
-                            name: new BrsString("foo"),
-                            value: new Expr.AALiteral([
-                                {
-                                    name: new BrsString("bar"),
-                                    value: new Expr.Literal(new BrsString("original aa.foo.bar")),
-                                },
-                            ]),
-                        },
-                    ])
+                    new Expr.AALiteral(
+                        [
+                            {
+                                name: new BrsString("foo"),
+                                value: new Expr.AALiteral(
+                                    [
+                                        {
+                                            name: new BrsString("bar"),
+                                            value: new Expr.Literal(
+                                                new BrsString("original aa.foo.bar"),
+                                                fakeLocation
+                                            ),
+                                        },
+                                    ],
+                                    LEFT_BRACE,
+                                    RIGHT_BRACE
+                                ),
+                            },
+                        ],
+                        LEFT_BRACE,
+                        RIGHT_BRACE
+                    )
                 ),
                 new Stmt.DottedSet(
                     new Expr.IndexedGet(
                         new Expr.Variable(identifier("aa")),
-                        new Expr.Literal(new BrsString("foo")),
-                        token(Lexeme.RightSquare, "]")
+                        [new Expr.Literal(new BrsString("foo"), fakeLocation)],
+                        RIGHT_SQUARE
                     ),
                     identifier("bar"),
-                    new Expr.Literal(new BrsString("new aa.foo.bar"))
+                    new Expr.Literal(new BrsString("new aa.foo.bar"), fakeLocation)
                 ),
                 new Stmt.IndexedSet(
                     new Expr.DottedGet(new Expr.Variable(identifier("aa")), identifier("foo")),
-                    new Expr.Literal(new BrsString("baz")),
-                    new Expr.Literal(new BrsString("added aa.foo.baz")),
-                    token(Lexeme.RightSquare, "]")
+                    [new Expr.Literal(new BrsString("baz"), fakeLocation)],
+                    new Expr.Literal(new BrsString("added aa.foo.baz"), fakeLocation),
+                    RIGHT_SQUARE
                 ),
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },

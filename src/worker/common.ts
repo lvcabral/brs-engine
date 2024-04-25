@@ -8,7 +8,36 @@
 
 // Default Device Information
 // Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
-export const defaultDeviceInfo = {
+export interface DeviceInfo {
+    [key: string]: any;
+    developerId: string;
+    friendlyName: string;
+    deviceModel: string;
+    firmwareVersion: string;
+    clientId: string;
+    RIDA: string;
+    countryCode: string;
+    timeZone: string;
+    locale: string;
+    captionLanguage: string;
+    clockFormat: string;
+    displayMode: string;
+    defaultFont: string;
+    fontPath: string;
+    fonts?: Map<string, any>;
+    maxSimulStreams: number;
+    customFeatures: string[];
+    connectionType: string;
+    localIps: string[];
+    startTime: number;
+    audioVolume: number;
+    maxFps: number;
+    registry?: Map<string, string>;
+    audioCodecs?: string[];
+    videoFormats?: Map<string, string[]>;
+}
+
+export const defaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
@@ -134,3 +163,37 @@ export const audioExt = new Set<string>([
 ]);
 
 export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
+
+export function parseManifest(contents: string) {
+    let keyValuePairs = contents
+        // for each line
+        .split("\n")
+        // remove leading/trailing whitespace
+        .map((line) => line.trim())
+        // separate keys and values
+        .map((line, index) => {
+            // skip empty lines and comments
+            if (line === "" || line.startsWith("#")) {
+                return ["", ""];
+            }
+
+            let equals = line.indexOf("=");
+            if (equals === -1) {
+                const pos = `${index + 1},0-${line.length}`;
+                console.warn(
+                    `manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`
+                );
+            }
+            return [line.slice(0, equals), line.slice(equals + 1)];
+        })
+        // keep only non-empty keys and values
+        .filter(([key, value]) => key && value)
+        // remove leading/trailing whitespace from keys and values
+        .map(([key, value]) => [key.trim(), value.trim()])
+        // convert value to boolean, integer, or leave as string
+        .map(([key, value]): [string, string] => {
+            return [key, value];
+        });
+
+    return new Map<string, string>(keyValuePairs);
+}

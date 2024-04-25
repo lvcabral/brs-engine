@@ -1,8 +1,9 @@
-const { Interpreter } = require("../../lib/interpreter");
-const { FormatJson, ParseJson } = require("../../lib/stdlib/index");
-const { RoArray } = require("../../lib/brsTypes/components/RoArray");
-const { RoAssociativeArray } = require("../../lib/brsTypes/components/RoAssociativeArray");
+const brs = require("../../bin/brs.node");
+const { Interpreter } = brs;
+const { FormatJson, ParseJson } = brs.stdlib;
 const {
+    RoArray,
+    RoAssociativeArray,
     BrsBoolean,
     BrsInvalid,
     BrsString,
@@ -11,34 +12,30 @@ const {
     Int64,
     Uninitialized,
     roInt,
-} = require("../../lib/brsTypes");
+} = brs.types;
 
-const { allArgs } = require("../e2e/E2ETests");
+const { allArgs, createMockStreams } = require("../e2e/E2ETests");
 
-function withEnv(k, v, fn) {
-    let save = process.env[k];
-    try {
-        process.env[k] = v;
-        return fn();
-    } finally {
-        process.env[k] = save;
-    }
-}
+let interpreter;
+let outputStreams;
 
 function expectConsoleError(expected, fn) {
-    let consoleError = jest.spyOn(console, "error").mockImplementation(() => {
-        /* no op */
-    });
-    return withEnv("NODE_ENV", "force test!", () => {
-        fn();
-        expect(allArgs(consoleError)).toEqual([expect.stringMatching(expected)]);
-    });
+    fn();
+    const output = allArgs(outputStreams.stderr.write);
+    return expect(output[0]).toMatch(expected);
 }
 
 describe("global JSON functions", () => {
-    let interpreter = new Interpreter();
+    beforeAll(() => {
+        outputStreams = createMockStreams();
+        interpreter = new Interpreter(outputStreams);
+    });
 
     afterEach(() => {
+        jest.resetAllMocks();
+    });
+
+    afterAll(() => {
         jest.restoreAllMocks();
     });
 

@@ -1,3 +1,4 @@
+const brs = require("../../bin/brs.node");
 const {
     UCase,
     LCase,
@@ -15,9 +16,9 @@ const {
     StrToI,
     STRING,
     StringI,
-} = require("../../lib/stdlib/index");
-const { Interpreter } = require("../../lib/interpreter");
-const { BrsString, BrsBoolean, Int32, Float } = require("../../lib/brsTypes");
+} = brs.stdlib;
+const { Interpreter } = brs;
+const { BrsString, BrsBoolean, Int32, Float } = brs.types;
 
 const interpreter = new Interpreter();
 
@@ -167,7 +168,7 @@ describe("global string functions", () => {
         });
 
         it("returns a string from a zero float", () => {
-            expect(Str.call(interpreter, new Float(0.0))).toEqual(new BrsString("0"));
+            expect(Str.call(interpreter, new Float(0.0))).toEqual(new BrsString(" 0"));
         });
     });
 
@@ -181,7 +182,7 @@ describe("global string functions", () => {
         });
 
         it("returns a string from a zero integer", () => {
-            expect(StrI.call(interpreter, new Int32(0))).toEqual(new BrsString("0"));
+            expect(StrI.call(interpreter, new Int32(0))).toEqual(new BrsString(" 0"));
         });
 
         it("returns an empty string for invalid radices", () => {

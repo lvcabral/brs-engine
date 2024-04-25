@@ -1,4 +1,4 @@
-const brs = require("brs");
+const brs = require("../../../bin/brs.node");
 const { Lexeme } = brs.lexer;
 const { Float } = brs.types;
 

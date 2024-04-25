@@ -1,179 +1,173 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser while statements nested 1`] = `
-Array [
+[
   While {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": 12,
           "line": 8,
         },
         "file": "",
-        "start": Object {
+        "start": {
           "column": 26,
           "line": 2,
         },
       },
-      "statements": Array [
+      "statements": [
         While {
           "body": Block {
-            "location": Object {
-              "end": Object {
+            "location": {
+              "end": {
                 "column": 16,
                 "line": 6,
               },
               "file": "",
-              "start": Object {
+              "start": {
                 "column": 30,
                 "line": 3,
               },
             },
-            "statements": Array [
+            "statements": [
               While {
                 "body": Block {
-                  "location": Object {
-                    "end": Object {
+                  "location": {
+                    "end": {
                       "column": 43,
                       "line": 4,
                     },
                     "file": "",
-                    "start": Object {
+                    "start": {
                       "column": 35,
                       "line": 4,
                     },
                   },
-                  "statements": Array [
+                  "statements": [
                     Increment {
-                      "token": Object {
+                      "token": {
                         "isReserved": false,
                         "kind": "PlusPlus",
                         "literal": undefined,
-                        "location": Object {
-                          "end": Object {
+                        "location": {
+                          "end": {
                             "column": 40,
                             "line": 4,
                           },
                           "file": "",
-                          "start": Object {
+                          "start": {
                             "column": 38,
                             "line": 4,
                           },
                         },
                         "text": "++",
                       },
-                      "type": "Increment",
                       "value": Variable {
-                        "name": Object {
+                        "name": {
                           "isReserved": false,
                           "kind": "Identifier",
                           "literal": undefined,
-                          "location": Object {
-                            "end": Object {
+                          "location": {
+                            "end": {
                               "column": 38,
                               "line": 4,
                             },
                             "file": "",
-                            "start": Object {
+                            "start": {
                               "column": 37,
                               "line": 4,
                             },
                           },
                           "text": "k",
                         },
-                        "type": "Variable",
                       },
                     },
                   ],
-                  "type": "Block",
                 },
                 "condition": Binary {
                   "left": Variable {
-                    "name": Object {
+                    "name": {
                       "isReserved": false,
                       "kind": "Identifier",
                       "literal": undefined,
-                      "location": Object {
-                        "end": Object {
+                      "location": {
+                        "end": {
                           "column": 27,
                           "line": 4,
                         },
                         "file": "",
-                        "start": Object {
+                        "start": {
                           "column": 26,
                           "line": 4,
                         },
                       },
                       "text": "k",
                     },
-                    "type": "Variable",
                   },
                   "right": Literal {
-                    "_location": Object {
-                      "end": Object {
+                    "_location": {
+                      "end": {
                         "column": 34,
                         "line": 4,
                       },
                       "file": "",
-                      "start": Object {
+                      "start": {
                         "column": 30,
                         "line": 4,
                       },
                     },
-                    "type": "Literal",
                     "value": Int32 {
                       "kind": 4,
                       "value": 1000,
                     },
                   },
-                  "token": Object {
+                  "token": {
                     "isReserved": false,
                     "kind": "Less",
                     "literal": undefined,
-                    "location": Object {
-                      "end": Object {
+                    "location": {
+                      "end": {
                         "column": 29,
                         "line": 4,
                       },
                       "file": "",
-                      "start": Object {
+                      "start": {
                         "column": 28,
                         "line": 4,
                       },
                     },
                     "text": "<",
                   },
-                  "type": "Binary",
                 },
-                "tokens": Object {
-                  "endWhile": Object {
+                "tokens": {
+                  "endWhile": {
                     "isReserved": false,
                     "kind": "EndWhile",
                     "literal": undefined,
-                    "location": Object {
-                      "end": Object {
+                    "location": {
+                      "end": {
                         "column": 52,
                         "line": 4,
                       },
                       "file": "",
-                      "start": Object {
+                      "start": {
                         "column": 43,
                         "line": 4,
                       },
                     },
                     "text": "end while",
                   },
-                  "while": Object {
+                  "while": {
                     "isReserved": true,
                     "kind": "While",
                     "literal": undefined,
-                    "location": Object {
-                      "end": Object {
+                    "location": {
+                      "end": {
                         "column": 25,
                         "line": 4,
                       },
                       "file": "",
-                      "start": Object {
+                      "start": {
                         "column": 20,
                         "line": 4,
                       },
@@ -181,138 +175,131 @@ Array [
                     "text": "while",
                   },
                 },
-                "type": "While",
               },
               Increment {
-                "token": Object {
+                "token": {
                   "isReserved": false,
                   "kind": "PlusPlus",
                   "literal": undefined,
-                  "location": Object {
-                    "end": Object {
+                  "location": {
+                    "end": {
                       "column": 23,
                       "line": 5,
                     },
                     "file": "",
-                    "start": Object {
+                    "start": {
                       "column": 21,
                       "line": 5,
                     },
                   },
                   "text": "++",
                 },
-                "type": "Increment",
                 "value": Variable {
-                  "name": Object {
+                  "name": {
                     "isReserved": false,
                     "kind": "Identifier",
                     "literal": undefined,
-                    "location": Object {
-                      "end": Object {
+                    "location": {
+                      "end": {
                         "column": 21,
                         "line": 5,
                       },
                       "file": "",
-                      "start": Object {
+                      "start": {
                         "column": 20,
                         "line": 5,
                       },
                     },
                     "text": "j",
                   },
-                  "type": "Variable",
                 },
               },
             ],
-            "type": "Block",
           },
           "condition": Binary {
             "left": Variable {
-              "name": Object {
+              "name": {
                 "isReserved": false,
                 "kind": "Identifier",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": 23,
                     "line": 3,
                   },
                   "file": "",
-                  "start": Object {
+                  "start": {
                     "column": 22,
                     "line": 3,
                   },
                 },
                 "text": "j",
               },
-              "type": "Variable",
             },
             "right": Literal {
-              "_location": Object {
-                "end": Object {
+              "_location": {
+                "end": {
                   "column": 30,
                   "line": 3,
                 },
                 "file": "",
-                "start": Object {
+                "start": {
                   "column": 26,
                   "line": 3,
                 },
               },
-              "type": "Literal",
               "value": Int32 {
                 "kind": 4,
                 "value": 1000,
               },
             },
-            "token": Object {
+            "token": {
               "isReserved": false,
               "kind": "Less",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": 25,
                   "line": 3,
                 },
                 "file": "",
-                "start": Object {
+                "start": {
                   "column": 24,
                   "line": 3,
                 },
               },
               "text": "<",
             },
-            "type": "Binary",
           },
-          "tokens": Object {
-            "endWhile": Object {
+          "tokens": {
+            "endWhile": {
               "isReserved": false,
               "kind": "EndWhile",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": 25,
                   "line": 6,
                 },
                 "file": "",
-                "start": Object {
+                "start": {
                   "column": 16,
                   "line": 6,
                 },
               },
               "text": "end while",
             },
-            "while": Object {
+            "while": {
               "isReserved": true,
               "kind": "While",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": 21,
                   "line": 3,
                 },
                 "file": "",
-                "start": Object {
+                "start": {
                   "column": 16,
                   "line": 3,
                 },
@@ -320,138 +307,131 @@ Array [
               "text": "while",
             },
           },
-          "type": "While",
         },
         Increment {
-          "token": Object {
+          "token": {
             "isReserved": false,
             "kind": "PlusPlus",
             "literal": undefined,
-            "location": Object {
-              "end": Object {
+            "location": {
+              "end": {
                 "column": 19,
                 "line": 7,
               },
               "file": "",
-              "start": Object {
+              "start": {
                 "column": 17,
                 "line": 7,
               },
             },
             "text": "++",
           },
-          "type": "Increment",
           "value": Variable {
-            "name": Object {
+            "name": {
               "isReserved": false,
               "kind": "Identifier",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": 17,
                   "line": 7,
                 },
                 "file": "",
-                "start": Object {
+                "start": {
                   "column": 16,
                   "line": 7,
                 },
               },
               "text": "i",
             },
-            "type": "Variable",
           },
         },
       ],
-      "type": "Block",
     },
     "condition": Binary {
       "left": Variable {
-        "name": Object {
+        "name": {
           "isReserved": false,
           "kind": "Identifier",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": 19,
               "line": 2,
             },
             "file": "",
-            "start": Object {
+            "start": {
               "column": 18,
               "line": 2,
             },
           },
           "text": "i",
         },
-        "type": "Variable",
       },
       "right": Literal {
-        "_location": Object {
-          "end": Object {
+        "_location": {
+          "end": {
             "column": 26,
             "line": 2,
           },
           "file": "",
-          "start": Object {
+          "start": {
             "column": 22,
             "line": 2,
           },
         },
-        "type": "Literal",
         "value": Int32 {
           "kind": 4,
           "value": 1000,
         },
       },
-      "token": Object {
+      "token": {
         "isReserved": false,
         "kind": "Less",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": 21,
             "line": 2,
           },
           "file": "",
-          "start": Object {
+          "start": {
             "column": 20,
             "line": 2,
           },
         },
         "text": "<",
       },
-      "type": "Binary",
     },
-    "tokens": Object {
-      "endWhile": Object {
+    "tokens": {
+      "endWhile": {
         "isReserved": false,
         "kind": "EndWhile",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": 21,
             "line": 8,
           },
           "file": "",
-          "start": Object {
+          "start": {
             "column": 12,
             "line": 8,
           },
         },
         "text": "end while",
       },
-      "while": Object {
+      "while": {
         "isReserved": true,
         "kind": "While",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": 17,
             "line": 2,
           },
           "file": "",
-          "start": Object {
+          "start": {
             "column": 12,
             "line": 2,
           },
@@ -459,36 +439,35 @@ Array [
         "text": "while",
       },
     },
-    "type": "While",
   },
 ]
 `;
 
 exports[`parser while statements while with exit 1`] = `
-Array [
+[
   While {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
         "file": undefined,
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
-      "statements": Array [
+      "statements": [
         Print {
-          "expressions": Array [
+          "expressions": [
             Literal {
-              "_location": Object {
-                "end": Object {
+              "_location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -499,17 +478,17 @@ Array [
               },
             },
           ],
-          "tokens": Object {
-            "print": Object {
+          "tokens": {
+            "print": {
               "isReserved": true,
               "kind": "Print",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -519,17 +498,17 @@ Array [
           },
         },
         ExitWhile {
-          "tokens": Object {
-            "exitWhile": Object {
+          "tokens": {
+            "exitWhile": {
               "isReserved": false,
               "kind": "ExitWhile",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -541,12 +520,12 @@ Array [
       ],
     },
     "condition": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -556,33 +535,33 @@ Array [
         "value": true,
       },
     },
-    "tokens": Object {
-      "endWhile": Object {
+    "tokens": {
+      "endWhile": {
         "isReserved": false,
         "kind": "EndWhile",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end while",
       },
-      "while": Object {
+      "while": {
         "isReserved": true,
         "kind": "While",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -595,30 +574,30 @@ Array [
 `;
 
 exports[`parser while statements while without exit 1`] = `
-Array [
+[
   While {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
         "file": undefined,
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
-      "statements": Array [
+      "statements": [
         Print {
-          "expressions": Array [
+          "expressions": [
             Literal {
-              "_location": Object {
-                "end": Object {
+              "_location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -629,17 +608,17 @@ Array [
               },
             },
           ],
-          "tokens": Object {
-            "print": Object {
+          "tokens": {
+            "print": {
               "isReserved": true,
               "kind": "Print",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -651,12 +630,12 @@ Array [
       ],
     },
     "condition": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -666,33 +645,33 @@ Array [
         "value": true,
       },
     },
-    "tokens": Object {
-      "endWhile": Object {
+    "tokens": {
+      "endWhile": {
         "isReserved": false,
         "kind": "EndWhile",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end while",
       },
-      "while": Object {
+      "while": {
         "isReserved": true,
         "kind": "While",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },

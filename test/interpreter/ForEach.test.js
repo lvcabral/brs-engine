@@ -1,16 +1,23 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-const { Interpreter } = require("../../lib/interpreter");
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
+const { Expr, Stmt } = brs.parser;
+const { Interpreter } = brs;
 const { BrsString } = brs.types;
 
-const { token, identifier } = require("../parser/ParserTests");
+const { token, identifier, fakeLocation } = require("../parser/ParserTests");
+
+const LEFT_SQUARE = token(Lexeme.LeftSquare, "[");
+const RIGHT_SQUARE = token(Lexeme.RightSquare, "]");
 
 let interpreter;
 
 describe("interpreter for-each loops", () => {
     const arrayMembers = [new BrsString("foo"), new BrsString("bar"), new BrsString("baz")];
+    const filledArray = new Expr.ArrayLiteral(
+        arrayMembers.map((member) => new Expr.Literal(member, fakeLocation)),
+        LEFT_SQUARE,
+        RIGHT_SQUARE
+    );
 
     beforeEach(() => {
         interpreter = new Interpreter();
@@ -34,7 +41,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(arrayMembers.map((member) => new Expr.Literal(member)))
+                filledArray
             ),
             new Stmt.ForEach(
                 {
@@ -62,7 +69,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("empty"),
-                new Expr.ArrayLiteral([])
+                new Expr.ArrayLiteral([], LEFT_SQUARE, RIGHT_SQUARE)
             ),
             new Stmt.ForEach(
                 {
@@ -88,7 +95,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(arrayMembers.map((member) => new Expr.Literal(member)))
+                filledArray
             ),
             new Stmt.ForEach(
                 {
@@ -119,7 +126,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("array"),
-                new Expr.ArrayLiteral(arrayMembers.map((member) => new Expr.Literal(member)))
+                filledArray
             ),
             new Stmt.ForEach(
                 {

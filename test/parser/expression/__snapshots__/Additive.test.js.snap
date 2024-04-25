@@ -1,35 +1,35 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser additive expressions parses left-associative addition chains 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -40,12 +40,12 @@ Array [
     "value": Binary {
       "left": Binary {
         "left": Literal {
-          "_location": Object {
-            "end": Object {
+          "_location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -56,12 +56,12 @@ Array [
           },
         },
         "right": Literal {
-          "_location": Object {
-            "end": Object {
+          "_location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -71,16 +71,16 @@ Array [
             "value": 2,
           },
         },
-        "token": Object {
+        "token": {
           "isReserved": false,
           "kind": "Plus",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -89,12 +89,12 @@ Array [
         },
       },
       "right": Literal {
-        "_location": Object {
-          "end": Object {
+        "_location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -104,16 +104,16 @@ Array [
           "value": 3,
         },
       },
-      "token": Object {
+      "token": {
         "isReserved": false,
         "kind": "Plus",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -126,35 +126,35 @@ Array [
 `;
 
 exports[`parser additive expressions parses left-associative subtraction chains 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -165,12 +165,12 @@ Array [
     "value": Binary {
       "left": Binary {
         "left": Literal {
-          "_location": Object {
-            "end": Object {
+          "_location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -181,12 +181,12 @@ Array [
           },
         },
         "right": Literal {
-          "_location": Object {
-            "end": Object {
+          "_location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -196,16 +196,16 @@ Array [
             "value": 2,
           },
         },
-        "token": Object {
+        "token": {
           "isReserved": false,
           "kind": "Minus",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -214,12 +214,12 @@ Array [
         },
       },
       "right": Literal {
-        "_location": Object {
-          "end": Object {
+        "_location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -229,16 +229,16 @@ Array [
           "value": 3,
         },
       },
-      "token": Object {
+      "token": {
         "isReserved": false,
         "kind": "Minus",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },

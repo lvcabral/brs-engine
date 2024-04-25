@@ -8,9 +8,9 @@ sub main()
 		subFunc(a)
     catch e
         ' currently unimplemented
-        print "[in_catch] e = " e
+        print "[in_catch] e = " e.message
 		for each bt in e.backtrace
-			print "[backtrace] = " bt
+			print "[backtrace] = " bt.line_number
 		end for
     end try
 
@@ -23,7 +23,7 @@ function subFunc(a)
 		thirdLevel()
 		a = a * "" ' force a type error
 	catch e
-		print e
+		print e.number
         e.customField = false
 		throw e
     endtry

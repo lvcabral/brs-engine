@@ -1,6 +1,7 @@
-const { Pos, Tab } = require("../../lib/stdlib/index");
-const { Interpreter } = require("../../lib/interpreter");
-const { BrsString, BrsBoolean, Int32 } = require("../../lib/brsTypes");
+const brs = require("../../bin/brs.node");
+const { Pos, Tab } = brs.stdlib;
+const { Interpreter } = brs;
+const { BrsString, Int32 } = brs.types;
 
 const { createMockStreams } = require("../e2e/E2ETests");
 

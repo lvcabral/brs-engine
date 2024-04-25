@@ -1,50 +1,50 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser for loops accepts a 'step' clause 1`] = `
-Array [
+[
   For {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
         "file": undefined,
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
-      "statements": Array [],
+      "statements": [],
     },
     "counterDeclaration": Assignment {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "i",
       },
-      "tokens": Object {
-        "equals": Object {
+      "tokens": {
+        "equals": {
           "isReserved": false,
           "kind": "Equal",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -53,12 +53,12 @@ Array [
         },
       },
       "value": Literal {
-        "_location": Object {
-          "end": Object {
+        "_location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -70,12 +70,12 @@ Array [
       },
     },
     "finalValue": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -86,12 +86,12 @@ Array [
       },
     },
     "increment": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -101,65 +101,65 @@ Array [
         "value": 2,
       },
     },
-    "tokens": Object {
-      "endFor": Object {
+    "tokens": {
+      "endFor": {
         "isReserved": false,
         "kind": "EndFor",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end for",
       },
-      "for": Object {
+      "for": {
         "isReserved": true,
         "kind": "For",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "for",
       },
-      "step": Object {
+      "step": {
         "isReserved": true,
         "kind": "Step",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "step",
       },
-      "to": Object {
+      "to": {
         "isReserved": true,
         "kind": "To",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -172,50 +172,50 @@ Array [
 `;
 
 exports[`parser for loops allows 'next' to terminate loop 1`] = `
-Array [
+[
   For {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
         "file": undefined,
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
-      "statements": Array [],
+      "statements": [],
     },
     "counterDeclaration": Assignment {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "i",
       },
-      "tokens": Object {
-        "equals": Object {
+      "tokens": {
+        "equals": {
           "isReserved": false,
           "kind": "Equal",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -224,12 +224,12 @@ Array [
         },
       },
       "value": Literal {
-        "_location": Object {
-          "end": Object {
+        "_location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -241,12 +241,12 @@ Array [
       },
     },
     "finalValue": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -257,12 +257,12 @@ Array [
       },
     },
     "increment": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -272,33 +272,33 @@ Array [
         "value": 1,
       },
     },
-    "tokens": Object {
-      "endFor": Object {
+    "tokens": {
+      "endFor": {
         "isReserved": true,
         "kind": "Next",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "next",
       },
-      "for": Object {
+      "for": {
         "isReserved": true,
         "kind": "For",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -306,16 +306,16 @@ Array [
         "text": "for",
       },
       "step": undefined,
-      "to": Object {
+      "to": {
         "isReserved": true,
         "kind": "To",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -328,50 +328,50 @@ Array [
 `;
 
 exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
-Array [
+[
   For {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
         "file": undefined,
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
-      "statements": Array [],
+      "statements": [],
     },
     "counterDeclaration": Assignment {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "i",
       },
-      "tokens": Object {
-        "equals": Object {
+      "tokens": {
+        "equals": {
           "isReserved": false,
           "kind": "Equal",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -380,12 +380,12 @@ Array [
         },
       },
       "value": Literal {
-        "_location": Object {
-          "end": Object {
+        "_location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -397,12 +397,12 @@ Array [
       },
     },
     "finalValue": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -413,12 +413,12 @@ Array [
       },
     },
     "increment": Literal {
-      "_location": Object {
-        "end": Object {
+      "_location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -428,33 +428,33 @@ Array [
         "value": 1,
       },
     },
-    "tokens": Object {
-      "endFor": Object {
+    "tokens": {
+      "endFor": {
         "isReserved": false,
         "kind": "EndFor",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end for",
       },
-      "for": Object {
+      "for": {
         "isReserved": true,
         "kind": "For",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -462,16 +462,16 @@ Array [
         "text": "for",
       },
       "step": undefined,
-      "to": Object {
+      "to": {
         "isReserved": true,
         "kind": "To",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },

@@ -65,6 +65,46 @@ module.exports = (env) => {
             },
         },
         {
+            entry: "./src/worker/index.ts",
+            target: "node",
+            mode: mode,
+            devtool: sourceMap,
+            module: {
+                rules: [
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ts-loader",
+                        exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.tsx?$/,
+                        loader: "ifdef-loader",
+                        options: ifdef_opts,
+                        exclude: /node_modules/,
+                    },
+                    {
+                        test: /\.brs$/,
+                        type: "asset/source",
+                    },
+                ],
+            },
+            resolve: {
+                modules: [path.resolve("./node_modules"), path.resolve("./src")],
+                extensions: [".tsx", ".ts", ".js"],
+            },
+            externals: {
+                canvas: "commonjs canvas" // Important (2)
+            },
+            output: {
+                path: path.join(__dirname, cliPath),
+                filename: libName + ".node.js",
+                library: libName + "-node",
+                libraryTarget: "umd",
+                umdNamedDefine: true,
+                globalObject: "typeof self !== 'undefined' ? self : this",
+            },
+        },
+        {
             entry: "./src/cli/ecp.ts",
             target: "node",
             mode: mode,

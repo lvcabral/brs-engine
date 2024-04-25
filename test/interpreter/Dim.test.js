@@ -1,7 +1,6 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-const { Interpreter } = require("../../lib/interpreter");
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
+const { Expr, Stmt } = brs.parser;
+const { Interpreter } = brs;
 const { Lexeme } = brs.lexer;
 const { Int32, BrsString } = brs.types;
 
@@ -32,7 +31,7 @@ describe("creating arrays using dim", () => {
             ),
             new Stmt.IndexedSet(
                 new Expr.Variable(identifier("array")),
-                new Expr.Literal(new Int32(4), fakeLocation),
+                [new Expr.Literal(new Int32(4), fakeLocation)],
                 new Expr.Literal(new BrsString("new index4"), fakeLocation),
                 RIGHT_SQUARE
             ),
@@ -41,7 +40,7 @@ describe("creating arrays using dim", () => {
                 identifier("result"),
                 new Expr.IndexedGet(
                     new Expr.Variable(identifier("array")),
-                    new Expr.Literal(new Int32(4), fakeLocation),
+                    [new Expr.Literal(new Int32(4), fakeLocation)],
                     RIGHT_SQUARE
                 )
             ),
@@ -76,10 +75,10 @@ describe("creating arrays using dim", () => {
             new Stmt.IndexedSet(
                 new Expr.IndexedGet(
                     new Expr.Variable(identifier("baseArray")),
-                    new Expr.Literal(new Int32(2), fakeLocation),
+                    [new Expr.Literal(new Int32(2), fakeLocation)],
                     RIGHT_SQUARE
                 ),
-                new Expr.Literal(new Int32(1), fakeLocation),
+                [new Expr.Literal(new Int32(1), fakeLocation)],
                 new Expr.Literal(new BrsString("new (2,1)"), fakeLocation),
                 RIGHT_SQUARE
             ),
@@ -89,10 +88,10 @@ describe("creating arrays using dim", () => {
                 new Expr.IndexedGet(
                     new Expr.IndexedGet(
                         new Expr.Variable(identifier("baseArray")),
-                        new Expr.Literal(new Int32(2), fakeLocation),
+                        [new Expr.Literal(new Int32(2), fakeLocation)],
                         RIGHT_SQUARE
                     ),
-                    new Expr.Literal(new Int32(1), fakeLocation),
+                    [new Expr.Literal(new Int32(1), fakeLocation)],
                     RIGHT_SQUARE
                 )
             ),

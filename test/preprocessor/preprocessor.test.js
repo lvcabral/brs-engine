@@ -1,9 +1,8 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
+const { Preprocessor } = brs;
 const { Lexeme } = brs.lexer;
 const { Chunk } = brs.preprocessor;
 const { BrsString, BrsBoolean } = brs.types;
-
-const { Preprocessor } = require("../../lib/preprocessor/Preprocessor");
 
 const { identifier, token, EOF } = require("../parser/ParserTests");
 
@@ -17,7 +16,8 @@ describe("preprocessor", () => {
             EOF,
         ];
 
-        let { processedTokens } = new Preprocessor().filter([new Chunk.BrightScript(unprocessed)]);
+        let pp = new Preprocessor();
+        let { processedTokens } = pp.filter([new Chunk.BrightScript(unprocessed)]);
         expect(processedTokens).toEqual(unprocessed);
     });
 

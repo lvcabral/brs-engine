@@ -1,4 +1,4 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { BrsBoolean, BrsString, RoString } = brs.types;
 
 describe("String", () => {

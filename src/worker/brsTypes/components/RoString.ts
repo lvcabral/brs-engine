@@ -91,34 +91,48 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         return this.intrinsic.toString(parent);
     }
 
-    // ---------- ifStringOps ----------
-    /** Sets the string to the first len characters of s. */
-    private setString = new Callable("SetString", {
-        signature: {
-            args: [
-                new StdlibArgument("s", ValueKind.String),
-                new StdlibArgument("len", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Void,
+    /**
+     * Sets the string to the first len characters of s.
+     * Note: this method is implemented in the ifString and ifStringOps interfaces
+     */
+    private setString = new Callable(
+        "SetString",
+        {
+            signature: {
+                args: [new StdlibArgument("s", ValueKind.String)],
+                returns: ValueKind.Void,
+            },
+            impl: (_, s: BrsString) => {
+                this.intrinsic = new BrsString(s.value);
+                return BrsInvalid.Instance;
+            },
         },
-        impl: (_interpreter, s: BrsString, len: Int32) => {
-            if (len instanceof Int32) {
-                this.intrinsic = new BrsString(s.value.slice(0, len.getValue()));
-            } else {
-                this.intrinsic = s;
-            }
-            return BrsInvalid.Instance;
-        },
-    });
+        {
+            signature: {
+                args: [
+                    new StdlibArgument("s", ValueKind.String),
+                    new StdlibArgument("len", ValueKind.Int32),
+                ],
+                returns: ValueKind.Void,
+            },
+            impl: (_, s: BrsString, len: Int32) => {
+                const length = len.getValue();
+                this.intrinsic =
+                    length <= 0 ? new BrsString("") : new BrsString(s.value.slice(0, length));
+                return BrsInvalid.Instance;
+            },
+        }
+    );
 
     private getString = new Callable("GetString", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => this.intrinsic,
+        impl: (_) => this.intrinsic,
     });
 
+    // ---------- ifStringOps ----------
     /** Appends the first len characters of s to the end of the string. */
     private appendString = new Callable("AppendString", {
         signature: {
@@ -128,8 +142,11 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             ],
             returns: ValueKind.Void,
         },
-        impl: (_interpreter, s: BrsString, len: Int32) => {
-            this.intrinsic = this.intrinsic.concat(new BrsString(s.value.slice(0, len.getValue())));
+        impl: (_, s: BrsString, len: Int32) => {
+            const length = len.getValue();
+            if (length > 0) {
+                this.intrinsic = this.intrinsic.concat(new BrsString(s.value.slice(0, length)));
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -140,7 +157,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new Int32(this.intrinsic.value.length);
         },
     });
@@ -151,7 +168,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("len", ValueKind.Int32)],
             returns: ValueKind.String,
         },
-        impl: (_interpreter, len: Int32) => {
+        impl: (_, len: Int32) => {
             return new BrsString(this.intrinsic.value.slice(0, len.getValue()));
         },
     });
@@ -162,9 +179,10 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("len", ValueKind.Int32)],
             returns: ValueKind.String,
         },
-        impl: (_interpreter, len: Int32) => {
-            let source = this.intrinsic.value;
-            return new BrsString(source.slice(-source.length));
+        impl: (_, len: Int32) => {
+            const source = this.intrinsic.value;
+            const length = len.getValue();
+            return length <= 0 ? new BrsString("") : new BrsString(source.slice(-length));
         },
     });
 
@@ -179,7 +197,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 args: [new StdlibArgument("start_index", ValueKind.Int32)],
                 returns: ValueKind.String,
             },
-            impl: (_interpreter, startIndex: Int32) => {
+            impl: (_, startIndex: Int32) => {
                 return new BrsString(this.intrinsic.value.slice(startIndex.getValue()));
             },
         },
@@ -196,7 +214,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 ],
                 returns: ValueKind.String,
             },
-            impl: (_interpreter, startIndex: Int32, numChars: Int32) => {
+            impl: (_, startIndex: Int32, numChars: Int32) => {
                 let source = this.intrinsic.value;
                 let start = startIndex.getValue() > 0 ? startIndex.getValue() : 0;
                 let length = numChars.getValue() > 0 ? numChars.getValue() : 0;
@@ -213,7 +231,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 args: [new StdlibArgument("substring", ValueKind.String)],
                 returns: ValueKind.Int32,
             },
-            impl: (_interpreter, substring: BrsString) => {
+            impl: (_, substring: BrsString) => {
                 return new Int32(this.intrinsic.value.indexOf(substring.value));
             },
         },
@@ -229,7 +247,10 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 ],
                 returns: ValueKind.Int32,
             },
-            impl: (_interpreter, startIndex: Int32, substring: BrsString) => {
+            impl: (_, startIndex: Int32, substring: BrsString) => {
+                if (substring.value === "") {
+                    return new Int32(startIndex.getValue() < 0 ? 0 : startIndex.getValue());
+                }
                 return new Int32(
                     this.intrinsic.value.indexOf(substring.value, startIndex.getValue())
                 );
@@ -249,7 +270,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             ],
             returns: ValueKind.String,
         },
-        impl: (_interpreter, from: BrsString, to: BrsString) => {
+        impl: (_, from: BrsString, to: BrsString) => {
             if (from.value === "") {
                 return this.intrinsic;
             }
@@ -272,7 +293,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(this.intrinsic.value.trim());
         },
     });
@@ -283,7 +304,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             let int = Math.trunc(Number.parseFloat(this.intrinsic.value));
 
             if (Number.isNaN(int)) {
@@ -301,7 +322,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.Float,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             let float = Number.parseFloat(this.intrinsic.value);
 
             if (Number.isNaN(float)) {
@@ -322,7 +343,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("delim", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (_interpreter, delim: BrsString) => {
+        impl: (_, delim: BrsString) => {
             let str = this.intrinsic.value;
             let token: string[] = [];
             let tokens: BrsString[] = [];
@@ -353,7 +374,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [new StdlibArgument("separator", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (_interpreter, separator: BrsString) => {
+        impl: (_, separator: BrsString) => {
             let parts;
             if (separator.value === "") {
                 // split characters apart, preserving multi-character unicode structures
@@ -375,7 +396,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(this.intrinsic.value.replace(/(['"<>&])/g, "\\$1"));
         },
     });
@@ -386,7 +407,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(
                 // encoding courtesy of
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent#Description
@@ -404,7 +425,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(decodeURIComponent(this.intrinsic.value));
         },
     });
@@ -415,7 +436,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return BrsBoolean.from(this.intrinsic.value.length === 0);
         },
     });
@@ -429,7 +450,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(encodeURI(this.intrinsic.value));
         },
     });
@@ -443,7 +464,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(decodeURI(this.intrinsic.value));
         },
     });
@@ -457,7 +478,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(encodeURIComponent(this.intrinsic.value));
         },
     });
@@ -467,7 +488,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (_) => {
             return new BrsString(decodeURIComponent(this.intrinsic.value));
         },
     });

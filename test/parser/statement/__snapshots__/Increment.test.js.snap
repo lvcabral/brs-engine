@@ -1,33 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser postfix unary expressions allows '++' at the end of a function 1`] = `
-Array [
+[
   Function {
     "func": Function {
       "body": Block {
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
           "file": undefined,
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
-        "statements": Array [
+        "statements": [
           Increment {
-            "token": Object {
+            "token": {
               "isReserved": false,
               "kind": "PlusPlus",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -35,16 +35,16 @@ Array [
               "text": "++",
             },
             "value": Variable {
-              "name": Object {
+              "name": {
                 "isReserved": false,
                 "kind": "Identifier",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": -9,
                     "line": -9,
                   },
-                  "start": Object {
+                  "start": {
                     "column": -9,
                     "line": -9,
                   },
@@ -55,51 +55,51 @@ Array [
           },
         ],
       },
-      "end": Object {
+      "end": {
         "isReserved": false,
         "kind": "EndSub",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end sub",
       },
-      "keyword": Object {
+      "keyword": {
         "isReserved": true,
         "kind": "Sub",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "sub",
       },
-      "parameters": Array [],
+      "parameters": [],
       "returns": 11,
     },
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -111,18 +111,18 @@ Array [
 `;
 
 exports[`parser postfix unary expressions parses postfix '++' for indexed get expressions 1`] = `
-Array [
+[
   Increment {
-    "token": Object {
+    "token": {
       "isReserved": false,
       "kind": "PlusPlus",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -130,51 +130,53 @@ Array [
       "text": "++",
     },
     "value": IndexedGet {
-      "closingSquare": Object {
+      "closingSquare": {
         "isReserved": false,
         "kind": "RightSquare",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "]",
       },
-      "index": Variable {
-        "name": Object {
-          "isReserved": false,
-          "kind": "Identifier",
-          "literal": undefined,
-          "location": Object {
-            "end": Object {
-              "column": -9,
-              "line": -9,
+      "indexes": [
+        Variable {
+          "name": {
+            "isReserved": false,
+            "kind": "Identifier",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
             },
-            "start": Object {
-              "column": -9,
-              "line": -9,
-            },
+            "text": "property",
           },
-          "text": "property",
         },
-      },
+      ],
       "obj": Variable {
-        "name": Object {
+        "name": {
           "isReserved": false,
           "kind": "Identifier",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -188,18 +190,18 @@ Array [
 `;
 
 exports[`parser postfix unary expressions parses postfix '++' for variables 1`] = `
-Array [
+[
   Increment {
-    "token": Object {
+    "token": {
       "isReserved": false,
       "kind": "PlusPlus",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -207,16 +209,16 @@ Array [
       "text": "++",
     },
     "value": Variable {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -229,18 +231,18 @@ Array [
 `;
 
 exports[`parser postfix unary expressions parses postfix '--' for dotted get expressions 1`] = `
-Array [
+[
   Increment {
-    "token": Object {
+    "token": {
       "isReserved": false,
       "kind": "MinusMinus",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -248,16 +250,16 @@ Array [
       "text": "--",
     },
     "value": DottedGet {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -265,16 +267,16 @@ Array [
         "text": "property",
       },
       "obj": Variable {
-        "name": Object {
+        "name": {
           "isReserved": false,
           "kind": "Identifier",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },

@@ -32,3 +32,4 @@ jobs:
         yarn lint
         yarn prettier
         yarn build
+        yarn test
