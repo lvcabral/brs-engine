@@ -1428,7 +1428,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (
                 current instanceof RoArray ||
                 current instanceof RoByteArray ||
-                current instanceof RoList
+                current instanceof RoList ||
+                current instanceof RoXMLList
             ) {
                 try {
                     current = current.get(dimIndex);
@@ -1716,7 +1717,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (
                     current instanceof RoArray ||
                     current instanceof RoByteArray ||
-                    current instanceof RoList
+                    current instanceof RoList ||
+                    current instanceof RoXMLList
                 ) {
                     try {
                         current = current.get(index);
@@ -1735,7 +1737,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } else if (
                 current instanceof RoArray ||
                 current instanceof RoByteArray ||
-                current instanceof RoList
+                current instanceof RoList ||
+                current instanceof RoXMLList
             ) {
                 try {
                     current.set(index, value);

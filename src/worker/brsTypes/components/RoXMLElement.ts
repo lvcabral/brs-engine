@@ -200,15 +200,17 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             let xmlParser = new xml2js.Parser();
             let parsedXML;
             xmlParser.parseString(xml.value, function (err: any, parsed: any) {
+                let errMessage = "";
                 if (err) {
-                    interpreter.stderr.write(`error,Error parsing XML: ${err.message}`);
+                    errMessage = `error,Error parsing XML: ${err.message}`;
                 } else if (parsed) {
                     parsedXML = parsed;
                     result = true;
                 } else {
-                    interpreter.stderr.write(
-                        "warning,Warning: Empty input was provided to parse XML."
-                    );
+                    errMessage = "warning,Warning: Empty input was provided to parse XML.";
+                }
+                if (errMessage !== "" && interpreter.isDevMode) {
+                    interpreter.stderr.write(errMessage);
                 }
             });
             this.parsedXML = parsedXML;

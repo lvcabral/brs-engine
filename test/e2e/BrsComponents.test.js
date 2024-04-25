@@ -295,7 +295,7 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
-    test.skip("components/roXMLElement.brs", () => {
+    test("components/roXMLElement.brs", () => {
         return execute([resourceFile("components", "roXMLElement.brs")], outputStreams).then(() => {
             expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
                 "xmlParser = <Component: roXMLElement>",
@@ -303,12 +303,12 @@ describe("end to end brightscript functions", () => {
                 "parse bad xml string, result = false",
                 "parse good xml string, result = true",
                 "getName() = tag1",
-                "getAttributes() = <Component: roAssociativeArray> =",
-                `<Component: roAssociativeArray> =\n` +
+                `getAttributes() = <Component: roAssociativeArray> =\n` +
                     `{\n` +
                     `    attr1: "0"\n` +
                     `    id: "someId"\n` +
                     `}`,
+                "children type = roXMLList",
                 `getNamedElementsCi("child1") count =  2`,
                 "name of first child  = Child1",
                 "mame of second child = CHILD1",
