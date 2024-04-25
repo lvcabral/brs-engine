@@ -488,12 +488,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     this.updateNext();
                     this.updateCapacity(1.5);
                 } else {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,BRIGHTSCRIPT: ERROR: roByteArray.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
                     );
                 }
             } else {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.Push: set ignored for non-numeric value: ${interpreter.formatLocation()}`
                 );
             }
@@ -535,12 +535,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     this.updateNext();
                     this.updateCapacity(1.25);
                 } else {
-                    interpreter.stdout.write(
+                    interpreter.stderr.write(
                         `warning,BRIGHTSCRIPT: ERROR: roByteArray.Unshift: unshift ignored for full non-resizable array: ${interpreter.formatLocation()}`
                     );
                 }
             } else {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.Unshift: unshift ignored for non-numeric value: ${interpreter.formatLocation()}`
                 );
             }
@@ -599,7 +599,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, array: BrsComponent) => {
             if (!(array instanceof RoByteArray)) {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
                 );
                 return BrsInvalid.Instance;
@@ -639,7 +639,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, index: Int32 | Float, value: BrsType) => {
             if (!isBrsNumber(value)) {
-                interpreter.stdout.write(
+                interpreter.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.SetEntry: set ignored for non-numeric value: ${interpreter.formatLocation()}`
                 );
             }

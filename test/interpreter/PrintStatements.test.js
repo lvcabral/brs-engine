@@ -1,14 +1,13 @@
-const Expr = require("../../lib/parser/Expression");
-const Stmt = require("../../lib/parser/Statement");
-const { token, identifier } = require("../parser/ParserTests");
-const { Interpreter } = require("../../lib/interpreter");
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
+const { Expr, Stmt } = brs.parser;
+const { Interpreter } = brs;
+const { identifier, token } = require("../parser/ParserTests");
 const { Int32, BrsString, BrsInvalid } = brs.types;
 
 const { createMockStreams, allArgs } = require("../e2e/E2ETests");
 
-describe("interperter print statements", () => {
+describe("interpreter print statements", () => {
     let stdout, stderr, interpreter;
 
     let tokens = {
@@ -28,7 +27,7 @@ describe("interperter print statements", () => {
 
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
-        expect(allArgs(stdout.write).join("")).toEqual("foo\n");
+        expect(allArgs(stdout.write).join("")).toEqual("foo\r\n");
     });
 
     it("prints multiple values with no separators", () => {
@@ -40,10 +39,10 @@ describe("interperter print statements", () => {
 
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
-        expect(allArgs(stdout.write).join("")).toEqual("foobarbaz\n");
+        expect(allArgs(stdout.write).join("")).toEqual("foobarbaz\r\n");
     });
 
-    it("prints multiple values with space separators", () => {
+    it("prints multiple values with semi-colon separators", () => {
         const ast = new Stmt.Print(tokens, [
             new Expr.Literal(new BrsString("foo")),
             token(Lexeme.Semicolon, ";"),
@@ -54,12 +53,12 @@ describe("interperter print statements", () => {
 
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
-        expect(allArgs(stdout.write).join("")).toEqual("foo bar baz\n");
+        expect(allArgs(stdout.write).join("")).toEqual("foobarbaz\r\n");
     });
 
-    it("aligns values to 16-charcater tab stops", () => {
+    it("aligns values to 16-character tab stops", () => {
         const ast = new Stmt.Print(tokens, [
-            new Expr.Literal(new BrsString("foo")),
+            new Expr.Literal(new BrsString("foosball")),
             token(Lexeme.Comma, ","),
             new Expr.Literal(new BrsString("barbara")),
             token(Lexeme.Comma, ","),
@@ -71,7 +70,7 @@ describe("interperter print statements", () => {
         expect(allArgs(stdout.write).join("")).toEqual(
             //   0   0   0   1   1   2   2   2   3
             //   0   4   8   2   6   0   4   8   2
-            "foo             barbara         baz\n"
+            "foosball        barbara         baz\r\n"
         );
     });
 
@@ -87,7 +86,7 @@ describe("interperter print statements", () => {
 
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
-        expect(allArgs(stdout.write).join("")).toEqual("foo bar baz");
+        expect(allArgs(stdout.write).join("")).toEqual("foobarbaz");
     });
 
     it("inserts the current position via `pos`", () => {
@@ -101,7 +100,7 @@ describe("interperter print statements", () => {
 
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
-        expect(allArgs(stdout.write).join("")).toEqual("foo 4\n");
+        expect(allArgs(stdout.write).join("")).toEqual("foo 3\r\n");
     });
 
     it("indents to an arbitrary position via `tab`", () => {
@@ -115,7 +114,7 @@ describe("interperter print statements", () => {
 
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
-        expect(allArgs(stdout.write).join("")).toEqual("foo   bar\n");
+        expect(allArgs(stdout.write).join("")).toEqual("foo   bar\r\n");
     });
 
     it("prints uninitialized values with placeholder text", () => {
@@ -123,6 +122,6 @@ describe("interperter print statements", () => {
 
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
-        expect(allArgs(stdout.write).join("")).toEqual("<UNINITIALIZED>\n");
+        expect(allArgs(stdout.write).join("")).toEqual("<UNINITIALIZED>\r\n");
     });
 });

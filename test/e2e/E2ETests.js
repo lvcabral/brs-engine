@@ -1,6 +1,14 @@
 const path = require("path");
 const stream = require("stream");
-const chalk = require("chalk");
+const brs = require("../../bin/brs.node");
+const { createPayload, executeFile } = brs;
+
+brs.registerCallback(() => {}); // register a callback to avoid display errors
+
+const deviceData = {
+    audioCodecs: audioCodecs(),
+    videoFormats: videoFormats(),
+};
 
 /** Returns the path to a file in `resources/`. */
 exports.resourceFile = function (...filenameParts) {
@@ -22,7 +30,6 @@ exports.allArgs = function (jestMock) {
 
 /** Creates a set of mocked streams, suitable for use in place of `process.stdout` and `process.stderr`. */
 exports.createMockStreams = function () {
-    chalk.level = 0;
     const stdout = Object.assign(new stream.PassThrough(), process.stdout);
     const stderr = Object.assign(new stream.PassThrough(), process.stderr);
 
@@ -31,5 +38,25 @@ exports.createMockStreams = function () {
         stderr,
         stdoutSpy: jest.spyOn(stdout, "write").mockImplementation(() => {}),
         stderrSpy: jest.spyOn(stderr, "write").mockImplementation(() => {}),
+        post: false,
     };
 };
+
+/** Executes the specified BrightScript files, capturing their output in the provided streams. */
+exports.execute = async function (filenames, options) {
+    const payload = createPayload(filenames, deviceData);
+    executeFile(payload, options);
+};
+
+function audioCodecs() {
+    return ["mp3", "mpeg", "ogg", "oga", "wav", "aac", "m4a", "flac"];
+}
+
+function videoFormats() {
+    const codecs = ["mpeg1", "mpeg2", "mpeg4 avc", "vp9"];
+    const containers = ["mp4", "m4v", "mov", "mkv", "hls"];
+    return new Map([
+        ["codecs", codecs],
+        ["containers", containers],
+    ]);
+}

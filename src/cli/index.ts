@@ -12,7 +12,7 @@ import path from "node:path";
 import { Worker } from "node:worker_threads";
 import envPaths from "env-paths";
 import { Canvas, ImageData, createCanvas } from "canvas";
-import chalk, { ColorSupportLevel } from "chalk";
+import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
 import readline from "readline";
@@ -66,7 +66,7 @@ program
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .action(async (brsFiles, program) => {
         if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
-            chalk.level = Math.trunc(program.colors) as ColorSupportLevel;
+            chalk.level = Math.trunc(program.colors) as chalk.Level;
         } else {
             console.warn(
                 chalk.yellow(
@@ -202,6 +202,7 @@ function runApp(payload: any) {
         if (pkg.endReason === "EXIT_USER_NAV") {
             console.log(chalk.blueBright(msg));
         } else {
+            process.exitCode = 1;
             console.log(chalk.redBright(msg));
         }
     }
@@ -237,16 +238,24 @@ function getLocalIps() {
  * Get the Registry data from disk
  * @returns the Map containing the persisted registry content
  */
-function getRegistry() {
+function getRegistry(): Map<string, string> {
+    const registry = new Map<string, string>();
     try {
         const strRegistry = fs.readFileSync(path.resolve(paths.data, "registry.json"));
         if (strRegistry?.length) {
-            return new Map(JSON.parse(strRegistry.toString()));
+            const parsed = JSON.parse(strRegistry.toString());
+            if (typeof parsed === "object" && parsed !== null) {
+                Object.entries(parsed).forEach(([key, value]) => {
+                    if (typeof key === "string" && typeof value === "string") {
+                        registry.set(key, value);
+                    }
+                });
+            }
         }
     } catch (err: any) {
         console.error(chalk.red(err.message));
     }
-    return new Map<string, string>();
+    return registry;
 }
 
 /**

@@ -345,9 +345,9 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             const getOffset = (timeZone = "UTC", date = new Date()) => {
                 const utcDate = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
                 const tzDate = new Date(date.toLocaleString("en-US", { timeZone: timeZone }));
-                return (tzDate.getTime() - utcDate.getTime()) / 6e4;
+                return Math.round((tzDate.getTime() - utcDate.getTime()) / 6e4);
             };
-            return new Int32(-getOffset(interpreter.deviceInfo.get("timeZone")));
+            return new Int32(-getOffset(interpreter.deviceInfo.get("timeZone")) + 0);
         },
     });
 

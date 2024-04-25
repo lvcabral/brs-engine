@@ -1,5 +1,4 @@
-const { execute } = require("../../lib");
-const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
+const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
 describe("Runtime errors", () => {
     let outputStreams;
@@ -22,7 +21,9 @@ describe("Runtime errors", () => {
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes("Attempting to retrieve property from non-iterable value")
+            errOutput[0].includes(
+                "'Dot' Operator attempted with invalid BrightScript Component or interface reference."
+            )
         ).toBeTruthy();
     });
 
@@ -31,7 +32,9 @@ describe("Runtime errors", () => {
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes("Attempting to retrieve property from non-iterable value")
+            errOutput[0].includes(
+                "'Dot' Operator attempted with invalid BrightScript Component or interface reference."
+            )
         ).toBeTruthy();
     });
 
@@ -40,9 +43,7 @@ describe("Runtime errors", () => {
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
         expect(
-            errOutput[0].includes(
-                "Attempting to retrieve property from iterable with illegal index type"
-            )
+            errOutput[0].includes("Attempt to use a non-numeric array index not allowed.")
         ).toBeTruthy();
     });
 });

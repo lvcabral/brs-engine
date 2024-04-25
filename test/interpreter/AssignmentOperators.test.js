@@ -1,8 +1,8 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { Expr, Stmt } = brs.parser;
 const { Lexeme } = brs.lexer;
 const { BrsString, Int32, Float } = brs.types;
-const { Interpreter } = require("../../lib/interpreter");
+const { Interpreter } = brs;
 
 const { token, identifier } = require("../parser/ParserTests");
 
@@ -83,18 +83,18 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(1));
     });
 
-    it.skip("left-shifts numbers", () => {
+    it("left-shifts numbers", () => {
         interpreter.exec([
             initializeFoo(new Int32(4)),
             fooAssignmentOperator(token(Lexeme.LeftShiftEqual, "<<="), new Int32(2)),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(8));
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(16));
     });
 
-    it.skip("right-shifts numbers", () => {
+    it("right-shifts numbers", () => {
         interpreter.exec([
-            initializeFoo(new Int32(8)),
+            initializeFoo(new Int32(16)),
             fooAssignmentOperator(token(Lexeme.RightShiftEqual, ">>="), new Int32(2)),
         ]);
 

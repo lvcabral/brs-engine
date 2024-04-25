@@ -1,35 +1,35 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser indexing multi-level bracketed 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -38,115 +38,121 @@ Array [
       },
     },
     "value": IndexedGet {
-      "closingSquare": Object {
+      "closingSquare": {
         "isReserved": false,
         "kind": "RightSquare",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "]",
       },
-      "index": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
-          },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "value": 6,
-        },
-      },
-      "obj": IndexedGet {
-        "closingSquare": Object {
-          "isReserved": false,
-          "kind": "RightSquare",
-          "literal": undefined,
-          "location": Object {
-            "end": Object {
+      "indexes": [
+        Literal {
+          "_location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
-              "column": -9,
-              "line": -9,
-            },
-          },
-          "text": "]",
-        },
-        "index": Literal {
-          "_location": Object {
-            "end": Object {
-              "column": -9,
-              "line": -9,
-            },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
           },
           "value": Int32 {
             "kind": 4,
-            "value": 0,
+            "value": 6,
           },
         },
-        "obj": IndexedGet {
-          "closingSquare": Object {
-            "isReserved": false,
-            "kind": "RightSquare",
-            "literal": undefined,
-            "location": Object {
-              "end": Object {
-                "column": -9,
-                "line": -9,
-              },
-              "start": Object {
-                "column": -9,
-                "line": -9,
-              },
+      ],
+      "obj": IndexedGet {
+        "closingSquare": {
+          "isReserved": false,
+          "kind": "RightSquare",
+          "literal": undefined,
+          "location": {
+            "end": {
+              "column": -9,
+              "line": -9,
             },
-            "text": "]",
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
           },
-          "index": Literal {
-            "_location": Object {
-              "end": Object {
+          "text": "]",
+        },
+        "indexes": [
+          Literal {
+            "_location": {
+              "end": {
                 "column": -9,
                 "line": -9,
               },
-              "start": Object {
+              "start": {
                 "column": -9,
                 "line": -9,
               },
             },
             "value": Int32 {
               "kind": 4,
-              "value": 2,
+              "value": 0,
             },
           },
-          "obj": Variable {
-            "name": Object {
-              "isReserved": false,
-              "kind": "Identifier",
-              "literal": undefined,
-              "location": Object {
-                "end": Object {
+        ],
+        "obj": IndexedGet {
+          "closingSquare": {
+            "isReserved": false,
+            "kind": "RightSquare",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "]",
+          },
+          "indexes": [
+            Literal {
+              "_location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
+              "value": Int32 {
+                "kind": 4,
+                "value": 2,
+              },
+            },
+          ],
+          "obj": Variable {
+            "name": {
+              "isReserved": false,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -162,35 +168,35 @@ Array [
 `;
 
 exports[`parser indexing multi-level dotted 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -199,16 +205,16 @@ Array [
       },
     },
     "value": DottedGet {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -216,16 +222,16 @@ Array [
         "text": "bar",
       },
       "obj": Variable {
-        "name": Object {
+        "name": {
           "isReserved": false,
           "kind": "Identifier",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -239,35 +245,35 @@ Array [
 `;
 
 exports[`parser indexing multi-level mixed 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -276,16 +282,16 @@ Array [
       },
     },
     "value": DottedGet {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -293,49 +299,51 @@ Array [
         "text": "baz",
       },
       "obj": IndexedGet {
-        "closingSquare": Object {
+        "closingSquare": {
           "isReserved": false,
           "kind": "RightSquare",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
           },
           "text": "]",
         },
-        "index": Literal {
-          "_location": Object {
-            "end": Object {
-              "column": -9,
-              "line": -9,
-            },
-            "start": Object {
-              "column": -9,
-              "line": -9,
-            },
-          },
-          "value": Int32 {
-            "kind": 4,
-            "value": 0,
-          },
-        },
-        "obj": DottedGet {
-          "name": Object {
-            "isReserved": false,
-            "kind": "Identifier",
-            "literal": undefined,
-            "location": Object {
-              "end": Object {
+        "indexes": [
+          Literal {
+            "_location": {
+              "end": {
                 "column": -9,
                 "line": -9,
               },
-              "start": Object {
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": Int32 {
+              "kind": 4,
+              "value": 0,
+            },
+          },
+        ],
+        "obj": DottedGet {
+          "name": {
+            "isReserved": false,
+            "kind": "Identifier",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
                 "column": -9,
                 "line": -9,
               },
@@ -343,16 +351,16 @@ Array [
             "text": "bar",
           },
           "obj": Variable {
-            "name": Object {
+            "name": {
               "isReserved": false,
               "kind": "Identifier",
               "literal": undefined,
-              "location": Object {
-                "end": Object {
+              "location": {
+                "end": {
                   "column": -9,
                   "line": -9,
                 },
-                "start": Object {
+                "start": {
                   "column": -9,
                   "line": -9,
                 },
@@ -368,35 +376,35 @@ Array [
 `;
 
 exports[`parser indexing one level bracketed 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -405,49 +413,51 @@ Array [
       },
     },
     "value": IndexedGet {
-      "closingSquare": Object {
+      "closingSquare": {
         "isReserved": false,
         "kind": "RightSquare",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "]",
       },
-      "index": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
-          },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "value": 2,
-        },
-      },
-      "obj": Variable {
-        "name": Object {
-          "isReserved": false,
-          "kind": "Identifier",
-          "literal": undefined,
-          "location": Object {
-            "end": Object {
+      "indexes": [
+        Literal {
+          "_location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "value": Int32 {
+            "kind": 4,
+            "value": 2,
+          },
+        },
+      ],
+      "obj": Variable {
+        "name": {
+          "isReserved": false,
+          "kind": "Identifier",
+          "literal": undefined,
+          "location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -461,35 +471,35 @@ Array [
 `;
 
 exports[`parser indexing one level dotted 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -498,16 +508,16 @@ Array [
       },
     },
     "value": DottedGet {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -515,16 +525,16 @@ Array [
         "text": "bar",
       },
       "obj": Variable {
-        "name": Object {
+        "name": {
           "isReserved": false,
           "kind": "Identifier",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
@@ -538,35 +548,35 @@ Array [
 `;
 
 exports[`parser indexing one level dotted and bracketed single dot 1`] = `
-Array [
+[
   Assignment {
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
       "text": "_",
     },
-    "tokens": Object {
-      "equals": Object {
+    "tokens": {
+      "equals": {
         "isReserved": false,
         "kind": "Equal",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -575,49 +585,51 @@ Array [
       },
     },
     "value": IndexedGet {
-      "closingSquare": Object {
+      "closingSquare": {
         "isReserved": false,
         "kind": "RightSquare",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "]",
       },
-      "index": Literal {
-        "_location": Object {
-          "end": Object {
-            "column": -9,
-            "line": -9,
-          },
-          "start": Object {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "value": 2,
-        },
-      },
-      "obj": Variable {
-        "name": Object {
-          "isReserved": false,
-          "kind": "Identifier",
-          "literal": undefined,
-          "location": Object {
-            "end": Object {
+      "indexes": [
+        Literal {
+          "_location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "value": Int32 {
+            "kind": 4,
+            "value": 2,
+          },
+        },
+      ],
+      "obj": Variable {
+        "name": {
+          "isReserved": false,
+          "kind": "Identifier",
+          "literal": undefined,
+          "location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "start": {
               "column": -9,
               "line": -9,
             },

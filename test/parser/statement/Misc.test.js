@@ -1,4 +1,4 @@
-const brs = require("brs");
+const brs = require("../../../bin/brs.node");
 
 describe("parser", () => {
     let parser;

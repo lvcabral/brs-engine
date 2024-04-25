@@ -181,7 +181,7 @@ export function videoFormats() {
             ["hevc", `video/mp4; codecs="hev1.2.4.L120.B0"`],
             ["vp8", `video/webm; codecs="vp8, vorbis"`],
             ["vp9", `video/mp4; codecs="vp09.00.50.08"`],
-            ["mpeg1", "vdeo/mpeg"],
+            ["mpeg1", "video/mpeg"],
             ["mpeg2", "video/mpeg2"],
         ]);
         formats.forEach((mime: string, codec: string) => {

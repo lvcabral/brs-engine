@@ -1,6 +1,6 @@
-const brs = require("brs");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
 const { roBoolean, BrsString, BrsBoolean, Callable } = brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoBoolean", () => {
     describe("equality", () => {

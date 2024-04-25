@@ -1,7 +1,7 @@
-const brs = require("brs");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
 const { RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } =
     brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
 
 describe("RoAssociativeArray", () => {
     describe("comparisons", () => {
@@ -30,9 +30,9 @@ describe("RoAssociativeArray", () => {
     array: <Component: roArray>
     associative-array: <Component: roAssociativeArray>
     boolean: true
-    string: "a string"
-    number: -1
     invalid: invalid
+    number: -1
+    string: "a string"
 }`
             );
         });

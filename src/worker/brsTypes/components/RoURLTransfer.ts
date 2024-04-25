@@ -123,7 +123,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     `warning,[getToStringSync] Error getting ${this.url}: ${e.message}`
                 );
             }
@@ -150,7 +150,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     `warning,[getToFileSync] Error getting ${this.url}: ${e.message}`
                 );
             }
@@ -206,7 +206,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 xhr.send(body);
                 this.failureReason = xhr.statusText;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     `warning,[postFromFileSync] Invalid volume: ${filePath}`
                 );
                 return BrsInvalid.Instance;
@@ -220,7 +220,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     `warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`
                 );
             }
@@ -251,7 +251,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 }
                 this.failureReason = xhr.statusText;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     `warning,[postFromFileToFileSync] Invalid volume: ${inputPath}`
                 );
                 return BrsInvalid.Instance;
@@ -265,7 +265,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     `warning,[postFromFileToFileSync] Error posting to ${this.url}: ${e.message}`
                 );
             }
@@ -322,7 +322,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     `warning,[requestHead] Error requesting from ${this.url}: ${e.message}`
                 );
             }
@@ -439,7 +439,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.port.registerCallback(this.getToStringSync.bind(this));
                 return BrsBoolean.True;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
                 return BrsBoolean.False;
@@ -462,7 +462,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.port.registerCallback(this.getToFileAsync.bind(this));
                 return BrsBoolean.True;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
                 return BrsBoolean.False;
@@ -510,7 +510,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.port.registerCallback(this.requestHead.bind(this));
                 return BrsBoolean.True;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
                 return BrsBoolean.False;
@@ -547,7 +547,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.port.registerCallback(this.postFromStringAsync.bind(this));
                 return BrsBoolean.True;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
                 return BrsBoolean.False;
@@ -584,7 +584,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.port.registerCallback(this.postFromFileAsync.bind(this));
                 return BrsBoolean.True;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
                 return BrsBoolean.False;
@@ -609,7 +609,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.port.registerCallback(this.postFromFileToFileAsync.bind(this));
                 return BrsBoolean.True;
             } else {
-                this.interpreter.stdout.write(
+                this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
                 return BrsBoolean.False;

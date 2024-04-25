@@ -1,4 +1,5 @@
-const BrsTypes = require("../../lib/brsTypes");
+const brs = require("../../bin/brs.node");
+const BrsTypes = brs.types;
 
 describe("Boolean", () => {
     test("true equals true", () => {

@@ -1,13 +1,14 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const { BrsString, BrsInvalid, Int32, RoArray, RoAssociativeArray } = brs.types;
-const { Run } = require("../../lib/stdlib");
-const { Interpreter } = require("../../lib/interpreter");
+const { Run } = brs.stdlib;
+const { Interpreter } = brs;
 const fs = require("fs");
 
 jest.mock("fs");
 
 describe("global Run function", () => {
     let interpreter;
+    brs.registerCallback(() => {}); // register a callback to avoid display errors
 
     beforeEach(() => {
         interpreter = new Interpreter();

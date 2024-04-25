@@ -1,32 +1,32 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser foreach loops allows 'next' to terminate loop 1`] = `
-Array [
+[
   ForEach {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
         "file": undefined,
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
-      "statements": Array [],
+      "statements": [],
     },
-    "item": Object {
+    "item": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -34,16 +34,16 @@ Array [
       "text": "word",
     },
     "target": Variable {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -51,49 +51,49 @@ Array [
         "text": "lipsum",
       },
     },
-    "tokens": Object {
-      "endFor": Object {
+    "tokens": {
+      "endFor": {
         "isReserved": true,
         "kind": "Next",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "next",
       },
-      "forEach": Object {
+      "forEach": {
         "isReserved": false,
         "kind": "ForEach",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "for each",
       },
-      "in": Object {
+      "in": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -106,32 +106,32 @@ Array [
 `;
 
 exports[`parser foreach loops requires a name and target 1`] = `
-Array [
+[
   ForEach {
     "body": Block {
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
         "file": undefined,
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
       },
-      "statements": Array [],
+      "statements": [],
     },
-    "item": Object {
+    "item": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": -9,
           "line": -9,
         },
-        "start": Object {
+        "start": {
           "column": -9,
           "line": -9,
         },
@@ -139,16 +139,16 @@ Array [
       "text": "word",
     },
     "target": Variable {
-      "name": Object {
+      "name": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -156,49 +156,49 @@ Array [
         "text": "lipsum",
       },
     },
-    "tokens": Object {
-      "endFor": Object {
+    "tokens": {
+      "endFor": {
         "isReserved": false,
         "kind": "EndFor",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "end for",
       },
-      "forEach": Object {
+      "forEach": {
         "isReserved": false,
         "kind": "ForEach",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": "for each",
       },
-      "in": Object {
+      "in": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },

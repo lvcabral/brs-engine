@@ -5,8 +5,9 @@ export class OutputProxy {
     /**
      * Creates a new proxy that tracks the current column of the provided stream.
      * @param outputStream the stream to proxy writes to
+     * @param post whether to post messages to the parent thread. defaults to true
      */
-    constructor(private outputStream: NodeJS.WriteStream, private message = true) {}
+    constructor(private outputStream: NodeJS.WriteStream, private post = true) {}
 
     /**
      * Writes a string's worth of data to the proxied stream and updates the current output column.
@@ -17,11 +18,11 @@ export class OutputProxy {
         const level = str.split(",")[0];
         if (["print", "error", "warning"].includes(level)) {
             content = str.slice(level.length + 1);
-            if (this.message) {
+            if (this.post) {
                 postMessage(str);
             }
         }
-        if (!this.message && content.length) {
+        if (!this.post && content.length) {
             this.outputStream.write(content);
         }
         this.position(content);

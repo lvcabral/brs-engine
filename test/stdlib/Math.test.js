@@ -1,22 +1,7 @@
-const {
-    Abs,
-    Cdbl,
-    Cint,
-    Csng,
-    Fix,
-    Int,
-    Sgn,
-    Atn,
-    Cos,
-    Sin,
-    Tan,
-    Exp,
-    Log,
-    Sqr,
-    Rnd,
-} = require("../../lib/stdlib/index");
-const { Interpreter } = require("../../lib/interpreter");
-const { Int32, Float, ValueKind } = require("../../lib/brsTypes");
+const brs = require("../../bin/brs.node");
+const { Abs, Cdbl, Cint, Csng, Fix, Int, Atn, Cos, Sin, Tan, Exp, Log, Sqr, Rnd } = brs.stdlib;
+const { Interpreter } = brs;
+const { Int32, Float, ValueKind } = brs.types;
 
 const interpreter = new Interpreter();
 

@@ -10,6 +10,24 @@ import * as crypto from "crypto";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    readonly captionsModes: string[] = ["Off", "On", "Instant replay"];
+    readonly captionsOptions: string[] = [
+        "mode",
+        "text/font",
+        "text/effect",
+        "text/size",
+        "text/color",
+        "text/opacity",
+        "background/color",
+        "background/opacity",
+        "window/color",
+        "window/opacity",
+        "track",
+        "track_composite",
+        "track_analog",
+        "muted",
+    ];
+    private captionsMode: BrsString = new BrsString("Off");
     private port?: RoMessagePort;
 
     constructor() {
@@ -46,22 +64,32 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getClockFormat,
                 this.timeSinceLastKeypress,
                 this.hasFeature,
+                this.getDrmInfo,
                 this.getDrmInfoEx,
+                this.getCaptionsMode,
+                this.setCaptionsMode,
+                this.getCaptionsOption,
                 this.canDecodeAudio,
                 this.getAudioOutputChannel,
+                this.getAudioDecodeInfo,
                 this.canDecodeVideo,
                 this.enableCodecCapChangedEvent,
                 this.IsAudioGuideEnabled,
+                this.enableAudioGuideChangedEvent,
                 this.getRandomUUID,
                 this.getConnectionInfo,
                 this.getConnectionType,
                 this.getLinkStatus,
+                this.enableLinkStatusEvent,
                 this.getInternetStatus,
                 this.enableInternetStatusEvent,
                 this.forceInternetStatusCheck,
                 this.getIPAddrs,
-                this.enableLowGeneralMemoryEvent,
+                this.getExternalIp,
                 this.getGeneralMemoryLevel,
+                this.enableLowGeneralMemoryEvent,
+                this.enableAppFocusEvent,
+                this.enableScreensaverExitedEvent,
                 this.getMessagePort,
                 this.setMessagePort,
             ],
@@ -95,7 +123,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const model = interpreter.deviceInfo.get("deviceModel");
-            const device = interpreter.deviceInfo.get("models").get(model);
+            const device = interpreter.deviceInfo?.get("models")?.get(model);
             return new BrsString(
                 device ? device[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`
             );
@@ -110,8 +138,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const device = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"));
+                ?.get("models")
+                ?.get(interpreter.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[1] : "STB");
         },
     });
@@ -238,7 +266,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.False;
+            return BrsBoolean.True;
         },
     });
 
@@ -490,8 +518,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 result.push({ name: new BrsString("width"), value: new Int32(1920) });
             }
             const device = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"));
+                ?.get("models")
+                ?.get(interpreter.deviceInfo.get("deviceModel"));
             let model = device ? device[3] : "HD";
             result.push({
                 name: new BrsString("name"),
@@ -509,8 +537,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const device = interpreter.deviceInfo
-                .get("models")
-                .get(interpreter.deviceInfo.get("deviceModel"));
+                ?.get("models")
+                ?.get(interpreter.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[2] : "opengl");
         },
     });
@@ -532,14 +560,70 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks for the DRM system used by the channel. */
+    private getDrmInfo = new Callable("getDrmInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return new RoAssociativeArray([]);
+        },
+    });
+
+    /** Checks for the DRM system used by the channel. */
     private getDrmInfoEx = new Callable("getDrmInfoEx", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            const result = new Array<AAMember>();
-            return new RoAssociativeArray(result);
+            return new RoAssociativeArray([]);
+        },
+    });
+
+    /** Determines whether global captions are turned on or off, or are in instant replay mode. */
+    private getCaptionsMode = new Callable("getCaptionsMode", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return this.captionsMode;
+        },
+    });
+
+    /** Sets the current global setting for the Caption Mode property. */
+    private setCaptionsMode = new Callable("setCaptionsMode", {
+        signature: {
+            args: [new StdlibArgument("mode", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, mode: BrsString) => {
+            if (this.captionsModes.includes(mode.value)) {
+                this.captionsMode = mode;
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Checks the current value of the specified global setting property. */
+    private getCaptionsOption = new Callable("getCaptionsOption", {
+        signature: {
+            args: [new StdlibArgument("option", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, option: BrsString) => {
+            const opt = option.value.toLowerCase();
+            if (!this.captionsOptions.includes(opt)) {
+                return new BrsString("");
+            }
+            if (opt === "mode") {
+                return this.captionsMode;
+            } else if (opt === "muted") {
+                return new BrsString("Unmuted");
+            }
+            return new BrsString("Default");
         },
     });
 
@@ -551,16 +635,21 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
+                const result = new Array<AAMember>();
                 const codecs = interpreter.deviceInfo.get("audioCodecs") as string[];
                 const codec = options.get(new BrsString("codec"));
-                const result = new Array<AAMember>();
-                if (codec instanceof BrsString && codecs.includes(codec.value.toLowerCase())) {
+                if (codec instanceof BrsString && codecs?.includes(codec.value.toLowerCase())) {
                     result.push({ name: new BrsString("result"), value: BrsBoolean.True });
                 } else {
                     result.push({ name: new BrsString("result"), value: BrsBoolean.False });
-                    result.push({ name: new BrsString("updated"), value: new BrsString("codec") });
-                    const roCodecs = new RoArray(codecs.map((c: string) => new BrsString(c)));
-                    result.push({ name: new BrsString("codec"), value: roCodecs });
+                    if (codecs) {
+                        result.push({
+                            name: new BrsString("updated"),
+                            value: new BrsString("codec"),
+                        });
+                        const roCodecs = new RoArray(codecs.map((c: string) => new BrsString(c)));
+                        result.push({ name: new BrsString("codec"), value: roCodecs });
+                    }
                 }
                 return new RoAssociativeArray(result);
             }
@@ -579,6 +668,18 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Lists each audio decoder supported by the device.*/
+    private getAudioDecodeInfo = new Callable("getAudioDecodeInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_interpreter) => {
+            // This method is deprecated in Roku
+            return new RoAssociativeArray([]);
+        },
+    });
+
     /** Checks if the device can decode and play the specified video format. */
     private canDecodeVideo = new Callable("canDecodeVideo", {
         signature: {
@@ -588,8 +689,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
                 const formats = interpreter.deviceInfo.get("videoFormats") as Map<string, string[]>;
-                const codecs = formats.get("codecs") ?? [];
-                const containers = formats.get("containers") ?? [];
+                const codecs = formats?.get("codecs") ?? [];
+                const containers = formats?.get("containers") ?? [];
                 const codec = options.get(new BrsString("codec"));
                 const container = options.get(new BrsString("container"));
                 const result = new Array<AAMember>();
@@ -630,6 +731,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
             return enable;
         },
     });
@@ -642,6 +744,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.False;
+        },
+    });
+
+    private enableAudioGuideChangedEvent = new Callable("enableAudioGuideChangedEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
+            return enable;
         },
     });
 
@@ -713,10 +826,22 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             let status = true;
-            if (typeof navigator === "object") {
+            if (typeof navigator === "object" && typeof navigator.onLine === "boolean") {
                 status = navigator.onLine;
             }
             return BrsBoolean.from(status);
+        },
+    });
+
+    /** Notifies the channel when a link status event occurs. */
+    private enableLinkStatusEvent = new Callable("enableLinkStatusEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
+            return enable;
         },
     });
 
@@ -728,7 +853,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             let status = true;
-            if (typeof navigator === "object") {
+            if (typeof navigator === "object" && typeof navigator.onLine === "boolean") {
                 status = navigator.onLine;
             }
             return BrsBoolean.from(status);
@@ -776,6 +901,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Checks the IP address assigned to the device by your internet service provider (ISP). */
+    private getExternalIp = new Callable("getExternalIp", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_interpreter) => {
+            return new BrsString("");
+        },
+    });
+
     //** Checks the general memory levels of the device. */
     private getGeneralMemoryLevel = new Callable("getGeneralMemoryLevel", {
         signature: {
@@ -792,6 +928,30 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
+            return enable;
+        },
+    });
+
+    /** Notifies the channel when a system overlay event is displayed. */
+    private enableAppFocusEvent = new Callable("enableAppFocusEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
+            return enable;
+        },
+    });
+
+    /** Notifies the channel when a screensaver exit event occurs. */
+    private enableScreensaverExitedEvent = new Callable("enableScreensaverExitedEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented

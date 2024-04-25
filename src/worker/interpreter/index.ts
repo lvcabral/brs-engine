@@ -49,7 +49,7 @@ import { toCallable } from "./BrsFunction";
 import { BlockEnd } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, dataBufferIndex } from "../common";
+import { DataType, DebugCommand, dataBufferIndex, defaultDeviceInfo } from "../common";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -60,6 +60,8 @@ export interface ExecutionOptions {
     stdout: NodeJS.WriteStream;
     /** The stderr stream that brs should use. Default: process.stderr. */
     stderr: NodeJS.WriteStream;
+    /** If enabled makes OutputProxy print output via postMessage(). Default: true */
+    post: boolean;
 }
 
 /** The default set of execution options.  */
@@ -69,6 +71,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
     stopOnCrash: false,
     stdout: process.stdout,
     stderr: process.stderr,
+    post: true,
 };
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -177,14 +180,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param options configuration for the execution
      */
-    constructor(options?: ExecutionOptions) {
+    constructor(options?: Partial<ExecutionOptions>) {
         Object.assign(this.options, options);
-        this.stdout = new OutputProxy(this.options.stdout);
-        this.stderr = new OutputProxy(this.options.stderr);
+        this.stdout = new OutputProxy(this.options.stdout, this.options.post);
+        this.stderr = new OutputProxy(this.options.stderr, this.options.post);
         this.fileSystem.set("common:", new FileSystem());
         this.fileSystem.set("pkg:", new FileSystem());
         this.fileSystem.set("tmp:", new FileSystem());
         this.fileSystem.set("cachefs:", new FileSystem());
+        Object.keys(defaultDeviceInfo).forEach((key) => {
+            if (!["registry", "fonts"].includes(key)) {
+                this.deviceInfo.set(key, defaultDeviceInfo[key]);
+            }
+        });
         Object.keys(StdLib)
             .map((name) => (StdLib as any)[name])
             .filter((func) => func instanceof Callable)
@@ -393,9 +401,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         statement.expressions.forEach((printable, index) => {
             if (isToken(printable)) {
                 switch (printable.kind) {
-                    case Lexeme.Comma:
-                        printStream += " ".repeat(16 - (this.stdout.position() % 16));
+                    case Lexeme.Comma: {
+                        const spaces = " ".repeat(16 - (this.stdout.position() % 16));
+                        printStream += spaces;
+                        this.stdout.position(spaces);
                         break;
+                    }
                     case Lexeme.Semicolon:
                         break;
                     default:
@@ -412,8 +423,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     isNumberComp(obj) && this.isPositive(obj.getValue())
                         ? " " + obj.toString()
                         : obj.toString();
-                this.stdout.position(str);
                 printStream += str;
+                this.stdout.position(str);
             }
         });
         let lastExpression = statement.expressions[statement.expressions.length - 1];
@@ -1420,7 +1431,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (
                 current instanceof RoArray ||
                 current instanceof RoByteArray ||
-                current instanceof RoList
+                current instanceof RoList ||
+                current instanceof RoXMLList
             ) {
                 try {
                     current = current.get(dimIndex);
@@ -1540,7 +1552,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 target.kind
             )}`;
             const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
-            this.stdout.write(`warning,${message}: ${location}`);
+            this.stderr.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
         }
 
@@ -1708,7 +1720,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (
                     current instanceof RoArray ||
                     current instanceof RoByteArray ||
-                    current instanceof RoList
+                    current instanceof RoList ||
+                    current instanceof RoXMLList
                 ) {
                     try {
                         current = current.get(index);
@@ -1727,7 +1740,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } else if (
                 current instanceof RoArray ||
                 current instanceof RoByteArray ||
-                current instanceof RoList
+                current instanceof RoList ||
+                current instanceof RoXMLList
             ) {
                 try {
                     current.set(index, value);
@@ -1906,7 +1920,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const line = loc.start.line;
                 btArray.unshift(
                     new RoAssociativeArray([
-                        { name: new BrsString("filename"), value: new BrsString(loc.file) },
+                        {
+                            name: new BrsString("filename"),
+                            value: new BrsString(loc?.file ?? "()"),
+                        },
                         { name: new BrsString("function"), value: new BrsString(funcSign) },
                         { name: new BrsString("line_number"), value: new Int32(line) },
                     ])

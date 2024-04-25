@@ -1,52 +1,52 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parser goto statements allows multiple goto statements on one line 1`] = `
-Array [
+[
   Function {
     "func": Function {
       "body": Block {
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": 12,
             "line": 6,
           },
           "file": "",
-          "start": Object {
+          "start": {
             "column": 22,
             "line": 2,
           },
         },
-        "statements": Array [
+        "statements": [
           Goto {
-            "tokens": Object {
-              "goto": Object {
+            "tokens": {
+              "goto": {
                 "isReserved": true,
                 "kind": "Goto",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": 20,
                     "line": 4,
                   },
                   "file": "",
-                  "start": Object {
+                  "start": {
                     "column": 16,
                     "line": 4,
                   },
                 },
                 "text": "goto",
               },
-              "label": Object {
+              "label": {
                 "isReserved": false,
                 "kind": "Identifier",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": 28,
                     "line": 4,
                   },
                   "file": "",
-                  "start": Object {
+                  "start": {
                     "column": 21,
                     "line": 4,
                   },
@@ -56,35 +56,35 @@ Array [
             },
           },
           Goto {
-            "tokens": Object {
-              "goto": Object {
+            "tokens": {
+              "goto": {
                 "isReserved": true,
                 "kind": "Goto",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": 35,
                     "line": 4,
                   },
                   "file": "",
-                  "start": Object {
+                  "start": {
                     "column": 31,
                     "line": 4,
                   },
                 },
                 "text": "goto",
               },
-              "label": Object {
+              "label": {
                 "isReserved": false,
                 "kind": "Identifier",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": 43,
                     "line": 4,
                   },
                   "file": "",
-                  "start": Object {
+                  "start": {
                     "column": 36,
                     "line": 4,
                   },
@@ -94,35 +94,35 @@ Array [
             },
           },
           Label {
-            "tokens": Object {
-              "colon": Object {
+            "tokens": {
+              "colon": {
                 "isReserved": false,
                 "kind": "Colon",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": 24,
                     "line": 5,
                   },
                   "file": "",
-                  "start": Object {
+                  "start": {
                     "column": 23,
                     "line": 5,
                   },
                 },
                 "text": ":",
               },
-              "identifier": Object {
+              "identifier": {
                 "isReserved": false,
                 "kind": "Identifier",
                 "literal": undefined,
-                "location": Object {
-                  "end": Object {
+                "location": {
+                  "end": {
                     "column": 23,
                     "line": 5,
                   },
                   "file": "",
-                  "start": Object {
+                  "start": {
                     "column": 16,
                     "line": 5,
                   },
@@ -133,54 +133,54 @@ Array [
           },
         ],
       },
-      "end": Object {
+      "end": {
         "isReserved": false,
         "kind": "EndSub",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": 19,
             "line": 6,
           },
           "file": "",
-          "start": Object {
+          "start": {
             "column": 12,
             "line": 6,
           },
         },
         "text": "end sub",
       },
-      "keyword": Object {
+      "keyword": {
         "isReserved": true,
         "kind": "Sub",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": 15,
             "line": 2,
           },
           "file": "",
-          "start": Object {
+          "start": {
             "column": 12,
             "line": 2,
           },
         },
         "text": "sub",
       },
-      "parameters": Array [],
+      "parameters": [],
       "returns": 11,
     },
-    "name": Object {
+    "name": {
       "isReserved": false,
       "kind": "Identifier",
       "literal": undefined,
-      "location": Object {
-        "end": Object {
+      "location": {
+        "end": {
           "column": 20,
           "line": 2,
         },
         "file": "",
-        "start": Object {
+        "start": {
           "column": 16,
           "line": 2,
         },
@@ -192,35 +192,35 @@ Array [
 `;
 
 exports[`parser goto statements detects labels 1`] = `
-Array [
+[
   Label {
-    "tokens": Object {
-      "colon": Object {
+    "tokens": {
+      "colon": {
         "isReserved": false,
         "kind": "Colon",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
         },
         "text": ":",
       },
-      "identifier": Object {
+      "identifier": {
         "isReserved": false,
         "kind": "Identifier",
         "literal": undefined,
-        "location": Object {
-          "end": Object {
+        "location": {
+          "end": {
             "column": -9,
             "line": -9,
           },
-          "start": Object {
+          "start": {
             "column": -9,
             "line": -9,
           },
@@ -233,37 +233,37 @@ Array [
 `;
 
 exports[`parser goto statements parses standalone statement properly 1`] = `
-Object {
-  "errors": Array [],
-  "statements": Array [
+{
+  "errors": [],
+  "statements": [
     Goto {
-      "tokens": Object {
-        "goto": Object {
+      "tokens": {
+        "goto": {
           "isReserved": true,
           "kind": "Goto",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },
           },
           "text": "goto",
         },
-        "label": Object {
+        "label": {
           "isReserved": false,
           "kind": "Identifier",
           "literal": undefined,
-          "location": Object {
-            "end": Object {
+          "location": {
+            "end": {
               "column": -9,
               "line": -9,
             },
-            "start": Object {
+            "start": {
               "column": -9,
               "line": -9,
             },

@@ -1,4 +1,4 @@
-const brs = require("brs");
+const brs = require("../../bin/brs.node");
 const preprocessor = brs.preprocessor;
 const { Lexeme } = brs.lexer;
 const { BrsBoolean } = brs.types;

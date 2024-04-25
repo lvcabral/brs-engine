@@ -1,7 +1,5 @@
-const { execute } = require("../../lib/");
 const path = require("path");
-
-const { createMockStreams, resourceFile, allArgs } = require("./E2ETests");
+const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
 describe("end to end conditional compilation", () => {
     let outputStreams;
@@ -12,44 +10,29 @@ describe("end to end conditional compilation", () => {
 
     test("conditional-compilation/conditionals.brs", async () => {
         await execute(
-            [resourceFile("conditional-compilation", "conditionals.brs")],
-            Object.assign(outputStreams, {
-                root: path.join(
-                    process.cwd(),
-                    "test",
-                    "e2e",
-                    "resources",
-                    "conditional-compilation"
-                ),
-            })
+            [
+                resourceFile("conditional-compilation", "manifest"),
+                resourceFile("conditional-compilation", "conditionals.brs"),
+            ],
+            outputStreams
         );
 
-        expect(allArgs(outputStreams.stdout.write).filter((arg) => arg !== "\n")).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "I'm ipsum!",
         ]);
     });
 
     describe("(with sterr captured)", () => {
-        test("conditional-compilation/compile-error.brs", async (done) => {
-            // make console.error empty so we don't clutter test output
-            let stderr = jest.spyOn(console, "error").mockImplementation(() => {});
-
-            try {
-                await execute(
-                    [resourceFile("conditional-compilation", "compile-error.brs")],
-                    outputStreams
-                );
-
-                stderr.mockRestore();
-                done.fail("execute() should have rejected");
-            } catch (err) {
-                expect(allArgs(stderr).filter((arg) => arg !== "\n")).toEqual([
-                    expect.stringContaining("I'm a compile-time error!"),
-                ]);
-
-                stderr.mockRestore();
-                done();
-            }
+        test("conditional-compilation/compile-error.brs", async () => {
+            await execute(
+                [
+                    resourceFile("conditional-compilation", "manifest"),
+                    resourceFile("conditional-compilation", "compile-error.brs"),
+                ],
+                outputStreams
+            ).catch((err) => {
+                expect(err.message).toEqual("I'm a compile-time error!");
+            });
         });
     });
 });

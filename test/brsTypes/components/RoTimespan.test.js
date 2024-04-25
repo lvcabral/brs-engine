@@ -1,6 +1,6 @@
-const brs = require("brs");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
 const { RoTimespan, Int32, BrsString, BrsInvalid } = brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
 const lolex = require("lolex");
 
 describe("Timespan", () => {

@@ -1,7 +1,6 @@
-const brs = require("brs");
-const { Int32, Float, BrsString, RoString, RoArray, BrsBoolean, Callable } = brs.types;
-const { Interpreter } = require("../../../lib/interpreter");
-const { describe } = require("node:test");
+const brs = require("../../../bin/brs.node");
+const { Interpreter } = brs;
+const { Int32, Float, BrsString, RoString, RoArray, RoList, BrsBoolean, Callable } = brs.types;
 
 describe("RoString", () => {
     describe("constructor", () => {
@@ -51,19 +50,15 @@ describe("RoString", () => {
                 expect(setString).toBeInstanceOf(Callable);
             });
 
-            it("overwrites its stored string", () => {
-                setString.call(interpreter, new BrsString("after"), new Int32(2));
-                expect(s.intrinsic).toEqual(new BrsString("af"));
+            it("sets a string into the object", () => {
+                setString.call(interpreter, new BrsString("hello"));
+                expect(s.intrinsic).toEqual(new BrsString("hello"));
             });
 
-            it("overwrites an empty string for zero `len`", () => {
-                setString.call(interpreter, new BrsString("after"), new Int32(0));
-                expect(s.intrinsic).toEqual(new BrsString(""));
-            });
-
-            it("overwrites an empty string for negative `len`", () => {
-                setString.call(interpreter, new BrsString("after"), new Int32(-1));
-                expect(s.intrinsic).toEqual(new BrsString(""));
+            it("overwrites string value previously set", () => {
+                setString.call(interpreter, new BrsString("hello"));
+                setString.call(interpreter, new BrsString("world"));
+                expect(s.intrinsic).toEqual(new BrsString("world"));
             });
         });
 
@@ -244,9 +239,9 @@ describe("RoString", () => {
                     expect(instr.call(interpreter, new BrsString("Fonzie"))).toEqual(new Int32(-1));
                 });
 
-                it.todo("returns 0 for empty substrings");
-                // TODO: compare to RBI
-                // () => expect(instr.call(interpreter, new BrsString(""))).toEqual(new Int32(-1));
+                it("returns 0 for empty substrings", () => {
+                    expect(instr.call(interpreter, new BrsString(""))).toEqual(new Int32(0));
+                });
             });
 
             describe("with start_index", () => {
@@ -262,9 +257,16 @@ describe("RoString", () => {
                     );
                 });
 
-                it.todo("returns start_index for empty substrings");
-                // TODO: compare to RBI
-                // () => expect(instr.call(interpreter, new BrsString(""))).toEqual(new Int32(-1));
+                it("returns start_index (when positive) for empty substrings", () => {
+                    expect(instr.call(interpreter, new Int32(111), new BrsString(""))).toEqual(
+                        new Int32(111)
+                    );
+                });
+                it("returns 0 (when star_index is negative) for empty substrings", () => {
+                    expect(instr.call(interpreter, new Int32(-1), new BrsString(""))).toEqual(
+                        new Int32(0)
+                    );
+                });
             });
         });
 
@@ -452,6 +454,31 @@ describe("RoString", () => {
                     new BrsString("d"),
                     new BrsString("g🐶"),
                 ]);
+            });
+        });
+
+        describe("seString", () => {
+            let s, setString;
+
+            beforeEach(() => {
+                s = new RoString(new BrsString("before"));
+                setString = s.getMethod("setString");
+                expect(setString).toBeInstanceOf(Callable);
+            });
+
+            it("overwrites its stored string", () => {
+                setString.call(interpreter, new BrsString("after"), new Int32(2));
+                expect(s.intrinsic).toEqual(new BrsString("af"));
+            });
+
+            it("overwrites an empty string for zero `len`", () => {
+                setString.call(interpreter, new BrsString("after"), new Int32(0));
+                expect(s.intrinsic).toEqual(new BrsString(""));
+            });
+
+            it("overwrites an empty string for negative `len`", () => {
+                setString.call(interpreter, new BrsString("after"), new Int32(-1));
+                expect(s.intrinsic).toEqual(new BrsString(""));
             });
         });
 

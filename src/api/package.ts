@@ -10,7 +10,7 @@ import { bufferToBase64, parseCSV, SubscribeCallback, context } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
-import { defaultDeviceInfo, audioExt, videoExt } from "../worker/common";
+import { defaultDeviceInfo, audioExt, videoExt, parseManifest } from "../worker/common";
 import models from "../worker/common/models.csv";
 import packageInfo from "../../package.json";
 
@@ -201,41 +201,6 @@ function processManifest(content: string) {
         }
     }
     notifyAll("loaded", currentApp);
-}
-
-function parseManifest(contents: string) {
-    let keyValuePairs = contents
-        // for each line
-        .split("\n")
-        // remove leading/trailing whitespace
-        .map((line) => line.trim())
-        // separate keys and values
-        .map((line, index) => {
-            // skip empty lines and comments
-            if (line === "" || line.startsWith("#")) {
-                return ["", ""];
-            }
-
-            let equals = line.indexOf("=");
-            if (equals === -1) {
-                const pos = `${index + 1},0-${line.length}`;
-                notifyAll(
-                    "warning",
-                    `manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`
-                );
-            }
-            return [line.slice(0, equals), line.slice(equals + 1)];
-        })
-        // keep only non-empty keys and values
-        .filter(([key, value]) => key && value)
-        // remove leading/trailing whitespace from keys and values
-        .map(([key, value]) => [key.trim(), value.trim()])
-        // convert value to boolean, integer, or leave as string
-        .map(([key, value]): [string, string] => {
-            return [key, value];
-        });
-
-    return new Map<string, string>(keyValuePairs);
 }
 
 // Returns Device Serial Number based on Device Model and library version
