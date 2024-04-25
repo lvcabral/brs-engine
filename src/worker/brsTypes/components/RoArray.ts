@@ -361,11 +361,11 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             } else {
                 const caseInsensitive = flags.toString().indexOf("i") > -1;
                 const originalArrayCopy = [...this.elements];
-                this.elements = this.elements.sort((a, b) => {
+                this.elements.sort((a, b) => {
                     return sortCompare(originalArrayCopy, a, b, caseInsensitive);
                 });
                 if (flags.toString().indexOf("r") > -1) {
-                    this.elements = this.elements.reverse();
+                    this.elements.reverse();
                 }
             }
             return BrsInvalid.Instance;
@@ -389,7 +389,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 }
             } else {
                 const originalArrayCopy = [...this.elements];
-                this.elements = this.elements.sort((a, b) => {
+                this.elements.sort((a, b) => {
                     let compare = 0;
                     if (a instanceof RoAssociativeArray && b instanceof RoAssociativeArray) {
                         compare = this.aaCompare(fieldName, flags, a, b);
@@ -399,7 +399,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                     return compare;
                 });
                 if (flags.toString().indexOf("r") > -1) {
-                    this.elements = this.elements.reverse();
+                    this.elements.reverse();
                 }
             }
             return BrsInvalid.Instance;
@@ -412,7 +412,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, separator: BrsString) => {
-            this.elements = this.elements.reverse();
+            this.elements.reverse();
             return BrsInvalid.Instance;
         },
     });

@@ -262,13 +262,13 @@ export function getFonts(fontPath: string, fontFamily: string) {
  */
 
 export function executeFile(payload: any, customOptions?: Partial<ExecutionOptions>): RunResult {
-    const options = Object.assign(
-        {
+    const options = {
+        ...{
             entryPoint: payload.entryPoint ?? true,
             stopOnCrash: payload.stopOnCrash ?? false,
         },
-        customOptions
-    );
+        ...customOptions,
+    };
     const interpreter = new Interpreter(options);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);

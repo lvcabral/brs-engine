@@ -401,11 +401,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         statement.expressions.forEach((printable, index) => {
             if (isToken(printable)) {
                 switch (printable.kind) {
-                    case Lexeme.Comma:
+                    case Lexeme.Comma: {
                         const spaces = " ".repeat(16 - (this.stdout.position() % 16));
                         printStream += spaces;
                         this.stdout.position(spaces);
                         break;
+                    }
                     case Lexeme.Semicolon:
                         break;
                     default:
