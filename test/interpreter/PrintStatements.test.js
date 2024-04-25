@@ -56,9 +56,9 @@ describe("interpreter print statements", () => {
         expect(allArgs(stdout.write).join("")).toEqual("foobarbaz\r\n");
     });
 
-    it.skip("aligns values to 16-character tab stops", () => {
+    it("aligns values to 16-character tab stops", () => {
         const ast = new Stmt.Print(tokens, [
-            new Expr.Literal(new BrsString("foo")),
+            new Expr.Literal(new BrsString("foosball")),
             token(Lexeme.Comma, ","),
             new Expr.Literal(new BrsString("barbara")),
             token(Lexeme.Comma, ","),
@@ -68,9 +68,9 @@ describe("interpreter print statements", () => {
         const [result] = interpreter.exec([ast]);
         expect(result).toEqual(BrsInvalid.Instance);
         expect(allArgs(stdout.write).join("")).toEqual(
-            //   0   0   0   1   1   2   2   2   3
-            //   0   4   8   2   6   0   4   8   2
-            "foo             barbara         baz\r\n"
+        //   0   0   0   1   1   2   2   2   3
+        //   0   4   8   2   6   0   4   8   2
+            "foosball        barbara         baz\r\n"
         );
     });
 

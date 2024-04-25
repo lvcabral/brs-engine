@@ -402,7 +402,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma:
-                        printStream += " ".repeat(16 - (this.stdout.position() % 16));
+                        const spaces = " ".repeat(16 - (this.stdout.position() % 16));
+                        printStream += spaces;
+                        this.stdout.position(spaces);
                         break;
                     case Lexeme.Semicolon:
                         break;
@@ -420,8 +422,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     isNumberComp(obj) && this.isPositive(obj.getValue())
                         ? " " + obj.toString()
                         : obj.toString();
-                this.stdout.position(str);
                 printStream += str;
+                this.stdout.position(str);
             }
         });
         let lastExpression = statement.expressions[statement.expressions.length - 1];

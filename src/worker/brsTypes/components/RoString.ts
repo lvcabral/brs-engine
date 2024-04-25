@@ -248,6 +248,9 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 returns: ValueKind.Int32,
             },
             impl: (_, startIndex: Int32, substring: BrsString) => {
+                if (substring.value === "") {
+                    return new Int32(startIndex.getValue() < 0 ? 0 : startIndex.getValue());
+                }
                 return new Int32(
                     this.intrinsic.value.indexOf(substring.value, startIndex.getValue())
                 );

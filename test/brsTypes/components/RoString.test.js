@@ -239,9 +239,9 @@ describe("RoString", () => {
                     expect(instr.call(interpreter, new BrsString("Fonzie"))).toEqual(new Int32(-1));
                 });
 
-                it.todo("returns 0 for empty substrings");
-                // TODO: compare to RBI
-                // () => expect(instr.call(interpreter, new BrsString(""))).toEqual(new Int32(-1));
+                it("returns 0 for empty substrings", () => {
+                    expect(instr.call(interpreter, new BrsString(""))).toEqual(new Int32(0));
+                });
             });
 
             describe("with start_index", () => {
@@ -257,9 +257,16 @@ describe("RoString", () => {
                     );
                 });
 
-                it.todo("returns start_index for empty substrings");
-                // TODO: compare to RBI
-                // () => expect(instr.call(interpreter, new BrsString(""))).toEqual(new Int32(-1));
+                it("returns start_index (when positive) for empty substrings", () => {
+                    expect(instr.call(interpreter, new Int32(111), new BrsString(""))).toEqual(
+                        new Int32(111)
+                    );
+                });
+                it("returns 0 (when star_index is negative) for empty substrings", () => {
+                    expect(instr.call(interpreter, new Int32(-1), new BrsString(""))).toEqual(
+                        new Int32(0)
+                    );
+                });
             });
         });
 

@@ -209,20 +209,20 @@ describe("end to end syntax", () => {
         ]);
     });
 
-    test.skip("print.brs", async () => {
+    test("print.brs", async () => {
         await execute([resourceFile("print.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).join("")).toEqual(
-            "lorem 1psum\n" +
-            " 9 is equal to 9\n" +
+            "lorem  1psum\r\n" +
+            " 9 is equal to 9\r\n" +
             //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
             //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
-            "column a        column b        column c        column d\n" +
+            "column a        column b        column c        column d\r\n" +
             //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
             //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
-            "   I started at col 3    I started at col 25\n" +
-            "0123 4\n" +
-            "lorem    ipsum    dolor    sit    amet\n" +
+            "   I started at col 3    I started at col 25\r\n" +
+            "0123 4\r\n" +
+            "lorem    ipsum    dolor    sit    amet\r\n" +
             "no newline"
         );
     });
