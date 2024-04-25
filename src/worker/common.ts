@@ -24,7 +24,7 @@ export interface DeviceInfo {
     displayMode: string;
     defaultFont: string;
     fontPath: string;
-    fonts?: Map<string, string>;
+    fonts?: Map<string, any>;
     maxSimulStreams: number;
     customFeatures: string[];
     connectionType: string;
@@ -33,6 +33,8 @@ export interface DeviceInfo {
     audioVolume: number;
     maxFps: number;
     registry?: Map<string, string>;
+    audioCodecs?: string[];
+    videoFormats?: Map<string, string[]>;
 }
 
 export const defaultDeviceInfo: DeviceInfo = {

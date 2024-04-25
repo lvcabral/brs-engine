@@ -3,7 +3,12 @@ const stream = require("stream");
 const brs = require("../../bin/brs.node");
 const { createPayload, executeFile } = brs;
 
-brs.registerCallback(() => { }); // register a callback to avoid display errors
+brs.registerCallback(() => {}); // register a callback to avoid display errors
+
+const deviceData = {
+    audioCodecs: audioCodecs(),
+    videoFormats: videoFormats(),
+};
 
 /** Returns the path to a file in `resources/`. */
 exports.resourceFile = function (...filenameParts) {
@@ -39,6 +44,19 @@ exports.createMockStreams = function () {
 
 /** Executes the specified BrightScript files, capturing their output in the provided streams. */
 exports.execute = async function (filenames, options) {
-    const payload = createPayload(filenames);
+    const payload = createPayload(filenames, deviceData);
     executeFile(payload, options);
+};
+
+function audioCodecs() {
+    return ["mp3", "mpeg", "ogg", "oga", "wav", "aac", "m4a", "flac"];
+}
+
+function videoFormats() {
+    const codecs = ["mpeg1", "mpeg2", "mpeg4 avc", "vp9"];
+    const containers = ["mp4", "m4v", "mov", "mkv", "hls"];
+    return new Map([
+        ["codecs", codecs],
+        ["containers", containers],
+    ]);
 }

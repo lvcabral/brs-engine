@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
-import { dataBufferIndex, dataBufferSize, defaultDeviceInfo, parseManifest } from "./common";
+import { DeviceInfo, dataBufferIndex, dataBufferSize, defaultDeviceInfo, parseManifest } from "./common";
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -160,7 +160,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  *
  * @returns object with the payload to run the app.
  */
-export function createPayload(files: any[], deviceData?: any) {
+export function createPayload(files: any[], customDeviceData?: Partial <DeviceInfo>) {
     const paths: Object[] = [];
     const source: string[] = [];
     const texts: string[] = [];
@@ -195,10 +195,11 @@ export function createPayload(files: any[], deviceData?: any) {
         }
     });
     if (id > 0) {
-        if (deviceData === undefined) {
-            deviceData = defaultDeviceInfo;
+        let deviceData = defaultDeviceInfo;
+        if (customDeviceData !== undefined) {
+            deviceData = Object.assign(deviceData, customDeviceData);
         }
-        if (deviceData.fonts.size === 0) {
+        if (!deviceData.fonts || deviceData.fonts.size === 0) {
             deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
         }
         if (manifest === undefined) {
@@ -343,7 +344,7 @@ function setupInputArray(input: any): AAMember[] {
  * @param interpreter the Interpreter instance to update
  *
  */
-function setupDeviceData(device: any, interpreter: Interpreter) {
+function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
     Object.keys(device).forEach((key) => {
         if (key !== "registry" && key !== "fonts") {
             interpreter.deviceInfo.set(key, device[key]);
@@ -367,7 +368,7 @@ function setupDeviceData(device: any, interpreter: Interpreter) {
  * @param interpreter the Interpreter instance to update
  *
  */
-function setupDeviceFonts(device: any, interpreter: Interpreter) {
+function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
     let fontFamily = device.defaultFont ?? "Asap";
     let fontPath = device.fontPath ?? "../fonts/";
 

@@ -1,6 +1,15 @@
+// Mock the resolvedOptions method of Intl.DateTimeFormat
+global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
+    return {
+        resolvedOptions: () => {
+            return {
+                timeZone: "America/Fortaleza",
+            };
+        },
+    };
+});
 const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 const lolex = require("lolex");
-const path = require("path");
 
 describe("end to end brightscript functions", () => {
     let outputStreams;
@@ -30,7 +39,7 @@ describe("end to end brightscript functions", () => {
     test("components/roArray.brs", async () => {
         await execute([resourceFile("components", "roArray.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "array length:  4",
             "last element: sit",
             "first element: lorem",
@@ -53,7 +62,7 @@ describe("end to end brightscript functions", () => {
     test("components/roAssociativeArray.brs", async () => {
         await execute([resourceFile("components", "roAssociativeArray.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "AA size:  3",
             "AA keys size:  3",
             "AA items size:  3",
@@ -79,7 +88,7 @@ describe("end to end brightscript functions", () => {
     test("components/ifEnum.brs", async () => {
         await execute([resourceFile("components", "ifEnum.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "testing roArray ifEnum",
             "isNext Not Empty:true",
             "isEmpty:true",
@@ -138,7 +147,7 @@ describe("end to end brightscript functions", () => {
     test("components/roByteArray.brs", async () => {
         await execute([resourceFile("components", "roByteArray.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "true",
             "true",
             "true",
@@ -202,7 +211,7 @@ describe("end to end brightscript functions", () => {
     test("components/roDateTime.brs", async () => {
         await execute([resourceFile("components", "roDateTime.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Full Date: Friday November 12, 2010",
             "No Week Day: November 12, 2010",
             "Short Date: 11/12/10",
@@ -223,7 +232,7 @@ describe("end to end brightscript functions", () => {
     test("components/roTimespan.brs", async () => {
         await execute([resourceFile("components", "roTimespan.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "can return seconds from date until now:  373447701",
             "can return seconds from date until now:  373447701",
             "can return seconds from date until now:  373447649",
@@ -239,7 +248,7 @@ describe("end to end brightscript functions", () => {
     test("components/roRegex.brs", async () => {
         await execute([resourceFile("components", "roRegex.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "HeLlO_123_WoRlD is match of hello_[0-9]*_world: true",
             "goodbye_123_WoRlD isn't match of hello_[0-9]*_world: true",
             "Replacing ',' in 2019,03,26 by '-' on first occurrence: 2019-03,26",
@@ -263,7 +272,7 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roString.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stderr.write)).toEqual([]);
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "hello",
             "bar",
             "bar",
@@ -288,7 +297,7 @@ describe("end to end brightscript functions", () => {
 
     test.skip("components/roXMLElement.brs", () => {
         return execute([resourceFile("components", "roXMLElement.brs")], outputStreams).then(() => {
-            expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+            expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
                 "xmlParser = <Component: roXMLElement>",
                 "type(xmlParser) = roXMLElement",
                 "parse bad xml string, result = false",
@@ -296,10 +305,10 @@ describe("end to end brightscript functions", () => {
                 "getName() = tag1",
                 "getAttributes() = <Component: roAssociativeArray> =",
                 `<Component: roAssociativeArray> =\n` +
-                `{\n` +
-                `    attr1: "0"\n` +
-                `    id: "someId"\n` +
-                `}`,
+                    `{\n` +
+                    `    attr1: "0"\n` +
+                    `    id: "someId"\n` +
+                    `}`,
                 `getNamedElementsCi("child1") count =  2`,
                 "name of first child  = Child1",
                 "mame of second child = CHILD1",
@@ -311,7 +320,7 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roIntrinsics.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stderr.write)).toEqual([]);
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Boolean object A true",
             "Boolean object B false",
             "Comparing true = false should be false false",
@@ -333,7 +342,7 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roInvalid.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stderr.write)).toEqual([]);
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "roInvalid",
             "<Component: roInvalid>",
             "invalid",
@@ -344,7 +353,7 @@ describe("end to end brightscript functions", () => {
     test("components/roPath.brs", async () => {
         await execute([resourceFile("components", "roPath.brs")], outputStreams);
         expect(allArgs(outputStreams.stderr.write)).toEqual([]);
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "appMain",
             ".brs",
             "appMain.brs",
@@ -382,74 +391,71 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
-    test.skip("components/roDeviceInfo.brs", async () => {
+    test("components/roDeviceInfo.brs", async () => {
         process.env.TZ = "PST";
         process.env.LOCALE = "en_US";
 
         await execute([resourceFile("components", "roDeviceInfo.brs")], outputStreams);
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
-            "",
-            "",
-            "",
-            " 0",
-            "",
-            " 0",
-            "",
-            "",
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "8000X",
+            "Roku (8000X)",
+            "STB",
+            " 2",
+            "BrightScript Engine Library",
+            " 4",
+            "BSC.00E04193A",
+            "f51ac698-bc60-4409-aae3-8fc3abc025c4",
             "true",
-            "",
+            "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
             " 36",
-            "PST",
+            "America/Fortaleza",
             "false",
             "en_US",
-            "en_US",
-            "en_US",
-            "fr_CA",
-            "fr_CA",
-            "fr_CA",
-            "",
+            "US",
+            "US",
+            "eng",
             " 0",
             " 0",
             " 0",
             "true",
-            "on",
-            "default",
-            "",
+            "On",
+            "Default",
+            "12h",
             "true",
             "true",
             "true",
-            "",
+            "normal",
             "false",
             "true",
             "true",
+            "WiredConnection",
             "",
-            "",
-            " 0",
-            " 0",
-            "",
-            "",
-            "",
-            " 0",
-            "",
-            " 0",
+            " 1",
+            " 3",
+            "HDTV",
+            "720p",
+            "16x9",
+            " 2",
+            "720p",
+            " 7",
+            " 3",
+            "true",
+            "invalid",
+            " 3",
+            "opengl",
+            "true",
+            "Stereo",
             " 0",
             "true",
-            "mpeg4 avc",
-            " 0",
-            "",
-            "true",
-            "",
-            " 0",
-            "true",
-            " 0",
-            "",
+            " 40",
+            "false",
             "true",
         ]);
     });
 
     test("components/roAppInfo.brs", async () => {
         await execute([resourceFile("components", "roAppInfo.brs")], outputStreams);
-        expect(allArgs(outputStreams.stdout.write).map(arg => arg.trimEnd())).toEqual([
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "dev",
             "true",
             "0.0.1",

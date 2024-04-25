@@ -134,7 +134,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("isRIDADisabled");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(BrsBoolean.False);
+                expect(method.call(interpreter)).toEqual(BrsBoolean.True);
             });
         });
         describe("getChannelClientId", () => {
@@ -228,8 +228,7 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("getDrmInfo", () => {
-            it.todo("Implement getDrmInfo method");
-            it.skip("should return fake drm info", () => {
+            it("should return fake drm info", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("getDrmInfo");
 
@@ -257,36 +256,51 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("getCaptionsMode", () => {
-            it.todo("Implement getCaptionsMode method");
-            it.skip("should fake captions mode setting to on", () => {
+            it("should fake captions mode setting to On", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("getCaptionsMode");
                 let setCapMethod = deviceInfo.getMethod("setCaptionsMode");
 
-                setCapMethod.call(interpreter, new BrsString("on"));
+                setCapMethod.call(interpreter, new BrsString("On"));
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("on"));
+                expect(method.call(interpreter)).toEqual(new BrsString("On"));
             });
         });
         describe("setCaptionsMode", () => {
-            it.todo("Implement setCaptionsMode() method");
-            it.skip("should set fake captions mode to true", () => {
+            it("should set a valid caption mode and return true", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("setCaptionsMode");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("on"))).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, new BrsString("Instant replay"))).toEqual(BrsBoolean.True);
+            });
+        });
+        describe("setCaptionsMode", () => {
+            it("should set an invalid caption mode and return false", () => {
+                let deviceInfo = new RoDeviceInfo();
+                let method = deviceInfo.getMethod("setCaptionsMode");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter, new BrsString(""))).toEqual(BrsBoolean.False);
             });
         });
         describe("getCaptionsOption", () => {
-            it.todo("Implement getCaptionsOption() method");
-            it.skip("should return a model number", () => {
+            it("should return 'Default' for any Captions Option", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("getCaptionsOption");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("on"))).toEqual(new BrsString("on"));
+                expect(method.call(interpreter, new BrsString("text/color"))).toEqual(new BrsString("Default"));
+            });
+        });
+        describe("getCaptionsOption", () => {
+            it("should return empty string for any invalid Captions Option", () => {
+                let deviceInfo = new RoDeviceInfo();
+                let method = deviceInfo.getMethod("getCaptionsOption");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter, new BrsString("foobar"))).toEqual(new BrsString(""));
             });
         });
         describe("getClockFormat", () => {
@@ -299,8 +313,7 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableAppFocusEvent", () => {
-            it.todo("Implement enableAppFocusEvent() method");
-            it.skip("should notify that event nofiication has been enabled", () => {
+            it("should notify that event notification has been enabled", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableAppFocusEvent");
 
@@ -309,8 +322,7 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableScreensaverExitedEvent", () => {
-            it.todo("Implement the method enableScreensaverExitedEvent()");
-            it.skip("should enable screensaver exited event", () => {
+            it("should enable screensaver exited event", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableScreensaverExitedEvent");
 
@@ -355,8 +367,7 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableLinkStatusEvent", () => {
-            it.todo("Implement the method enableLinkStatusEvent()");
-            it.skip("should return a model number", () => {
+            it("should return true to confirm the Link Status", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableLinkStatusEvent");
 
@@ -374,8 +385,7 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("getExternalIp", () => {
-            it.todo("Implement the method getExternalIp()");
-            it.skip("should return a fake external ip address", () => {
+            it("should return a fake external ip address", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("getExternalIp");
 
@@ -565,8 +575,7 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableAudioGuideChangedEvent", () => {
-            it.todo("implement this method");
-            it.skip("should return true when enabling audio guide change event", () => {
+            it("should return true when enabling audio guide change event", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableAudioGuideChangedEvent");
 
