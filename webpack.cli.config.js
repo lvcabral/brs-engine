@@ -57,7 +57,8 @@ module.exports = (env) => {
                 new ShebangPlugin(),
             ],
             externals: {
-                canvas: "commonjs canvas" // Important (2)
+                "./brs.node.js": "commonjs ./brs.node.js",
+                canvas: "commonjs canvas"
             },
             output: {
                 filename: libName + ".cli.js",
