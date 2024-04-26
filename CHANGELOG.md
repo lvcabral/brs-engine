@@ -1,12 +1,29 @@
 # Changelog
 
+<a name="v1.5.5"></a>
+
+## [v1.5.5 - Several fixes and Unit Tests enabled](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.5) - 26 Apr 2024
+
+### Release Changes
+
+* Implemented `pos()` and `tab()` for `print` statement by [@lvcabral](https://github.com/lvcabral) in [#339](https://github.com/lvcabral/brs-engine/pull/339)
+* Fixed Callable signature check by [@lvcabral](https://github.com/lvcabral) in [#340](https://github.com/lvcabral/brs-engine/pull/340)
+* Fixed conversion functions to Integer: `Int()`, `CInt()` and `Fix()` by [@lvcabral](https://github.com/lvcabral) in [#342](https://github.com/lvcabral/brs-engine/pull/342)
+* Refactored `worker` and `cli` libraries to support `run` function by [@lvcabral](https://github.com/lvcabral) in [#344](https://github.com/lvcabral/brs-engine/pull/344)
+* Updated CLI app to load the engine as an external library by [@lvcabral](https://github.com/lvcabral) in [#350](https://github.com/lvcabral/brs-engine/pull/350)
+* Fixed CLI font loading by [@lvcabral](https://github.com/lvcabral) in [#345](https://github.com/lvcabral/brs-engine/pull/345)
+* Fixed Unit Tests and several issues by [@lvcabral](https://github.com/lvcabral) in [#348](https://github.com/lvcabral/brs-engine/pull/348)
+* Fixed Video seek causing a stack overflow crash by [@lvcabral](https://github.com/lvcabral) in [#349](https://github.com/lvcabral/brs-engine/pull/349)
+
+[Full Changelog][v1.5.5]
+
 <a name="v1.5.4"></a>
 
 ## [v1.5.4 - Continue For/While statements](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.4) - 14 Apr 2024
 
 ### Release Changes
 
-* Implemented support for multi-dimensional indexes of `roArray` and `roList` by[@lvcabral](https://github.com/lvcabral) in [#331](https://github.com/lvcabral/brs-engine/pull/331)
+* Implemented support for multi-dimensional indexes of `roArray` and `roList` by [@lvcabral](https://github.com/lvcabral) in [#331](https://github.com/lvcabral/brs-engine/pull/331)
 * Implemented `Continue For` and `Continue While` statements by [@lvcabral](https://github.com/lvcabral) in [#332](https://github.com/lvcabral/brs-engine/pull/332)
 * Fixed CLI: REPL was not showing any error messages.
 
@@ -704,6 +721,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.5]: https://github.com/lvcabral/brs-engine/compare/v1.5.4...v1.5.5
 [v1.5.4]: https://github.com/lvcabral/brs-engine/compare/v1.5.3...v1.5.4
 [v1.5.3]: https://github.com/lvcabral/brs-engine/compare/v1.5.2...v1.5.3
 [v1.5.2]: https://github.com/lvcabral/brs-engine/compare/v1.5.1...v1.5.2s
