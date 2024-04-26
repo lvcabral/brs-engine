@@ -24,16 +24,10 @@ import {
     getSerialNumber,
 } from "../api/package";
 import { isNumber } from "../api/util";
-import {
-    registerCallback,
-    getInterpreter,
-    getFonts,
-    executeLine,
-    executeFile,
-    createPayload,
-} from "../worker";
 import { debugPrompt, dataBufferIndex, dataBufferSize } from "../worker/common";
 import packageInfo from "../../package.json";
+// @ts-ignore
+import * as brs from './brs.node.js';
 
 // Constants
 const program = new Command();
@@ -93,14 +87,14 @@ program
             deviceData.deviceModel = "4400X";
             deviceData.customFeatures.push("ascii_rendering");
             deviceData.fontPath = "../app/fonts";
-            deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
+            deviceData.fonts = brs.getFonts(deviceData.fontPath, deviceData.defaultFont);
             deviceData.localIps = getLocalIps();
             if (program.registry) {
                 deviceData.registry = getRegistry();
             }
         }
         subscribePackage("cli", packageCallback);
-        registerCallback(messageCallback, sharedBuffer);
+        brs.registerCallback(messageCallback, sharedBuffer);
         if (brsFiles.length > 0) {
             try {
                 // Run App Zip file
@@ -119,7 +113,7 @@ program
                     return;
                 }
                 // Run BrightScript files
-                const payload = createPayload(brsFiles);
+                const payload = brs.createPayload(brsFiles);
                 runApp(payload);
             } catch (err: any) {
                 if (err.messages?.length) {
@@ -177,7 +171,7 @@ function runApp(payload: any) {
         brsWorker.postMessage(sharedBuffer);
         return;
     }
-    const pkg = executeFile(payload);
+    const pkg = brs.executeFile(payload);
     if (program.ecp) {
         brsWorker?.terminate();
     }
@@ -265,7 +259,7 @@ function getRegistry(): Map<string, string> {
  * **NOTE:** Currently limited to single-line inputs :(
  */
 function repl() {
-    const replInterpreter = getInterpreter({ device: deviceData });
+    const replInterpreter = brs.getInterpreter({ device: deviceData });
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -285,7 +279,7 @@ function repl() {
             );
             process.stdout.write("\n");
         } else {
-            executeLine(line, replInterpreter);
+            brs.executeLine(line, replInterpreter);
         }
         rl.prompt();
     });
