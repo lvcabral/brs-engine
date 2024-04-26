@@ -31,7 +31,7 @@ describe("end to end conditional compilation", () => {
                 ],
                 outputStreams
             ).catch((err) => {
-                expect(err.message).toEqual("I'm a compile-time error!");
+                expect(err.message.trimEnd()).toEqual("I'm a compile-time error!");
             });
         });
     });
