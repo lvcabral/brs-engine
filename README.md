@@ -1,6 +1,6 @@
 # BrightScript Simulation Engine
 
-An intepreter for the BrightScript language that runs Roku apps on modern browser platforms.
+An intepreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
 [![NPM Version](https://badge.fury.io/js/brs-engine.svg?style=flat)](https://npmjs.org/package/brs-engine)
@@ -11,9 +11,11 @@ An intepreter for the BrightScript language that runs Roku apps on modern browse
 
 ## The Project
 
-This respository was created as a fork from [**brs**](https://github.com/rokucommunity/brs), a _command line interpreter_ for **BrightScript** language, with the objective of implementing a Roku simulator, an important tool that was missing for the **Roku** development community.
+The **BrightScript Simulation Engine** implements an interpreter for the **BrightScript** language, that can be embedded in Web, Electron and Node.js applications, allowing [Roku apps](https://developer.roku.com/overview) to be executed in several different non-Roku platforms.
 
 Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, but it was extended to include simulation of the **Roku** file system, registry, remote control and the Micro Debugger.
+
+This repository was originally a fork from [**brs**](https://github.com/rokucommunity/brs), a **BrightScript** _command line interpreter_.
 
 **Important Notes:**
 
@@ -28,9 +30,10 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 
 | Library File | Description |
 | --- | --- |
-| `app/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be imported and used by the client applications hosting the Simulator.|
+| `app/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be imported and used by the Web applications hosting the Simulator.|
 | `app/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform.|
 |`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application that can be used from the terminal: <br/>- As a language shell - [REPL (read-eval-print loop)](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop)<br/>- Executing `brs`, `zip` or `bpk` files<br/>- Packaging `zip` files into encrypted `bpk` packages.|
+|`bin/brs.node.js`| A NodeJS library, similar to `brs.worker.js` that exposes the language parser and interpreter to be used by Node.js applications, the engine CLI and automated tests.|
 |`bin/brs.ecp.js`| A **[NodeJS Worker](https://nodejs.org/api/worker_threads.html)** library, used by the CLI to launch the ECP and SSDP services.|
 
 The Web Worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
