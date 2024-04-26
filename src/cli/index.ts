@@ -113,7 +113,7 @@ program
                     return;
                 }
                 // Run BrightScript files
-                const payload = brs.createPayload(brsFiles);
+                const payload = brs.createPayload(brsFiles, deviceData);
                 runApp(payload);
             } catch (err: any) {
                 if (err.messages?.length) {
