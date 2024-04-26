@@ -27,7 +27,7 @@ import { isNumber } from "../api/util";
 import { debugPrompt, dataBufferIndex, dataBufferSize } from "../worker/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
-import * as brs from './brs.node.js';
+import * as brs from "./brs.node.js";
 
 // Constants
 const program = new Command();
