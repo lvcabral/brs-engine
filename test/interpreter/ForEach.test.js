@@ -61,7 +61,7 @@ describe("interpreter for-each loops", () => {
         expect(receivedElements).toEqual(arrayMembers);
     });
 
-    it("doesn't exceute the body for empty arrays", () => {
+    it("doesn't execute the body for empty arrays", () => {
         const emptyBlock = new Stmt.Block([]);
         const emptyBlockSpy = jest.spyOn(emptyBlock, "accept");
 
@@ -143,5 +143,33 @@ describe("interpreter for-each loops", () => {
         interpreter.exec(statements);
 
         expect(blockSpy).toHaveBeenCalledTimes(1);
+    });
+    it("iterates across all elements of an array skipping `exit for` with `continue for`", () => {
+        const block = new Stmt.Block([
+            new Stmt.ContinueFor({ continueFor: token(Lexeme.ContinueFor, "continue for") }),
+            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
+        ]);
+        const blockSpy = jest.spyOn(block, "accept");
+
+        const statements = [
+            new Stmt.Assignment(
+                { equals: token(Lexeme.Equals, "=") },
+                identifier("array"),
+                filledArray
+            ),
+            new Stmt.ForEach(
+                {
+                    forEach: token(Lexeme.ForEach, "for each"),
+                    in: identifier("in"),
+                    endFor: token(Lexeme.EndFor, "end for"),
+                },
+                identifier("element"),
+                new Expr.Variable(identifier("array")),
+                block
+            ),
+        ];
+        interpreter.exec(statements);
+
+        expect(blockSpy).toHaveBeenCalledTimes(3);
     });
 });

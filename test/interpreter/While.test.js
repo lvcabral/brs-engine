@@ -106,5 +106,30 @@ describe("interpreter while loops", () => {
         interpreter.exec(statements);
         expect(decrementSpy).toHaveBeenCalledTimes(1);
     });
-    it.todo("add continue while tests");
+    it("prevent exit early using 'continue while' skipping 'exit while'", () => {
+        const statements = [
+            initializeFoo,
+            new Stmt.While(
+                {
+                    while: token(Lexeme.While, "while"),
+                    endWhile: token(Lexeme.EndWhile, "end while"),
+                },
+                new Expr.Binary(
+                    new Expr.Variable(identifier("foo")),
+                    token(Lexeme.Greater, ">"),
+                    new Expr.Literal(new Int32(0))
+                ),
+                new Stmt.Block([
+                    decrementFoo,
+                    new Stmt.ContinueWhile({
+                        continueWhile: token(Lexeme.ContinueWhile, "continue while"),
+                    }),
+                    new Stmt.ExitWhile({ exitWhile: token(Lexeme.ExitWhile, "exit while") }),
+                ])
+            ),
+        ];
+
+        interpreter.exec(statements);
+        expect(decrementSpy).toHaveBeenCalledTimes(5);
+    });
 });
