@@ -106,6 +106,7 @@ describe("interpreter while loops", () => {
         interpreter.exec(statements);
         expect(decrementSpy).toHaveBeenCalledTimes(1);
     });
+
     it("prevent exit early using 'continue while' skipping 'exit while'", () => {
         const statements = [
             initializeFoo,
