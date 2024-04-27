@@ -121,7 +121,9 @@ describe("interpreter while loops", () => {
                 ),
                 new Stmt.Block([
                     decrementFoo,
-                    new Stmt.ContinueWhile({ continueWhile: token(Lexeme.ContinueWhile, "continue while") }),
+                    new Stmt.ContinueWhile({
+                        continueWhile: token(Lexeme.ContinueWhile, "continue while"),
+                    }),
                     new Stmt.ExitWhile({ exitWhile: token(Lexeme.ExitWhile, "exit while") }),
                 ])
             ),
