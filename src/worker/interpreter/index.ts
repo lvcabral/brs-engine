@@ -1148,12 +1148,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         throw new Stmt.ExitForReason(statement.location);
     }
 
-    visitContinueWhile(expression: Stmt.ContinueWhile): never {
-        throw new Stmt.ContinueWhileReason(expression.location);
+    visitContinueWhile(statement: Stmt.ContinueWhile): never {
+        throw new Stmt.ContinueWhileReason(statement.location);
     }
 
-    visitExitWhile(expression: Stmt.ExitWhile): never {
-        throw new Stmt.ExitWhileReason(expression.location);
+    visitExitWhile(statement: Stmt.ExitWhile): never {
+        throw new Stmt.ExitWhileReason(statement.location);
     }
 
     visitCall(expression: Expr.Call) {
@@ -1760,52 +1760,52 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitIncrement(expression: Stmt.Increment) {
-        let target = this.evaluate(expression.value);
+    visitIncrement(statement: Stmt.Increment) {
+        let target = this.evaluate(statement.value);
         if (isBoxedNumber(target)) {
             target = target.unbox();
         }
 
         if (!isBrsNumber(target)) {
-            let operation = expression.token.kind === Lexeme.PlusPlus ? "increment" : "decrement";
+            let operation = statement.token.kind === Lexeme.PlusPlus ? "increment" : "decrement";
             this.addError(
                 new TypeMismatch({
                     message: `Attempting to ${operation} value of non-numeric type`,
                     left: {
                         type: target,
-                        location: expression.location,
+                        location: statement.location,
                     },
                 })
             );
         }
 
         let result: BrsNumber;
-        if (expression.token.kind === Lexeme.PlusPlus) {
+        if (statement.token.kind === Lexeme.PlusPlus) {
             result = target.add(new Int32(1));
         } else {
             result = target.subtract(new Int32(1));
         }
 
-        if (expression.value instanceof Expr.Variable) {
+        if (statement.value instanceof Expr.Variable) {
             // store the result of the operation
-            this.environment.define(Scope.Function, expression.value.name.text, result);
-        } else if (expression.value instanceof Expr.DottedGet) {
+            this.environment.define(Scope.Function, statement.value.name.text, result);
+        } else if (statement.value instanceof Expr.DottedGet) {
             // immediately execute a dotted "set" statement
             this.execute(
                 new Stmt.DottedSet(
-                    expression.value.obj,
-                    expression.value.name,
-                    new Expr.Literal(result, expression.location)
+                    statement.value.obj,
+                    statement.value.name,
+                    new Expr.Literal(result, statement.location)
                 )
             );
-        } else if (expression.value instanceof Expr.IndexedGet) {
+        } else if (statement.value instanceof Expr.IndexedGet) {
             // immediately execute an indexed "set" statement
             this.execute(
                 new Stmt.IndexedSet(
-                    expression.value.obj,
-                    expression.value.indexes,
-                    new Expr.Literal(result, expression.location),
-                    expression.value.closingSquare
+                    statement.value.obj,
+                    statement.value.indexes,
+                    new Expr.Literal(result, statement.location),
+                    statement.value.closingSquare
                 )
             );
         }

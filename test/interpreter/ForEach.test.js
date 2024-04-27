@@ -144,6 +144,7 @@ describe("interpreter for-each loops", () => {
 
         expect(blockSpy).toHaveBeenCalledTimes(1);
     });
+
     it("iterates across all elements of an array skipping `exit for` with `continue for`", () => {
         const block = new Stmt.Block([
             new Stmt.ContinueFor({ continueFor: token(Lexeme.ContinueFor, "continue for") }),
