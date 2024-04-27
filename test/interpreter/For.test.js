@@ -108,7 +108,7 @@ describe("interpreter for loops", () => {
         ];
 
         interpreter.exec(statements);
-        // i=0 through i=4, then when i=5 (final value)
+        // i=0 through i=5, then when i=6 (final value)
         expect(bodySpy).toHaveBeenCalledTimes(6);
     });
 
@@ -156,5 +156,29 @@ describe("interpreter for loops", () => {
         interpreter.exec(statements);
         expect(bodySpy).toHaveBeenCalledTimes(1);
     });
-    it.todo("add continue for tests");
+    it("executes block skipping 'exit for' with 'continue for'", () => {
+        const body = new Stmt.Block([
+            new Stmt.ContinueFor({ continueFor: token(Lexeme.ContinueFor, "continue for") }),
+            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
+        ]);
+        const bodySpy = jest.spyOn(body, "accept");
+
+        const statements = [
+            new Stmt.For(
+                {
+                    for: token(Lexeme.For, "for"),
+                    to: token(Lexeme.To, "to"),
+                    endFor: token(Lexeme.EndFor, "end for"),
+                },
+                initializeCounter,
+                new Expr.Literal(new Int32(5)),
+                new Expr.Literal(new Int32(1)),
+                body
+            ),
+        ];
+
+        interpreter.exec(statements);
+        // i=0 through i=4, then when i=5 (final value)
+        expect(bodySpy).toHaveBeenCalledTimes(6);
+    });
 });
