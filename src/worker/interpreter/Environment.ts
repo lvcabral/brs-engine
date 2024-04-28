@@ -18,7 +18,8 @@ export class NotFound extends Error {
     }
 }
 
-export interface BackTrace {
+/** The definition of a trace point to be added to the stack trace */
+export interface TracePoint {
     functionName: string;
     functionLoc: Location;
     callLoc: Location;
@@ -54,7 +55,7 @@ export class Environment {
     private rootM: RoAssociativeArray;
 
     /** Context properties to support the Debugger */
-    private backTrace = new Array<BackTrace>();
+    private stackTrace = new Array<TracePoint>();
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -113,19 +114,19 @@ export class Environment {
     }
 
     /**
-     * Add a Back Trace to the environment
+     * Add a trace point to the environment stack
      * @param name The name of the function
      * @param functionLoc The location of the function
      * @param callLoc The location of the call
      * @param signature The signature of the function
      */
-    public addBackTrace(
+    public addToStack(
         name: string,
         functionLoc: Location,
         callLoc: Location,
         signature: Signature
     ) {
-        this.backTrace.push({
+        this.stackTrace.push({
             functionName: name,
             functionLoc: functionLoc,
             callLoc: callLoc,
@@ -134,11 +135,11 @@ export class Environment {
     }
 
     /**
-     * Retrieves the back trace of the environment
-     * @returns the array containing the current back trace
+     * Retrieves the stack trace of the environment
+     * @returns the array containing the current stack trace
      */
-    public getBackTrace() {
-        return this.backTrace;
+    public getStackTrace() {
+        return this.stackTrace;
     }
 
     /**

@@ -285,8 +285,8 @@ describe("end to end syntax", () => {
             " 6502",
             "[in_catch] e = subFunc custom error message!",
             "[backtrace] =  8",
-            "[backtrace] =  23",
-            "[backtrace] =  34",
+            "[backtrace] =  22",
+            "[backtrace] =  33",
             "[post_try] a =  10",
         ]);
     });

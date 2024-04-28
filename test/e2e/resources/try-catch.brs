@@ -7,7 +7,6 @@ sub main()
         print "[in_try] a = " a
 		subFunc(a)
     catch e
-        ' currently unimplemented
         print "[in_catch] e = " e.message
 		for each bt in e.backtrace
 			print "[backtrace] = " bt.line_number

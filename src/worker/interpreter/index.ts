@@ -44,7 +44,7 @@ import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
 
-import { Scope, Environment, NotFound, BackTrace } from "./Environment";
+import { Scope, Environment, NotFound, TracePoint } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
@@ -218,10 +218,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
-        let btArray = originalEnvironment.getBackTrace();
-        btArray.forEach((bt) => {
-            newEnv.addBackTrace(bt.functionName, bt.functionLoc, bt.callLoc, bt.signature);
-        });
+        newEnv.getStackTrace().push(...originalEnvironment.getStackTrace());
         try {
             this._environment = newEnv;
             return func(this);
@@ -311,8 +308,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value ?? BrsInvalid.Instance];
             } else if (err instanceof BrsError) {
-                const backtrace = this.formatBacktrace(err.location, true, err.backtrace);
-                throw new Error(`${err.format()}\nBackTrace:\n${backtrace}`);
+                const backTrace = this.formatBacktrace(err.location, true, err.backTrace);
+                throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`);
             } else {
                 throw err;
             }
@@ -1036,7 +1033,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (!(err instanceof BrsError)) {
                 throw err;
             }
-            const btArray = this.formatBacktrace(err.location, false, err.backtrace) as RoArray;
+            const btArray = this.formatBacktrace(err.location, false, err.backTrace) as RoArray;
             let errCode = RuntimeErrorCode.Internal;
             let errMessage = err.message;
             if (err instanceof RuntimeError) {
@@ -1104,7 +1101,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             errCode.message,
             statement.location,
             extraFields,
-            this.environment.getBackTrace()
+            this.environment.getStackTrace()
         );
         // Validation Functions
         function validateErrorNumber(element: BrsType, errCode: ErrorCode): ErrorCode {
@@ -1209,7 +1206,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (funcLoc) {
                         let callLoc = expression.callee.location;
                         let sign = callee.signatures[0].signature;
-                        subInterpreter.environment.addBackTrace(
+                        subInterpreter.environment.addToStack(
                             functionName,
                             funcLoc,
                             callLoc,
@@ -1900,8 +1897,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param bt the backtrace array
      * @returns a string or an array with the backtrace formatted
      */
-    formatBacktrace(loc: Location, asString = true, bt?: BackTrace[]): RoArray | string {
-        const backTrace = bt ?? this.environment.getBackTrace();
+    formatBacktrace(loc: Location, asString = true, bt?: TracePoint[]): RoArray | string {
+        const backTrace = bt ?? this.environment.getStackTrace();
         let debugMsg = "";
         const btArray: BrsType[] = [];
         for (let index = backTrace.length - 1; index >= 0; index--) {
@@ -2039,8 +2036,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param err the ParseError to emit then throw
      */
     public addError(err: BrsError): never {
-        if (!err.backtrace) {
-            err.backtrace = this.environment.getBackTrace();
+        if (!err.backTrace) {
+            err.backTrace = this.environment.getStackTrace();
         }
         this.errors.push(err);
         this.events.emit("err", err);
