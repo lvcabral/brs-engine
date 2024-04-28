@@ -1,5 +1,5 @@
 import { BrsType } from "./brsTypes";
-import { TracePoint } from "./interpreter/Environment";
+import type { TracePoint } from "./interpreter";
 import type { Location } from "./lexer";
 
 export class BrsError extends Error {

@@ -31,6 +31,7 @@ import {
     RoXMLElement,
     RoXMLList,
     RoFunction,
+    Signature,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/coercion";
 import { shared } from "..";
@@ -44,7 +45,7 @@ import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
 
-import { Scope, Environment, NotFound, TracePoint } from "./Environment";
+import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
@@ -74,9 +75,18 @@ export const defaultExecutionOptions: ExecutionOptions = {
     post: true,
 };
 
+/** The definition of a trace point to be added to the stack trace */
+export interface TracePoint {
+    functionName: string;
+    functionLoc: Location;
+    callLoc: Location;
+    signature: Signature;
+}
+
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _sourceMap = new Map<string, string>();
+    private _stack = new Array<TracePoint>();
     private _startTime = Date.now();
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
@@ -111,6 +121,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get sourceMap() {
         return this._sourceMap;
+    }
+
+    get stack() {
+        return this._stack;
     }
 
     get startTime() {
@@ -218,7 +232,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
-        newEnv.getStackTrace().push(...originalEnvironment.getStackTrace());
         try {
             this._environment = newEnv;
             return func(this);
@@ -230,6 +243,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             throw err;
         } finally {
             this._environment = originalEnvironment;
+            this._stack.pop();
         }
     }
 
@@ -1101,7 +1115,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             errCode.message,
             statement.location,
             extraFields,
-            this.environment.getStackTrace()
+            this._stack.slice()
         );
         // Validation Functions
         function validateErrorNumber(element: BrsType, errCode: ErrorCode): ErrorCode {
@@ -1206,12 +1220,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (funcLoc) {
                         let callLoc = expression.callee.location;
                         let sign = callee.signatures[0].signature;
-                        subInterpreter.environment.addToStack(
-                            functionName,
-                            funcLoc,
-                            callLoc,
-                            sign
-                        );
+                        this._stack.push({
+                            functionName: functionName,
+                            functionLoc: funcLoc,
+                            callLoc: callLoc,
+                            signature: sign,
+                        });
                     }
                     try {
                         return callee.call(this, ...args);
@@ -1898,7 +1912,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @returns a string or an array with the backtrace formatted
      */
     formatBacktrace(loc: Location, asString = true, bt?: TracePoint[]): RoArray | string {
-        const backTrace = bt ?? this.environment.getStackTrace();
+        const backTrace = bt ?? this._stack;
         let debugMsg = "";
         const btArray: BrsType[] = [];
         for (let index = backTrace.length - 1; index >= 0; index--) {
@@ -2037,7 +2051,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     public addError(err: BrsError): never {
         if (!err.backTrace) {
-            err.backTrace = this.environment.getStackTrace();
+            err.backTrace = this._stack.slice();
         }
         this.errors.push(err);
         this.events.emit("err", err);

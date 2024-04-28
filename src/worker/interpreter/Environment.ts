@@ -18,14 +18,6 @@ export class NotFound extends Error {
     }
 }
 
-/** The definition of a trace point to be added to the stack trace */
-export interface TracePoint {
-    functionName: string;
-    functionLoc: Location;
-    callLoc: Location;
-    signature: Signature;
-}
-
 /** Holds a set of values in multiple scopes and provides access operations to them. */
 export class Environment {
     constructor(rootM?: RoAssociativeArray) {
@@ -53,9 +45,6 @@ export class Environment {
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer = new RoAssociativeArray([]);
     private rootM: RoAssociativeArray;
-
-    /** Context properties to support the Debugger */
-    private stackTrace = new Array<TracePoint>();
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -111,35 +100,6 @@ export class Environment {
      */
     public setRootM(newMPointer: RoAssociativeArray): void {
         this.rootM = newMPointer;
-    }
-
-    /**
-     * Add a trace point to the environment stack
-     * @param name The name of the function
-     * @param functionLoc The location of the function
-     * @param callLoc The location of the call
-     * @param signature The signature of the function
-     */
-    public addToStack(
-        name: string,
-        functionLoc: Location,
-        callLoc: Location,
-        signature: Signature
-    ) {
-        this.stackTrace.push({
-            functionName: name,
-            functionLoc: functionLoc,
-            callLoc: callLoc,
-            signature: signature,
-        });
-    }
-
-    /**
-     * Retrieves the stack trace of the environment
-     * @returns the array containing the current stack trace
-     */
-    public getStackTrace() {
-        return this.stackTrace;
     }
 
     /**

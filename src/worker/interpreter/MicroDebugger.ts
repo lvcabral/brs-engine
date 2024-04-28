@@ -1,5 +1,4 @@
-import { Interpreter } from ".";
-import { TracePoint } from "./Environment";
+import { Interpreter, TracePoint } from ".";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { BrsError } from "../Error";
@@ -176,8 +175,7 @@ function debugHandleCommand(
     lastLoc: Location,
     cmd: number
 ) {
-    const env = interpreter.environment;
-    const backTrace = env.getStackTrace();
+    const backTrace = interpreter.stack;
     const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
     const currLines = parseTextFile(interpreter.sourceMap.get(currLoc.file));
     let lastLine: number = lastLoc.start.line;
