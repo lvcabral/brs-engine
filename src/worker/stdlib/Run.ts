@@ -40,7 +40,7 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
     try {
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
         const sandbox = new Interpreter(interpreter.options);
-        const sourceMap = brs.setupPayload(sandbox, brs.createPayload(pathsToFiles));
+        const sourceMap = brs.setupPayload(sandbox, brs.createPayload(pathsToFiles)).sourceMap;
         const parseResult = brs.lexParseSync(sourceMap, sandbox.manifest);
         const result = sandbox.exec(parseResult.statements, sourceMap, ...args);
         return result[0] || BrsInvalid.Instance;
