@@ -604,7 +604,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ) {
                     return left.leftShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
-                    this.addError(
+                    return this.addError(
                         new RuntimeError(
                             RuntimeErrorCode.BadBitShift,
                             "",
@@ -612,7 +612,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     );
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "<<" can't be applied to`,
                             left: {
@@ -636,7 +636,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ) {
                     return left.rightShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
-                    this.addError(
+                    return this.addError(
                         new RuntimeError(
                             RuntimeErrorCode.BadBitShift,
                             "",
@@ -644,7 +644,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     );
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator ">>" can't be applied to`,
                             left: {
@@ -663,7 +663,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.subtract(right);
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "-" can't be applied to`,
                             left: {
@@ -682,7 +682,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.multiply(right);
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "*" can't be applied to`,
                             left: {
@@ -700,7 +700,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.pow(right);
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "^" can't be applied to`,
                             left: {
@@ -719,7 +719,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.divide(right);
                 }
-                this.addError(
+                return this.addError(
                     new TypeMismatch({
                         message: `Operator "/" can't be applied to`,
                         left: {
@@ -736,7 +736,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.modulo(right);
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "mod" can't be applied to`,
                             left: {
@@ -755,7 +755,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(left) && isBrsNumber(right)) {
                     return left.intDivide(right);
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "\\" can't be applied to`,
                             left: {
@@ -776,7 +776,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else if (isStringComp(left) && isStringComp(right)) {
                     return left.concat(right);
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "+" can't be applied to`,
                             left: {
@@ -798,7 +798,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.greaterThan(right);
                 }
 
-                this.addError(
+                return this.addError(
                     new TypeMismatch({
                         message: `Operator ">" can't be applied to`,
                         left: {
@@ -820,7 +820,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.greaterThan(right).or(left.equalTo(right));
                 }
 
-                this.addError(
+                return this.addError(
                     new TypeMismatch({
                         message: `Operator ">=" can't be applied to`,
                         left: {
@@ -842,7 +842,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.lessThan(right);
                 }
 
-                this.addError(
+                return this.addError(
                     new TypeMismatch({
                         message: `Operator "<" can't be applied to`,
                         left: {
@@ -863,7 +863,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.lessThan(right).or(left.equalTo(right));
                 }
 
-                this.addError(
+                return this.addError(
                     new TypeMismatch({
                         message: `Operator "<=" can't be applied to`,
                         left: {
@@ -881,7 +881,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.equalTo(right);
                 }
 
-                this.addError(
+                return this.addError(
                     new TypeMismatch({
                         message: `Operator "=" can't be applied to`,
                         left: {
@@ -899,7 +899,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.equalTo(right).not();
                 }
 
-                this.addError(
+                return this.addError(
                     new TypeMismatch({
                         message: `Operator "<>" can't be applied to`,
                         left: {
@@ -922,7 +922,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         return (left as BrsBoolean).and(right);
                     }
 
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "and" can't be applied to`,
                             left: {
@@ -942,7 +942,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         return left.and(right);
                     }
 
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "and" can't be applied to`,
                             left: {
@@ -956,7 +956,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         })
                     );
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "and" can't be applied to`,
                             left: {
@@ -979,7 +979,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (isBrsBoolean(right) || isBrsNumber(right)) {
                         return (left as BrsBoolean).or(right);
                     } else {
-                        this.addError(
+                        return this.addError(
                             new TypeMismatch({
                                 message: `Operator "or" can't be applied to`,
                                 left: {
@@ -999,7 +999,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         return left.or(right);
                     }
 
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "or" can't be applied to`,
                             left: {
@@ -1013,7 +1013,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         })
                     );
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "or" can't be applied to`,
                             left: {
@@ -1843,7 +1843,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isBrsNumber(right)) {
                     return right.multiply(new Int32(-1));
                 } else {
-                    this.addError(
+                    return this.addError(
                         new TypeMismatch({
                             message: `Operator "-" can't be applied to`,
                             left: {
