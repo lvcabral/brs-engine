@@ -110,7 +110,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getVersion");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("BSC.00E04193A"));
+                expect(method.call(interpreter)).toEqual(new BrsString("BSC.50E04330A"));
             });
         });
         describe("getRIDA", () => {
