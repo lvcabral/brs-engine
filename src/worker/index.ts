@@ -277,9 +277,9 @@ export function executeFile(payload: any, customOptions?: Partial<ExecutionOptio
         result = runBinary(interpreter, sourceResult, input, password);
     } else {
         result = runSource(interpreter, sourceResult.sourceMap, input, password);
-        if (!result?.cipherText) {
-            postMessage(`end,${result.endReason}`);
-        }
+    }
+    if (!result.cipherText) {
+        postMessage(`end,${result.endReason}`);
     }
     return result;
 }
