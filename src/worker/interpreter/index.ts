@@ -38,7 +38,7 @@ import { shared } from "..";
 import { Lexeme } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
-import { BrsError, RuntimeError, RuntimeErrorCode, findErrorCode, ErrorCode } from "../Error";
+import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
@@ -315,7 +315,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 // Generate an exception when Entry Point is required
                 throw new RuntimeError(
                     {
-                        errno: RuntimeErrorCode.MissingMainFunction.errno,
+                        errno: RuntimeErrorDetail.MissingMainFunction.errno,
                         message:
                             "No entry point found! You must define a function Main() or RunUserInterface()",
                     },
@@ -526,7 +526,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             let val = this.evaluate(expr);
             if (val.kind !== ValueKind.Int32 && val.kind !== ValueKind.Float) {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.NonNumericArrayIndex, expr.location)
+                    new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, expr.location)
                 );
             }
             // dim takes max-index, so +1 to get the actual array size
@@ -608,7 +608,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.leftShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
                     return this.addError(
-                        new RuntimeError(RuntimeErrorCode.BadBitShift, expression.right.location)
+                        new RuntimeError(RuntimeErrorDetail.BadBitShift, expression.right.location)
                     );
                 } else {
                     return this.addError(
@@ -636,7 +636,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.rightShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
                     return this.addError(
-                        new RuntimeError(RuntimeErrorCode.BadBitShift, expression.right.location)
+                        new RuntimeError(RuntimeErrorDetail.BadBitShift, expression.right.location)
                     );
                 } else {
                     return this.addError(
@@ -1044,15 +1044,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 throw err;
             }
             const btArray = this.formatBacktrace(err.location, false, err.backTrace) as RoArray;
-            let errCode = RuntimeErrorCode.Internal;
+            let errDetail = RuntimeErrorDetail.Internal;
             let errMessage = err.message;
             if (err instanceof RuntimeError) {
-                errCode = err.errCode;
+                errDetail = err.errorDetail;
             }
             const errorAA = new RoAssociativeArray([
                 { name: new BrsString("backtrace"), value: btArray },
                 { name: new BrsString("message"), value: new BrsString(errMessage) },
-                { name: new BrsString("number"), value: new Int32(errCode.errno) },
+                { name: new BrsString("number"), value: new Int32(errDetail.errno) },
                 { name: new BrsString("rethrown"), value: BrsBoolean.False },
             ]);
             if (err instanceof RuntimeError && err.extraFields?.size) {
@@ -1074,65 +1074,65 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitThrow(statement: Stmt.Throw): never {
-        let errCode = RuntimeErrorCode.UserDefined;
-        errCode.message = "";
+        let errDetail = RuntimeErrorDetail.UserDefined;
+        errDetail.message = "";
         const extraFields: Map<string, BrsType> = new Map<string, BrsType>();
         let toThrow = this.evaluate(statement.value);
         if (isStringComp(toThrow)) {
-            errCode.message = toThrow.getValue();
+            errDetail.message = toThrow.getValue();
         } else if (toThrow instanceof RoAssociativeArray) {
             for (const [key, element] of toThrow.elements) {
                 if (key.toLowerCase() === "number") {
-                    errCode = validateErrorNumber(element, errCode);
+                    errDetail = validateErrorNumber(element, errDetail);
                 } else if (key.toLowerCase() === "message") {
-                    errCode = validateErrorMessage(element, errCode);
+                    errDetail = validateErrorMessage(element, errDetail);
                 } else if (key.toLowerCase() === "backtrace") {
                     if (element instanceof RoArray) {
                         extraFields.set("backtrace", element);
                         extraFields.set("rethrown", BrsBoolean.True);
                     } else {
-                        errCode = RuntimeErrorCode.MalformedThrow;
-                        errCode.message = `Thrown "backtrace" is not an object.`;
+                        errDetail = RuntimeErrorDetail.MalformedThrow;
+                        errDetail.message = `Thrown "backtrace" is not an object.`;
                     }
                 } else if (key.toLowerCase() !== "rethrown") {
                     extraFields.set(key, element);
                 }
-                if (errCode.errno === RuntimeErrorCode.MalformedThrow.errno) {
+                if (errDetail.errno === RuntimeErrorDetail.MalformedThrow.errno) {
                     extraFields.clear();
                     break;
                 }
             }
         } else {
-            errCode = RuntimeErrorCode.MalformedThrow;
-            errCode.message = `Thrown value neither string nor roAssociativeArray.`;
+            errDetail = RuntimeErrorDetail.MalformedThrow;
+            errDetail.message = `Thrown value neither string nor roAssociativeArray.`;
         }
-        throw new RuntimeError(errCode, statement.location, this._stack.slice(), extraFields);
+        throw new RuntimeError(errDetail, statement.location, this._stack.slice(), extraFields);
         // Validation Functions
-        function validateErrorNumber(element: BrsType, errCode: ErrorCode): ErrorCode {
+        function validateErrorNumber(element: BrsType, errDetail: ErrorDetail): ErrorDetail {
             if (element instanceof Int32) {
-                errCode.errno = element.getValue();
-                if (errCode.message === "") {
-                    const foundErr = findErrorCode(element.getValue());
-                    errCode.message = foundErr ? foundErr.message : "UNKNOWN ERROR";
+                errDetail.errno = element.getValue();
+                if (errDetail.message === "") {
+                    const foundErr = findErrorDetail(element.getValue());
+                    errDetail.message = foundErr ? foundErr.message : "UNKNOWN ERROR";
                 }
             } else if (!(element instanceof BrsInvalid)) {
                 return {
-                    errno: RuntimeErrorCode.MalformedThrow.errno,
+                    errno: RuntimeErrorDetail.MalformedThrow.errno,
                     message: `Thrown "number" is not an integer.`,
                 };
             }
-            return errCode;
+            return errDetail;
         }
-        function validateErrorMessage(element: BrsType, errCode: ErrorCode): ErrorCode {
+        function validateErrorMessage(element: BrsType, errDetail: ErrorDetail): ErrorDetail {
             if (element instanceof BrsString) {
-                errCode.message = element.toString();
+                errDetail.message = element.toString();
             } else if (!(element instanceof BrsInvalid)) {
                 return {
-                    errno: RuntimeErrorCode.MalformedThrow.errno,
+                    errno: RuntimeErrorDetail.MalformedThrow.errno,
                     message: `Thrown "message" is not a string.`,
                 };
             }
-            return errCode;
+            return errDetail;
         }
     }
 
@@ -1175,7 +1175,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (!isBrsCallable(callee)) {
             this.addError(
-                new RuntimeError(RuntimeErrorCode.NotAFunction, expression.closingParen.location)
+                new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location)
             );
         }
 
@@ -1220,11 +1220,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             !(err instanceof Stmt.BlockEnd)
                         ) {
                             // Enable Micro Debugger on app crash
-                            let errCode = RuntimeErrorCode.Internal.errno;
+                            let errNumber = RuntimeErrorDetail.Internal.errno;
                             if (err instanceof RuntimeError) {
-                                errCode = err.errCode.errno;
+                                errNumber = err.errorDetail.errno;
                             }
-                            runDebugger(this, this.location, this.location, err.message, errCode);
+                            runDebugger(this, this.location, this.location, err.message, errNumber);
                             this.options.stopOnCrash = false;
                         }
                         throw err;
@@ -1252,13 +1252,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (returnedValue && signatureKind === ValueKind.Void) {
                     this.addError(
-                        new RuntimeError(RuntimeErrorCode.ReturnWithValue, returnLocation)
+                        new RuntimeError(RuntimeErrorDetail.ReturnWithValue, returnLocation)
                     );
                 }
 
                 if (!returnedValue && signatureKind !== ValueKind.Void) {
                     this.addError(
-                        new RuntimeError(RuntimeErrorCode.ReturnWithoutValue, returnLocation)
+                        new RuntimeError(RuntimeErrorDetail.ReturnWithoutValue, returnLocation)
                     );
                 }
 
@@ -1335,7 +1335,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 return this._dotLevel > 0
                     ? boxedSource
                     : this.addError(
-                          new RuntimeError(RuntimeErrorCode.BadSyntax, expression.name.location)
+                          new RuntimeError(RuntimeErrorDetail.BadSyntax, expression.name.location)
                       );
             }
             let ifFilter = "";
@@ -1367,7 +1367,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else {
             this.addError(
-                new RuntimeError(RuntimeErrorCode.DotOnNonObject, expression.name.location)
+                new RuntimeError(RuntimeErrorDetail.DotOnNonObject, expression.name.location)
             );
         }
     }
@@ -1375,14 +1375,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
         let source = this.evaluate(expression.obj);
         if (!isIterable(source)) {
-            this.addError(new RuntimeError(RuntimeErrorCode.UndimmedArray, expression.location));
+            this.addError(new RuntimeError(RuntimeErrorDetail.UndimmedArray, expression.location));
         }
 
         if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
             if (expression.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(
-                        RuntimeErrorCode.WrongNumberOfParams,
+                        RuntimeErrorDetail.WrongNumberOfParams,
                         expression.closingSquare.location
                     )
                 );
@@ -1409,7 +1409,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (expression.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(
-                        RuntimeErrorCode.BadNumberOfIndexes,
+                        RuntimeErrorDetail.BadNumberOfIndexes,
                         expression.closingSquare.location
                     )
                 );
@@ -1420,7 +1420,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             let dimIndex = this.evaluate(index);
             if (!isBrsNumber(dimIndex)) {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.NonNumericArrayIndex, index.location)
+                    new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, index.location)
                 );
             }
             if (
@@ -1436,7 +1436,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, expression.location)
+                    new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, expression.location)
                 );
             }
         }
@@ -1643,7 +1643,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let source = this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
-            this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, statement.name.location));
+            this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.name.location));
         }
 
         try {
@@ -1660,14 +1660,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let source = this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
-            this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, statement.obj.location));
+            this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.obj.location));
         }
 
         if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
             if (statement.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(
-                        RuntimeErrorCode.WrongNumberOfParams,
+                        RuntimeErrorDetail.WrongNumberOfParams,
                         statement.closingSquare.location
                     )
                 );
@@ -1695,7 +1695,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (statement.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(
-                        RuntimeErrorCode.BadNumberOfIndexes,
+                        RuntimeErrorDetail.BadNumberOfIndexes,
                         statement.closingSquare.location
                     )
                 );
@@ -1708,7 +1708,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (!isBrsNumber(index)) {
                 this.addError(
                     new RuntimeError(
-                        RuntimeErrorCode.NonNumericArrayIndex,
+                        RuntimeErrorDetail.NonNumericArrayIndex,
                         statement.indexes[i].location
                     )
                 );
@@ -1728,7 +1728,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                 } else {
                     this.addError(
-                        new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, statement.location)
+                        new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, statement.location)
                     );
                 }
             } else if (
@@ -1744,7 +1744,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, statement.location)
+                    new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, statement.location)
                 );
             }
         }
