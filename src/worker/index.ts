@@ -42,8 +42,6 @@ export { Environment, Scope } from "./interpreter/Environment";
 export const shared = new Map<string, Int32Array>();
 
 const algorithm = "aes-256-ctr";
-let pcode: Buffer;
-let iv: string;
 
 /// #if BROWSER
 if (typeof onmessage !== "undefined") {
@@ -133,25 +131,20 @@ export function executeLine(contents: string, interpreter: Interpreter) {
     if (scanResults.errors.length > 0) {
         return;
     }
-
     const parseResults = parser.parse(scanResults.tokens);
     if (parseResults.errors.length > 0) {
         return;
     }
-
     if (parseResults.statements.length === 0) {
         return;
     }
-
     try {
         const results = interpreter.exec(parseResults.statements);
-        if (results) {
-            results.map((result) => {
-                if (result !== BrsTypes.BrsInvalid.Instance) {
-                    postMessage(`print,${result.toString()}`);
-                }
-            });
-        }
+        results.map((result) => {
+            if (result !== BrsTypes.BrsInvalid.Instance) {
+                postMessage(`print,${result.toString()}`);
+            }
+        });
     } catch (err: any) {
         if (!(err instanceof BrsError.BrsError)) {
             postMessage(`error,Interpreter execution error: ${err.message}`);
@@ -162,7 +155,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
 /**
  * Create the payload to run the app with the provided files.
  * @param files Code files to be executed
- * @param deviceData optional object with device info data
+ * @param customDeviceData optional object with device info data
  *
  * @returns object with the payload to run the app.
  */
@@ -234,7 +227,9 @@ export function createPayload(files: any[], customDeviceData?: Partial<DeviceInf
 
 /**
  * Get the fonts map for the device.
+ * @param fontPath a string with the font path.
  * @param fontFamily a string with the font family name.
+ *
  * @returns a Map with the fonts.
  */
 
@@ -258,7 +253,7 @@ export function getFonts(fontPath: string, fontFamily: string) {
  * @param payload with the source code and all the assets of the app.
  * @param customOptions optional object with the output streams.
  *
- * @returns void.
+ * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 
 export function executeFile(payload: any, customOptions?: Partial<ExecutionOptions>): RunResult {
@@ -273,22 +268,20 @@ export function executeFile(payload: any, customOptions?: Partial<ExecutionOptio
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
-    const sourceMap = setupPayload(interpreter, payload);
+    const sourceResult = setupPayload(interpreter, payload);
     // Run App
     const password = payload.password ?? "";
-    let endReason = "EXIT_USER_NAV";
+    let result: RunResult;
     let input = new RoAssociativeArray(inputArray);
-    if (pcode instanceof Buffer) {
-        runBinary(interpreter, input, password);
+    if (sourceResult.pcode && sourceResult.iv) {
+        result = runBinary(interpreter, sourceResult, input, password);
     } else {
-        const result = runSource(interpreter, sourceMap, input, password);
-        if (result?.cipherText) {
-            return result;
-        }
-        endReason = result.endReason;
+        result = runSource(interpreter, sourceResult.sourceMap, input, password);
     }
-    postMessage(`end,${endReason}`);
-    return { endReason: endReason };
+    if (!result.cipherText) {
+        postMessage(`end,${result.endReason}`);
+    }
+    return result;
 }
 
 /**
@@ -296,9 +289,16 @@ export function executeFile(payload: any, customOptions?: Partial<ExecutionOptio
  * @param interpreter The interpreter instance to setup
  * @param payload The payload with the source code and all the assets of the app.
  *
- * @returns a Map with the source code files content.
+ * @returns a SourceResult object with the source map or the pcode data.
  */
-export function setupPayload(interpreter: Interpreter, payload: any): Map<string, string> {
+
+interface SourceResult {
+    sourceMap: Map<string, string>;
+    pcode?: Buffer;
+    iv?: string;
+}
+
+export function setupPayload(interpreter: Interpreter, payload: any): SourceResult {
     interpreter.setManifest(payload.manifest);
     interpreter.setRegistry(payload.device.registry);
     setupDeviceData(payload.device, interpreter);
@@ -430,6 +430,7 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
  * @param brs Map with source code files data
  * @param interpreter the Interpreter instance to update
  *
+ * @returns a SourceResult object with the source map or the pcode data.
  */
 function setupPackageFiles(
     paths: any,
@@ -437,8 +438,8 @@ function setupPackageFiles(
     texts: any,
     brs: any,
     interpreter: Interpreter
-): Map<string, string> {
-    const sourceMap = new Map<string, string>();
+): SourceResult {
+    const result: SourceResult = { sourceMap: new Map<string, string>() };
     let volume = interpreter.fileSystem.get("pkg:");
     if (volume && Array.isArray(paths)) {
         for (let filePath of paths) {
@@ -454,7 +455,7 @@ function setupPackageFiles(
                 if (filePath.type === "binary" && Array.isArray(binaries)) {
                     volume.writeFileSync(`/${filePath.url}`, binaries[filePath.id]);
                 } else if (filePath.type === "pcode" && Array.isArray(binaries)) {
-                    pcode = Buffer.from(binaries[filePath.id]);
+                    result.pcode = Buffer.from(binaries[filePath.id]);
                 } else if (["audio", "video"].includes(filePath.type)) {
                     // As the media files are played on the renderer process we need to
                     // save a mock file to allow file exist checking and save the index
@@ -469,12 +470,12 @@ function setupPackageFiles(
                     volume.writeFileSync(`/${filePath.url}`, fileData);
                 } else if (filePath.type === "text" && Array.isArray(texts)) {
                     if (filePath.url === "source/var") {
-                        iv = texts[filePath.id];
+                        result.iv = texts[filePath.id];
                     } else {
                         volume.writeFileSync(`/${filePath.url}`, texts[filePath.id]);
                     }
                 } else if (filePath.type === "source" && Array.isArray(brs)) {
-                    sourceMap.set(filePath.url, brs[filePath.id]);
+                    result.sourceMap.set(filePath.url, brs[filePath.id]);
                     volume.writeFileSync(`/${filePath.url}`, brs[filePath.id]);
                 }
             } catch (err: any) {
@@ -531,7 +532,7 @@ function setupPackageFiles(
             postMessage(`error,Invalid path: ${badPath} - ${err.message}`);
         }
     }
-    return sourceMap;
+    return result;
 }
 
 /**
@@ -619,7 +620,8 @@ export function lexParseSync(
  * @param sourceMap Map with the source code files content.
  * @param input associative array with the input parameters
  * @param password string with the encryption password (optional)
- * @returns interface RunResult.
+ *
+ * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 export interface RunResult {
     endReason: string;
@@ -666,27 +668,29 @@ function runSource(
  * Runs a binary package of BrightScript code.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
+ * @param sourceResult with the pcode data and iv.
  * @param input associative array with the input parameters
  * @param password decryption password.
- * @returns an array of statement execution results, indicating why each
- *          statement exited and what its return value was, or `undefined` if
- *          `interpreter` threw an Error.
+ *
+ * @returns RunResult with the end reason.
  */
 function runBinary(
     interpreter: Interpreter,
+    sourceResult: SourceResult,
     input: RoAssociativeArray,
     password: string
 ): RunResult {
     let decodedTokens: Map<string, any>;
     // Decode Source PCode
     try {
-        if (password.length > 0) {
-            const decipher = crypto.createDecipheriv(algorithm, password, iv);
-            const inflated = unzlibSync(Buffer.concat([decipher.update(pcode), decipher.final()]));
+        if (password.length > 0 && sourceResult.pcode && sourceResult.iv) {
+            const decipher = crypto.createDecipheriv(algorithm, password, sourceResult.iv);
+            const inflated = unzlibSync(
+                Buffer.concat([decipher.update(sourceResult.pcode), decipher.final()])
+            );
             const spcode = decode(inflated) as SerializedPCode;
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
-                pcode = Buffer.from([]);
             } else {
                 return { endReason: "EXIT_INVALID_PCODE" };
             }
