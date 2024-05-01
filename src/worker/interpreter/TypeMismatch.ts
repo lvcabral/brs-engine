@@ -41,7 +41,7 @@ export class TypeMismatch extends RuntimeError {
             errMessage += ` to "${ValueKind.toString(getKind(mismatchMetadata.left.type))}"`;
         }
         errMessage += ".";
-        super(errCode, errMessage, mismatchMetadata.left.location);
+        super({ errno: errCode.errno, message: errMessage }, mismatchMetadata.left.location);
     }
 }
 
