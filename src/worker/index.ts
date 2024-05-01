@@ -271,15 +271,15 @@ export function executeFile(payload: any, customOptions?: Partial<ExecutionOptio
     const sourceResult = setupPayload(interpreter, payload);
     // Run App
     const password = payload.password ?? "";
-    let result: RunResult = { endReason: "EXIT_USER_NAV" };
+    let result: RunResult;
     let input = new RoAssociativeArray(inputArray);
     if (sourceResult.pcode && sourceResult.iv) {
         result = runBinary(interpreter, sourceResult, input, password);
     } else {
         result = runSource(interpreter, sourceResult.sourceMap, input, password);
-    }
-    if (!result?.cipherText) {
-        postMessage(`end,${result.endReason}`);
+        if (!result?.cipherText) {
+            postMessage(`end,${result.endReason}`);
+        }
     }
     return result;
 }
