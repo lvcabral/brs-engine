@@ -84,7 +84,7 @@ program
             }
         }
         if (typeof deviceData === "object") {
-            deviceData.deviceModel = "4400X";
+            deviceData.deviceModel = "3930X";
             deviceData.customFeatures.push("ascii_rendering");
             deviceData.fontPath = "../app/fonts";
             deviceData.fonts = brs.getFonts(deviceData.fontPath, deviceData.defaultFont);
