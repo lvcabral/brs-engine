@@ -234,8 +234,8 @@ function debugList(backTrace: TracePoint[], currLines: string[], flagLine: numbe
     let list = "";
     if (backTrace.length > 0) {
         const func = backTrace[backTrace.length - 1];
-        const start = func.functionLoc.start.line;
-        const end = Math.min(func.functionLoc.end.line, currLines.length);
+        const start = func.functionLocation.start.line;
+        const end = Math.min(func.functionLocation.end.line, currLines.length);
         for (let index = start; index <= end; index++) {
             const flag = index === flagLine ? "*" : " ";
             const line = currLines[index - 1].trimEnd();

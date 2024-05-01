@@ -78,8 +78,8 @@ export const defaultExecutionOptions: ExecutionOptions = {
 /** The definition of a trace point to be added to the stack trace */
 export interface TracePoint {
     functionName: string;
-    functionLoc: Location;
-    callLoc: Location;
+    functionLocation: Location;
+    callLocation: Location;
     signature: Signature;
 }
 
@@ -314,8 +314,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } else if (this.options.entryPoint) {
                 // Generate an exception when Entry Point is required
                 throw new RuntimeError(
-                    RuntimeErrorCode.MissingMainFunction,
-                    "No entry point found! You must define a function Main() or RunUserInterface()",
+                    {
+                        errno: RuntimeErrorCode.MissingMainFunction.errno,
+                        message:
+                            "No entry point found! You must define a function Main() or RunUserInterface()",
+                    },
                     mainVariable.location
                 );
             }
@@ -523,7 +526,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             let val = this.evaluate(expr);
             if (val.kind !== ValueKind.Int32 && val.kind !== ValueKind.Float) {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.NonNumericArrayIndex, "", expr.location)
+                    new RuntimeError(RuntimeErrorCode.NonNumericArrayIndex, expr.location)
                 );
             }
             // dim takes max-index, so +1 to get the actual array size
@@ -605,11 +608,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.leftShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
                     return this.addError(
-                        new RuntimeError(
-                            RuntimeErrorCode.BadBitShift,
-                            "",
-                            expression.right.location
-                        )
+                        new RuntimeError(RuntimeErrorCode.BadBitShift, expression.right.location)
                     );
                 } else {
                     return this.addError(
@@ -637,11 +636,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return left.rightShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
                     return this.addError(
-                        new RuntimeError(
-                            RuntimeErrorCode.BadBitShift,
-                            "",
-                            expression.right.location
-                        )
+                        new RuntimeError(RuntimeErrorCode.BadBitShift, expression.right.location)
                     );
                 } else {
                     return this.addError(
@@ -1111,13 +1106,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             errCode = RuntimeErrorCode.MalformedThrow;
             errCode.message = `Thrown value neither string nor roAssociativeArray.`;
         }
-        throw new RuntimeError(
-            errCode,
-            errCode.message,
-            statement.location,
-            extraFields,
-            this._stack.slice()
-        );
+        throw new RuntimeError(errCode, statement.location, this._stack.slice(), extraFields);
         // Validation Functions
         function validateErrorNumber(element: BrsType, errCode: ErrorCode): ErrorCode {
             if (element instanceof Int32) {
@@ -1186,11 +1175,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (!isBrsCallable(callee)) {
             this.addError(
-                new RuntimeError(
-                    RuntimeErrorCode.NotAFunction,
-                    "",
-                    expression.closingParen.location
-                )
+                new RuntimeError(RuntimeErrorCode.NotAFunction, expression.closingParen.location)
             );
         }
 
@@ -1219,8 +1204,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     subInterpreter.environment.setM(mPointer);
                     this._stack.push({
                         functionName: functionName,
-                        functionLoc: callee.getLocation() ?? this.location,
-                        callLoc: expression.callee.location,
+                        functionLocation: callee.getLocation() ?? this.location,
+                        callLocation: expression.callee.location,
                         signature: signature,
                     });
                     try {
@@ -1267,13 +1252,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 if (returnedValue && signatureKind === ValueKind.Void) {
                     this.addError(
-                        new RuntimeError(RuntimeErrorCode.ReturnWithValue, "", returnLocation)
+                        new RuntimeError(RuntimeErrorCode.ReturnWithValue, returnLocation)
                     );
                 }
 
                 if (!returnedValue && signatureKind !== ValueKind.Void) {
                     this.addError(
-                        new RuntimeError(RuntimeErrorCode.ReturnWithoutValue, "", returnLocation)
+                        new RuntimeError(RuntimeErrorCode.ReturnWithoutValue, returnLocation)
                     );
                 }
 
@@ -1350,7 +1335,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 return this._dotLevel > 0
                     ? boxedSource
                     : this.addError(
-                          new RuntimeError(RuntimeErrorCode.BadSyntax, "", expression.name.location)
+                          new RuntimeError(RuntimeErrorCode.BadSyntax, expression.name.location)
                       );
             }
             let ifFilter = "";
@@ -1382,7 +1367,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else {
             this.addError(
-                new RuntimeError(RuntimeErrorCode.DotOnNonObject, "", expression.name.location)
+                new RuntimeError(RuntimeErrorCode.DotOnNonObject, expression.name.location)
             );
         }
     }
@@ -1390,9 +1375,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
         let source = this.evaluate(expression.obj);
         if (!isIterable(source)) {
-            this.addError(
-                new RuntimeError(RuntimeErrorCode.UndimmedArray, "", expression.location)
-            );
+            this.addError(new RuntimeError(RuntimeErrorCode.UndimmedArray, expression.location));
         }
 
         if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
@@ -1400,7 +1383,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this.addError(
                     new RuntimeError(
                         RuntimeErrorCode.WrongNumberOfParams,
-                        "",
                         expression.closingSquare.location
                     )
                 );
@@ -1428,7 +1410,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this.addError(
                     new RuntimeError(
                         RuntimeErrorCode.BadNumberOfIndexes,
-                        "",
                         expression.closingSquare.location
                     )
                 );
@@ -1439,7 +1420,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             let dimIndex = this.evaluate(index);
             if (!isBrsNumber(dimIndex)) {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.NonNumericArrayIndex, "", index.location)
+                    new RuntimeError(RuntimeErrorCode.NonNumericArrayIndex, index.location)
                 );
             }
             if (
@@ -1455,7 +1436,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, "", expression.location)
+                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, expression.location)
                 );
             }
         }
@@ -1662,7 +1643,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let source = this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
-            this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, "", statement.name.location));
+            this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, statement.name.location));
         }
 
         try {
@@ -1679,7 +1660,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let source = this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
-            this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, "", statement.obj.location));
+            this.addError(new RuntimeError(RuntimeErrorCode.BadLHS, statement.obj.location));
         }
 
         if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
@@ -1687,7 +1668,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this.addError(
                     new RuntimeError(
                         RuntimeErrorCode.WrongNumberOfParams,
-                        "",
                         statement.closingSquare.location
                     )
                 );
@@ -1716,7 +1696,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this.addError(
                     new RuntimeError(
                         RuntimeErrorCode.BadNumberOfIndexes,
-                        "",
                         statement.closingSquare.location
                     )
                 );
@@ -1730,7 +1709,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this.addError(
                     new RuntimeError(
                         RuntimeErrorCode.NonNumericArrayIndex,
-                        "",
                         statement.indexes[i].location
                     )
                 );
@@ -1750,11 +1728,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                 } else {
                     this.addError(
-                        new RuntimeError(
-                            RuntimeErrorCode.BadNumberOfIndexes,
-                            "",
-                            statement.location
-                        )
+                        new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, statement.location)
                     );
                 }
             } else if (
@@ -1770,7 +1744,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             } else {
                 this.addError(
-                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, "", statement.location)
+                    new RuntimeError(RuntimeErrorCode.BadNumberOfIndexes, statement.location)
                 );
             }
         }
@@ -1930,9 +1904,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 args += args !== "" ? "," : "";
                 args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
             });
-            const funcSign = `${func.functionName}(${args}) As ${kind}`;
+            const funcSignature = `${func.functionName}(${args}) As ${kind}`;
             if (asString) {
-                debugMsg += `#${index}  Function ${funcSign}\r\n`;
+                debugMsg += `#${index}  Function ${funcSignature}\r\n`;
                 debugMsg += `   file/line: ${this.formatLocation(loc)}\r\n`;
             } else {
                 const line = loc.start.line;
@@ -1942,12 +1916,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             name: new BrsString("filename"),
                             value: new BrsString(loc?.file ?? "()"),
                         },
-                        { name: new BrsString("function"), value: new BrsString(funcSign) },
+                        { name: new BrsString("function"), value: new BrsString(funcSignature) },
                         { name: new BrsString("line_number"), value: new Int32(line) },
                     ])
                 );
             }
-            loc = func.callLoc;
+            loc = func.callLocation;
         }
         return asString ? debugMsg : new RoArray(btArray);
     }

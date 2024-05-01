@@ -47,9 +47,7 @@ export const Cint = new Callable("Cint", {
         if (isBrsNumber(x)) {
             return toInt32(x, "round");
         }
-        interpreter.addError(
-            new RuntimeError(RuntimeErrorCode.TypeMismatch, "", interpreter.location)
-        );
+        interpreter.addError(new RuntimeError(RuntimeErrorCode.TypeMismatch, interpreter.location));
     },
 });
 
@@ -75,9 +73,7 @@ export const Fix = new Callable("Fix", {
         if (isBrsNumber(x)) {
             return toInt32(x, "trunc");
         }
-        interpreter.addError(
-            new RuntimeError(RuntimeErrorCode.TypeMismatch, "", interpreter.location)
-        );
+        interpreter.addError(new RuntimeError(RuntimeErrorCode.TypeMismatch, interpreter.location));
     },
 });
 
@@ -94,9 +90,7 @@ export const Int = new Callable("Int", {
         if (isBrsNumber(x)) {
             return toInt32(x);
         }
-        interpreter.addError(
-            new RuntimeError(RuntimeErrorCode.TypeMismatch, "", interpreter.location)
-        );
+        interpreter.addError(new RuntimeError(RuntimeErrorCode.TypeMismatch, interpreter.location));
     },
 });
 
