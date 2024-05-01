@@ -1,5 +1,5 @@
-import { Identifier, Location } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32, Signature } from "../brsTypes";
+import { Identifier } from "../lexer";
+import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -16,13 +16,6 @@ export class NotFound extends Error {
     constructor(reason: string) {
         super(reason);
     }
-}
-
-export interface BackTrace {
-    functionName: string;
-    functionLoc: Location;
-    callLoc: Location;
-    signature: Signature;
 }
 
 /** Holds a set of values in multiple scopes and provides access operations to them. */
@@ -52,9 +45,6 @@ export class Environment {
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer = new RoAssociativeArray([]);
     private rootM: RoAssociativeArray;
-
-    /** Context properties to support the Debugger */
-    private backTrace = new Array<BackTrace>();
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
@@ -110,35 +100,6 @@ export class Environment {
      */
     public setRootM(newMPointer: RoAssociativeArray): void {
         this.rootM = newMPointer;
-    }
-
-    /**
-     * Add a Back Trace to the environment
-     * @param name The name of the function
-     * @param functionLoc The location of the function
-     * @param callLoc The location of the call
-     * @param signature The signature of the function
-     */
-    public addBackTrace(
-        name: string,
-        functionLoc: Location,
-        callLoc: Location,
-        signature: Signature
-    ) {
-        this.backTrace.push({
-            functionName: name,
-            functionLoc: functionLoc,
-            callLoc: callLoc,
-            signature: signature,
-        });
-    }
-
-    /**
-     * Retrieves the back trace of the environment
-     * @returns the array containing the current back trace
-     */
-    public getBackTrace() {
-        return this.backTrace;
     }
 
     /**

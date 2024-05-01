@@ -31,6 +31,7 @@ import {
     RoXMLElement,
     RoXMLList,
     RoFunction,
+    Signature,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/coercion";
 import { shared } from "..";
@@ -44,7 +45,7 @@ import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
 
-import { Scope, Environment, NotFound, BackTrace } from "./Environment";
+import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
@@ -74,9 +75,19 @@ export const defaultExecutionOptions: ExecutionOptions = {
     post: true,
 };
 
+/** The definition of a trace point to be added to the stack trace */
+export interface TracePoint {
+    functionName: string;
+    functionLoc: Location;
+    callLoc: Location;
+    signature: Signature;
+}
+
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
     private _sourceMap = new Map<string, string>();
+    private _stack = new Array<TracePoint>();
+    private _tryMode = false;
     private _startTime = Date.now();
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
@@ -111,6 +122,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get sourceMap() {
         return this._sourceMap;
+    }
+
+    get stack() {
+        return this._stack;
     }
 
     get startTime() {
@@ -218,21 +233,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
-        let btArray = originalEnvironment.getBackTrace();
-        btArray.forEach((bt) => {
-            newEnv.addBackTrace(bt.functionName, bt.functionLoc, bt.callLoc, bt.signature);
-        });
         try {
             this._environment = newEnv;
-            return func(this);
+            const returnValue = func(this);
+            this._environment = originalEnvironment;
+            return returnValue;
         } catch (err: any) {
             if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                 // Keep environment for Micro Debugger in case of a crash
                 originalEnvironment = this._environment;
             }
-            throw err;
-        } finally {
             this._environment = originalEnvironment;
+            throw err;
         }
     }
 
@@ -311,8 +323,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value ?? BrsInvalid.Instance];
             } else if (err instanceof BrsError) {
-                const backtrace = this.formatBacktrace(err.location, true, err.backtrace);
-                throw new Error(`${err.format()}\nBackTrace:\n${backtrace}`);
+                const backTrace = this.formatBacktrace(err.location, true, err.backTrace);
+                throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`);
             } else {
                 throw err;
             }
@@ -353,7 +365,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitNamedFunction(statement: Stmt.Function): BrsType {
         if (statement.name.isReserved) {
-            return this.addError(
+            this.addError(
                 new BrsError(
                     `Cannot create a named function with reserved name '${statement.name.text}'`,
                     statement.name.location
@@ -364,7 +376,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.environment.has(statement.name, [Scope.Module])) {
             // TODO: Figure out how to determine where the original version was declared
             // Maybe `Environment.define` records the location along with the value?
-            return this.addError(
+            this.addError(
                 new BrsError(
                     `Attempting to declare function '${statement.name.text}', but ` +
                         `a property of that name already exists in this scope.`,
@@ -1016,7 +1028,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             default:
-                return this.addError(
+                this.addError(
                     new BrsError(
                         `Received unexpected token kind '${expression.token.kind}'`,
                         expression.token.location
@@ -1026,17 +1038,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitTryCatch(statement: Stmt.TryCatch): BrsInvalid {
-        let stopState = this.options.stopOnCrash;
+        let tryMode = this._tryMode;
         try {
-            this.options.stopOnCrash = false;
+            this._tryMode = true;
             this.visitBlock(statement.tryBlock);
-            this.options.stopOnCrash = stopState;
+            this._tryMode = tryMode;
         } catch (err: any) {
-            this.options.stopOnCrash = stopState;
+            this._tryMode = tryMode;
             if (!(err instanceof BrsError)) {
                 throw err;
             }
-            const btArray = this.formatBacktrace(err.location, false, err.backtrace) as RoArray;
+            const btArray = this.formatBacktrace(err.location, false, err.backTrace) as RoArray;
             let errCode = RuntimeErrorCode.Internal;
             let errMessage = err.message;
             if (err instanceof RuntimeError) {
@@ -1104,7 +1116,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             errCode.message,
             statement.location,
             extraFields,
-            this.environment.getBackTrace()
+            this._stack.slice()
         );
         // Validation Functions
         function validateErrorNumber(element: BrsType, errCode: ErrorCode): ErrorCode {
@@ -1173,7 +1185,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let args = expression.args.map(this.evaluate, this);
 
         if (!isBrsCallable(callee)) {
-            return this.addError(
+            this.addError(
                 new RuntimeError(
                     RuntimeErrorCode.NotAFunction,
                     "",
@@ -1205,21 +1217,23 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
                 return this.inSubEnv((subInterpreter) => {
                     subInterpreter.environment.setM(mPointer);
-                    let funcLoc = callee.getLocation();
-                    if (funcLoc) {
-                        let callLoc = expression.callee.location;
-                        let sign = callee.signatures[0].signature;
-                        subInterpreter.environment.addBackTrace(
-                            functionName,
-                            funcLoc,
-                            callLoc,
-                            sign
-                        );
-                    }
+                    this._stack.push({
+                        functionName: functionName,
+                        functionLoc: callee.getLocation() ?? this.location,
+                        callLoc: expression.callee.location,
+                        signature: signature,
+                    });
                     try {
-                        return callee.call(this, ...args);
+                        const returnValue = callee.call(this, ...args);
+                        this._stack.pop();
+                        return returnValue;
                     } catch (err: any) {
-                        if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
+                        this._stack.pop();
+                        if (
+                            !this._tryMode &&
+                            this.options.stopOnCrash &&
+                            !(err instanceof Stmt.BlockEnd)
+                        ) {
                             // Enable Micro Debugger on app crash
                             let errCode = RuntimeErrorCode.Internal.errno;
                             if (err instanceof RuntimeError) {
@@ -1275,7 +1289,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     signatureKind !== ValueKind.Dynamic &&
                     signatureKind !== returnedValue.kind
                 ) {
-                    return this.addError(
+                    this.addError(
                         new TypeMismatch({
                             message: `Unable to cast`,
                             left: {
@@ -1294,7 +1308,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 return returnedValue ?? BrsInvalid.Instance;
             }
         } else {
-            return this.addError(
+            this.addError(
                 generateArgumentMismatchError(callee, args, expression.closingParen.location)
             );
         }
@@ -1307,7 +1321,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             try {
                 return source.getAttribute(new BrsString(expression.name.text));
             } catch (err: any) {
-                return this.addError(new BrsError(err.message, expression.name.location));
+                this.addError(new BrsError(err.message, expression.name.location));
             }
         } else {
             this.addError(
@@ -1508,7 +1522,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
-                    } else if (!(reason instanceof Stmt.ContinueForReason)) {
+                    } else if (reason instanceof Stmt.ContinueForReason) {
+                        // continue to the next iteration
+                    } else {
                         // re-throw returns, runtime errors, etc.
                         throw reason;
                     }
@@ -1530,7 +1546,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
-                    } else if (!(reason instanceof Stmt.ContinueForReason)) {
+                    } else if (reason instanceof Stmt.ContinueForReason) {
+                        // continue to the next iteration
+                    } else {
                         // re-throw returns, runtime errors, etc.
                         throw reason;
                     }
@@ -1566,7 +1584,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (reason instanceof Stmt.ExitForReason) {
                     // break out of the loop
                     return false;
-                } else if (!(reason instanceof Stmt.ContinueForReason)) {
+                } else if (reason instanceof Stmt.ContinueForReason) {
+                    // continue to the next iteration
+                } else {
                     // re-throw returns, runtime errors, etc.
                     throw reason;
                 }
@@ -1648,7 +1668,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         try {
             source.set(new BrsString(statement.name.text), value);
         } catch (err: any) {
-            return this.addError(new BrsError(err.message, statement.name.location));
+            this.addError(new BrsError(err.message, statement.name.location));
         }
 
         return BrsInvalid.Instance;
@@ -1687,7 +1707,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             try {
                 source.set(index, value, true);
             } catch (err: any) {
-                return this.addError(new BrsError(err.message, statement.closingSquare.location));
+                this.addError(new BrsError(err.message, statement.closingSquare.location));
             }
             return BrsInvalid.Instance;
         }
@@ -1746,9 +1766,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 try {
                     current.set(index, value);
                 } catch (err: any) {
-                    return this.addError(
-                        new BrsError(err.message, statement.closingSquare.location)
-                    );
+                    this.addError(new BrsError(err.message, statement.closingSquare.location));
                 }
             } else {
                 this.addError(
@@ -1900,8 +1918,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param bt the backtrace array
      * @returns a string or an array with the backtrace formatted
      */
-    formatBacktrace(loc: Location, asString = true, bt?: BackTrace[]): RoArray | string {
-        const backTrace = bt ?? this.environment.getBackTrace();
+    formatBacktrace(loc: Location, asString = true, bt?: TracePoint[]): RoArray | string {
+        const backTrace = bt ?? this._stack;
         let debugMsg = "";
         const btArray: BrsType[] = [];
         for (let index = backTrace.length - 1; index >= 0; index--) {
@@ -2039,11 +2057,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param err the ParseError to emit then throw
      */
     public addError(err: BrsError): never {
-        if (!err.backtrace) {
-            err.backtrace = this.environment.getBackTrace();
+        if (!err.backTrace) {
+            err.backTrace = this._stack.slice();
         }
-        this.errors.push(err);
-        this.events.emit("err", err);
+        if (!this._tryMode) {
+            // do not save/emit the error if we are in a try block
+            this.errors.push(err);
+            this.events.emit("err", err);
+        }
         throw err;
     }
 
