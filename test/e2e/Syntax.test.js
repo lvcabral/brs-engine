@@ -278,16 +278,20 @@ describe("end to end syntax", () => {
     test("try-catch.brs", async () => {
         await execute([resourceFile("try-catch.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "[pre_try] a =  5",
-            "[in_try] a =  10",
-            "[subFunc] a =  10",
+            "[pre_try] a = 5",
+            "[in_try] a = 10",
+            "[subFunc] a = 10",
             "[thirdLevel]",
-            " 6502",
-            "[in_catch] e = subFunc custom error message!",
-            "[backtrace] =  8",
-            "[backtrace] =  22",
-            "[backtrace] =  33",
-            "[post_try] a =  10",
+            "Error # = 6502",
+            "[in_catch] message = subFunc custom error message!",
+            "[in_catch] customField = true",
+            "[backtrace] = 8",
+            "[backtrace] = 25",
+            "[backtrace] = 41",
+            "[post_try] a = 10",
+            "[subFunc] a = 11",
+            "Error # = 24",
+            `Error message = Type Mismatch. Operator "*" can't be applied to "Integer" and "String".`,
         ]);
     });
 });
