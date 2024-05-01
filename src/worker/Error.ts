@@ -1,39 +1,48 @@
 import { BrsType } from "./brsTypes";
-import { BackTrace } from "./interpreter/Environment";
-import { Location } from "./lexer";
-
-/**
- * Formats the error into a human-readable string including filename, starting and ending line
- * and column, and the message associated with the error, e.g.:
- *
- * `lorem.brs(1,1-3): Expected '(' after sub name`
- * ```
- */
-export function formatMessage(obj: { message: string; location: Location }): string {
-    let location = obj.location;
-
-    let formattedLocation: string;
-
-    if (location.start.line === location.end.line) {
-        let columns = `${location.start.column}`;
-        if (location.start.column !== location.end.column) {
-            columns += `-${location.end.column}`;
-        }
-        formattedLocation = `${location.file}(${location.start.line},${columns})`;
-    } else {
-        formattedLocation = `${location.file}(${location.start.line},${location.start.column},${location.end.line},${location.end.line})`;
-    }
-
-    return `${formattedLocation}: ${obj.message}`;
-}
+import type { TracePoint } from "./interpreter";
+import type { Location } from "./lexer";
 
 export class BrsError extends Error {
-    constructor(message: string, readonly location: Location, public backtrace?: BackTrace[]) {
+    constructor(message: string, readonly location: Location, public backTrace?: TracePoint[]) {
         super(message);
     }
 
+    /**
+     * Formats the error into a human-readable string including filename, starting and ending line
+     * and column, and the message associated with the error, e.g.:
+     *
+     * `lorem.brs(1,1-3): Expected '(' after sub name`
+     * @see BrsError#format
+     */
     format() {
-        return formatMessage(this);
+        return BrsError.format(this);
+    }
+
+    /**
+     * Formats a location and message into a human-readable string including filename, starting
+     * and ending line and column, and the message associated with the error, e.g.:
+     *
+     * `lorem.brs(1,1-3): Expected '(' after sub name`
+     *
+     * @param message a string describing the error
+     * @param location where the error occurred
+     */
+    static format(obj: { message: string; location: Location }): string {
+        let location = obj.location;
+
+        let formattedLocation: string;
+
+        if (location.start.line === location.end.line) {
+            let columns = `${location.start.column}`;
+            if (location.start.column !== location.end.column) {
+                columns += `-${location.end.column}`;
+            }
+            formattedLocation = `${location.file}(${location.start.line},${columns})`;
+        } else {
+            formattedLocation = `${location.file}(${location.start.line},${location.start.column},${location.end.line},${location.end.line})`;
+        }
+
+        return `${formattedLocation}: ${obj.message}`;
     }
 }
 
@@ -44,12 +53,12 @@ export class RuntimeError extends BrsError {
         message: string,
         location: Location,
         readonly extraFields?: Map<string, BrsType>,
-        readonly backtrace?: BackTrace[]
+        readonly backTrace?: TracePoint[]
     ) {
         if (message.trim() === "") {
             message = errCode.message;
         }
-        super(message, location, backtrace);
+        super(message, location, backTrace);
     }
 }
 

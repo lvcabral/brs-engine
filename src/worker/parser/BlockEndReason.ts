@@ -1,17 +1,9 @@
 import { BrsType } from "../brsTypes";
-import { BrsError, formatMessage } from "../Error";
+import { BrsError } from "../Error";
 import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */
-export class BlockEnd extends BrsError {
-    constructor(public message: string, public readonly location: Location) {
-        super(message, location);
-    }
-
-    format() {
-        return formatMessage(this);
-    }
-}
+export class BlockEnd extends BrsError {}
 
 /** An error thrown to continue a for loop. */
 export class ContinueForReason extends BlockEnd {
