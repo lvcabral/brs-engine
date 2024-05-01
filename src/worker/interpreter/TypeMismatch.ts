@@ -1,5 +1,5 @@
 import { BrsType, ValueKind } from "../brsTypes";
-import { RuntimeError, RuntimeErrorCode } from "../Error";
+import { RuntimeError, RuntimeErrorDetail } from "../Error";
 import type { Location } from "../lexer";
 
 /** Wraps up the metadata associated with a type mismatch error. */
@@ -29,8 +29,8 @@ export type TypeAndLocation = {
  */
 export class TypeMismatch extends RuntimeError {
     constructor(mismatchMetadata: TypeMismatchMetadata) {
-        const errCode = RuntimeErrorCode.TypeMismatch;
-        let errMessage = `${errCode.message} ${mismatchMetadata.message} `;
+        const errDetail = RuntimeErrorDetail.TypeMismatch;
+        let errMessage = `${errDetail.message} ${mismatchMetadata.message} `;
         if (!mismatchMetadata.cast) {
             errMessage += `"${ValueKind.toString(getKind(mismatchMetadata.left.type))}"`;
             if (mismatchMetadata.right) {
@@ -41,7 +41,7 @@ export class TypeMismatch extends RuntimeError {
             errMessage += ` to "${ValueKind.toString(getKind(mismatchMetadata.left.type))}"`;
         }
         errMessage += ".";
-        super({ errno: errCode.errno, message: errMessage }, mismatchMetadata.left.location);
+        super({ errno: errDetail.errno, message: errMessage }, mismatchMetadata.left.location);
     }
 }
 

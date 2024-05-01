@@ -30,7 +30,7 @@ export function runDebugger(
     nextLoc: Location,
     lastLoc: Location,
     errMessage?: string,
-    errCode?: number
+    errNumber?: number
 ) {
     // TODO:
     // - Implement step over and step out
@@ -57,7 +57,7 @@ export function runDebugger(
         debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
         debugMsg += `${interpreter.manifest.get("title") || "brs"}\r\n\r\n`;
         debugMsg += `${errMessage ?? "STOP"} (runtime error &h${
-            errCode ? numberToHex(errCode) : "f7"
+            errNumber ? numberToHex(errNumber) : "f7"
         }) in ${interpreter.formatLocation()}`;
         debugMsg += "\r\nBacktrace: \r\n";
         interpreter.stdout.write(`print,${debugMsg}`);
