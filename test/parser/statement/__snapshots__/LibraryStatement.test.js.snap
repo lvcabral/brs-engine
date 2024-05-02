@@ -3,7 +3,7 @@
 exports[`parser library statements adds error for library statements NOT at top of file 1`] = `
 {
   "errors": [
-    [Error: Library statements may only appear at the top of a file],
+    [Error: Syntax Error. (compile error &h2) Library statements may only appear at the top of a file],
   ],
   "statements": [
     Function {
@@ -125,7 +125,7 @@ exports[`parser library statements adds error for library statements NOT at top 
 exports[`parser library statements adds error for library statements inside of function body 1`] = `
 {
   "errors": [
-    [Error: Library statements may only appear at the top of a file],
+    [Error: Syntax Error. (compile error &h2) Library statements may only appear at the top of a file],
   ],
   "statements": [
     Function {
@@ -562,7 +562,7 @@ exports[`parser library statements does not prevent usage of \`library\` as vari
 exports[`parser library statements parses rest of file with ONLY the library keyword present at root level 1`] = `
 {
   "errors": [
-    [Error: Missing string literal after library keyword],
+    [Error: Syntax Error. (compile error &h2) Missing string literal after library keyword],
   ],
   "statements": [
     Library {
@@ -721,9 +721,9 @@ exports[`parser library statements parses rest of file with ONLY the library key
 exports[`parser library statements still parses entire file after invalid library statement 1`] = `
 {
   "errors": [
-    [Error: Found unexpected token 'cat' after library statement],
-    [Error: Found unexpected token 'dog' after library statement],
-    [Error: Found unexpected token 'mouse' after library statement],
+    [Error: Syntax Error. (compile error &h2) Found unexpected token 'cat' after library statement],
+    [Error: Syntax Error. (compile error &h2) Found unexpected token 'dog' after library statement],
+    [Error: Syntax Error. (compile error &h2) Found unexpected token 'mouse' after library statement],
   ],
   "statements": [
     Library {

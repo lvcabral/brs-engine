@@ -56,7 +56,7 @@ export class StdlibArgument implements Argument {
     }
 
     /** A fake location exists only within the BRS runtime. */
-    static InternalLocation = {
+    static readonly InternalLocation = {
         file: "(stdlib)",
         start: { line: -1, column: -1 },
         end: { line: -1, column: -1 },

@@ -5,7 +5,7 @@ import { Boxable } from "./Boxing";
 import { Float } from "./Float";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
-import { roInt } from "./components/RoInt";
+import { RoInt } from "./components/RoInt";
 import Long from "long";
 
 export class Int32 implements Numeric, Comparable, Boxable {
@@ -230,6 +230,6 @@ export class Int32 implements Numeric, Comparable, Boxable {
     }
 
     box() {
-        return new roInt(this);
+        return new RoInt(this);
     }
 }

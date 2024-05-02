@@ -3,10 +3,10 @@
 exports[`parser function declarations does not allow type designators at end of name 1`] = `
 {
   "errors": [
-    [Error: Function name 'StringFunc#' cannot end with type designator '#'],
-    [Error: Function name 'IntegerFunc%' cannot end with type designator '%'],
-    [Error: Function name 'FloatFunc!' cannot end with type designator '!'],
-    [Error: Function name 'DoubleFunc#' cannot end with type designator '#'],
+    [Error: Syntax Error. (compile error &h2) Function name 'StringFunc#' cannot end with type designator '#'],
+    [Error: Syntax Error. (compile error &h2) Function name 'IntegerFunc%' cannot end with type designator '%'],
+    [Error: Syntax Error. (compile error &h2) Function name 'FloatFunc!' cannot end with type designator '!'],
+    [Error: Syntax Error. (compile error &h2) Function name 'DoubleFunc#' cannot end with type designator '#'],
   ],
   "statements": [
     Function {
@@ -1549,7 +1549,7 @@ exports[`parser function declarations parses return types 1`] = `
 exports[`parser function declarations recovers when using \`end sub\` instead of \`end function\` 1`] = `
 {
   "errors": [
-    [Error: Expected 'end function' to terminate function block],
+    [Error: Syntax Error. (compile error &h2) Expected 'end function' to terminate function block],
   ],
   "statements": [
     Function {
@@ -1742,10 +1742,10 @@ exports[`parser function declarations recovers when using \`end sub\` instead of
 exports[`parser sub declarations does not allow type designators at end of name 1`] = `
 {
   "errors": [
-    [Error: Function name 'StringSub#' cannot end with type designator '#'],
-    [Error: Function name 'IntegerSub%' cannot end with type designator '%'],
-    [Error: Function name 'FloatSub!' cannot end with type designator '!'],
-    [Error: Function name 'DoubleSub#' cannot end with type designator '#'],
+    [Error: Syntax Error. (compile error &h2) Function name 'StringSub#' cannot end with type designator '#'],
+    [Error: Syntax Error. (compile error &h2) Function name 'IntegerSub%' cannot end with type designator '%'],
+    [Error: Syntax Error. (compile error &h2) Function name 'FloatSub!' cannot end with type designator '!'],
+    [Error: Syntax Error. (compile error &h2) Function name 'DoubleSub#' cannot end with type designator '#'],
   ],
   "statements": [
     Function {
@@ -3059,7 +3059,7 @@ exports[`parser sub declarations parses subs with typed arguments and default ex
 exports[`parser sub declarations recovers when using \`end function\` instead of \`end sub\` 1`] = `
 {
   "errors": [
-    [Error: Expected 'end sub' to terminate sub block],
+    [Error: Syntax Error. (compile error &h2) Expected 'end sub' to terminate sub block],
   ],
   "statements": [
     Function {

@@ -5,7 +5,7 @@ import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
-import { roFloat } from "./components/RoFloat";
+import { RoFloat } from "./components/RoFloat";
 import Long from "long";
 
 /**
@@ -50,7 +50,6 @@ export class Float implements Numeric, Comparable, Boxable {
     add(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
             case ValueKind.Int64:
-                // TODO: Confirm that (double) + (int64) -> (double)
                 return new Float(this.getValue() + rhs.getValue().toNumber());
             case ValueKind.Int32:
             case ValueKind.Float:
@@ -63,7 +62,6 @@ export class Float implements Numeric, Comparable, Boxable {
     subtract(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
             case ValueKind.Int64:
-                // TODO: Confirm that (float) - (int64) -> (float)
                 return new Float(this.getValue() - rhs.getValue().toNumber());
             case ValueKind.Int32:
             case ValueKind.Float:
@@ -76,7 +74,6 @@ export class Float implements Numeric, Comparable, Boxable {
     multiply(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
             case ValueKind.Int64:
-                // TODO: Confirm that (float) * (int64) -> (float)
                 return new Float(this.getValue() * rhs.getValue().toNumber());
             case ValueKind.Int32:
             case ValueKind.Float:
@@ -89,7 +86,6 @@ export class Float implements Numeric, Comparable, Boxable {
     divide(rhs: BrsNumber): Float | Double {
         switch (rhs.kind) {
             case ValueKind.Int64:
-                // TODO: Confirm that (float) / (int64) -> (float)
                 return new Float(this.getValue() / rhs.getValue().toNumber());
             case ValueKind.Int32:
             case ValueKind.Float:
@@ -221,6 +217,6 @@ export class Float implements Numeric, Comparable, Boxable {
     }
 
     box() {
-        return new roFloat(this);
+        return new RoFloat(this);
     }
 }

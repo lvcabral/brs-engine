@@ -12,12 +12,12 @@ const {
     RoAssociativeArray,
     BrsString,
     Uninitialized,
-    roInt,
-    roFloat,
-    roDouble,
-    roLongInteger,
+    RoInt,
+    RoFloat,
+    RoDouble,
+    RoLongInteger,
     RoString,
-    roBoolean,
+    RoBoolean,
     RoFunction,
 } = brs.types;
 
@@ -63,12 +63,12 @@ describe("type coercion", () => {
 
         describe("boxing", () => {
             it.each([
-                ["integer", new Int32(1234), roInt],
-                ["float", new Float(2.345), roFloat],
-                ["double", new Double(3.456), roDouble],
-                ["longinteger", new Int64(3.456), roLongInteger],
+                ["integer", new Int32(1234), RoInt],
+                ["float", new Float(2.345), RoFloat],
+                ["double", new Double(3.456), RoDouble],
+                ["longinteger", new Int64(3.456), RoLongInteger],
                 ["string", new BrsString("lorem"), RoString],
-                ["boolean", BrsBoolean.False, roBoolean],
+                ["boolean", BrsBoolean.False, RoBoolean],
                 ["function", new Callable("foo"), RoFunction],
             ])("boxes primitive %s for object target", (_type, input, ctor) => {
                 let output = tryCoerce(input, ValueKind.Object);
@@ -79,12 +79,12 @@ describe("type coercion", () => {
 
         describe("unboxing", () => {
             it.each([
-                ["integer", new roInt(new Int32(1234)), ValueKind.Int32, Int32],
-                ["float", new roFloat(new Float(2.345)), ValueKind.Float, Float],
-                ["double", new roDouble(new Double(3.456)), ValueKind.Double, Double],
-                ["longinteger", new roLongInteger(new Int64(3.456)), ValueKind.Int64, Int64],
+                ["integer", new RoInt(new Int32(1234)), ValueKind.Int32, Int32],
+                ["float", new RoFloat(new Float(2.345)), ValueKind.Float, Float],
+                ["double", new RoDouble(new Double(3.456)), ValueKind.Double, Double],
+                ["longinteger", new RoLongInteger(new Int64(3.456)), ValueKind.Int64, Int64],
                 ["string", new RoString(new BrsString("lorem")), ValueKind.String, BrsString],
-                ["boolean", new roBoolean(BrsBoolean.False), ValueKind.Boolean, BrsBoolean],
+                ["boolean", new RoBoolean(BrsBoolean.False), ValueKind.Boolean, BrsBoolean],
                 ["function", new RoFunction(new Callable("foo")), ValueKind.Callable, Callable],
             ])("boxes %s for object target", (_type, input, target, ctor) => {
                 let output = tryCoerce(input, target);
