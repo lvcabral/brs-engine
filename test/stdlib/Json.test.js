@@ -11,7 +11,7 @@ const {
     Int32,
     Int64,
     Uninitialized,
-    roInt,
+    RoInt,
 } = brs.types;
 
 const { allArgs, createMockStreams } = require("../e2e/E2ETests");
@@ -90,7 +90,7 @@ describe("global JSON functions", () => {
         });
 
         it("converts boxed BRS types to string representations", () => {
-            expect(FormatJson.call(interpreter, new roInt(new Int32(-1)))).toEqual(
+            expect(FormatJson.call(interpreter, new RoInt(new Int32(-1)))).toEqual(
                 new BrsString("-1")
             );
         });

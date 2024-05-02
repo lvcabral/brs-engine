@@ -24,10 +24,10 @@ import { RoXMLElement } from "./components/RoXMLElement";
 import { RoPath } from "./components/RoPath";
 import { RoURLEvent } from "./components/RoURLEvent";
 import { RoUniversalControlEvent } from "./components/RoUniversalControlEvent";
-import { roInt } from "./components/RoInt";
-import { roFloat } from "./components/RoFloat";
-import { roDouble } from "./components/RoDouble";
-import { roLongInteger } from "./components/RoLongInteger";
+import { RoInt } from "./components/RoInt";
+import { RoFloat } from "./components/RoFloat";
+import { RoDouble } from "./components/RoDouble";
+import { RoLongInteger } from "./components/RoLongInteger";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -182,10 +182,10 @@ export function isStringComp(value: BrsType): value is BrsString & Comparable {
  */
 export function isBoxedNumber(value: BrsType): value is BoxedNumber {
     return (
-        value instanceof roInt ||
-        value instanceof roFloat ||
-        value instanceof roDouble ||
-        value instanceof roLongInteger
+        value instanceof RoInt ||
+        value instanceof RoFloat ||
+        value instanceof RoDouble ||
+        value instanceof RoLongInteger
     );
 }
 
@@ -193,7 +193,7 @@ export function isBoxedNumber(value: BrsType): value is BoxedNumber {
 export type BrsNumber = Int32 | Int64 | Float | Double;
 
 /** The set of BrightScript boxed numeric types. */
-export type BoxedNumber = roInt | roFloat | roDouble | roLongInteger;
+export type BoxedNumber = RoInt | RoFloat | RoDouble | RoLongInteger;
 
 /**
  * The set of all comparable BrightScript types. Only primitive (i.e. intrinsic * and unboxed)

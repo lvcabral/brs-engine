@@ -6,7 +6,7 @@ import { Unboxable } from "../Boxing";
 import { Double } from "../Double";
 import { vsprintf } from "sprintf-js";
 
-export class roDouble extends BrsComponent implements BrsValue, Unboxable {
+export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Double;
 
@@ -29,7 +29,7 @@ export class roDouble extends BrsComponent implements BrsValue, Unboxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other instanceof roDouble) {
+        if (other instanceof RoDouble) {
             return BrsBoolean.from(other.intrinsic.getValue() === this.intrinsic.getValue());
         }
 

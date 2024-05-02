@@ -107,7 +107,10 @@ describe("parser indexing", () => {
                 ]);
 
                 expect(errors.length).toBe(1);
-                expect(errors[0]).toHaveProperty("message", "Expected property name after '.'");
+                expect(errors[0]).toHaveProperty(
+                    "message",
+                    "Syntax Error. (compile error &h2) Expected property name after '.'"
+                );
             });
         });
 

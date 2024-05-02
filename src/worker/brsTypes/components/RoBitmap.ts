@@ -7,6 +7,7 @@ import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RoFont } from "./RoFont";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import { numberToHex } from "../../common";
 import {
     WorkerCanvas,
     WorkerCanvasRenderingContext2D,
@@ -87,7 +88,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             this.valid = false;
         }
         this.canvas = createNewCanvas(width, height);
-        //TODO: Review alpha enable, it should only affect bitmap as destination.
         this.context = this.canvas.getContext("2d", {
             alpha: true,
         }) as WorkerCanvasRenderingContext2D;
@@ -110,7 +110,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         const webpDecoder = new WebPDecoder();
                         const imgBuffer = Buffer.from(image);
                         const imgArray = WebPRiffParser(imgBuffer, 0);
-                        if (imgArray?.frames && imgArray.frames.length) {
+                        if (imgArray?.frames?.length) {
                             let aHeight = [0];
                             let aWidth = [0];
                             // Get only the first frame (animations not supported)
@@ -358,7 +358,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 new StdlibArgument("scaleX", ValueKind.Float),
                 new StdlibArgument("scaleY", ValueKind.Float),
                 new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance), // TODO: add support to rgba
+                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
             ],
             returns: ValueKind.Boolean,
         },
@@ -639,11 +639,7 @@ export function rgbaIntToHex(rgba: number, alpha: boolean = true): string {
     if (!alpha) {
         rgba = rgbaToOpaque(rgba);
     }
-    let hex = (rgba >>> 0).toString(16);
-    while (hex.length < 8) {
-        hex = "0" + hex;
-    }
-    return "#" + hex;
+    return "#" + numberToHex(rgba, "0");
 }
 
 export function rgbaToTransparent(rgba: number): number {

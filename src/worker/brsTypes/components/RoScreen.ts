@@ -289,7 +289,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 new StdlibArgument("scaleX", ValueKind.Float),
                 new StdlibArgument("scaleY", ValueKind.Float),
                 new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance), // TODO: add support to rgba
+                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
             ],
             returns: ValueKind.Boolean,
         },

@@ -1,15 +1,15 @@
 const brs = require("../../../bin/brs.node");
 const { Interpreter } = brs;
-const { roLongInteger, Int64, BrsBoolean, BrsString, Callable } = brs.types;
+const { RoLongInteger, Int64, BrsBoolean, BrsString, Callable } = brs.types;
 
 describe("roLongInteger", () => {
     describe("equality", () => {
         it("compares to intrinsic Int64", () => {
-            let a = new roLongInteger(new Int64(40000111222));
-            let b = new roLongInteger(new Int64(0));
-            let c = new roLongInteger(new Int64(-40000111222));
-            let d = new roLongInteger(new Int64(40000111222));
-            let e = new roLongInteger(new Int64(-5));
+            let a = new RoLongInteger(new Int64(40000111222));
+            let b = new RoLongInteger(new Int64(0));
+            let c = new RoLongInteger(new Int64(-40000111222));
+            let d = new RoLongInteger(new Int64(40000111222));
+            let e = new RoLongInteger(new Int64(-5));
 
             expect(a.equalTo(b)).toBe(BrsBoolean.False);
             expect(a.equalTo(c)).toBe(BrsBoolean.False);
@@ -22,12 +22,12 @@ describe("roLongInteger", () => {
     });
 
     test("toString", () => {
-        expect(new roLongInteger(new Int64(22)).toString()).toBe("22");
+        expect(new RoLongInteger(new Int64(22)).toString()).toBe("22");
     });
 
     describe("ifLongInt, ifToStr", () => {
-        var a = new roLongInteger(new Int64(0));
-        var b = new roLongInteger(new Int64(0));
+        var a = new RoLongInteger(new Int64(0));
+        var b = new RoLongInteger(new Int64(0));
         let interpreter;
         let someNumberA = 305;
         let someNumberB = 291;
@@ -46,13 +46,13 @@ describe("roLongInteger", () => {
             setLongIntA.call(interpreter, new Int64(someNumberA));
             setLongIntB.call(interpreter, new Int64(someNumberB));
 
-            expect(a.equalTo(new roLongInteger(new Int64(someNumberA)))).toBe(BrsBoolean.True);
-            expect(b.equalTo(new roLongInteger(new Int64(someNumberB)))).toBe(BrsBoolean.True);
+            expect(a.equalTo(new RoLongInteger(new Int64(someNumberA)))).toBe(BrsBoolean.True);
+            expect(b.equalTo(new RoLongInteger(new Int64(someNumberB)))).toBe(BrsBoolean.True);
         });
 
         it("getLongInt", () => {
-            a = new roLongInteger(new Int64(someNumberA));
-            b = new roLongInteger(new Int64(someNumberB));
+            a = new RoLongInteger(new Int64(someNumberA));
+            b = new RoLongInteger(new Int64(someNumberB));
 
             getLongIntA = a.getMethod("getLongInt");
             getLongIntB = b.getMethod("getLongInt");
@@ -68,8 +68,8 @@ describe("roLongInteger", () => {
         });
 
         it("toStr", () => {
-            a = new roLongInteger(new Int64(someNumberA));
-            b = new roLongInteger(new Int64(someNumberB));
+            a = new RoLongInteger(new Int64(someNumberA));
+            b = new RoLongInteger(new Int64(someNumberB));
 
             toStrA = a.getMethod("toStr");
             toStrB = b.getMethod("toStr");

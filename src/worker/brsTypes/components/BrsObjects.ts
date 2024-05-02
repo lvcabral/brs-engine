@@ -37,16 +37,16 @@ import { RoDeviceInfo } from "./RoDeviceInfo";
 import { RoFileSystem } from "./RoFileSystem";
 import { Interpreter } from "../../interpreter";
 import { RoString } from "./RoString";
-import { roBoolean } from "./RoBoolean";
-import { roDouble } from "./RoDouble";
-import { roFloat } from "./RoFloat";
-import { roInt } from "./RoInt";
-import { roLongInteger } from "./RoLongInteger";
+import { RoBoolean } from "./RoBoolean";
+import { RoDouble } from "./RoDouble";
+import { RoFloat } from "./RoFloat";
+import { RoInt } from "./RoInt";
+import { RoLongInteger } from "./RoLongInteger";
 import { Double } from "../Double";
 import { Float } from "../Float";
 import { Int32 } from "../Int32";
 import { Int64 } from "../Int64";
-import { roInvalid } from "./RoInvalid";
+import { RoInvalid } from "./RoInvalid";
 import { RoFunction } from "./RoFunction";
 import { Callable } from "../Callable";
 
@@ -74,11 +74,11 @@ export const BrsObjects = new Map<string, Function>([
             new RoRegex(expression, flags),
     ],
     ["rostring", (interpreter: Interpreter) => new RoString()],
-    ["roboolean", (interpreter: Interpreter, literal: BrsBoolean) => new roBoolean(literal)],
-    ["rodouble", (interpreter: Interpreter, literal: Double) => new roDouble(literal)],
-    ["rofloat", (interpreter: Interpreter, literal: Float) => new roFloat(literal)],
-    ["roint", (interpreter: Interpreter, literal: Int32) => new roInt(literal)],
-    ["rolonginteger", (interpreter: Interpreter, literal: Int64) => new roLongInteger(literal)],
+    ["roboolean", (interpreter: Interpreter, literal: BrsBoolean) => new RoBoolean(literal)],
+    ["rodouble", (interpreter: Interpreter, literal: Double) => new RoDouble(literal)],
+    ["rofloat", (interpreter: Interpreter, literal: Float) => new RoFloat(literal)],
+    ["roint", (interpreter: Interpreter, literal: Int32) => new RoInt(literal)],
+    ["rolonginteger", (interpreter: Interpreter, literal: Int64) => new RoLongInteger(literal)],
     ["rofunction", (interpreter: Interpreter, sub: Callable) => new RoFunction(sub)],
     ["ropath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
     [
@@ -126,5 +126,5 @@ export const BrsObjects = new Map<string, Function>([
     ],
     ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
     ["rourltransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
-    ["roinvalid", (interpreter: Interpreter) => new roInvalid()],
+    ["roinvalid", (interpreter: Interpreter) => new RoInvalid()],
 ]);

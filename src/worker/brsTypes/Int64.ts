@@ -5,7 +5,7 @@ import { ValueKind, Comparable } from "./BrsType";
 import { Float } from "./Float";
 import { Double } from "./Double";
 import { Boxable } from "./Boxing";
-import { roLongInteger } from "./components/RoLongInteger";
+import { RoLongInteger } from "./components/RoLongInteger";
 
 export class Int64 implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Int64;
@@ -231,6 +231,6 @@ export class Int64 implements Numeric, Comparable, Boxable {
     }
 
     box() {
-        return new roLongInteger(this);
+        return new RoLongInteger(this);
     }
 }

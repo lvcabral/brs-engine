@@ -197,3 +197,7 @@ export function parseManifest(contents: string) {
 
     return new Map<string, string>(keyValuePairs);
 }
+
+export function numberToHex(value: number, pad: string = ""): string {
+    return (value >>> 0).toString(16).padStart(8, pad);
+}

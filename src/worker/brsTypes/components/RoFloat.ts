@@ -6,7 +6,7 @@ import { Unboxable } from "../Boxing";
 import { Float } from "../Float";
 import { vsprintf } from "sprintf-js";
 
-export class roFloat extends BrsComponent implements BrsValue, Unboxable {
+export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Float;
 
@@ -29,7 +29,7 @@ export class roFloat extends BrsComponent implements BrsValue, Unboxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other instanceof roFloat) {
+        if (other instanceof RoFloat) {
             return BrsBoolean.from(other.intrinsic.getValue() === this.intrinsic.getValue());
         }
 
