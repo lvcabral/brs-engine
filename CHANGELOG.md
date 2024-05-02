@@ -1,5 +1,24 @@
 # Changelog
 
+<a name="v1.5.6"></a>
+
+## [v1.5.6 - Bump to Firmware 11.5 and Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.6) - 01 May 2024
+
+### Release Changes
+
+* Fixed loading fonts on CLI when running `.brs` files by [@lvcabral](https://github.com/lvcabral) in [#351](https://github.com/lvcabral/brs-engine/pull/351)
+* Added unit tests for `continue for/while` by [@lvcabral](https://github.com/lvcabral) in [#352](https://github.com/lvcabral/brs-engine/pull/352)
+* Improvements to stack trace and `try...catch` by [@lvcabral](https://github.com/lvcabral) in [#353](https://github.com/lvcabral/brs-engine/pull/353)
+* Updated engine-api.md by [@lvcabral](https://github.com/lvcabral) in [#354](https://github.com/lvcabral/brs-engine/pull/354)
+* Simplification of the Error objects and removing abbreviations from properties by [@lvcabral](https://github.com/lvcabral) in [#355](https://github.com/lvcabral/brs-engine/pull/355)
+* Renamed type `ErrorCode` to `ErrorDetail` by [@lvcabral](https://github.com/lvcabral) in [#356](https://github.com/lvcabral/brs-engine/pull/356)
+* Updated Firmware Version to 11.5 as `continue for/while` is now supported by [@lvcabral](https://github.com/lvcabral) in [#357](https://github.com/lvcabral/brs-engine/pull/357)
+* Removed usage of global objects to encrypt/decrypt packages by [@lvcabral](https://github.com/lvcabral) in [#358](https://github.com/lvcabral/brs-engine/pull/358)
+* Fixed multiple Static Analysis issues raised by Sonar Cloud by [@lvcabral](https://github.com/lvcabral) in [#359](https://github.com/lvcabral/brs-engine/pull/359)
+* Increased the timeout for CLI run zip file test to 10s by [@lvcabral](https://github.com/lvcabral) in [#360](https://github.com/lvcabral/brs-engine/pull/360)
+
+[Full Changelog][v1.5.6]
+
 <a name="v1.5.5"></a>
 
 ## [v1.5.5 - Several fixes and Unit Tests enabled](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.5) - 26 Apr 2024
@@ -721,6 +740,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.6]: https://github.com/lvcabral/brs-engine/compare/v1.5.5...v1.5.6
 [v1.5.5]: https://github.com/lvcabral/brs-engine/compare/v1.5.4...v1.5.5
 [v1.5.4]: https://github.com/lvcabral/brs-engine/compare/v1.5.3...v1.5.4
 [v1.5.3]: https://github.com/lvcabral/brs-engine/compare/v1.5.2...v1.5.3
