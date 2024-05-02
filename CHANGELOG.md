@@ -1,5 +1,16 @@
 # Changelog
 
+<a name="v1.5.7"></a>
+
+## [v1.5.7 - Fixed Critical Issue](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.7) - 01 May 2024
+
+### Release Changes
+
+* Fixed issue that was not restoring the environment in Try mode when `stopOnCrash` was enabled by [@lvcabral](https://github.com/lvcabral) in [#361](https://github.com/lvcabral/brs-engine/pull/361)
+* Reduced complexity of Try/Catch visit functions by [@lvcabral](https://github.com/lvcabral) in [#362](https://github.com/lvcabral/brs-engine/pull/362)
+
+[Full Changelog][v1.5.7]
+
 <a name="v1.5.6"></a>
 
 ## [v1.5.6 - Bump to Firmware 11.5 and Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.6) - 01 May 2024
@@ -740,6 +751,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.5.7]: https://github.com/lvcabral/brs-engine/compare/v1.5.6...v1.5.7
 [v1.5.6]: https://github.com/lvcabral/brs-engine/compare/v1.5.5...v1.5.6
 [v1.5.5]: https://github.com/lvcabral/brs-engine/compare/v1.5.4...v1.5.5
 [v1.5.4]: https://github.com/lvcabral/brs-engine/compare/v1.5.3...v1.5.4
