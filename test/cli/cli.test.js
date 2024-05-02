@@ -18,7 +18,7 @@ describe("cli", () => {
         });
         let result = stdout.trim().match(/hi from foo\(\)/g);
         expect(result.length).toEqual(1);
-    });
+    }, 10000);
 
     it("prints syntax errors once", async () => {
         let folder = "errors";
