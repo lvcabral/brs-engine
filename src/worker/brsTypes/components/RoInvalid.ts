@@ -5,7 +5,7 @@ import { Interpreter } from "../../interpreter";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 
-export class roInvalid extends BrsComponent implements BrsValue, Unboxable {
+export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: BrsInvalid;
 
@@ -31,7 +31,7 @@ export class roInvalid extends BrsComponent implements BrsValue, Unboxable {
             return BrsBoolean.True;
         }
 
-        if (other instanceof roInvalid) {
+        if (other instanceof RoInvalid) {
             return BrsBoolean.True;
         }
 

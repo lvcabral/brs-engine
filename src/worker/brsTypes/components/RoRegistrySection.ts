@@ -162,7 +162,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             let keys = new Array<BrsString>();
             [...interpreter.registry.keys()].forEach((key) => {
                 let regSection = this.devId + "." + this.section;
-                if (key.slice(0, regSection.length) === regSection) {
+                if (key.startsWith(regSection)) {
                     keys.push(new BrsString(key.slice(regSection.length + 1)));
                 }
             });

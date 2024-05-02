@@ -3,8 +3,8 @@ import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
 import { Float } from "./Float";
-import { roBoolean } from "./components/RoBoolean";
-import { roInvalid } from "./components/RoInvalid";
+import { RoBoolean } from "./components/RoBoolean";
+import { RoInvalid } from "./components/RoInvalid";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
@@ -250,8 +250,8 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
         return this.value;
     }
 
-    static False = new BrsBoolean(false);
-    static True = new BrsBoolean(true);
+    static readonly False = new BrsBoolean(false);
+    static readonly True = new BrsBoolean(true);
     static from(value: boolean) {
         return value ? BrsBoolean.True : BrsBoolean.False;
     }
@@ -282,7 +282,7 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
     }
 
     box() {
-        return new roBoolean(this);
+        return new RoBoolean(this);
     }
 
     /**
@@ -324,22 +324,20 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 /** Internal representation of the BrightScript `invalid` value. */
 export class BrsInvalid implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Invalid;
-    static Instance = new BrsInvalid();
+    static readonly Instance = new BrsInvalid();
 
     lessThan(other: BrsType): BrsBoolean {
         // invalid isn't less than anything
-        // TODO: Validate on a Roku
         return BrsBoolean.False;
     }
 
     greaterThan(other: BrsType): BrsBoolean {
         // but isn't greater than anything either
-        // TODO: Validate on a Roku
         return BrsBoolean.False;
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.Invalid || other instanceof roInvalid) {
+        if (other.kind === ValueKind.Invalid || other instanceof RoInvalid) {
             return BrsBoolean.True;
         }
         return BrsBoolean.False;
@@ -354,14 +352,14 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
     }
 
     box() {
-        return new roInvalid();
+        return new RoInvalid();
     }
 }
 
 /** Internal representation of uninitialized BrightScript variables. */
 export class Uninitialized implements BrsValue, Comparable {
     readonly kind = ValueKind.Uninitialized;
-    static Instance = new Uninitialized();
+    static readonly Instance = new Uninitialized();
 
     lessThan(other: BrsType): BrsBoolean {
         // uninitialized values aren't less than anything

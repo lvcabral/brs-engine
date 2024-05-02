@@ -250,9 +250,11 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, obj: BrsType) => {
+        impl: (interpreter: Interpreter, obj: BrsComponent) => {
             if (!(obj instanceof RoAssociativeArray)) {
-                // TODO: validate against RBI
+                interpreter.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roAssociativeArray.Append: invalid parameter type ${obj.getComponentName()}: ${interpreter.formatLocation()}`
+                );
                 return BrsInvalid.Instance;
             }
 

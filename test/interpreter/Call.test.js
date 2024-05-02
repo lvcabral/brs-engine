@@ -2,7 +2,7 @@ const brs = require("../../bin/brs.node");
 const { Lexeme } = brs.lexer;
 const { Expr, Stmt } = brs.parser;
 const { Interpreter } = brs;
-const { BrsString, Int32, roInt, ValueKind, BrsInvalid, roInvalid } = brs.types;
+const { BrsString, Int32, RoInt, ValueKind, BrsInvalid, RoInvalid } = brs.types;
 
 const { token, identifier, fakeLocation } = require("../parser/ParserTests");
 
@@ -107,7 +107,7 @@ describe("interpreter calls", () => {
 
         let result = interpreter.environment.get(identifier("result"));
         expect(result.kind).toBe(ValueKind.Object);
-        expect(result.value).toEqual(new roInt(new Int32(5)).value);
+        expect(result.value).toEqual(new RoInt(new Int32(5)).value);
     });
 
     it("automatically boxes arguments when appropriate", () => {
@@ -234,7 +234,7 @@ describe("interpreter calls", () => {
         interpreter.exec(ast);
         let result = interpreter.environment.get(identifier("result"));
         expect(result.kind).toEqual(ValueKind.Object);
-        expect(result.value).toEqual(new roInvalid().value);
+        expect(result.value).toEqual(new RoInvalid().value);
     });
 
     it("errors when returning from a void return", () => {

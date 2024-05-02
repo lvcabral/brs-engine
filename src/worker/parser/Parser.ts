@@ -158,7 +158,7 @@ interface ParseResults {
     statements: Stmt.Statement[];
     /** The errors encountered by the Parser. */
     errors: ParseError[];
-    /** Libraries ussage encountered by the Parser */
+    /** Libraries usage encountered by the Parser */
     libraries: Map<string, boolean>;
 }
 
@@ -536,7 +536,7 @@ export class Parser {
             };
         }
 
-        function assignment(...additionalterminators: Lexeme[]): Stmt.Assignment {
+        function assignment(...additionalTerminators: Lexeme[]): Stmt.Assignment {
             let name = advance() as Identifier;
             //add error if name is a reserved word that cannot be used as an identifier
             if (disallowedIdentifiers.has(name.text.toLowerCase())) {
@@ -544,18 +544,18 @@ export class Parser {
                 addError(name, `Cannot use reserved word "${name.text}" as an identifier`);
             }
             let operator = consume(
-                `Expected operator ('=', '+=', '-=', '*=', '/=', '\\=', '^=', '<<=', or '>>=') after idenfifier '${name.text}'`,
+                `Expected operator ('=', '+=', '-=', '*=', '/=', '\\=', '^=', '<<=', or '>>=') after identifier '${name.text}'`,
                 ...assignmentOperators
             );
 
             let value = expression();
-            if (!check(...additionalterminators)) {
+            if (!check(...additionalTerminators)) {
                 consume(
                     "Expected newline or ':' after assignment",
                     Lexeme.Newline,
                     Lexeme.Colon,
                     Lexeme.Eof,
-                    ...additionalterminators
+                    ...additionalTerminators
                 );
             }
 
@@ -588,7 +588,7 @@ export class Parser {
             }
         }
 
-        function statement(...additionalterminators: BlockTerminator[]): Statement | undefined {
+        function statement(...additionalTerminators: BlockTerminator[]): Statement | undefined {
             if (checkLibrary()) {
                 return libraryStatement();
             }
@@ -606,7 +606,7 @@ export class Parser {
             }
 
             if (check(Lexeme.Print)) {
-                return printStatement(...additionalterminators);
+                return printStatement(...additionalTerminators);
             }
 
             if (check(Lexeme.While)) {
@@ -663,7 +663,7 @@ export class Parser {
             }
 
             // TODO: support multi-statements
-            return setStatement(...additionalterminators);
+            return setStatement(...additionalTerminators);
         }
 
         function tryCatch(): Stmt.TryCatch {
@@ -979,7 +979,7 @@ export class Parser {
                         let index = tokens.indexOf(endIfToken);
                         let previousToken = tokens[index - 1];
                         if (previousToken.kind !== Lexeme.Colon) {
-                            addError(endIfToken, "Expected ':' to preceed 'end if'");
+                            addError(endIfToken, "Expected ':' to precede 'end if'");
                         }
                     }
                     match(Lexeme.Newline);
@@ -996,7 +996,7 @@ export class Parser {
                         let index = tokens.indexOf(endIfToken);
                         let previousToken = tokens[index - 1];
                         if (previousToken.kind !== Lexeme.Colon) {
-                            addError(endIfToken, "Expected ':' to preceed 'end if'");
+                            addError(endIfToken, "Expected ':' to precede 'end if'");
                         }
                     }
                     match(Lexeme.Newline);
@@ -1076,7 +1076,7 @@ export class Parser {
              * Attempts to find an expression-statement or an increment statement.
              * While calls are valid expressions _and_ statements, increment (e.g. `foo++`)
              * statements aren't valid expressions. They _do_ however fall under the same parsing
-             * priority as standalone function calls though, so we cann parse them in the same way.
+             * priority as standalone function calls though, so we can parse them in the same way.
              */
             function _expressionStatement(): Stmt.Expression | Stmt.Increment {
                 let expressionStart = peek();
@@ -1168,7 +1168,7 @@ export class Parser {
             }
         }
 
-        function printStatement(...additionalterminators: BlockTerminator[]): Stmt.Print {
+        function printStatement(...additionalTerminators: BlockTerminator[]): Stmt.Print {
             let printKeyword = advance();
 
             let values: (Expr.Expression | Stmt.PrintSeparator.Tab | Stmt.PrintSeparator.Space)[] =
@@ -1182,7 +1182,7 @@ export class Parser {
                 values.push(expression());
             }
 
-            while (!check(Lexeme.Newline, Lexeme.Colon, ...additionalterminators) && !isAtEnd()) {
+            while (!check(Lexeme.Newline, Lexeme.Colon, ...additionalTerminators) && !isAtEnd()) {
                 if (check(Lexeme.Semicolon)) {
                     values.push(advance() as Stmt.PrintSeparator.Space);
                 }
@@ -1196,7 +1196,7 @@ export class Parser {
                 }
             }
 
-            if (!check(...additionalterminators)) {
+            if (!check(...additionalTerminators)) {
                 consume(
                     "Expected newline or ':' after printed values",
                     Lexeme.Newline,
@@ -1350,7 +1350,7 @@ export class Parser {
 
                     //scrap the entire line
                     consumeUntil(Lexeme.Colon, Lexeme.Newline, Lexeme.Eof);
-                    //trash the newline character so we start the next iteraion on the next line
+                    //trash the newline character so we start the next iteration on the next line
                     advance();
                 }
 
@@ -1381,7 +1381,7 @@ export class Parser {
                 return undefined;
             }
 
-            //the block's location starts at the end of the preceeding token, and stops at the beginning of the `end` token
+            //the block's location starts at the end of the preceding token, and stops at the beginning of the `end` token
             const location: Location = {
                 file: startingToken.location.file,
                 start: startingToken.location.start,

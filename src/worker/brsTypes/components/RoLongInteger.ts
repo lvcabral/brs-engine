@@ -6,7 +6,7 @@ import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
 import { vsprintf } from "sprintf-js";
 
-export class roLongInteger extends BrsComponent implements BrsValue, Unboxable {
+export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Int64;
 
@@ -29,7 +29,7 @@ export class roLongInteger extends BrsComponent implements BrsValue, Unboxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other instanceof roLongInteger) {
+        if (other instanceof RoLongInteger) {
             return BrsBoolean.from(
                 other.intrinsic.getValue().low === this.intrinsic.getValue().low
             );

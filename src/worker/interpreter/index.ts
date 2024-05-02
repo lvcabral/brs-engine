@@ -390,7 +390,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         this.environment.define(
             Scope.Module,
-            statement.name.text!,
+            statement.name.text,
             toCallable(statement.func, statement.name.text)
         );
         return BrsInvalid.Instance;
@@ -531,7 +531,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             // dim takes max-index, so +1 to get the actual array size
             dimensionValues.push(val.getValue() + 1);
-            return;
         });
 
         let createArrayTree = (dimIndex: number = 0): RoArray => {

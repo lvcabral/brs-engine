@@ -16,7 +16,7 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand, debugPrompt } from "../common";
+import { DataType, DebugCommand, debugPrompt, numberToHex } from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
@@ -328,8 +328,4 @@ function parseCommand(command: string): any {
         }
     }
     return result;
-}
-
-function numberToHex(value: number, pad: string = ""): string {
-    return (value >>> 0).toString(16).padStart(8, pad);
 }
