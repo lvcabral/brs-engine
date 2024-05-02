@@ -239,7 +239,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = originalEnvironment;
             return returnValue;
         } catch (err: any) {
-            if (this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
+            if (!this._tryMode && this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                 // Keep environment for Micro Debugger in case of a crash
                 originalEnvironment = this._environment;
             }
