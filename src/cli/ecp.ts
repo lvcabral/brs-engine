@@ -502,7 +502,6 @@ function getMacAddress() {
                 return;
             }
             mac = iface.mac;
-            return;
         });
     });
     if (mac === "") {

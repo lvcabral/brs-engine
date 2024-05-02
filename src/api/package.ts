@@ -24,11 +24,11 @@ export const deviceData = Object.assign(defaultDeviceInfo, {
 // App Data
 const defaultSplashTime = 1600;
 let splashTimeout = 0;
-export let source: any[] = [];
-export let paths: any[] = [];
-export let txts: any[] = [];
-export let bins: any[] = [];
-export let manifestMap = new Map();
+export const source: any[] = [];
+export const paths: any[] = [];
+export const txts: any[] = [];
+export const bins: any[] = [];
+export const manifestMap = new Map();
 export const currentApp = createCurrentApp();
 export const lastApp = { id: "", exitReason: "EXIT_UNKNOWN" };
 
@@ -78,10 +78,10 @@ export function loadAppZip(fileName: string, file: any, callback: Function) {
     txtId = 0;
     srcId = 0;
     audId = 0;
-    source = [];
-    paths = [];
-    txts = [];
-    bins = [];
+    source.length = 0;
+    paths.length = 0;
+    txts.length = 0;
+    bins.length = 0;
 
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
@@ -152,8 +152,10 @@ function processBinaryFile(relativePath: string, fileData: Uint8Array, binType: 
 }
 
 function processManifest(content: string) {
-    manifestMap = parseManifest(content);
-
+    manifestMap.clear();
+    parseManifest(content).forEach((value, key) => {
+        manifestMap.set(key, value);
+    });
     currentApp.title = manifestMap.get("title") || "No Title";
     currentApp.subtitle = manifestMap.get("subtitle") || "";
     currentApp.audioMetadata = manifestMap.get("requires_audiometadata") === "1";
@@ -188,8 +190,12 @@ function processManifest(content: string) {
             }
         }
     }
+    showSplashOrIcon(splash, iconFile);
+    notifyAll("loaded", currentApp);
+}
+
+function showSplashOrIcon(splash?: string, iconFile?: Uint8Array) {
     if (typeof createImageBitmap !== "undefined") {
-        // Display Splash or Icon
         clearDisplay();
         if (splash?.slice(0, 5) === "pkg:/") {
             const splashFile = currentZip[splash.slice(5)];
@@ -200,7 +206,6 @@ function processManifest(content: string) {
             createImageBitmap(new Blob([iconFile])).then(drawIconAsSplash);
         }
     }
-    notifyAll("loaded", currentApp);
 }
 
 // Returns Device Serial Number based on Device Model and library version
