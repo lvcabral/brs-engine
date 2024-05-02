@@ -1042,68 +1042,50 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (!(err instanceof BrsError)) {
                 throw err;
             }
-            const btArray = this.formatBacktrace(err.location, false, err.backTrace) as RoArray;
-            let errDetail = RuntimeErrorDetail.Internal;
-            let errMessage = err.message;
-            if (err instanceof RuntimeError) {
-                errDetail = err.errorDetail;
-            }
-            const errorAA = new RoAssociativeArray([
-                { name: new BrsString("backtrace"), value: btArray },
-                { name: new BrsString("message"), value: new BrsString(errMessage) },
-                { name: new BrsString("number"), value: new Int32(errDetail.errno) },
-                { name: new BrsString("rethrown"), value: BrsBoolean.False },
-            ]);
-            if (err instanceof RuntimeError && err.extraFields?.size) {
-                for (const [key, value] of err.extraFields) {
-                    errorAA.set(new BrsString(key), value);
-                    if (key === "rethrown" && toBool(value)) {
-                        errorAA.set(new BrsString("rethrow_backtrace"), btArray);
-                    }
-                }
-            }
-            this.environment.define(Scope.Function, statement.errorBinding.name.text, errorAA);
+            this.environment.define(
+                Scope.Function,
+                statement.errorBinding.name.text,
+                this.formatErrorVariable(err)
+            );
             this.visitBlock(statement.catchBlock);
         }
         return BrsInvalid.Instance;
-        // Helper Function
-        function toBool(value: BrsType): boolean {
-            return isBrsBoolean(value) && value.toBoolean();
-        }
     }
 
     visitThrow(statement: Stmt.Throw): never {
         let errDetail = RuntimeErrorDetail.UserDefined;
         errDetail.message = "";
-        const extraFields: Map<string, BrsType> = new Map<string, BrsType>();
         let toThrow = this.evaluate(statement.value);
         if (isStringComp(toThrow)) {
             errDetail.message = toThrow.getValue();
-        } else if (toThrow instanceof RoAssociativeArray) {
-            for (const [key, element] of toThrow.elements) {
-                if (key.toLowerCase() === "number") {
-                    errDetail = validateErrorNumber(element, errDetail);
-                } else if (key.toLowerCase() === "message") {
-                    errDetail = validateErrorMessage(element, errDetail);
-                } else if (key.toLowerCase() === "backtrace") {
-                    if (element instanceof RoArray) {
-                        extraFields.set("backtrace", element);
-                        extraFields.set("rethrown", BrsBoolean.True);
-                    } else {
-                        errDetail = RuntimeErrorDetail.MalformedThrow;
-                        errDetail.message = `Thrown "backtrace" is not an object.`;
-                    }
-                } else if (key.toLowerCase() !== "rethrown") {
-                    extraFields.set(key, element);
-                }
-                if (errDetail.errno === RuntimeErrorDetail.MalformedThrow.errno) {
-                    extraFields.clear();
-                    break;
-                }
-            }
-        } else {
+            throw new RuntimeError(errDetail, statement.location, this._stack.slice());
+        }
+        if (!(toThrow instanceof RoAssociativeArray)) {
             errDetail = RuntimeErrorDetail.MalformedThrow;
-            errDetail.message = `Thrown value neither string nor roAssociativeArray.`;
+            errDetail.message = "Thrown value neither string nor roAssociativeArray.";
+            throw new RuntimeError(errDetail, statement.location, this._stack.slice());
+        }
+        const extraFields: Map<string, BrsType> = new Map<string, BrsType>();
+        for (const [key, element] of toThrow.elements) {
+            if (key.toLowerCase() === "number") {
+                errDetail = validateErrorNumber(element, errDetail);
+            } else if (key.toLowerCase() === "message") {
+                errDetail = validateErrorMessage(element, errDetail);
+            } else if (key.toLowerCase() === "backtrace") {
+                if (element instanceof RoArray) {
+                    extraFields.set("backtrace", element);
+                    extraFields.set("rethrown", BrsBoolean.True);
+                } else {
+                    errDetail = RuntimeErrorDetail.MalformedThrow;
+                    errDetail.message = `Thrown "backtrace" is not an object.`;
+                }
+            } else if (key.toLowerCase() !== "rethrown") {
+                extraFields.set(key, element);
+            }
+            if (errDetail.errno === RuntimeErrorDetail.MalformedThrow.errno) {
+                extraFields.clear();
+                break;
+            }
         }
         throw new RuntimeError(errDetail, statement.location, this._stack.slice(), extraFields);
         // Validation Functions
@@ -2039,6 +2021,30 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.events.emit("err", err);
         }
         throw err;
+    }
+
+    private formatErrorVariable(err: BrsError) {
+        const btArray = this.formatBacktrace(err.location, false, err.backTrace) as RoArray;
+        let errDetail = RuntimeErrorDetail.Internal;
+        let errMessage = err.message;
+        if (err instanceof RuntimeError) {
+            errDetail = err.errorDetail;
+        }
+        const errorAA = new RoAssociativeArray([
+            { name: new BrsString("backtrace"), value: btArray },
+            { name: new BrsString("message"), value: new BrsString(errMessage) },
+            { name: new BrsString("number"), value: new Int32(errDetail.errno) },
+            { name: new BrsString("rethrown"), value: BrsBoolean.False },
+        ]);
+        if (err instanceof RuntimeError && err.extraFields?.size) {
+            for (const [key, value] of err.extraFields) {
+                errorAA.set(new BrsString(key), value);
+                if (key === "rethrown" && isBrsBoolean(value) && value.toBoolean()) {
+                    errorAA.set(new BrsString("rethrow_backtrace"), btArray);
+                }
+            }
+        }
+        return errorAA;
     }
 
     /**
