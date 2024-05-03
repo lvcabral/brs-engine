@@ -311,7 +311,7 @@ function setNext(index: number) {
 
 function triggerWav(wav: string, volume: number, index: number) {
     const soundId = soundsIdx.get(wav.toLowerCase());
-    if (soundId) {
+    if (soundId !== undefined) {
         const sound = soundsDat[soundId];
         if (volume && !isNaN(volume)) {
             sound.volume(volume / 100);
