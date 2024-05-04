@@ -16,6 +16,7 @@ export interface Visitor<T> {
     visitExitFor(statement: ExitFor): never;
     visitExitWhile(statement: ExitWhile): never;
     visitPrint(statement: Print): BrsType;
+    visitGoto(statement: Goto): never;
     visitIf(statement: If): BrsType;
     visitBlock(block: Block): BrsType;
     visitFor(statement: For): BrsType;
@@ -309,8 +310,7 @@ export class Goto implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        //should search the code for the corresponding label, and set that as the next line to execute
-        throw new BrsError("Goto statement not implemented!", this.tokens.goto.location);
+        return visitor.visitGoto(this);
     }
 
     get location() {
@@ -331,7 +331,7 @@ export class Label implements Statement {
     ) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
-        // Label support not implemented, ignore labels for now.
+        // Label is just a marker, it doesn't produce any value
         return BrsInvalid.Instance;
     }
 

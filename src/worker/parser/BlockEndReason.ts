@@ -34,6 +34,13 @@ export class ExitWhileReason extends BlockEnd {
     }
 }
 
+/** An error thrown to handle a `goto` statement. */
+export class GotoLabel extends BlockEnd {
+    constructor(readonly location: Location, readonly label?: string) {
+        super("`goto` encountered", location);
+    }
+}
+
 /** An error thrown to handle a `return` statement. */
 export class ReturnValue extends BlockEnd {
     constructor(readonly location: Location, readonly value?: BrsType) {

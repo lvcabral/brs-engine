@@ -46,6 +46,8 @@ export class Environment {
     private mPointer = new RoAssociativeArray([]);
     private rootM: RoAssociativeArray;
 
+    gotoLabel: string = "";
+
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.
      * @param scope The logical region from a particular variable or function that defines where it may be accessed from

@@ -98,6 +98,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: 0, column: 0 },
     };
 
+    static InternalLocation = {
+        file: "(internal)",
+        start: { line: -1, column: -1 },
+        end: { line: -1, column: -1 },
+    };
+
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
@@ -258,46 +264,20 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._sourceMap = sourceMap;
         }
         try {
-            let mainVariable = new Expr.Variable({
-                kind: Lexeme.Identifier,
-                text: "runuserinterface",
-                isReserved: false,
-                location: {
-                    start: {
-                        line: -1,
-                        column: -1,
-                    },
-                    end: {
-                        line: -1,
-                        column: -1,
-                    },
-                    file: "(internal)",
-                },
-            });
-
-            let maybeMain = this.visitVariable(mainVariable);
+            let mainName = "RunUserInterface";
+            let maybeMain = this.getCallableFunction(mainName.toLowerCase());
 
             if (maybeMain.kind !== ValueKind.Callable) {
-                mainVariable = new Expr.Variable({
-                    kind: Lexeme.Identifier,
-                    text: "main",
-                    isReserved: false,
-                    location: {
-                        start: {
-                            line: -1,
-                            column: -1,
-                        },
-                        end: {
-                            line: -1,
-                            column: -1,
-                        },
-                        file: "(internal)",
-                    },
-                });
-                maybeMain = this.visitVariable(mainVariable);
+                mainName = "Main";
+                maybeMain = this.getCallableFunction(mainName.toLowerCase());
             }
-
             if (maybeMain.kind === ValueKind.Callable) {
+                let mainVariable = new Expr.Variable({
+                    kind: Lexeme.Identifier,
+                    text: mainName.toLowerCase(),
+                    isReserved: false,
+                    location: Interpreter.InternalLocation,
+                });
                 if (maybeMain.signatures[0].signature.args.length === 0) {
                     args = [];
                 }
@@ -319,7 +299,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         message:
                             "No entry point found! You must define a function Main() or RunUserInterface()",
                     },
-                    mainVariable.location
+                    Interpreter.InternalLocation
                 );
             }
         } catch (err: any) {
@@ -336,29 +316,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
-    getCallableFunction(functionName: string): Callable {
+    getCallableFunction(functionName: string): Callable | BrsInvalid {
         let callbackVariable = new Expr.Variable({
             kind: Lexeme.Identifier,
             text: functionName,
             isReserved: false,
-            location: {
-                start: {
-                    line: -1,
-                    column: -1,
-                },
-                end: {
-                    line: -1,
-                    column: -1,
-                },
-                file: "(internal)",
-            },
+            location: Interpreter.InternalLocation,
         });
         let maybeCallback = this.evaluate(callbackVariable);
         if (maybeCallback.kind === ValueKind.Callable) {
             return maybeCallback;
         }
 
-        throw new NotFound(`${functionName} was not found in scope`);
+        return BrsInvalid.Instance;
     }
 
     visitLibrary(statement: Stmt.Library): BrsInvalid {
@@ -468,7 +438,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     statement.name.location
                 )
             );
-            return BrsInvalid.Instance;
         }
 
         let value = this.evaluate(statement.value);
@@ -1122,6 +1091,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
+    visitGoto(statement: Stmt.Goto): never {
+        throw new Stmt.GotoLabel(statement.location, statement.tokens.label.text);
+    }
+
     visitContinueFor(statement: Stmt.ContinueFor): never {
         throw new Stmt.ContinueForReason(statement.location);
     }
@@ -1455,17 +1428,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     kind: Lexeme.Plus,
                     text: "+",
                     isReserved: false,
-                    location: {
-                        start: {
-                            line: -1,
-                            column: -1,
-                        },
-                        end: {
-                            line: -1,
-                            column: -1,
-                        },
-                        file: "(internal)",
-                    },
+                    location: Interpreter.InternalLocation,
                 },
                 new Expr.Literal(increment, statement.increment.location)
             )
@@ -1848,6 +1811,26 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
+        if (this._environment.gotoLabel !== "") {
+            if (statement instanceof Stmt.Label) {
+                if (statement.tokens.identifier.text === this._environment.gotoLabel) {
+                    this._environment.gotoLabel = "";
+                }
+            } else if (statement instanceof Stmt.If) {
+                this.visitBlock(statement.thenBranch);
+                if (this._environment.gotoLabel !== "" && statement.elseBranch) {
+                    this.visitBlock(statement.elseBranch);
+                }
+            } else if (
+                statement instanceof Stmt.For ||
+                statement instanceof Stmt.ForEach ||
+                statement instanceof Stmt.While
+            ) {
+                this.visitBlock(statement.body);
+            }
+            return BrsInvalid.Instance;
+        }
+
         const cmd = this.checkBreakCommand();
         if (cmd === DebugCommand.BREAK) {
             if (!(statement instanceof Stmt.Block)) {

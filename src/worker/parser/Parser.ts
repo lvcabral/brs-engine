@@ -461,6 +461,9 @@ export class Parser {
                     );
                 }
 
+                // TODO: For goto implementation iterate through all statements and check if labels exists saving it
+                // on a map to be used in goto statement, attaching it to the Function expression
+
                 let func = new Expr.Function(
                     args,
                     returnType,
@@ -658,6 +661,7 @@ export class Parser {
             }
 
             //does this line look like a label? (i.e.  `someIdentifier:` )
+            // TODO: Must support numbers as labels
             if (check(Lexeme.Identifier) && checkNext(Lexeme.Colon)) {
                 return labelStatement();
             }
@@ -1289,6 +1293,8 @@ export class Parser {
                 goto: advance(),
                 label: consume("Expected label identifier after goto keyword", Lexeme.Identifier),
             };
+
+            //TODO: check functionDeclarationLevel to ensure it is inside a function and not inside a try/catch block
 
             while (match(Lexeme.Newline, Lexeme.Colon));
 
