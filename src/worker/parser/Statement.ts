@@ -1,7 +1,6 @@
 import * as Expr from "./Expression";
 import { Token, Identifier, Location, Lexeme } from "../lexer";
 import { BrsType, BrsInvalid } from "../brsTypes";
-import { BrsError } from "../Error";
 import { BlockEnd } from "./BlockEndReason";
 
 /** A set of reasons why a `Block` stopped executing. */

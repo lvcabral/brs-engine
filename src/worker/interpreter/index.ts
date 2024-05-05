@@ -1550,7 +1550,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     break;
-                } else if (!(reason instanceof Stmt.ContinueWhileReason)) {
+                } else if (reason instanceof Stmt.ContinueWhileReason) {
+                    // continue to the next iteration
+                } else  {
                     // re-throw returns, runtime errors, etc.
                     throw reason;
                 }
@@ -1860,11 +1862,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (statement.tokens.identifier.text.toLowerCase() === this.environment.gotoLabel) {
                 this.environment.gotoLabel = "";
             }
+            return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.If) {
             this.visitBlock(statement.thenBranch);
             if (this.environment.gotoLabel !== "" && statement.elseBranch) {
                 this.visitBlock(statement.elseBranch);
             }
+            return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
                 this.visitBlock(statement.body);
@@ -1879,22 +1883,21 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     throw reason;
                 }
             }
-            if (this.environment.continueFor) {
-                return statement.accept<BrsType>(this);
-            }
         } else if (statement instanceof Stmt.While) {
             try {
                 this.visitBlock(statement.body);
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     return BrsInvalid.Instance;
-                } else if (!(reason instanceof Stmt.ContinueWhileReason)) {
+                } else if (reason instanceof Stmt.ContinueWhileReason) {
+                    // continue to the next iteration
+                } else {
                     throw reason;
                 }
             }
-            if (this.environment.gotoLabel === "") {
-                this.visitWhile(statement);
-            }
+        }
+        if (this.environment.gotoLabel === "") {
+            return statement.accept<BrsType>(this);
         }
         return BrsInvalid.Instance;
     }
