@@ -1404,19 +1404,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitFor(statement: Stmt.For): BrsType {
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
-        this.execute(statement.counterDeclaration);
-        const startValue = this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
-        const finalValue = this.evaluate(statement.finalValue) as Int32 | Float;
         let increment = this.evaluate(statement.increment) as Int32 | Float;
         if (increment instanceof Float) {
             increment = new Int32(Math.trunc(increment.getValue()));
-        }
-        if (
-            (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
-            (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
-        ) {
-            // Shortcut, do not process anything
-            return BrsInvalid.Instance;
         }
         const counterName = statement.counterDeclaration.name;
         const step = new Stmt.Assignment(
@@ -1433,6 +1423,23 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 new Expr.Literal(increment, statement.increment.location)
             )
         );
+        let startValue: BrsType;
+        if (this.environment.continueFor) {
+            this.execute(step);
+            startValue = this.evaluate(new Expr.Variable(counterName)) as Int32 | Float;
+            this.environment.continueFor = false;
+        } else {
+            this.execute(statement.counterDeclaration);
+            startValue = this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
+        }
+        const finalValue = this.evaluate(statement.finalValue) as Int32 | Float;
+        if (
+            (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
+            (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
+        ) {
+            // Shortcut, do not process anything
+            return BrsInvalid.Instance;
+        }
 
         if (increment.getValue() > 0) {
             while (
@@ -1498,19 +1505,30 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.stderr.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
         }
-
+        let continueAt = 0;
+        if (this.environment.continueFor) {
+            continueAt = this.environment.continueForEach;
+            this.environment.continueFor = false;
+            this.environment.continueForEach = 0;
+        }
+        let index = 0;
         target.getElements().every((element) => {
             this.environment.define(Scope.Function, statement.item.text!, element);
 
             // execute the block
             try {
-                this.execute(statement.body);
+                if (continueAt <= index) {
+                    this.execute(statement.body);
+                }
             } catch (reason) {
                 if (reason instanceof Stmt.ExitForReason) {
                     // break out of the loop
                     return false;
                 } else if (reason instanceof Stmt.ContinueForReason) {
                     // continue to the next iteration
+                } else if (reason instanceof Stmt.GotoLabel) {
+                    this.environment.continueForEach = index + 1;
+                    throw reason;
                 } else {
                     // re-throw returns, runtime errors, etc.
                     throw reason;
@@ -1518,6 +1536,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
 
             // keep looping
+            index++;
             return true;
         });
 
@@ -1849,14 +1868,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
                 this.visitBlock(statement.body);
+                this.environment.continueFor = this.environment.gotoLabel === "";
             } catch (reason) {
+                this.environment.continueFor = false;
                 if (reason instanceof Stmt.ExitForReason) {
                     return BrsInvalid.Instance;
-                } else if (!(reason instanceof Stmt.ContinueForReason)) {
+                } else if (reason instanceof Stmt.ContinueForReason) {
+                    this.environment.continueFor = true;
+                } else {
                     throw reason;
                 }
             }
-            if (this.environment.gotoLabel === "") {
+            if (this.environment.continueFor) {
                 return statement.accept<BrsType>(this);
             }
         } else if (statement instanceof Stmt.While) {

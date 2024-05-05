@@ -46,7 +46,10 @@ export class Environment {
     private mPointer = new RoAssociativeArray([]);
     private rootM: RoAssociativeArray;
 
+    /** Properties to support GOTO statement */
     gotoLabel: string = "";
+    continueFor: boolean = false;
+    continueForEach: number = 0;
 
     /**
      * Stores a `value` for the `name`d variable in the provided `scope`.

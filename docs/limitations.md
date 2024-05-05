@@ -21,7 +21,6 @@ There are several features from the **BrightScript** language and components tha
   * `roTextToSpeech`
   * `roTextureManager`
   * `roTextureRequest`
-* Statement `Goto` not yet supported.
 * Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
   * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
   * If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.

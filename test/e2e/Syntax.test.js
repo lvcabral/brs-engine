@@ -213,6 +213,14 @@ describe("end to end syntax", () => {
         await execute([resourceFile("continue.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            " 1",
+            " 2",
+            " 4",
+            " 5",
+            " 5",
+            " 4",
+            " 2",
+            " 1",
             "orange",
             "lime",
             " 0",
@@ -292,6 +300,50 @@ describe("end to end syntax", () => {
             "[subFunc] a = 11",
             "Error # = 24",
             `Error message = Type Mismatch. Operator "*" can't be applied to "Integer" and "String".`,
+        ]);
+    });
+
+    test("goto.brs", async () => {
+        await execute([resourceFile("goto.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "counter: 0",
+            "goto start",
+            "counter: 1",
+            "goto insideIf",
+            "nested: 1 - 1",
+            "nested: 1 - 2",
+            "back to start",
+            "counter: 2",
+        ]);
+    });
+    test("goto-func-for.brs", async () => {
+        await execute([resourceFile("goto-func-for.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "starting goto test",
+            "not jumped: 5",
+            "not jumped: 4",
+            "did jump! 3",
+            "not jumped: 2",
+            "not jumped: 1",
+            "not jumped: 0",
+            "not jumped:-1",
+            "error: aborting",
+            "successful goto test!",
+            "finished goto test",
+        ]);
+    });
+    test("goto-foreach.brs", async () => {
+        await execute([resourceFile("goto-foreach.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "starting goto test",
+            "not jumped: a",
+            "not jumped: b",
+            "did jump! c",
+            "not jumped: d",
+            "not jumped: e",
+            "not jumped: f",
+            "successful goto test!",
+            "finished goto test",
         ]);
     });
 });
