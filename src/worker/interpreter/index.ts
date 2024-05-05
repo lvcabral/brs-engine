@@ -1811,26 +1811,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
-        if (this._environment.gotoLabel !== "") {
-            if (statement instanceof Stmt.Label) {
-                if (statement.tokens.identifier.text === this._environment.gotoLabel) {
-                    this._environment.gotoLabel = "";
-                }
-            } else if (statement instanceof Stmt.If) {
-                this.visitBlock(statement.thenBranch);
-                if (this._environment.gotoLabel !== "" && statement.elseBranch) {
-                    this.visitBlock(statement.elseBranch);
-                }
-            } else if (
-                statement instanceof Stmt.For ||
-                statement instanceof Stmt.ForEach ||
-                statement instanceof Stmt.While
-            ) {
-                this.visitBlock(statement.body);
-            }
-            return BrsInvalid.Instance;
+        if (this.environment.gotoLabel !== "") {
+            return this.searchLabel(statement);
         }
-
         const cmd = this.checkBreakCommand();
         if (cmd === DebugCommand.BREAK) {
             if (!(statement instanceof Stmt.Block)) {
@@ -1845,6 +1828,52 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         this.location = statement.location;
         return statement.accept<BrsType>(this);
+    }
+
+    /**
+     * Iterates through the statements to find the label to jump to
+     * @param statement the root statement to start searching
+     *
+     * @returns Invalid if no exception is thrown
+     */
+    private searchLabel(this: Interpreter, statement: Stmt.Statement) {
+        if (statement instanceof Stmt.Label) {
+            if (statement.tokens.identifier.text.toLowerCase() === this.environment.gotoLabel) {
+                this.environment.gotoLabel = "";
+            }
+        } else if (statement instanceof Stmt.If) {
+            this.visitBlock(statement.thenBranch);
+            if (this.environment.gotoLabel !== "" && statement.elseBranch) {
+                this.visitBlock(statement.elseBranch);
+            }
+        } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
+            try {
+                this.visitBlock(statement.body);
+            } catch (reason) {
+                if (reason instanceof Stmt.ExitForReason) {
+                    return BrsInvalid.Instance;
+                } else if (!(reason instanceof Stmt.ContinueForReason)) {
+                    throw reason;
+                }
+            }
+            if (this.environment.gotoLabel === "") {
+                return statement.accept<BrsType>(this);
+            }
+        } else if (statement instanceof Stmt.While) {
+            try {
+                this.visitBlock(statement.body);
+            } catch (reason) {
+                if (reason instanceof Stmt.ExitWhileReason) {
+                    return BrsInvalid.Instance;
+                } else if (!(reason instanceof Stmt.ContinueWhileReason)) {
+                    throw reason;
+                }
+            }
+            if (this.environment.gotoLabel === "") {
+                this.visitWhile(statement);
+            }
+        }
+        return BrsInvalid.Instance;
     }
 
     // Helper methods

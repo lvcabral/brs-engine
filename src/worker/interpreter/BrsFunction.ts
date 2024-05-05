@@ -20,27 +20,26 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             returns: func.returns,
         },
         impl: (interpreter: Interpreter, ...args: BrsType[]) => {
-            let finished = false;
             interpreter.environment.gotoLabel = "";
             let location = func.location;
-            while (!finished) {
+            let done = false;
+            while (!done) {
                 try {
                     func.body.statements.forEach((statement) => interpreter.execute(statement));
-                    finished = true;
-                } catch (err: any) {
-                    if (err instanceof Stmt.GotoLabel) {
-                        if (err.label === undefined) {
-                            interpreter.addError(new RuntimeError(RuntimeErrorDetail.MissingLineNumber, location));
-                        }
-                        interpreter.environment.gotoLabel = err.label;
-                        location = err.location;
+                    done = true;
+                } catch (reason: any) {
+                    if (reason instanceof Stmt.GotoLabel) {
+                        interpreter.environment.gotoLabel = reason.label.toLowerCase();
+                        location = reason.location;
                     } else {
-                        throw err;
+                        throw reason;
                     }
                 }
             }
             if (interpreter.environment.gotoLabel !== "") {
-                interpreter.addError(new RuntimeError(RuntimeErrorDetail.MissingLineNumber, location));
+                interpreter.addError(
+                    new RuntimeError(RuntimeErrorDetail.MissingLineNumber, location)
+                );
             }
             return BrsInvalid.Instance;
         },
