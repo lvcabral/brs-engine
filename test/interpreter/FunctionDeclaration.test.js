@@ -4,6 +4,7 @@ const { Expr, Stmt } = brs.parser;
 const { Interpreter } = brs;
 const { Int32, BrsString, BrsInvalid, Callable, ValueKind, StdlibArgument } = brs.types;
 
+const { createMockStreams, allArgs } = require("../e2e/E2ETests");
 const { token, identifier } = require("../parser/ParserTests");
 
 const FUNCTION = token(Lexeme.Function, "function");
@@ -12,8 +13,14 @@ const END_FUNCTION = token(Lexeme.EndFunction, "end function");
 let interpreter;
 
 describe("interpreter function declarations", () => {
+    let tokens = {
+        print: token(Lexeme.Print, "print"),
+    };
+
     beforeEach(() => {
-        interpreter = new Interpreter();
+        const outputStreams = createMockStreams();
+        interpreter = new Interpreter(outputStreams);
+        stdout = outputStreams.stdout;
     });
 
     it("creates function callables", () => {
@@ -32,13 +39,14 @@ describe("interpreter function declarations", () => {
     });
 
     it("can call functions after definition", () => {
-        let emptyBlock = new Stmt.Block([]);
-        jest.spyOn(emptyBlock, "accept");
+        let mainBody = new Stmt.Block([
+            new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
+        ]);
 
         let statements = [
             new Stmt.Function(
                 identifier("foo"),
-                new Expr.Function([], ValueKind.Void, emptyBlock, FUNCTION, END_FUNCTION)
+                new Expr.Function([], ValueKind.Void, mainBody, FUNCTION, END_FUNCTION)
             ),
             new Stmt.Expression(
                 new Expr.Call(
@@ -51,7 +59,7 @@ describe("interpreter function declarations", () => {
 
         interpreter.exec(statements);
 
-        expect(emptyBlock.accept).toHaveBeenCalledTimes(1);
+        expect(allArgs(stdout.write).join("")).toEqual("foo\r\n");
     });
 
     it("returns values", () => {
@@ -229,8 +237,9 @@ describe("interpreter function declarations", () => {
     });
 
     it("automatically calls main()", () => {
-        let mainBody = new Stmt.Block([]);
-        jest.spyOn(mainBody, "accept");
+        let mainBody = new Stmt.Block([
+            new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
+        ]);
 
         let statements = [
             new Stmt.Function(
@@ -246,6 +255,6 @@ describe("interpreter function declarations", () => {
         ];
 
         expect(() => interpreter.exec(statements)).not.toThrow();
-        expect(mainBody.accept).toHaveBeenCalledTimes(1);
+        expect(allArgs(stdout.write).join("")).toEqual("foo\r\n");
     });
 });
