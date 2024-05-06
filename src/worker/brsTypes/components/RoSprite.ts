@@ -22,7 +22,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     private memberFlags: number;
     private collidableFlags: number;
     private data: BrsType;
-    private compositor: RoCompositor;
+    private compositor?: RoCompositor;
     private tickSum: number;
 
     constructor(
@@ -45,9 +45,11 @@ export class RoSprite extends BrsComponent implements BrsValue {
         this.data = BrsInvalid.Instance;
         this.compositor = compositor;
         this.tickSum = 0;
+        region.addReference();
         if (region instanceof RoArray) {
             this.regions = region;
             this.region = region.getElements()[this.frame] as RoRegion;
+            this.region.addReference();
         } else {
             this.region = region;
         }
@@ -152,6 +154,19 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            if (this.regions) {
+                this.regions.removeReference();
+            } else {
+                this.region.removeReference();
+            }
+            if (this.data instanceof BrsComponent) {
+                this.data?.removeReference();
+            }
+        }
+    }
     /** Returns an roRegion object that specifies the region of a bitmap that is the sprite's display graphic */
     private getRegion = new Callable("getRegion", {
         signature: {
@@ -170,7 +185,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.compositor.checkCollision(this, false);
+            return this.compositor?.checkCollision(this, false) ?? BrsInvalid.Instance;
         },
     });
 
@@ -181,7 +196,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.compositor.checkCollision(this, true);
+            return this.compositor?.checkCollision(this, true) ?? BrsInvalid.Instance;
         },
     });
 
@@ -350,6 +365,9 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, data: BrsType) => {
             this.data = data;
+            if (data instanceof BrsComponent) {
+                data.addReference();
+            }
             return BrsInvalid.Instance;
         },
     });
@@ -397,7 +415,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, z: Int32) => {
-            if (this.z !== z.getValue()) {
+            if (this.compositor && this.z !== z.getValue()) {
                 this.compositor.setSpriteZ(this.id, this.z, z.getValue());
                 this.z = z.getValue();
             }
@@ -412,7 +430,8 @@ export class RoSprite extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, z: Int32) => {
-            this.compositor.removeSprite(this.id, this.regions !== null);
+            this.compositor?.removeSprite(this.id, this.regions !== null);
+            this.compositor = undefined;
             return BrsInvalid.Instance;
         },
     });

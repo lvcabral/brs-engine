@@ -176,6 +176,11 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
                 if (param.defaultValue && mutableArgs[index] == null) {
                     mutableArgs[index] = subInterpreter.evaluate(param.defaultValue);
                 }
+                const value = mutableArgs[index];
+                if (value instanceof Brs.BrsComponent) {
+                    value.addReference();
+                    // console.log("Call arg bmp:", param.name.text, value.getReferenceCount());
+                }
 
                 subInterpreter.environment.define(
                     Scope.Function,

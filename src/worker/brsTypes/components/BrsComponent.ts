@@ -7,11 +7,13 @@ export class BrsComponent {
     private methods: Map<string, Callable> = new Map();
     private readonly componentName: string;
     private filter: string = "";
+    protected references: number;
 
     readonly interfaces = new Map<string, BrsInterface>();
 
     constructor(name: string) {
         this.componentName = name;
+        this.references = 0;
     }
 
     /**
@@ -50,6 +52,22 @@ export class BrsComponent {
             return iface?.hasMethod(method) ? this.methods.get(method) : undefined;
         }
         return this.methods.get(method);
+    }
+    getReferenceCount() {
+        return this.references;
+    }
+
+    removeReference(source = "") {
+        this.references--;
+    }
+
+    addReference() {
+        this.references++;
+    }
+
+    dispose() {
+        this.methods.clear();
+        this.interfaces.clear();
     }
 }
 

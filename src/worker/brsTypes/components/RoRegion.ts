@@ -39,6 +39,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
         this.valid = false;
+        bitmap.addReference();
         this.bitmap = bitmap;
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
         this.x = 0;
@@ -275,6 +276,13 @@ export class RoRegion extends BrsComponent implements BrsValue {
 
     equalTo(other: BrsType) {
         return BrsBoolean.False;
+    }
+
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.bitmap.removeReference("roRegion");
+        }
     }
 
     /** Returns a newly created copy of the region as a new roRegion object */

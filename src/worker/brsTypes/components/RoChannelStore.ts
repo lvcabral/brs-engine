@@ -53,6 +53,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.port?.removeReference();
+        }
+    }
+
     // ifChannelStore ------------------------------------------------------------------------------------
 
     /** Returns a unique number that can be used to identify whether a roChannelStoreEvent originated from this object. */
@@ -333,6 +340,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.addReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

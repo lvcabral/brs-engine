@@ -30,6 +30,13 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.port?.removeReference();
+        }
+    }
+
     // ifChannelStore ------------------------------------------------------------------------------------
 
     /** Enables a channel to be alerted when it has reached 80% of its memory usage limit. */
@@ -90,6 +97,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.addReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

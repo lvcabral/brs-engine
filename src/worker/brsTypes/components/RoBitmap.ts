@@ -17,6 +17,7 @@ import {
     drawObjectToComponent,
     drawRotatedObject,
     putImageAtPos,
+    releaseCanvas,
 } from "../draw2d";
 import { RoByteArray } from "./RoByteArray";
 import { GifReader } from "omggif";
@@ -35,6 +36,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private rgbaLast: number;
     private rgbaRedraw: boolean;
     private valid: boolean;
+    private myId: number;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
         super("roBitmap");
@@ -87,6 +89,8 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             interpreter.stderr.write(`warning,Invalid roBitmap param:${param}`);
             this.valid = false;
         }
+        interpreter.bmpCounter++;
+        this.myId = interpreter.bmpCounter;
         this.canvas = createNewCanvas(width, height);
         this.context = this.canvas.getContext("2d", {
             alpha: true,
@@ -273,6 +277,22 @@ export class RoBitmap extends BrsComponent implements BrsValue {
 
     isValid() {
         return this.valid;
+    }
+    addReference(): void {
+        super.addReference();
+        console.log("Bitmap add: ", this.myId, this.references);
+    }
+
+    removeReference(source = ""): void {
+        super.removeReference();
+        console.log("Bitmap remove: ", source, this.myId, this.references);
+    }
+
+    dispose() {
+        releaseCanvas(this.canvas);
+        if (this.rgbaCanvas) {
+            releaseCanvas(this.rgbaCanvas);
+        }
     }
 
     // ifDraw2D  -----------------------------------------------------------------------------------

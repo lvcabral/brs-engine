@@ -13,6 +13,7 @@ import {
     createNewCanvas,
     drawObjectToComponent,
     getDimensions,
+    releaseCanvas,
 } from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
@@ -195,6 +196,25 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.destBitmap?.removeReference("roCompositor");
+            this.sprites.forEach((layer) => {
+                layer.forEach((sprite) => {
+                    sprite.removeReference();
+                });
+            });
+            this.animations.forEach((sprite) => {
+                sprite.removeReference();
+            });
+        }
+    }
+
+    dispose(): void {
+        releaseCanvas(this.canvas);
+    }
+
     /** Set the destBitmap (roBitmap or roScreen) and the background color */
     private setDrawTo = new Callable("setDrawTo", {
         signature: {
@@ -209,6 +229,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             destBitmap: RoBitmap | RoScreen | RoRegion,
             rgbaBackground: Int32
         ) => {
+            destBitmap.addReference();
             this.destBitmap = destBitmap;
             const destDimensions = getDimensions(destBitmap);
             this.canvas.width = destDimensions.width;
@@ -232,6 +253,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
             if (region instanceof RoRegion) {
                 let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
+                sprite.addReference();
                 this.setSpriteLayer(sprite, z.getValue());
                 return sprite;
             } else {
@@ -261,7 +283,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (regions && regions.length > 0) {
                     if (regions[0] instanceof RoRegion) {
                         let sprite = new RoSprite(x, y, regionArray, z, this.spriteId++, this);
+                        sprite.addReference();
                         this.setSpriteLayer(sprite, z.getValue());
+                        sprite.addReference();
                         this.animations.push(sprite);
                         return sprite;
                     } else {

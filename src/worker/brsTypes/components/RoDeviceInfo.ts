@@ -104,6 +104,13 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.port?.removeReference();
+        }
+    }
+
     /** Returns the model name for the Roku Streaming Player device running the script. */
     private getModel = new Callable("getModel", {
         signature: {
@@ -981,6 +988,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.addReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

@@ -103,6 +103,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         start: { line: -1, column: -1 },
         end: { line: -1, column: -1 },
     };
+    bmpCounter: number = 0;
 
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
@@ -251,6 +252,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             this._environment = originalEnvironment;
             throw err;
+        } finally {
+            const localVars = this._environment.getList(Scope.Function);
+            for (let [key, value] of localVars) {
+                if (value instanceof BrsComponent) {
+                    value.removeReference("inSubEnv");
+                    // console.log("Removing references", key, value.getReferenceCount());
+                }
+            }
+
         }
     }
 
@@ -473,6 +483,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     })
                 );
             }
+        }
+        if (value instanceof BrsComponent) {
+            value.addReference();
+            // console.log("Component assignment:", statement.name.text, value.getReferenceCount());
         }
 
         this.environment.define(Scope.Function, statement.name.text, value);
@@ -1591,15 +1605,30 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
-        return new RoArray(expression.elements.map((expr) => this.evaluate(expr)));
+        return new RoArray(
+            expression.elements.map((expr, index) => {
+                const value = this.evaluate(expr);
+                if (value instanceof BrsComponent) {
+                    value.addReference();
+                    // console.log("visitArrayLiteral:", index, value.getReferenceCount());
+                }
+                return value;
+            })
+        );
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {
         return new RoAssociativeArray(
-            expression.elements.map((member) => ({
-                name: member.name,
-                value: this.evaluate(member.value),
-            }))
+            expression.elements.map((member) => {
+                if (member.value instanceof BrsComponent) {
+                    member.value.addReference();
+                    // console.log("visitAALiteral:", member.name, member.value.getReferenceCount());
+                }
+                return {
+                    name: member.name,
+                    value: this.evaluate(member.value),
+                };
+            })
         );
     }
 
@@ -1612,6 +1641,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         try {
+            if (value instanceof BrsComponent) {
+                value.addReference();
+                // console.log("visitDottedSet:", statement.name.text, value.getReferenceCount());
+            }
             source.set(new BrsString(statement.name.text), value);
         } catch (err: any) {
             this.addError(new BrsError(err.message, statement.name.location));
@@ -1703,6 +1736,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 current instanceof RoXMLList
             ) {
                 try {
+                    if (value instanceof BrsComponent) {
+                        value.addReference();
+                        // console.log("visitIndexedSet:", index, value.getReferenceCount());
+                    }
                     current.set(index, value);
                 } catch (err: any) {
                     this.addError(new BrsError(err.message, statement.closingSquare.location));
@@ -1970,12 +2007,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${text}${lf}`;
             } else if (isIterable(value)) {
                 const count = value.getElements().length;
-                debugMsg += `${varName}${value.getComponentName()} count:${count}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} count:${count} refs: ${
+                    value.getReferenceCount()
+                }\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {
                 const unboxed = value.unbox();
-                debugMsg += `${varName}${value.getComponentName()} val:${unboxed.toString()}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} val:${unboxed.toString()} refs: ${
+                    value.getReferenceCount()
+                }\r\n`;
             } else if (value.kind === ValueKind.Object) {
-                debugMsg += `${varName}${value.getComponentName()}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} refs: ${value.getReferenceCount()}\r\n`;
             } else if (value.kind === ValueKind.Callable) {
                 debugMsg += `${varName}${ValueKind.toString(
                     value.kind

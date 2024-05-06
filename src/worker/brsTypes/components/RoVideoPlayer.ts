@@ -82,6 +82,14 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         });
         return contents;
     }
+
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.port?.removeReference();
+        }
+    }
+
     /** Sets the content list to be played by the Video Player */
     private setContentList = new Callable("setContentList", {
         signature: {
@@ -432,6 +440,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableVideo(true);
+            port.addReference();
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -445,6 +454,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableVideo(true);
+            port.addReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

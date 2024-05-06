@@ -16,8 +16,10 @@ import {
     drawImageToContext,
     drawObjectToComponent,
     drawRotatedObject,
+    releaseCanvas,
 } from "../draw2d";
 import UPNG from "upng-js";
+import { release } from "os";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -175,6 +177,17 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     makeDirty() {
         this.isDirty = true;
+    }
+
+    removeReference(): void {
+        super.removeReference();
+        if (this.port && this.getReferenceCount() === 0) {
+            this.port.removeReference();
+        }
+    }
+
+    dispose(): void {
+        this.canvas.forEach((c) => releaseCanvas(c));
     }
     // ifScreen ------------------------------------------------------------------------------------
 
@@ -580,6 +593,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.addReference();
             port.enableKeys(true);
             this.port = port;
             return BrsInvalid.Instance;
@@ -594,6 +608,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableKeys(true);
+            port.addReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

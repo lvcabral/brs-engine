@@ -150,6 +150,17 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
     }
 
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.elements.forEach((value) => {
+                if (value instanceof BrsComponent) {
+                    value.removeReference("roAssociativeArray");
+                }
+            });
+        }
+    }
+
     /** if AA is in insensitive mode, it means that we should do insensitive search of real key */
     private findElementKey(elementKey: string, isCaseSensitiveFind = false) {
         if (this.modeCaseSensitive && isCaseSensitiveFind) {

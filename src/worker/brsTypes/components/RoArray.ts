@@ -162,6 +162,17 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         return compare;
     }
 
+    removeReference(): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.elements.forEach((element) => {
+                if (element instanceof BrsComponent) {
+                    element.removeReference("roArray");
+                }
+            });
+        }
+    }
+
     // ifArray
     private peek = new Callable("peek", {
         signature: {
