@@ -1,6 +1,17 @@
 # Changelog
 
-<a name="v1.5.7"></a>
+<a name="v1.6.0"></a>
+
+## [v1.6.0 - Goto Label Statement](https://github.com/lvcabral/brs-engine/releases/tag/v1.6.0) - 05 May 2024
+
+<a name="v1.6.0"></a>
+
+### Release Changes
+
+* Implemented `goto` statement by [@lvcabral](https://github.com/lvcabral) in [#367](https://github.com/lvcabral/brs-engine/pull/367)
+* Fixed sound `select` not being triggered [@lvcabral](https://github.com/lvcabral) in [#366](https://github.com/lvcabral/brs-engine/pull/366)
+
+[Full Changelog][v1.6.0]
 
 ## [v1.5.7 - Fixed Critical Issue](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.7) - 01 May 2024
 
@@ -751,6 +762,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.6.0]: https://github.com/lvcabral/brs-engine/compare/v1.5.7...v1.6.0
 [v1.5.7]: https://github.com/lvcabral/brs-engine/compare/v1.5.6...v1.5.7
 [v1.5.6]: https://github.com/lvcabral/brs-engine/compare/v1.5.5...v1.5.6
 [v1.5.5]: https://github.com/lvcabral/brs-engine/compare/v1.5.4...v1.5.5
