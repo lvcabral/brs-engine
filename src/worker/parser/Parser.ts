@@ -658,6 +658,7 @@ export class Parser {
             }
 
             //does this line look like a label? (i.e.  `someIdentifier:` )
+            // TODO: Must support numbers as labels
             if (check(Lexeme.Identifier) && checkNext(Lexeme.Colon)) {
                 return labelStatement();
             }

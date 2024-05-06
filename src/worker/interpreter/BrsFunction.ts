@@ -1,6 +1,8 @@
-import { Callable, BrsType } from "../brsTypes";
+import { Callable, BrsType, BrsInvalid } from "../brsTypes";
 import * as Expr from "../parser/Expression";
 import { Interpreter } from ".";
+import { Stmt } from "../parser";
+import { RuntimeError, RuntimeErrorDetail } from "../Error";
 
 /**
  * Converts a Function expression to a BrightScript callable representation so
@@ -18,8 +20,28 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             returns: func.returns,
         },
         impl: (interpreter: Interpreter, ...args: BrsType[]) => {
-            // just return whatever BrightScript returned
-            return func.body.accept(interpreter);
+            interpreter.environment.gotoLabel = "";
+            let location = func.location;
+            let done = false;
+            while (!done) {
+                try {
+                    func.body.statements.forEach((statement) => interpreter.execute(statement));
+                    done = true;
+                } catch (reason: any) {
+                    if (reason instanceof Stmt.GotoLabel) {
+                        interpreter.environment.gotoLabel = reason.label.toLowerCase();
+                        location = reason.location;
+                    } else {
+                        throw reason;
+                    }
+                }
+            }
+            if (interpreter.environment.gotoLabel !== "") {
+                interpreter.addError(
+                    new RuntimeError(RuntimeErrorDetail.MissingLineNumber, location)
+                );
+            }
+            return BrsInvalid.Instance;
         },
     });
     callFunc.setLocation(func.location);
