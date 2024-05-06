@@ -1552,7 +1552,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     break;
                 } else if (reason instanceof Stmt.ContinueWhileReason) {
                     // continue to the next iteration
-                } else  {
+                } else {
                     // re-throw returns, runtime errors, etc.
                     throw reason;
                 }

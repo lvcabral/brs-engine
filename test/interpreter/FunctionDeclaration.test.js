@@ -40,9 +40,7 @@ describe("interpreter function declarations", () => {
 
     it("can call functions after definition", () => {
         let mainBody = new Stmt.Block([
-            new Stmt.Print(tokens, [
-                new Expr.Literal(new BrsString("foo")),
-            ])
+            new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
         ]);
 
         let statements = [
@@ -240,9 +238,7 @@ describe("interpreter function declarations", () => {
 
     it("automatically calls main()", () => {
         let mainBody = new Stmt.Block([
-            new Stmt.Print(tokens, [
-                new Expr.Literal(new BrsString("foo")),
-            ])
+            new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
         ]);
 
         let statements = [

@@ -22,9 +22,7 @@ describe("interpreter function expressions", () => {
 
     it("creates callable functions", () => {
         let mainBody = new Stmt.Block([
-            new Stmt.Print(tokens, [
-                new Expr.Literal(new BrsString("foo")),
-            ])
+            new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
         ]);
 
         let statements = [
