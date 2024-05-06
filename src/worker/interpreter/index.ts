@@ -98,7 +98,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: 0, column: 0 },
     };
 
-    static InternalLocation = {
+    static readonly InternalLocation = {
         file: "(internal)",
         start: { line: -1, column: -1 },
         end: { line: -1, column: -1 },
