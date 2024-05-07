@@ -346,4 +346,13 @@ describe("end to end syntax", () => {
             "finished goto test",
         ]);
     });
+    test("goto-trycatch.brs", async () => {
+        await execute([resourceFile("goto-trycatch.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "start tests",
+            "test 1",
+            "test 2",
+            "test ends here",
+        ]);
+    });
 });

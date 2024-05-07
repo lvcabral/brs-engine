@@ -16,6 +16,7 @@ import {
     Argument,
     StdlibArgument,
 } from "../brsTypes";
+import { RuntimeErrorDetail } from "../Error";
 
 /** Set of all keywords that end blocks. */
 type BlockTerminator =
@@ -213,6 +214,7 @@ export class Parser {
     parse(toParse: readonly Token[]): ParseResults {
         let current = 0;
         let tokens = toParse;
+        let parsingTryBlock = false;
 
         //the depth of the calls to function declarations. Helps some checks know if they are at the root or not.
         let functionDeclarationLevel = 0;
@@ -669,7 +671,9 @@ export class Parser {
 
         function tryCatch(): Stmt.TryCatch {
             let tryKeyword = advance();
+            parsingTryBlock = true;
             let tryBlock = block(Lexeme.Catch);
+            parsingTryBlock = false;
             if (!tryBlock) {
                 throw addError(peek(), "Expected 'catch' to terminate try block");
             }
@@ -1344,7 +1348,14 @@ export class Parser {
                 let dec = declaration(...terminators);
 
                 if (dec) {
-                    statements.push(dec);
+                    if (dec instanceof Stmt.Label && parsingTryBlock) {
+                        addErrorAtLocation(
+                            dec.location,
+                            RuntimeErrorDetail.TryContainsLabel.message
+                        );
+                    } else {
+                        statements.push(dec);
+                    }
                 } else {
                     //something went wrong. reset to the top of the loop
                     current = loopCurrent;
