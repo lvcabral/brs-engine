@@ -47,7 +47,7 @@ import Long from "long";
 
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
-import { BlockEnd } from "../parser/Statement";
+import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, dataBufferIndex, defaultDeviceInfo } from "../common";
@@ -1008,7 +1008,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._tryMode = tryMode;
         } catch (err: any) {
             this._tryMode = tryMode;
-            if (!(err instanceof BrsError)) {
+            if (!(err instanceof BrsError) || err instanceof GotoLabel) {
                 throw err;
             }
             this.environment.define(
@@ -1868,6 +1868,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (this.environment.gotoLabel !== "" && statement.elseBranch) {
                 this.visitBlock(statement.elseBranch);
             }
+            return BrsInvalid.Instance;
+        } else if (statement instanceof Stmt.TryCatch) {
+            // Only search on Catch block, as labels are illegal inside Try block
+            this.visitBlock(statement.catchBlock);
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
