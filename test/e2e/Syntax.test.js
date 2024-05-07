@@ -307,12 +307,12 @@ describe("end to end syntax", () => {
         await execute([resourceFile("goto.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "counter: 0",
-            "goto start",
+            "goto 10",
             "counter: 1",
-            "goto insideIf",
+            "goto 20",
             "nested: 1 - 1",
             "nested: 1 - 2",
-            "back to start",
+            "back to 10",
             "counter: 2",
         ]);
     });
