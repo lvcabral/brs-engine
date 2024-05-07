@@ -1291,7 +1291,11 @@ export class Parser {
         function gotoStatement() {
             let tokens = {
                 goto: advance(),
-                label: consume("Expected valid label after goto keyword", Lexeme.Identifier, Lexeme.Integer),
+                label: consume(
+                    "Expected valid label after goto keyword",
+                    Lexeme.Identifier,
+                    Lexeme.Integer
+                ),
             };
 
             while (match(Lexeme.Newline, Lexeme.Colon));
