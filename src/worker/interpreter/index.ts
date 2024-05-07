@@ -1870,10 +1870,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.TryCatch) {
-            this.visitBlock(statement.tryBlock);
-            if (this.environment.gotoLabel !== "") {
-                this.visitBlock(statement.catchBlock);
-            }
+            // Only search on Catch block, as labels are illegal inside Try block
+            this.visitBlock(statement.catchBlock);
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
