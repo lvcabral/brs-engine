@@ -660,8 +660,7 @@ export class Parser {
             }
 
             //does this line look like a label? (i.e.  `someIdentifier:` )
-            // TODO: Must support numbers as labels
-            if (check(Lexeme.Identifier) && checkNext(Lexeme.Colon)) {
+            if ((check(Lexeme.Identifier) || check(Lexeme.Integer)) && checkNext(Lexeme.Colon)) {
                 return labelStatement();
             }
 
@@ -1261,7 +1260,7 @@ export class Parser {
 
         /**
          * Parses a `dim` statement
-         * @returns an AST representation of an `goto` statement.
+         * @returns an AST representation of an `dim` statement.
          */
         function dimStatement() {
             let dimToken = advance();
@@ -1292,7 +1291,11 @@ export class Parser {
         function gotoStatement() {
             let tokens = {
                 goto: advance(),
-                label: consume("Expected label identifier after goto keyword", Lexeme.Identifier),
+                label: consume(
+                    "Expected valid label after goto keyword",
+                    Lexeme.Identifier,
+                    Lexeme.Integer
+                ),
             };
 
             while (match(Lexeme.Newline, Lexeme.Colon));
