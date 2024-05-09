@@ -144,7 +144,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 }
                 region = this.regions.getElements()[this.frame] as RoRegion;
                 region.addReference();
-                this.region.removeReference("roSprite.nextFrame");
+                this.region.removeReference();
                 this.region = region;
             }
         }
@@ -162,12 +162,12 @@ export class RoSprite extends BrsComponent implements BrsValue {
         super.removeReference();
         if (this.references === 0) {
             if (this.regions) {
-                this.regions.removeReference("roSprite.removeReference");
+                this.regions.removeReference();
             } else {
-                this.region.removeReference("roSprite.removeReference");
+                this.region.removeReference();
             }
             if (this.data instanceof BrsComponent) {
-                this.data.removeReference("roSprite.removeReference");
+                this.data.removeReference();
             }
         }
     }
@@ -411,7 +411,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, region: RoRegion) => {
             region.addReference();
-            this.region.removeReference("roSprite.setRegion");
+            this.region.removeReference();
             this.region = region;
             return BrsInvalid.Instance;
         },
@@ -440,7 +440,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, z: Int32) => {
             this.compositor?.removeSprite(this.id, this.regions !== null);
-            this.compositor?.removeReference("roSprite.remove");
+            this.compositor?.removeReference();
             this.compositor = undefined;
             return BrsInvalid.Instance;
         },
