@@ -98,6 +98,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

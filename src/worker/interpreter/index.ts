@@ -253,14 +253,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = originalEnvironment;
             throw err;
         } finally {
-            const localVars = this._environment.getList(Scope.Function);
+            const localVars = newEnv.getList(Scope.Function);
             for (let [key, value] of localVars) {
                 if (value instanceof BrsComponent) {
                     value.removeReference("inSubEnv");
-                    // console.log("Removing references", key, value.getReferenceCount());
                 }
             }
-
         }
     }
 
@@ -484,11 +482,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             }
         }
-        if (value instanceof BrsComponent) {
-            value.addReference();
-            // console.log("Component assignment:", statement.name.text, value.getReferenceCount());
-        }
-
         this.environment.define(Scope.Function, statement.name.text, value);
         return BrsInvalid.Instance;
     }
@@ -2007,16 +2000,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${text}${lf}`;
             } else if (isIterable(value)) {
                 const count = value.getElements().length;
-                debugMsg += `${varName}${value.getComponentName()} count:${count} refs: ${
-                    value.getReferenceCount()
-                }\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {
                 const unboxed = value.unbox();
-                debugMsg += `${varName}${value.getComponentName()} val:${unboxed.toString()} refs: ${
-                    value.getReferenceCount()
-                }\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} val:${unboxed.toString()}\r\n`;
             } else if (value.kind === ValueKind.Object) {
-                debugMsg += `${varName}${value.getComponentName()} refs: ${value.getReferenceCount()}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()}\r\n`;
             } else if (value.kind === ValueKind.Callable) {
                 debugMsg += `${varName}${ValueKind.toString(
                     value.kind

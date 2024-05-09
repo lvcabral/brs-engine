@@ -441,6 +441,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableVideo(true);
             port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -455,6 +456,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableVideo(true);
             port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

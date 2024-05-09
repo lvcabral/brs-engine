@@ -224,6 +224,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableAudio(true);
             port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -238,6 +239,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableAudio(true);
             port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

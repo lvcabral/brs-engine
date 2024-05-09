@@ -1,5 +1,5 @@
 import { Identifier } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32 } from "../brsTypes";
+import { BrsType, RoAssociativeArray, Int32, BrsComponent } from "../brsTypes";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -59,10 +59,19 @@ export class Environment {
      */
     public define(scope: Scope, name: string, value: BrsType): void {
         let destination: Map<string, BrsType>;
-
+        const lowercaseName = name.toLowerCase();
         switch (scope) {
             case Scope.Function:
                 destination = this.function;
+                if (value instanceof BrsComponent) {
+                    value.addReference();
+                }
+                if (this.function.has(lowercaseName)) {
+                    let current = this.function.get(lowercaseName);
+                    if (current instanceof BrsComponent) {
+                        current.removeReference("function level define");
+                    }
+                }
                 break;
             case Scope.Module:
                 destination = this.module;
@@ -72,7 +81,7 @@ export class Environment {
                 break;
         }
 
-        destination.set(name.toLowerCase(), value);
+        destination.set(lowercaseName, value);
     }
 
     /**
@@ -113,13 +122,19 @@ export class Environment {
      * @param scope the scope to remove this variable from (defaults to "function")
      */
     public remove(name: string, scope: Scope = Scope.Function): void {
-        let lowercaseName = name.toLowerCase();
+        const lowercaseName = name.toLowerCase();
         switch (scope) {
             case Scope.Module:
                 this.module.delete(lowercaseName);
                 break;
             case Scope.Function:
-                this.function.delete(lowercaseName);
+                if (this.function.has(lowercaseName)) {
+                    let value = this.function.get(lowercaseName);
+                    if (value instanceof BrsComponent) {
+                        value.removeReference("function level remove");
+                    }
+                    this.function.delete(lowercaseName);
+                }
                 break;
             default:
                 break;

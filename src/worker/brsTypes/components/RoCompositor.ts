@@ -76,7 +76,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         this.sprites.forEach(function (layer) {
             layer.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
-                    object.splice(index, 1);
+                    object.splice(index, 1).forEach((sprite) => {
+                        sprite.removeReference();
+                    });
                     return true; // break
                 }
                 return false;
@@ -85,7 +87,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         if (animation) {
             this.animations.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
-                    object.splice(index, 1);
+                    object.splice(index, 1).forEach((sprite) => {
+                        sprite.removeReference();
+                    });
                     return true; // break
                 }
                 return false;
@@ -230,6 +234,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             rgbaBackground: Int32
         ) => {
             destBitmap.addReference();
+            this.destBitmap?.removeReference("roCompositor.setDrawTo");
             this.destBitmap = destBitmap;
             const destDimensions = getDimensions(destBitmap);
             this.canvas.width = destDimensions.width;

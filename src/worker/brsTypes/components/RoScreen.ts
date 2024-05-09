@@ -19,7 +19,6 @@ import {
     releaseCanvas,
 } from "../draw2d";
 import UPNG from "upng-js";
-import { release } from "os";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -181,8 +180,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     removeReference(): void {
         super.removeReference();
-        if (this.port && this.getReferenceCount() === 0) {
-            this.port.removeReference();
+        if (this.references === 0) {
+            this.port?.removeReference();
         }
     }
 
@@ -593,8 +592,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
             port.enableKeys(true);
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -609,6 +609,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableKeys(true);
             port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

@@ -451,7 +451,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.y = srcRegion.y;
             this.width = srcRegion.width;
             this.height = srcRegion.height;
-            this.bitmap = srcRegion.bitmap;
+            srcRegion.bitmap?.addReference();
+            this.bitmap?.removeReference("roRegion.set()");
             this.bitmap = srcRegion.bitmap;
             this.collisionType = srcRegion.collisionType;
             this.translationX = srcRegion.translationX;
