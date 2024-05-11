@@ -255,13 +255,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = originalEnvironment;
             throw err;
         } finally {
-            const localVars = newEnv.getList(Scope.Function);
-            for (let [key, value] of localVars) {
-                if (value instanceof BrsComponent) {
-                    // console.log("removing references from variable: ", key, value.getReferenceCount());
-                    value.removeReference("inSubEnv");
-                }
-            }
+            newEnv.removeReferences();
         }
     }
 

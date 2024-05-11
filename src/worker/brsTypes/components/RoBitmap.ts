@@ -288,10 +288,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     //     console.log("Bitmap add: ", this.myId, this.references);
     // }
 
-    // removeReference(source = ""): void {
-    //     super.removeReference();
-    //     console.log("Bitmap remove: ", source, this.myId, this.references);
-    // }
+    removeReference(source = ""): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.dispose();
+        }
+        // console.log("Bitmap remove: ", source, this.myId, this.references);
+    }
 
     dispose() {
         releaseCanvas(this.canvas);

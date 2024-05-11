@@ -131,13 +131,21 @@ export class Environment {
                 if (this.function.has(lowercaseName)) {
                     let value = this.function.get(lowercaseName);
                     if (value instanceof BrsComponent) {
-                        value.removeReference("function level remove");
+                        value.removeReference();
                     }
                     this.function.delete(lowercaseName);
                 }
                 break;
             default:
                 break;
+        }
+    }
+
+    public removeReferences() {
+        for (let [key, value] of this.function) {
+            if (value instanceof BrsComponent) {
+                value.removeReference();
+            }
         }
     }
 

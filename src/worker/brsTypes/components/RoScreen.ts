@@ -186,6 +186,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         super.removeReference();
         if (this.references === 0) {
             this.port?.removeReference();
+            this.dispose();
         }
     }
 

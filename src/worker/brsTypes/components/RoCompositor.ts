@@ -217,6 +217,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 // console.log("Compositor removing animation reference:", sprite.getId(), sprite.getReferenceCount());
                 sprite.removeReference();
             });
+            this.dispose();
         }
     }
 
