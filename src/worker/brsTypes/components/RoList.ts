@@ -337,7 +337,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, tvalue: BrsType) => {
-            this.add(tvalue, true)
+            this.add(tvalue, true);
             return BrsInvalid.Instance;
         },
     });

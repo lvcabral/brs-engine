@@ -26,7 +26,6 @@ sub main()
     tracks = []
     currAudioTrack = 0
     paused = false
-    stop
     screen.clear(&hFFFFFFFF)
     screen.drawRect(rect.x, rect.y, rect.w, rect.h, 0)
     screen.swapBuffers()

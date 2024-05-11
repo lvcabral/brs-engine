@@ -28,7 +28,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         super("roAssociativeArray");
         elements.forEach((member) => {
             this.addChildRef(member.value);
-            this.set(member.name, member.value, true)
+            this.set(member.name, member.value, true);
         });
         this.enumIndex = elements.length ? 0 : -1;
 

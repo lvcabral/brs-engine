@@ -1601,21 +1601,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
-        return new RoArray(
-            expression.elements.map((expr, index) => {
-                return this.evaluate(expr);
-            })
-        );
+        return new RoArray(expression.elements.map((expr) => this.evaluate(expr)));
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {
         return new RoAssociativeArray(
-            expression.elements.map((member) => {
-                return {
-                    name: member.name,
-                    value: this.evaluate(member.value),
-                };
-            })
+            expression.elements.map((member) => ({
+                name: member.name,
+                value: this.evaluate(member.value),
+            }))
         );
     }
 
@@ -1978,13 +1972,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         fnc.forEach((value, key) => {
             const varName = key.padEnd(17);
             if (PrimitiveKinds.has(value.kind)) {
-                debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(value)}`;
+                debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(
+                    value
+                )}`;
             } else if (isIterable(value)) {
                 const count = value.getElements().length;
                 debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {
                 const unboxed = value.unbox();
-                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} val:${this.formatValue(unboxed)}`;
+                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} val:${this.formatValue(
+                    unboxed
+                )}`;
             } else if (value.kind === ValueKind.Object) {
                 debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()}\r\n`;
             } else if (value.kind === ValueKind.Callable) {
@@ -2004,9 +2002,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (value instanceof BrsString) {
             text = `"${text.substring(0, 94)}"`;
         } else if (value instanceof Int32) {
-            text = `${text} (&h${numberToHex(value.getValue()).toUpperCase()})`
+            text = `${text} (&h${numberToHex(value.getValue()).toUpperCase()})`;
         } else if (value instanceof Int64) {
-            text = `${text} (&h${numberToHex(value.getValue().toNumber()).toUpperCase()})`
+            text = `${text} (&h${numberToHex(value.getValue().toNumber()).toUpperCase()})`;
         }
         return `${text}${lf}`;
     }

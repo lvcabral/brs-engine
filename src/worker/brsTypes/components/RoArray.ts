@@ -20,7 +20,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         if (args.length === 1 && Array.isArray(args[0])) {
             args[0].forEach((element) => {
                 this.addChildRef(element);
-                this.elements.push(element)
+                this.elements.push(element);
             });
         } else if (
             args.length === 2 &&
