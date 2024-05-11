@@ -213,6 +213,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         return drawImageToContext(ctx, image, this.alphaEnable, x, y);
     }
 
+    getId(): number {
+        return this.myId;
+    }
+
     getImageWidth(): number {
         return this.canvas.width;
     }

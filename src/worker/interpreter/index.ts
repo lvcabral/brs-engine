@@ -105,6 +105,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: -1, column: -1 },
     };
     bmpCounter: number = 0;
+    regCounter: number = 0;
 
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
@@ -257,6 +258,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             const localVars = newEnv.getList(Scope.Function);
             for (let [key, value] of localVars) {
                 if (value instanceof BrsComponent) {
+                    // console.log("removing references from variable: ", key, value.getReferenceCount());
                     value.removeReference("inSubEnv");
                 }
             }
@@ -515,8 +517,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             let size = dimensionValues[dimIndex];
             for (let i = 0; i < size; i++) {
                 if (dimIndex < dimensionValues.length) {
-                    let subchildren = createArrayTree(dimIndex + 1);
-                    if (subchildren !== undefined) children.push(subchildren);
+                    let subChildren = createArrayTree(dimIndex + 1);
+                    if (subChildren !== undefined) children.push(subChildren);
                 }
             }
             let child = new RoArray(children);
@@ -1601,12 +1603,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
         return new RoArray(
             expression.elements.map((expr, index) => {
-                const value = this.evaluate(expr);
-                if (value instanceof BrsComponent) {
-                    value.addReference();
-                    // console.log("visitArrayLiteral:", index, value.getReferenceCount());
-                }
-                return value;
+                return this.evaluate(expr);
             })
         );
     }
@@ -1614,10 +1611,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitAALiteral(expression: Expr.AALiteral): BrsType {
         return new RoAssociativeArray(
             expression.elements.map((member) => {
-                if (member.value instanceof BrsComponent) {
-                    member.value.addReference();
-                    // console.log("visitAALiteral:", member.name, member.value.getReferenceCount());
-                }
                 return {
                     name: member.name,
                     value: this.evaluate(member.value),
@@ -1635,10 +1628,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         try {
-            if (value instanceof BrsComponent) {
-                value.addReference();
-                // console.log("visitDottedSet:", statement.name.text, value.getReferenceCount());
-            }
             source.set(new BrsString(statement.name.text), value);
         } catch (err: any) {
             this.addError(new BrsError(err.message, statement.name.location));
@@ -1730,10 +1719,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 current instanceof RoXMLList
             ) {
                 try {
-                    if (value instanceof BrsComponent) {
-                        value.addReference();
-                        // console.log("visitIndexedSet:", index, value.getReferenceCount());
-                    }
                     current.set(index, value);
                 } catch (err: any) {
                     this.addError(new BrsError(err.message, statement.closingSquare.location));

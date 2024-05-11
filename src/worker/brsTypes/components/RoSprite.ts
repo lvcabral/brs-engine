@@ -44,13 +44,12 @@ export class RoSprite extends BrsComponent implements BrsValue {
         this.memberFlags = 1;
         this.data = BrsInvalid.Instance;
         this.compositor = compositor;
-        this.compositor.addReference();
         this.tickSum = 0;
-        region.addReference();
+        region.addReference("roSprite constructor");
         if (region instanceof RoArray) {
             this.regions = region;
             this.region = region.getElements()[this.frame] as RoRegion;
-            this.region.addReference();
+            this.region.addReference("roSprite constructor");
         } else {
             this.region = region;
         }
@@ -135,16 +134,17 @@ export class RoSprite extends BrsComponent implements BrsValue {
     nextFrame(tick: number) {
         if (this.regions) {
             this.tickSum += tick;
-            let region = this.regions.getElements()[this.frame] as RoRegion;
+            const frames = this.regions.getElements();
+            let region = frames[this.frame] as RoRegion;
             if (this.tickSum >= region.getAnimaTime()) {
                 this.frame++;
                 this.tickSum = 0;
-                if (this.frame >= this.regions.getElements().length) {
+                if (this.frame >= frames.length) {
                     this.frame = 0;
                 }
-                region = this.regions.getElements()[this.frame] as RoRegion;
-                region.addReference();
-                this.region.removeReference();
+                region = frames[this.frame] as RoRegion;
+                region.addReference("nextFrame");
+                this.region.removeReference("nextFrame");
                 this.region = region;
             }
         }
@@ -161,11 +161,9 @@ export class RoSprite extends BrsComponent implements BrsValue {
     removeReference(source = ""): void {
         super.removeReference();
         if (this.references === 0) {
-            if (this.regions) {
-                this.regions.removeReference();
-            } else {
-                this.region.removeReference();
-            }
+            // console.log("Removed last reference to roSprite: ", source, this.getId());
+            this.region?.removeReference("roSprite removeReference");
+            this.regions?.removeReference("roSprite removeReference");
             if (this.data instanceof BrsComponent) {
                 this.data.removeReference();
             }
@@ -372,7 +370,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 data.addReference();
             }
             if (this.data instanceof BrsComponent) {
-                this.data.removeReference("roSprite.setData()");
+                this.data.removeReference();
             }
             this.data = data;
             return BrsInvalid.Instance;
@@ -411,7 +409,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, region: RoRegion) => {
             region.addReference();
-            this.region.removeReference();
+            this.region.removeReference("setRegion");
             this.region = region;
             return BrsInvalid.Instance;
         },
@@ -440,7 +438,6 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, z: Int32) => {
             this.compositor?.removeSprite(this.id, this.regions !== null);
-            this.compositor?.removeReference();
             this.compositor = undefined;
             return BrsInvalid.Instance;
         },

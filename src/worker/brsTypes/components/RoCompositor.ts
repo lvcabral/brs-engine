@@ -203,13 +203,18 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     removeReference(): void {
         super.removeReference();
         if (this.references === 0) {
+            // if (this.destBitmap) {
+            //     console.log("Compositor removing destBitmap reference:", this.destBitmap.getId(), this.destBitmap.getReferenceCount());
+            // };
             this.destBitmap?.removeReference("roCompositor");
             this.sprites.forEach((layer) => {
                 layer.forEach((sprite) => {
+                    // console.log("Compositor removing sprite reference:", sprite.getId(), sprite.getReferenceCount());
                     sprite.removeReference();
                 });
             });
             this.animations.forEach((sprite) => {
+                // console.log("Compositor removing animation reference:", sprite.getId(), sprite.getReferenceCount());
                 sprite.removeReference();
             });
         }
@@ -288,9 +293,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (regions && regions.length > 0) {
                     if (regions[0] instanceof RoRegion) {
                         let sprite = new RoSprite(x, y, regionArray, z, this.spriteId++, this);
-                        sprite.addReference();
+                        sprite.addReference("sprite layer");
                         this.setSpriteLayer(sprite, z.getValue());
-                        sprite.addReference();
+                        sprite.addReference("animations array");
                         this.animations.push(sprite);
                         return sprite;
                     } else {

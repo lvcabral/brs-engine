@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, RoArray } from "..";
+import { BrsType, Float, Int32, RoArray, RoRegion } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -12,10 +12,12 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     constructor(elements?: BrsType[]) {
         super("roList");
+        this.elements = [];
         if (elements) {
-            this.elements = new Array<BrsType>(...elements);
-        } else {
-            this.elements = new Array<BrsType>();
+            elements.forEach((element) => {
+                this.addChildRef(element);
+                this.elements.push(element);
+            });
         }
         this.listIndex = -1;
         this.enumIndex = -1;
@@ -91,12 +93,16 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     set(index: BrsType, value: BrsType) {
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-            this.elements[Math.trunc(index.getValue())] = value;
+            const idx = Math.trunc(index.getValue());
+            this.addChildRef(value);
+            this.removeChildRef(this.elements[idx]);
+            this.elements[idx] = value;
         }
         return BrsInvalid.Instance;
     }
 
     add(element: BrsType, onTail: boolean = true) {
+        this.addChildRef(element);
         if (onTail) {
             this.elements.push(element);
         } else {
@@ -131,6 +137,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         if (this.enumIndex >= this.elements.length) {
             this.enumIndex = -1;
         }
+        this.removeChildRef(removed);
         return removed;
     }
 
@@ -162,6 +169,27 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     tail() {
         return this.elements.length - 1;
+    }
+
+    removeReference(source = ""): void {
+        super.removeReference();
+        if (this.references === 0) {
+            this.elements.forEach((element) => {
+                this.removeChildRef(element);
+            });
+        }
+    }
+
+    addChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            value.addReference("roList");
+        }
+    }
+
+    removeChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            value.removeReference("roList");
+        }
     }
 
     //--------------------------------- ifList ---------------------------------
@@ -309,7 +337,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, tvalue: BrsType) => {
-            this.elements.push(tvalue);
+            this.add(tvalue, true)
             return BrsInvalid.Instance;
         },
     });

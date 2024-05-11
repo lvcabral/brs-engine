@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, RoRegion } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -26,7 +26,10 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     constructor(elements: AAMember[]) {
         super("roAssociativeArray");
-        elements.forEach((member) => this.set(member.name, member.value, true));
+        elements.forEach((member) => {
+            this.addChildRef(member.value);
+            this.set(member.name, member.value, true)
+        });
         this.enumIndex = elements.length ? 0 : -1;
 
         this.registerMethods({
@@ -117,6 +120,8 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
 
         let indexValue = isCaseSensitive ? index.value : index.value.toLowerCase();
+        this.addChildRef(value);
+        this.removeChildRef(this.elements.get(indexValue));
         this.elements.set(indexValue, value);
 
         let lkey = index.value.toLowerCase();
@@ -150,14 +155,29 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
     }
 
-    removeReference(): void {
+    removeReference(source = ""): void {
         super.removeReference();
         if (this.references === 0) {
-            this.elements.forEach((value) => {
-                if (value instanceof BrsComponent) {
-                    value.removeReference("roAssociativeArray");
-                }
+            this.elements.forEach((element) => {
+                this.removeChildRef(element);
             });
+        }
+    }
+
+    addChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            value.addReference("roAssociativeArray");
+        }
+    }
+
+    removeChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            // if (value instanceof RoRegion) {
+            //     console.log("roArray.remove region:", value.getId(), value.getReferenceCount());
+            // } else if (value instanceof RoArray) {
+            //     console.log("roArray.remove array:", value.elements.length, value.getReferenceCount());
+            // }
+            value.removeReference("roAssociativeArray");
         }
     }
 
@@ -182,6 +202,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            this.elements.forEach((element) => {
+                this.removeChildRef(element);
+            });
             this.elements.clear();
             this.keyMap.clear();
             this.enumIndex = -1;
@@ -197,6 +220,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
         impl: (_: Interpreter, str: BrsString) => {
             let key = this.findElementKey(str.value, this.modeCaseSensitive);
+            if (key) {
+                this.removeChildRef(this.elements.get(key));
+            }
             let deleted = key ? this.elements.delete(key) : false;
 
             let lKey = str.value.toLowerCase();

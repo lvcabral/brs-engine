@@ -1,4 +1,4 @@
-import { BrsType, isBrsString, isBrsNumber, Int32, Float } from "..";
+import { BrsType, isBrsString, isBrsNumber, Int32, Float, RoRegion } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -18,7 +18,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         super("roArray");
         this.elements = [];
         if (args.length === 1 && Array.isArray(args[0])) {
-            this.elements = args[0];
+            args[0].forEach((element) => {
+                this.addChildRef(element);
+                this.elements.push(element)
+            });
         } else if (
             args.length === 2 &&
             (args[0] instanceof Int32 || args[0] instanceof Float) &&
@@ -96,7 +99,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
 
     set(index: BrsType, value: BrsType) {
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-            this.elements[Math.trunc(index.getValue())] = value;
+            const idx = Math.trunc(index.getValue());
+            this.addChildRef(value);
+            this.removeChildRef(this.elements[idx]);
+            this.elements[idx] = value;
         }
         return BrsInvalid.Instance;
     }
@@ -162,14 +168,29 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         return compare;
     }
 
-    removeReference(): void {
+    removeReference(source = ""): void {
         super.removeReference();
         if (this.references === 0) {
             this.elements.forEach((element) => {
-                if (element instanceof BrsComponent) {
-                    element.removeReference("roArray");
-                }
+                this.removeChildRef(element);
             });
+        }
+    }
+
+    addChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            value.addReference("roArray");
+        }
+    }
+
+    removeChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            // if (value instanceof RoRegion) {
+            //     console.log("roArray.remove region:", value.getId(), value.getReferenceCount());
+            // } else if (value instanceof RoArray) {
+            //     console.log("roArray.remove array:", value.elements.length, value.getReferenceCount());
+            // }
+            value.removeReference("roArray");
         }
     }
 
@@ -191,6 +212,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             const removed = this.elements.pop();
+            this.removeChildRef(removed);
             this.updateNext();
             return removed || BrsInvalid.Instance;
         },
@@ -203,6 +225,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, tvalue: BrsType) => {
             if (this.resizable || this.elements.length < this.maxSize) {
+                this.addChildRef(tvalue);
                 this.elements.push(tvalue);
                 this.updateNext();
                 this.updateCapacity(1.25);
@@ -222,6 +245,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             const removed = this.elements.shift();
+            this.removeChildRef(removed);
             this.updateNext();
             return removed || BrsInvalid.Instance;
         },
@@ -234,6 +258,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, tvalue: BrsType) => {
             if (this.resizable || this.elements.length < this.maxSize) {
+                this.addChildRef(tvalue);
                 this.elements.unshift(tvalue);
                 this.updateNext();
                 this.updateCapacity(1.25);
@@ -256,6 +281,9 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
             const deleted = this.elements.splice(index.getValue(), 1);
+            deleted.forEach((element) => {
+                this.removeChildRef(element);
+            });
             this.updateNext();
             return BrsBoolean.from(deleted.length > 0);
         },
@@ -277,6 +305,9 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            this.elements.forEach((element) => {
+                this.removeChildRef(element);
+            });
             this.elements = [];
             this.enumIndex = -1;
             return BrsInvalid.Instance;
@@ -297,6 +328,9 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             }
 
             if (this.resizable || this.elements.length + array.elements.length <= this.maxSize) {
+                array.elements.forEach((element) => {
+                    this.addChildRef(element);
+                });
                 this.elements = [
                     ...this.elements,
                     ...array.elements.filter((element) => !!element), // don't copy "holes" where no value exists

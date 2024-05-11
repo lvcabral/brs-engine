@@ -61,7 +61,7 @@ export class BrsComponent {
         this.references--;
     }
 
-    addReference() {
+    addReference(source = "") {
         this.references++;
     }
 
