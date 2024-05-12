@@ -1,5 +1,18 @@
 # Changelog
 
+<a name="v1.6.1"></a>
+
+## [v1.6.1 - Numeric Labels](https://github.com/lvcabral/brs-engine/releases/tag/v1.6.1) - 11 May 2024
+
+<a name="v1.6.1"></a>
+
+### Release Changes
+
+* Added support for numeric labels by [@lvcabral](https://github.com/lvcabral) in [#372](https://github.com/lvcabral/brs-engine/pull/372)
+* Fixed `goto` with `try/catch` by [@lvcabral](https://github.com/lvcabral) in [#371](https://github.com/lvcabral/brs-engine/pull/371)
+
+[Full Changelog][v1.6.0]
+
 <a name="v1.6.0"></a>
 
 ## [v1.6.0 - Goto Label Statement](https://github.com/lvcabral/brs-engine/releases/tag/v1.6.0) - 05 May 2024
@@ -762,6 +775,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.6.1]: https://github.com/lvcabral/brs-engine/compare/v1.6.0...v1.6.1
 [v1.6.0]: https://github.com/lvcabral/brs-engine/compare/v1.5.7...v1.6.0
 [v1.5.7]: https://github.com/lvcabral/brs-engine/compare/v1.5.6...v1.5.7
 [v1.5.6]: https://github.com/lvcabral/brs-engine/compare/v1.5.5...v1.5.6
