@@ -277,9 +277,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     }
 
     dispose() {
-        releaseCanvas(this.canvas);
+        releaseCanvas(this.context);
         if (this.rgbaCanvas) {
-            releaseCanvas(this.rgbaCanvas);
+            const ctx = this.rgbaCanvas.getContext("2d") as BrsCanvasContext2D;
+            releaseCanvas(ctx);
         }
     }
 

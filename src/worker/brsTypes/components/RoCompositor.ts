@@ -208,7 +208,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         this.animations.forEach((sprite) => {
             sprite.removeReference();
         });
-        releaseCanvas(this.canvas);
+        releaseCanvas(this.context);
     }
 
     /** Set the destBitmap (roBitmap or roScreen) and the background color */

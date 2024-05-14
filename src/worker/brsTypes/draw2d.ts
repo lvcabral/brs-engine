@@ -290,11 +290,10 @@ export function createNewCanvas(width: number, height: number) {
     /// #endif
 }
 
-export function releaseCanvas(canvas: BrsCanvas) {
-    canvas.width = 1;
-    canvas.height = 1;
-    const ctx = canvas.getContext("2d");
-    ctx?.clearRect(0, 0, 1, 1);
+export function releaseCanvas(ctx: BrsCanvasContext2D) {
+    ctx.canvas.width = 1;
+    ctx.canvas.height = 1;
+    ctx.clearRect(0, 0, 1, 1);
 }
 
 export function drawImageAtPos(image: BrsCanvas, ctx: BrsCanvasContext2D, x: number, y: number) {
