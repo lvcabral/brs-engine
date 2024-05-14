@@ -38,7 +38,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private width: number;
     private height: number;
     private valid: boolean;
-    private myId: number;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
         super("roBitmap");
@@ -91,8 +90,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             interpreter.stderr.write(`warning,Invalid roBitmap param:${param}`);
             this.valid = false;
         }
-        interpreter.bmpCounter++;
-        this.myId = interpreter.bmpCounter;
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         if (image) {
@@ -211,10 +208,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
         const ctx = this.context;
         return drawImageToContext(ctx, image, this.alphaEnable, x, y);
-    }
-
-    getId(): number {
-        return this.myId;
     }
 
     getImageWidth(): number {

@@ -117,7 +117,7 @@ export const BrsObjects = new Map<string, Function>([
             y: Int32,
             width: Int32,
             height: Int32
-        ) => createRegion(interpreter, bitmap, x, y, width, height),
+        ) => createRegion(bitmap, x, y, width, height),
     ],
     [
         "roscreen",

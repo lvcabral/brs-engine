@@ -104,8 +104,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         start: { line: -1, column: -1 },
         end: { line: -1, column: -1 },
     };
-    bmpCounter: number = 0;
-    regCounter: number = 0;
 
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();

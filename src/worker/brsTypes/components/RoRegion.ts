@@ -35,7 +35,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private wrap: boolean;
     private collisionCircle: Circle;
     private collisionRect: Rect;
-    public myId = 0;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
@@ -269,10 +268,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
 
     getSourceBitmap(): RoBitmap | RoScreen {
         return this.bitmap;
-    }
-
-    getId(): number {
-        return this.myId;
     }
 
     toString(parent?: BrsType): string {
@@ -928,7 +923,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
 }
 
 export function createRegion(
-    interpreter: Interpreter,
     bitmap: RoBitmap | RoScreen,
     x: Int32,
     y: Int32,
@@ -936,9 +930,5 @@ export function createRegion(
     height: Int32
 ) {
     const reg = new RoRegion(bitmap, x, y, width, height);
-    if (reg.isValid()) {
-        interpreter.regCounter++;
-        reg.myId = interpreter.regCounter;
-    }
     return reg.isValid() ? reg : BrsInvalid.Instance;
 }
