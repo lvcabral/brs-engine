@@ -182,7 +182,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     addChildRef(value: BrsType | undefined) {
         if (value instanceof BrsComponent) {
-            value.addReference("roList");
+            value.addReference();
         }
     }
 

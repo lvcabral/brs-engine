@@ -64,7 +64,7 @@ export class Environment {
             case Scope.Function:
                 destination = this.function;
                 if (value instanceof BrsComponent) {
-                    value.addReference("function level define");
+                    value.addReference();
                 }
                 if (destination.has(lowercaseName)) {
                     let current = destination.get(lowercaseName);

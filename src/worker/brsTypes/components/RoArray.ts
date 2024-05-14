@@ -179,7 +179,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
 
     addChildRef(value: BrsType | undefined) {
         if (value instanceof BrsComponent) {
-            value.addReference("roArray");
+            value.addReference();
         }
     }
 

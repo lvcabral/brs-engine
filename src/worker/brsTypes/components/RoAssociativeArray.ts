@@ -166,7 +166,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     addChildRef(value: BrsType | undefined) {
         if (value instanceof BrsComponent) {
-            value.addReference("roAssociativeArray");
+            value.addReference();
         }
     }
 

@@ -45,11 +45,11 @@ export class RoSprite extends BrsComponent implements BrsValue {
         this.data = BrsInvalid.Instance;
         this.compositor = compositor;
         this.tickSum = 0;
-        region.addReference("roSprite constructor");
+        region.addReference();
         if (region instanceof RoArray) {
             this.regions = region;
             this.region = region.getElements()[this.frame] as RoRegion;
-            this.region.addReference("roSprite constructor");
+            this.region.addReference();
         } else {
             this.region = region;
         }
@@ -143,7 +143,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
                     this.frame = 0;
                 }
                 region = frames[this.frame] as RoRegion;
-                region.addReference("nextFrame");
+                region.addReference();
                 this.region.removeReference("nextFrame");
                 this.region = region;
             }
