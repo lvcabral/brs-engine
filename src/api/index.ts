@@ -8,8 +8,10 @@
 import { SubscribeCallback, getNow, getWorkerLibPath, context, saveDataBuffer } from "./util";
 
 import {
+    AppPayload,
     DataType,
     DebugCommand,
+    DeviceInfo,
     RemoteType,
     dataBufferIndex,
     dataBufferSize,
@@ -92,7 +94,7 @@ let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
 let sharedArray: Int32Array;
 
 // API Methods
-export function initialize(customDeviceInfo?: any, options: any = {}) {
+export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
         const invalidKeys = [
             "registry",
@@ -355,28 +357,32 @@ function resetArray() {
 function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
     reader.onload = function (_) {
-        manifestMap.clear();
-        manifestMap.set("title", "BRS File");
-        manifestMap.set("major_version", "1");
-        manifestMap.set("minor_version", "0");
-        manifestMap.set("build_version", "0");
-        manifestMap.set("requires_audiometadata", "1");
-        currentApp.id = "brs";
-        currentApp.title = fileName;
-        paths.length = 0;
-        bins.length = 0;
-        txts.length = 0;
-        source.push(this.result);
-        paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
-        clearDisplay();
-        notifyAll("loaded", currentApp);
-        runApp(createPayload(1, false));
+        if (typeof this.result === "string") {
+            manifestMap.clear();
+            manifestMap.set("title", "BRS File");
+            manifestMap.set("major_version", "1");
+            manifestMap.set("minor_version", "0");
+            manifestMap.set("build_version", "0");
+            manifestMap.set("requires_audiometadata", "1");
+            currentApp.id = "brs";
+            currentApp.title = fileName;
+            paths.length = 0;
+            bins.length = 0;
+            txts.length = 0;
+            source.push(this.result);
+            paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
+            clearDisplay();
+            notifyAll("loaded", currentApp);
+            runApp(createPayload(1, false));
+        } else {
+            apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);
+        }
     };
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
 // Execute Engine Web Worker
-function runApp(payload: object) {
+function runApp(payload: AppPayload) {
     showDisplay();
     currentApp.running = true;
     brsWorker = new Worker(brsWrkLib);

@@ -24,7 +24,7 @@ import {
     getSerialNumber,
 } from "../api/package";
 import { isNumber } from "../api/util";
-import { debugPrompt, dataBufferIndex, dataBufferSize } from "../worker/common";
+import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload } from "../worker/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
@@ -150,7 +150,7 @@ function showAppTitle() {
  * if a password is passed with parameter --pack.
  *
  */
-function runApp(payload: any) {
+function runApp(payload: AppPayload) {
     payload.stopOnCrash = program.debug ?? false;
     payload.password = program.pack;
     if (program.ecp && !workerReady) {

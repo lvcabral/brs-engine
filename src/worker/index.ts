@@ -8,6 +8,8 @@
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import {
+    AppFilePath,
+    AppPayload,
     DeviceInfo,
     dataBufferIndex,
     dataBufferSize,
@@ -46,7 +48,7 @@ const algorithm = "aes-256-ctr";
 /// #if BROWSER
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
-    onmessage = function (event: any) {
+    onmessage = function (event: MessageEvent) {
         if (event.data.device) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
@@ -106,7 +108,7 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  * Returns a new instance of the Interpreter for REPL
  *
  */
-export function getInterpreter(payload: any) {
+export function getInterpreter(payload: AppPayload) {
     const replInterpreter = new Interpreter();
     replInterpreter.onError(logError);
     setupDeviceData(payload.device, replInterpreter);
@@ -159,8 +161,8 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  *
  * @returns object with the payload to run the app.
  */
-export function createPayload(files: any[], customDeviceData?: Partial<DeviceInfo>) {
-    const paths: Object[] = [];
+export function createPayload(files: string[], customDeviceData?: Partial<DeviceInfo>): AppPayload {
+    const paths: AppFilePath[] = [];
     const source: string[] = [];
     const texts: string[] = [];
     let manifest: Map<string, string> | undefined;
@@ -174,7 +176,7 @@ export function createPayload(files: any[], customDeviceData?: Partial<DeviceInf
                 const sourceCode = fs.readFileSync(filePath);
                 if (sourceCode) {
                     source.push(sourceCode.toString());
-                    paths.push({ url: `source/${fileName}`, id: id, type: "source" });
+                    paths.push({ id: id, url: `source/${fileName}`, type: "source" });
                     id++;
                 }
             } catch (err: any) {
@@ -186,7 +188,7 @@ export function createPayload(files: any[], customDeviceData?: Partial<DeviceInf
                 if (fileData) {
                     manifest = parseManifest(fileData.toString());
                     texts.push(fileData.toString());
-                    paths.push({ url: "manifest", id: 0, type: "text" });
+                    paths.push({ id: 0, url: "manifest", type: "text" });
                 }
             } catch (err: any) {
                 throw err;
@@ -212,7 +214,7 @@ export function createPayload(files: any[], customDeviceData?: Partial<DeviceInf
         return {
             device: deviceData,
             manifest: manifest,
-            input: [],
+            input: new Map(),
             paths: paths,
             brs: source,
             texts: texts,
@@ -256,7 +258,10 @@ export function getFonts(fontPath: string, fontFamily: string) {
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 
-export function executeFile(payload: any, customOptions?: Partial<ExecutionOptions>): RunResult {
+export function executeFile(
+    payload: AppPayload,
+    customOptions?: Partial<ExecutionOptions>
+): RunResult {
     const options = {
         ...{
             entryPoint: payload.entryPoint ?? true,
@@ -298,18 +303,14 @@ interface SourceResult {
     iv?: string;
 }
 
-export function setupPayload(interpreter: Interpreter, payload: any): SourceResult {
+export function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
-    interpreter.setRegistry(payload.device.registry);
+    if (payload.device.registry) {
+        interpreter.setRegistry(payload.device.registry);
+    }
     setupDeviceData(payload.device, interpreter);
     setupDeviceFonts(payload.device, interpreter);
-    return setupPackageFiles(
-        payload.paths,
-        payload.binaries,
-        payload.texts,
-        payload.brs,
-        interpreter
-    );
+    return setupPackageFiles(payload, interpreter);
 }
 
 interface SerializedPCode {
@@ -323,7 +324,7 @@ interface SerializedPCode {
  *
  * @returns an array of parameters in AA member format.
  */
-function setupInputArray(input: any): AAMember[] {
+function setupInputArray(input: Map<string, string>): AAMember[] {
     const inputArray = new Array<AAMember>();
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
@@ -331,11 +332,9 @@ function setupInputArray(input: any): AAMember[] {
         ["source", "auto-run-dev"],
         ["splashTime", "0"],
     ]);
-    if (input instanceof Map) {
-        input.forEach((value, key) => {
-            inputMap.set(key, value);
-        });
-    }
+    input.forEach((value, key) => {
+        inputMap.set(key, value);
+    });
     inputMap.forEach((value, key) => {
         inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
     });
@@ -432,17 +431,11 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
  *
  * @returns a SourceResult object with the source map or the pcode data.
  */
-function setupPackageFiles(
-    paths: any,
-    binaries: any,
-    texts: any,
-    brs: any,
-    interpreter: Interpreter
-): SourceResult {
+function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
     let volume = interpreter.fileSystem.get("pkg:");
-    if (volume && Array.isArray(paths)) {
-        for (let filePath of paths) {
+    if (volume && Array.isArray(payload.paths)) {
+        for (let filePath of payload.paths) {
             const pathDirName = path.dirname(`/${filePath.url}`);
             if (!volume.existsSync(pathDirName)) {
                 try {
@@ -452,31 +445,31 @@ function setupPackageFiles(
                 }
             }
             try {
-                if (filePath.type === "binary" && Array.isArray(binaries)) {
-                    volume.writeFileSync(`/${filePath.url}`, binaries[filePath.id]);
-                } else if (filePath.type === "pcode" && Array.isArray(binaries)) {
-                    result.pcode = Buffer.from(binaries[filePath.id]);
+                if (filePath.type === "binary" && Array.isArray(payload.binaries)) {
+                    volume.writeFileSync(`/${filePath.url}`, payload.binaries[filePath.id]);
+                } else if (filePath.type === "pcode" && Array.isArray(payload.binaries)) {
+                    result.pcode = Buffer.from(payload.binaries[filePath.id]);
                 } else if (["audio", "video"].includes(filePath.type)) {
                     // As the media files are played on the renderer process we need to
                     // save a mock file to allow file exist checking and save the index
-                    let fileData = filePath.id.toString();
+                    let fileData = Buffer.from(filePath.id.toString());
                     if (filePath.type === "audio") {
                         interpreter.audioId = filePath.id;
                         if (filePath.binId) {
                             // If audio metadata is enabled we have the audio file data
-                            fileData = binaries[filePath.binId];
+                            fileData = Buffer.from(payload.binaries[filePath.binId]);
                         }
                     }
                     volume.writeFileSync(`/${filePath.url}`, fileData);
-                } else if (filePath.type === "text" && Array.isArray(texts)) {
+                } else if (filePath.type === "text" && Array.isArray(payload.texts)) {
                     if (filePath.url === "source/var") {
-                        result.iv = texts[filePath.id];
+                        result.iv = payload.texts[filePath.id];
                     } else {
-                        volume.writeFileSync(`/${filePath.url}`, texts[filePath.id]);
+                        volume.writeFileSync(`/${filePath.url}`, payload.texts[filePath.id]);
                     }
-                } else if (filePath.type === "source" && Array.isArray(brs)) {
-                    result.sourceMap.set(filePath.url, brs[filePath.id]);
-                    volume.writeFileSync(`/${filePath.url}`, brs[filePath.id]);
+                } else if (filePath.type === "source" && Array.isArray(payload.brs)) {
+                    result.sourceMap.set(filePath.url, payload.brs[filePath.id]);
+                    volume.writeFileSync(`/${filePath.url}`, payload.brs[filePath.id]);
                 }
             } catch (err: any) {
                 postMessage(`error,Error writing file ${filePath.url} - ${err.message}`);

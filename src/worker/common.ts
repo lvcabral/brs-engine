@@ -21,13 +21,13 @@ export interface DeviceInfo {
     locale: string;
     captionLanguage: string;
     clockFormat: string;
-    displayMode: string;
+    displayMode: "480p" | "720p" | "1080p";
     defaultFont: string;
     fontPath: string;
     fonts?: Map<string, any>;
-    maxSimulStreams: number;
+    maxSimulStreams: 1 | 2 | 3;
     customFeatures: string[];
-    connectionType: string;
+    connectionType: "WiFiConnection" | "WiredConnection" | "";
     localIps: string[];
     startTime: number;
     audioVolume: number;
@@ -49,18 +49,48 @@ export const defaultDeviceInfo: DeviceInfo = {
     locale: "en_US", // Used if app supports localization
     captionLanguage: "eng",
     clockFormat: "12h",
-    displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
+    displayMode: "720p",
     defaultFont: "Asap",
     fontPath: "../fonts/",
     fonts: new Map(),
-    maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
-    customFeatures: new Array<string>(),
-    connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
+    maxSimulStreams: 2,
+    customFeatures: [],
+    connectionType: "WiredConnection",
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
     registry: new Map(),
     maxFps: 60,
+};
+
+export type AppPayload = {
+    device: DeviceInfo;
+    manifest: Map<string, string>;
+    input: Map<string, string>;
+    paths: AppFilePath[];
+    brs: string[];
+    texts: string[];
+    binaries: any[];
+    password?: string;
+    entryPoint?: boolean;
+    stopOnCrash?: boolean;
+};
+
+export type AppFilePath = {
+    id: number;
+    url: string;
+    type: "source" | "text" | "binary" | "audio" | "video" | "pcode";
+    format?: string;
+    binId?: number;
+};
+
+export type RunContext = {
+    inElectron: boolean;
+    inChromium: boolean;
+    inBrowser: boolean;
+    inSafari: boolean;
+    inApple: boolean;
+    inIOS: boolean;
 };
 
 // Shared array data types enumerator
