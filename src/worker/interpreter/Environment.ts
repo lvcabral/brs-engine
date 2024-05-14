@@ -148,7 +148,7 @@ export class Environment {
     }
 
     public removeReferences() {
-        for (let [key, value] of this.function) {
+        for (let [_, value] of this.function) {
             if (value instanceof BrsComponent) {
                 value.removeReference();
             }

@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, RoArray, RoRegion } from "..";
+import { BrsType, Float, Int32, RoArray } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
