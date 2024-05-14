@@ -266,13 +266,13 @@ export function drawImageToContext(
 
 export function drawRotatedObject(
     component: BrsDraw2D,
-    ctx: BrsCanvasContext2D,
     object: BrsComponent,
     rgba: Int32 | BrsInvalid,
     x: number,
     y: number,
     angle: number
 ): boolean {
+    const ctx = component.getContext();
     const angleInRad = (-angle * Math.PI) / 180;
     ctx.save();
     ctx.translate(x, y);
@@ -290,10 +290,9 @@ export function createNewCanvas(width: number, height: number) {
     /// #endif
 }
 
-export function releaseCanvas(ctx: BrsCanvasContext2D) {
-    ctx.canvas.width = 1;
-    ctx.canvas.height = 1;
-    ctx.clearRect(0, 0, 1, 1);
+export function releaseCanvas(canvas: BrsCanvas) {
+    canvas.width = 0;
+    canvas.height = 0;
 }
 
 export function drawImageAtPos(image: BrsCanvas, ctx: BrsCanvasContext2D, x: number, y: number) {

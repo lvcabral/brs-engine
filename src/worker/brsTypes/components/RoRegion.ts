@@ -632,10 +632,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.bitmap.getContext();
             const didDraw = drawRotatedObject(
                 this,
-                ctx,
                 object,
                 rgba,
                 x.getValue(),

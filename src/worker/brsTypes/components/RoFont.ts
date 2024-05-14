@@ -90,7 +90,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             ctx.textBaseline = "top";
             let measure = ctx.measureText(text.value);
             let length = Math.min(measure.width, maxWidth.getValue());
-            releaseCanvas(ctx);
+            releaseCanvas(canvas);
             return new Int32(Math.round(length));
         },
     });

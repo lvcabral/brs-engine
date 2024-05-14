@@ -37,6 +37,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private rgbaRedraw: boolean;
     private width: number;
     private height: number;
+    private name: string;
     private valid: boolean;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
@@ -47,6 +48,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.valid = true;
         this.width = 1;
         this.height = 1;
+        this.name = "";
         let image;
         if (param instanceof BrsString) {
             let url = new URL(param.value);
@@ -55,6 +57,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 try {
                     image = volume.readFileSync(url.pathname);
                     this.alphaEnable = false;
+                    this.name = url.pathname;
                 } catch (err: any) {
                     interpreter.stderr.write(
                         `error,Error loading bitmap:${url.pathname} - ${err.message}`
@@ -81,6 +84,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 paramHeight instanceof Double
             ) {
                 this.height = Math.trunc(paramHeight.getValue());
+            }
+            let paramName = param.get(new BrsString("name"));
+            if (paramName instanceof BrsString) {
+                this.name = paramName.value;
             }
             let alphaEnable = param.get(new BrsString("alphaEnable"));
             if (alphaEnable instanceof BrsBoolean) {
@@ -179,6 +186,9 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 this.getWidth,
                 this.getHeight,
             ],
+            ifBrs: [
+                this.getName,
+            ]
         });
     }
 
@@ -216,6 +226,10 @@ export class RoBitmap extends BrsComponent implements BrsValue {
 
     getImageHeight(): number {
         return this.height;
+    }
+
+    getImageName(): string {
+        return this.name;
     }
 
     getCanvas(): BrsCanvas {
@@ -277,10 +291,9 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     }
 
     dispose() {
-        releaseCanvas(this.context);
+        releaseCanvas(this.canvas);
         if (this.rgbaCanvas) {
-            const ctx = this.rgbaCanvas.getContext("2d") as BrsCanvasContext2D;
-            releaseCanvas(ctx);
+            releaseCanvas(this.rgbaCanvas);
         }
     }
 
@@ -342,10 +355,8 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            let ctx = this.context;
             const didDraw = drawRotatedObject(
                 this,
-                ctx,
                 object,
                 rgba,
                 x.getValue(),
@@ -379,7 +390,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.context;
             const didDraw = this.drawImage(
                 object,
                 rgba,
@@ -388,7 +398,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 scaleX.getValue(),
                 scaleY.getValue()
             );
-            ctx.globalAlpha = 1.0;
+            this.context.globalAlpha = 1.0;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -458,7 +468,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             yEnd: Int32,
             rgba: Int32
         ) => {
-            let ctx = this.context;
+            const ctx = this.context;
             ctx.beginPath();
             ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.moveTo(xStart.getValue(), yStart.getValue());
@@ -502,7 +512,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            let ctx = this.context;
+            const ctx = this.context;
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
             this.rgbaRedraw = true;
@@ -573,7 +583,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.canvas.width);
+            return new Int32(this.width);
         },
     });
 
@@ -584,7 +594,18 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.canvas.height);
+            return new Int32(this.height);
+        },
+    });
+
+    /** Return the image name (file name or custom) of the bitmap (this method is not on RBI). */
+    private getName = new Callable("getHeight", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(this.height);
         },
     });
 
@@ -600,13 +621,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.context.getImageData(
+            const imgData = this.context.getImageData(
                 x.getValue(),
                 y.getValue(),
                 width.getValue(),
                 height.getValue()
             );
-            let byteArray = new Uint8Array(imgData.data.buffer);
+            const byteArray = new Uint8Array(imgData.data.buffer);
             return new RoByteArray(byteArray);
         },
     });
@@ -623,7 +644,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.context.getImageData(
+            const imgData = this.context.getImageData(
                 x.getValue(),
                 y.getValue(),
                 width.getValue(),

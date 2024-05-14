@@ -182,7 +182,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     dispose(): void {
         this.port?.removeReference();
-        this.context.forEach((c) => releaseCanvas(c));
+        this.canvas.forEach((c) => releaseCanvas(c));
     }
     // ifScreen ------------------------------------------------------------------------------------
 
@@ -274,10 +274,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.context[this.currentBuffer];
             drawRotatedObject(
                 this,
-                ctx,
                 object,
                 rgba,
                 x.getValue(),
