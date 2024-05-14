@@ -377,6 +377,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         let toReturn = this.evaluate(statement.value);
+        if (toReturn instanceof BrsComponent) {
+            toReturn.addReference(true);
+        }
         throw new Stmt.ReturnValue(statement.tokens.return.location, toReturn);
     }
 

@@ -8,8 +8,8 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
 import {
-    WorkerCanvas,
-    WorkerCanvasRenderingContext2D,
+    BrsCanvas,
+    BrsCanvasContext2D,
     createNewCanvas,
     drawObjectToComponent,
     getDimensions,
@@ -20,8 +20,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly sprites = new Map<number, RoSprite[]>();
     readonly animations = new Array<RoSprite>();
-    private canvas: WorkerCanvas;
-    private context: WorkerCanvasRenderingContext2D;
+    private canvas: BrsCanvas;
+    private context: BrsCanvasContext2D;
     private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
@@ -30,9 +30,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     constructor() {
         super("roCompositor");
         this.canvas = createNewCanvas(10, 10);
-        let context = this.canvas.getContext("2d", {
-            alpha: true,
-        }) as WorkerCanvasRenderingContext2D;
+        let context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         this.context = context;
         this.spriteId = 0;
         this.registerMethods({
@@ -101,7 +99,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return !!this.destBitmap?.getAlphaEnableValue();
     }
 
-    getContext(): WorkerCanvasRenderingContext2D {
+    getContext(): BrsCanvasContext2D {
         return this.context;
     }
 
@@ -200,28 +198,16 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    removeReference(): void {
-        super.removeReference();
-        if (this.references === 0) {
-            // if (this.destBitmap) {
-            //     console.log("Compositor removing destBitmap reference:", this.destBitmap.getId(), this.destBitmap.getReferenceCount());
-            // };
-            this.destBitmap?.removeReference("roCompositor");
-            this.sprites.forEach((layer) => {
-                layer.forEach((sprite) => {
-                    // console.log("Compositor removing sprite reference:", sprite.getId(), sprite.getReferenceCount());
-                    sprite.removeReference();
-                });
-            });
-            this.animations.forEach((sprite) => {
-                // console.log("Compositor removing animation reference:", sprite.getId(), sprite.getReferenceCount());
+    dispose(): void {
+        this.destBitmap?.removeReference();
+        this.sprites.forEach((layer) => {
+            layer.forEach((sprite) => {
                 sprite.removeReference();
             });
-            this.dispose();
-        }
-    }
-
-    dispose(): void {
+        });
+        this.animations.forEach((sprite) => {
+            sprite.removeReference();
+        });
         releaseCanvas(this.canvas);
     }
 
@@ -240,7 +226,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             rgbaBackground: Int32
         ) => {
             destBitmap.addReference();
-            this.destBitmap?.removeReference("roCompositor.setDrawTo");
+            this.destBitmap?.removeReference();
             this.destBitmap = destBitmap;
             const destDimensions = getDimensions(destBitmap);
             this.canvas.width = destDimensions.width;
@@ -294,9 +280,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (regions && regions.length > 0) {
                     if (regions[0] instanceof RoRegion) {
                         let sprite = new RoSprite(x, y, regionArray, z, this.spriteId++, this);
-                        sprite.addReference("sprite layer");
+                        sprite.addReference();
                         this.setSpriteLayer(sprite, z.getValue());
-                        sprite.addReference("animations array");
+                        sprite.addReference();
                         this.animations.push(sprite);
                         return sprite;
                     } else {

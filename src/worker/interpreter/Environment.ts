@@ -26,6 +26,8 @@ export class Environment {
         } else {
             this.rootM = rootM;
         }
+        this.rootM.addReference();
+        this.mPointer.addReference();
     }
     /**
      * Functions that are always accessible.
@@ -69,7 +71,7 @@ export class Environment {
                 if (destination.has(lowercaseName)) {
                     let current = destination.get(lowercaseName);
                     if (current instanceof BrsComponent) {
-                        current.removeReference("function level define");
+                        current.removeReference();
                     }
                 }
                 break;
@@ -89,6 +91,8 @@ export class Environment {
      * @param newMPointer the new value to be used for the `m` pointer
      */
     public setM(newMPointer: RoAssociativeArray): void {
+        newMPointer.addReference();
+        this.mPointer.removeReference();
         this.mPointer = newMPointer;
     }
 
@@ -113,6 +117,8 @@ export class Environment {
      * @param newMPointer the new value to be used for the `m` pointer
      */
     public setRootM(newMPointer: RoAssociativeArray): void {
+        newMPointer.addReference();
+        this.mPointer.removeReference();
         this.rootM = newMPointer;
     }
 
@@ -244,7 +250,7 @@ export class Environment {
         let newEnvironment = new Environment(this.rootM);
         newEnvironment.global = this.global;
         newEnvironment.module = this.module;
-        newEnvironment.mPointer = this.mPointer;
+        newEnvironment.setM(this.mPointer);
 
         return newEnvironment;
     }

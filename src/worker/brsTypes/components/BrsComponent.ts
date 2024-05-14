@@ -8,12 +8,14 @@ export class BrsComponent {
     private readonly componentName: string;
     private filter: string = "";
     protected references: number;
+    protected returnFlag: boolean;
 
     readonly interfaces = new Map<string, BrsInterface>();
 
     constructor(name: string) {
         this.componentName = name;
         this.references = 0;
+        this.returnFlag = false;
     }
 
     /**
@@ -57,17 +59,24 @@ export class BrsComponent {
         return this.references;
     }
 
-    removeReference(source = "") {
-        this.references--;
+    addReference(isReturn = false) {
+        // prevent dispose when returning object created inside a function
+        if (!this.returnFlag) {
+            this.references++;
+            this.returnFlag = false;
+        }
+        this.returnFlag = isReturn;
     }
 
-    addReference(source = "") {
-        this.references++;
+    removeReference() {
+        this.references--;
+        if (this.references === 0) {
+            this.dispose();
+        }
     }
 
     dispose() {
-        this.methods.clear();
-        this.interfaces.clear();
+        // To be overridden by subclasses
     }
 }
 

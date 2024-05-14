@@ -10,8 +10,8 @@ import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
 import {
-    WorkerCanvas,
-    WorkerCanvasRenderingContext2D,
+    BrsCanvas,
+    BrsCanvasContext2D,
     createNewCanvas,
     drawImageToContext,
     drawObjectToComponent,
@@ -28,8 +28,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private lastBuffer: number;
     private width: number;
     private height: number;
-    private canvas: WorkerCanvas[];
-    private context: WorkerCanvasRenderingContext2D[];
+    private canvas: BrsCanvas[];
+    private context: BrsCanvasContext2D[];
     private port?: RoMessagePort;
     private isDirty: boolean;
     private lastMessage: number;
@@ -71,8 +71,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.doubleBuffer = doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean();
         this.currentBuffer = 0;
         this.lastBuffer = 0;
-        this.canvas = new Array<WorkerCanvas>(this.doubleBuffer ? 2 : 1);
-        this.context = new Array<WorkerCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
+        this.canvas = new Array<BrsCanvas>(this.doubleBuffer ? 2 : 1);
+        this.context = new Array<BrsCanvasContext2D>(this.doubleBuffer ? 2 : 1);
         this.createDisplayBuffer();
         this.alphaEnable = false;
         const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
@@ -106,9 +106,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         for (let index = 0; index < this.canvas.length; index++) {
             this.canvas[index] = createNewCanvas(this.width, this.height);
             if (this.canvas[index]) {
-                this.context[index] = this.canvas[index].getContext("2d", {
-                    alpha: true,
-                }) as WorkerCanvasRenderingContext2D;
+                this.context[index] = this.canvas[index].getContext("2d") as BrsCanvasContext2D;
                 this.canvas[index].width = this.width;
                 this.canvas[index].height = this.height;
             }
@@ -123,11 +121,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.canvas[this.lastBuffer].height;
     }
 
-    getCanvas(): WorkerCanvas {
+    getCanvas(): BrsCanvas {
         return this.canvas[this.lastBuffer];
     }
 
-    getContext(): WorkerCanvasRenderingContext2D {
+    getContext(): BrsCanvasContext2D {
         return this.context[this.currentBuffer];
     }
 
@@ -159,7 +157,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.isDirty;
     }
 
-    drawImageToContext(image: WorkerCanvas, x: number, y: number): boolean {
+    drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
         const ctx = this.context[this.currentBuffer];
         this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y);
         return this.isDirty;
@@ -182,15 +180,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.isDirty = true;
     }
 
-    removeReference(): void {
-        super.removeReference();
-        if (this.references === 0) {
-            this.port?.removeReference();
-            this.dispose();
-        }
-    }
-
     dispose(): void {
+        this.port?.removeReference();
         this.canvas.forEach((c) => releaseCanvas(c));
     }
     // ifScreen ------------------------------------------------------------------------------------

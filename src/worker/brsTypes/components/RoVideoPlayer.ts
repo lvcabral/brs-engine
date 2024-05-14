@@ -83,11 +83,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         return contents;
     }
 
-    removeReference(): void {
-        super.removeReference();
-        if (this.references === 0) {
-            this.port?.removeReference();
-        }
+    dispose() {
+        this.port?.removeReference();
     }
 
     /** Sets the content list to be played by the Video Player */

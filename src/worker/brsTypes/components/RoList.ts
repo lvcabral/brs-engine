@@ -171,13 +171,10 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         return this.elements.length - 1;
     }
 
-    removeReference(source = ""): void {
-        super.removeReference();
-        if (this.references === 0) {
-            this.elements.forEach((element) => {
-                this.removeChildRef(element);
-            });
-        }
+    dispose() {
+        this.elements.forEach((element) => {
+            this.removeChildRef(element);
+        });
     }
 
     addChildRef(value: BrsType | undefined) {
@@ -188,7 +185,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     removeChildRef(value: BrsType | undefined) {
         if (value instanceof BrsComponent) {
-            value.removeReference("roList");
+            value.removeReference();
         }
     }
 

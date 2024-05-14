@@ -104,11 +104,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    removeReference(): void {
-        super.removeReference();
-        if (this.references === 0) {
-            this.port?.removeReference();
-        }
+    dispose() {
+        this.port?.removeReference();
     }
 
     /** Returns the model name for the Roku Streaming Player device running the script. */

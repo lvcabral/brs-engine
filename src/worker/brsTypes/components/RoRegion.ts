@@ -9,9 +9,9 @@ import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
 import {
-    WorkerCanvas,
-    WorkerCanvasRenderingContext2D,
-    WorkerImageData,
+    BrsCanvas,
+    BrsCanvasContext2D,
+    BrsImageData,
     drawImageToContext,
     drawObjectToComponent,
     drawRotatedObject,
@@ -51,11 +51,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
         if (y instanceof Float || y instanceof Double || y instanceof Int32) {
             this.y = Math.trunc(y.getValue());
         }
-        this.width = bitmap.getCanvas().width;
+        this.width = bitmap.getImageWidth();
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
         }
-        this.height = bitmap.getCanvas().height;
+        this.height = bitmap.getImageHeight();
         if (height instanceof Float || height instanceof Double || height instanceof Int32) {
             this.height = Math.trunc(height.getValue());
         }
@@ -69,8 +69,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.alphaEnable = true;
 
         if (
-            this.x + this.width <= bitmap.getCanvas().width &&
-            this.y + this.height <= bitmap.getCanvas().height
+            this.x + this.width <= bitmap.getImageWidth() &&
+            this.y + this.height <= bitmap.getImageHeight()
         ) {
             this.valid = true;
         }
@@ -177,7 +177,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return isDirty;
     }
 
-    drawImageToContext(image: WorkerCanvas, x: number, y: number): boolean {
+    drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
         const isDirty = drawImageToContext(
             ctx,
@@ -192,15 +192,15 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return isDirty;
     }
 
-    getCanvas(): WorkerCanvas {
+    getCanvas(): BrsCanvas {
         return this.bitmap.getCanvas();
     }
 
-    getContext(): WorkerCanvasRenderingContext2D {
+    getContext(): BrsCanvasContext2D {
         return this.bitmap.getContext();
     }
 
-    getRgbaCanvas(rgba: number): WorkerCanvas {
+    getRgbaCanvas(rgba: number): BrsCanvas {
         if (this.bitmap instanceof RoBitmap) {
             return this.bitmap.getRgbaCanvas(rgba);
         }
@@ -247,7 +247,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.collisionType;
     }
 
-    getImageData(): WorkerImageData {
+    getImageData(): BrsImageData {
         return this.bitmap.getContext().getImageData(this.x, this.y, this.width, this.height);
     }
 
@@ -283,17 +283,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    // addReference(source = ""): void {
-    //     super.addReference();
-    //     console.log("Added reference to roRegion: ", source, this.getId(), this.references);
-    // }
-
-    removeReference(source = ""): void {
-        super.removeReference();
-        // console.log("Removed reference to roRegion: ", source, this.getId(), this.references);
-        if (this.references === 0) {
-            this.bitmap.removeReference(`${source}=>roRegion`);
-        }
+    dispose() {
+        this.bitmap.removeReference();
     }
 
     /** Returns a newly created copy of the region as a new roRegion object */
@@ -463,7 +454,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.width = srcRegion.width;
             this.height = srcRegion.height;
             srcRegion.bitmap?.addReference();
-            this.bitmap?.removeReference("roRegion.set()");
+            this.bitmap?.removeReference();
             this.bitmap = srcRegion.bitmap;
             this.collisionType = srcRegion.collisionType;
             this.translationX = srcRegion.translationX;

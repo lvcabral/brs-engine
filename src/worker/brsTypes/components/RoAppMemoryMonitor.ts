@@ -30,11 +30,8 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    removeReference(): void {
-        super.removeReference();
-        if (this.references === 0) {
-            this.port?.removeReference();
-        }
+    dispose() {
+        this.port?.removeReference();
     }
 
     // ifChannelStore ------------------------------------------------------------------------------------

@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 import { RoRegion } from "./RoRegion";
 import { RoCompositor, Rect, Circle } from "./RoCompositor";
 import { RoArray } from "./RoArray";
-import { WorkerImageData } from "../draw2d";
+import { BrsImageData } from "../draw2d";
 
 export class RoSprite extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -80,7 +80,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         });
     }
 
-    getImageData(): WorkerImageData {
+    getImageData(): BrsImageData {
         return this.region.getImageData();
     }
 
@@ -144,7 +144,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 }
                 region = frames[this.frame] as RoRegion;
                 region.addReference();
-                this.region.removeReference("nextFrame");
+                this.region.removeReference();
                 this.region = region;
             }
         }
@@ -158,15 +158,11 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    removeReference(source = ""): void {
-        super.removeReference();
-        if (this.references === 0) {
-            // console.log("Removed last reference to roSprite: ", source, this.getId());
-            this.region?.removeReference("roSprite removeReference");
-            this.regions?.removeReference("roSprite removeReference");
-            if (this.data instanceof BrsComponent) {
-                this.data.removeReference();
-            }
+    dispose() {
+        this.region?.removeReference();
+        this.regions?.removeReference();
+        if (this.data instanceof BrsComponent) {
+            this.data.removeReference();
         }
     }
     /** Returns an roRegion object that specifies the region of a bitmap that is the sprite's display graphic */
@@ -409,7 +405,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, region: RoRegion) => {
             region.addReference();
-            this.region.removeReference("setRegion");
+            this.region.removeReference();
             this.region = region;
             return BrsInvalid.Instance;
         },
