@@ -135,10 +135,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.alphaEnable;
     }
 
-    getId(): number {
-        return -1;
-    }
-
     clearCanvas(rgba: number) {
         let ctx = this.context[this.currentBuffer];
         ctx.fillStyle = rgbaIntToHex(rgba, false);

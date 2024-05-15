@@ -68,11 +68,9 @@ export class Environment {
                 if (value instanceof BrsComponent) {
                     value.addReference();
                 }
-                if (destination.has(lowercaseName)) {
-                    let current = destination.get(lowercaseName);
-                    if (current instanceof BrsComponent) {
-                        current.removeReference();
-                    }
+                const current = destination.get(lowercaseName);
+                if (current instanceof BrsComponent) {
+                    current.removeReference();
                 }
                 break;
             case Scope.Module:
@@ -118,7 +116,7 @@ export class Environment {
      */
     public setRootM(newMPointer: RoAssociativeArray): void {
         newMPointer.addReference();
-        this.mPointer.removeReference();
+        this.rootM.removeReference();
         this.rootM = newMPointer;
     }
 
@@ -135,7 +133,7 @@ export class Environment {
                 break;
             case Scope.Function:
                 if (this.function.has(lowercaseName)) {
-                    let value = this.function.get(lowercaseName);
+                    const value = this.function.get(lowercaseName);
                     if (value instanceof BrsComponent) {
                         value.removeReference();
                     }
