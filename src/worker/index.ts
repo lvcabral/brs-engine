@@ -8,6 +8,9 @@
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import {
+    AppExitReason,
+    AppFilePath,
+    AppPayload,
     DeviceInfo,
     dataBufferIndex,
     dataBufferSize,
@@ -46,7 +49,7 @@ const algorithm = "aes-256-ctr";
 /// #if BROWSER
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
-    onmessage = function (event: any) {
+    onmessage = function (event: MessageEvent) {
         if (event.data.device) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
@@ -106,7 +109,7 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  * Returns a new instance of the Interpreter for REPL
  *
  */
-export function getInterpreter(payload: any) {
+export function getInterpreter(payload: AppPayload) {
     const replInterpreter = new Interpreter();
     replInterpreter.onError(logError);
     setupDeviceData(payload.device, replInterpreter);
@@ -159,8 +162,8 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  *
  * @returns object with the payload to run the app.
  */
-export function createPayload(files: any[], customDeviceData?: Partial<DeviceInfo>) {
-    const paths: Object[] = [];
+export function createPayload(files: string[], customDeviceData?: Partial<DeviceInfo>): AppPayload {
+    const paths: AppFilePath[] = [];
     const source: string[] = [];
     const texts: string[] = [];
     let manifest: Map<string, string> | undefined;
@@ -174,7 +177,7 @@ export function createPayload(files: any[], customDeviceData?: Partial<DeviceInf
                 const sourceCode = fs.readFileSync(filePath);
                 if (sourceCode) {
                     source.push(sourceCode.toString());
-                    paths.push({ url: `source/${fileName}`, id: id, type: "source" });
+                    paths.push({ id: id, url: `source/${fileName}`, type: "source" });
                     id++;
                 }
             } catch (err: any) {
@@ -186,7 +189,7 @@ export function createPayload(files: any[], customDeviceData?: Partial<DeviceInf
                 if (fileData) {
                     manifest = parseManifest(fileData.toString());
                     texts.push(fileData.toString());
-                    paths.push({ url: "manifest", id: 0, type: "text" });
+                    paths.push({ id: 0, url: "manifest", type: "text" });
                 }
             } catch (err: any) {
                 throw err;
@@ -212,7 +215,7 @@ export function createPayload(files: any[], customDeviceData?: Partial<DeviceInf
         return {
             device: deviceData,
             manifest: manifest,
-            input: [],
+            input: new Map(),
             paths: paths,
             brs: source,
             texts: texts,
@@ -256,7 +259,10 @@ export function getFonts(fontPath: string, fontFamily: string) {
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 
-export function executeFile(payload: any, customOptions?: Partial<ExecutionOptions>): RunResult {
+export function executeFile(
+    payload: AppPayload,
+    customOptions?: Partial<ExecutionOptions>
+): RunResult {
     const options = {
         ...{
             entryPoint: payload.entryPoint ?? true,
@@ -279,7 +285,7 @@ export function executeFile(payload: any, customOptions?: Partial<ExecutionOptio
         result = runSource(interpreter, sourceResult.sourceMap, input, password);
     }
     if (!result.cipherText) {
-        postMessage(`end,${result.endReason}`);
+        postMessage(`end,${result.exitReason}`);
     }
     return result;
 }
@@ -298,18 +304,14 @@ interface SourceResult {
     iv?: string;
 }
 
-export function setupPayload(interpreter: Interpreter, payload: any): SourceResult {
+export function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
-    interpreter.setRegistry(payload.device.registry);
+    if (payload.device.registry) {
+        interpreter.setRegistry(payload.device.registry);
+    }
     setupDeviceData(payload.device, interpreter);
     setupDeviceFonts(payload.device, interpreter);
-    return setupPackageFiles(
-        payload.paths,
-        payload.binaries,
-        payload.texts,
-        payload.brs,
-        interpreter
-    );
+    return setupPackageFiles(payload, interpreter);
 }
 
 interface SerializedPCode {
@@ -323,19 +325,17 @@ interface SerializedPCode {
  *
  * @returns an array of parameters in AA member format.
  */
-function setupInputArray(input: any): AAMember[] {
+function setupInputArray(input: Map<string, string>): AAMember[] {
     const inputArray = new Array<AAMember>();
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
-        ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+        ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
         ["source", "auto-run-dev"],
         ["splashTime", "0"],
     ]);
-    if (input instanceof Map) {
-        input.forEach((value, key) => {
-            inputMap.set(key, value);
-        });
-    }
+    input.forEach((value, key) => {
+        inputMap.set(key, value);
+    });
     inputMap.forEach((value, key) => {
         inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
     });
@@ -432,17 +432,11 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
  *
  * @returns a SourceResult object with the source map or the pcode data.
  */
-function setupPackageFiles(
-    paths: any,
-    binaries: any,
-    texts: any,
-    brs: any,
-    interpreter: Interpreter
-): SourceResult {
+function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
     let volume = interpreter.fileSystem.get("pkg:");
-    if (volume && Array.isArray(paths)) {
-        for (let filePath of paths) {
+    if (volume && Array.isArray(payload.paths)) {
+        for (let filePath of payload.paths) {
             const pathDirName = path.dirname(`/${filePath.url}`);
             if (!volume.existsSync(pathDirName)) {
                 try {
@@ -452,31 +446,31 @@ function setupPackageFiles(
                 }
             }
             try {
-                if (filePath.type === "binary" && Array.isArray(binaries)) {
-                    volume.writeFileSync(`/${filePath.url}`, binaries[filePath.id]);
-                } else if (filePath.type === "pcode" && Array.isArray(binaries)) {
-                    result.pcode = Buffer.from(binaries[filePath.id]);
+                if (filePath.type === "binary" && Array.isArray(payload.binaries)) {
+                    volume.writeFileSync(`/${filePath.url}`, payload.binaries[filePath.id]);
+                } else if (filePath.type === "pcode" && Array.isArray(payload.binaries)) {
+                    result.pcode = Buffer.from(payload.binaries[filePath.id]);
                 } else if (["audio", "video"].includes(filePath.type)) {
                     // As the media files are played on the renderer process we need to
                     // save a mock file to allow file exist checking and save the index
-                    let fileData = filePath.id.toString();
+                    let fileData = Buffer.from(filePath.id.toString());
                     if (filePath.type === "audio") {
                         interpreter.audioId = filePath.id;
                         if (filePath.binId) {
                             // If audio metadata is enabled we have the audio file data
-                            fileData = binaries[filePath.binId];
+                            fileData = Buffer.from(payload.binaries[filePath.binId]);
                         }
                     }
                     volume.writeFileSync(`/${filePath.url}`, fileData);
-                } else if (filePath.type === "text" && Array.isArray(texts)) {
+                } else if (filePath.type === "text" && Array.isArray(payload.texts)) {
                     if (filePath.url === "source/var") {
-                        result.iv = texts[filePath.id];
+                        result.iv = payload.texts[filePath.id];
                     } else {
-                        volume.writeFileSync(`/${filePath.url}`, texts[filePath.id]);
+                        volume.writeFileSync(`/${filePath.url}`, payload.texts[filePath.id]);
                     }
-                } else if (filePath.type === "source" && Array.isArray(brs)) {
-                    result.sourceMap.set(filePath.url, brs[filePath.id]);
-                    volume.writeFileSync(`/${filePath.url}`, brs[filePath.id]);
+                } else if (filePath.type === "source" && Array.isArray(payload.brs)) {
+                    result.sourceMap.set(filePath.url, payload.brs[filePath.id]);
+                    volume.writeFileSync(`/${filePath.url}`, payload.brs[filePath.id]);
                 }
             } catch (err: any) {
                 postMessage(`error,Error writing file ${filePath.url} - ${err.message}`);
@@ -544,7 +538,7 @@ function setupPackageFiles(
  * @returns the AST produced from lexing and parsing the provided files or the tokens for encryption if password is provided.
  */
 export interface ParseResult {
-    endReason: string;
+    exitReason: AppExitReason;
     tokens: Token[];
     statements: Stmt.Statement[];
 }
@@ -565,16 +559,16 @@ export function lexParseSync(
     lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
-    let endReason = "EXIT_USER_NAV";
+    let exitReason = AppExitReason.FINISHED;
     for (let [path, code] of sourceMap) {
         const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
             break;
         }
         let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
         if (preprocessorResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
             break;
         }
         if (password.length > 0) {
@@ -583,7 +577,7 @@ export function lexParseSync(
         }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
         if (parseResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
             break;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
@@ -607,7 +601,7 @@ export function lexParseSync(
         });
     }
     return {
-        endReason: endReason,
+        exitReason: exitReason,
         tokens: tokens,
         statements: allStatements,
     };
@@ -624,7 +618,7 @@ export function lexParseSync(
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 export interface RunResult {
-    endReason: string;
+    exitReason: AppExitReason;
     cipherText?: Uint8Array;
     iv?: string;
 }
@@ -635,7 +629,7 @@ function runSource(
     password: string = ""
 ): RunResult {
     const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
-    let endReason = parseResult.endReason;
+    let exitReason = parseResult.exitReason;
     if (password.length > 0) {
         const tokens = parseResult.tokens;
         const iv = crypto.randomBytes(12).toString("base64");
@@ -643,25 +637,25 @@ function runSource(
         const deflated = zlibSync(encode({ pcode: tokens }));
         const source = Buffer.from(deflated);
         const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
-        return { endReason: "EXIT_PACKAGER_DONE", cipherText: cipherText, iv: iv };
+        return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
     }
     try {
-        if (endReason !== "EXIT_BRIGHTSCRIPT_CRASH") {
-            endReason = "EXIT_USER_NAV";
+        if (exitReason !== AppExitReason.CRASHED) {
+            exitReason = AppExitReason.FINISHED;
             interpreter.exec(parseResult.statements, sourceMap, input);
         }
     } catch (err: any) {
-        endReason = "EXIT_USER_NAV";
+        exitReason = AppExitReason.FINISHED;
         if (err.message !== "debug-exit") {
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {
                 interpreter.options.stderr.write(err.message);
             }
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
         }
     }
-    return { endReason: endReason };
+    return { exitReason: exitReason };
 }
 
 /**
@@ -692,14 +686,14 @@ function runBinary(
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
             } else {
-                return { endReason: "EXIT_INVALID_PCODE" };
+                return { exitReason: AppExitReason.INVALID };
             }
         } else {
-            return { endReason: "EXIT_MISSING_PASSWORD" };
+            return { exitReason: AppExitReason.PASSWORD };
         }
     } catch (err: any) {
         postMessage(`error,Error unpacking the app: ${err.message}`);
-        return { endReason: "EXIT_UNPACK_ERROR" };
+        return { exitReason: AppExitReason.UNPACK };
     }
     // Execute the decrypted source code
     const lexer = new Lexer();
@@ -736,7 +730,7 @@ function runBinary(
         if (token.kind === "Eof") {
             const parseResults = parser.parse(tokens);
             if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
-                return { endReason: "EXIT_BRIGHTSCRIPT_CRASH" };
+                return { exitReason: AppExitReason.CRASHED };
             }
             if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
                 lib.set("v30/bslDefender.brs", bslDefender);
@@ -758,16 +752,16 @@ function runBinary(
             allStatements.push(...libParse.statements);
         }
     });
-    let endReason = "EXIT_USER_NAV";
+    let exitReason = AppExitReason.FINISHED;
     try {
         interpreter.exec(allStatements, undefined, input);
     } catch (err: any) {
         if (err.message !== "debug-exit") {
             postMessage(`error,${err.message}`);
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
         }
     }
-    return { endReason: endReason };
+    return { exitReason: exitReason };
 }
 
 /**

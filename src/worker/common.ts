@@ -21,13 +21,13 @@ export interface DeviceInfo {
     locale: string;
     captionLanguage: string;
     clockFormat: string;
-    displayMode: string;
+    displayMode: "480p" | "720p" | "1080p";
     defaultFont: string;
     fontPath: string;
     fonts?: Map<string, any>;
-    maxSimulStreams: number;
+    maxSimulStreams: 1 | 2 | 3;
     customFeatures: string[];
-    connectionType: string;
+    connectionType: "WiFiConnection" | "WiredConnection" | "";
     localIps: string[];
     startTime: number;
     audioVolume: number;
@@ -35,6 +35,7 @@ export interface DeviceInfo {
     registry?: Map<string, string>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
+    context?: RunContext;
 }
 
 export const defaultDeviceInfo: DeviceInfo = {
@@ -49,18 +50,76 @@ export const defaultDeviceInfo: DeviceInfo = {
     locale: "en_US", // Used if app supports localization
     captionLanguage: "eng",
     clockFormat: "12h",
-    displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
+    displayMode: "720p",
     defaultFont: "Asap",
     fontPath: "../fonts/",
     fonts: new Map(),
-    maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
-    customFeatures: new Array<string>(),
-    connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
+    maxSimulStreams: 2,
+    customFeatures: [],
+    connectionType: "WiredConnection",
     localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
     startTime: Date.now(),
     audioVolume: 40,
     registry: new Map(),
     maxFps: 60,
+};
+
+export type AppPayload = {
+    device: DeviceInfo;
+    manifest: Map<string, string>;
+    input: Map<string, string>;
+    paths: AppFilePath[];
+    brs: string[];
+    texts: string[];
+    binaries: any[];
+    password?: string;
+    entryPoint?: boolean;
+    stopOnCrash?: boolean;
+};
+
+export type AppFilePath = {
+    id: number;
+    url: string;
+    type: "source" | "text" | "binary" | "audio" | "video" | "pcode";
+    format?: string;
+    binId?: number;
+};
+
+export enum AppExitReason {
+    UNKNOWN = "EXIT_UNKNOWN",
+    CRASHED = "EXIT_BRIGHTSCRIPT_CRASH",
+    FINISHED = "EXIT_USER_NAV",
+    SETTINGS = "EXIT_SETTINGS_UPDATE",
+    POWER = "EXIT_POWER_MODE",
+    TIMEOUT = "EXIT_TIMEOUT",
+    PACKAGED = "EXIT_PACKAGER_DONE",
+    INVALID = "EXIT_INVALID_PCODE",
+    PASSWORD = "EXIT_MISSING_PASSWORD",
+    UNPACK = "EXIT_UNPACK_FAILED",
+}
+
+export type AppData = {
+    id: string;
+    file: string;
+    title: string;
+    subtitle: string;
+    version: string;
+    execSource: string;
+    exitReason: AppExitReason;
+    password: string;
+    clearDisplay: boolean;
+    debugOnCrash: boolean;
+    audioMetadata: boolean;
+    running: boolean;
+};
+
+export type RunContext = {
+    inElectron: boolean;
+    inChromium: boolean;
+    inBrowser: boolean;
+    inSafari: boolean;
+    inApple: boolean;
+    inIOS: boolean;
 };
 
 // Shared array data types enumerator
@@ -196,6 +255,14 @@ export function parseManifest(contents: string) {
         });
 
     return new Map<string, string>(keyValuePairs);
+}
+
+export function getExitReason(value: string): AppExitReason {
+    if (Object.values(AppExitReason).includes(value as any)) {
+        return value as AppExitReason;
+    } else {
+        return AppExitReason.UNKNOWN;
+    }
 }
 
 export function numberToHex(value: number, pad: string = ""): string {
