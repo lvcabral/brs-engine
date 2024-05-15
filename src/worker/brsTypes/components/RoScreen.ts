@@ -34,6 +34,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private isDirty: boolean;
     private lastMessage: number;
     private maxMs: number;
+    private disposeCanvas: boolean;
 
     // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(
@@ -52,6 +53,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
+        this.disposeCanvas = interpreter.deviceInfo.get("context")?.inIOS ?? false;
         this.lastMessage = performance.now();
         this.isDirty = true;
         this.width = defaultWidth;
@@ -182,7 +184,9 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     dispose(): void {
         this.port?.removeReference();
-        this.canvas.forEach((c) => releaseCanvas(c));
+        if (this.disposeCanvas) {
+            this.canvas.forEach((c) => releaseCanvas(c));
+        }
     }
     // ifScreen ------------------------------------------------------------------------------------
 
@@ -274,14 +278,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            drawRotatedObject(
-                this,
-                object,
-                rgba,
-                x.getValue(),
-                y.getValue(),
-                theta.getValue()
-            );
+            drawRotatedObject(this, object, rgba, x.getValue(), y.getValue(), theta.getValue());
             return BrsBoolean.from(this.isDirty);
         },
     });

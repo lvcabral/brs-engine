@@ -39,6 +39,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private height: number;
     private name: string;
     private valid: boolean;
+    private disposeCanvas: boolean;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
         super("roBitmap");
@@ -46,6 +47,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.rgbaLast = 0;
         this.rgbaRedraw = true;
         this.valid = true;
+        this.disposeCanvas = interpreter.deviceInfo.get("context")?.inIOS ?? false;
         this.width = 1;
         this.height = 1;
         this.name = "";
@@ -186,9 +188,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 this.getWidth,
                 this.getHeight,
             ],
-            ifBrs: [
-                this.getName,
-            ]
+            ifBitmap: [this.getName],
         });
     }
 
@@ -291,9 +291,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     }
 
     dispose() {
-        releaseCanvas(this.canvas);
-        if (this.rgbaCanvas) {
-            releaseCanvas(this.rgbaCanvas);
+        if (this.disposeCanvas) {
+            releaseCanvas(this.canvas);
+            if (this.rgbaCanvas) {
+                releaseCanvas(this.rgbaCanvas);
+            }
         }
     }
 
