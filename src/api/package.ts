@@ -170,16 +170,16 @@ function processManifest(content: string) {
     parseManifest(content).forEach((value, key) => {
         manifestMap.set(key, value);
     });
-    currentApp.title = manifestMap.get("title") || "No Title";
-    currentApp.subtitle = manifestMap.get("subtitle") || "";
+    currentApp.title = manifestMap.get("title") ?? "No Title";
+    currentApp.subtitle = manifestMap.get("subtitle") ?? "";
     currentApp.audioMetadata = manifestMap.get("requires_audiometadata") === "1";
 
-    const majorVersion = parseInt(manifestMap.get("major_version") || "") || 0;
-    const minorVersion = parseInt(manifestMap.get("minor_version") || "") || 0;
-    const buildVersion = parseInt(manifestMap.get("build_version") || "") || 0;
+    const majorVersion = parseInt(manifestMap.get("major_version") ?? "") ?? 0;
+    const minorVersion = parseInt(manifestMap.get("minor_version") ?? "") ?? 0;
+    const buildVersion = parseInt(manifestMap.get("build_version") ?? "") ?? 0;
     currentApp.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
 
-    const splashMinTime = parseInt(manifestMap.get("splash_min_time") || "");
+    const splashMinTime = parseInt(manifestMap.get("splash_min_time") ?? "");
     splashTimeout = isNaN(splashMinTime) ? defaultSplashTime : splashMinTime;
 
     const resKeys = ["hd", "fhd"];
