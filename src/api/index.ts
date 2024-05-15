@@ -103,6 +103,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             "videoFormats",
             "fonts",
             "password",
+            "context",
         ];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {

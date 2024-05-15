@@ -406,10 +406,10 @@ function printAsciiScreen(columns: number, image: Canvas) {
     let cols = Math.min(columns, maxColumns);
     let lines = Math.trunc(cols / ratio);
     const canvas = createCanvas(cols, lines);
-    const context = canvas.getContext("2d");
-    if (context) {
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         let grayStep = Math.ceil(255 / alphabet.length);
         for (let i = 0; i < imageData.data.length; i += 4) {
             for (let j = 0; j < alphabet.length; j++) {

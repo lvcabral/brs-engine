@@ -35,6 +35,7 @@ export interface DeviceInfo {
     registry?: Map<string, string>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
+    context?: RunContext;
 }
 
 export const defaultDeviceInfo: DeviceInfo = {

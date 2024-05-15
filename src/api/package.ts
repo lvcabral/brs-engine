@@ -23,9 +23,10 @@ import packageInfo from "../../package.json";
 
 // Default Device Data
 export const deviceData = Object.assign(defaultDeviceInfo, {
+    models: parseCSV(models),
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
-    models: parseCSV(models),
+    context: context,
 });
 
 // App Data

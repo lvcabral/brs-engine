@@ -53,9 +53,13 @@ function getContext(): RunContext {
     }
     if (typeof navigator !== "undefined" && typeof navigator.userAgent === "string") {
         inElectron = navigator.userAgent.indexOf("Electron") >= 0;
-        inApple = /(Mac|iPhone|iPad)/i.test(navigator.platform);
+        inApple = /(Mac|iPhone|iPad|iPod)/i.test(navigator.platform);
         inSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        inIOS = /iPad|iPhone|iPod/.test(navigator.platform);
+        inIOS =
+            /iPad|iPhone|iPod/.test(navigator.platform) ||
+            (typeof navigator.maxTouchPoints !== "undefined" &&
+                navigator.maxTouchPoints > 2 &&
+                /MacIntel/.test(navigator.platform));
     } else {
         inApple = process.platform === "darwin";
     }
