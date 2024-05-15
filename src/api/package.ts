@@ -17,6 +17,8 @@ import {
     parseManifest,
     AppPayload,
     AppFilePath,
+    AppData,
+    AppExitReason,
 } from "../worker/common";
 import models from "../worker/common/models.csv";
 import packageInfo from "../../package.json";
@@ -37,8 +39,8 @@ export const paths: AppFilePath[] = [];
 export const txts: string[] = [];
 export const bins: any[] = [];
 export const manifestMap: Map<string, string> = new Map();
-export const currentApp = createCurrentApp();
-export const lastApp = { id: "", exitReason: "EXIT_UNKNOWN" };
+export const currentApp = createAppStatus();
+export const lastApp = createAppStatus();
 
 // Observers Handling
 const observers = new Map();
@@ -250,7 +252,7 @@ export function createPayload(timeOut?: number, entryPoint?: boolean): AppPayloa
         timeOut = splashTimeout;
     }
     const input = new Map([
-        ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+        ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
         ["splashTime", timeOut.toString()],
     ]);
     if (currentApp.id === lastApp.id) {
@@ -275,10 +277,10 @@ export function createPayload(timeOut?: number, entryPoint?: boolean): AppPayloa
 
 // Current App object
 export function resetCurrentApp() {
-    Object.assign(currentApp, createCurrentApp());
+    Object.assign(currentApp, createAppStatus());
 }
 
-function createCurrentApp() {
+function createAppStatus(): AppData {
     return {
         id: "",
         file: "",
@@ -286,6 +288,7 @@ function createCurrentApp() {
         subtitle: "",
         version: "",
         execSource: "auto-run-dev",
+        exitReason: AppExitReason.UNKNOWN,
         password: "",
         clearDisplay: true,
         debugOnCrash: false,

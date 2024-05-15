@@ -85,6 +85,34 @@ export type AppFilePath = {
     binId?: number;
 };
 
+export enum AppExitReason {
+    UNKNOWN = "EXIT_UNKNOWN",
+    CRASHED = "EXIT_BRIGHTSCRIPT_CRASH",
+    FINISHED = "EXIT_USER_NAV",
+    SETTINGS = "EXIT_SETTINGS_UPDATE",
+    POWER = "EXIT_POWER_MODE",
+    TIMEOUT = "EXIT_TIMEOUT",
+    PACKAGED = "EXIT_PACKAGER_DONE",
+    INVALID = "EXIT_INVALID_PCODE",
+    PASSWORD = "EXIT_MISSING_PASSWORD",
+    UNPACK = "EXIT_UNPACK_FAILED",
+}
+
+export type AppData = {
+    id: string;
+    file: string;
+    title: string;
+    subtitle: string;
+    version: string;
+    execSource: string;
+    exitReason: AppExitReason;
+    password: string;
+    clearDisplay: boolean;
+    debugOnCrash: boolean;
+    audioMetadata: boolean;
+    running: boolean;
+};
+
 export type RunContext = {
     inElectron: boolean;
     inChromium: boolean;
@@ -227,6 +255,14 @@ export function parseManifest(contents: string) {
         });
 
     return new Map<string, string>(keyValuePairs);
+}
+
+export function getExitReason(value: string): AppExitReason {
+    if (Object.values(AppExitReason).includes(value as any)) {
+        return value as AppExitReason;
+    } else {
+        return AppExitReason.UNKNOWN;
+    }
 }
 
 export function numberToHex(value: number, pad: string = ""): string {

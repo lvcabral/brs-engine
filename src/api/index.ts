@@ -8,6 +8,7 @@
 import { SubscribeCallback, getNow, getWorkerLibPath, context, saveDataBuffer } from "./util";
 
 import {
+    AppExitReason,
     AppPayload,
     DataType,
     DebugCommand,
@@ -15,6 +16,7 @@ import {
     RemoteType,
     dataBufferIndex,
     dataBufferSize,
+    getExitReason,
 } from "../worker/common";
 
 import {
@@ -160,7 +162,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         if (event === "mode") {
             deviceData.displayMode = data;
             if (currentApp.running) {
-                terminate("EXIT_SETTINGS_UPDATE");
+                terminate(AppExitReason.SETTINGS);
             }
             notifyAll("display", data);
         } else if (["redraw", "resolution"].includes(event)) {
@@ -175,14 +177,14 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
                 if (!home) {
                     home = new Howl({ src: ["./audio/select.wav"] });
                     home.on("play", function () {
-                        terminate("EXIT_USER_NAV");
+                        terminate(AppExitReason.FINISHED);
                     });
                 }
                 home.play();
             }
         } else if (event === "poweroff") {
             if (currentApp.running) {
-                terminate("EXIT_POWER_MODE");
+                terminate(AppExitReason.POWER);
             }
         } else if (event === "volumemute") {
             setAudioMute(!getAudioMute());
@@ -268,7 +270,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
 }
 
 // Restore engine state and terminate Worker
-export function terminate(reason: string) {
+export function terminate(reason: AppExitReason) {
     if (currentApp.running) {
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
@@ -277,9 +279,9 @@ export function terminate(reason: string) {
         clearDisplay();
     }
     resetWorker();
-    lastApp.id = currentApp.id;
-    lastApp.exitReason = reason;
-    Object.assign(currentApp, resetCurrentApp());
+    currentApp.running = false;
+    Object.assign(lastApp, currentApp);
+    resetCurrentApp();
     enableSendKeys(false);
     notifyAll("closed", reason);
 }
@@ -446,7 +448,7 @@ function workerCallback(event: MessageEvent) {
         statsUpdate(true);
         notifyAll("started", currentApp);
     } else if (event.data.startsWith("end,")) {
-        terminate(event.data.slice(4));
+        terminate(getExitReason(event.data.slice(4)));
     } else if (event.data === "reset") {
         notifyAll("reset");
     } else if (event.data.startsWith("version,")) {

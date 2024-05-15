@@ -8,6 +8,7 @@
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import {
+    AppExitReason,
     AppFilePath,
     AppPayload,
     DeviceInfo,
@@ -284,7 +285,7 @@ export function executeFile(
         result = runSource(interpreter, sourceResult.sourceMap, input, password);
     }
     if (!result.cipherText) {
-        postMessage(`end,${result.endReason}`);
+        postMessage(`end,${result.exitReason}`);
     }
     return result;
 }
@@ -328,7 +329,7 @@ function setupInputArray(input: Map<string, string>): AAMember[] {
     const inputArray = new Array<AAMember>();
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
-        ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+        ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
         ["source", "auto-run-dev"],
         ["splashTime", "0"],
     ]);
@@ -537,7 +538,7 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
  * @returns the AST produced from lexing and parsing the provided files or the tokens for encryption if password is provided.
  */
 export interface ParseResult {
-    endReason: string;
+    exitReason: AppExitReason;
     tokens: Token[];
     statements: Stmt.Statement[];
 }
@@ -558,16 +559,16 @@ export function lexParseSync(
     lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
-    let endReason = "EXIT_USER_NAV";
+    let exitReason = AppExitReason.FINISHED;
     for (let [path, code] of sourceMap) {
         const scanResults = lexer.scan(code, path);
         if (scanResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
             break;
         }
         let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
         if (preprocessorResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
             break;
         }
         if (password.length > 0) {
@@ -576,7 +577,7 @@ export function lexParseSync(
         }
         const parseResults = parser.parse(preprocessorResults.processedTokens);
         if (parseResults.errors.length > 0) {
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
             break;
         }
         if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
@@ -600,7 +601,7 @@ export function lexParseSync(
         });
     }
     return {
-        endReason: endReason,
+        exitReason: exitReason,
         tokens: tokens,
         statements: allStatements,
     };
@@ -617,7 +618,7 @@ export function lexParseSync(
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 export interface RunResult {
-    endReason: string;
+    exitReason: AppExitReason;
     cipherText?: Uint8Array;
     iv?: string;
 }
@@ -628,7 +629,7 @@ function runSource(
     password: string = ""
 ): RunResult {
     const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
-    let endReason = parseResult.endReason;
+    let exitReason = parseResult.exitReason;
     if (password.length > 0) {
         const tokens = parseResult.tokens;
         const iv = crypto.randomBytes(12).toString("base64");
@@ -636,25 +637,25 @@ function runSource(
         const deflated = zlibSync(encode({ pcode: tokens }));
         const source = Buffer.from(deflated);
         const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
-        return { endReason: "EXIT_PACKAGER_DONE", cipherText: cipherText, iv: iv };
+        return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
     }
     try {
-        if (endReason !== "EXIT_BRIGHTSCRIPT_CRASH") {
-            endReason = "EXIT_USER_NAV";
+        if (exitReason !== AppExitReason.CRASHED) {
+            exitReason = AppExitReason.FINISHED;
             interpreter.exec(parseResult.statements, sourceMap, input);
         }
     } catch (err: any) {
-        endReason = "EXIT_USER_NAV";
+        exitReason = AppExitReason.FINISHED;
         if (err.message !== "debug-exit") {
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {
                 interpreter.options.stderr.write(err.message);
             }
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
         }
     }
-    return { endReason: endReason };
+    return { exitReason: exitReason };
 }
 
 /**
@@ -685,14 +686,14 @@ function runBinary(
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
             } else {
-                return { endReason: "EXIT_INVALID_PCODE" };
+                return { exitReason: AppExitReason.INVALID };
             }
         } else {
-            return { endReason: "EXIT_MISSING_PASSWORD" };
+            return { exitReason: AppExitReason.PASSWORD };
         }
     } catch (err: any) {
         postMessage(`error,Error unpacking the app: ${err.message}`);
-        return { endReason: "EXIT_UNPACK_ERROR" };
+        return { exitReason: AppExitReason.UNPACK };
     }
     // Execute the decrypted source code
     const lexer = new Lexer();
@@ -729,7 +730,7 @@ function runBinary(
         if (token.kind === "Eof") {
             const parseResults = parser.parse(tokens);
             if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
-                return { endReason: "EXIT_BRIGHTSCRIPT_CRASH" };
+                return { exitReason: AppExitReason.CRASHED };
             }
             if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
                 lib.set("v30/bslDefender.brs", bslDefender);
@@ -751,16 +752,16 @@ function runBinary(
             allStatements.push(...libParse.statements);
         }
     });
-    let endReason = "EXIT_USER_NAV";
+    let exitReason = AppExitReason.FINISHED;
     try {
         interpreter.exec(allStatements, undefined, input);
     } catch (err: any) {
         if (err.message !== "debug-exit") {
             postMessage(`error,${err.message}`);
-            endReason = "EXIT_BRIGHTSCRIPT_CRASH";
+            exitReason = AppExitReason.CRASHED;
         }
     }
-    return { endReason: endReason };
+    return { exitReason: exitReason };
 }
 
 /**

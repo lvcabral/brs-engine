@@ -24,7 +24,13 @@ import {
     getSerialNumber,
 } from "../api/package";
 import { isNumber } from "../api/util";
-import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload } from "../worker/common";
+import {
+    debugPrompt,
+    dataBufferIndex,
+    dataBufferSize,
+    AppPayload,
+    AppExitReason,
+} from "../worker/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
@@ -175,7 +181,7 @@ function runApp(payload: AppPayload) {
     if (program.ecp) {
         brsWorker?.terminate();
     }
-    if (pkg?.cipherText instanceof Uint8Array && pkg.iv) {
+    if (pkg.exitReason === AppExitReason.PACKAGED) {
         const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
         try {
             const buffer = updateAppZip(pkg.cipherText, pkg.iv);
@@ -191,9 +197,9 @@ function runApp(payload: AppPayload) {
             console.error(chalk.red(`Error generating the file ${filePath}: ${err.message}`));
             process.exitCode = 1;
         }
-    } else if (pkg?.endReason) {
-        const msg = `------ Finished '${appFileName}' execution [${pkg.endReason}] ------\n`;
-        if (pkg.endReason === "EXIT_USER_NAV") {
+    } else {
+        const msg = `------ Finished '${appFileName}' execution [${pkg.exitReason}] ------\n`;
+        if (pkg.exitReason === AppExitReason.FINISHED) {
             console.log(chalk.blueBright(msg));
         } else {
             process.exitCode = 1;
@@ -322,7 +328,7 @@ function messageCallback(message: any, _?: any) {
             process.exitCode = 1;
         } else if (mType === "end") {
             const msg = message.slice(mType.length + 1).trimEnd();
-            if (msg !== "EXIT_USER_NAV") {
+            if (msg !== AppExitReason.FINISHED) {
                 process.exitCode = 1;
             }
         } else if (!["start", "debug", "reset", "video", "audio"].includes(mType)) {
