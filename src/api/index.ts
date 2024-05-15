@@ -8,11 +8,15 @@
 import { SubscribeCallback, getNow, getWorkerLibPath, context, saveDataBuffer } from "./util";
 
 import {
+    AppExitReason,
+    AppPayload,
     DataType,
     DebugCommand,
+    DeviceInfo,
     RemoteType,
     dataBufferIndex,
     dataBufferSize,
+    getExitReason,
 } from "../worker/common";
 
 import {
@@ -92,7 +96,7 @@ let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
 let sharedArray: Int32Array;
 
 // API Methods
-export function initialize(customDeviceInfo?: any, options: any = {}) {
+export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
         const invalidKeys = [
             "registry",
@@ -101,6 +105,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
             "videoFormats",
             "fonts",
             "password",
+            "context",
         ];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {
@@ -157,7 +162,7 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
         if (event === "mode") {
             deviceData.displayMode = data;
             if (currentApp.running) {
-                terminate("EXIT_SETTINGS_UPDATE");
+                terminate(AppExitReason.SETTINGS);
             }
             notifyAll("display", data);
         } else if (["redraw", "resolution"].includes(event)) {
@@ -172,14 +177,14 @@ export function initialize(customDeviceInfo?: any, options: any = {}) {
                 if (!home) {
                     home = new Howl({ src: ["./audio/select.wav"] });
                     home.on("play", function () {
-                        terminate("EXIT_USER_NAV");
+                        terminate(AppExitReason.FINISHED);
                     });
                 }
                 home.play();
             }
         } else if (event === "poweroff") {
             if (currentApp.running) {
-                terminate("EXIT_POWER_MODE");
+                terminate(AppExitReason.POWER);
             }
         } else if (event === "volumemute") {
             setAudioMute(!getAudioMute());
@@ -265,7 +270,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
 }
 
 // Restore engine state and terminate Worker
-export function terminate(reason: string) {
+export function terminate(reason: AppExitReason) {
     if (currentApp.running) {
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
@@ -274,9 +279,9 @@ export function terminate(reason: string) {
         clearDisplay();
     }
     resetWorker();
-    lastApp.id = currentApp.id;
-    lastApp.exitReason = reason;
-    Object.assign(currentApp, resetCurrentApp());
+    currentApp.running = false;
+    Object.assign(lastApp, currentApp);
+    resetCurrentApp();
     enableSendKeys(false);
     notifyAll("closed", reason);
 }
@@ -355,28 +360,32 @@ function resetArray() {
 function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
     reader.onload = function (_) {
-        manifestMap.clear();
-        manifestMap.set("title", "BRS File");
-        manifestMap.set("major_version", "1");
-        manifestMap.set("minor_version", "0");
-        manifestMap.set("build_version", "0");
-        manifestMap.set("requires_audiometadata", "1");
-        currentApp.id = "brs";
-        currentApp.title = fileName;
-        paths.length = 0;
-        bins.length = 0;
-        txts.length = 0;
-        source.push(this.result);
-        paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
-        clearDisplay();
-        notifyAll("loaded", currentApp);
-        runApp(createPayload(1, false));
+        if (typeof this.result === "string") {
+            manifestMap.clear();
+            manifestMap.set("title", "BRS File");
+            manifestMap.set("major_version", "1");
+            manifestMap.set("minor_version", "0");
+            manifestMap.set("build_version", "0");
+            manifestMap.set("requires_audiometadata", "1");
+            currentApp.id = "brs";
+            currentApp.title = fileName;
+            paths.length = 0;
+            bins.length = 0;
+            txts.length = 0;
+            source.push(this.result);
+            paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
+            clearDisplay();
+            notifyAll("loaded", currentApp);
+            runApp(createPayload(1, false));
+        } else {
+            apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);
+        }
     };
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
 // Execute Engine Web Worker
-function runApp(payload: object) {
+function runApp(payload: AppPayload) {
     showDisplay();
     currentApp.running = true;
     brsWorker = new Worker(brsWrkLib);
@@ -439,7 +448,7 @@ function workerCallback(event: MessageEvent) {
         statsUpdate(true);
         notifyAll("started", currentApp);
     } else if (event.data.startsWith("end,")) {
-        terminate(event.data.slice(4));
+        terminate(getExitReason(event.data.slice(4)));
     } else if (event.data === "reset") {
         notifyAll("reset");
     } else if (event.data.startsWith("version,")) {

@@ -10,27 +10,37 @@ import { bufferToBase64, parseCSV, SubscribeCallback, context } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
-import { defaultDeviceInfo, audioExt, videoExt, parseManifest } from "../worker/common";
+import {
+    defaultDeviceInfo,
+    audioExt,
+    videoExt,
+    parseManifest,
+    AppPayload,
+    AppFilePath,
+    AppData,
+    AppExitReason,
+} from "../worker/common";
 import models from "../worker/common/models.csv";
 import packageInfo from "../../package.json";
 
 // Default Device Data
 export const deviceData = Object.assign(defaultDeviceInfo, {
+    models: parseCSV(models),
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
-    models: parseCSV(models),
+    context: context,
 });
 
 // App Data
 const defaultSplashTime = 1600;
 let splashTimeout = 0;
-export const source: any[] = [];
-export const paths: any[] = [];
-export const txts: any[] = [];
+export const source: string[] = [];
+export const paths: AppFilePath[] = [];
+export const txts: string[] = [];
 export const bins: any[] = [];
-export const manifestMap = new Map();
-export const currentApp = createCurrentApp();
-export const lastApp = { id: "", exitReason: "EXIT_UNKNOWN" };
+export const manifestMap: Map<string, string> = new Map();
+export const currentApp = createAppStatus();
+export const lastApp = createAppStatus();
 
 // Observers Handling
 const observers = new Map();
@@ -113,24 +123,24 @@ function processFile(relativePath: string, fileData: Uint8Array) {
 }
 
 function processSourceFile(relativePath: string, fileData: Uint8Array) {
-    paths.push({ url: relativePath, id: srcId, type: "source" });
+    paths.push({ id: srcId, url: relativePath, type: "source" });
     source.push(strFromU8(fileData));
     srcId++;
 }
 
 function processTextFile(relativePath: string, fileData: Uint8Array) {
-    paths.push({ url: relativePath, id: txtId, type: "text" });
+    paths.push({ id: txtId, url: relativePath, type: "text" });
     txts.push(strFromU8(fileData));
     txtId++;
 }
 
 function processAudioFile(relativePath: string, fileData: Uint8Array, ext: string) {
     if (currentApp.audioMetadata) {
-        paths.push({ url: relativePath, id: audId, binId: binId, type: "audio", format: ext });
+        paths.push({ id: audId, url: relativePath, binId: binId, type: "audio", format: ext });
         bins.push(fileData.buffer);
         binId++;
     } else {
-        paths.push({ url: relativePath, id: audId, type: "audio", format: ext });
+        paths.push({ id: audId, url: relativePath, type: "audio", format: ext });
     }
     if (context.inBrowser) {
         addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
@@ -139,14 +149,18 @@ function processAudioFile(relativePath: string, fileData: Uint8Array, ext: strin
 }
 
 function processVideoFile(relativePath: string, fileData: Uint8Array, ext: string) {
-    paths.push({ url: relativePath, id: 0, type: "video", format: ext });
+    paths.push({ id: 0, url: relativePath, type: "video", format: ext });
     if (context.inBrowser) {
         addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
     }
 }
 
-function processBinaryFile(relativePath: string, fileData: Uint8Array, binType: string) {
-    paths.push({ url: relativePath, id: binId, type: binType });
+function processBinaryFile(
+    relativePath: string,
+    fileData: Uint8Array,
+    binType: "binary" | "pcode"
+) {
+    paths.push({ id: binId, url: relativePath, type: binType });
     bins.push(fileData.buffer);
     binId++;
 }
@@ -156,16 +170,16 @@ function processManifest(content: string) {
     parseManifest(content).forEach((value, key) => {
         manifestMap.set(key, value);
     });
-    currentApp.title = manifestMap.get("title") || "No Title";
-    currentApp.subtitle = manifestMap.get("subtitle") || "";
+    currentApp.title = manifestMap.get("title") ?? "No Title";
+    currentApp.subtitle = manifestMap.get("subtitle") ?? "";
     currentApp.audioMetadata = manifestMap.get("requires_audiometadata") === "1";
 
-    const majorVersion = parseInt(manifestMap.get("major_version")) || 0;
-    const minorVersion = parseInt(manifestMap.get("minor_version")) || 0;
-    const buildVersion = parseInt(manifestMap.get("build_version")) || 0;
+    const majorVersion = parseInt(manifestMap.get("major_version") ?? "") ?? 0;
+    const minorVersion = parseInt(manifestMap.get("minor_version") ?? "") ?? 0;
+    const buildVersion = parseInt(manifestMap.get("build_version") ?? "") ?? 0;
     currentApp.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
 
-    const splashMinTime = parseInt(manifestMap.get("splash_min_time"));
+    const splashMinTime = parseInt(manifestMap.get("splash_min_time") ?? "");
     splashTimeout = isNaN(splashMinTime) ? defaultSplashTime : splashMinTime;
 
     const resKeys = ["hd", "fhd"];
@@ -233,12 +247,12 @@ export function updateAppZip(source: Uint8Array, iv: string) {
 }
 
 // Create App Payload
-export function createPayload(timeOut?: number, entryPoint?: boolean) {
+export function createPayload(timeOut?: number, entryPoint?: boolean): AppPayload {
     if (!timeOut) {
         timeOut = splashTimeout;
     }
     const input = new Map([
-        ["lastExitOrTerminationReason", "EXIT_UNKNOWN"],
+        ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
         ["splashTime", timeOut.toString()],
     ]);
     if (currentApp.id === lastApp.id) {
@@ -263,10 +277,10 @@ export function createPayload(timeOut?: number, entryPoint?: boolean) {
 
 // Current App object
 export function resetCurrentApp() {
-    Object.assign(currentApp, createCurrentApp());
+    Object.assign(currentApp, createAppStatus());
 }
 
-function createCurrentApp() {
+function createAppStatus(): AppData {
     return {
         id: "",
         file: "",
@@ -274,6 +288,7 @@ function createCurrentApp() {
         subtitle: "",
         version: "",
         execSource: "auto-run-dev",
+        exitReason: AppExitReason.UNKNOWN,
         password: "",
         clearDisplay: true,
         debugOnCrash: false,
