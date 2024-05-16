@@ -114,14 +114,14 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
         // override old key with new one
         let oldKey = this.findElementKey(index.value);
+        this.addChildRef(value);
+        if (oldKey) this.removeChildRef(this.elements.get(oldKey));
         if (!this.modeCaseSensitive && oldKey) {
             this.elements.delete(oldKey);
             this.keyMap.set(oldKey.toLowerCase(), new Set()); // clear key set cuz in insensitive mode we should have 1 key in set
         }
 
         let indexValue = isCaseSensitive ? index.value : index.value.toLowerCase();
-        this.addChildRef(value);
-        this.removeChildRef(this.elements.get(indexValue));
         this.elements.set(indexValue, value);
 
         let lkey = index.value.toLowerCase();
