@@ -26,7 +26,6 @@ export class Environment {
         } else {
             this.rootM = rootM;
         }
-        this.rootM.addReference();
         this.mPointer.addReference();
     }
     /**
@@ -63,7 +62,7 @@ export class Environment {
         let destination: Map<string, BrsType>;
         const lowercaseName = name.toLowerCase();
         switch (scope) {
-            case Scope.Function:
+            case Scope.Function: {
                 destination = this.function;
                 if (value instanceof BrsComponent) {
                     value.addReference();
@@ -73,6 +72,7 @@ export class Environment {
                     current.removeReference();
                 }
                 break;
+            }
             case Scope.Module:
                 destination = this.module;
                 break;
@@ -89,8 +89,6 @@ export class Environment {
      * @param newMPointer the new value to be used for the `m` pointer
      */
     public setM(newMPointer: RoAssociativeArray): void {
-        newMPointer.addReference();
-        this.mPointer.removeReference();
         this.mPointer = newMPointer;
     }
 
@@ -115,8 +113,6 @@ export class Environment {
      * @param newMPointer the new value to be used for the `m` pointer
      */
     public setRootM(newMPointer: RoAssociativeArray): void {
-        newMPointer.addReference();
-        this.rootM.removeReference();
         this.rootM = newMPointer;
     }
 

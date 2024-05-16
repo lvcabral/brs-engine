@@ -240,6 +240,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
+        let retValue: BrsComponent | undefined = undefined;
         try {
             this._environment = newEnv;
             const returnValue = func(this);
@@ -249,11 +250,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (!this._tryMode && this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                 // Keep environment for Micro Debugger in case of a crash
                 originalEnvironment = this._environment;
+            } else if (err instanceof Stmt.ReturnValue && err.value instanceof BrsComponent) {
+                retValue = err.value;
+                retValue.setReturn(true);
             }
             this._environment = originalEnvironment;
             throw err;
         } finally {
             newEnv.removeReferences();
+            retValue?.setReturn(false);
         }
     }
 
@@ -374,10 +379,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             throw new Stmt.ReturnValue(statement.tokens.return.location);
         }
 
-        let toReturn = this.evaluate(statement.value);
-        if (toReturn instanceof BrsComponent) {
-            toReturn.addReference(true);
-        }
+        const toReturn = this.evaluate(statement.value);
         throw new Stmt.ReturnValue(statement.tokens.return.location, toReturn);
     }
 

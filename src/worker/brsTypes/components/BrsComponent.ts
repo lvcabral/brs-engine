@@ -59,18 +59,18 @@ export class BrsComponent {
         return this.references;
     }
 
-    addReference(isReturn = false) {
+    setReturn(beingReturned: boolean) {
         // prevent dispose when returning object created inside a function
-        if (!this.returnFlag) {
-            this.references++;
-            this.returnFlag = false;
-        }
-        this.returnFlag = isReturn;
+        this.returnFlag = beingReturned;
+    }
+
+    addReference() {
+        this.references++;
     }
 
     removeReference() {
         this.references--;
-        if (this.references === 0) {
+        if (this.references === 0 && !this.returnFlag) {
             this.dispose();
         }
     }
