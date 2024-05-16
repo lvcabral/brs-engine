@@ -601,13 +601,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Return the image name (file name or custom) of the bitmap (this method is not on RBI). */
-    private getName = new Callable("getHeight", {
+    private getName = new Callable("getName", {
         signature: {
             args: [],
-            returns: ValueKind.Int32,
+            returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.height);
+            return new BrsString(this.name);
         },
     });
 
