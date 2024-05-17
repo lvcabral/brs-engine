@@ -8,19 +8,20 @@ import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
 import {
-    WorkerCanvas,
-    WorkerCanvasRenderingContext2D,
+    BrsCanvas,
+    BrsCanvasContext2D,
     createNewCanvas,
     drawObjectToComponent,
     getDimensions,
+    releaseCanvas,
 } from "../draw2d";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly sprites = new Map<number, RoSprite[]>();
     readonly animations = new Array<RoSprite>();
-    private canvas: WorkerCanvas;
-    private context: WorkerCanvasRenderingContext2D;
+    private canvas: BrsCanvas;
+    private context: BrsCanvasContext2D;
     private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
@@ -29,9 +30,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     constructor() {
         super("roCompositor");
         this.canvas = createNewCanvas(10, 10);
-        let context = this.canvas.getContext("2d", {
-            alpha: true,
-        }) as WorkerCanvasRenderingContext2D;
+        let context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         this.context = context;
         this.spriteId = 0;
         this.registerMethods({
@@ -75,7 +74,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         this.sprites.forEach(function (layer) {
             layer.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
-                    object.splice(index, 1);
+                    object.splice(index, 1).forEach((sprite) => {
+                        sprite.removeReference();
+                    });
                     return true; // break
                 }
                 return false;
@@ -84,7 +85,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         if (animation) {
             this.animations.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
-                    object.splice(index, 1);
+                    object.splice(index, 1).forEach((sprite) => {
+                        sprite.removeReference();
+                    });
                     return true; // break
                 }
                 return false;
@@ -96,7 +99,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return !!this.destBitmap?.getAlphaEnableValue();
     }
 
-    getContext(): WorkerCanvasRenderingContext2D {
+    getContext(): BrsCanvasContext2D {
         return this.context;
     }
 
@@ -195,6 +198,19 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    dispose(): void {
+        this.destBitmap?.removeReference();
+        this.sprites.forEach((layer) => {
+            layer.forEach((sprite) => {
+                sprite.removeReference();
+            });
+        });
+        this.animations.forEach((sprite) => {
+            sprite.removeReference();
+        });
+        releaseCanvas(this.canvas);
+    }
+
     /** Set the destBitmap (roBitmap or roScreen) and the background color */
     private setDrawTo = new Callable("setDrawTo", {
         signature: {
@@ -209,6 +225,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             destBitmap: RoBitmap | RoScreen | RoRegion,
             rgbaBackground: Int32
         ) => {
+            destBitmap.addReference();
+            this.destBitmap?.removeReference();
             this.destBitmap = destBitmap;
             const destDimensions = getDimensions(destBitmap);
             this.canvas.width = destDimensions.width;
@@ -232,6 +250,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, x: Int32, y: Int32, region: RoRegion, z: Int32) => {
             if (region instanceof RoRegion) {
                 let sprite = new RoSprite(x, y, region, z, this.spriteId++, this);
+                sprite.addReference();
                 this.setSpriteLayer(sprite, z.getValue());
                 return sprite;
             } else {
@@ -261,7 +280,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (regions && regions.length > 0) {
                     if (regions[0] instanceof RoRegion) {
                         let sprite = new RoSprite(x, y, regionArray, z, this.spriteId++, this);
+                        sprite.addReference();
                         this.setSpriteLayer(sprite, z.getValue());
+                        sprite.addReference();
                         this.animations.push(sprite);
                         return sprite;
                     } else {

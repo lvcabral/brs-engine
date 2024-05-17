@@ -26,7 +26,10 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     constructor(elements: AAMember[]) {
         super("roAssociativeArray");
-        elements.forEach((member) => this.set(member.name, member.value, true));
+        elements.forEach((member) => {
+            this.addChildRef(member.value);
+            this.set(member.name, member.value, true);
+        });
         this.enumIndex = elements.length ? 0 : -1;
 
         this.registerMethods({
@@ -111,6 +114,8 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
         // override old key with new one
         let oldKey = this.findElementKey(index.value);
+        this.addChildRef(value);
+        if (oldKey) this.removeChildRef(this.elements.get(oldKey));
         if (!this.modeCaseSensitive && oldKey) {
             this.elements.delete(oldKey);
             this.keyMap.set(oldKey.toLowerCase(), new Set()); // clear key set cuz in insensitive mode we should have 1 key in set
@@ -150,6 +155,24 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
     }
 
+    dispose() {
+        this.elements.forEach((element) => {
+            this.removeChildRef(element);
+        });
+    }
+
+    addChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            value.addReference();
+        }
+    }
+
+    removeChildRef(value: BrsType | undefined) {
+        if (value instanceof BrsComponent) {
+            value.removeReference();
+        }
+    }
+
     /** if AA is in insensitive mode, it means that we should do insensitive search of real key */
     private findElementKey(elementKey: string, isCaseSensitiveFind = false) {
         if (this.modeCaseSensitive && isCaseSensitiveFind) {
@@ -171,6 +194,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            this.elements.forEach((element) => {
+                this.removeChildRef(element);
+            });
             this.elements.clear();
             this.keyMap.clear();
             this.enumIndex = -1;
@@ -186,6 +212,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
         impl: (_: Interpreter, str: BrsString) => {
             let key = this.findElementKey(str.value, this.modeCaseSensitive);
+            if (key) {
+                this.removeChildRef(this.elements.get(key));
+            }
             let deleted = key ? this.elements.delete(key) : false;
 
             let lKey = str.value.toLowerCase();

@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { FontMetrics } from "./RoFontRegistry";
-import { WorkerCanvasRenderingContext2D, createNewCanvas } from "../draw2d";
+import { BrsCanvasContext2D, createNewCanvas, releaseCanvas } from "../draw2d";
 
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -84,14 +84,13 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, text: BrsString, maxWidth: Int32) => {
-            let canvas = createNewCanvas(1280, 720);
-            let ctx = canvas.getContext("2d", {
-                alpha: false,
-            }) as WorkerCanvasRenderingContext2D;
+            const canvas = createNewCanvas(1280, 720);
+            const ctx = canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
             ctx.font = this.toFontString();
             ctx.textBaseline = "top";
             let measure = ctx.measureText(text.value);
             let length = Math.min(measure.width, maxWidth.getValue());
+            releaseCanvas(canvas);
             return new Int32(Math.round(length));
         },
     });
