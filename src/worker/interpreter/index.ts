@@ -22,6 +22,7 @@ import {
     PrimitiveKinds,
     Callable,
     Int32,
+    Int64,
     Float,
     Uninitialized,
     RoArray,
@@ -50,7 +51,7 @@ import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, dataBufferIndex, defaultDeviceInfo } from "../common";
+import { DataType, DebugCommand, dataBufferIndex, defaultDeviceInfo, numberToHex } from "../common";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -239,6 +240,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
+        let retValue: BrsComponent | undefined = undefined;
         try {
             this._environment = newEnv;
             const returnValue = func(this);
@@ -248,9 +250,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (!this._tryMode && this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                 // Keep environment for Micro Debugger in case of a crash
                 originalEnvironment = this._environment;
+            } else if (err instanceof Stmt.ReturnValue && err.value instanceof BrsComponent) {
+                retValue = err.value;
+                retValue.setReturn(true);
             }
             this._environment = originalEnvironment;
             throw err;
+        } finally {
+            newEnv.removeReferences();
+            retValue?.setReturn(false);
         }
     }
 
@@ -371,7 +379,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             throw new Stmt.ReturnValue(statement.tokens.return.location);
         }
 
-        let toReturn = this.evaluate(statement.value);
+        const toReturn = this.evaluate(statement.value);
         throw new Stmt.ReturnValue(statement.tokens.return.location, toReturn);
     }
 
@@ -474,7 +482,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             }
         }
-
         this.environment.define(Scope.Function, statement.name.text, value);
         return BrsInvalid.Instance;
     }
@@ -507,8 +514,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             let size = dimensionValues[dimIndex];
             for (let i = 0; i < size; i++) {
                 if (dimIndex < dimensionValues.length) {
-                    let subchildren = createArrayTree(dimIndex + 1);
-                    if (subchildren !== undefined) children.push(subchildren);
+                    let subChildren = createArrayTree(dimIndex + 1);
+                    if (subChildren !== undefined) children.push(subChildren);
                 }
             }
             let child = new RoArray(children);
@@ -1955,27 +1962,26 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     formatLocalVariables(): string {
         let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
-        debugMsg += `${"m".padEnd(16)} roAssociativeArray count:${
+        debugMsg += `${"m".padEnd(16)} roAssociativeArray refcnt=2 count:${
             this.environment.getM().getElements().length
         }\r\n`;
         let fnc = this.environment.getList(Scope.Function);
         fnc.forEach((value, key) => {
             const varName = key.padEnd(17);
             if (PrimitiveKinds.has(value.kind)) {
-                let text = value.toString();
-                let lf = text.length <= 94 ? "\r\n" : "...\r\n";
-                if (value.kind === ValueKind.String) {
-                    text = `"${text.substring(0, 94)}"`;
-                }
-                debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${text}${lf}`;
+                debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(
+                    value
+                )}`;
             } else if (isIterable(value)) {
                 const count = value.getElements().length;
-                debugMsg += `${varName}${value.getComponentName()} count:${count}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {
                 const unboxed = value.unbox();
-                debugMsg += `${varName}${value.getComponentName()} val:${unboxed.toString()}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} val:${this.formatValue(
+                    unboxed
+                )}`;
             } else if (value.kind === ValueKind.Object) {
-                debugMsg += `${varName}${value.getComponentName()}\r\n`;
+                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()}\r\n`;
             } else if (value.kind === ValueKind.Callable) {
                 debugMsg += `${varName}${ValueKind.toString(
                     value.kind
@@ -1985,6 +1991,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         });
         return debugMsg;
+    }
+
+    formatValue(value: BrsType) {
+        let text = value.toString();
+        let lf = text.length <= 94 ? "\r\n" : "...\r\n";
+        if (value instanceof BrsString) {
+            text = `"${text.substring(0, 94)}"`;
+        } else if (value instanceof Int32) {
+            text = `${text} (&h${numberToHex(value.getValue()).toUpperCase()})`;
+        } else if (value instanceof Int64) {
+            text = `${text} (&h${numberToHex(value.getValue().toNumber()).toUpperCase()})`;
+        }
+        return `${text}${lf}`;
     }
 
     /**

@@ -30,6 +30,10 @@ export class RoInput extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    dispose() {
+        this.port?.removeReference();
+    }
+
     // ifInput ------------------------------------------------------------------------------------
 
     /** Sets the current Order which must be an roList of roAssociativeArray items. */
@@ -73,6 +77,8 @@ export class RoInput extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

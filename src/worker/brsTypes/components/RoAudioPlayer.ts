@@ -43,6 +43,13 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    dispose() {
+        this.contentList.forEach((element) => {
+            this.removeReference();
+        });
+        this.port?.removeReference();
+    }
+
     /** Sets the content list to be played by the Audio Player */
     private setContentList = new Callable("setContentList", {
         signature: {
@@ -53,6 +60,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             const contents = new Array<string>();
             this.contentList = contentList.getElements() as RoAssociativeArray[];
             this.contentList.forEach((value, index, array) => {
+                value.addReference();
                 let url = value.get(new BrsString("url"));
                 if (url instanceof BrsString) {
                     contents.push(url.value);
@@ -70,6 +78,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentItem: RoAssociativeArray) => {
+            contentItem.addReference();
             this.contentList.push(contentItem);
             const contents = new Array<string>();
             this.contentList.forEach((value, index, array) => {
@@ -214,6 +223,8 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableAudio(true);
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -227,6 +238,8 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableAudio(true);
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

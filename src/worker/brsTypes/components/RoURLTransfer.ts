@@ -338,6 +338,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    dispose() {
+        this.port?.removeReference();
+    }
+
     // ifUrlTransfer ----------------------------------------------------------------------------------
 
     /** Returns a unique number for this object that can be used to identify whether events originated from this object. */
@@ -942,6 +946,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -954,6 +960,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

@@ -5,17 +5,15 @@ import { Int32 } from "./Int32";
 import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
 
 export type BrsDraw2D = RoBitmap | RoRegion | RoScreen;
-export type WorkerCanvas = OffscreenCanvas | Canvas;
-export type WorkerCanvasRenderingContext2D =
-    | OffscreenCanvasRenderingContext2D
-    | CanvasRenderingContext2D;
-export type WorkerImageData = ImageData | NodeImageData;
+export type BrsCanvas = OffscreenCanvas | Canvas;
+export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+export type BrsImageData = ImageData | NodeImageData;
 
 // In Chrome, when this is enabled, it slows down non-alpha draws. However, when this is true, it behaves the same as Roku
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
 const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
 
-function setContextAlpha(ctx: WorkerCanvasRenderingContext2D, rgba: Int32 | BrsInvalid) {
+function setContextAlpha(ctx: BrsCanvasContext2D, rgba: Int32 | BrsInvalid) {
     if (rgba instanceof Int32) {
         const alpha = rgba.getValue() & 255;
         if (alpha < 255) {
@@ -24,8 +22,8 @@ function setContextAlpha(ctx: WorkerCanvasRenderingContext2D, rgba: Int32 | BrsI
     }
 }
 
-function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): WorkerCanvas {
-    let cvs: WorkerCanvas;
+function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): BrsCanvas {
+    let cvs: BrsCanvas;
     if (rgba instanceof Int32 && !(object instanceof RoScreen)) {
         cvs = object.getRgbaCanvas(rgba.getValue());
     } else {
@@ -34,7 +32,7 @@ function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): Worke
     return cvs;
 }
 
-function isCanvasValid(cvs?: WorkerCanvas): boolean {
+function isCanvasValid(cvs?: BrsCanvas): boolean {
     if (!cvs) {
         return false;
     }
@@ -71,7 +69,7 @@ export class Dimensions {
     constructor(public width: number, public height: number) {}
 }
 
-export function getDimensions(object: BrsDraw2D | RoCompositor | WorkerCanvas): Dimensions {
+export function getDimensions(object: BrsDraw2D | RoCompositor | BrsCanvas): Dimensions {
     if (object instanceof RoRegion || object instanceof RoBitmap) {
         return new Dimensions(object.getImageWidth(), object.getImageHeight());
     } else if (object instanceof RoScreen) {
@@ -204,7 +202,7 @@ export function drawObjectToComponent(
 ): boolean {
     const ctx = component.getContext();
     const alphaEnable = component.getAlphaEnableValue();
-    let image: WorkerCanvas;
+    let image: BrsCanvas;
     if (object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen) {
         image = getCanvasFromDraw2d(object, rgba);
         setContextAlpha(ctx, rgba);
@@ -238,8 +236,8 @@ export function drawObjectToComponent(
 }
 
 export function drawImageToContext(
-    ctx: WorkerCanvasRenderingContext2D,
-    image: WorkerCanvas,
+    ctx: BrsCanvasContext2D,
+    image: BrsCanvas,
     alphaEnable: boolean,
     x: number,
     y: number
@@ -255,9 +253,7 @@ export function drawImageToContext(
     } else if (alphaEnable) {
         drawImageAtPos(image, ctx, x, y);
     } else {
-        const ctc = image.getContext("2d", {
-            alpha: true,
-        }) as WorkerCanvasRenderingContext2D;
+        const ctc = image.getContext("2d") as BrsCanvasContext2D;
         let imageData = ctc.getImageData(0, 0, image.width, image.height);
         let pixels = imageData.data;
         for (let i = 3, n = image.width * image.height * 4; i < n; i += 4) {
@@ -270,13 +266,13 @@ export function drawImageToContext(
 
 export function drawRotatedObject(
     component: BrsDraw2D,
-    ctx: WorkerCanvasRenderingContext2D,
     object: BrsComponent,
     rgba: Int32 | BrsInvalid,
     x: number,
     y: number,
     angle: number
 ): boolean {
+    const ctx = component.getContext();
     const angleInRad = (-angle * Math.PI) / 180;
     ctx.save();
     ctx.translate(x, y);
@@ -294,12 +290,12 @@ export function createNewCanvas(width: number, height: number) {
     /// #endif
 }
 
-export function drawImageAtPos(
-    image: WorkerCanvas,
-    ctx: WorkerCanvasRenderingContext2D,
-    x: number,
-    y: number
-) {
+export function releaseCanvas(canvas: BrsCanvas) {
+    canvas.width = 0;
+    canvas.height = 0;
+}
+
+export function drawImageAtPos(image: BrsCanvas, ctx: BrsCanvasContext2D, x: number, y: number) {
     /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
         ctx.drawImage(image, x, y);
@@ -312,8 +308,8 @@ export function drawImageAtPos(
 }
 
 export function putImageAtPos(
-    imageData: WorkerImageData,
-    ctx: WorkerCanvasRenderingContext2D,
+    imageData: BrsImageData,
+    ctx: BrsCanvasContext2D,
     x: number,
     y: number
 ) {
@@ -328,7 +324,7 @@ export function putImageAtPos(
     /// #endif
 }
 
-function drawChunk(ctx: WorkerCanvasRenderingContext2D, image: WorkerCanvas, chunk: DrawChunk) {
+function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) {
     const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
     /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {

@@ -10,12 +10,13 @@ import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
 import {
-    WorkerCanvas,
-    WorkerCanvasRenderingContext2D,
+    BrsCanvas,
+    BrsCanvasContext2D,
     createNewCanvas,
     drawImageToContext,
     drawObjectToComponent,
     drawRotatedObject,
+    releaseCanvas,
 } from "../draw2d";
 import UPNG from "upng-js";
 
@@ -27,12 +28,13 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private lastBuffer: number;
     private width: number;
     private height: number;
-    private canvas: WorkerCanvas[];
-    private context: WorkerCanvasRenderingContext2D[];
+    private canvas: BrsCanvas[];
+    private context: BrsCanvasContext2D[];
     private port?: RoMessagePort;
     private isDirty: boolean;
     private lastMessage: number;
     private maxMs: number;
+    private disposeCanvas: boolean;
 
     // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(
@@ -51,6 +53,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
+        this.disposeCanvas = interpreter.deviceInfo.get("context")?.inIOS ?? false;
         this.lastMessage = performance.now();
         this.isDirty = true;
         this.width = defaultWidth;
@@ -70,8 +73,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.doubleBuffer = doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean();
         this.currentBuffer = 0;
         this.lastBuffer = 0;
-        this.canvas = new Array<WorkerCanvas>(this.doubleBuffer ? 2 : 1);
-        this.context = new Array<WorkerCanvasRenderingContext2D>(this.doubleBuffer ? 2 : 1);
+        this.canvas = new Array<BrsCanvas>(this.doubleBuffer ? 2 : 1);
+        this.context = new Array<BrsCanvasContext2D>(this.doubleBuffer ? 2 : 1);
         this.createDisplayBuffer();
         this.alphaEnable = false;
         const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
@@ -105,9 +108,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         for (let index = 0; index < this.canvas.length; index++) {
             this.canvas[index] = createNewCanvas(this.width, this.height);
             if (this.canvas[index]) {
-                this.context[index] = this.canvas[index].getContext("2d", {
-                    alpha: true,
-                }) as WorkerCanvasRenderingContext2D;
+                this.context[index] = this.canvas[index].getContext("2d") as BrsCanvasContext2D;
                 this.canvas[index].width = this.width;
                 this.canvas[index].height = this.height;
             }
@@ -122,11 +123,11 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.canvas[this.lastBuffer].height;
     }
 
-    getCanvas(): WorkerCanvas {
+    getCanvas(): BrsCanvas {
         return this.canvas[this.lastBuffer];
     }
 
-    getContext(): WorkerCanvasRenderingContext2D {
+    getContext(): BrsCanvasContext2D {
         return this.context[this.currentBuffer];
     }
 
@@ -154,7 +155,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         return this.isDirty;
     }
 
-    drawImageToContext(image: WorkerCanvas, x: number, y: number): boolean {
+    drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
         const ctx = this.context[this.currentBuffer];
         this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y);
         return this.isDirty;
@@ -175,6 +176,13 @@ export class RoScreen extends BrsComponent implements BrsValue {
 
     makeDirty() {
         this.isDirty = true;
+    }
+
+    dispose(): void {
+        this.port?.removeReference();
+        if (this.disposeCanvas) {
+            this.canvas.forEach((c) => releaseCanvas(c));
+        }
     }
     // ifScreen ------------------------------------------------------------------------------------
 
@@ -266,16 +274,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.context[this.currentBuffer];
-            drawRotatedObject(
-                this,
-                ctx,
-                object,
-                rgba,
-                x.getValue(),
-                y.getValue(),
-                theta.getValue()
-            );
+            drawRotatedObject(this, object, rgba, x.getValue(), y.getValue(), theta.getValue());
             return BrsBoolean.from(this.isDirty);
         },
     });
@@ -581,6 +580,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableKeys(true);
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },
@@ -594,6 +595,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
             port.enableKeys(true);
+            port.addReference();
+            this.port?.removeReference();
             this.port = port;
             return BrsInvalid.Instance;
         },

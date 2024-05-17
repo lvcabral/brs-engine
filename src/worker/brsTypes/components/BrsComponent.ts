@@ -7,11 +7,15 @@ export class BrsComponent {
     private methods: Map<string, Callable> = new Map();
     private readonly componentName: string;
     private filter: string = "";
+    protected references: number;
+    protected returnFlag: boolean;
 
     readonly interfaces = new Map<string, BrsInterface>();
 
     constructor(name: string) {
         this.componentName = name;
+        this.references = 0;
+        this.returnFlag = false;
     }
 
     /**
@@ -50,6 +54,29 @@ export class BrsComponent {
             return iface?.hasMethod(method) ? this.methods.get(method) : undefined;
         }
         return this.methods.get(method);
+    }
+    getReferenceCount() {
+        return this.references;
+    }
+
+    setReturn(beingReturned: boolean) {
+        // prevent dispose when returning object created inside a function
+        this.returnFlag = beingReturned;
+    }
+
+    addReference() {
+        this.references++;
+    }
+
+    removeReference() {
+        this.references--;
+        if (this.references === 0 && !this.returnFlag) {
+            this.dispose();
+        }
+    }
+
+    dispose() {
+        // To be overridden by subclasses
     }
 }
 
