@@ -128,6 +128,9 @@ describe("end to end standard libary", () => {
                 '    string: "ok"',
                 "}",
             ].join("\n"),
+            "",
+            `{"ar":[1,2,3],"di":null,"nx":123,"sa":"abc"}`,
+            `{"ar":[1,2,3],"di":"<roDeviceInfo>","nx":123,"sa":"abc"}`,
         ]);
     });
 
