@@ -8,7 +8,9 @@ import {
     Int32,
     BrsInterface,
     BrsComponent,
+    BrsType,
 } from "../brsTypes";
+import { RuntimeError, RuntimeErrorDetail } from "../Error";
 import { Interpreter } from "../interpreter";
 
 /** Request the system to perform a soft reboot. */
@@ -65,5 +67,34 @@ export const FindMemberFunction = new Callable("FindMemberFunction", {
             }
         }
         return BrsInvalid.Instance;
+    },
+});
+
+export const ObjFun = new Callable("ObjFun", {
+    signature: {
+        args: [
+            new StdlibArgument("object", ValueKind.Object),
+            new StdlibArgument("iface", ValueKind.Interface),
+            new StdlibArgument("funName", ValueKind.String),
+        ],
+        variadic: true,
+        returns: ValueKind.Dynamic,
+    },
+    impl: (
+        interpreter: Interpreter,
+        object: BrsComponent,
+        iface: BrsInterface,
+        funName: BrsString,
+        ...args: BrsType[]
+    ): BrsType => {
+        for (let [_, objI] of object.interfaces) {
+            if (iface.name === objI.name && iface.hasMethod(funName.value)) {
+                const func = object.getMethod(funName.value);
+                return func?.call(interpreter, ...args) || BrsInvalid.Instance;
+            }
+        }
+        interpreter.addError(
+            new RuntimeError(RuntimeErrorDetail.MemberFunctionNotFound, interpreter.location)
+        );
     },
 });

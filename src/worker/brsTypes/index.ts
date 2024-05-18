@@ -99,7 +99,7 @@ export * from "./coercion";
  * @returns `true` if `value` is a numeric value, otherwise `false`.
  */
 export function isBrsNumber(value: BrsType): value is BrsNumber {
-    return NumberKinds.has(value.kind);
+    return NumberKinds.has(value?.kind);
 }
 
 export function isNumberKind(kind: ValueKind): boolean {
@@ -128,7 +128,7 @@ export const PrimitiveKinds = new Set([
  * @returns `true` if `value` is a string, otherwise `false`.
  */
 export function isBrsString(value: BrsType): value is BrsString {
-    return value.kind === ValueKind.String || value instanceof RoString;
+    return value?.kind === ValueKind.String || value instanceof RoString;
 }
 
 /**
@@ -137,7 +137,7 @@ export function isBrsString(value: BrsType): value is BrsString {
  * @returns `true` if `value` if a boolean, otherwise `false`.
  */
 export function isBrsBoolean(value: BrsType): value is BrsBoolean {
-    return value.kind === ValueKind.Boolean;
+    return value?.kind === ValueKind.Boolean;
 }
 
 /**
@@ -146,7 +146,7 @@ export function isBrsBoolean(value: BrsType): value is BrsBoolean {
  * @returns `true` if `value` is a Callable value, otherwise `false`.
  */
 export function isBrsCallable(value: BrsType): value is Callable {
-    return value.kind === ValueKind.Callable;
+    return value?.kind === ValueKind.Callable;
 }
 
 /**

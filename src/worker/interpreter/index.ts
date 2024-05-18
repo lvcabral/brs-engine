@@ -1151,7 +1151,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 let signature = satisfiedSignature.signature;
                 args = args.map((arg, index) => {
                     // any arguments of type "object" must be automatically boxed
-                    if (signature.args[index].type.kind === ValueKind.Object && isBoxable(arg)) {
+                    if (signature.args[index]?.type.kind === ValueKind.Object && isBoxable(arg)) {
                         return arg.box();
                     }
 
