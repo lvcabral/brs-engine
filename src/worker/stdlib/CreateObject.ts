@@ -12,15 +12,8 @@ import { Interpreter } from "../interpreter";
 /** Creates a new instance of a given brightscript component (e.g. roAssociativeArray) */
 export const CreateObject = new Callable("CreateObject", {
     signature: {
-        args: [
-            new StdlibArgument("objName", ValueKind.String),
-            new StdlibArgument("arg1", ValueKind.Dynamic, BrsInvalid.Instance),
-            new StdlibArgument("arg2", ValueKind.Dynamic, BrsInvalid.Instance),
-            new StdlibArgument("arg3", ValueKind.Dynamic, BrsInvalid.Instance),
-            new StdlibArgument("arg4", ValueKind.Dynamic, BrsInvalid.Instance),
-            new StdlibArgument("arg5", ValueKind.Dynamic, BrsInvalid.Instance),
-            new StdlibArgument("arg6", ValueKind.Dynamic, BrsInvalid.Instance),
-        ],
+        args: [new StdlibArgument("objName", ValueKind.String)],
+        variadic: true,
         returns: ValueKind.Dynamic,
     },
     impl: (interpreter: Interpreter, objName: BrsString, ...additionalArgs: BrsType[]) => {
