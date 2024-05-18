@@ -8,4 +8,8 @@ sub main()
     print FindMemberFunction(1, "tostr")
     print GetInterface(1, "iftostr")
     print Type(RunGarbageCollector());
+    di = createObject("roDeviceInfo")
+    iface = getInterface(di, "ifDeviceInfo")
+    print objFun(di, iface, "getModel")
+    print objFun(di, iface, "canDecodeVideo", {codec: "mpeg2"}).result
 end sub

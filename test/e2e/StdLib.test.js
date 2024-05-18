@@ -155,6 +155,8 @@ describe("end to end standard libary", () => {
             "<Interface: ifIntOps>",
             "<Interface: ifToStr>",
             "roAssociativeArray",
+            "8000X",
+            "true",
         ]);
     });
 });
