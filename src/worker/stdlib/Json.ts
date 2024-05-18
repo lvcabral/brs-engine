@@ -4,6 +4,7 @@ import { Interpreter } from "../interpreter";
 
 import {
     BrsBoolean,
+    BrsComponent,
     BrsInvalid,
     BrsString,
     BrsType,
@@ -20,7 +21,7 @@ import {
  * Converts a value to its representation as a BrsType. If no such
  * representation is possible, throws an Error.
  * @param {any} x Some value.
- * @return {BrsType} The BrsType representaion of `x`.
+ * @return {BrsType} The BrsType representation of `x`.
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
 function brsValueOf(x: any): BrsType {
@@ -76,7 +77,9 @@ function visit(x: BrsAggregate, visited: Set<BrsAggregate>): void {
 function jsonOf(
     interpreter: Interpreter,
     x: BrsType,
-    visited: Set<BrsAggregate> = new Set()
+    flags: number = 0,
+    visited: Set<BrsAggregate> = new Set(),
+    key: string = ""
 ): string {
     switch (x.kind) {
         case ValueKind.Invalid:
@@ -95,7 +98,8 @@ function jsonOf(
                 return `{${x
                     .getElements()
                     .map((k: BrsString) => {
-                        return `"${k.toString()}":${jsonOf(interpreter, x.get(k), visited)}`;
+                        key = k.toString();
+                        return `"${key}":${jsonOf(interpreter, x.get(k), flags, visited, key)}`;
                     })
                     .join(",")}}`;
             }
@@ -104,12 +108,12 @@ function jsonOf(
                 return `[${x
                     .getElements()
                     .map((el: BrsType) => {
-                        return jsonOf(interpreter, el, visited);
+                        return jsonOf(interpreter, el, flags, visited, key);
                     })
                     .join(",")}]`;
             }
             if (isUnboxable(x)) {
-                return jsonOf(interpreter, x.unbox(), visited);
+                return jsonOf(interpreter, x.unbox(), flags, visited, key);
             }
             break;
         case ValueKind.Callable:
@@ -122,7 +126,19 @@ function jsonOf(
             const _: never = x;
             break;
     }
-    throw new Error(`jsonOf not implemented for: ${x}`);
+    let xType = x instanceof BrsComponent ? x.getComponentName() : x;
+    if (flags & 256) {
+        // UnsupportedIgnore
+        return "null";
+    } else if (flags & 512) {
+        // UnsupportedAnnotate
+        return `"<${xType}>"`;
+    }
+    let errMessage = `Value type not supported: ${xType}`;
+    if (key !== "") {
+        errMessage = `${key}: ${errMessage}`;
+    }
+    throw new Error(errMessage);
 }
 
 function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
@@ -141,12 +157,10 @@ export const FormatJson = new Callable("FormatJson", {
             new StdlibArgument("flags", ValueKind.Int32, new Int32(0)),
         ],
     },
-    impl: (interpreter: Interpreter, x: BrsType, _flags: Int32) => {
+    impl: (interpreter: Interpreter, x: BrsType, flags: Int32) => {
         try {
-            return new BrsString(jsonOf(interpreter, x));
+            return new BrsString(jsonOf(interpreter, x, flags.getValue()));
         } catch (err: any) {
-            // example RBI error:
-            // "BRIGHTSCRIPT: ERROR: FormatJSON: Value type not supported: roFunction: pkg:/source/main.brs(14)"
             logBrsErr(interpreter, "FormatJSON", err);
             return new BrsString("");
         }

@@ -4,13 +4,13 @@ const { FormatJson, ParseJson } = brs.stdlib;
 const {
     RoArray,
     RoAssociativeArray,
+    RoDateTime,
     BrsBoolean,
     BrsInvalid,
     BrsString,
     Float,
     Int32,
     Int64,
-    Uninitialized,
     RoInt,
 } = brs.types;
 
@@ -42,10 +42,20 @@ describe("global JSON functions", () => {
     describe("FormatJson", () => {
         it("rejects non-convertible types", () => {
             expectConsoleError(/BRIGHTSCRIPT: ERROR: FormatJSON: /, () => {
-                expect(FormatJson.call(interpreter, Uninitialized.Instance)).toEqual(
-                    new BrsString("")
-                );
+                expect(FormatJson.call(interpreter, new RoDateTime())).toEqual(new BrsString(""));
             });
+        });
+
+        it("returns `null` for non-convertible types (flag 256)", () => {
+            expect(FormatJson.call(interpreter, new RoDateTime(), new Int32(256))).toEqual(
+                new BrsString("null")
+            );
+        });
+
+        it("returns the type annotation for non-convertible types (flag 512)", () => {
+            expect(FormatJson.call(interpreter, new RoDateTime(), new Int32(512))).toEqual(
+                new BrsString(`"<roDateTime>"`)
+            );
         });
 
         it("rejects nested associative array references", () => {

@@ -1,7 +1,7 @@
 {
   "name": "brs-engine",
   "version": "1.6.1",
-  "description": "BrightScript Simulation Engine",
+  "description": "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
   "license": "MIT",
   "copyright": "© 2019-2024, Marcelo Lv Cabral",

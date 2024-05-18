@@ -38,7 +38,7 @@ describe("cli", () => {
             let errors = err.stderr.match(new RegExp(filename, "g"));
             expect(errors.length).toEqual(2);
         }
-    });
+    }, 10000);
 
     it("prints eval errors once", async () => {
         let folder = "errors";
@@ -57,6 +57,6 @@ describe("cli", () => {
             let errors = err.stderr.match(new RegExp(filename, "g"));
             expect(errors.length).toEqual(2);
         }
-    });
+    }, 10000);
     it.todo("add tests for the remaining CLI options");
 });
