@@ -1834,7 +1834,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {
-        this.location = expression.location;
+        if (expression.location.start.line !== -1) this.location = expression.location;
         return expression.accept<BrsType>(this);
     }
 
