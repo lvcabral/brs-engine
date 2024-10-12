@@ -145,7 +145,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
     }
     try {
         const results = interpreter.exec(parseResults.statements);
-        results.map((result) => {
+        results.forEach((result) => {
             if (result !== BrsTypes.BrsInvalid.Instance) {
                 postMessage(`print,${result.toString()}`);
             }
@@ -171,7 +171,7 @@ export function createPayload(files: string[], customDeviceData?: Partial<Device
     let manifest: Map<string, string> | undefined;
 
     let id = 0;
-    files.map((filePath) => {
+    files.forEach((filePath) => {
         const fileName = path.basename(filePath) ?? filePath;
         const fileExt = fileName.split(".").pop();
         if (fileExt?.toLowerCase() === "brs") {

@@ -80,7 +80,7 @@ class BrsObjectsMap {
     }
 
     values() {
-        Array.from(this.map.values()).map((entry) => entry.value);
+        return Array.from(this.map.values()).map((entry) => entry.value);
     }
 
     keys() {
