@@ -166,7 +166,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
         }
     }
     /** Returns an roRegion object that specifies the region of a bitmap that is the sprite's display graphic */
-    private getRegion = new Callable("getRegion", {
+    private readonly getRegion = new Callable("getRegion", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -177,7 +177,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns the first roSprite that this sprite collides with. */
-    private checkCollision = new Callable("checkCollision", {
+    private readonly checkCollision = new Callable("checkCollision", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -188,7 +188,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns an array of all colliding sprites. If there are no collisions return invalid. */
-    private checkMultipleCollisions = new Callable("checkMultipleCollisions", {
+    private readonly checkMultipleCollisions = new Callable("checkMultipleCollisions", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -199,7 +199,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns the value of collidable flags variable. */
-    private getCollidableFlags = new Callable("getCollidableFlags", {
+    private readonly getCollidableFlags = new Callable("getCollidableFlags", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -210,7 +210,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns the value of the Drawable Flag. */
-    private getDrawableFlag = new Callable("getDrawableFlag", {
+    private readonly getDrawableFlag = new Callable("getDrawableFlag", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -221,7 +221,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns the value of member flags variable. */
-    private getMemberFlags = new Callable("getMemberFlags", {
+    private readonly getMemberFlags = new Callable("getMemberFlags", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -232,7 +232,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns any user data associated with the sprite previously set via SetData(). */
-    private getData = new Callable("getData", {
+    private readonly getData = new Callable("getData", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -243,7 +243,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns the x coordinate of the sprite. */
-    private getX = new Callable("getX", {
+    private readonly getX = new Callable("getX", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -254,7 +254,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns the y coordinate of the sprite */
-    private getY = new Callable("getY", {
+    private readonly getY = new Callable("getY", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -265,7 +265,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Returns the z (layer) of the sprite */
-    private getZ = new Callable("getZ", {
+    private readonly getZ = new Callable("getZ", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -276,7 +276,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Move the sprite to coordinate x,y. */
-    private moveTo = new Callable("moveTo", {
+    private readonly moveTo = new Callable("moveTo", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -292,7 +292,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Move the sprite to coordinate x,y. */
-    private moveOffset = new Callable("moveOffset", {
+    private readonly moveOffset = new Callable("moveOffset", {
         signature: {
             args: [
                 new StdlibArgument("xOffset", ValueKind.Int32),
@@ -308,7 +308,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Adjusts the part of an roRegion's bitmap that is being displayed as the sprite. */
-    private offsetRegion = new Callable("offsetRegion", {
+    private readonly offsetRegion = new Callable("offsetRegion", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -344,7 +344,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Sets bits to determine what sprites will be checked for collisions. */
-    private setCollidableFlags = new Callable("setCollidableFlags", {
+    private readonly setCollidableFlags = new Callable("setCollidableFlags", {
         signature: {
             args: [new StdlibArgument("collidableFlags", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -356,7 +356,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Associate user defined data with the sprite. The data can be any type including intrinsic types or objects. */
-    private setData = new Callable("setData", {
+    private readonly setData = new Callable("setData", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -374,7 +374,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Sets whether this sprite is drawable or just used for collision tests. */
-    private setDrawableFlag = new Callable("setDrawableFlag", {
+    private readonly setDrawableFlag = new Callable("setDrawableFlag", {
         signature: {
             args: [new StdlibArgument("drawable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -386,7 +386,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Sets flags to define the sprite membership. These flags are used with CollidableFlags to define what sprites are allowed to collide. */
-    private setMemberFlags = new Callable("setMemberFlags", {
+    private readonly setMemberFlags = new Callable("setMemberFlags", {
         signature: {
             args: [new StdlibArgument("memberFlags", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -398,7 +398,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Set the region of the sprite to the passed roRegion object. */
-    private setRegion = new Callable("setRegion", {
+    private readonly setRegion = new Callable("setRegion", {
         signature: {
             args: [new StdlibArgument("region", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -412,7 +412,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Sets the z value of the sprite. The z value defines the order in which sprites are drawn. */
-    private setZ = new Callable("setZ", {
+    private readonly setZ = new Callable("setZ", {
         signature: {
             args: [new StdlibArgument("z", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -427,7 +427,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     });
 
     /** Removes the sprite from the managing roComposite object and deletes the sprite. */
-    private remove = new Callable("remove", {
+    private readonly remove = new Callable("remove", {
         signature: {
             args: [],
             returns: ValueKind.Void,

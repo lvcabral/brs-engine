@@ -64,7 +64,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     }
 
     /** Returns the number of pixels from one line to the next when drawing with this font */
-    private getOneLineHeight = new Callable("getOneLineHeight", {
+    private readonly getOneLineHeight = new Callable("getOneLineHeight", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -75,7 +75,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     });
 
     /** Returns the number of pixels from one line to the next when drawing with this font */
-    private getOneLineWidth = new Callable("getOneLineWidth", {
+    private readonly getOneLineWidth = new Callable("getOneLineWidth", {
         signature: {
             args: [
                 new StdlibArgument("text", ValueKind.String),
@@ -96,7 +96,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     });
 
     /** Returns the font ascent in pixels */
-    private getAscent = new Callable("getAscent", {
+    private readonly getAscent = new Callable("getAscent", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -107,7 +107,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     });
 
     /** Returns the font descent in pixels */
-    private getDescent = new Callable("getDescent", {
+    private readonly getDescent = new Callable("getDescent", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -118,7 +118,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     });
 
     /** Returns the font maximum advance width in pixels */
-    private getMaxAdvance = new Callable("getMaxAdvance", {
+    private readonly getMaxAdvance = new Callable("getMaxAdvance", {
         signature: {
             args: [],
             returns: ValueKind.Int32,

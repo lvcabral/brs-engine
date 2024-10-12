@@ -44,7 +44,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
     }
 
     /** Sets timespan object to the current time */
-    private mark = new Callable("mark", {
+    private readonly mark = new Callable("mark", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -56,7 +56,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
     });
 
     /** Returns total milliseconds from the mark time to now */
-    private totalMilliseconds = new Callable("totalMilliseconds", {
+    private readonly totalMilliseconds = new Callable("totalMilliseconds", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -67,7 +67,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
     });
 
     /** Returns total seconds from the mark time to now */
-    private totalSeconds = new Callable("totalSeconds", {
+    private readonly totalSeconds = new Callable("totalSeconds", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -80,7 +80,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
     /** Parses an ISO8601 date and returns number of seconds from now until the given date.
      * If the date is not a valid ISO8601 date string and can't be parsed, the int 2077252342 is returned, consistent with the brightscript method.
      */
-    private getSecondsToISO8601Date = new Callable("getSecondsToISO8601Date", {
+    private readonly getSecondsToISO8601Date = new Callable("getSecondsToISO8601Date", {
         signature: {
             args: [new StdlibArgument("date", ValueKind.String)],
             returns: ValueKind.Int32,

@@ -64,7 +64,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     }
 
     /** Triggers the start of the audio resource sound playback. */
-    private trigger = new Callable("trigger", {
+    private readonly trigger = new Callable("trigger", {
         signature: {
             args: [
                 new StdlibArgument("volume", ValueKind.Int32),
@@ -82,7 +82,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if this audio resource is currently playing */
-    private isPlaying = new Callable("isPlaying", {
+    private readonly isPlaying = new Callable("isPlaying", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -100,7 +100,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     });
 
     /** Stops playing the audio resource. */
-    private stop = new Callable("stop", {
+    private readonly stop = new Callable("stop", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -113,7 +113,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     });
 
     /** Returns the maximum number of simultaneous wav playback. */
-    private maxSimulStreams = new Callable("maxSimulStreams", {
+    private readonly maxSimulStreams = new Callable("maxSimulStreams", {
         signature: {
             args: [],
             returns: ValueKind.Int32,

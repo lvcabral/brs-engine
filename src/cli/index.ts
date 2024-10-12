@@ -102,33 +102,7 @@ program
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
         if (brsFiles.length > 0) {
-            try {
-                // Run App Zip file
-                const filePath = brsFiles[0];
-                const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
-                const fileExt = fileName.split(".").pop()?.toLowerCase();
-                appFileName = fileName;
-                if (fileExt === "zip" || fileExt === "bpk") {
-                    showAppTitle();
-                    if (program.pack.length > 0 && fileExt === "zip") {
-                        console.log(chalk.blueBright(`Packaging ${filePath}...\n`));
-                    } else {
-                        console.log(chalk.blueBright(`Executing ${filePath}...\n`));
-                    }
-                    loadAppZip(fileName, fs.readFileSync(filePath), runApp);
-                    return;
-                }
-                // Run BrightScript files
-                const payload = brs.createPayload(brsFiles, deviceData);
-                runApp(payload);
-            } catch (err: any) {
-                if (err.messages?.length) {
-                    err.messages.forEach((message: string) => console.error(chalk.red(message)));
-                } else {
-                    console.error(chalk.red(err.message));
-                }
-                process.exitCode = 1;
-            }
+            runAppFiles(brsFiles);
         } else {
             showAppTitle();
             repl();
@@ -136,6 +110,40 @@ program
     })
     .version(packageInfo.version, "-v, --version")
     .parse(process.argv);
+
+/**
+ * Run the BrightScript files or the App Zip file.
+ * @param files the list of files to run.
+ */
+function runAppFiles(files: string[]) {
+    try {
+        // Run App Zip file
+        const filePath = files[0];
+        const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
+        const fileExt = fileName.split(".").pop()?.toLowerCase();
+        appFileName = fileName;
+        if (fileExt === "zip" || fileExt === "bpk") {
+            showAppTitle();
+            if (program.pack.length > 0 && fileExt === "zip") {
+                console.log(chalk.blueBright(`Packaging ${filePath}...\n`));
+            } else {
+                console.log(chalk.blueBright(`Executing ${filePath}...\n`));
+            }
+            loadAppZip(fileName, fs.readFileSync(filePath), runApp);
+            return;
+        }
+        // Run BrightScript files
+        const payload = brs.createPayload(files, deviceData);
+        runApp(payload);
+    } catch (err: any) {
+        if (err.messages?.length) {
+            err.messages.forEach((message: string) => console.error(chalk.red(message)));
+        } else {
+            console.error(chalk.red(err.message));
+        }
+        process.exitCode = 1;
+    }
+}
 
 /**
  * Display the CLI application title on the console
@@ -313,27 +321,7 @@ function packageCallback(event: string, data: any) {
  */
 function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
-        const mType = message.split(",")[0];
-        if (mType === "print") {
-            let log = message.slice(6);
-            if (log.endsWith(debugPrompt)) {
-                process.stdout.write(log);
-            } else {
-                process.stdout.write(colorize(log));
-            }
-        } else if (mType === "warning") {
-            console.warn(chalk.yellow(message.slice(8).trimEnd()));
-        } else if (mType === "error") {
-            console.error(chalk.red(message.slice(6).trimEnd()));
-            process.exitCode = 1;
-        } else if (mType === "end") {
-            const msg = message.slice(mType.length + 1).trimEnd();
-            if (msg !== AppExitReason.FINISHED) {
-                process.exitCode = 1;
-            }
-        } else if (!["start", "debug", "reset", "video", "audio"].includes(mType)) {
-            console.info(chalk.blueBright(message.trimEnd()));
-        }
+        handleStringMessage(message);
     } else if (program.ascii && message instanceof ImageData) {
         const canvas = createCanvas(message.width, message.height);
         const ctx = canvas.getContext("2d");
@@ -354,6 +342,34 @@ function messageCallback(message: any, _?: any) {
                 console.error(chalk.red(err.message));
             }
         }
+    }
+}
+
+/**
+ * Handles String Callback messages
+ * @param message the message to parse and display
+ */
+function handleStringMessage(message: string) {
+    const mType = message.split(",")[0];
+    if (mType === "print") {
+        let log = message.slice(6);
+        if (log.endsWith(debugPrompt)) {
+            process.stdout.write(log);
+        } else {
+            process.stdout.write(colorize(log));
+        }
+    } else if (mType === "warning") {
+        console.warn(chalk.yellow(message.slice(8).trimEnd()));
+    } else if (mType === "error") {
+        console.error(chalk.red(message.slice(6).trimEnd()));
+        process.exitCode = 1;
+    } else if (mType === "end") {
+        const msg = message.slice(mType.length + 1).trimEnd();
+        if (msg !== AppExitReason.FINISHED) {
+            process.exitCode = 1;
+        }
+    } else if (!["start", "debug", "reset", "video", "audio"].includes(mType)) {
+        console.info(chalk.blueBright(message.trimEnd()));
     }
 }
 

@@ -84,7 +84,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     }
 
     /** Modifies or changes the current path via the relative or absolute path passed as a string. */
-    private change = new Callable("change", {
+    private readonly change = new Callable("change", {
         signature: {
             args: [new StdlibArgument("newPath", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -96,7 +96,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Checks whether the current path is valid; that is, if the path is correctly formed. */
-    private isValid = new Callable("isValid", {
+    private readonly isValid = new Callable("isValid", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -107,7 +107,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Returns an roAssociativeArrays containing the significant elements of the path */
-    private split = new Callable("split", {
+    private readonly split = new Callable("split", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -142,7 +142,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Sets the path string . */
-    private setString = new Callable("SetString", {
+    private readonly setString = new Callable("SetString", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Void,
@@ -154,7 +154,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** returns string with full path */
-    private getString = new Callable("GetString", {
+    private readonly getString = new Callable("GetString", {
         signature: {
             args: [],
             returns: ValueKind.String,

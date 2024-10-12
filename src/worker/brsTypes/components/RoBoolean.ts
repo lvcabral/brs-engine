@@ -43,7 +43,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
 
     // -------------- ifBoolean -------------- //
 
-    private getBoolean = new Callable("getBoolean", {
+    private readonly getBoolean = new Callable("getBoolean", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -53,7 +53,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
         },
     });
 
-    private setBoolean = new Callable("setBoolean", {
+    private readonly setBoolean = new Callable("setBoolean", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -66,7 +66,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
 
     // -------------- ifToStr --------------
 
-    private toStr = new Callable("toStr", {
+    private readonly toStr = new Callable("toStr", {
         signature: {
             args: [],
             returns: ValueKind.String,

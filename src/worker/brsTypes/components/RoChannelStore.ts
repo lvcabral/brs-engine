@@ -60,7 +60,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     // ifChannelStore ------------------------------------------------------------------------------------
 
     /** Returns a unique number that can be used to identify whether a roChannelStoreEvent originated from this object. */
-    private getIdentity = new Callable("getIdentity", {
+    private readonly getIdentity = new Callable("getIdentity", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -71,7 +71,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Requests the list of In-Channel products which are linked to the running channel. */
-    private getCatalog = new Callable("getCatalog", {
+    private readonly getCatalog = new Callable("getCatalog", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -85,7 +85,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Requests the list of globally available In-Channel products, which are available to all channels. */
-    private getStoreCatalog = new Callable("getStoreCatalog", {
+    private readonly getStoreCatalog = new Callable("getStoreCatalog", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -99,7 +99,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Requests the list of active purchases associated with the current user account. */
-    private getPurchases = new Callable("getPurchases", {
+    private readonly getPurchases = new Callable("getPurchases", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -113,7 +113,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Requests the list of all purchases associated with the current user account, including expired. */
-    private getAllPurchases = new Callable("getAllPurchases", {
+    private readonly getAllPurchases = new Callable("getAllPurchases", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -127,7 +127,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Sets the current Order which must be an roList of roAssociativeArray items. */
-    private setOrder = new Callable("setOrder", {
+    private readonly setOrder = new Callable("setOrder", {
         signature: {
             args: [new StdlibArgument("order", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -141,7 +141,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Clears the current Order (shopping cart). After this call, the Order is empty. */
-    private clearOrder = new Callable("clearOrder", {
+    private readonly clearOrder = new Callable("clearOrder", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -153,7 +153,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Applies a change in quantity to one item in the current Order (shopping cart). */
-    private deltaOrder = new Callable("deltaOrder", {
+    private readonly deltaOrder = new Callable("deltaOrder", {
         signature: {
             args: [
                 new StdlibArgument("code", ValueKind.String),
@@ -168,7 +168,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Retrieves the current Order (shopping cart). */
-    private getOrder = new Callable("getOrder", {
+    private readonly getOrder = new Callable("getOrder", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -179,7 +179,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** If the user approves the order, this function returns true, otherwise it returns false */
-    private doOrder = new Callable("doOrder", {
+    private readonly doOrder = new Callable("doOrder", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -192,7 +192,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** This test mode short circuits communication to the Roku Channel store. */
-    private fakeServer = new Callable("fakeServer", {
+    private readonly fakeServer = new Callable("fakeServer", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -203,7 +203,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Provides a way to request user authorization to share his account information with the calling channel. */
-    private getUserData = new Callable("getUserData", {
+    private readonly getUserData = new Callable("getUserData", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -214,7 +214,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Retrieves the state, zip code, and country associated with the customer's Roku account. */
-    private getUserRegionData = new Callable("getUserRegionData", {
+    private readonly getUserRegionData = new Callable("getUserRegionData", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -229,7 +229,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Provides a way to request user authorization to share his account information with the calling channel. */
-    private getPartialUserData = new Callable("getPartialUserData", {
+    private readonly getPartialUserData = new Callable("getPartialUserData", {
         signature: {
             args: [new StdlibArgument("properties", ValueKind.String)],
             returns: ValueKind.Object,
@@ -240,7 +240,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Stores an access token, oAuth token, or other authentication artifact that can be retrieved by calling the GetChannelCred method. */
-    private storeChannelCredData = new Callable("storeChannelCredData", {
+    private readonly storeChannelCredData = new Callable("storeChannelCredData", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.String)],
             returns: ValueKind.Object,
@@ -254,7 +254,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Returns channel information from the Channel Store. */
-    private getChannelCred = new Callable("getChannelCred", {
+    private readonly getChannelCred = new Callable("getChannelCred", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -280,7 +280,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** Checks the user's billing status and is a prerequisite for ConfirmPartnerOrder() when doing transactional purchases. */
-    private requestPartnerOrder = new Callable("requestPartnerOrder", {
+    private readonly requestPartnerOrder = new Callable("requestPartnerOrder", {
         signature: {
             args: [
                 new StdlibArgument("orderInfo", ValueKind.Object),
@@ -298,7 +298,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     });
 
     /** This function is equivalent to doOrder() for transactional purchases. */
-    private confirmPartnerOrder = new Callable("confirmPartnerOrder", {
+    private readonly confirmPartnerOrder = new Callable("confirmPartnerOrder", {
         signature: {
             args: [
                 new StdlibArgument("confirmOrderInfo", ValueKind.Object),
@@ -318,7 +318,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -331,7 +331,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

@@ -135,7 +135,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     //--------------------------------- ifXMLList ---------------------------------
 
     /** If list contains only one item, returns the attributes of that item. Otherwise returns invalid */
-    private getAttributes = new Callable("getAttributes", {
+    private readonly getAttributes = new Callable("getAttributes", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -152,7 +152,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** If list contains only one item, returns the text of that item. Otherwise, returns an empty string */
-    private getText = new Callable("getText", {
+    private readonly getText = new Callable("getText", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -169,7 +169,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** If the list contains exactly one item, returns the child elements of that item. */
-    private getChildElements = new Callable("getChildElements", {
+    private readonly getChildElements = new Callable("getChildElements", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -186,7 +186,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns a new XMLList that contains all roXMLElements that matched the passed in name. */
-    private getNamedElements = new Callable("getNamedElements", {
+    private readonly getNamedElements = new Callable("getNamedElements", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
@@ -197,7 +197,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Same as GetNamedElements except the name matching is case-insensitive. */
-    private getNamedElementsCi = new Callable("getNamedElementsCi", {
+    private readonly getNamedElementsCi = new Callable("getNamedElementsCi", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
@@ -208,7 +208,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** If the list contains exactly one item, Simplify() returns that item. Otherwise, it returns itself */
-    private simplify = new Callable("simplify", {
+    private readonly simplify = new Callable("simplify", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -224,7 +224,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     //--------------------------------- ifList ---------------------------------
 
     /** Adds typed value to head of list */
-    private addHead = new Callable("addHead", {
+    private readonly addHead = new Callable("addHead", {
         signature: {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -236,7 +236,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Adds typed value to tail of list */
-    private addTail = new Callable("addTail", {
+    private readonly addTail = new Callable("addTail", {
         signature: {
             args: [new StdlibArgument("talue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -248,7 +248,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Gets the entry at head of list and keep entry in list */
-    private getHead = new Callable("getHead", {
+    private readonly getHead = new Callable("getHead", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -259,7 +259,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Gets the Object at tail of List and keep Object in list */
-    private getTail = new Callable("getTail", {
+    private readonly getTail = new Callable("getTail", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -270,7 +270,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes entry at head of list */
-    private removeHead = new Callable("removeHead", {
+    private readonly removeHead = new Callable("removeHead", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -281,7 +281,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes entry at tail of list */
-    private removeTail = new Callable("removeTail", {
+    private readonly removeTail = new Callable("removeTail", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -292,7 +292,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Resets the current index or position in list to the head element */
-    private resetIndex = new Callable("resetIndex", {
+    private readonly resetIndex = new Callable("resetIndex", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -304,7 +304,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Gets the entry at current index or position from the list and increments the index or position in the list */
-    private getIndex = new Callable("getIndex", {
+    private readonly getIndex = new Callable("getIndex", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -315,7 +315,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes the entry at the current index or position from the list and increments the index or position in the list */
-    private removeIndex = new Callable("removeIndex", {
+    private readonly removeIndex = new Callable("removeIndex", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -326,7 +326,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the number of elements in list */
-    private count = new Callable("count", {
+    private readonly count = new Callable("count", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -337,7 +337,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes all elements from list */
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -351,7 +351,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     //--------------------------------- ifListToArray ---------------------------------
 
     /** Returns an roArray containing the same elements as the list */
-    private toArray = new Callable("toArray", {
+    private readonly toArray = new Callable("toArray", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -364,7 +364,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     //------------------------------- ifArrayGet --------------------------------
 
     /** Returns an array entry based on the provided index. */
-    private getEntry = new Callable("getEntry", {
+    private readonly getEntry = new Callable("getEntry", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
@@ -376,7 +376,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
 
     //------------------------------- ifArraySet --------------------------------
 
-    private setEntry = new Callable("setEntry", {
+    private readonly setEntry = new Callable("setEntry", {
         signature: {
             args: [
                 new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
@@ -392,7 +392,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     //--------------------------------- ifEnum ---------------------------------
 
     /** Returns true if enumeration contains no elements, false otherwise	 */
-    private isEmpty = new Callable("isEmpty", {
+    private readonly isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -403,7 +403,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Checks whether the current position is not past the end of the enumeration. */
-    private isNext = new Callable("isNext", {
+    private readonly isNext = new Callable("isNext", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -414,7 +414,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Resets the current position to the first element of the enumeration. */
-    private reset = new Callable("reset", {
+    private readonly reset = new Callable("reset", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -426,7 +426,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Increments the position of an enumeration. */
-    private next = new Callable("next", {
+    private readonly next = new Callable("next", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,

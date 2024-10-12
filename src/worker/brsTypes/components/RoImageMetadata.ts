@@ -185,7 +185,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     /**
      * Set the URL of the image file to read metadata from.
      */
-    private setUrl = new Callable("setUrl", {
+    private readonly setUrl = new Callable("setUrl", {
         signature: {
             args: [new StdlibArgument("url", ValueKind.String)],
             returns: ValueKind.Void,
@@ -199,7 +199,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     /**
      * Returns a set of simple and common image metadata
      */
-    private getMetadata = new Callable("getMetadata", {
+    private readonly getMetadata = new Callable("getMetadata", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -255,7 +255,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     /**
      * Returns a thumbnail image if one is embedded in the image metadata and the corresponding associative array with image data.
      */
-    private getThumbnail = new Callable("getThumbnail", {
+    private readonly getThumbnail = new Callable("getThumbnail", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -294,7 +294,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     /**
      * Returns all of the raw EXIF metadata.
      */
-    private getRawExif = new Callable("getRawExif", {
+    private readonly getRawExif = new Callable("getRawExif", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -368,7 +368,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     /**
      * Returns the raw data for an Exif tag. The method provides direct access to a specific raw EXIF tag.
      */
-    private getRawExifTag = new Callable("getRawExifTag", {
+    private readonly getRawExifTag = new Callable("getRawExifTag", {
         signature: {
             args: [
                 new StdlibArgument("ifd", ValueKind.Int32 | ValueKind.Float),

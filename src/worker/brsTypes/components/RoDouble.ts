@@ -42,7 +42,7 @@ export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
 
     // -------------- ifDouble --------------
 
-    private getDouble = new Callable("getDouble", {
+    private readonly getDouble = new Callable("getDouble", {
         signature: {
             args: [],
             returns: ValueKind.Double,
@@ -52,7 +52,7 @@ export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
         },
     });
 
-    private setDouble = new Callable("setDouble", {
+    private readonly setDouble = new Callable("setDouble", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Double)],
             returns: ValueKind.Void,
@@ -65,7 +65,7 @@ export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
 
     // -------------- ifToStr --------------
 
-    private toStr = new Callable("toStr", {
+    private readonly toStr = new Callable("toStr", {
         signature: {
             args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,

@@ -44,7 +44,7 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
 
     // ---------- ifInt ----------
 
-    private getInt = new Callable("getInt", {
+    private readonly getInt = new Callable("getInt", {
         signature: {
             args: [],
             returns: ValueKind.Double,
@@ -54,7 +54,7 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
         },
     });
 
-    private setInt = new Callable("setInt", {
+    private readonly setInt = new Callable("setInt", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -67,7 +67,7 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
 
     // ---------- ifIntOps, ifToStr ----------
 
-    private toStr = new Callable("toStr", {
+    private readonly toStr = new Callable("toStr", {
         signature: {
             args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,

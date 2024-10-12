@@ -22,7 +22,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
     }
 
     /** Deletes the specified section. */
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("section", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -40,7 +40,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
     });
 
     /** Flushes the contents of the registry out to persistent storage. */
-    private flush = new Callable("flush", {
+    private readonly flush = new Callable("flush", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -52,7 +52,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roList with one entry for each registry section */
-    private getSectionList = new Callable("getSectionList", {
+    private readonly getSectionList = new Callable("getSectionList", {
         signature: {
             args: [],
             returns: ValueKind.Object,

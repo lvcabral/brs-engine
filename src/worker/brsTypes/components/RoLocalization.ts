@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 
 export class RoLocalization extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private locale: string;
+    private readonly locale: string;
 
     // Constructor can only be used by RoFontRegistry()
     constructor(interpreter: Interpreter) {
@@ -25,7 +25,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
     }
 
     /** Replaces "^n" in pluralString with count and returns the result. */
-    private getPluralString = new Callable("getPluralString", {
+    private readonly getPluralString = new Callable("getPluralString", {
         signature: {
             args: [
                 new StdlibArgument("count", ValueKind.Int32),
@@ -59,7 +59,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
     });
 
     /** Returns an appropriate asset path based on the user's currently selected language. */
-    private getLocalizedAsset = new Callable("getLocalizedAsset", {
+    private readonly getLocalizedAsset = new Callable("getLocalizedAsset", {
         signature: {
             args: [
                 new StdlibArgument("dirName", ValueKind.String),
