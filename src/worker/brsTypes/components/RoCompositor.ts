@@ -107,27 +107,17 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         const sourceCircle = source.getCircle();
         const sourceRect = source.getRect();
         const sourceType = source.getType();
+        const collisions: RoSprite[] = [];
         let collision: BrsType;
-        let collisions: RoSprite[] = [];
         collision = BrsInvalid.Instance;
         for (let [, layer] of this.sprites) {
             layer.some((target, _index, _object) => {
                 if (source.getId() !== target.getId()) {
-                    let targetFlags = target.getFlags();
-                    let targetType = target.getType();
+                    const targetFlags = target.getFlags();
+                    const targetType = target.getType();
                     if (sourceFlags.memberFlags === targetFlags.memberFlags) {
                         // TODO: Correctly check the flags using bitwise operation
-                        let collided = false;
-                        if (sourceType < 2 && targetType < 2) {
-                            collided = RectRect(sourceRect, target.getRect());
-                        } else if (sourceType === 2 && targetType === 2) {
-                            collided = CircleCircle(sourceCircle, target.getCircle());
-                        } else if (sourceType === 2) {
-                            collided = RectCircle(target.getRect(), sourceCircle);
-                        } else {
-                            collided = RectCircle(sourceRect, target.getCircle());
-                        }
-                        if (collided) {
+                        if (hasCollided(sourceType, sourceRect, sourceCircle, targetType, target)) {
                             if (multiple) {
                                 collisions.push(target);
                             } else {
@@ -352,6 +342,18 @@ export interface Rect {
     y: number;
     w: number;
     h: number;
+}
+
+function hasCollided(sourceType: number, sourceRect: Rect, sourceCircle: Circle, targetType: number, target: RoSprite) {
+    if (sourceType < 2 && targetType < 2) {
+        return RectRect(sourceRect, target.getRect());
+    } else if (sourceType === 2 && targetType === 2) {
+        return CircleCircle(sourceCircle, target.getCircle());
+    } else if (sourceType === 2) {
+        return RectCircle(target.getRect(), sourceCircle);
+    } else {
+        return RectCircle(sourceRect, target.getCircle());
+    }
 }
 
 function RectRect(rect1: Rect, rect2: Rect): boolean {
