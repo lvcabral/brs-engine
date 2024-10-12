@@ -20,8 +20,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly sprites = new Map<number, RoSprite[]>();
     readonly animations = new Array<RoSprite>();
-    private canvas: BrsCanvas;
-    private context: BrsCanvasContext2D;
+    private readonly canvas: BrsCanvas;
+    private readonly context: BrsCanvasContext2D;
     private destBitmap?: RoBitmap | RoScreen | RoRegion;
     private rgbaBackground?: number;
     private spriteId: number;
@@ -30,8 +30,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     constructor() {
         super("roCompositor");
         this.canvas = createNewCanvas(10, 10);
-        let context = this.canvas.getContext("2d") as BrsCanvasContext2D;
-        this.context = context;
+        this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         this.spriteId = 0;
         this.registerMethods({
             ifCompositor: [
@@ -212,7 +211,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     }
 
     /** Set the destBitmap (roBitmap or roScreen) and the background color */
-    private setDrawTo = new Callable("setDrawTo", {
+    private readonly setDrawTo = new Callable("setDrawTo", {
         signature: {
             args: [
                 new StdlibArgument("destBitmap", ValueKind.Object),
@@ -237,7 +236,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     });
 
     /** Create a new sprite, using an roRegion to define the sprite's bitmap. */
-    private newSprite = new Callable("newSprite", {
+    private readonly newSprite = new Callable("newSprite", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -263,7 +262,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     });
 
     /** Create a new sprite that consists of a sequence of frames to be animated. The frames are defined by the regionArray which is an roArray of roRegions. */
-    private newAnimatedSprite = new Callable("newAnimatedSprite", {
+    private readonly newAnimatedSprite = new Callable("newAnimatedSprite", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -304,7 +303,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     });
 
     /** Duration is the number of ms since the last call. Moves all animated sprites. Sprites will not animate unless you call this function regularly  */
-    private animationTick = new Callable("animationTick", {
+    private readonly animationTick = new Callable("animationTick", {
         signature: {
             args: [new StdlibArgument("duration", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -318,7 +317,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     });
 
     /** Draw any dirty sprites (that is, whatever is new or has changed since the last Draw). */
-    private draw = new Callable("draw", {
+    private readonly draw = new Callable("draw", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -330,7 +329,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     });
 
     /** Redraw all sprites even if not dirty. */
-    private drawAll = new Callable("drawAll", {
+    private readonly drawAll = new Callable("drawAll", {
         signature: {
             args: [],
             returns: ValueKind.Void,

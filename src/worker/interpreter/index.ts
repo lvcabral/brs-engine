@@ -92,11 +92,11 @@ export interface TracePoint {
 }
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
+    private readonly _startTime = Date.now();
+    private readonly _stack = new Array<TracePoint>();
     private _environment: Environment;
     private _sourceMap = new Map<string, string>();
-    private _stack = new Array<TracePoint>();
     private _tryMode = false;
-    private _startTime = Date.now();
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
 

@@ -52,7 +52,7 @@ import { Callable } from "../Callable";
 
 // Class to define a case-insensitive map of BrightScript objects.
 class BrsObjectsMap {
-    private map = new Map<string, { originalKey: string; value: Function }>();
+    private readonly map = new Map<string, { originalKey: string; value: Function }>();
 
     constructor(entries: [string, Function][]) {
         entries.forEach(([key, value]) => this.set(key, value));
