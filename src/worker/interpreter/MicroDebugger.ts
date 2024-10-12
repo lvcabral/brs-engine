@@ -1,7 +1,10 @@
+import { bscs } from "..";
 import { Interpreter, TracePoint } from ".";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { BrsError } from "../Error";
+import { BrsObjects } from "../brsTypes";
+
 import {
     Statement,
     Assignment,
@@ -16,7 +19,7 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand, debugPrompt, numberToHex } from "../common";
+import { DataType, DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
@@ -32,9 +35,6 @@ export function runDebugger(
     errMessage?: string,
     errNumber?: number
 ) {
-    // TODO:
-    // - Implement step over and step out
-    // - Implement classes, bsc(s) and stats
     const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
@@ -213,6 +213,30 @@ function debugHandleCommand(
             debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}\r\n`;
             debugMsg += "  *selected\r\n";
             break;
+        case DebugCommand.BSCS: {
+            const objList = Array.from(bscs.keys()).sort();
+            let total = 0;
+            debugMsg = "print,";
+            for (const obj of objList) {
+                const value = bscs.get(obj);
+                if (value) {
+                    debugMsg += `${obj}: `.padStart(27);
+                    debugMsg += `count=${value}\r\n`;
+                    total += value;
+                }
+            }
+            debugMsg += `Total # components: `.padStart(27);
+            debugMsg += `${total}\r\n`;
+            break;
+        }
+        case DebugCommand.STATS:
+            debugMsg = `print,${interpreter.formatStats()}`;
+            break;
+        case DebugCommand.CLASSES: {
+            const classList = BrsObjects.keys().sort();
+            debugMsg = `print,${classList.join("\r\n")}\r\n`;
+            break;
+        }
         case DebugCommand.VAR:
             debugMsg = `print,${interpreter.formatLocalVariables()}`;
             break;
@@ -251,7 +275,7 @@ function debugHelp(): string {
     debugMsg += "Command List:\r\n";
     debugMsg += "   bt              Print backtrace of call function context frames\r\n";
     // debugMsg += "   brkd            Break on BrightScript diagnostics\r\n"
-    // debugMsg += "   classes         List public classes\r\n"
+    debugMsg += "   classes         List public classes\r\n";
     debugMsg += "   cont|c          Continue script execution\r\n";
     // debugMsg += "   down|d          Move down the function context chain one\r\n"
     debugMsg += "   exit|quit|q     Exit shell\r\n";
@@ -260,8 +284,8 @@ function debugHelp(): string {
     debugMsg += "   next|n          Show the next line to execute\r\n";
     debugMsg += "   list            List current function\r\n";
     // debugMsg += "   bsc             List BrightScript Component instances\r\n"
-    // debugMsg += "   bscs            Summarize BrightScript Component instances\r\n"
-    // debugMsg += "   stats           Shows statistics\r\n"
+    debugMsg += "   bscs            Summarize BrightScript Component instances\r\n";
+    debugMsg += "   stats           Shows statistics\r\n";
     debugMsg += "   step|s|t        Step one program statement\r\n";
     debugMsg += "   thread|th       Show selected thread\r\n";
     // debugMsg += "   thread|th <id>  Select one thread for inspection\r\n"
@@ -277,20 +301,13 @@ function debugHelp(): string {
     return debugMsg;
 }
 
-// This function takes a text file content as a string and returns an array of lines
-function parseTextFile(content?: string): string[] {
-    let lines: string[] = [];
-    if (content) {
-        lines = content.split("\n");
-    }
-    return lines;
-}
-
 function parseCommand(command: string): any {
     let result = { cmd: DebugCommand.EXPR, expr: "" };
     if (command?.length) {
         const commandsMap = new Map([
+            ["bscs", DebugCommand.BSCS],
             ["bt", DebugCommand.BT],
+            ["classes", DebugCommand.CLASSES],
             ["cont", DebugCommand.CONT],
             ["c", DebugCommand.CONT],
             ["exit", DebugCommand.EXIT],
@@ -305,6 +322,7 @@ function parseCommand(command: string): any {
             ["over", DebugCommand.STEP],
             ["out", DebugCommand.STEP],
             ["step", DebugCommand.STEP],
+            ["stats", DebugCommand.STATS],
             ["s", DebugCommand.STEP],
             ["t", DebugCommand.STEP],
             ["thread", DebugCommand.THREAD],

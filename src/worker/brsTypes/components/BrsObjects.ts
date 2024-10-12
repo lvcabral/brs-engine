@@ -50,66 +50,104 @@ import { RoInvalid } from "./RoInvalid";
 import { RoFunction } from "./RoFunction";
 import { Callable } from "../Callable";
 
-/** Map containing a list of BrightScript components that can be created. */
-export const BrsObjects = new Map<string, Function>([
-    ["roappmanager", (interpreter: Interpreter) => new RoAppManager()],
-    ["roassociativearray", (interpreter: Interpreter) => new RoAssociativeArray([])],
+// Class to define a case-insensitive map of BrightScript objects.
+class BrsObjectsMap {
+    private readonly map = new Map<string, { originalKey: string; value: Function }>();
+
+    constructor(entries: [string, Function][]) {
+        entries.forEach(([key, value]) => this.set(key, value));
+    }
+
+    get(key: string) {
+        const entry = this.map.get(key.toLowerCase());
+        return entry ? entry.value : undefined;
+    }
+
+    set(key: string, value: Function) {
+        return this.map.set(key.toLowerCase(), { originalKey: key, value: value });
+    }
+
+    has(key: string) {
+        return this.map.has(key.toLowerCase());
+    }
+
+    delete(key: string) {
+        return this.map.delete(key.toLowerCase());
+    }
+
+    clear() {
+        return this.map.clear();
+    }
+
+    values() {
+        return Array.from(this.map.values()).map((entry) => entry.value);
+    }
+
+    keys() {
+        return Array.from(this.map.values()).map((entry) => entry.originalKey);
+    }
+}
+
+/** Map containing a list of BrightScript components that can be created with CreateObject(). */
+export const BrsObjects = new BrsObjectsMap([
+    ["roAppManager", (interpreter: Interpreter) => new RoAppManager()],
+    ["roAssociativeArray", (interpreter: Interpreter) => new RoAssociativeArray([])],
     [
-        "roarray",
+        "roArray",
         (interpreter: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) =>
             new RoArray(capacity, resizable),
     ],
-    ["robytearray", (interpreter: Interpreter) => new RoByteArray()],
-    ["roevpcipher", (interpreter: Interpreter) => new RoEVPCipher()],
-    ["roevpdigest", (interpreter: Interpreter) => new RoEVPDigest()],
-    ["rohmac", (interpreter: Interpreter) => new RoHMAC()],
-    ["rodevicecrypto", (interpreter: Interpreter) => new RoDeviceCrypto(interpreter)],
-    ["rochannelstore", (interpreter: Interpreter) => new RoChannelStore()],
-    ["rodatetime", (interpreter: Interpreter) => new RoDateTime()],
-    ["rolist", (interpreter: Interpreter) => new RoList()],
-    ["rotimespan", (interpreter: Interpreter) => new RoTimespan()],
+    ["roByteArray", (interpreter: Interpreter) => new RoByteArray()],
+    ["roEVPCipher", (interpreter: Interpreter) => new RoEVPCipher()],
+    ["roEVPDigest", (interpreter: Interpreter) => new RoEVPDigest()],
+    ["roHMAC", (interpreter: Interpreter) => new RoHMAC()],
+    ["roDeviceCrypto", (interpreter: Interpreter) => new RoDeviceCrypto(interpreter)],
+    ["roChannelStore", (interpreter: Interpreter) => new RoChannelStore()],
+    ["roDateTime", (interpreter: Interpreter) => new RoDateTime()],
+    ["roList", (interpreter: Interpreter) => new RoList()],
+    ["roTimespan", (interpreter: Interpreter) => new RoTimespan()],
     [
-        "roregex",
+        "roRegex",
         (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
             new RoRegex(expression, flags),
     ],
-    ["rostring", (interpreter: Interpreter) => new RoString()],
-    ["roboolean", (interpreter: Interpreter, literal: BrsBoolean) => new RoBoolean(literal)],
-    ["rodouble", (interpreter: Interpreter, literal: Double) => new RoDouble(literal)],
-    ["rofloat", (interpreter: Interpreter, literal: Float) => new RoFloat(literal)],
-    ["roint", (interpreter: Interpreter, literal: Int32) => new RoInt(literal)],
-    ["rolonginteger", (interpreter: Interpreter, literal: Int64) => new RoLongInteger(literal)],
-    ["rofunction", (interpreter: Interpreter, sub: Callable) => new RoFunction(sub)],
-    ["ropath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
+    ["roString", (interpreter: Interpreter) => new RoString()],
+    ["roBoolean", (interpreter: Interpreter, literal: BrsBoolean) => new RoBoolean(literal)],
+    ["roDouble", (interpreter: Interpreter, literal: Double) => new RoDouble(literal)],
+    ["roFloat", (interpreter: Interpreter, literal: Float) => new RoFloat(literal)],
+    ["roInt", (interpreter: Interpreter, literal: Int32) => new RoInt(literal)],
+    ["roLongInteger", (interpreter: Interpreter, literal: Int64) => new RoLongInteger(literal)],
+    ["roFunction", (interpreter: Interpreter, sub: Callable) => new RoFunction(sub)],
+    ["roPath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
     [
-        "robitmap",
+        "roBitmap",
         (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
     ],
-    ["roimagemetadata", (interpreter: Interpreter) => new RoImageMetadata()],
-    ["romessageport", (interpreter: Interpreter) => new RoMessagePort()],
-    ["roinput", (interpreter: Interpreter) => new RoInput()],
-    ["rofilesystem", (interpreter: Interpreter) => new RoFileSystem()],
-    ["rolocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],
-    ["rofontregistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
-    ["roregistry", (interpreter: Interpreter) => new RoRegistry()],
+    ["roImageMetadata", (interpreter: Interpreter) => new RoImageMetadata()],
+    ["roMessagePort", (interpreter: Interpreter) => new RoMessagePort()],
+    ["roInput", (interpreter: Interpreter) => new RoInput()],
+    ["roFileSystem", (interpreter: Interpreter) => new RoFileSystem()],
+    ["roLocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],
+    ["roFontRegistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
+    ["roRegistry", (interpreter: Interpreter) => new RoRegistry()],
     [
-        "roregistrysection",
+        "roRegistrySection",
         (interpreter: Interpreter, section: BrsString) =>
             new RoRegistrySection(interpreter, section),
     ],
-    ["roappinfo", (interpreter: Interpreter) => new RoAppInfo()],
-    ["rodeviceinfo", (interpreter: Interpreter) => new RoDeviceInfo()],
-    ["roappmemorymonitor", (interpreter: Interpreter) => new RoAppMemoryMonitor()],
-    ["roaudioplayer", (interpreter: Interpreter) => new RoAudioPlayer()],
+    ["roAppInfo", (interpreter: Interpreter) => new RoAppInfo()],
+    ["roDeviceInfo", (interpreter: Interpreter) => new RoDeviceInfo()],
+    ["roAppMemoryMonitor", (interpreter: Interpreter) => new RoAppMemoryMonitor()],
+    ["roAudioPlayer", (interpreter: Interpreter) => new RoAudioPlayer()],
     [
-        "roaudioresource",
+        "roAudioResource",
         (interpreter: Interpreter, name: BrsString) => createAudioResource(interpreter, name),
     ],
-    ["roaudiometadata", (interpreter: Interpreter) => new RoAudioMetadata()],
-    ["rovideoplayer", (interpreter: Interpreter) => new RoVideoPlayer()],
-    ["rocompositor", (interpreter: Interpreter) => new RoCompositor()],
+    ["roAudioMetadata", (interpreter: Interpreter) => new RoAudioMetadata()],
+    ["roVideoPlayer", (interpreter: Interpreter) => new RoVideoPlayer()],
+    ["roCompositor", (interpreter: Interpreter) => new RoCompositor()],
     [
-        "roregion",
+        "roRegion",
         (
             interpreter: Interpreter,
             bitmap: RoBitmap | RoScreen,
@@ -120,11 +158,11 @@ export const BrsObjects = new Map<string, Function>([
         ) => createRegion(bitmap, x, y, width, height),
     ],
     [
-        "roscreen",
+        "roScreen",
         (interpreter: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
             new RoScreen(interpreter, dblbuffer, width, height),
     ],
-    ["roxmlelement", (interpreter: Interpreter) => new RoXMLElement()],
-    ["rourltransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
-    ["roinvalid", (interpreter: Interpreter) => new RoInvalid()],
+    ["roXMLElement", (interpreter: Interpreter) => new RoXMLElement()],
+    ["roURLTransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
+    ["roInvalid", (interpreter: Interpreter) => new RoInvalid()],
 ]);

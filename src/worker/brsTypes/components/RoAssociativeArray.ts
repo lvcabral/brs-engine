@@ -188,7 +188,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     /** Removes all elements from the associative array */
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -205,7 +205,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Removes a given item from the associative array */
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -220,7 +220,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             let lKey = str.value.toLowerCase();
             if (this.modeCaseSensitive) {
                 let keySet = this.keyMap.get(lKey);
-                keySet?.delete(key);
+                if (keySet && key) {
+                    keySet?.delete(key);
+                }
                 if (keySet?.size === 0) {
                     this.keyMap.delete(lKey);
                 }
@@ -235,7 +237,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     /** Given a key and value, adds an item to the associative array if it doesn't exist
      * Or replaces the value of a key that already exists in the associative array
      */
-    private addreplace = new Callable("addreplace", {
+    private readonly addreplace = new Callable("addreplace", {
         signature: {
             args: [
                 new StdlibArgument("key", ValueKind.String),
@@ -251,7 +253,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Returns the number of items in the associative array */
-    private count = new Callable("count", {
+    private readonly count = new Callable("count", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -262,7 +264,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Returns a boolean indicating whether or not a given key exists in the associative array */
-    private doesexist = new Callable("doesexist", {
+    private readonly doesexist = new Callable("doesexist", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -274,7 +276,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Appends a new associative array to another. If two keys are the same, the value of the original AA is replaced with the new one. */
-    private append = new Callable("append", {
+    private readonly append = new Callable("append", {
         signature: {
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -297,7 +299,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Returns an array of keys from the associative array in lexicographical order */
-    private keys = new Callable("keys", {
+    private readonly keys = new Callable("keys", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -308,7 +310,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Returns an array of values from the associative array in lexicographical order */
-    private items = new Callable("items", {
+    private readonly items = new Callable("items", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -334,7 +336,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     /** Given a key, returns the value associated with that key.
      * This method is case insensitive either-or case sensitive, depends on whether `setModeCasesensitive` was called or not.
      */
-    private lookup = new Callable("lookup", {
+    private readonly lookup = new Callable("lookup", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
@@ -345,7 +347,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Given a key, returns the value associated with that key. This method always is case insensitive. */
-    private lookupCI = new Callable("lookupCI", {
+    private readonly lookupCI = new Callable("lookupCI", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
@@ -356,7 +358,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Changes the sensitive case method for lookups */
-    private setmodecasesensitive = new Callable("setModeCaseSensitive", {
+    private readonly setmodecasesensitive = new Callable("setModeCaseSensitive", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -373,7 +375,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     // not possible to reproduce for now, this implementation follows the same logic used in roArray.
 
     /** Returns true if enumeration contains no elements, false otherwise	 */
-    private isEmpty = new Callable("isEmpty", {
+    private readonly isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -384,7 +386,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Checks whether the current position is not past the end of the enumeration. */
-    private isNext = new Callable("isNext", {
+    private readonly isNext = new Callable("isNext", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -395,7 +397,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Resets the current position to the first element of the enumeration. */
-    private reset = new Callable("reset", {
+    private readonly reset = new Callable("reset", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -407,7 +409,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Increments the position of an enumeration. */
-    private next = new Callable("next", {
+    private readonly next = new Callable("next", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
