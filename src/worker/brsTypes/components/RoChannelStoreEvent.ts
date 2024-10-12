@@ -36,7 +36,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     }
 
     /** Returns if the previous Get request has completed successfully. */
-    private isRequestSucceeded = new Callable("isRequestSucceeded", {
+    private readonly isRequestSucceeded = new Callable("isRequestSucceeded", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -47,7 +47,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if the Get request fail. */
-    private isRequestFailed = new Callable("isRequestFailed", {
+    private readonly isRequestFailed = new Callable("isRequestFailed", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -58,7 +58,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns a unique number that can be matched with the value returned by ifChannelStore.GetIdentity(). */
-    private getSourceIdentity = new Callable("getSourceIdentity", {
+    private readonly getSourceIdentity = new Callable("getSourceIdentity", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -69,7 +69,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns an array of roAssociativeArray items for the previous Get* method invocation. */
-    private getResponse = new Callable("getResponse", {
+    private readonly getResponse = new Callable("getResponse", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -83,7 +83,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns an Integer code that indicates the reason for failure. */
-    private getStatus = new Callable("getStatus", {
+    private readonly getStatus = new Callable("getStatus", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -94,7 +94,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns a human-readable string describing the status of the completed request	. */
-    private getStatusMessage = new Callable("getStatusMessage", {
+    private readonly getStatusMessage = new Callable("getStatusMessage", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -105,7 +105,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if the request was not complete. */
-    private isRequestInterrupted = new Callable("isRequestInterrupted", {
+    private readonly isRequestInterrupted = new Callable("isRequestInterrupted", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,

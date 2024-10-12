@@ -42,7 +42,7 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
 
     // -------------- ifFloat --------------
 
-    private getFloat = new Callable("getFloat", {
+    private readonly getFloat = new Callable("getFloat", {
         signature: {
             args: [],
             returns: ValueKind.Float,
@@ -52,7 +52,7 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
         },
     });
 
-    private setFloat = new Callable("setFloat", {
+    private readonly setFloat = new Callable("setFloat", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Float)],
             returns: ValueKind.Void,
@@ -65,7 +65,7 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
 
     // -------------- ifToStr --------------
 
-    private toStr = new Callable("toStr", {
+    private readonly toStr = new Callable("toStr", {
         signature: {
             args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,

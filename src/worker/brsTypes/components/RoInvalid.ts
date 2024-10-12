@@ -44,7 +44,7 @@ export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
 
     // ---------- ifToStr ----------
 
-    private toStr = new Callable("toStr", {
+    private readonly toStr = new Callable("toStr", {
         signature: {
             args: [],
             returns: ValueKind.String,

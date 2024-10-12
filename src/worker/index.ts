@@ -480,57 +480,63 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
                 postMessage(`error,Error writing file ${filePath.url} - ${err.message}`);
             }
         }
-        // Load Translations
-        let xmlText = "";
-        let trType = "";
-        let trTarget = "";
-        const locale = interpreter.deviceInfo.get("locale") || "en_US";
-        try {
-            if (volume.existsSync(`/locale/${locale}/translations.ts`)) {
-                xmlText = volume.readFileSync(`/locale/${locale}/translations.ts`);
-                trType = "TS";
-                trTarget = "translation";
-            } else if (volume.existsSync(`/locale/${locale}/translations.xml`)) {
-                xmlText = volume.readFileSync(`/locale/${locale}/translations.xml`);
-                trType = "xliff";
-                trTarget = "target";
-            }
-            if (trType !== "") {
-                let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
-                let xmlParser = new xml2js.Parser(xmlOptions);
-                xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
-                    if (err) {
-                        postMessage(`error,Error parsing XML: ${err.message}`);
-                    } else if (parsed) {
-                        if (Object.keys(parsed).length > 0) {
-                            let trArray;
-                            if (trType === "TS") {
-                                trArray = parsed["TS"]["context"]["message"];
-                            } else {
-                                trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
-                            }
-                            if (trArray instanceof Array) {
-                                trArray.forEach((item) => {
-                                    if (item["source"]) {
-                                        interpreter.translations.set(
-                                            item["source"],
-                                            item[trTarget]
-                                        );
-                                    }
-                                });
-                            }
-                        }
-                    } else {
-                        postMessage("error,Error parsing translation XML: Empty input");
-                    }
-                });
-            }
-        } catch (err: any) {
-            const badPath = `pkg:/locale/${locale}/`;
-            postMessage(`error,Invalid path: ${badPath} - ${err.message}`);
-        }
+        loadTranslations(interpreter, volume);
     }
     return result;
+}
+
+/**
+ * Load the translations data based on the configured locale.
+ * @param interpreter the Interpreter instance to update
+ * @param volume the file system volume to use
+ */
+
+function loadTranslations(interpreter: Interpreter, volume: FileSystem) {
+    let xmlText = "";
+    let trType = "";
+    let trTarget = "";
+    const locale = interpreter.deviceInfo.get("locale") || "en_US";
+    try {
+        if (volume.existsSync(`/locale/${locale}/translations.ts`)) {
+            xmlText = volume.readFileSync(`/locale/${locale}/translations.ts`);
+            trType = "TS";
+            trTarget = "translation";
+        } else if (volume.existsSync(`/locale/${locale}/translations.xml`)) {
+            xmlText = volume.readFileSync(`/locale/${locale}/translations.xml`);
+            trType = "xliff";
+            trTarget = "target";
+        }
+        if (trType !== "") {
+            let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
+            let xmlParser = new xml2js.Parser(xmlOptions);
+            xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
+                if (err) {
+                    postMessage(`error,Error parsing XML: ${err.message}`);
+                } else if (parsed) {
+                    if (Object.keys(parsed).length > 0) {
+                        let trArray;
+                        if (trType === "TS") {
+                            trArray = parsed["TS"]["context"]["message"];
+                        } else {
+                            trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
+                        }
+                        if (trArray instanceof Array) {
+                            trArray.forEach((item) => {
+                                if (item["source"]) {
+                                    interpreter.translations.set(item["source"], item[trTarget]);
+                                }
+                            });
+                        }
+                    }
+                } else {
+                    postMessage("error,Error parsing translation XML: Empty input");
+                }
+            });
+        }
+    } catch (err: any) {
+        const badPath = `pkg:/locale/${locale}/`;
+        postMessage(`error,Invalid path: ${badPath} - ${err.message}`);
+    }
 }
 
 /**

@@ -283,7 +283,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     }
 
     /** Returns a newly created copy of the region as a new roRegion object */
-    private copy = new Callable("copy", {
+    private readonly copy = new Callable("copy", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -300,7 +300,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the roBitmap object of the bitmap this region refers to	 */
-    private getBitmap = new Callable("getBitmap", {
+    private readonly getBitmap = new Callable("getBitmap", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -311,7 +311,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Gets the type of region to be used for collision tests with the sprite */
-    private getCollisionType = new Callable("getCollisionType", {
+    private readonly getCollisionType = new Callable("getCollisionType", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -322,7 +322,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the height of the region */
-    private getHeight = new Callable("getHeight", {
+    private readonly getHeight = new Callable("getHeight", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -333,7 +333,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the pretranslation x value */
-    private getPretranslationX = new Callable("getPretranslationX", {
+    private readonly getPretranslationX = new Callable("getPretranslationX", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -344,7 +344,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the pretranslation y value */
-    private getPretranslationY = new Callable("getPretranslationY", {
+    private readonly getPretranslationY = new Callable("getPretranslationY", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -355,7 +355,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the scaling mode of the region */
-    private getScaleMode = new Callable("getScaleMode", {
+    private readonly getScaleMode = new Callable("getScaleMode", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -366,7 +366,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the "frame hold time" in milliseconds */
-    private getTime = new Callable("getTime", {
+    private readonly getTime = new Callable("getTime", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -377,7 +377,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the width of the region */
-    private getWidth = new Callable("getWidth", {
+    private readonly getWidth = new Callable("getWidth", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -388,7 +388,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if the region can be wrapped */
-    private getWrap = new Callable("getWrap", {
+    private readonly getWrap = new Callable("getWrap", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -399,7 +399,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the x coordinate of the region in its bitmap */
-    private getX = new Callable("getX", {
+    private readonly getX = new Callable("getX", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -410,7 +410,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the y coordinate of the region in its bitmap */
-    private getY = new Callable("getY", {
+    private readonly getY = new Callable("getY", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -421,7 +421,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Adds the passed parameters x,y, w, and h to the values of those roRegion fields. */
-    private offset = new Callable("offset", {
+    private readonly offset = new Callable("offset", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Dynamic),
@@ -438,7 +438,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Initializes the fields of the region with the values of the fields in the srcRegion */
-    private set = new Callable("set", {
+    private readonly set = new Callable("set", {
         signature: {
             args: [new StdlibArgument("srcRegion", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -465,7 +465,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Sets the type of region to be used for collision tests with the sprite */
-    private setCollisionType = new Callable("setCollisionType", {
+    private readonly setCollisionType = new Callable("setCollisionType", {
         signature: {
             args: [new StdlibArgument("collisionType", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -477,7 +477,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Sets the collision circle used for type 2 collision tests. */
-    private setCollisionCircle = new Callable("setCollisionCircle", {
+    private readonly setCollisionCircle = new Callable("setCollisionCircle", {
         signature: {
             args: [
                 new StdlibArgument("xOffset", ValueKind.Int32),
@@ -497,7 +497,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Sets the collision rectangle used for type 1 collision tests. */
-    private setCollisionRectangle = new Callable("setCollisionRectangle", {
+    private readonly setCollisionRectangle = new Callable("setCollisionRectangle", {
         signature: {
             args: [
                 new StdlibArgument("xOffset", ValueKind.Int32),
@@ -519,7 +519,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Set the pretranslation for DrawObject, DrawRotatedObject and DrawScaledObject */
-    private setPretranslation = new Callable("setPretranslation", {
+    private readonly setPretranslation = new Callable("setPretranslation", {
         signature: {
             args: [
                 new StdlibArgument("translationX", ValueKind.Int32),
@@ -536,7 +536,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Sets the scaling mode of the region  */
-    private setScaleMode = new Callable("setScaleMode", {
+    private readonly setScaleMode = new Callable("setScaleMode", {
         signature: {
             args: [new StdlibArgument("scaleMode", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -549,7 +549,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns the "frame hold time" in milliseconds  */
-    private setTime = new Callable("setTime", {
+    private readonly setTime = new Callable("setTime", {
         signature: {
             args: [new StdlibArgument("time", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -561,7 +561,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** If true, any part of region that goes beyond the bounds of its bitmap "wraps" to the other side of the bitmap and is rendered there. */
-    private setWrap = new Callable("setWrap", {
+    private readonly setWrap = new Callable("setWrap", {
         signature: {
             args: [new StdlibArgument("wrap", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -576,7 +576,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     // ifDraw2D  -----------------------------------------------------------------------------------
 
     /** Clear the bitmap, and fill with the specified RGBA color */
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [new StdlibArgument("rgba", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -588,7 +588,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object, where src is an roBitmap or an roRegion object, at position x,y */
-    private drawObject = new Callable("drawObject", {
+    private readonly drawObject = new Callable("drawObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -613,7 +613,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object at position x,y rotated by angle theta degrees. */
-    private drawRotatedObject = new Callable("drawRotatedObject", {
+    private readonly drawRotatedObject = new Callable("drawRotatedObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -645,7 +645,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
-    private drawScaledObject = new Callable("drawScaledObject", {
+    private readonly drawScaledObject = new Callable("drawScaledObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -681,7 +681,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object, at position x,y, rotated by theta and scaled horizontally by scaleX and vertically by scaleY. */
-    private drawTransformedObject = new Callable("drawTransformedObject", {
+    private readonly drawTransformedObject = new Callable("drawTransformedObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -726,7 +726,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Draw a line from (xStart, yStart) to (xEnd, yEnd) with RGBA color */
-    private drawLine = new Callable("drawLine", {
+    private readonly drawLine = new Callable("drawLine", {
         signature: {
             args: [
                 new StdlibArgument("xStart", ValueKind.Int32),
@@ -757,7 +757,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Draws a point at (x,y) with the given size and RGBA color */
-    private drawPoint = new Callable("drawPoint", {
+    private readonly drawPoint = new Callable("drawPoint", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -782,7 +782,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Fill the specified rectangle from left (x), top (y) to right (x + width), bottom (y + height) with the RGBA color */
-    private drawRect = new Callable("drawRect", {
+    private readonly drawRect = new Callable("drawRect", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -808,7 +808,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Draws the text at position (x,y) using the specified RGBA color and roFont font object. */
-    private drawText = new Callable("drawText", {
+    private readonly drawText = new Callable("drawText", {
         signature: {
             args: [
                 new StdlibArgument("text", ValueKind.String),
@@ -835,7 +835,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Realize the bitmap by finishing all queued draw calls. */
-    private finish = new Callable("finish", {
+    private readonly finish = new Callable("finish", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -846,7 +846,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if alpha blending is enabled */
-    private getAlphaEnable = new Callable("getAlphaEnable", {
+    private readonly getAlphaEnable = new Callable("getAlphaEnable", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -857,7 +857,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** If enable is true, do alpha blending when this bitmap is the destination */
-    private setAlphaEnable = new Callable("setAlphaEnable", {
+    private readonly setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
             args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -869,7 +869,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
-    private getByteArray = new Callable("getByteArray", {
+    private readonly getByteArray = new Callable("getByteArray", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -894,7 +894,7 @@ export class RoRegion extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
-    private getPng = new Callable("getPng", {
+    private readonly getPng = new Callable("getPng", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),

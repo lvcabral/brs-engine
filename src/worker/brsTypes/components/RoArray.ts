@@ -7,8 +7,8 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
+    private readonly resizable: boolean = true;
     private maxSize = 0;
-    private resizable = true;
     elements: BrsType[];
     enumIndex: number;
 
@@ -187,7 +187,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     // ifArray
-    private peek = new Callable("peek", {
+    private readonly peek = new Callable("peek", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -197,7 +197,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private pop = new Callable("pop", {
+    private readonly pop = new Callable("pop", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -210,7 +210,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private push = new Callable("push", {
+    private readonly push = new Callable("push", {
         signature: {
             args: [new StdlibArgument("talue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -230,7 +230,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private shift = new Callable("shift", {
+    private readonly shift = new Callable("shift", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -243,7 +243,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private unshift = new Callable("unshift", {
+    private readonly unshift = new Callable("unshift", {
         signature: {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -263,7 +263,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
@@ -281,7 +281,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private count = new Callable("count", {
+    private readonly count = new Callable("count", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -291,7 +291,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -306,7 +306,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private append = new Callable("append", {
+    private readonly append = new Callable("append", {
         signature: {
             args: [new StdlibArgument("array", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -335,7 +335,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     // ifArrayGet
-    private getEntry = new Callable("getEntry", {
+    private readonly getEntry = new Callable("getEntry", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
@@ -346,7 +346,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     // ifArraySet
-    private setEntry = new Callable("setEntry", {
+    private readonly setEntry = new Callable("setEntry", {
         signature: {
             args: [
                 new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
@@ -360,7 +360,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     // ifArrayJoin
-    private join = new Callable("join", {
+    private readonly join = new Callable("join", {
         signature: {
             args: [new StdlibArgument("separator", ValueKind.String)],
             returns: ValueKind.String,
@@ -383,7 +383,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     // ifArraySort
-    private sort = new Callable("sort", {
+    private readonly sort = new Callable("sort", {
         signature: {
             args: [new StdlibArgument("flags", ValueKind.String, new BrsString(""))],
             returns: ValueKind.Void,
@@ -409,7 +409,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private sortBy = new Callable("sortBy", {
+    private readonly sortBy = new Callable("sortBy", {
         signature: {
             args: [
                 new StdlibArgument("fieldName", ValueKind.String),
@@ -443,7 +443,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private reverse = new Callable("reverse", {
+    private readonly reverse = new Callable("reverse", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -457,7 +457,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifArraySlice
 
     /** Returns a copy of a portion of an array into a new array selected from start to end (end not included) */
-    private slice = new Callable("slice", {
+    private readonly slice = new Callable("slice", {
         signature: {
             args: [
                 new StdlibArgument("start", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
@@ -477,7 +477,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifArraySizeInfo
 
     /** Returns the maximum number of entries that can be stored in the array. */
-    private capacity = new Callable("capacity", {
+    private readonly capacity = new Callable("capacity", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -488,7 +488,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns true if the array can be resized. */
-    private isResizable = new Callable("isResizable", {
+    private readonly isResizable = new Callable("isResizable", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -501,7 +501,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifEnum
 
     /** Checks whether the array contains no elements. */
-    private isEmpty = new Callable("isEmpty", {
+    private readonly isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -512,7 +512,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Checks whether the current position is not past the end of the enumeration. */
-    private isNext = new Callable("isNext", {
+    private readonly isNext = new Callable("isNext", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -523,7 +523,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Resets the current position to the first element of the enumeration. */
-    private reset = new Callable("reset", {
+    private readonly reset = new Callable("reset", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -535,7 +535,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Increments the position of an enumeration. */
-    private next = new Callable("next", {
+    private readonly next = new Callable("next", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,

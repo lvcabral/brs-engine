@@ -5,13 +5,11 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
 export class RoInput extends BrsComponent implements BrsValue {
-    private id: number;
     private port?: RoMessagePort;
     readonly kind = ValueKind.Object;
 
     constructor() {
         super("roInput");
-        this.id = Math.floor(Math.random() * 100) + 1;
         this.registerMethods({
             ifInput: [
                 this.enableTransportEvents,
@@ -37,7 +35,7 @@ export class RoInput extends BrsComponent implements BrsValue {
     // ifInput ------------------------------------------------------------------------------------
 
     /** Sets the current Order which must be an roList of roAssociativeArray items. */
-    private eventResponse = new Callable("setOrder", {
+    private readonly eventResponse = new Callable("setOrder", {
         signature: {
             args: [new StdlibArgument("aa", ValueKind.Object)],
             returns: ValueKind.Boolean,
@@ -49,7 +47,7 @@ export class RoInput extends BrsComponent implements BrsValue {
     });
 
     /** Registers a channel to receive roInput events, which are voice commands sent via the Roku remote control. */
-    private enableTransportEvents = new Callable("enableTransportEvents", {
+    private readonly enableTransportEvents = new Callable("enableTransportEvents", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -60,7 +58,7 @@ export class RoInput extends BrsComponent implements BrsValue {
     });
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -71,7 +69,7 @@ export class RoInput extends BrsComponent implements BrsValue {
     });
 
     /** Sets the roMessagePort to be used for all events from the screen */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

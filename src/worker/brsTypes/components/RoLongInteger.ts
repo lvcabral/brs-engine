@@ -44,7 +44,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
 
     // ---------- ifLongInt ----------
 
-    private getLongInt = new Callable("getLongInt", {
+    private readonly getLongInt = new Callable("getLongInt", {
         signature: {
             args: [],
             returns: ValueKind.Int64,
@@ -54,7 +54,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
         },
     });
 
-    private setLongInt = new Callable("setLongInt", {
+    private readonly setLongInt = new Callable("setLongInt", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Int64)],
             returns: ValueKind.Void,
@@ -67,7 +67,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
 
     // ---------- ifToStr ----------
 
-    private toStr = new Callable("toStr", {
+    private readonly toStr = new Callable("toStr", {
         signature: {
             args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,

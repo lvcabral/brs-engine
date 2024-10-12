@@ -79,7 +79,7 @@ export class RoHMAC extends BrsComponent implements BrsValue {
     }
 
     /** Initializes new HMAC context. */
-    private setup = new Callable("setup", {
+    private readonly setup = new Callable("setup", {
         signature: {
             args: [
                 new StdlibArgument("digestType", ValueKind.String),
@@ -93,7 +93,7 @@ export class RoHMAC extends BrsComponent implements BrsValue {
     });
 
     /** Adds more data to be digested. The data in the array is added to the current digest. */
-    private update = new Callable("update", {
+    private readonly update = new Callable("update", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -105,7 +105,7 @@ export class RoHMAC extends BrsComponent implements BrsValue {
     });
 
     /** Re-initializes an existing HMAC context to reuse it to authenticate new data. */
-    private reinit = new Callable("reinit", {
+    private readonly reinit = new Callable("reinit", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -119,7 +119,7 @@ export class RoHMAC extends BrsComponent implements BrsValue {
     });
 
     /** Digests the data in an array generates a MAC. */
-    private process = new Callable("process", {
+    private readonly process = new Callable("process", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Object,
@@ -138,7 +138,7 @@ export class RoHMAC extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roByteArray containing the final MAC. */
-    private final = new Callable("final", {
+    private readonly final = new Callable("final", {
         signature: {
             args: [],
             returns: ValueKind.Object,

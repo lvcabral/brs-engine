@@ -118,7 +118,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
     }
 
     /** Configures and initializes a new cipher context. */
-    private setup = new Callable("setup", {
+    private readonly setup = new Callable("setup", {
         signature: {
             args: [
                 new StdlibArgument("encrypt", ValueKind.Boolean),
@@ -151,7 +151,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
     });
 
     /** Re-initializes an existing cipher context, to reuse it to encrypt new data. */
-    private reinit = new Callable("reinit", {
+    private readonly reinit = new Callable("reinit", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -174,7 +174,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
     });
 
     /** Processes the included roByteArray containing encrypted/decrypted data. */
-    private process = new Callable("process", {
+    private readonly process = new Callable("process", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Object,
@@ -205,7 +205,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
     });
 
     /** Updates the included roByteArray containing encrypted/decrypted data. */
-    private update = new Callable("update", {
+    private readonly update = new Callable("update", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.String,
@@ -216,7 +216,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
     });
 
     /** Signals that all data has been submitted by previous calls to Update(). */
-    private final = new Callable("final", {
+    private readonly final = new Callable("final", {
         signature: {
             args: [],
             returns: ValueKind.Object,

@@ -7,7 +7,10 @@ export class OutputProxy {
      * @param outputStream the stream to proxy writes to
      * @param post whether to post messages to the parent thread. defaults to true
      */
-    constructor(private outputStream: NodeJS.WriteStream, private post = true) {}
+    constructor(
+        private readonly outputStream: NodeJS.WriteStream,
+        private readonly post: boolean = true
+    ) {}
 
     /**
      * Writes a string's worth of data to the proxied stream and updates the current output column.

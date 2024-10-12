@@ -99,7 +99,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     }
 
     /** Register a font file (.ttf or .otf format). */
-    private register = new Callable("register", {
+    private readonly register = new Callable("register", {
         signature: {
             args: [new StdlibArgument("fontPath", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -110,7 +110,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roArray of strings that represent the names of the font families which have been registered via Register(). */
-    private getFamilies = new Callable("getFamilies", {
+    private readonly getFamilies = new Callable("getFamilies", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -125,7 +125,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roFont object representing a font from the specified family, selected from the fonts previously registered via Register(). */
-    private getFont = new Callable("getFont", {
+    private readonly getFont = new Callable("getFont", {
         signature: {
             args: [
                 new StdlibArgument("family", ValueKind.String),
@@ -173,7 +173,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roFont object representing the system default font. */
-    private getDefaultFont = new Callable("getDefaultFont", {
+    private readonly getDefaultFont = new Callable("getDefaultFont", {
         signature: {
             args: [
                 new StdlibArgument("size", ValueKind.Int32, new Int32(this.defaultFontSize)),
@@ -215,7 +215,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     });
 
     /** Returns the default font size. */
-    private getDefaultFontSize = new Callable("getDefaultFontSize", {
+    private readonly getDefaultFontSize = new Callable("getDefaultFontSize", {
         signature: {
             args: [],
             returns: ValueKind.Int32,

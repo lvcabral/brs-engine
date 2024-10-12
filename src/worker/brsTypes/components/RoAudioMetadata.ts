@@ -100,7 +100,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     /**
      * Sets the URL to the audio file. Only file URLs are initially supported.
      */
-    setUrl = new Callable("setUrl", {
+    private readonly setUrl = new Callable("setUrl", {
         signature: {
             args: [new StdlibArgument("url", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -114,7 +114,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     /**
      * Returns an associative array that contains a simple set of tags that are common to most audio formats.
      */
-    getTags = new Callable("getTags", {
+    private readonly getTags = new Callable("getTags", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -159,7 +159,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     /**
      * Returns an associative array with a simple set of audio properties.
      */
-    getAudioProperties = new Callable("getAudioProperties", {
+    private readonly getAudioProperties = new Callable("getAudioProperties", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -205,7 +205,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     /**
      * Returns the cover art, if available.
      */
-    getCoverArt = new Callable("getCoverArt", {
+    private readonly getCoverArt = new Callable("getCoverArt", {
         signature: {
             args: [],
             returns: ValueKind.Object,

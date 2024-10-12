@@ -69,7 +69,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     // ifFileSystem ----------------------------------------------------------------------------------
 
     /** Returns an `roList` containing Strings representing the available volumes. */
-    private getVolumeList = new Callable("getVolumeList", {
+    private readonly getVolumeList = new Callable("getVolumeList", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -84,7 +84,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roAssociativeArray containing information about the volume specified in path. */
-    private getVolumeInfo = new Callable("getVolumeInfo", {
+    private readonly getVolumeInfo = new Callable("getVolumeInfo", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
@@ -104,7 +104,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Returns an `roList` containing Strings representing the available volumes. */
-    private getDirectoryListing = new Callable("getDirectoryListing", {
+    private readonly getDirectoryListing = new Callable("getDirectoryListing", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
@@ -125,7 +125,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Creates the directory specified by the path parameter. */
-    private createDirectory = new Callable("createDirectory", {
+    private readonly createDirectory = new Callable("createDirectory", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -146,7 +146,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Permanently removes the file or directory specified by the path parameter. */
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -171,7 +171,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Copies the file from origin path to destiny path. */
-    private copyFile = new Callable("copyFile", {
+    private readonly copyFile = new Callable("copyFile", {
         signature: {
             args: [
                 new StdlibArgument("fromPath", ValueKind.String),
@@ -201,7 +201,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Renames or moves the file or directory. */
-    private rename = new Callable("rename", {
+    private readonly rename = new Callable("rename", {
         signature: {
             args: [
                 new StdlibArgument("fromPath", ValueKind.String),
@@ -236,7 +236,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Checks if the path exists. */
-    private exists = new Callable("exists", {
+    private readonly exists = new Callable("exists", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -256,7 +256,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roList of Strings representing the directory listing of names in dirPath which match the regEx regular expression. */
-    private find = new Callable("find", {
+    private readonly find = new Callable("find", {
         signature: {
             args: [
                 new StdlibArgument("path", ValueKind.String),
@@ -287,7 +287,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roList of Strings representing the recursive directory listing of names in dirPath which match the regEx regular expression. */
-    private findRecurse = new Callable("findRecurse", {
+    private readonly findRecurse = new Callable("findRecurse", {
         signature: {
             args: [
                 new StdlibArgument("path", ValueKind.String),
@@ -307,7 +307,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roList of Strings representing the directory listing of names in dirPath which match the shell-like pattern. */
-    private match = new Callable("match", {
+    private readonly match = new Callable("match", {
         signature: {
             args: [
                 new StdlibArgument("path", ValueKind.String),
@@ -342,7 +342,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roAssociativeArray containing the keys for the passed in path. */
-    private stat = new Callable("stat", {
+    private readonly stat = new Callable("stat", {
         signature: {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
@@ -383,7 +383,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -397,7 +397,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

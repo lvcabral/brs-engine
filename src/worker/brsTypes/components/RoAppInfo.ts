@@ -31,7 +31,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     }
 
     /** Returns the app's channel ID. */
-    private getId = new Callable("getId", {
+    private readonly getId = new Callable("getId", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -42,7 +42,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if the application is sideloaded, i.e. the channel ID is "dev". */
-    private isDev = new Callable("isDev", {
+    private readonly isDev = new Callable("isDev", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -54,7 +54,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the app's developer ID, or the keyed developer ID, if the application is sideloaded. */
-    private getDevId = new Callable("getDevId", {
+    private readonly getDevId = new Callable("getDevId", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -65,7 +65,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the conglomerate version from the manifest, as formatted major_version + minor_version + build_version. */
-    private getVersion = new Callable("getVersion", {
+    private readonly getVersion = new Callable("getVersion", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -76,7 +76,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the title value from the manifest. */
-    private getTitle = new Callable("getTitle", {
+    private readonly getTitle = new Callable("getTitle", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -87,7 +87,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the subtitle value from the manifest. */
-    private getSubtitle = new Callable("getSubtitle", {
+    private readonly getSubtitle = new Callable("getSubtitle", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -98,7 +98,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the named manifest value, or an empty string if the entry is does not exist. */
-    private getValue = new Callable("getValue", {
+    private readonly getValue = new Callable("getValue", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.String,

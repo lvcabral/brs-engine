@@ -64,7 +64,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     }
 
     /** Returns an integer representing the index of the current audio stream. */
-    private getIndex = new Callable("getIndex", {
+    private readonly getIndex = new Callable("getIndex", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -75,7 +75,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns info in some events (not implemented just a placeholder). */
-    private getInfo = new Callable("getInfo", {
+    private readonly getInfo = new Callable("getInfo", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -101,7 +101,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns the current status message. */
-    private getMessage = new Callable("getMessage", {
+    private readonly getMessage = new Callable("getMessage", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -112,7 +112,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if a stream has been selected to start playing. */
-    private isListItemSelected = new Callable("isListItemSelected", {
+    private readonly isListItemSelected = new Callable("isListItemSelected", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -123,7 +123,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if video is loaded and will start to play. */
-    private isFullResult = new Callable("isFullResult", {
+    private readonly isFullResult = new Callable("isFullResult", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -134,7 +134,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if video playback completed at end of content. */
-    private isRequestSucceeded = new Callable("isRequestSucceeded", {
+    private readonly isRequestSucceeded = new Callable("isRequestSucceeded", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -145,7 +145,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if video playback fails. */
-    private isRequestFailed = new Callable("isRequestFailed", {
+    private readonly isRequestFailed = new Callable("isRequestFailed", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -156,7 +156,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if video playback was interrupted. */
-    private isPartialResult = new Callable("isPartialResult", {
+    private readonly isPartialResult = new Callable("isPartialResult", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -167,7 +167,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if video playback was paused. */
-    private isPaused = new Callable("isPaused", {
+    private readonly isPaused = new Callable("isPaused", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -178,7 +178,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if video playback was resumed. */
-    private isResumed = new Callable("isResumed", {
+    private readonly isResumed = new Callable("isResumed", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -189,7 +189,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if there is a status message. */
-    private isStatusMessage = new Callable("isStatusMessage", {
+    private readonly isStatusMessage = new Callable("isStatusMessage", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -200,7 +200,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether an ID3 timecode has passed with an event that includes key-value pairs for timed metadata. */
-    private isTimedMetadata = new Callable("isTimedMetadata", {
+    private readonly isTimedMetadata = new Callable("isTimedMetadata", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -212,7 +212,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether the current position in the video stream has changed. */
-    private isPlaybackPosition = new Callable("isPlaybackPosition", {
+    private readonly isPlaybackPosition = new Callable("isPlaybackPosition", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -223,7 +223,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether the format of all tracks in the media stream have been identified. */
-    private isFormatDetected = new Callable("isFormatDetected", {
+    private readonly isFormatDetected = new Callable("isFormatDetected", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -235,7 +235,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether the video stream has started downloading a segment. */
-    private isSegmentDownloadStarted = new Callable("isSegmentDownloadStarted", {
+    private readonly isSegmentDownloadStarted = new Callable("isSegmentDownloadStarted", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -247,7 +247,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether the video stream has started playing. */
-    private isStreamStarted = new Callable("isStreamStarted", {
+    private readonly isStreamStarted = new Callable("isStreamStarted", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -258,7 +258,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether the caption mode has changed. */
-    private isCaptionModeChanged = new Callable("isCaptionModeChanged", {
+    private readonly isCaptionModeChanged = new Callable("isCaptionModeChanged", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -270,7 +270,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether playback has begun of a segment in an HLS, DASH, or smooth stream. */
-    private isStreamSegmentInfo = new Callable("isStreamSegmentInfo", {
+    private readonly isStreamSegmentInfo = new Callable("isStreamSegmentInfo", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -282,7 +282,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether a segment in an adaptive stream (HLS, Smooth, or DASH) has been downloaded. */
-    private isDownloadSegmentInfo = new Callable("isDownloadSegmentInfo", {
+    private readonly isDownloadSegmentInfo = new Callable("isDownloadSegmentInfo", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,

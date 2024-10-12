@@ -109,7 +109,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     }
 
     /** Returns the model name for the Roku Streaming Player device running the script. */
-    private getModel = new Callable("getModel", {
+    private readonly getModel = new Callable("getModel", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -120,7 +120,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the model display name for the Roku Streaming Player device running the script. */
-    private getModelDisplayName = new Callable("getModelDisplayName", {
+    private readonly getModelDisplayName = new Callable("getModelDisplayName", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -135,7 +135,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a string describing what type of device it is. */
-    private getModelType = new Callable("getModelType", {
+    private readonly getModelType = new Callable("getModelType", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -149,7 +149,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns device model details. */
-    private getModelDetails = new Callable("getModelDetails", {
+    private readonly getModelDetails = new Callable("getModelDetails", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -166,7 +166,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns device model details. */
-    private getFriendlyName = new Callable("getFriendlyName", {
+    private readonly getFriendlyName = new Callable("getFriendlyName", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -177,7 +177,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the version number of the device's firmware. */
-    private getVersion = new Callable("getVersion", {
+    private readonly getVersion = new Callable("getVersion", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -188,7 +188,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roAssociativeArray containing the major, minor, revision, and build numbers of the Roku OS running on the device. */
-    private getOSVersion = new Callable("getOSVersion", {
+    private readonly getOSVersion = new Callable("getOSVersion", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -220,7 +220,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks for the user interface sound effects volume level. */
-    private getSoundEffectsVolume = new Callable("getSoundEffectsVolume", {
+    private readonly getSoundEffectsVolume = new Callable("getSoundEffectsVolume", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -231,7 +231,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId() */
-    private getClientTrackingId = new Callable("getClientTrackingId", {
+    private readonly getClientTrackingId = new Callable("getClientTrackingId", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -242,7 +242,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a unique identifier of the unit running the script. */
-    private getChannelClientId = new Callable("getChannelClientId", {
+    private readonly getChannelClientId = new Callable("getChannelClientId", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -253,7 +253,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a unique identifier for Advertisement tracking. */
-    private getRIDA = new Callable("getRIDA", {
+    private readonly getRIDA = new Callable("getRIDA", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -264,7 +264,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if the user has disabled RIDA tracking. */
-    private isRIDADisabled = new Callable("isRIDADisabled", {
+    private readonly isRIDADisabled = new Callable("isRIDADisabled", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -275,7 +275,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether the device is in demo mode. */
-    private isStoreDemoMode = new Callable("isStoreDemoMode", {
+    private readonly isStoreDemoMode = new Callable("isStoreDemoMode", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -286,7 +286,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a value that designates the Roku Channel Store associated with a user’s Roku account. */
-    private getCountryCode = new Callable("getCountryCode", {
+    private readonly getCountryCode = new Callable("getCountryCode", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -297,7 +297,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a value that designates the Roku Channel Store associated with a user’s Roku account. */
-    private getUserCountryCode = new Callable("getUserCountryCode", {
+    private readonly getUserCountryCode = new Callable("getUserCountryCode", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -308,7 +308,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the three-letter ISO 639-2 language terminology code of the preferred caption language set on the Roku device. */
-    private getPreferredCaptionLanguage = new Callable("getPreferredCaptionLanguage", {
+    private readonly getPreferredCaptionLanguage = new Callable("getPreferredCaptionLanguage", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -319,7 +319,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the user's current system time zone setting. */
-    private getTimeZone = new Callable("getTimeZone", {
+    private readonly getTimeZone = new Callable("getTimeZone", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -330,7 +330,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns  the current locale value based on the user's language setting. */
-    private getCurrentLocale = new Callable("getCurrentLocale", {
+    private readonly getCurrentLocale = new Callable("getCurrentLocale", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -341,7 +341,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns system settings for time format. */
-    private getClockFormat = new Callable("getClockFormat", {
+    private readonly getClockFormat = new Callable("getClockFormat", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -352,7 +352,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the text corresponding to the button selection in the Player Info Settings/Display Type page. */
-    private getDisplayType = new Callable("getDisplayType", {
+    private readonly getDisplayType = new Callable("getDisplayType", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -368,7 +368,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the configured graphics layer resolution. */
-    private getDisplayMode = new Callable("getDisplayMode", {
+    private readonly getDisplayMode = new Callable("getDisplayMode", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -379,7 +379,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the video playback resolution. */
-    private getVideoMode = new Callable("getVideoMode", {
+    private readonly getVideoMode = new Callable("getVideoMode", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -390,7 +390,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the aspect ration for the display screen. */
-    private getDisplayAspectRatio = new Callable("getDisplayAspectRatio", {
+    private readonly getDisplayAspectRatio = new Callable("getDisplayAspectRatio", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -406,7 +406,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns the display size of a screen as an Associative array containing the screen width and height. */
-    private getDisplaySize = new Callable("getDisplaySize", {
+    private readonly getDisplaySize = new Callable("getDisplaySize", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -429,7 +429,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns An associative array with the following key/value pairs for the display properties of the screen. */
-    private getDisplayProperties = new Callable("getDisplayProperties", {
+    private readonly getDisplayProperties = new Callable("getDisplayProperties", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -457,53 +457,56 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns An associative array with the following key/value pairs for the display properties of the screen. */
-    private getSupportedGraphicsResolutions = new Callable("getSupportedGraphicsResolutions", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (interpreter: Interpreter) => {
-            let result: RoAssociativeArray[] = [];
-            let mode = new Array<AAMember>();
-            let display = interpreter.deviceInfo.get("displayMode");
-            mode.push({ name: new BrsString("name"), value: new BrsString("SD") });
-            mode.push({ name: new BrsString("height"), value: new Int32(480) });
-            mode.push({ name: new BrsString("width"), value: new Int32(720) });
-            mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
-            if (display.slice(0, 3) === "480") {
-                mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
-            } else {
-                mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
-            }
-            result.push(new RoAssociativeArray(mode));
-            mode = new Array<AAMember>();
-            mode.push({ name: new BrsString("name"), value: new BrsString("HD") });
-            mode.push({ name: new BrsString("height"), value: new Int32(720) });
-            mode.push({ name: new BrsString("width"), value: new Int32(1280) });
-            mode.push({ name: new BrsString("preferred"), value: BrsBoolean.True });
-            if (display.slice(0, 3) === "720") {
-                mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
-            } else {
-                mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
-            }
-            result.push(new RoAssociativeArray(mode));
-            mode = new Array<AAMember>();
-            mode.push({ name: new BrsString("name"), value: new BrsString("FHD") });
-            mode.push({ name: new BrsString("height"), value: new Int32(1080) });
-            mode.push({ name: new BrsString("width"), value: new Int32(1920) });
-            mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
-            if (display.slice(0, 4) === "1080") {
-                mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
-            } else {
-                mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
-            }
-            result.push(new RoAssociativeArray(mode));
-            return new RoArray(result);
-        },
-    });
+    private readonly getSupportedGraphicsResolutions = new Callable(
+        "getSupportedGraphicsResolutions",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Object,
+            },
+            impl: (interpreter: Interpreter) => {
+                let result: RoAssociativeArray[] = [];
+                let mode = new Array<AAMember>();
+                let display = interpreter.deviceInfo.get("displayMode");
+                mode.push({ name: new BrsString("name"), value: new BrsString("SD") });
+                mode.push({ name: new BrsString("height"), value: new Int32(480) });
+                mode.push({ name: new BrsString("width"), value: new Int32(720) });
+                mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
+                if (display.slice(0, 3) === "480") {
+                    mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
+                } else {
+                    mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
+                }
+                result.push(new RoAssociativeArray(mode));
+                mode = new Array<AAMember>();
+                mode.push({ name: new BrsString("name"), value: new BrsString("HD") });
+                mode.push({ name: new BrsString("height"), value: new Int32(720) });
+                mode.push({ name: new BrsString("width"), value: new Int32(1280) });
+                mode.push({ name: new BrsString("preferred"), value: BrsBoolean.True });
+                if (display.slice(0, 3) === "720") {
+                    mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
+                } else {
+                    mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
+                }
+                result.push(new RoAssociativeArray(mode));
+                mode = new Array<AAMember>();
+                mode.push({ name: new BrsString("name"), value: new BrsString("FHD") });
+                mode.push({ name: new BrsString("height"), value: new Int32(1080) });
+                mode.push({ name: new BrsString("width"), value: new Int32(1920) });
+                mode.push({ name: new BrsString("preferred"), value: BrsBoolean.False });
+                if (display.slice(0, 4) === "1080") {
+                    mode.push({ name: new BrsString("ui"), value: BrsBoolean.True });
+                } else {
+                    mode.push({ name: new BrsString("ui"), value: BrsBoolean.False });
+                }
+                result.push(new RoAssociativeArray(mode));
+                return new RoArray(result);
+            },
+        }
+    );
 
     /** Returns the display size of a screen as an Associative array containing the screen width and height. */
-    private getUIResolution = new Callable("getUIResolution", {
+    private readonly getUIResolution = new Callable("getUIResolution", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -534,7 +537,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a string specifying the device's graphics platform, either opengl or directfb. */
-    private getGraphicsPlatform = new Callable("getGraphicsPlatform", {
+    private readonly getGraphicsPlatform = new Callable("getGraphicsPlatform", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -548,7 +551,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks if the current device/firmware supports the passed in feature string. */
-    private hasFeature = new Callable("hasFeature", {
+    private readonly hasFeature = new Callable("hasFeature", {
         signature: {
             args: [new StdlibArgument("feature", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -564,7 +567,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks for the DRM system used by the channel. */
-    private getDrmInfo = new Callable("getDrmInfo", {
+    private readonly getDrmInfo = new Callable("getDrmInfo", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -575,7 +578,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks for the DRM system used by the channel. */
-    private getDrmInfoEx = new Callable("getDrmInfoEx", {
+    private readonly getDrmInfoEx = new Callable("getDrmInfoEx", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -586,7 +589,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Determines whether global captions are turned on or off, or are in instant replay mode. */
-    private getCaptionsMode = new Callable("getCaptionsMode", {
+    private readonly getCaptionsMode = new Callable("getCaptionsMode", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -597,7 +600,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Sets the current global setting for the Caption Mode property. */
-    private setCaptionsMode = new Callable("setCaptionsMode", {
+    private readonly setCaptionsMode = new Callable("setCaptionsMode", {
         signature: {
             args: [new StdlibArgument("mode", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -612,7 +615,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks the current value of the specified global setting property. */
-    private getCaptionsOption = new Callable("getCaptionsOption", {
+    private readonly getCaptionsOption = new Callable("getCaptionsOption", {
         signature: {
             args: [new StdlibArgument("option", ValueKind.String)],
             returns: ValueKind.String,
@@ -632,7 +635,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks if the device can decode and play the specified audio format. */
-    private canDecodeAudio = new Callable("canDecodeAudio", {
+    private readonly canDecodeAudio = new Callable("canDecodeAudio", {
         signature: {
             args: [new StdlibArgument("options", ValueKind.Dynamic)],
             returns: ValueKind.Object,
@@ -662,7 +665,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks for the type of audio output. */
-    private getAudioOutputChannel = new Callable("getAudioOutputChannel", {
+    private readonly getAudioOutputChannel = new Callable("getAudioOutputChannel", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -673,7 +676,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Lists each audio decoder supported by the device.*/
-    private getAudioDecodeInfo = new Callable("getAudioDecodeInfo", {
+    private readonly getAudioDecodeInfo = new Callable("getAudioDecodeInfo", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -685,7 +688,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks if the device can decode and play the specified video format. */
-    private canDecodeVideo = new Callable("canDecodeVideo", {
+    private readonly canDecodeVideo = new Callable("canDecodeVideo", {
         signature: {
             args: [new StdlibArgument("options", ValueKind.Dynamic)],
             returns: ValueKind.Object,
@@ -729,7 +732,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Notifies the channel when the audio or video codec changes. */
-    private enableCodecCapChangedEvent = new Callable("enableCodecCapChangedEvent", {
+    private readonly enableCodecCapChangedEvent = new Callable("enableCodecCapChangedEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -741,7 +744,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks if the screen reader is enabled. */
-    private IsAudioGuideEnabled = new Callable("IsAudioGuideEnabled", {
+    private readonly IsAudioGuideEnabled = new Callable("IsAudioGuideEnabled", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -751,7 +754,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    private enableAudioGuideChangedEvent = new Callable("enableAudioGuideChangedEvent", {
+    private readonly enableAudioGuideChangedEvent = new Callable("enableAudioGuideChangedEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Dynamic,
@@ -763,7 +766,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks for the number of seconds passed since the last remote keypress. */
-    private timeSinceLastKeypress = new Callable("timeSinceLastKeypress", {
+    private readonly timeSinceLastKeypress = new Callable("timeSinceLastKeypress", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -774,7 +777,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a randomly generated unique identifier. */
-    private getRandomUUID = new Callable("getRandomUUID", {
+    private readonly getRandomUUID = new Callable("getRandomUUID", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -785,7 +788,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks whether the device has a WiFi or wired connection, or if it is not connected through any type of network. */
-    private getConnectionType = new Callable("getConnectionType", {
+    private readonly getConnectionType = new Callable("getConnectionType", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -796,7 +799,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks for the information associated with the hardware's connection. */
-    private getConnectionInfo = new Callable("getConnectionInfo", {
+    private readonly getConnectionInfo = new Callable("getConnectionInfo", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -823,7 +826,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks if the device has an active connection. */
-    private getLinkStatus = new Callable("getLinkStatus", {
+    private readonly getLinkStatus = new Callable("getLinkStatus", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -838,7 +841,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Notifies the channel when a link status event occurs. */
-    private enableLinkStatusEvent = new Callable("enableLinkStatusEvent", {
+    private readonly enableLinkStatusEvent = new Callable("enableLinkStatusEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -850,7 +853,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks the internet connection status of the device. */
-    private getInternetStatus = new Callable("getInternetStatus", {
+    private readonly getInternetStatus = new Callable("getInternetStatus", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -865,7 +868,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Notifies the channel when an internet connection status event occurs. */
-    private enableInternetStatusEvent = new Callable("enableInternetStatusEvent", {
+    private readonly enableInternetStatusEvent = new Callable("enableInternetStatusEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -877,7 +880,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Forces a new internet connection check. */
-    private forceInternetStatusCheck = new Callable("forceInternetStatusCheck", {
+    private readonly forceInternetStatusCheck = new Callable("forceInternetStatusCheck", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -888,7 +891,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns an AA that each key is the name of a network interface and the value is the IP-address of the interface. */
-    private getIPAddrs = new Callable("getIPAddrs", {
+    private readonly getIPAddrs = new Callable("getIPAddrs", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -906,7 +909,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Checks the IP address assigned to the device by your internet service provider (ISP). */
-    private getExternalIp = new Callable("getExternalIp", {
+    private readonly getExternalIp = new Callable("getExternalIp", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -917,7 +920,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     //** Checks the general memory levels of the device. */
-    private getGeneralMemoryLevel = new Callable("getGeneralMemoryLevel", {
+    private readonly getGeneralMemoryLevel = new Callable("getGeneralMemoryLevel", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -928,7 +931,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Notifies the channel when a lowGeneralMemoryLevel event occurs. */
-    private enableLowGeneralMemoryEvent = new Callable("enableLowGeneralMemoryEvent", {
+    private readonly enableLowGeneralMemoryEvent = new Callable("enableLowGeneralMemoryEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -940,7 +943,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Notifies the channel when a system overlay event is displayed. */
-    private enableAppFocusEvent = new Callable("enableAppFocusEvent", {
+    private readonly enableAppFocusEvent = new Callable("enableAppFocusEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Dynamic,
@@ -952,7 +955,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Notifies the channel when a screensaver exit event occurs. */
-    private enableScreensaverExitedEvent = new Callable("enableScreensaverExitedEvent", {
+    private readonly enableScreensaverExitedEvent = new Callable("enableScreensaverExitedEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Dynamic,
@@ -966,7 +969,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -979,7 +982,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

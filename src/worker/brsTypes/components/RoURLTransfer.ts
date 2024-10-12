@@ -345,7 +345,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     // ifUrlTransfer ----------------------------------------------------------------------------------
 
     /** Returns a unique number for this object that can be used to identify whether events originated from this object. */
-    private getIdentity = new Callable("getIdentity", {
+    private readonly getIdentity = new Callable("getIdentity", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -356,7 +356,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Sets the URL to use for the transfer request. */
-    private setUrl = new Callable("setUrl", {
+    private readonly setUrl = new Callable("setUrl", {
         signature: {
             args: [new StdlibArgument("url", ValueKind.String)],
             returns: ValueKind.Void,
@@ -368,7 +368,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Returns the current URL. */
-    private getUrl = new Callable("getUrl", {
+    private readonly getUrl = new Callable("getUrl", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -379,7 +379,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Changes the request method from the normal GET, HEAD or POST to the value passed as a string. */
-    private setRequest = new Callable("setRequest", {
+    private readonly setRequest = new Callable("setRequest", {
         signature: {
             args: [new StdlibArgument("reqMethod", ValueKind.String)],
             returns: ValueKind.Void,
@@ -391,7 +391,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Returns the current request method. */
-    private getRequest = new Callable("getRequest", {
+    private readonly getRequest = new Callable("getRequest", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -402,7 +402,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Connect to the remote service as specified in the URL and return the response body as a string. */
-    private getToString = new Callable("getToString", {
+    private readonly getToString = new Callable("getToString", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -417,7 +417,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Connect to the remote URL and write the response body to a file on the filesystem. */
-    private getToFile = new Callable("getToFile", {
+    private readonly getToFile = new Callable("getToFile", {
         signature: {
             args: [new StdlibArgument("filePath", ValueKind.String)],
             returns: ValueKind.Int32,
@@ -432,7 +432,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Starts a GET request to a server, but does not wait for the transfer to complete. */
-    private asyncGetToString = new Callable("asyncGetToString", {
+    private readonly asyncGetToString = new Callable("asyncGetToString", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -454,7 +454,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     /** Like AsyncGetToString, this starts a transfer without waiting for it to complete. */
     /** However, the response body will be written to a file on the device's filesystem */
     /** instead of being returned in a String object. */
-    private asyncGetToFile = new Callable("asyncGetToFile", {
+    private readonly asyncGetToFile = new Callable("asyncGetToFile", {
         signature: {
             args: [new StdlibArgument("filePath", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -475,7 +475,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Cancel any outstanding async requests on the roUrlEvent object. */
-    private asyncCancel = new Callable("asyncCancel", {
+    private readonly asyncCancel = new Callable("asyncCancel", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -492,7 +492,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Synchronously perform an HTTP HEAD request and return an roUrlEvent object. */
-    private head = new Callable("head", {
+    private readonly head = new Callable("head", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -503,7 +503,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Begin an HTTP HEAD request without waiting for it to complete.. */
-    private asyncHead = new Callable("asyncHead", {
+    private readonly asyncHead = new Callable("asyncHead", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -523,7 +523,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Use the HTTP POST method to send the supplied string to the current URL. */
-    private postFromString = new Callable("postFromString", {
+    private readonly postFromString = new Callable("postFromString", {
         signature: {
             args: [new StdlibArgument("request", ValueKind.String)],
             returns: ValueKind.Int32,
@@ -539,7 +539,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
 
     /** Use the HTTP POST method to send the supplied string to the current URL. When the POST completes, */
     /** an roUrlEvent will be sent to the message port associated with the object. */
-    private asyncPostFromString = new Callable("asyncPostFromString", {
+    private readonly asyncPostFromString = new Callable("asyncPostFromString", {
         signature: {
             args: [new StdlibArgument("request", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -561,7 +561,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
 
     /** Use the HTTP POST method to send the contents of the specified file to the current URL. */
     /** The HTTP response code is returned. */
-    private postFromFile = new Callable("postFromFile", {
+    private readonly postFromFile = new Callable("postFromFile", {
         signature: {
             args: [new StdlibArgument("filePath", ValueKind.String)],
             returns: ValueKind.Int32,
@@ -576,7 +576,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Use the HTTP POST method to send the contents of the specified file to the current URL. */
-    private asyncPostFromFile = new Callable("asyncPostFromFile", {
+    private readonly asyncPostFromFile = new Callable("asyncPostFromFile", {
         signature: {
             args: [new StdlibArgument("filePath", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -597,7 +597,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Use the HTTP POST method to send the contents of the specified file to the current URL. */
-    private asyncPostFromFileToFile = new Callable("asyncPostFromFileToFile", {
+    private readonly asyncPostFromFileToFile = new Callable("asyncPostFromFileToFile", {
         signature: {
             args: [
                 new StdlibArgument("fromFile", ValueKind.String),
@@ -622,7 +622,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** If retain is true, return the body of the response even if the HTTP status code indicates that an error occurred. */
-    private retainBodyOnError = new Callable("retainBodyOnError", {
+    private readonly retainBodyOnError = new Callable("retainBodyOnError", {
         signature: {
             args: [new StdlibArgument("retain", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -633,7 +633,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Enables HTTP authentication using the specified user name and password. */
-    private setUserAndPassword = new Callable("setUserAndPassword", {
+    private readonly setUserAndPassword = new Callable("setUserAndPassword", {
         signature: {
             args: [
                 new StdlibArgument("user", ValueKind.String),
@@ -650,7 +650,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
 
     /** Terminates the transfer automatically if the transfer rate drops below the */
     /** specified rate (bytes_per_second) over a specific interval (period_in_seconds). */
-    private setMinimumTransferRate = new Callable("setMinimumTransferRate", {
+    private readonly setMinimumTransferRate = new Callable("setMinimumTransferRate", {
         signature: {
             args: [
                 new StdlibArgument("bytes_per_second", ValueKind.Int32),
@@ -666,7 +666,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Returns a description of the failure that occurred. */
-    private getFailureReason = new Callable("getFailureReason", {
+    private readonly getFailureReason = new Callable("getFailureReason", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -677,7 +677,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** URL encode the specified string per RFC 3986 and return the encoded string. */
-    private escape = new Callable("escape", {
+    private readonly escape = new Callable("escape", {
         signature: {
             args: [new StdlibArgument("text", ValueKind.String)],
             returns: ValueKind.String,
@@ -688,7 +688,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** URL encode the specified string per RFC 3986 and return the encoded string. */
-    private urlEncode = new Callable("urlEncode", {
+    private readonly urlEncode = new Callable("urlEncode", {
         signature: {
             args: [new StdlibArgument("text", ValueKind.String)],
             returns: ValueKind.String,
@@ -699,7 +699,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Decode the specified string per RFC 3986 and return the unencoded string. */
-    private unescape = new Callable("unescape", {
+    private readonly unescape = new Callable("unescape", {
         signature: {
             args: [new StdlibArgument("text", ValueKind.String)],
             returns: ValueKind.String,
@@ -710,7 +710,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Specify whether to enable gzip encoding of transfers. */
-    private enableEncodings = new Callable("enableEncodings", {
+    private readonly enableEncodings = new Callable("enableEncodings", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -721,7 +721,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Enables automatic resumption of AsyncGetToFile and GetToFile requests. */
-    private enableResume = new Callable("enableResume", {
+    private readonly enableResume = new Callable("enableResume", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -734,7 +734,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Verifies that the certificate has a chain of trust up to a valid root certificate. */
-    private enablePeerVerification = new Callable("enablePeerVerification", {
+    private readonly enablePeerVerification = new Callable("enablePeerVerification", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -747,7 +747,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Verifies that the certificate belongs to the host. */
-    private enableHostVerification = new Callable("enableHostVerification", {
+    private readonly enableHostVerification = new Callable("enableHostVerification", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -760,7 +760,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Specify whether to enable fresh connections. */
-    private enableFreshConnection = new Callable("enableFreshConnection", {
+    private readonly enableFreshConnection = new Callable("enableFreshConnection", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -772,7 +772,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** An optional function that enables HTTP/2 support. */
-    private setHttpVersion = new Callable("setHttpVersion", {
+    private readonly setHttpVersion = new Callable("setHttpVersion", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -789,7 +789,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
      *  If "x-roku-reserved-dev-id" is passed as a name, the value parameter is ignored and in its place,
      *  the devId of the currently running channel is used as the value.
      */
-    private addHeader = new Callable("addHeader", {
+    private readonly addHeader = new Callable("addHeader", {
         signature: {
             args: [
                 new StdlibArgument("name", ValueKind.String),
@@ -808,7 +808,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Each name/value in the passed AA is added as an HTTP header. */
-    private setHeaders = new Callable("setHeaders", {
+    private readonly setHeaders = new Callable("setHeaders", {
         signature: {
             args: [new StdlibArgument("headers", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
@@ -827,7 +827,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Initialize the object to send the Roku client certificate. */
-    private initClientCertificates = new Callable("initClientCertificates", {
+    private readonly initClientCertificates = new Callable("initClientCertificates", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -838,7 +838,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Set the certificates file used for SSL to the .pem file specified. */
-    private setCertificatesFile = new Callable("setCertificatesFile", {
+    private readonly setCertificatesFile = new Callable("setCertificatesFile", {
         signature: {
             args: [new StdlibArgument("certificate", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -850,7 +850,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Sets the maximum depth of the certificate chain that will be accepted. */
-    private setCertificatesDepth = new Callable("setCertificatesDepth", {
+    private readonly setCertificatesDepth = new Callable("setCertificatesDepth", {
         signature: {
             args: [new StdlibArgument("depth", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -862,7 +862,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Causes any Set-Cookie headers returned from the request to be interpreted. */
-    private enableCookies = new Callable("enableCookies", {
+    private readonly enableCookies = new Callable("enableCookies", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -874,7 +874,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Returns any cookies from the cookie cache that match the specified domain and path. */
-    private getCookies = new Callable("getCookies", {
+    private readonly getCookies = new Callable("getCookies", {
         signature: {
             args: [
                 new StdlibArgument("domain", ValueKind.String),
@@ -889,7 +889,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Verifies that the certificate belongs to the host. */
-    private addCookies = new Callable("addCookies", {
+    private readonly addCookies = new Callable("addCookies", {
         signature: {
             args: [new StdlibArgument("cookies", ValueKind.Object)],
             returns: ValueKind.Boolean,
@@ -902,7 +902,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Removes all cookies from the cookie cache. */
-    private clearCookies = new Callable("clearCookies", {
+    private readonly clearCookies = new Callable("clearCookies", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -916,7 +916,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -927,7 +927,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Returns the message port (if any) currently associated with the object */
-    private getPort = new Callable("getPort", {
+    private readonly getPort = new Callable("getPort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -940,7 +940,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the audio player */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -954,7 +954,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     });
 
     /** Sets the roMessagePort to be used for all events from the audio player */
-    private setPort = new Callable("setPort", {
+    private readonly setPort = new Callable("setPort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

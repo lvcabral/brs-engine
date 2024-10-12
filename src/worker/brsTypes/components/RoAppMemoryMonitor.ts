@@ -37,7 +37,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
     // ifChannelStore ------------------------------------------------------------------------------------
 
     /** Enables a channel to be alerted when it has reached 80% of its memory usage limit. */
-    private enableMemoryWarningEvent = new Callable("enableMemoryWarningEvent", {
+    private readonly enableMemoryWarningEvent = new Callable("enableMemoryWarningEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -49,7 +49,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
     });
 
     /** Returns the usage percentage of memory limit for the channel. */
-    private getMemoryLimitPercent = new Callable("getMemoryLimitPercent", {
+    private readonly getMemoryLimitPercent = new Callable("getMemoryLimitPercent", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -61,7 +61,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
     });
 
     /** Returns the estimated kilobytes (Kb) of memory available for the channel. */
-    private getChannelAvailableMemory = new Callable("getChannelAvailableMemory", {
+    private readonly getChannelAvailableMemory = new Callable("getChannelAvailableMemory", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -75,7 +75,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -88,7 +88,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

@@ -27,7 +27,7 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
     }
 
     /** Checks if an input event was received. */
-    private isInput = new Callable("isInput", {
+    private readonly isInput = new Callable("isInput", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -38,7 +38,7 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roAssociativeArray describing the input event. */
-    private getInfo = new Callable("getSourceIdentity", {
+    private readonly getInfo = new Callable("getSourceIdentity", {
         signature: {
             args: [],
             returns: ValueKind.Object,

@@ -95,7 +95,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Sets the string to the first len characters of s.
      * Note: this method is implemented in the ifString and ifStringOps interfaces
      */
-    private setString = new Callable(
+    private readonly setString = new Callable(
         "SetString",
         {
             signature: {
@@ -124,7 +124,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         }
     );
 
-    private getString = new Callable("GetString", {
+    private readonly getString = new Callable("GetString", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -134,7 +134,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
 
     // ---------- ifStringOps ----------
     /** Appends the first len characters of s to the end of the string. */
-    private appendString = new Callable("AppendString", {
+    private readonly appendString = new Callable("AppendString", {
         signature: {
             args: [
                 new StdlibArgument("s", ValueKind.String),
@@ -152,7 +152,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Returns the number of characters in the string. */
-    private len = new Callable("Len", {
+    private readonly len = new Callable("Len", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -163,7 +163,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Returns a string consisting of the first len characters of the string. */
-    private left = new Callable("Left", {
+    private readonly left = new Callable("Left", {
         signature: {
             args: [new StdlibArgument("len", ValueKind.Int32)],
             returns: ValueKind.String,
@@ -174,7 +174,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Returns a string consisting of the last len characters of the string. */
-    private right = new Callable("Right", {
+    private readonly right = new Callable("Right", {
         signature: {
             args: [new StdlibArgument("len", ValueKind.Int32)],
             returns: ValueKind.String,
@@ -186,7 +186,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
     });
 
-    private mid = new Callable(
+    private readonly mid = new Callable(
         "Mid",
         /**
          * Returns a string consisting of the last characters of the string, starting at the
@@ -223,7 +223,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         }
     );
 
-    private instr = new Callable(
+    private readonly instr = new Callable(
         "Instr",
         /** Returns the zero-based index of the first occurrence of substring in the string. */
         {
@@ -262,7 +262,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Returns a copy of the string with all instances of fromStr replaced with toStr. If fromStr is
      * empty the return value is the same as the source string.
      */
-    private replace = new Callable("Replace", {
+    private readonly replace = new Callable("Replace", {
         signature: {
             args: [
                 new StdlibArgument("from", ValueKind.String),
@@ -288,7 +288,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Returns the string with any leading and trailing whitespace characters (space, TAB, LF, CR,
      * VT, FF, NO-BREAK SPACE, et al) removed.
      */
-    private trim = new Callable("Trim", {
+    private readonly trim = new Callable("Trim", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -299,7 +299,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Returns the value of the string interpreted as a decimal number. */
-    private toInt = new Callable("ToInt", {
+    private readonly toInt = new Callable("ToInt", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -317,7 +317,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Returns the value of the string interpreted as a floating point number. */
-    private toFloat = new Callable("ToFloat", {
+    private readonly toFloat = new Callable("ToFloat", {
         signature: {
             args: [],
             returns: ValueKind.Float,
@@ -338,7 +338,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Splits the string into separate substrings separated by a single delimiter character. Returns
      * an roList containing each of the substrings. The delimiters are not returned.
      */
-    private tokenize = new Callable("Tokenize", {
+    private readonly tokenize = new Callable("Tokenize", {
         signature: {
             args: [new StdlibArgument("delim", ValueKind.String)],
             returns: ValueKind.Object,
@@ -369,7 +369,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * the split token strings (not including the delimiter). An empty separator string indicates
      * to split the string by character.
      */
-    private split = new Callable("Split", {
+    private readonly split = new Callable("Split", {
         signature: {
             args: [new StdlibArgument("separator", ValueKind.String)],
             returns: ValueKind.Object,
@@ -391,7 +391,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Returns the string with certain characters ("'<>&) replaced with the corresponding HTML
      * entity encoding.
      */
-    private getEntityEncode = new Callable("GetEntityEncode", {
+    private readonly getEntityEncode = new Callable("GetEntityEncode", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -402,7 +402,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** URL encodes the specified string per RFC 3986 and returns the encoded string. */
-    private escape = new Callable("Escape", {
+    private readonly escape = new Callable("Escape", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -420,7 +420,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** URL decodes the specified string per RFC 3986 and returns the decoded string. */
-    private unescape = new Callable("Unescape", {
+    private readonly unescape = new Callable("Unescape", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -431,7 +431,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** returns whether string is empty or not */
-    private isEmpty = new Callable("isEmpty", {
+    private readonly isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -445,7 +445,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Encode the specified string with escape sequences for reserved Uniform Resource Identifier
      * (URI) characters.
      */
-    private encodeUri = new Callable("EncodeUri", {
+    private readonly encodeUri = new Callable("EncodeUri", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -459,7 +459,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Decode the specified string with escape sequences for reserved Uniform Resource Identifier
      * (URI) characters.
      */
-    private decodeUri = new Callable("DecodeUri", {
+    private readonly decodeUri = new Callable("DecodeUri", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -473,7 +473,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      * Encode the specified string with escape sequences for reserved Uniform Resource Identifier
      * (URI) component characters.
      */
-    private encodeUriComponent = new Callable("EncodeUriComponent", {
+    private readonly encodeUriComponent = new Callable("EncodeUriComponent", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -483,7 +483,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
     });
 
-    private decodeUriComponent = new Callable("DecodeUriCOmponent", {
+    private readonly decodeUriComponent = new Callable("DecodeUriCOmponent", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -494,7 +494,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Checks whether the string starts with the substring specified in matchString, starting at the matchPos parameter (0-based character offset). */
-    private startsWith = new Callable("startsWith", {
+    private readonly startsWith = new Callable("startsWith", {
         signature: {
             args: [
                 new StdlibArgument("matchString", ValueKind.String),
@@ -513,7 +513,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Checks whether the string ends with the substring specified in matchString, starting at the position specified in the length parameter. */
-    private endsWith = new Callable("endsWith", {
+    private readonly endsWith = new Callable("endsWith", {
         signature: {
             args: [
                 new StdlibArgument("matchString", ValueKind.String),
@@ -532,7 +532,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Undocumented method that allows printf formatting */
-    private toStr = new Callable("toStr", {
+    private readonly toStr = new Callable("toStr", {
         signature: {
             args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,
@@ -555,7 +555,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     /** Undocumented method that allows printf formatting */
-    private format = new Callable("format", {
+    private readonly format = new Callable("format", {
         signature: {
             args: [
                 new StdlibArgument("arg1", ValueKind.Dynamic, BrsInvalid.Instance),

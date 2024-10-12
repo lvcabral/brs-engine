@@ -190,7 +190,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     }
 
     /** Parse a string of XML. Returns true if successful. In that case, XML elements are available using other methods */
-    private parse = new Callable("parse", {
+    private readonly parse = new Callable("parse", {
         signature: {
             args: [new StdlibArgument("xml", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -222,7 +222,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     /** returns an roXMLList representing those elements, like GetChildElements(). */
     /** If there are no children but the element contains text, returns an roString like GetText(). */
     /** If the element is empty, GetBody() returns invalid */
-    private getBody = new Callable("getBody", {
+    private readonly getBody = new Callable("getBody", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -239,7 +239,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns an roXMLList of child elements. If there are no child elements, returns invalid.  */
-    private getChildElements = new Callable("getChildElements", {
+    private readonly getChildElements = new Callable("getChildElements", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -254,7 +254,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns an roXMLList of child elements. If there are no child elements, returns invalid. */
-    private getChildNodes = new Callable("getChildNodes", {
+    private readonly getChildNodes = new Callable("getChildNodes", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -269,7 +269,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns an roXMLList representing all child elements of this element whose name is specified. */
-    private getNamedElements = new Callable("getNamedElements", {
+    private readonly getNamedElements = new Callable("getNamedElements", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
@@ -280,7 +280,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Same as GetNamedElements except the name matching is case-insensitive. */
-    private getNamedElementsCi = new Callable("getNamedElementsCi", {
+    private readonly getNamedElementsCi = new Callable("getNamedElementsCi", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
@@ -291,7 +291,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns an Associative Array representing the XML attributes of the element */
-    private getAttributes = new Callable("getAttributes", {
+    private readonly getAttributes = new Callable("getAttributes", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -302,7 +302,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns the name of the element */
-    private getName = new Callable("getName", {
+    private readonly getName = new Callable("getName", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -313,7 +313,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns any text contained in the element. */
-    private getText = new Callable("getText", {
+    private readonly getText = new Callable("getText", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -324,7 +324,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns true if the element has the specified name. */
-    private isName = new Callable("isName", {
+    private readonly isName = new Callable("isName", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -335,7 +335,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Returns true if the element has the specified attribute. */
-    private hasAttribute = new Callable("hasAttribute", {
+    private readonly hasAttribute = new Callable("hasAttribute", {
         signature: {
             args: [new StdlibArgument("attr", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -353,7 +353,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Sets the element text from the specified string. */
-    private setBody = new Callable("setBody", {
+    private readonly setBody = new Callable("setBody", {
         signature: {
             args: [new StdlibArgument("body", ValueKind.String)],
             returns: ValueKind.Void,
@@ -372,7 +372,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Adds text to the element body. */
-    private addText = new Callable("addText", {
+    private readonly addText = new Callable("addText", {
         signature: {
             args: [new StdlibArgument("text", ValueKind.String)],
             returns: ValueKind.Void,
@@ -391,7 +391,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Adds an new empty child element and returns it. */
-    private addBodyElement = new Callable("addBodyElement", {
+    private readonly addBodyElement = new Callable("addBodyElement", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -409,7 +409,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Adds a new child element with the specified name and returns the new element. */
-    private addElement = new Callable("addElement", {
+    private readonly addElement = new Callable("addElement", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Object,
@@ -427,7 +427,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Adds a new child element with the specified name and text from the specified body string, and returns the new element. */
-    private addElementWithBody = new Callable("addElementWithBody", {
+    private readonly addElementWithBody = new Callable("addElementWithBody", {
         signature: {
             args: [
                 new StdlibArgument("name", ValueKind.String),
@@ -448,7 +448,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Adds an attribute value to the element. */
-    private addAttribute = new Callable("addAttribute", {
+    private readonly addAttribute = new Callable("addAttribute", {
         signature: {
             args: [
                 new StdlibArgument("attr", ValueKind.String),
@@ -470,7 +470,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Sets the name of the element. */
-    private setName = new Callable("setName", {
+    private readonly setName = new Callable("setName", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Void,
@@ -487,7 +487,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Serializes the element to XML document text. */
-    private genXMLHdr = new Callable("genXMLHdr", {
+    private readonly genXMLHdr = new Callable("genXMLHdr", {
         signature: {
             args: [new StdlibArgument("header", ValueKind.String)],
             returns: ValueKind.String,
@@ -503,7 +503,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Serializes the element to XML document text. */
-    private genXML = new Callable("genXML", {
+    private readonly genXML = new Callable("genXML", {
         signature: {
             args: [new StdlibArgument("gen_header", ValueKind.Boolean)],
             returns: ValueKind.String,
@@ -523,7 +523,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     });
 
     /** Removes all sub-elements and clear the name of the element */
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,

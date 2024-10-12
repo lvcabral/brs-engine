@@ -16,8 +16,8 @@ import { Interpreter } from "../../interpreter";
 export class RoDeviceCrypto extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
-    private algorithm = "aes-256-ctr";
-    private keys: Map<string, Buffer>;
+    private readonly algorithm = "aes-256-ctr";
+    private readonly keys: Map<string, Buffer>;
 
     constructor(interpreter: Interpreter) {
         super("roDeviceCrypto");
@@ -59,7 +59,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
     }
 
     /** Encrypts data on a device that is unique per device, channel, or model. */
-    private encrypt = new Callable("encrypt", {
+    private readonly encrypt = new Callable("encrypt", {
         signature: {
             args: [
                 new StdlibArgument("input", ValueKind.Object),
@@ -91,7 +91,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
     });
 
     /** Decrypts data stored on a device that was previously encoded with the Encrypt() method. */
-    private decrypt = new Callable("decrypt", {
+    private readonly decrypt = new Callable("decrypt", {
         signature: {
             args: [
                 new StdlibArgument("encryptedData", ValueKind.Object),
