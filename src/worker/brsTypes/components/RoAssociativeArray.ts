@@ -220,7 +220,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             let lKey = str.value.toLowerCase();
             if (this.modeCaseSensitive) {
                 let keySet = this.keyMap.get(lKey);
-                keySet?.delete(key);
+                if (keySet && key) {
+                    keySet?.delete(key);
+                }
                 if (keySet?.size === 0) {
                     this.keyMap.delete(lKey);
                 }

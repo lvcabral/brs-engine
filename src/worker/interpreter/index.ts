@@ -35,7 +35,7 @@ import {
     Signature,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/coercion";
-import { shared } from "..";
+import { shared, stats } from "..";
 import { Lexeme } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -51,7 +51,14 @@ import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, dataBufferIndex, defaultDeviceInfo, numberToHex } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    dataBufferIndex,
+    defaultDeviceInfo,
+    numberToHex,
+    parseTextFile,
+} from "../common";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -85,7 +92,7 @@ export interface TracePoint {
 }
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
-    private _environment = new Environment();
+    private _environment: Environment;
     private _sourceMap = new Map<string, string>();
     private _stack = new Array<TracePoint>();
     private _tryMode = false;
@@ -203,6 +210,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param options configuration for the execution
      */
     constructor(options?: Partial<ExecutionOptions>) {
+        this._environment = new Environment(new RoAssociativeArray([]));
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
@@ -1946,7 +1954,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             name: new BrsString("filename"),
                             value: new BrsString(loc?.file ?? "()"),
                         },
-                        { name: new BrsString("function"), value: new BrsString(funcSignature) },
+                        {
+                            name: new BrsString("function"),
+                            value: new BrsString(funcSignature),
+                        },
                         { name: new BrsString("line_number"), value: new Int32(line) },
                     ])
                 );
@@ -2018,6 +2029,27 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             formattedLocation = `pkg:/${location.file}(??)`;
         }
         return formattedLocation;
+    }
+
+    /**
+     * Method to return the statistics of the interpreter for the REPL and Micro Debugger
+     * @returns a string representation of the interpreter statistics
+     */
+    formatStats(): string {
+        let debugMsg = `Sub Context Data:\r\n`;
+        let varCount = this.environment.getList(Scope.Function).size + 2;
+        debugMsg += `  Variables:      ${varCount}\r\n`;
+        let lineCount = 0;
+        this.sourceMap.forEach((lines) => {
+            lineCount += parseTextFile(lines).length;
+        });
+        debugMsg += "Module Constant Table Sizes:\r\n";
+        debugMsg += `  Source Lns:     ${lineCount}\r\n`;
+        stats.forEach((count, lexeme) => {
+            const name = Lexeme[lexeme] + ":";
+            debugMsg += `  ${name.padEnd(15)} ${count}\r\n`;
+        });
+        return debugMsg;
     }
 
     /**

@@ -18,7 +18,7 @@ import {
     parseManifest,
 } from "./common";
 import { FileSystem } from "./interpreter/FileSystem";
-import { Lexer, Token } from "./lexer";
+import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
@@ -43,6 +43,8 @@ export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
 export const shared = new Map<string, Int32Array>();
+export const bscs = new Map<string, number>();
+export const stats = new Map<Lexeme, number>();
 
 const algorithm = "aes-256-ctr";
 
@@ -270,6 +272,8 @@ export function executeFile(
         },
         ...customOptions,
     };
+    bscs.clear();
+    stats.clear();
     const interpreter = new Interpreter(options);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
@@ -594,12 +598,16 @@ export function lexParseSync(
     if (password.length === 0) {
         lib.forEach((value: string, key: string) => {
             if (value !== "") {
+                sourceMap.set(key, value);
                 const libScan = lexer.scan(value, key);
                 const libParse = parser.parse(libScan.tokens);
                 allStatements.push(...libParse.statements);
             }
         });
     }
+    parser.stats.forEach((count, lexeme) => {
+        stats.set(lexeme, count.size);
+    });
     return {
         exitReason: exitReason,
         tokens: tokens,

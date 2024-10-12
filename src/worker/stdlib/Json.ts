@@ -28,6 +28,7 @@ function brsValueOf(x: any): BrsType {
     if (x === null) {
         return BrsInvalid.Instance;
     }
+    const maxInt = 0x80000000;
     let t: string = typeof x;
     switch (t) {
         case "boolean":
@@ -36,7 +37,7 @@ function brsValueOf(x: any): BrsType {
             return new BrsString(x);
         case "number":
             if (Number.isInteger(x)) {
-                return x >= -2_147_483_648 && x <= 2_147_483_647 ? new Int32(x) : new Int64(x);
+                return x >= -maxInt && x < maxInt ? new Int32(x) : new Int64(x);
             }
             return new Float(x);
         case "object":
@@ -175,15 +176,11 @@ export const ParseJson = new Callable("ParseJson", {
     impl: (interpreter: Interpreter, jsonString: BrsString) => {
         try {
             let s: string = jsonString.toString().trim();
-
             if (s === "") {
                 throw new Error("Data is empty");
             }
-
             return brsValueOf(JSON.parse(s));
         } catch (err: any) {
-            // example RBI error:
-            // "BRIGHTSCRIPT: ERROR: ParseJSON: Unknown identifier 'x': pkg:/source/main.brs(25)"
             logBrsErr(interpreter, "ParseJSON", err);
             return BrsInvalid.Instance;
         }

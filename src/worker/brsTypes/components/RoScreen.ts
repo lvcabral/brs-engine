@@ -178,7 +178,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.isDirty = true;
     }
 
-    dispose(): void {
+    dispose() {
         this.port?.removeReference();
         if (this.disposeCanvas) {
             this.canvas.forEach((c) => releaseCanvas(c));

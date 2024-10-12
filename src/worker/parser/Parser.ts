@@ -15,6 +15,7 @@ import {
     ValueKind,
     Argument,
     StdlibArgument,
+    BrsType,
 } from "../brsTypes";
 import { RuntimeErrorDetail } from "../Error";
 
@@ -166,12 +167,21 @@ interface ParseResults {
 export class Parser {
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
+    readonly stats = new Map<Lexeme, Set<any>>();
 
     constructor() {
         bsLibraries.set("v30/bslCore.brs", false);
         bsLibraries.set("v30/bslDefender.brs", false);
         bsLibraries.set("Roku_Ads.brs", false);
+        this.stats.set(Lexeme.Integer, new Set());
+        this.stats.set(Lexeme.String, new Set());
+        this.stats.set(Lexeme.Float, new Set());
+        this.stats.set(Lexeme.Double, new Set());
+        this.stats.set(Lexeme.LongInteger, new Set());
+        this.stats.set(Lexeme.Function, new Set());
+        this.stats.set(Lexeme.Identifier, new Set());
     }
+
     /**
      * A convenience function, equivalent to `new Parser().parse(toParse)`, that parses an array of
      * `Token`s into an abstract syntax tree that can be executed with the `Interpreter`.
@@ -212,6 +222,7 @@ export class Parser {
      *          program
      */
     parse(toParse: readonly Token[]): ParseResults {
+        const self = this;
         let current = 0;
         let tokens = toParse;
         let parsingTryBlock = false;
@@ -363,6 +374,7 @@ export class Parser {
                     returnType = ValueKind.Dynamic;
                 }
 
+                let funcName = "(anonymous)";
                 if (isAnonymous) {
                     leftParen = consume(
                         `Expected '(' after ${functionType.text}`,
@@ -387,6 +399,7 @@ export class Parser {
                             `Function name '${name.text}' cannot end with type designator '${lastChar}'`
                         );
                     }
+                    funcName = name.text;
                 }
 
                 let args: Argument[] = [];
@@ -418,7 +431,8 @@ export class Parser {
                             `Function return type '${typeString}' is invalid`
                         );
                     }
-
+                    // RBI count the literal integer 0 when a function has a return type
+                    countLiteral(Lexeme.Integer, new Int32(0));
                     returnType = maybeReturnType;
                 }
 
@@ -470,6 +484,7 @@ export class Parser {
                     startingKeyword,
                     endingKeyword
                 );
+                countFunction(funcName);
 
                 if (isAnonymous) {
                     return func;
@@ -743,6 +758,10 @@ export class Parser {
             } else {
                 // BrightScript for/to/step loops default to a step of 1 if no `step` is provided
                 increment = new Expr.Literal(new Int32(1), peek().location);
+            }
+            // RBI count the step as literal integer even when omitted
+            if (increment instanceof Expr.Literal) {
+                countLiteral(Lexeme.Integer, increment.value);
             }
 
             let maybeBody = block(Lexeme.EndFor, Lexeme.Next);
@@ -1577,6 +1596,7 @@ export class Parser {
 
                         // force it into an identifier so the AST makes some sense
                         name.kind = Lexeme.Identifier;
+                        countIdentifier(name.text);
                         expr = new Expr.DottedGet(expr, name as Identifier);
                     }
                 } else {
@@ -1611,6 +1631,19 @@ export class Parser {
                 Lexeme.RightParen
             );
 
+            if (
+                callee instanceof Expr.Variable &&
+                callee.name.text.toLowerCase() === "createobject"
+            ) {
+                // RBI doesn't count the object name, but only if a single argument is passed
+                if (args.length === 1 && args[0] instanceof Expr.Literal) {
+                    const name = args[0].value.toString();
+                    const strings = self.stats.get(Lexeme.String);
+                    if (strings && strings.has(name) && Array.from(strings).pop() === name) {
+                        strings.delete(name);
+                    }
+                }
+            }
             return new Expr.Call(callee, closingParen, args);
         }
 
@@ -1629,6 +1662,7 @@ export class Parser {
                     Lexeme.Double,
                     Lexeme.String
                 ):
+                    countLiteral(Lexeme[previous().kind], previous().literal!);
                     return new Expr.Literal(previous().literal!, previous().location);
                 case match(Lexeme.Identifier):
                     return new Expr.Variable(previous() as Identifier);
@@ -1668,6 +1702,12 @@ export class Parser {
 
                     let closingSquare = previous();
 
+                    // When we initialize a literal array the capacity and object name are counted
+                    countLiteral(Lexeme.Integer, new Int32(10));
+                    countLiteral(Lexeme.String, new BrsString("roArray"));
+                    if (elements.length) {
+                        countIdentifier("");
+                    }
                     return new Expr.ArrayLiteral(elements, openingSquare, closingSquare);
                 }
                 case match(Lexeme.LeftBrace): {
@@ -1721,6 +1761,12 @@ export class Parser {
                             "Unmatched '{' - expected '}' after associative array literal",
                             Lexeme.RightBrace
                         );
+                        if (members.length) {
+                            countIdentifier("");
+                            members.forEach((member) => {
+                                countIdentifier(member.name.value);
+                            });
+                        }
                     }
 
                     let closingBrace = previous();
@@ -1884,6 +1930,27 @@ export class Parser {
                 }
 
                 advance();
+            }
+        }
+
+        function countFunction(name: string) {
+            const funcs = self.stats.get(Lexeme.Function);
+            if (funcs) {
+                funcs.add(`${name.toLowerCase()}(${funcs.size})`);
+            }
+        }
+
+        function countLiteral(lexeme: Lexeme, value: BrsType) {
+            const literals = self.stats.get(lexeme);
+            if (literals && !literals.has(value.toString())) {
+                literals.add(value.toString());
+            }
+        }
+
+        function countIdentifier(name: string) {
+            const identifiers = self.stats.get(Lexeme.Identifier);
+            if (identifiers && !identifiers?.has(name.toLowerCase())) {
+                identifiers.add(name.toLowerCase());
             }
         }
     }

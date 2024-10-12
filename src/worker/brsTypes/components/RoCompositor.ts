@@ -198,7 +198,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    dispose(): void {
+    dispose() {
         this.destBitmap?.removeReference();
         this.sprites.forEach((layer) => {
             layer.forEach((sprite) => {

@@ -158,31 +158,34 @@ export enum RemoteType {
     ECP = 40, // External Control Protocol
     RMOB = 50, // Roku Mobile App (ECP2)
 }
-// Other valid remote codes:
+// Other RBI valid remote codes:
 // BT - Bluetooth
 // CEC - Consumer Electronics Control
 // MHL - Mobile High-Definition Link
-// FP - Front Panel (for on device controls)
+// FP - Front Panel (for on-device controls)
 
 // Debug prompt
 export const debugPrompt = "Brightscript Debugger> ";
 
 // Debug commands enumerator
 export enum DebugCommand {
+    BREAK,
+    BSCS,
     BT,
+    CLASSES,
     CONT,
     EXIT,
+    EXPR,
     HELP,
     LAST,
     LIST,
     NEXT,
+    PAUSE,
+    STATS,
     STEP,
     THREAD,
     THREADS,
     VAR,
-    EXPR,
-    BREAK,
-    PAUSE,
 }
 
 // Media events enumerator
@@ -266,4 +269,13 @@ export function getExitReason(value: string): AppExitReason {
 
 export function numberToHex(value: number, pad: string = ""): string {
     return (value >>> 0).toString(16).padStart(8, pad);
+}
+
+// This function takes a text file content as a string and returns an array of lines
+export function parseTextFile(content?: string): string[] {
+    let lines: string[] = [];
+    if (content) {
+        lines = content.trimEnd().split("\n");
+    }
+    return lines;
 }
