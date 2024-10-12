@@ -74,7 +74,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
     }
 
     /** Initializes a new message digest context. */
-    private setup = new Callable("setup", {
+    private readonly setup = new Callable("setup", {
         signature: {
             args: [new StdlibArgument("algorithm", ValueKind.String)],
             returns: ValueKind.Int32,
@@ -86,7 +86,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
     });
 
     /** Re-initializes an existing message digest context, to reuse it to digest new data. */
-    private reinit = new Callable("reinit", {
+    private readonly reinit = new Callable("reinit", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -100,7 +100,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
     });
 
     /** Digests the provided data. */
-    private process = new Callable("process", {
+    private readonly process = new Callable("process", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.String,
@@ -116,7 +116,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
     });
 
     /** Adds more data to be digested. */
-    private update = new Callable("update", {
+    private readonly update = new Callable("update", {
         signature: {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -128,7 +128,7 @@ export class RoEVPDigest extends BrsComponent implements BrsValue {
     });
 
     /** Returns the digest of data passed in by previous calls to Update() as a hex string. */
-    private final = new Callable("final", {
+    private readonly final = new Callable("final", {
         signature: {
             args: [],
             returns: ValueKind.String,

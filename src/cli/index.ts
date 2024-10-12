@@ -321,7 +321,7 @@ function packageCallback(event: string, data: any) {
  */
 function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
-        handleStringMessage(message)
+        handleStringMessage(message);
     } else if (program.ascii && message instanceof ImageData) {
         const canvas = createCanvas(message.width, message.height);
         const ctx = canvas.getContext("2d");

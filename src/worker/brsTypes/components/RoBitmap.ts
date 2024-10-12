@@ -29,17 +29,17 @@ import { WebPRiffParser, WebPDecoder } from "libwebpjs";
 
 export class RoBitmap extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly canvas: BrsCanvas;
+    private readonly context: BrsCanvasContext2D;
+    private readonly width: number;
+    private readonly height: number;
+    private readonly name: string;
+    private readonly disposeCanvas: boolean;
     private alphaEnable: boolean;
-    private canvas: BrsCanvas;
-    private context: BrsCanvasContext2D;
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number;
     private rgbaRedraw: boolean;
-    private width: number;
-    private height: number;
-    private name: string;
     private valid: boolean;
-    private disposeCanvas: boolean;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
         super("roBitmap");
@@ -302,7 +302,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     // ifDraw2D  -----------------------------------------------------------------------------------
 
     /** Clear the bitmap, and fill with the specified RGBA color */
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [new StdlibArgument("rgba", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -313,7 +313,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object, where src is an roBitmap or an roRegion object, at position x,y */
-    private drawObject = new Callable("drawObject", {
+    private readonly drawObject = new Callable("drawObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -338,7 +338,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object at position x,y rotated by angle theta degrees. */
-    private drawRotatedObject = new Callable("drawRotatedObject", {
+    private readonly drawRotatedObject = new Callable("drawRotatedObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -371,7 +371,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
-    private drawScaledObject = new Callable("drawScaledObject", {
+    private readonly drawScaledObject = new Callable("drawScaledObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -406,7 +406,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Draw the source object, at position x,y, rotated by theta and scaled horizontally by scaleX and vertically by scaleY. */
-    private drawTransformedObject = new Callable("drawTransformedObject", {
+    private readonly drawTransformedObject = new Callable("drawTransformedObject", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -451,7 +451,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Draw a line from (xStart, yStart) to (xEnd, yEnd) with RGBA color */
-    private drawLine = new Callable("drawLine", {
+    private readonly drawLine = new Callable("drawLine", {
         signature: {
             args: [
                 new StdlibArgument("xStart", ValueKind.Int32),
@@ -482,7 +482,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Draws a point at (x,y) with the given size and RGBA color */
-    private drawPoint = new Callable("drawPoint", {
+    private readonly drawPoint = new Callable("drawPoint", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -502,7 +502,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Fill the specified rectangle from left (x), top (y) to right (x + width), bottom (y + height) with the RGBA color */
-    private drawRect = new Callable("drawRect", {
+    private readonly drawRect = new Callable("drawRect", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -523,7 +523,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Draws the text at position (x,y) using the specified RGBA color and roFont font object. */
-    private drawText = new Callable("drawText", {
+    private readonly drawText = new Callable("drawText", {
         signature: {
             args: [
                 new StdlibArgument("text", ValueKind.String),
@@ -546,7 +546,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Realize the bitmap by finishing all queued draw calls. */
-    private finish = new Callable("finish", {
+    private readonly finish = new Callable("finish", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -557,7 +557,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if alpha blending is enabled */
-    private getAlphaEnable = new Callable("getAlphaEnable", {
+    private readonly getAlphaEnable = new Callable("getAlphaEnable", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -568,7 +568,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** If enable is true, do alpha blending when this bitmap is the destination */
-    private setAlphaEnable = new Callable("setAlphaEnable", {
+    private readonly setAlphaEnable = new Callable("setAlphaEnable", {
         signature: {
             args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -579,7 +579,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Return the width of the screen/bitmap/region. */
-    private getWidth = new Callable("getWidth", {
+    private readonly getWidth = new Callable("getWidth", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -590,7 +590,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Return the height of the screen/bitmap/region. */
-    private getHeight = new Callable("getHeight", {
+    private readonly getHeight = new Callable("getHeight", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -601,7 +601,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Return the image name (file name or custom) of the bitmap (this method is not on RBI). */
-    private getName = new Callable("getName", {
+    private readonly getName = new Callable("getName", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -612,7 +612,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
-    private getByteArray = new Callable("getByteArray", {
+    private readonly getByteArray = new Callable("getByteArray", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),
@@ -635,7 +635,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
-    private getPng = new Callable("getPng", {
+    private readonly getPng = new Callable("getPng", {
         signature: {
             args: [
                 new StdlibArgument("x", ValueKind.Int32),

@@ -59,7 +59,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     }
 
     /** Set the date/time value to the current UTC date and time */
-    private mark = new Callable("mark", {
+    private readonly mark = new Callable("mark", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -71,7 +71,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time as a formatted string */
-    private asDateString = new Callable("asDateString", {
+    private readonly asDateString = new Callable("asDateString", {
         signature: {
             args: [new StdlibArgument("format", ValueKind.String)],
             returns: ValueKind.String,
@@ -179,7 +179,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Same as AsDateString("long-date") */
-    private asDateStringNoParam = new Callable("asDateStringNoParam", {
+    private readonly asDateStringNoParam = new Callable("asDateStringNoParam", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -198,7 +198,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time as the number of seconds from the Unix epoch (00:00:00 1/1/1970 GMT) */
-    private asSeconds = new Callable("asSeconds", {
+    private readonly asSeconds = new Callable("asSeconds", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -209,7 +209,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Set the date/time using a string in the ISO 8601 format */
-    private fromISO8601String = new Callable("fromISO8601String", {
+    private readonly fromISO8601String = new Callable("fromISO8601String", {
         signature: {
             args: [new StdlibArgument("dateString", ValueKind.String)],
             returns: ValueKind.Void,
@@ -225,7 +225,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Set the date/time value using the number of seconds from the Unix epoch */
-    private fromSeconds = new Callable("fromSeconds", {
+    private readonly fromSeconds = new Callable("fromSeconds", {
         signature: {
             args: [new StdlibArgument("numSeconds", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -237,7 +237,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's day of the month */
-    private getDayOfMonth = new Callable("getDayOfMonth", {
+    private readonly getDayOfMonth = new Callable("getDayOfMonth", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -249,7 +249,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's day of the week */
-    private getDayOfWeek = new Callable("getDayOfWeek", {
+    private readonly getDayOfWeek = new Callable("getDayOfWeek", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -261,7 +261,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's hour within the day */
-    private getHours = new Callable("getHours", {
+    private readonly getHours = new Callable("getHours", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -273,7 +273,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's last day of the month */
-    private getLastDayOfMonth = new Callable("getLastDayOfMonth", {
+    private readonly getLastDayOfMonth = new Callable("getLastDayOfMonth", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -287,7 +287,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's millisecond within the second */
-    private getMilliseconds = new Callable("getMilliseconds", {
+    private readonly getMilliseconds = new Callable("getMilliseconds", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -299,7 +299,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's minute within the hour */
-    private getMinutes = new Callable("getMinutes", {
+    private readonly getMinutes = new Callable("getMinutes", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -311,7 +311,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's month */
-    private getMonth = new Callable("getMonth", {
+    private readonly getMonth = new Callable("getMonth", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -323,7 +323,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's second within the minute */
-    private getSeconds = new Callable("getSeconds", {
+    private readonly getSeconds = new Callable("getSeconds", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -335,7 +335,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the offset in minutes from the system time zone to UTC */
-    private getTimeZoneOffset = new Callable("getTimeZoneOffset", {
+    private readonly getTimeZoneOffset = new Callable("getTimeZoneOffset", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -352,7 +352,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the day of the week */
-    private getWeekday = new Callable("getWeekday", {
+    private readonly getWeekday = new Callable("getWeekday", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -366,7 +366,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Returns the date/time value's year */
-    private getYear = new Callable("getYear", {
+    private readonly getYear = new Callable("getYear", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -378,7 +378,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Return an ISO 8601 representation of the date/time value */
-    private toISOString = new Callable("toISOString", {
+    private readonly toISOString = new Callable("toISOString", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -390,7 +390,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     });
 
     /** Offsets the date/time value from an assumed UTC date/time to a local date/time using the system time zone setting. */
-    private toLocalTime = new Callable("toLocalTime", {
+    private readonly toLocalTime = new Callable("toLocalTime", {
         signature: {
             args: [],
             returns: ValueKind.Void,

@@ -55,7 +55,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     }
 
     /** Returns an integer representing the index of the current audio stream. */
-    private getIndex = new Callable("getIndex", {
+    private readonly getIndex = new Callable("getIndex", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -66,7 +66,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns info in some events (not implemented just a placeholder). */
-    private getInfo = new Callable("getInfo", {
+    private readonly getInfo = new Callable("getInfo", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -77,7 +77,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns error code when isRequestFailed() is true. */
-    private getData = new Callable("getData", {
+    private readonly getData = new Callable("getData", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -88,7 +88,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns the current status message. */
-    private getMessage = new Callable("getMessage", {
+    private readonly getMessage = new Callable("getMessage", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -99,7 +99,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if a stream has been selected to start playing. */
-    private isListItemSelected = new Callable("isListItemSelected", {
+    private readonly isListItemSelected = new Callable("isListItemSelected", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -110,7 +110,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if audio is loaded and will start to play. */
-    private isFullResult = new Callable("isFullResult", {
+    private readonly isFullResult = new Callable("isFullResult", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -121,7 +121,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if audio playback completed at end of content. */
-    private isRequestSucceeded = new Callable("isRequestSucceeded", {
+    private readonly isRequestSucceeded = new Callable("isRequestSucceeded", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -132,7 +132,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if audio playback fails. */
-    private isRequestFailed = new Callable("isRequestFailed", {
+    private readonly isRequestFailed = new Callable("isRequestFailed", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -143,7 +143,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if audio playback was interrupted. */
-    private isPartialResult = new Callable("isPartialResult", {
+    private readonly isPartialResult = new Callable("isPartialResult", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -154,7 +154,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if audio playback was paused. */
-    private isPaused = new Callable("isPaused", {
+    private readonly isPaused = new Callable("isPaused", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -165,7 +165,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if audio playback was resumed. */
-    private isResumed = new Callable("isResumed", {
+    private readonly isResumed = new Callable("isResumed", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -176,7 +176,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if there is a status message. */
-    private isStatusMessage = new Callable("isStatusMessage", {
+    private readonly isStatusMessage = new Callable("isStatusMessage", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -187,7 +187,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Not Implemented just a placeholder. */
-    private isTimedMetadata = new Callable("isTimedMetadata", {
+    private readonly isTimedMetadata = new Callable("isTimedMetadata", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,

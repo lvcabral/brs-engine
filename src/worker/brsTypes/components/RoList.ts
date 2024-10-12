@@ -192,7 +192,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     //--------------------------------- ifList ---------------------------------
 
     /** Adds typed value to head of list */
-    private addHead = new Callable("addHead", {
+    private readonly addHead = new Callable("addHead", {
         signature: {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -204,7 +204,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Adds typed value to tail of list */
-    private addTail = new Callable("addTail", {
+    private readonly addTail = new Callable("addTail", {
         signature: {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -216,7 +216,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Gets the entry at head of list and keep entry in list */
-    private getHead = new Callable("getHead", {
+    private readonly getHead = new Callable("getHead", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -227,7 +227,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Gets the Object at tail of List and keep Object in list */
-    private getTail = new Callable("getTail", {
+    private readonly getTail = new Callable("getTail", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -238,7 +238,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes entry at head of list */
-    private removeHead = new Callable("removeHead", {
+    private readonly removeHead = new Callable("removeHead", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -249,7 +249,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes entry at tail of list */
-    private removeTail = new Callable("removeTail", {
+    private readonly removeTail = new Callable("removeTail", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -260,7 +260,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Resets the current index or position in list to the head element */
-    private resetIndex = new Callable("resetIndex", {
+    private readonly resetIndex = new Callable("resetIndex", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -272,7 +272,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Gets the entry at current index or position from the list and increments the index or position in the list */
-    private getIndex = new Callable("getIndex", {
+    private readonly getIndex = new Callable("getIndex", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -283,7 +283,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes the entry at the current index or position from the list and increments the index or position in the list */
-    private removeIndex = new Callable("removeIndex", {
+    private readonly removeIndex = new Callable("removeIndex", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -296,7 +296,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     //--------------------------------- ifListToArray ---------------------------------
 
     /** Returns an roArray containing the same elements as the list */
-    private toArray = new Callable("toArray", {
+    private readonly toArray = new Callable("toArray", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -308,7 +308,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     //--------------------------------- ifArray ---------------------------------
 
-    private peek = new Callable("peek", {
+    private readonly peek = new Callable("peek", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -318,7 +318,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private pop = new Callable("pop", {
+    private readonly pop = new Callable("pop", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -328,7 +328,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private push = new Callable("push", {
+    private readonly push = new Callable("push", {
         signature: {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -339,7 +339,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private shift = new Callable("shift", {
+    private readonly shift = new Callable("shift", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -349,7 +349,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private unshift = new Callable("unshift", {
+    private readonly unshift = new Callable("unshift", {
         signature: {
             args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -360,7 +360,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
@@ -376,7 +376,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private count = new Callable("count", {
+    private readonly count = new Callable("count", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -386,7 +386,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -399,7 +399,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private append = new Callable("append", {
+    private readonly append = new Callable("append", {
         signature: {
             args: [new StdlibArgument("array", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -424,7 +424,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     //------------------------------- ifArrayGet --------------------------------
 
     /** Returns an array entry based on the provided index. */
-    private getEntry = new Callable("getEntry", {
+    private readonly getEntry = new Callable("getEntry", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
@@ -436,7 +436,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
 
     //------------------------------- ifArraySet --------------------------------
 
-    private setEntry = new Callable("setEntry", {
+    private readonly setEntry = new Callable("setEntry", {
         signature: {
             args: [
                 new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
@@ -452,7 +452,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     //--------------------------------- ifEnum ---------------------------------
 
     /** Checks whether the enumeration contains no elements. */
-    private isEmpty = new Callable("isEmpty", {
+    private readonly isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -463,7 +463,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Checks whether the current position is not past the end of the enumeration. */
-    private isNext = new Callable("isNext", {
+    private readonly isNext = new Callable("isNext", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -474,7 +474,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Resets the current position to the first element of the enumeration. */
-    private reset = new Callable("reset", {
+    private readonly reset = new Callable("reset", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -486,7 +486,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Increments the position of an enumeration. */
-    private next = new Callable("next", {
+    private readonly next = new Callable("next", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,

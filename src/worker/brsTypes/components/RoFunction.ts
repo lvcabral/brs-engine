@@ -34,7 +34,7 @@ export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic.toString();
     }
 
-    private getSub = new Callable("getSub", {
+    private readonly getSub = new Callable("getSub", {
         signature: {
             args: [],
             returns: ValueKind.Callable,
@@ -44,7 +44,7 @@ export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
         },
     });
 
-    private setSub = new Callable("setSub", {
+    private readonly setSub = new Callable("setSub", {
         signature: {
             args: [new StdlibArgument("value", ValueKind.Callable)],
             returns: ValueKind.Void,

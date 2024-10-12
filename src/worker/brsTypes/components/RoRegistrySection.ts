@@ -43,7 +43,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     }
 
     /** Reads and returns the value of the specified key. */
-    private read = new Callable("read", {
+    private readonly read = new Callable("read", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.String,
@@ -59,7 +59,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     });
 
     /** Reads multiple values from the registry. */
-    private readMulti = new Callable("readMulti", {
+    private readonly readMulti = new Callable("readMulti", {
         signature: {
             args: [new StdlibArgument("keysArray", ValueKind.Object)],
             returns: ValueKind.Dynamic,
@@ -80,7 +80,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     });
 
     /** Replaces the value of the specified key. */
-    private write = new Callable("write", {
+    private readonly write = new Callable("write", {
         signature: {
             args: [
                 new StdlibArgument("key", ValueKind.String),
@@ -98,7 +98,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     });
 
     /** Writes multiple values to the registry. */
-    private writeMulti = new Callable("writeMulti", {
+    private readonly writeMulti = new Callable("writeMulti", {
         signature: {
             args: [new StdlibArgument("roAA", ValueKind.Object)],
             returns: ValueKind.Boolean,
@@ -114,7 +114,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     });
 
     /** Deletes the specified key. */
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -128,7 +128,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     });
 
     /** Checks if the specified key exists */
-    private exists = new Callable("exists", {
+    private readonly exists = new Callable("exists", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -141,7 +141,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     });
 
     /** Flushes the contents of the registry out to persistent storage. */
-    private flush = new Callable("flush", {
+    private readonly flush = new Callable("flush", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -153,7 +153,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     });
 
     /** Each entry is an roString containing the name of the key */
-    private getKeyList = new Callable("getKeyList", {
+    private readonly getKeyList = new Callable("getKeyList", {
         signature: {
             args: [],
             returns: ValueKind.Object,

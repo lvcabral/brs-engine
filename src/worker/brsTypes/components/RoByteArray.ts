@@ -164,7 +164,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifByteArray ---------------------------------------------------------------------
 
     /** Reads the specified file into the Byte Array. Any data currently in the Byte Array is discarded. */
-    private readFile = new Callable("readFile", {
+    private readonly readFile = new Callable("readFile", {
         signature: {
             args: [
                 new StdlibArgument("path", ValueKind.String),
@@ -199,7 +199,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Writes the bytes (or a subset) contained in the Byte Array to the specified file. */
-    private writeFile = new Callable("writeFile", {
+    private readonly writeFile = new Callable("writeFile", {
         signature: {
             args: [
                 new StdlibArgument("path", ValueKind.String),
@@ -235,7 +235,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Appends the contents (or a subset) of the Byte Array to the specified file. */
-    private appendFile = new Callable("appendFile", {
+    private readonly appendFile = new Callable("appendFile", {
         signature: {
             args: [
                 new StdlibArgument("path", ValueKind.String),
@@ -276,7 +276,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Sets the contents of the Byte Array to the specified string using UTF-8 encoding. Any data currently in the Byte Array is discarded. */
-    private fromAsciiString = new Callable("fromAsciiString", {
+    private readonly fromAsciiString = new Callable("fromAsciiString", {
         signature: {
             args: [new StdlibArgument("asciiStr", ValueKind.String)],
             returns: ValueKind.Void,
@@ -293,7 +293,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the contents of the Byte Array as a string. The contents must be valid UTF-8 (or ASCII subset), or the result is undefined. */
-    private toAsciiString = new Callable("toAsciiString", {
+    private readonly toAsciiString = new Callable("toAsciiString", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -303,7 +303,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private fromHexString = new Callable("fromHexString", {
+    private readonly fromHexString = new Callable("fromHexString", {
         signature: {
             args: [new StdlibArgument("hexStr", ValueKind.String)],
             returns: ValueKind.Void,
@@ -320,7 +320,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns a hexadecimal string representing the contents of the Byte Array, two digits per byte. */
-    private toHexString = new Callable("toHexString", {
+    private readonly toHexString = new Callable("toHexString", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -332,7 +332,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Sets the contents of the Byte Array to the specified value. Any data currently in the Byte Array is discarded. */
-    private fromBase64String = new Callable("fromBase64String", {
+    private readonly fromBase64String = new Callable("fromBase64String", {
         signature: {
             args: [new StdlibArgument("hexStr", ValueKind.String)],
             returns: ValueKind.Void,
@@ -349,7 +349,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns a base-64 string representing the contents of the Byte Array. */
-    private toBase64String = new Callable("toBase64String", {
+    private readonly toBase64String = new Callable("toBase64String", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -360,7 +360,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the signed byte at the specified zero-based index in the Byte Array. */
-    private getSignedByte = new Callable("getSignedByte", {
+    private readonly getSignedByte = new Callable("getSignedByte", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Int32,
@@ -376,7 +376,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the signed long (four bytes) starting at the specified zero-based long index. */
-    private getSignedLong = new Callable("getSignedLong", {
+    private readonly getSignedLong = new Callable("getSignedLong", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Int32,
@@ -393,7 +393,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Calculates a CRC-32 of the contents (or a subset) of the Byte Array. */
-    private getCRC32 = new Callable("getCRC32", {
+    private readonly getCRC32 = new Callable("getCRC32", {
         signature: {
             args: [
                 new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
@@ -413,7 +413,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** If the size of the Byte Array is less than min_size, expands the Byte Array to min_size. */
-    private setResize = new Callable("setResize", {
+    private readonly setResize = new Callable("setResize", {
         signature: {
             args: [
                 new StdlibArgument("minSize", ValueKind.Int32 | ValueKind.Float),
@@ -429,7 +429,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns true if the CPU architecture is little-endian. */
-    private isLittleEndianCPU = new Callable("isLittleEndianCPU", {
+    private readonly isLittleEndianCPU = new Callable("isLittleEndianCPU", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -442,7 +442,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifArray -------------------------------------------------------------------------
 
     /** Returns the last array entry without removing it. If the array is empty, returns invalid. */
-    private peek = new Callable("peek", {
+    private readonly peek = new Callable("peek", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -454,7 +454,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the last entry from the array and removes it. If the array is empty, returns invalid. */
-    private pop = new Callable("pop", {
+    private readonly pop = new Callable("pop", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -473,7 +473,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Adds the specified value to the end of the array. */
-    private push = new Callable("push", {
+    private readonly push = new Callable("push", {
         signature: {
             args: [new StdlibArgument("byte", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -502,7 +502,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Removes the first entry (zero index) from the beginning of the array and shifts the other entries up. */
-    private shift = new Callable("shift", {
+    private readonly shift = new Callable("shift", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -520,7 +520,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Adds the specified value to the beginning of the array (at the zero index) and shifts the other entries down. */
-    private unshift = new Callable("unshift", {
+    private readonly unshift = new Callable("unshift", {
         signature: {
             args: [new StdlibArgument("byte", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -549,7 +549,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Deletes the indicated array entry, and shifts all entries up. This decreases the array length by one. */
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Boolean,
@@ -568,7 +568,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the length of the array, which is one more than the index of highest entry. */
-    private count = new Callable("count", {
+    private readonly count = new Callable("count", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -579,7 +579,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Deletes all the entries in the array. */
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -592,7 +592,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Appends the entries in one roArray to another. */
-    private append = new Callable("append", {
+    private readonly append = new Callable("append", {
         signature: {
             args: [new StdlibArgument("array", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -616,7 +616,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifArrayGet -------------------------------------------------------------------------
 
     /** Returns an array entry based on the provided index. */
-    private getEntry = new Callable("getEntry", {
+    private readonly getEntry = new Callable("getEntry", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
@@ -629,7 +629,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifArraySet  -------------------------------------------------------------------------
 
     /** Sets an entry at a given index to the passed value. If index is beyond the bounds of the array, the array is expanded. */
-    private setEntry = new Callable("setEntry", {
+    private readonly setEntry = new Callable("setEntry", {
         signature: {
             args: [
                 new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
@@ -650,7 +650,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifArraySizeInfo ---------------------------------------------------------------------
 
     /** Returns the maximum number of entries that can be stored in the array. */
-    private capacity = new Callable("capacity", {
+    private readonly capacity = new Callable("capacity", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -661,7 +661,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns true if the array can be resized. */
-    private isResizable = new Callable("isResizable", {
+    private readonly isResizable = new Callable("isResizable", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -674,7 +674,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     // ifEnum -------------------------------------------------------------------------
 
     /** Checks whether the enumeration contains no elements. */
-    private isEmpty = new Callable("isEmpty", {
+    private readonly isEmpty = new Callable("isEmpty", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -685,7 +685,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Checks whether the current position is not past the end of the enumeration. */
-    private isNext = new Callable("isNext", {
+    private readonly isNext = new Callable("isNext", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -696,7 +696,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Resets the current position to the first element of the enumeration. */
-    private reset = new Callable("reset", {
+    private readonly reset = new Callable("reset", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -708,7 +708,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Increments the position of an enumeration. */
-    private next = new Callable("next", {
+    private readonly next = new Callable("next", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,

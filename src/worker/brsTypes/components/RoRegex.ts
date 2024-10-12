@@ -71,7 +71,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     }
 
     /** Returns whether the string matched the regex or not */
-    private isMatch = new Callable("ismatch", {
+    private readonly isMatch = new Callable("ismatch", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -82,7 +82,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     });
 
     /** Returns an array of matches */
-    private match = new Callable("match", {
+    private readonly match = new Callable("match", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Object,
@@ -99,7 +99,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     });
 
     /** Returns a new string with first match replaced */
-    private replace = new Callable("replace", {
+    private readonly replace = new Callable("replace", {
         signature: {
             args: [
                 new StdlibArgument("str", ValueKind.String),
@@ -115,7 +115,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     });
 
     /** Returns a new string with all matches replaced */
-    private replaceAll = new Callable("replaceall", {
+    private readonly replaceAll = new Callable("replaceall", {
         signature: {
             args: [
                 new StdlibArgument("str", ValueKind.String),
@@ -137,7 +137,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     });
 
     /** Returns an array of strings split by match */
-    private split = new Callable("split", {
+    private readonly split = new Callable("split", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Object,
@@ -150,7 +150,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     });
 
     /** Returns an array of array with all matches found */
-    private matchAll = new Callable("matchall", {
+    private readonly matchAll = new Callable("matchall", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Object,

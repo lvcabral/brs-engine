@@ -51,7 +51,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     }
 
     /** Sets the content list to be played by the Audio Player */
-    private setContentList = new Callable("setContentList", {
+    private readonly setContentList = new Callable("setContentList", {
         signature: {
             args: [new StdlibArgument("contentList", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -72,7 +72,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Adds a new ContentMetaData item to the content list for the Audio Player. */
-    private addContent = new Callable("addContent", {
+    private readonly addContent = new Callable("addContent", {
         signature: {
             args: [new StdlibArgument("contentItem", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -93,7 +93,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Clears the content list */
-    private clearContent = new Callable("clearContent", {
+    private readonly clearContent = new Callable("clearContent", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -106,7 +106,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Puts the Audio Player into play mode starting at the current item in the Content List. */
-    private play = new Callable("play", {
+    private readonly play = new Callable("play", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -118,7 +118,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Stops the Audio Player from playing or pausing and cleanup */
-    private stop = new Callable("stop", {
+    private readonly stop = new Callable("stop", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -130,7 +130,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Puts the Audio Player into pause mode. */
-    private pause = new Callable("pause", {
+    private readonly pause = new Callable("pause", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -142,7 +142,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Puts the Audio Player into play mode starting from the pause point. */
-    private resume = new Callable("resume", {
+    private readonly resume = new Callable("resume", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -154,7 +154,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Enables/disables the automatic replaying of the Content List */
-    private setLoop = new Callable("setLoop", {
+    private readonly setLoop = new Callable("setLoop", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -166,7 +166,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Set what the next item to be played within the Content List should be */
-    private setNext = new Callable("setNext", {
+    private readonly setNext = new Callable("setNext", {
         signature: {
             args: [new StdlibArgument("item", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -178,7 +178,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Set the start point of playback for the current item to offsetMs milliseconds. */
-    private seek = new Callable("seek", {
+    private readonly seek = new Callable("seek", {
         signature: {
             args: [new StdlibArgument("offsetMs", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -189,7 +189,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         },
     });
 
-    private setTimedMetadataForKeys = new Callable("setTimedMetadataForKeys", {
+    private readonly setTimedMetadataForKeys = new Callable("setTimedMetadataForKeys", {
         signature: {
             args: [new StdlibArgument("keys", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -203,7 +203,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -216,7 +216,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the audio player */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -231,7 +231,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Sets the roMessagePort to be used for all events from the audio player */
-    private setPort = new Callable("setPort", {
+    private readonly setPort = new Callable("setPort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

@@ -38,7 +38,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     // ifChannelStore ------------------------------------------------------------------------------------
 
     /** Returns an roTimespan object which is "marked" when the user started the channel. */
-    private getUpTime = new Callable("getUpTime", {
+    private readonly getUpTime = new Callable("getUpTime", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -49,7 +49,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Returns the user's screensaver wait time setting in number of minutes, or zero if the screensaver is disabled. */
-    private getScreensaverTimeout = new Callable("getScreensaverTimeout", {
+    private readonly getScreensaverTimeout = new Callable("getScreensaverTimeout", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -60,7 +60,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Resets the idle timer that is used to count down to screensaver activation, so if a screensaver is not already displayed it will reset the timer and defer the activation. */
-    private updateLastKeyPressTime = new Callable("updateLastKeyPressTime", {
+    private readonly updateLastKeyPressTime = new Callable("updateLastKeyPressTime", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -72,7 +72,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Allows a channel to tell Roku when the user is signed in or signed out of the channel. */
-    private setUserSignedIn = new Callable("setUserSignedIn", {
+    private readonly setUserSignedIn = new Callable("setUserSignedIn", {
         signature: {
             args: [new StdlibArgument("signedIn", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -83,7 +83,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Set a group of theme attributes for the application. */
-    private setTheme = new Callable("setTheme", {
+    private readonly setTheme = new Callable("setTheme", {
         signature: {
             args: [new StdlibArgument("attributeArray", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -94,7 +94,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Set an individual theme attribute for the application. */
-    private setThemeAttribute = new Callable("setThemeAttribute", {
+    private readonly setThemeAttribute = new Callable("setThemeAttribute", {
         signature: {
             args: [
                 new StdlibArgument("attributeName", ValueKind.String),
@@ -108,7 +108,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Clears a previously set attribute and reverts to its default value. */
-    private clearThemeAttribute = new Callable("clearThemeAttribute", {
+    private readonly clearThemeAttribute = new Callable("clearThemeAttribute", {
         signature: {
             args: [new StdlibArgument("attributeName", ValueKind.String)],
             returns: ValueKind.Void,
@@ -119,7 +119,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Returns true if a channel with the specified channelID and the minimum version required is installed. */
-    private isAppInstalled = new Callable("isAppInstalled", {
+    private readonly isAppInstalled = new Callable("isAppInstalled", {
         signature: {
             args: [
                 new StdlibArgument("channelId", ValueKind.String),
@@ -134,7 +134,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Enables or disables automatic Audio Guide and override any manifest setting. */
-    private setAutomaticAudioGuideEnabled = new Callable("setAutomaticAudioGuideEnabled", {
+    private readonly setAutomaticAudioGuideEnabled = new Callable("setAutomaticAudioGuideEnabled", {
         signature: {
             args: [new StdlibArgument("enabled", ValueKind.Boolean)],
             returns: ValueKind.Void,

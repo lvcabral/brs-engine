@@ -88,7 +88,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     }
 
     /** Sets the content list to be played by the Video Player */
-    private setContentList = new Callable("setContentList", {
+    private readonly setContentList = new Callable("setContentList", {
         signature: {
             args: [new StdlibArgument("contentList", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -102,7 +102,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Adds a new ContentMetaData item to the content list for the Video Player. */
-    private addContent = new Callable("addContent", {
+    private readonly addContent = new Callable("addContent", {
         signature: {
             args: [new StdlibArgument("contentItem", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -115,7 +115,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Clears the content list */
-    private clearContent = new Callable("clearContent", {
+    private readonly clearContent = new Callable("clearContent", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -129,7 +129,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Begins downloading and buffering of a video that may be selected by a user. */
-    private preBuffer = new Callable("preBuffer", {
+    private readonly preBuffer = new Callable("preBuffer", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -143,7 +143,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Puts the Video Player into play mode starting at the current item in the Content List. */
-    private play = new Callable("play", {
+    private readonly play = new Callable("play", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -156,7 +156,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Stops the Video Player from playing or pausing and cleanup */
-    private stop = new Callable("stop", {
+    private readonly stop = new Callable("stop", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -169,7 +169,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Puts the Video Player into pause mode. */
-    private pause = new Callable("pause", {
+    private readonly pause = new Callable("pause", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -181,7 +181,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Puts the Video Player into play mode starting from the pause point. */
-    private resume = new Callable("resume", {
+    private readonly resume = new Callable("resume", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -193,7 +193,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Enables/disables the automatic replaying of the Content List. */
-    private setLoop = new Callable("setLoop", {
+    private readonly setLoop = new Callable("setLoop", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -205,7 +205,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Set what the next item to be played within the Content List should be. */
-    private setNext = new Callable("setNext", {
+    private readonly setNext = new Callable("setNext", {
         signature: {
             args: [new StdlibArgument("item", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -217,7 +217,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Mutes the audio during video playback. */
-    private setEnableAudio = new Callable("setEnableAudio", {
+    private readonly setEnableAudio = new Callable("setEnableAudio", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Void,
@@ -229,7 +229,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Set the start point of playback for the current item to offsetMs milliseconds. */
-    private seek = new Callable("seek", {
+    private readonly seek = new Callable("seek", {
         signature: {
             args: [new StdlibArgument("offsetMs", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -242,7 +242,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Sets the interval to receive playback position events from the roVideoPlayer. */
-    private setPositionNotificationPeriod = new Callable("setPositionNotificationPeriod", {
+    private readonly setPositionNotificationPeriod = new Callable("setPositionNotificationPeriod", {
         signature: {
             args: [new StdlibArgument("period", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -258,7 +258,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Sets CGMS (Copy Guard Management System) on analog outputs to the desired level. */
-    private setCGMS = new Callable("setCGMS", {
+    private readonly setCGMS = new Callable("setCGMS", {
         signature: {
             args: [new StdlibArgument("level", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -270,7 +270,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Sets the target display window for the video. */
-    private setDestinationRect = new Callable(
+    private readonly setDestinationRect = new Callable(
         "setDestinationRect",
         {
             signature: {
@@ -308,7 +308,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     );
 
     /** Sets the max resolution required by your video. */
-    private setMaxVideoDecodeResolution = new Callable("setMaxVideoDecodeResolution", {
+    private readonly setMaxVideoDecodeResolution = new Callable("setMaxVideoDecodeResolution", {
         signature: {
             args: [
                 new StdlibArgument("width", ValueKind.Int32),
@@ -323,7 +323,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Returns the duration of the video, in seconds. */
-    private getPlaybackDuration = new Callable("getPlaybackDuration", {
+    private readonly getPlaybackDuration = new Callable("getPlaybackDuration", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -335,7 +335,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Returns the audio tracks contained in the current stream. */
-    private getAudioTracks = new Callable("getAudioTracks", {
+    private readonly getAudioTracks = new Callable("getAudioTracks", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -370,7 +370,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Changes the currently playing audio track. */
-    private changeAudioTrack = new Callable("changeAudioTrack", {
+    private readonly changeAudioTrack = new Callable("changeAudioTrack", {
         signature: {
             args: [new StdlibArgument("trackId", ValueKind.String)],
             returns: ValueKind.Void,
@@ -381,7 +381,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
     });
 
-    private setTimedMetadataForKeys = new Callable("setTimedMetadataForKeys", {
+    private readonly setTimedMetadataForKeys = new Callable("setTimedMetadataForKeys", {
         signature: {
             args: [new StdlibArgument("keys", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -392,7 +392,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
     });
 
-    private getCaptionRenderer = new Callable("getCaptionRenderer", {
+    private readonly getCaptionRenderer = new Callable("getCaptionRenderer", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -404,7 +404,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** This function is deprecated. Macrovision is not supported anymore. */
-    private setMacrovisionLevel = new Callable("setMacrovisionLevel", {
+    private readonly setMacrovisionLevel = new Callable("setMacrovisionLevel", {
         signature: {
             args: [new StdlibArgument("level", ValueKind.Int32)],
             returns: ValueKind.Void,
@@ -417,7 +417,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     // ifGetMessagePort ----------------------------------------------------------------------------------
 
     /** Returns the message port (if any) currently associated with the object */
-    private getMessagePort = new Callable("getMessagePort", {
+    private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -430,7 +430,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the video player */
-    private setMessagePort = new Callable("setMessagePort", {
+    private readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
@@ -445,7 +445,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     });
 
     /** Sets the roMessagePort to be used for all events from the video player */
-    private setPort = new Callable("setPort", {
+    private readonly setPort = new Callable("setPort", {
         signature: {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,

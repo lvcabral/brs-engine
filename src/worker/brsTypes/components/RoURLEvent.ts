@@ -78,7 +78,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     }
 
     /** Returns the type of event. */
-    private getInt = new Callable("getInt", {
+    private readonly getInt = new Callable("getInt", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -89,7 +89,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Returns response code from the request. */
-    private getResponseCode = new Callable("getResponseCode", {
+    private readonly getResponseCode = new Callable("getResponseCode", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -100,7 +100,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Returns a description of the failure that occurred. */
-    private getFailureReason = new Callable("getFailureReason", {
+    private readonly getFailureReason = new Callable("getFailureReason", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -111,7 +111,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** For transfer complete AsyncGetToString, AsyncPostFromString and AsnycPostFromFile requests this will be the actual response body from the server. */
-    private getString = new Callable("getString", {
+    private readonly getString = new Callable("getString", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -122,7 +122,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Returns a unique number that can be matched with the value returned by roUrlTransfer.GetIdentity(). */
-    private getSourceIdentity = new Callable("getSourceIdentity", {
+    private readonly getSourceIdentity = new Callable("getSourceIdentity", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -133,7 +133,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Returns an roAssociativeArray containing all the headers returned by the server for appropriate protocols (such as HTTP). */
-    private getResponseHeaders = new Callable("getResponseHeaders", {
+    private readonly getResponseHeaders = new Callable("getResponseHeaders", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -167,7 +167,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
 
     /** Returns an array of roAssociativeArray, each AA contains a single header name/value pair. */
     /** Use this function if you need access to duplicate headers, since GetResponseHeaders() returns only the last name/value pair for a given name. */
-    private getResponseHeadersArray = new Callable("getResponseHeadersArray", {
+    private readonly getResponseHeadersArray = new Callable("getResponseHeadersArray", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -202,7 +202,7 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     });
 
     /** Returns the IP address of the destination. */
-    private getTargetIpAddress = new Callable("getTargetIpAddress", {
+    private readonly getTargetIpAddress = new Callable("getTargetIpAddress", {
         signature: {
             args: [],
             returns: ValueKind.String,

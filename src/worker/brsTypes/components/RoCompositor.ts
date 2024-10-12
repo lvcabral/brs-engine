@@ -344,7 +344,13 @@ export interface Rect {
     h: number;
 }
 
-function hasCollided(sourceType: number, sourceRect: Rect, sourceCircle: Circle, targetType: number, target: RoSprite) {
+function hasCollided(
+    sourceType: number,
+    sourceRect: Rect,
+    sourceCircle: Circle,
+    targetType: number,
+    target: RoSprite
+) {
     if (sourceType < 2 && targetType < 2) {
         return RectRect(sourceRect, target.getRect());
     } else if (sourceType === 2 && targetType === 2) {

@@ -19,9 +19,9 @@ import {
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private messageQueue: BrsType[];
-    private callbackQueue: Function[]; // TODO: consider having the id of the connected objects
-    private keysBuffer: KeyEvent[];
+    private readonly messageQueue: BrsType[];
+    private readonly callbackQueue: Function[]; // TODO: consider having the id of the connected objects
+    private readonly keysBuffer: KeyEvent[];
     private lastKey: number;
     private screen: boolean;
     private audioFlags: number;
@@ -84,7 +84,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     asyncCancel() {
-        this.callbackQueue = [];
+        this.callbackQueue.length = 0;
     }
 
     toString(parent?: BrsType): string {
@@ -267,7 +267,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     /** Waits until an event object is available or timeout milliseconds have passed. */
-    private waitMessage = new Callable("waitMessage", {
+    private readonly waitMessage = new Callable("waitMessage", {
         signature: {
             args: [new StdlibArgument("timeout", ValueKind.Int32)],
             returns: ValueKind.Object,
@@ -278,7 +278,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     });
 
     /** If an event object is available, it is returned. Otherwise invalid is returned. */
-    private getMessage = new Callable("getMessage", {
+    private readonly getMessage = new Callable("getMessage", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -300,7 +300,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     });
 
     /** Similar to GetMessage() but the returned object (if not invalid) remains in the message queue. */
-    private peekMessage = new Callable("peekMessage", {
+    private readonly peekMessage = new Callable("peekMessage", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
