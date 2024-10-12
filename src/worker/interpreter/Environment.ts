@@ -20,13 +20,14 @@ export class NotFound extends Error {
 
 /** Holds a set of values in multiple scopes and provides access operations to them. */
 export class Environment {
-    constructor(rootM?: RoAssociativeArray) {
+    constructor(mPointer: RoAssociativeArray, rootM?: RoAssociativeArray) {
         if (!rootM) {
-            this.rootM = this.mPointer;
+            this.rootM = mPointer;
         } else {
             this.rootM = rootM;
         }
-        this.mPointer.addReference();
+        mPointer.addReference();
+        this.mPointer = mPointer;
     }
     /**
      * Functions that are always accessible.
@@ -44,7 +45,7 @@ export class Environment {
      */
     private function = new Map<string, BrsType>();
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
-    private mPointer = new RoAssociativeArray([]);
+    private mPointer: RoAssociativeArray;
     private rootM: RoAssociativeArray;
 
     /** Properties to support GOTO statement */
@@ -241,10 +242,9 @@ export class Environment {
      * @returns a copy of this environment but with no function-scoped values.
      */
     public createSubEnvironment(): Environment {
-        let newEnvironment = new Environment(this.rootM);
+        let newEnvironment = new Environment(this.mPointer, this.rootM);
         newEnvironment.global = this.global;
         newEnvironment.module = this.module;
-        newEnvironment.setM(this.mPointer);
 
         return newEnvironment;
     }

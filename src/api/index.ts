@@ -115,7 +115,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         Object.assign(deviceData, customDeviceInfo);
     }
     const storage: Storage = window.localStorage;
-    let initMsg = `${packageInfo.description} - v${packageInfo.version}`;
+    let initMsg = `${packageInfo.title} - v${packageInfo.version}`;
     /// #if DEBUG
     initMsg += " - dev";
     /// #endif

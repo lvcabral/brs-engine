@@ -1,7 +1,7 @@
 const brs = require("../../bin/brs.node");
 const { Environment, Scope } = brs;
 const { Lexeme } = brs.lexer;
-const { BrsString, RoAssociativeArray, Int32, BrsInvalid, Callable } = brs.types;
+const { BrsString, RoAssociativeArray, Int32 } = brs.types;
 
 describe("Environment", () => {
     let env;
@@ -11,7 +11,7 @@ describe("Environment", () => {
     let identifier = (text) => ({ kind: Lexeme.Identifier, text: text, line: lineNumber++ });
 
     beforeEach(() => {
-        env = new Environment();
+        env = new Environment(new RoAssociativeArray([]));
         lineNumber = 0;
     });
 
@@ -137,7 +137,7 @@ describe("Environment", () => {
 
     it("maintains root-m scope between subenvironments", () => {
         let rootM = new RoAssociativeArray([]);
-        env = new Environment(rootM);
+        env = new Environment(new RoAssociativeArray([]), rootM);
 
         expect(env.getRootM()).toBe(env.createSubEnvironment().getRootM());
     });

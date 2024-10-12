@@ -1,3 +1,4 @@
+import { bscs } from "../..";
 import { BrsType } from "..";
 import { BrsInvalid } from "../BrsType";
 import { Callable } from "../Callable";
@@ -66,11 +67,19 @@ export class BrsComponent {
 
     addReference() {
         this.references++;
+        if (this.references === 1) {
+            const count = bscs.get(this.componentName) ?? 0;
+            bscs.set(this.componentName, count + 1);
+        }
     }
 
     removeReference() {
         this.references--;
         if (this.references === 0 && !this.returnFlag) {
+            const count = bscs.get(this.componentName);
+            if (count) {
+                bscs.set(this.componentName, count - 1);
+            }
             this.dispose();
         }
     }

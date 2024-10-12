@@ -25,7 +25,7 @@ describe("parser print statements", () => {
     });
 
     it("supports empty print", () => {
-        let { statements, errors } = brs.parser.Parser.parse([token(Lexeme.Print), EOF]);
+        let { statements, errors } = parser.parse([token(Lexeme.Print), EOF]);
         expect(errors).toEqual([]);
         expect(statements).toBeDefined();
         expect(statements).not.toBeNull();

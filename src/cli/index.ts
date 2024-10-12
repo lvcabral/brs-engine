@@ -55,7 +55,7 @@ sharedArray.fill(-1);
  *
  */
 program
-    .description(`${packageInfo.description} CLI`)
+    .description(`${packageInfo.title} CLI`)
     .arguments(`brs-cli [brsFiles...]`)
     .option("-a, --ascii <columns>", "Enable ASCII screen mode with # of columns.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
@@ -142,7 +142,7 @@ program
  *
  */
 function showAppTitle() {
-    const appTitle = `${packageInfo.description} CLI`;
+    const appTitle = `${packageInfo.title} CLI`;
     const appVersion = `v${packageInfo.version}`;
     /// #if DEBUG
     console.log(`\n${appTitle} [${chalk.cyanBright(appVersion)} ${chalk.gray("dev")}]\n`);

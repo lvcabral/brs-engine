@@ -308,7 +308,7 @@ function genDeviceRootXml() {
     xmlDevice.ele("friendlyName", {}, device.friendlyName);
     xmlDevice.ele("manufacturer", {}, "Roku");
     xmlDevice.ele("manufacturerURL", {}, "https://www.roku.com/");
-    xmlDevice.ele("modelDescription", {}, packageInfo.description);
+    xmlDevice.ele("modelDescription", {}, packageInfo.title);
     xmlDevice.ele("modelName", {}, getModelName(device.deviceModel));
     xmlDevice.ele("modelNumber", {}, device.deviceModel);
     xmlDevice.ele("modelURL", {}, "https://www.lvcabral.com/brs/");
