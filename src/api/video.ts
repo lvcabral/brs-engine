@@ -10,6 +10,7 @@ import { BufferType, DataType, MediaEvent } from "../worker/common";
 import Hls from "hls.js";
 
 // Video Objects
+export let player: HTMLVideoElement;
 let hls: Hls;
 let packageVideos = new Map();
 let audioTracks = new Array();
@@ -31,7 +32,9 @@ let videoMuted = false;
 let uiMuted = false;
 
 // Initialize Video Module
-export const player = document?.getElementById("player") as HTMLVideoElement;
+if (typeof document !== "undefined") {
+    player = document.getElementById("player") as HTMLVideoElement;
+}
 export function initVideoModule(array: Int32Array, mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
