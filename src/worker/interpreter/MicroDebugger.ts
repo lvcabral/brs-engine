@@ -285,7 +285,7 @@ function debugHelp(): string {
     debugMsg += "   list            List current function\r\n";
     // debugMsg += "   bsc             List BrightScript Component instances\r\n"
     debugMsg += "   bscs            Summarize BrightScript Component instances\r\n";
-    debugMsg += "   stats           Shows statistics\r\n"
+    debugMsg += "   stats           Shows statistics\r\n";
     debugMsg += "   step|s|t        Step one program statement\r\n";
     debugMsg += "   thread|th       Show selected thread\r\n";
     // debugMsg += "   thread|th <id>  Select one thread for inspection\r\n"

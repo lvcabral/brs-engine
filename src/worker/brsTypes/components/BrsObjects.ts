@@ -91,10 +91,7 @@ class BrsObjectsMap {
 /** Map containing a list of BrightScript components that can be created with CreateObject(). */
 export const BrsObjects = new BrsObjectsMap([
     ["roAppManager", (interpreter: Interpreter) => new RoAppManager()],
-    [
-        "roAssociativeArray",
-        (interpreter: Interpreter) => new RoAssociativeArray([]),
-    ],
+    ["roAssociativeArray", (interpreter: Interpreter) => new RoAssociativeArray([])],
     [
         "roArray",
         (interpreter: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) =>
