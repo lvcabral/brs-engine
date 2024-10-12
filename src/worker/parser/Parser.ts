@@ -1662,8 +1662,9 @@ export class Parser {
                     Lexeme.Double,
                     Lexeme.String
                 ):
-                    countLiteral(Lexeme[previous().kind], previous().literal!);
-                    return new Expr.Literal(previous().literal!, previous().location);
+                    const literal = previous().literal!
+                    countLiteral(Lexeme[previous().kind], literal);
+                    return new Expr.Literal(literal, previous().location);
                 case match(Lexeme.Identifier):
                     return new Expr.Variable(previous() as Identifier);
                 case match(Lexeme.LeftParen): {
@@ -1940,9 +1941,9 @@ export class Parser {
             }
         }
 
-        function countLiteral(lexeme: Lexeme, value: BrsType) {
+        function countLiteral(lexeme: Lexeme, value?: BrsType) {
             const literals = self.stats.get(lexeme);
-            if (literals && !literals.has(value.toString())) {
+            if (literals && value && !literals.has(value.toString())) {
                 literals.add(value.toString());
             }
         }

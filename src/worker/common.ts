@@ -169,7 +169,6 @@ export const debugPrompt = "Brightscript Debugger> ";
 
 // Debug commands enumerator
 export enum DebugCommand {
-    BREAK,
     BSCS,
     BT,
     CLASSES,
@@ -180,12 +179,13 @@ export enum DebugCommand {
     LAST,
     LIST,
     NEXT,
-    PAUSE,
     STATS,
     STEP,
     THREAD,
     THREADS,
     VAR,
+    BREAK,
+    PAUSE,
 }
 
 // Media events enumerator
