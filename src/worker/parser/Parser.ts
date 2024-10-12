@@ -1662,7 +1662,7 @@ export class Parser {
                     Lexeme.Double,
                     Lexeme.String
                 ):
-                    countLiteral(Lexeme[previous().kind], previous().literal!);
+                    countLiteral(Lexeme[previous().kind], previous().literal);
                     return new Expr.Literal(previous().literal!, previous().location);
                 case match(Lexeme.Identifier):
                     return new Expr.Variable(previous() as Identifier);
