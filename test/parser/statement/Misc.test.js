@@ -107,6 +107,7 @@ describe("parser", () => {
                 person = {}
                 person.and = true
                 person.box = true
+                person.catch = true
                 person.createobject = true
                 person.dim = true
                 person.double = true
@@ -155,6 +156,7 @@ describe("parser", () => {
                 person.then = true
                 person.to = true
                 person.true = true
+                person.try = true
                 person.type = true
                 person.while = true
             end sub

@@ -414,7 +414,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
         "location": {
           "end": {
             "column": 12,
-            "line": 56,
+            "line": 58,
           },
           "file": "",
           "start": {
@@ -615,13 +615,68 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "literal": undefined,
               "location": {
                 "end": {
-                  "column": 35,
+                  "column": 28,
                   "line": 6,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
                   "line": 6,
+                },
+              },
+              "text": "catch",
+            },
+            "obj": Variable {
+              "name": {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": 22,
+                    "line": 6,
+                  },
+                  "file": "",
+                  "start": {
+                    "column": 16,
+                    "line": 6,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": {
+                "end": {
+                  "column": 35,
+                  "line": 6,
+                },
+                "file": "",
+                "start": {
+                  "column": 31,
+                  "line": 6,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 2,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": {
+              "isReserved": true,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": 35,
+                  "line": 7,
+                },
+                "file": "",
+                "start": {
+                  "column": 23,
+                  "line": 7,
                 },
               },
               "text": "createobject",
@@ -634,12 +689,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 6,
+                    "line": 7,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 6,
+                    "line": 7,
                   },
                 },
                 "text": "person",
@@ -649,12 +704,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 42,
-                  "line": 6,
+                  "line": 7,
                 },
                 "file": "",
                 "start": {
                   "column": 38,
-                  "line": 6,
+                  "line": 7,
                 },
               },
               "value": BrsBoolean {
@@ -671,12 +726,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 7,
+                  "line": 8,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 7,
+                  "line": 8,
                 },
               },
               "text": "dim",
@@ -689,12 +744,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 7,
+                    "line": 8,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 7,
+                    "line": 8,
                   },
                 },
                 "text": "person",
@@ -704,12 +759,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 7,
+                  "line": 8,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 7,
+                  "line": 8,
                 },
               },
               "value": BrsBoolean {
@@ -726,12 +781,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 29,
-                  "line": 8,
+                  "line": 9,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 8,
+                  "line": 9,
                 },
               },
               "text": "double",
@@ -744,12 +799,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 8,
+                    "line": 9,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 8,
+                    "line": 9,
                   },
                 },
                 "text": "person",
@@ -759,12 +814,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 36,
-                  "line": 8,
+                  "line": 9,
                 },
                 "file": "",
                 "start": {
                   "column": 32,
-                  "line": 8,
+                  "line": 9,
                 },
               },
               "value": BrsBoolean {
@@ -781,12 +836,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 9,
+                  "line": 10,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 9,
+                  "line": 10,
                 },
               },
               "text": "each",
@@ -799,12 +854,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 9,
+                    "line": 10,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 9,
+                    "line": 10,
                   },
                 },
                 "text": "person",
@@ -814,12 +869,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 9,
+                  "line": 10,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 9,
+                  "line": 10,
                 },
               },
               "value": BrsBoolean {
@@ -836,12 +891,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 10,
+                  "line": 11,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 10,
+                  "line": 11,
                 },
               },
               "text": "else",
@@ -854,12 +909,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 10,
+                    "line": 11,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 10,
+                    "line": 11,
                   },
                 },
                 "text": "person",
@@ -869,12 +924,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 10,
+                  "line": 11,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 10,
+                  "line": 11,
                 },
               },
               "value": BrsBoolean {
@@ -891,12 +946,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 29,
-                  "line": 11,
+                  "line": 12,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 11,
+                  "line": 12,
                 },
               },
               "text": "elseif",
@@ -909,12 +964,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 11,
+                    "line": 12,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 11,
+                    "line": 12,
                   },
                 },
                 "text": "person",
@@ -924,12 +979,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 36,
-                  "line": 11,
+                  "line": 12,
                 },
                 "file": "",
                 "start": {
                   "column": 32,
-                  "line": 11,
+                  "line": 12,
                 },
               },
               "value": BrsBoolean {
@@ -946,12 +1001,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 12,
+                  "line": 13,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 12,
+                  "line": 13,
                 },
               },
               "text": "end",
@@ -964,12 +1019,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 12,
+                    "line": 13,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 12,
+                    "line": 13,
                   },
                 },
                 "text": "person",
@@ -979,12 +1034,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 12,
+                  "line": 13,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 12,
+                  "line": 13,
                 },
               },
               "value": BrsBoolean {
@@ -1001,12 +1056,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 29,
-                  "line": 13,
+                  "line": 14,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 13,
+                  "line": 14,
                 },
               },
               "text": "endfor",
@@ -1019,12 +1074,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 13,
+                    "line": 14,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 13,
+                    "line": 14,
                   },
                 },
                 "text": "person",
@@ -1034,12 +1089,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 36,
-                  "line": 13,
+                  "line": 14,
                 },
                 "file": "",
                 "start": {
                   "column": 32,
-                  "line": 13,
+                  "line": 14,
                 },
               },
               "value": BrsBoolean {
@@ -1056,12 +1111,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 34,
-                  "line": 14,
+                  "line": 15,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 14,
+                  "line": 15,
                 },
               },
               "text": "endfunction",
@@ -1074,12 +1129,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 14,
+                    "line": 15,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 14,
+                    "line": 15,
                   },
                 },
                 "text": "person",
@@ -1089,12 +1144,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 41,
-                  "line": 14,
+                  "line": 15,
                 },
                 "file": "",
                 "start": {
                   "column": 37,
-                  "line": 14,
+                  "line": 15,
                 },
               },
               "value": BrsBoolean {
@@ -1111,12 +1166,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 28,
-                  "line": 15,
+                  "line": 16,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 15,
+                  "line": 16,
                 },
               },
               "text": "endif",
@@ -1129,12 +1184,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 15,
+                    "line": 16,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 15,
+                    "line": 16,
                   },
                 },
                 "text": "person",
@@ -1144,12 +1199,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 35,
-                  "line": 15,
+                  "line": 16,
                 },
                 "file": "",
                 "start": {
                   "column": 31,
-                  "line": 15,
+                  "line": 16,
                 },
               },
               "value": BrsBoolean {
@@ -1166,12 +1221,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 29,
-                  "line": 16,
+                  "line": 17,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 16,
+                  "line": 17,
                 },
               },
               "text": "endsub",
@@ -1184,12 +1239,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 16,
+                    "line": 17,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 16,
+                    "line": 17,
                   },
                 },
                 "text": "person",
@@ -1199,12 +1254,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 36,
-                  "line": 16,
+                  "line": 17,
                 },
                 "file": "",
                 "start": {
                   "column": 32,
-                  "line": 16,
+                  "line": 17,
                 },
               },
               "value": BrsBoolean {
@@ -1221,12 +1276,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 31,
-                  "line": 17,
+                  "line": 18,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 17,
+                  "line": 18,
                 },
               },
               "text": "endwhile",
@@ -1239,12 +1294,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 17,
+                    "line": 18,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 17,
+                    "line": 18,
                   },
                 },
                 "text": "person",
@@ -1254,12 +1309,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 38,
-                  "line": 17,
+                  "line": 18,
                 },
                 "file": "",
                 "start": {
                   "column": 34,
-                  "line": 17,
+                  "line": 18,
                 },
               },
               "value": BrsBoolean {
@@ -1276,12 +1331,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 18,
+                  "line": 19,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 18,
+                  "line": 19,
                 },
               },
               "text": "eval",
@@ -1294,12 +1349,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 18,
+                    "line": 19,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 18,
+                    "line": 19,
                   },
                 },
                 "text": "person",
@@ -1309,12 +1364,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 18,
+                  "line": 19,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 18,
+                  "line": 19,
                 },
               },
               "value": BrsBoolean {
@@ -1331,12 +1386,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 19,
+                  "line": 20,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 19,
+                  "line": 20,
                 },
               },
               "text": "exit",
@@ -1349,12 +1404,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 19,
+                    "line": 20,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 19,
+                    "line": 20,
                   },
                 },
                 "text": "person",
@@ -1364,12 +1419,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 19,
+                  "line": 20,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 19,
+                  "line": 20,
                 },
               },
               "value": BrsBoolean {
@@ -1386,12 +1441,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 30,
-                  "line": 20,
+                  "line": 21,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 20,
+                  "line": 21,
                 },
               },
               "text": "exitfor",
@@ -1404,12 +1459,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 20,
+                    "line": 21,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 20,
+                    "line": 21,
                   },
                 },
                 "text": "person",
@@ -1419,12 +1474,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 37,
-                  "line": 20,
+                  "line": 21,
                 },
                 "file": "",
                 "start": {
                   "column": 33,
-                  "line": 20,
+                  "line": 21,
                 },
               },
               "value": BrsBoolean {
@@ -1441,12 +1496,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 32,
-                  "line": 21,
+                  "line": 22,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 21,
+                  "line": 22,
                 },
               },
               "text": "exitwhile",
@@ -1459,12 +1514,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 21,
+                    "line": 22,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 21,
+                    "line": 22,
                   },
                 },
                 "text": "person",
@@ -1474,12 +1529,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 39,
-                  "line": 21,
+                  "line": 22,
                 },
                 "file": "",
                 "start": {
                   "column": 35,
-                  "line": 21,
+                  "line": 22,
                 },
               },
               "value": BrsBoolean {
@@ -1496,12 +1551,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 28,
-                  "line": 22,
+                  "line": 23,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 22,
+                  "line": 23,
                 },
               },
               "text": "false",
@@ -1514,12 +1569,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 22,
+                    "line": 23,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 22,
+                    "line": 23,
                   },
                 },
                 "text": "person",
@@ -1529,12 +1584,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 35,
-                  "line": 22,
+                  "line": 23,
                 },
                 "file": "",
                 "start": {
                   "column": 31,
-                  "line": 22,
+                  "line": 23,
                 },
               },
               "value": BrsBoolean {
@@ -1551,12 +1606,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 28,
-                  "line": 23,
+                  "line": 24,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 23,
+                  "line": 24,
                 },
               },
               "text": "float",
@@ -1569,12 +1624,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 23,
+                    "line": 24,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 23,
+                    "line": 24,
                   },
                 },
                 "text": "person",
@@ -1584,12 +1639,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 35,
-                  "line": 23,
+                  "line": 24,
                 },
                 "file": "",
                 "start": {
                   "column": 31,
-                  "line": 23,
+                  "line": 24,
                 },
               },
               "value": BrsBoolean {
@@ -1606,12 +1661,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 24,
+                  "line": 25,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 24,
+                  "line": 25,
                 },
               },
               "text": "for",
@@ -1624,12 +1679,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 24,
+                    "line": 25,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 24,
+                    "line": 25,
                   },
                 },
                 "text": "person",
@@ -1639,12 +1694,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 24,
+                  "line": 25,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 24,
+                  "line": 25,
                 },
               },
               "value": BrsBoolean {
@@ -1661,12 +1716,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 30,
-                  "line": 25,
+                  "line": 26,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 25,
+                  "line": 26,
                 },
               },
               "text": "foreach",
@@ -1679,12 +1734,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 25,
+                    "line": 26,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 25,
+                    "line": 26,
                   },
                 },
                 "text": "person",
@@ -1694,12 +1749,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 37,
-                  "line": 25,
+                  "line": 26,
                 },
                 "file": "",
                 "start": {
                   "column": 33,
-                  "line": 25,
+                  "line": 26,
                 },
               },
               "value": BrsBoolean {
@@ -1716,12 +1771,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 31,
-                  "line": 26,
+                  "line": 27,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 26,
+                  "line": 27,
                 },
               },
               "text": "function",
@@ -1734,12 +1789,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 26,
+                    "line": 27,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 26,
+                    "line": 27,
                   },
                 },
                 "text": "person",
@@ -1749,12 +1804,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 38,
-                  "line": 26,
+                  "line": 27,
                 },
                 "file": "",
                 "start": {
                   "column": 34,
-                  "line": 26,
+                  "line": 27,
                 },
               },
               "value": BrsBoolean {
@@ -1771,12 +1826,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 34,
-                  "line": 27,
+                  "line": 28,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 27,
+                  "line": 28,
                 },
               },
               "text": "getglobalaa",
@@ -1789,12 +1844,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 27,
+                    "line": 28,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 27,
+                    "line": 28,
                   },
                 },
                 "text": "person",
@@ -1804,12 +1859,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 41,
-                  "line": 27,
+                  "line": 28,
                 },
                 "file": "",
                 "start": {
                   "column": 37,
-                  "line": 27,
+                  "line": 28,
                 },
               },
               "value": BrsBoolean {
@@ -1826,12 +1881,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 45,
-                  "line": 28,
+                  "line": 29,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 28,
+                  "line": 29,
                 },
               },
               "text": "getlastruncompileerror",
@@ -1844,12 +1899,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 28,
+                    "line": 29,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 28,
+                    "line": 29,
                   },
                 },
                 "text": "person",
@@ -1859,12 +1914,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 52,
-                  "line": 28,
+                  "line": 29,
                 },
                 "file": "",
                 "start": {
                   "column": 48,
-                  "line": 28,
+                  "line": 29,
                 },
               },
               "value": BrsBoolean {
@@ -1881,12 +1936,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 45,
-                  "line": 29,
+                  "line": 30,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 29,
+                  "line": 30,
                 },
               },
               "text": "getlastrunruntimeerror",
@@ -1899,12 +1954,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 29,
+                    "line": 30,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 29,
+                    "line": 30,
                   },
                 },
                 "text": "person",
@@ -1914,12 +1969,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 52,
-                  "line": 29,
+                  "line": 30,
                 },
                 "file": "",
                 "start": {
                   "column": 48,
-                  "line": 29,
+                  "line": 30,
                 },
               },
               "value": BrsBoolean {
@@ -1936,12 +1991,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 30,
+                  "line": 31,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 30,
+                  "line": 31,
                 },
               },
               "text": "goto",
@@ -1954,12 +2009,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 30,
+                    "line": 31,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 30,
+                    "line": 31,
                   },
                 },
                 "text": "person",
@@ -1969,12 +2024,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 30,
+                  "line": 31,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 30,
+                  "line": 31,
                 },
               },
               "value": BrsBoolean {
@@ -1991,12 +2046,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 25,
-                  "line": 31,
+                  "line": 32,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 31,
+                  "line": 32,
                 },
               },
               "text": "if",
@@ -2009,12 +2064,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 31,
+                    "line": 32,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 31,
+                    "line": 32,
                   },
                 },
                 "text": "person",
@@ -2024,12 +2079,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 32,
-                  "line": 31,
+                  "line": 32,
                 },
                 "file": "",
                 "start": {
                   "column": 28,
-                  "line": 31,
+                  "line": 32,
                 },
               },
               "value": BrsBoolean {
@@ -2046,12 +2101,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 30,
-                  "line": 32,
+                  "line": 33,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 32,
+                  "line": 33,
                 },
               },
               "text": "integer",
@@ -2064,12 +2119,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 32,
+                    "line": 33,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 32,
+                    "line": 33,
                   },
                 },
                 "text": "person",
@@ -2079,12 +2134,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 37,
-                  "line": 32,
+                  "line": 33,
                 },
                 "file": "",
                 "start": {
                   "column": 33,
-                  "line": 32,
+                  "line": 33,
                 },
               },
               "value": BrsBoolean {
@@ -2101,12 +2156,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 30,
-                  "line": 33,
+                  "line": 34,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 33,
+                  "line": 34,
                 },
               },
               "text": "invalid",
@@ -2119,12 +2174,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 33,
+                    "line": 34,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 33,
+                    "line": 34,
                   },
                 },
                 "text": "person",
@@ -2134,12 +2189,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 37,
-                  "line": 33,
+                  "line": 34,
                 },
                 "file": "",
                 "start": {
                   "column": 33,
-                  "line": 33,
+                  "line": 34,
                 },
               },
               "value": BrsBoolean {
@@ -2156,12 +2211,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 34,
+                  "line": 35,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 34,
+                  "line": 35,
                 },
               },
               "text": "let",
@@ -2174,12 +2229,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 34,
+                    "line": 35,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 34,
+                    "line": 35,
                   },
                 },
                 "text": "person",
@@ -2189,12 +2244,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 34,
+                  "line": 35,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 34,
+                  "line": 35,
                 },
               },
               "value": BrsBoolean {
@@ -2211,12 +2266,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 31,
-                  "line": 35,
+                  "line": 36,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 35,
+                  "line": 36,
                 },
               },
               "text": "line_num",
@@ -2229,12 +2284,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 35,
+                    "line": 36,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 35,
+                    "line": 36,
                   },
                 },
                 "text": "person",
@@ -2244,12 +2299,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 38,
-                  "line": 35,
+                  "line": 36,
                 },
                 "file": "",
                 "start": {
                   "column": 34,
-                  "line": 35,
+                  "line": 36,
                 },
               },
               "value": BrsBoolean {
@@ -2266,12 +2321,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 34,
-                  "line": 36,
+                  "line": 37,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 36,
+                  "line": 37,
                 },
               },
               "text": "longinteger",
@@ -2284,12 +2339,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 36,
+                    "line": 37,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 36,
+                    "line": 37,
                   },
                 },
                 "text": "person",
@@ -2299,12 +2354,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 41,
-                  "line": 36,
+                  "line": 37,
                 },
                 "file": "",
                 "start": {
                   "column": 37,
-                  "line": 36,
+                  "line": 37,
                 },
               },
               "value": BrsBoolean {
@@ -2321,12 +2376,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 37,
+                  "line": 38,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 37,
+                  "line": 38,
                 },
               },
               "text": "next",
@@ -2339,12 +2394,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 37,
+                    "line": 38,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 37,
+                    "line": 38,
                   },
                 },
                 "text": "person",
@@ -2354,12 +2409,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 37,
+                  "line": 38,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 37,
+                  "line": 38,
                 },
               },
               "value": BrsBoolean {
@@ -2376,12 +2431,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 38,
+                  "line": 39,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 38,
+                  "line": 39,
                 },
               },
               "text": "not",
@@ -2394,12 +2449,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 38,
+                    "line": 39,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 38,
+                    "line": 39,
                   },
                 },
                 "text": "person",
@@ -2409,12 +2464,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 38,
+                  "line": 39,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 38,
+                  "line": 39,
                 },
               },
               "value": BrsBoolean {
@@ -2431,12 +2486,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 29,
-                  "line": 39,
+                  "line": 40,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 39,
+                  "line": 40,
                 },
               },
               "text": "objfun",
@@ -2449,12 +2504,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 39,
+                    "line": 40,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 39,
+                    "line": 40,
                   },
                 },
                 "text": "person",
@@ -2464,12 +2519,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 36,
-                  "line": 39,
+                  "line": 40,
                 },
                 "file": "",
                 "start": {
                   "column": 32,
-                  "line": 39,
+                  "line": 40,
                 },
               },
               "value": BrsBoolean {
@@ -2486,12 +2541,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 25,
-                  "line": 40,
+                  "line": 41,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 40,
+                  "line": 41,
                 },
               },
               "text": "or",
@@ -2504,12 +2559,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 40,
+                    "line": 41,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 40,
+                    "line": 41,
                   },
                 },
                 "text": "person",
@@ -2519,12 +2574,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 32,
-                  "line": 40,
+                  "line": 41,
                 },
                 "file": "",
                 "start": {
                   "column": 28,
-                  "line": 40,
+                  "line": 41,
                 },
               },
               "value": BrsBoolean {
@@ -2541,12 +2596,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 41,
+                  "line": 42,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 41,
+                  "line": 42,
                 },
               },
               "text": "pos",
@@ -2559,12 +2614,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 41,
+                    "line": 42,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 41,
+                    "line": 42,
                   },
                 },
                 "text": "person",
@@ -2574,12 +2629,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 41,
+                  "line": 42,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 41,
+                  "line": 42,
                 },
               },
               "value": BrsBoolean {
@@ -2596,12 +2651,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 28,
-                  "line": 42,
+                  "line": 43,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 42,
+                  "line": 43,
                 },
               },
               "text": "print",
@@ -2614,12 +2669,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 42,
+                    "line": 43,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 42,
+                    "line": 43,
                   },
                 },
                 "text": "person",
@@ -2629,12 +2684,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 35,
-                  "line": 42,
+                  "line": 43,
                 },
                 "file": "",
                 "start": {
                   "column": 31,
-                  "line": 42,
+                  "line": 43,
                 },
               },
               "value": BrsBoolean {
@@ -2651,12 +2706,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 43,
+                  "line": 44,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 43,
+                  "line": 44,
                 },
               },
               "text": "rem",
@@ -2669,12 +2724,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 43,
+                    "line": 44,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 43,
+                    "line": 44,
                   },
                 },
                 "text": "person",
@@ -2684,12 +2739,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 43,
+                  "line": 44,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 43,
+                  "line": 44,
                 },
               },
               "value": BrsBoolean {
@@ -2706,12 +2761,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 29,
-                  "line": 44,
+                  "line": 45,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 44,
+                  "line": 45,
                 },
               },
               "text": "return",
@@ -2724,12 +2779,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 44,
+                    "line": 45,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 44,
+                    "line": 45,
                   },
                 },
                 "text": "person",
@@ -2739,12 +2794,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 36,
-                  "line": 44,
+                  "line": 45,
                 },
                 "file": "",
                 "start": {
                   "column": 32,
-                  "line": 44,
+                  "line": 45,
                 },
               },
               "value": BrsBoolean {
@@ -2761,12 +2816,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 45,
+                  "line": 46,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 45,
+                  "line": 46,
                 },
               },
               "text": "run",
@@ -2779,12 +2834,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 45,
+                    "line": 46,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 45,
+                    "line": 46,
                   },
                 },
                 "text": "person",
@@ -2794,12 +2849,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 45,
+                  "line": 46,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 45,
+                  "line": 46,
                 },
               },
               "value": BrsBoolean {
@@ -2816,12 +2871,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 46,
+                  "line": 47,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 46,
+                  "line": 47,
                 },
               },
               "text": "step",
@@ -2834,12 +2889,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 46,
+                    "line": 47,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 46,
+                    "line": 47,
                   },
                 },
                 "text": "person",
@@ -2849,12 +2904,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 46,
+                  "line": 47,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 46,
+                  "line": 47,
                 },
               },
               "value": BrsBoolean {
@@ -2871,12 +2926,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 47,
+                  "line": 48,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 47,
+                  "line": 48,
                 },
               },
               "text": "stop",
@@ -2889,12 +2944,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 47,
+                    "line": 48,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 47,
+                    "line": 48,
                   },
                 },
                 "text": "person",
@@ -2904,12 +2959,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 47,
+                  "line": 48,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 47,
+                  "line": 48,
                 },
               },
               "value": BrsBoolean {
@@ -2926,12 +2981,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 29,
-                  "line": 48,
+                  "line": 49,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 48,
+                  "line": 49,
                 },
               },
               "text": "string",
@@ -2944,12 +2999,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 48,
+                    "line": 49,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 48,
+                    "line": 49,
                   },
                 },
                 "text": "person",
@@ -2959,12 +3014,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 36,
-                  "line": 48,
+                  "line": 49,
                 },
                 "file": "",
                 "start": {
                   "column": 32,
-                  "line": 48,
+                  "line": 49,
                 },
               },
               "value": BrsBoolean {
@@ -2981,12 +3036,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 49,
+                  "line": 50,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 49,
+                  "line": 50,
                 },
               },
               "text": "sub",
@@ -2999,12 +3054,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 49,
+                    "line": 50,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 49,
+                    "line": 50,
                   },
                 },
                 "text": "person",
@@ -3014,12 +3069,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 49,
+                  "line": 50,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 49,
+                  "line": 50,
                 },
               },
               "value": BrsBoolean {
@@ -3036,12 +3091,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 26,
-                  "line": 50,
+                  "line": 51,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 50,
+                  "line": 51,
                 },
               },
               "text": "tab",
@@ -3054,12 +3109,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 50,
+                    "line": 51,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 50,
+                    "line": 51,
                   },
                 },
                 "text": "person",
@@ -3069,12 +3124,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 33,
-                  "line": 50,
+                  "line": 51,
                 },
                 "file": "",
                 "start": {
                   "column": 29,
-                  "line": 50,
+                  "line": 51,
                 },
               },
               "value": BrsBoolean {
@@ -3091,12 +3146,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 51,
+                  "line": 52,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 51,
+                  "line": 52,
                 },
               },
               "text": "then",
@@ -3109,12 +3164,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 51,
+                    "line": 52,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 51,
+                    "line": 52,
                   },
                 },
                 "text": "person",
@@ -3124,12 +3179,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 51,
+                  "line": 52,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 51,
+                  "line": 52,
                 },
               },
               "value": BrsBoolean {
@@ -3146,12 +3201,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 25,
-                  "line": 52,
+                  "line": 53,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 52,
+                  "line": 53,
                 },
               },
               "text": "to",
@@ -3164,12 +3219,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 52,
+                    "line": 53,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 52,
+                    "line": 53,
                   },
                 },
                 "text": "person",
@@ -3179,12 +3234,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 32,
-                  "line": 52,
+                  "line": 53,
                 },
                 "file": "",
                 "start": {
                   "column": 28,
-                  "line": 52,
+                  "line": 53,
                 },
               },
               "value": BrsBoolean {
@@ -3201,12 +3256,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 53,
+                  "line": 54,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 53,
+                  "line": 54,
                 },
               },
               "text": "true",
@@ -3219,12 +3274,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 53,
+                    "line": 54,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 53,
+                    "line": 54,
                   },
                 },
                 "text": "person",
@@ -3234,12 +3289,67 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 53,
+                  "line": 54,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 53,
+                  "line": 54,
+                },
+              },
+              "value": BrsBoolean {
+                "kind": 2,
+                "value": true,
+              },
+            },
+          },
+          DottedSet {
+            "name": {
+              "isReserved": true,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": 26,
+                  "line": 55,
+                },
+                "file": "",
+                "start": {
+                  "column": 23,
+                  "line": 55,
+                },
+              },
+              "text": "try",
+            },
+            "obj": Variable {
+              "name": {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": 22,
+                    "line": 55,
+                  },
+                  "file": "",
+                  "start": {
+                    "column": 16,
+                    "line": 55,
+                  },
+                },
+                "text": "person",
+              },
+            },
+            "value": Literal {
+              "_location": {
+                "end": {
+                  "column": 33,
+                  "line": 55,
+                },
+                "file": "",
+                "start": {
+                  "column": 29,
+                  "line": 55,
                 },
               },
               "value": BrsBoolean {
@@ -3256,12 +3366,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 27,
-                  "line": 54,
+                  "line": 56,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 54,
+                  "line": 56,
                 },
               },
               "text": "type",
@@ -3274,12 +3384,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 54,
+                    "line": 56,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 54,
+                    "line": 56,
                   },
                 },
                 "text": "person",
@@ -3289,12 +3399,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 34,
-                  "line": 54,
+                  "line": 56,
                 },
                 "file": "",
                 "start": {
                   "column": 30,
-                  "line": 54,
+                  "line": 56,
                 },
               },
               "value": BrsBoolean {
@@ -3311,12 +3421,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "location": {
                 "end": {
                   "column": 28,
-                  "line": 55,
+                  "line": 57,
                 },
                 "file": "",
                 "start": {
                   "column": 23,
-                  "line": 55,
+                  "line": 57,
                 },
               },
               "text": "while",
@@ -3329,12 +3439,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 "location": {
                   "end": {
                     "column": 22,
-                    "line": 55,
+                    "line": 57,
                   },
                   "file": "",
                   "start": {
                     "column": 16,
-                    "line": 55,
+                    "line": 57,
                   },
                 },
                 "text": "person",
@@ -3344,12 +3454,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "_location": {
                 "end": {
                   "column": 35,
-                  "line": 55,
+                  "line": 57,
                 },
                 "file": "",
                 "start": {
                   "column": 31,
-                  "line": 55,
+                  "line": 57,
                 },
               },
               "value": BrsBoolean {
@@ -3367,12 +3477,12 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
         "location": {
           "end": {
             "column": 19,
-            "line": 56,
+            "line": 58,
           },
           "file": "",
           "start": {
             "column": 12,
-            "line": 56,
+            "line": 58,
           },
         },
         "text": "end sub",
