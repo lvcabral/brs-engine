@@ -50,6 +50,7 @@ const assignmentOperators = [
 const allowedProperties = [
     Lexeme.And,
     Lexeme.Box,
+    Lexeme.Catch,
     Lexeme.ContinueFor,
     Lexeme.ContinueWhile,
     Lexeme.CreateObject,
@@ -91,6 +92,7 @@ const allowedProperties = [
     Lexeme.Tab,
     Lexeme.To,
     Lexeme.True,
+    Lexeme.Try,
     Lexeme.Type,
     Lexeme.While,
 ];

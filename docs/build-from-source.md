@@ -66,6 +66,8 @@ $ yarn test
 
 Note that only test files ending in `.test.js` will be executed by `yarn test`.
 
+If you need to update the snapshots use the command: `npx jest --updateSnapshot`
+
 ### Cleaning
 
 Compiled output in `lib/`, `bin/` and `types/` can be removed with the `clean` target:
