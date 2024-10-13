@@ -1,23 +1,42 @@
 # Changelog
 
+<a name="v1.7.0"></a>
+
+## [v1.7.0 - FormatJSON() fixes and MicroDebugger stats](https://github.com/lvcabral/brs-engine/releases/tag/v1.7.0) - 12 October 2024
+
+### Release Changes
+
+* Implemented new Type and Enum definitions by [@lvcabral](https://github.com/lvcabral) in [#374](https://github.com/lvcabral/brs-engine/pull/374)
+* Added reference tracking and object disposal event by [@lvcabral](https://github.com/lvcabral) in [#373](https://github.com/lvcabral/brs-engine/pull/373)
+* Implemented `ObjFun()` global function and support for `variadic` arguments on `Callable` by [@lvcabral](https://github.com/lvcabral) in [#375](https://github.com/lvcabral/brs-engine/pull/375)
+* Added support for `formatJson()` undocumented flags 256 and 512 by [@lvcabral](https://github.com/lvcabral) in [#377](https://github.com/lvcabral/brs-engine/pull/377)
+* Implemented Micro Debugger commands:  `classes`,  `bscs` and `stats` by [@lvcabral](https://github.com/lvcabral) in [#385](https://github.com/lvcabral/brs-engine/pull/385)
+* Static analysis fixes by [@lvcabral](https://github.com/lvcabral) in [#389](https://github.com/lvcabral/brs-engine/pull/389)
+* Fixed Critical bug with `formatJson` #383 by [@lvcabral](https://github.com/lvcabral) in [#390](https://github.com/lvcabral/brs-engine/pull/390)
+* Fixed #384 - Allow `try` and `catch` as object properties. by [@lvcabral](https://github.com/lvcabral) in [#391](https://github.com/lvcabral/brs-engine/pull/391)
+* build(deps-dev): bump webpack from 5.91.0 to 5.94.0 by @dependabot in [#381](https://github.com/lvcabral/brs-engine/pull/381)
+* build(deps): bump ws from 8.17.0 to 8.17.1 by @dependabot in [#379](https://github.com/lvcabral/brs-engine/pull/379)
+* build(deps): bump braces from 3.0.2 to 3.0.3 by @dependabot in [#378](https://github.com/lvcabral/brs-engine/pull/378)
+* build(deps): bump elliptic from 6.5.5 to 6.5.7 by @dependabot in [#386](https://github.com/lvcabral/brs-engine/pull/386)
+* build(deps): bump express from 4.19.2 to 4.21.1 by @dependabot in [#387](https://github.com/lvcabral/brs-engine/pull/387)
+* Upgraded dependencies by [@lvcabral](https://github.com/lvcabral) in [#388](https://github.com/lvcabral/brs-engine/pull/388)
+
+[Full Changelog][v1.7.0]
+
 <a name="v1.6.1"></a>
 
 ## [v1.6.1 - Numeric Labels](https://github.com/lvcabral/brs-engine/releases/tag/v1.6.1) - 11 May 2024
-
-<a name="v1.6.1"></a>
 
 ### Release Changes
 
 * Added support for numeric labels by [@lvcabral](https://github.com/lvcabral) in [#372](https://github.com/lvcabral/brs-engine/pull/372)
 * Fixed `goto` with `try/catch` by [@lvcabral](https://github.com/lvcabral) in [#371](https://github.com/lvcabral/brs-engine/pull/371)
 
-[Full Changelog][v1.6.0]
+[Full Changelog][v1.6.1]
 
 <a name="v1.6.0"></a>
 
 ## [v1.6.0 - Goto Label Statement](https://github.com/lvcabral/brs-engine/releases/tag/v1.6.0) - 05 May 2024
-
-<a name="v1.6.0"></a>
 
 ### Release Changes
 
@@ -25,6 +44,8 @@
 * Fixed sound `select` not being triggered [@lvcabral](https://github.com/lvcabral) in [#366](https://github.com/lvcabral/brs-engine/pull/366)
 
 [Full Changelog][v1.6.0]
+
+<a name="v1.5.7"></a>
 
 ## [v1.5.7 - Fixed Critical Issue](https://github.com/lvcabral/brs-engine/releases/tag/v1.5.7) - 01 May 2024
 
@@ -775,6 +796,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.7.0]: https://github.com/lvcabral/brs-engine/compare/v1.6.1...v1.7.0
 [v1.6.1]: https://github.com/lvcabral/brs-engine/compare/v1.6.0...v1.6.1
 [v1.6.0]: https://github.com/lvcabral/brs-engine/compare/v1.5.7...v1.6.0
 [v1.5.7]: https://github.com/lvcabral/brs-engine/compare/v1.5.6...v1.5.7
