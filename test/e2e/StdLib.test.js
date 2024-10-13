@@ -134,6 +134,17 @@ describe("end to end standard libary", () => {
         ]);
     });
 
+    test("stdlib/nested-array-formatjson.brs", async () => {
+        await execute([resourceFile("stdlib", "nested-array-formatjson.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            `["Array A",["Array B",["Array C"]],["Array C"]]`,
+            "",
+        ]);
+        let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
+        expect(errOutput[0].includes("FormatJSON: Nested object reference")).toBeTruthy();
+    });
+
     test("stdlib/run.brs", async () => {
         await execute([resourceFile("stdlib", "run.brs")], outputStreams);
 
