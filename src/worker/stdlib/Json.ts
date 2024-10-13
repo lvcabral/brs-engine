@@ -55,15 +55,6 @@ function brsValueOf(x: any): BrsType {
     }
 }
 
-type BrsAggregate = RoAssociativeArray | RoArray;
-
-function visit(x: BrsAggregate, visited: Set<BrsAggregate>): void {
-    if (visited.has(x)) {
-        throw new Error("Nested object reference");
-    }
-    visited.add(x);
-}
-
 /**
  * Converts a BrsType value to its representation as a JSON string. If no such
  * representation is possible, throws an Error. Objects with cyclical references
@@ -75,13 +66,7 @@ function visit(x: BrsAggregate, visited: Set<BrsAggregate>): void {
  * @return {string} The JSON string representation of `x`.
  * @throws {Error} If `x` cannot be represented as a JSON string.
  */
-function jsonOf(
-    interpreter: Interpreter,
-    x: BrsType,
-    flags: number = 0,
-    visited: Set<BrsAggregate> = new Set(),
-    key: string = ""
-): string {
+function jsonOf(interpreter: Interpreter, x: BrsType, flags: number = 0, key: string = ""): string {
     switch (x.kind) {
         case ValueKind.Invalid:
             return "null";
@@ -95,26 +80,24 @@ function jsonOf(
             return x.toString();
         case ValueKind.Object:
             if (x instanceof RoAssociativeArray) {
-                visit(x, visited);
                 return `{${x
                     .getElements()
                     .map((k: BrsString) => {
                         key = k.toString();
-                        return `"${key}":${jsonOf(interpreter, x.get(k), flags, visited, key)}`;
+                        return `"${key}":${jsonOf(interpreter, x.get(k), flags, key)}`;
                     })
                     .join(",")}}`;
             }
             if (x instanceof RoArray) {
-                visit(x, visited);
                 return `[${x
                     .getElements()
                     .map((el: BrsType) => {
-                        return jsonOf(interpreter, el, flags, visited, key);
+                        return jsonOf(interpreter, el, flags, key);
                     })
                     .join(",")}]`;
             }
             if (isUnboxable(x)) {
-                return jsonOf(interpreter, x.unbox(), flags, visited, key);
+                return jsonOf(interpreter, x.unbox(), flags, key);
             }
             break;
         case ValueKind.Callable:
@@ -162,6 +145,9 @@ export const FormatJson = new Callable("FormatJson", {
         try {
             return new BrsString(jsonOf(interpreter, x, flags.getValue()));
         } catch (err: any) {
+            if (err instanceof RangeError) {
+                err = new Error("Nested object reference");
+            }
             logBrsErr(interpreter, "FormatJSON", err);
             return new BrsString("");
         }
