@@ -57,6 +57,7 @@
   ],
   "dependencies": {
     "@msgpack/msgpack": "^2.8.0",
+    "canvas": "^2.11.2",
     "chalk": "^4.1.2",
     "commander": "^2.12.2",
     "crc": "^3.8.0",
@@ -115,7 +116,6 @@
     "@typescript-eslint/eslint-plugin": "^7.5.0",
     "@typescript-eslint/parser": "^7.5.0",
     "buffer": "^6.0.3",
-    "canvas": "^2.11.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
