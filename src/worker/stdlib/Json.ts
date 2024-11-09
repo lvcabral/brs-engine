@@ -1,6 +1,6 @@
 import { RoAssociativeArray } from "../brsTypes/components/RoAssociativeArray";
 import { RoArray } from "../brsTypes/components/RoArray";
-import { Interpreter } from "../interpreter";
+import { Interpreter, jsonOf } from "../interpreter";
 
 import {
     BrsBoolean,
@@ -55,75 +55,6 @@ function brsValueOf(x: any): BrsType {
     }
 }
 
-/**
- * Converts a BrsType value to its representation as a JSON string. If no such
- * representation is possible, throws an Error. Objects with cyclical references
- * are rejected.
- * @param {Interpreter} interpreter An Interpreter.
- * @param {BrsType} x Some BrsType value.
- * @param {Set<BrsAggregate>} visited An optional Set of visited of RoArray or
- *   RoAssociativeArray. If not provided, a new Set will be created.
- * @return {string} The JSON string representation of `x`.
- * @throws {Error} If `x` cannot be represented as a JSON string.
- */
-function jsonOf(interpreter: Interpreter, x: BrsType, flags: number = 0, key: string = ""): string {
-    switch (x.kind) {
-        case ValueKind.Invalid:
-            return "null";
-        case ValueKind.String:
-            return `"${x.toString()}"`;
-        case ValueKind.Boolean:
-        case ValueKind.Double:
-        case ValueKind.Float:
-        case ValueKind.Int32:
-        case ValueKind.Int64:
-            return x.toString();
-        case ValueKind.Object:
-            if (x instanceof RoAssociativeArray) {
-                return `{${x
-                    .getElements()
-                    .map((k: BrsString) => {
-                        key = k.toString();
-                        return `"${key}":${jsonOf(interpreter, x.get(k), flags, key)}`;
-                    })
-                    .join(",")}}`;
-            }
-            if (x instanceof RoArray) {
-                return `[${x
-                    .getElements()
-                    .map((el: BrsType) => {
-                        return jsonOf(interpreter, el, flags, key);
-                    })
-                    .join(",")}]`;
-            }
-            if (isUnboxable(x)) {
-                return jsonOf(interpreter, x.unbox(), flags, key);
-            }
-            break;
-        case ValueKind.Callable:
-        case ValueKind.Uninitialized:
-        case ValueKind.Interface:
-            break;
-        default:
-            // Exhaustive check as per:
-            // https://basarat.gitbooks.io/typescript/content/docs/types/discriminated-unions.html
-            const _: never = x;
-            break;
-    }
-    let xType = x instanceof BrsComponent ? x.getComponentName() : x;
-    if (flags & 256) {
-        // UnsupportedIgnore
-        return "null";
-    } else if (flags & 512) {
-        // UnsupportedAnnotate
-        return `"<${xType}>"`;
-    }
-    let errMessage = `Value type not supported: ${xType}`;
-    if (key !== "") {
-        errMessage = `${key}: ${errMessage}`;
-    }
-    throw new Error(errMessage);
-}
 
 function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
     interpreter.stderr.write(
@@ -143,7 +74,7 @@ export const FormatJson = new Callable("FormatJson", {
     },
     impl: (interpreter: Interpreter, x: BrsType, flags: Int32) => {
         try {
-            return new BrsString(jsonOf(interpreter, x, flags.getValue()));
+            return new BrsString(jsonOf(x, flags.getValue()));
         } catch (err: any) {
             if (err instanceof RangeError) {
                 err = new Error("Nested object reference");

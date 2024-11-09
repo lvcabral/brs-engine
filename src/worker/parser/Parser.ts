@@ -157,7 +157,7 @@ const disallowedIdentifiers = new Set(
 const bsLibraries = new Map<string, boolean>();
 
 /** The results of a Parser's parsing pass. */
-interface ParseResults {
+export interface ParseResults {
     /** The statements produced by the parser. */
     statements: Stmt.Statement[];
     /** The errors encountered by the Parser. */
@@ -175,6 +175,7 @@ export class Parser {
         bsLibraries.set("v30/bslCore.brs", false);
         bsLibraries.set("v30/bslDefender.brs", false);
         bsLibraries.set("Roku_Ads.brs", false);
+        bsLibraries.set("RokuBrowser.brs", false);
         this.stats.set(Lexeme.Integer, new Set());
         this.stats.set(Lexeme.String, new Set());
         this.stats.set(Lexeme.Float, new Set());
@@ -896,7 +897,7 @@ export class Parser {
                 } else {
                     addErrorAtLocation(
                         libraryStatement.location,
-                        `Invalid library "${key}"! Supported: "v30/bslCore.brs", "v30/bslDefender.brs" or "Roku_Ads.brs"`
+                        `Invalid library "${key}"! Supported: ${Array.from(bsLibraries.keys()).join(", ")}`
                     );
                 }
             }
