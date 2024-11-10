@@ -470,7 +470,7 @@ function workerCallback(event: MessageEvent) {
                 height: parseInt(winDim[1]),
             });
         } else {
-            notifyAll("launch", {app: data[1], params: data[2]});
+            notifyAll("launch", { app: data[1], params: data[2] });
         }
     }
 }
