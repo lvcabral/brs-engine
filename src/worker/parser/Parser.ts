@@ -897,7 +897,9 @@ export class Parser {
                 } else {
                     addErrorAtLocation(
                         libraryStatement.location,
-                        `Invalid library "${key}"! Supported: ${Array.from(bsLibraries.keys()).join(", ")}`
+                        `Invalid library "${key}"! Supported: ${Array.from(bsLibraries.keys()).join(
+                            ", "
+                        )}`
                     );
                 }
             }

@@ -63,6 +63,25 @@ brs.subscribe("app", (event, data) => {
     } else if (event === "started") {
         currentApp = data;
         stats.style.visibility = "visible";
+    } else if (event === "launch") {
+        if (data?.app) {
+            brs.terminate("EXIT_USER_NAV");
+            currentApp = { id: "", running: false };
+            loadZip(data.app);
+        }
+    } else if (event === "browser") {
+        if (data?.url) {
+            const newWindow = window.open(
+                data.url,
+                "_blank",
+                `width=${data.width},height=${data.height},popup`
+            );
+            if (newWindow) {
+                newWindow.focus();
+            } else {
+                console.warn("Warning: It was not possible to open a new window!");
+            }
+        }
     } else if (event === "closed" || event === "error") {
         currentApp = { id: "", running: false };
         display.style.opacity = 0;

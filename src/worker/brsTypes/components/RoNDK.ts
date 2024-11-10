@@ -1,8 +1,8 @@
-import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoAssociativeArray, RoMessagePort } from "..";
+import { BrsType, Int32, isBrsString, RoArray, RoMessagePort } from "..";
 import { Callable, StdlibArgument } from "../Callable";
-import { Interpreter, jsonOf } from "../../interpreter";
+import { Interpreter } from "../../interpreter";
 
 export class RoNDK extends BrsComponent implements BrsValue {
     private port?: RoMessagePort;
@@ -25,94 +25,23 @@ export class RoNDK extends BrsComponent implements BrsValue {
 
     // ifNDK ------------------------------------------------------------------------------------
 
-    /** Starts a NDK application. */
+    /** Starts a NDK application. There is no public documentation for this component
+     *  this implementation is based on some examples shared by Roku developers.
+     */
     private readonly start = new Callable("start", {
         signature: {
             args: [
                 new StdlibArgument("app", ValueKind.String),
                 new StdlibArgument("params", ValueKind.Object),
             ],
-            returns: ValueKind.Void,
+            returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, app: BrsString, params: RoAssociativeArray) => {
-            // Start the NDK application
-            if (app.value === "RokuBrowser") {
-                let paramsJson = jsonOf(params);
-                if (paramsJson) {
-                    postMessage(`ndk,browser,${paramsJson}`);
-                }
-            }
-            return BrsInvalid.Instance;
+        impl: (_: Interpreter, app: BrsString, params: RoArray) => {
+            // Filter parameters that are strings
+            const stringElements = params.elements.filter((el) => isBrsString(el));
+            const csvString = stringElements.map((el) => el.toString()).join(",");
+            postMessage(`ndk,${app.value},${csvString}`);
+            return new Int32(0);
         },
     });
 }
-
-/**
- * Converts a BrsType value to its representation as a JSON string. If no such
- * representation is possible, throws an Error. Objects with cyclical references
- * are rejected.
- * @param {Interpreter} interpreter An Interpreter.
- * @param {BrsType} x Some BrsType value.
- * @param {Set<BrsAggregate>} visited An optional Set of visited of RoArray or
- *   RoAssociativeArray. If not provided, a new Set will be created.
- * @return {string} The JSON string representation of `x`.
- * @throws {Error} If `x` cannot be represented as a JSON string.
- */
-// function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
-//     switch (x.kind) {
-//         case ValueKind.Invalid:
-//             return "null";
-//         case ValueKind.String:
-//             return `"${x.toString()}"`;
-//         case ValueKind.Boolean:
-//         case ValueKind.Double:
-//         case ValueKind.Float:
-//         case ValueKind.Int32:
-//         case ValueKind.Int64:
-//             return x.toString();
-//         case ValueKind.Object:
-//             if (x instanceof RoAssociativeArray) {
-//                 return `{${x
-//                     .getElements()
-//                     .map((k: BrsString) => {
-//                         key = k.toString();
-//                         return `"${key}":${jsonOf(x.get(k), flags, key)}`;
-//                     })
-//                     .join(",")}}`;
-//             }
-//             if (x instanceof RoArray) {
-//                 return `[${x
-//                     .getElements()
-//                     .map((el: BrsType) => {
-//                         return jsonOf(el, flags, key);
-//                     })
-//                     .join(",")}]`;
-//             }
-//             if (isUnboxable(x)) {
-//                 return jsonOf(x.unbox(), flags, key);
-//             }
-//             break;
-//         case ValueKind.Callable:
-//         case ValueKind.Uninitialized:
-//         case ValueKind.Interface:
-//             break;
-//         default:
-//             // Exhaustive check as per:
-//             // https://basarat.gitbooks.io/typescript/content/docs/types/discriminated-unions.html
-//             const _: never = x;
-//             break;
-//     }
-//     let xType = x instanceof BrsComponent ? x.getComponentName() : x;
-//     if (flags & 256) {
-//         // UnsupportedIgnore
-//         return "null";
-//     } else if (flags & 512) {
-//         // UnsupportedAnnotate
-//         return `"<${xType}>"`;
-//     }
-//     let errMessage = `Value type not supported: ${xType}`;
-//     if (key !== "") {
-//         errMessage = `${key}: ${errMessage}`;
-//     }
-//     throw new Error(errMessage);
-// }
