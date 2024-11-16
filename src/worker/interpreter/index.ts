@@ -2120,10 +2120,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Method to evaluate if a string is a valid IP address
      * @param ip the string to evaluate
      * @returns whether the string is a valid IP address
-     * */
+     */
     public isValidIp(ip: string): boolean {
-        const ipv4Regex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        return ipv4Regex.test(ip);
+        const parts = ip.split(".");
+        return (
+            parts.length === 4 &&
+            parts.every((part) => {
+                const num = Number(part);
+                return !isNaN(num) && num >= 0 && num <= 255;
+            })
+        );
     }
 
     private formatErrorVariable(err: BrsError) {
