@@ -30,7 +30,11 @@ export function getVolumeByPath(interpreter: Interpreter, path: string): Volume 
  *   ex. "tmp:/test/test1.txt" -> "/test/test1.txt"
  */
 export function getPath(fileUri: string) {
-    return new URL(fileUri).pathname;
+    try {
+        return new URL(fileUri).pathname;
+    } catch (err: any) {
+        return fileUri;
+    }
 }
 
 /*
@@ -42,13 +46,17 @@ export function getPath(fileUri: string) {
  *
  */
 export function getScopedPath(interpreter: Interpreter, fileUri: string) {
-    let url = new URL(fileUri);
-    let filePath = getPath(fileUri);
-    let scopedPath = filePath;
-    if (url.protocol === "pkg:") {
-        scopedPath = path.join(interpreter.options.root ?? "", filePath);
+    try {
+        let url = new URL(fileUri);
+        let filePath = getPath(fileUri);
+        let scopedPath = filePath;
+        if (url.protocol === "pkg:") {
+            scopedPath = path.join(interpreter.options.root ?? "", filePath);
+        }
+        return scopedPath.replace(/[\/\\]+/g, path.posix.sep);
+    } catch (err: any) {
+        return fileUri;
     }
-    return scopedPath.replace(/[\/\\]+/g, path.posix.sep);
 }
 
 export function createDir(interpreter: Interpreter, dir: string) {

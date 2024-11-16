@@ -53,11 +53,10 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     }
 
     registerFont(interpreter: Interpreter, fontPath: string) {
-        let url = new URL(fontPath);
-        const volume = interpreter.fileSystem.get(url.protocol);
-        if (volume) {
+        const fileData = interpreter.getFileData(fontPath);
+        if (fileData.url && fileData.volume) {
             try {
-                const fontArray = volume.readFileSync(url.pathname);
+                const fontArray = fileData.volume.readFileSync(fileData.url.pathname);
                 const fontObj = opentype.parse(fontArray);
                 // Get font metrics
                 const fontMetrics = {
@@ -89,11 +88,11 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 interpreter.stderr.write(
-                    `error,Error loading font:${url.pathname} - ${err.message}`
+                    `error,Error loading font:${fileData.url.pathname} - ${err.message}`
                 );
             }
         } else {
-            interpreter.stderr.write(`error,Invalid volume in font path: ${url.pathname}`);
+            interpreter.stderr.write(`error,Invalid volume in font path: ${fontPath}`);
         }
         return BrsBoolean.True;
     }

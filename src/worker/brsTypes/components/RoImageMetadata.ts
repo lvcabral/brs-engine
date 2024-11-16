@@ -34,21 +34,20 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     }
 
     private loadFile(interpreter: Interpreter, file: string) {
-        let url = new URL(file);
         let image: Buffer | undefined;
-        const volume = interpreter.fileSystem.get(url.protocol);
-        if (volume) {
+        const fileData = interpreter.getFileData(file);
+        if (fileData.url && fileData.volume) {
             try {
-                image = volume.readFileSync(url.pathname);
+                image = fileData.volume.readFileSync(fileData.url.pathname);
             } catch (err: any) {
                 if (interpreter.isDevMode) {
                     interpreter.stderr.write(
-                        `warning,[roImageMetadata] Error loading bitmap:${url.pathname} - ${err.message}`
+                        `warning,[roImageMetadata] Error loading bitmap:${fileData.url.pathname} - ${err.message}`
                     );
                 }
             }
         } else if (interpreter.isDevMode) {
-            interpreter.stderr.write(`warning,[roImageMetadata] Invalid volume:${url.pathname}`);
+            interpreter.stderr.write(`warning,[roImageMetadata] Invalid file/volume:${file}`);
         }
         return image;
     }
