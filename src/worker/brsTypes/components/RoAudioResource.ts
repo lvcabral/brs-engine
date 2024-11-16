@@ -24,22 +24,21 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         if (sysIndex > -1) {
             this.audioId = sysIndex;
         } else {
-            const url = new URL(name.value);
-            const volume = interpreter.fileSystem.get(url.protocol);
-            if (volume) {
+            const fileData = interpreter.getFileData(name.value);
+            if (fileData.url && fileData.volume) {
                 try {
-                    const id = parseInt(volume.readFileSync(url.pathname));
+                    const id = parseInt(fileData.volume.readFileSync(fileData.url.pathname));
                     if (id && id >= 0) {
                         this.audioId = id + systemwav.length;
                     }
                 } catch (err: any) {
                     interpreter.stderr.write(
-                        `error,Error loading audio file: ${url.pathname} - ${err.message}`
+                        `error,Error loading audio file: ${fileData.url.pathname} - ${err.message}`
                     );
                     this.valid = false;
                 }
             } else {
-                interpreter.stderr.write(`error,Invalid volume:${name}`);
+                interpreter.stderr.write(`error,Invalid volume:${name.value}`);
                 this.valid = false;
             }
         }

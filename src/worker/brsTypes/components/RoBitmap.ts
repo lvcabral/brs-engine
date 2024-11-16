@@ -53,21 +53,20 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.name = "";
         let image;
         if (param instanceof BrsString) {
-            let url = new URL(param.value);
-            const volume = interpreter.fileSystem.get(url.protocol);
-            if (volume) {
+            const fileData = interpreter.getFileData(param.value);
+            if (fileData.url && fileData.volume) {
                 try {
-                    image = volume.readFileSync(url.pathname);
+                    image = fileData.volume.readFileSync(fileData.url.pathname);
                     this.alphaEnable = false;
-                    this.name = url.pathname;
+                    this.name = fileData.url.pathname;
                 } catch (err: any) {
                     interpreter.stderr.write(
-                        `error,Error loading bitmap:${url.pathname} - ${err.message}`
+                        `error,Error loading bitmap:${fileData.url.pathname} - ${err.message}`
                     );
                     this.valid = false;
                 }
             } else {
-                interpreter.stderr.write(`error,Invalid volume:${url.pathname}`);
+                interpreter.stderr.write(`error,Invalid URL or volume:${param.value}`);
                 this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
