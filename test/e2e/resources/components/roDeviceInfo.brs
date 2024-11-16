@@ -40,7 +40,7 @@ sub main()
     print deviceInfo.getLinkStatus()
     print deviceInfo.enableLinkStatusEvent(true)
     print deviceInfo.getConnectionType()
-    print deviceInfo.getExternalIp()
+    print isValidIP(deviceInfo.getExternalIp())
     print deviceInfo.getIPAddrs().count()
     print deviceInfo.getConnectionInfo().count()
     print deviceInfo.getDisplayType()
@@ -65,3 +65,16 @@ sub main()
     print deviceInfo.enableAudioGuideChangedEvent(true)
 
 end sub
+
+function isValidIP(ip as String) as Boolean
+    ' Regular expression pattern for a valid IPv4 address
+    ipPattern = "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+    ' Create a regex object
+    regex = CreateObject("roRegex", ipPattern)
+    ' Check if the IP matches the pattern
+    if regex.IsMatch(ip)
+        return true
+    else
+        return false
+    end if
+end function

@@ -429,7 +429,7 @@ describe("end to end brightscript functions", () => {
             "true",
             "true",
             "WiredConnection",
-            "",
+            "true",
             " 1",
             " 3",
             "HDTV",

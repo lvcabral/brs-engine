@@ -394,7 +394,9 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getExternalIp");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString(""));
+                let result = method.call(interpreter);
+                expect(result).toBeInstanceOf(BrsString);
+                expect(interpreter.isValidIp(result.value)).toBe(true);
             });
         });
         describe("getIPAddrs", () => {
