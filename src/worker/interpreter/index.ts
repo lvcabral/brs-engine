@@ -91,6 +91,12 @@ export interface TracePoint {
     signature: Signature;
 }
 
+/** The definition of a local file data with parsed url and volume */
+export interface LocalFileData {
+    url: URL | undefined;
+    volume: FileSystem | undefined;
+}
+
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private readonly _startTime = Date.now();
     private readonly _stack = new Array<TracePoint>();
@@ -1922,6 +1928,29 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     // Helper methods
+
+    /**
+     * Returns the file data for a given url
+     * @param urlString the url string
+     * @returns the file data (parsed url and volume)
+     */
+    getFileData(urlString: string): LocalFileData {
+        const fileData: LocalFileData = {
+            url: undefined,
+            volume: undefined,
+        };
+        try {
+            fileData.url = new URL(urlString);
+            fileData.volume = this.fileSystem.get(fileData.url.protocol);
+        } catch (e: any) {
+            if (this.isDevMode) {
+                this.stderr.write(
+                    `warning,[interpreter.getFileData] URL ${urlString}: ${e.message}`
+                );
+            }
+        }
+        return fileData;
+    }
 
     /**
      * Returns the Backtrace formatted as a string or an array

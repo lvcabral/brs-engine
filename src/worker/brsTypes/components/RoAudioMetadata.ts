@@ -27,21 +27,20 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     }
 
     private loadFile(interpreter: Interpreter, file: string) {
-        let url = new URL(file);
         let audio: Buffer | undefined;
-        const volume = interpreter.fileSystem.get(url.protocol);
-        if (volume) {
+        const fileData = interpreter.getFileData(file);
+        if (fileData.url && fileData.volume) {
             try {
-                audio = volume.readFileSync(url.pathname);
+                audio = fileData.volume.readFileSync(fileData.url.pathname);
             } catch (err: any) {
                 if (interpreter.isDevMode) {
                     interpreter.stderr.write(
-                        `warning,[roAudioMetadata] Error loading audio:${url.pathname} - ${err.message}`
+                        `warning,[roAudioMetadata] Error loading audio:${file} - ${err.message}`
                     );
                 }
             }
         } else if (interpreter.isDevMode) {
-            interpreter.stderr.write(`warning,[roAudioMetadata] Invalid volume:${url.pathname}`);
+            interpreter.stderr.write(`warning,[roAudioMetadata] Invalid file/volume:${file}`);
         }
         if (audio instanceof Buffer) {
             return new DataView(audio.buffer);

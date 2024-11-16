@@ -175,10 +175,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
-                const url = new URL(filepath.value);
-                const volume = interpreter.fileSystem.get(url.protocol);
-                if (volume) {
-                    let array: Uint8Array = volume.readFileSync(url.pathname);
+                const fileData = interpreter.getFileData(filepath.value);
+                if (fileData.url && fileData.volume) {
+                    let array: Uint8Array = fileData.volume.readFileSync(fileData.url.pathname);
                     if (index.getValue() > 0 || length.getValue() > 0) {
                         let start = index.getValue();
                         let end = length.getValue() < 1 ? undefined : start + length.getValue();
