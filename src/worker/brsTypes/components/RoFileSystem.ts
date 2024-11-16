@@ -355,7 +355,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                     result.set(
                         new BrsString("permissions"),
                         new BrsString(
-                            fileData.url.protocol === "tmp:" || fileData.url.protocol === "cachefs:" ? "rw" : "r"
+                            fileData.url.protocol === "tmp:" || fileData.url.protocol === "cachefs:"
+                                ? "rw"
+                                : "r"
                         )
                     );
                     result.set(
