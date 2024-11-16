@@ -7,6 +7,9 @@ import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
+/// #if !BROWSER
+import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
+/// #endif
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -914,7 +917,32 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const url = "https://api.ipify.org";
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open("GET", url, false); // Note: synchronous
+                xhr.responseType = "text";
+                xhr.send();
+                if (xhr.status !== 200) {
+                    if (interpreter.isDevMode) {
+                        interpreter.stderr.write(
+                            `warning,[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`
+                        );
+                    }
+                    return new BrsString("");
+                }
+                const ip = xhr.responseText;
+                if (interpreter.isValidIp(ip)) {
+                    return new BrsString(ip);
+                }
+            } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(
+                        `warning,[getExternalIp] Error getting ${url}: ${err.message}`
+                    );
+                }
+            }
             return new BrsString("");
         },
     });
