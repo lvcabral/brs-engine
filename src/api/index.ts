@@ -140,13 +140,13 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     // Shared buffer (Keys, Sounds and Debug Commands)
     const length = dataBufferIndex + dataBufferSize;
-    if (self.crossOriginIsolated || context.inElectron) {
+    try {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-    } else {
+    } catch (error) {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
         apiException(
             "warning",
-            `[api] Remote control emulation will not work as SharedArrayBuffer is not enabled, ` +
+            `[api] Remote control simulation will not work as SharedArrayBuffer is not enabled, ` +
                 `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
         );
     }
