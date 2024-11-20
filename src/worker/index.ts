@@ -30,10 +30,10 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
-import bslCore from "./common/v30/bslCore.brs";
-import bslDefender from "./common/v30/bslDefender.brs";
-import Roku_Ads from "./common/Roku_Ads.brs";
-import RokuBrowser from "./common/RokuBrowser.brs";
+import bslCore from "./libraries/common/v30/bslCore.brs";
+import bslDefender from "./libraries/common/v30/bslDefender.brs";
+import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
+import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
 
 export * as lexer from "./lexer";
@@ -369,6 +369,10 @@ function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
         volume.mkdirSync("/LibCore/v30");
         volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
         volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
+        volume.mkdirSync("/roku_ads");
+        volume.writeFileSync("/roku_ads/Roku_Ads.brs", Roku_Ads);
+        volume.mkdirSync("/roku_browser");
+        volume.writeFileSync("/roku_browser/RokuBrowser.brs", RokuBrowser);
     }
 }
 

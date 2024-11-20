@@ -27,4 +27,8 @@ sub main()
     print fs.GetDirectoryListing("tmp:/")
     print fs.delete("tmp:/source")
     print fs.GetDirectoryListing("tmp:/")
+    print fs.GetDirectoryListing("common:/")
+    print fs.GetDirectoryListing("common:/roku_browser/")
+    print ReadAsciiFile("common:/roku_browser/RokuBrowser.brs")
+    print fs.GetDirectoryListing("common:/fonts/")
 end sub
