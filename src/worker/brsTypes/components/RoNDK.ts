@@ -26,21 +26,21 @@ export class RoNDK extends BrsComponent implements BrsValue {
     // ifNDK ------------------------------------------------------------------------------------
 
     /** Starts a NDK application. There is no public documentation for this component
-     *  this implementation is based on some examples shared by Roku developers.
+     *  this implementation is based on some examples found on the internet.
      */
     private readonly start = new Callable("start", {
         signature: {
             args: [
                 new StdlibArgument("app", ValueKind.String),
-                new StdlibArgument("params", ValueKind.Object),
+                new StdlibArgument("params", ValueKind.Object, new RoArray([])),
+                new StdlibArgument("env", ValueKind.Object, new RoArray([])),
             ],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, app: BrsString, params: RoArray) => {
-            // Filter parameters that are strings
-            const stringElements = params.elements.filter((el) => isBrsString(el));
-            const csvString = stringElements.map((el) => el.toString()).join(",");
-            postMessage(`ndk,${app.value},${csvString}`);
+        impl: (_: Interpreter, app: BrsString, params: RoArray, _env: RoArray) => {
+            const stringParams = params.elements.filter((el) => isBrsString(el));
+            const csvParams = stringParams.map((el) => el.toString()).join(",");
+            postMessage(`ndk,${app.value},${csvParams}`);
             return new Int32(0);
         },
     });
