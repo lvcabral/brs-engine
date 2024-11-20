@@ -71,6 +71,7 @@ brs.subscribe("app", (event, data) => {
         }
     } else if (event === "browser") {
         if (data?.url) {
+            // TODO: Handle the scenario of internal files (file://...)
             const newWindow = window.open(
                 data.url,
                 "_blank",
