@@ -239,6 +239,22 @@ exports[`parser indexing multi-level dotted 1`] = `
           "text": "foo",
         },
       },
+      "token": {
+        "isReserved": false,
+        "kind": "Dot",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": ".",
+      },
     },
   },
 ]
@@ -368,7 +384,39 @@ exports[`parser indexing multi-level mixed 1`] = `
               "text": "foo",
             },
           },
+          "token": {
+            "isReserved": false,
+            "kind": "Dot",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": ".",
+          },
         },
+      },
+      "token": {
+        "isReserved": false,
+        "kind": "Dot",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": ".",
       },
     },
   },
@@ -541,6 +589,22 @@ exports[`parser indexing one level dotted 1`] = `
           },
           "text": "foo",
         },
+      },
+      "token": {
+        "isReserved": false,
+        "kind": "Dot",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": ".",
       },
     },
   },

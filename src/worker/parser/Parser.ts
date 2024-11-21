@@ -1588,6 +1588,7 @@ export class Parser {
                     if (match(Lexeme.LeftSquare)) {
                         indexedGet();
                     } else {
+                        const dotToken = previous();
                         while (match(Lexeme.Newline));
 
                         let name = consume(
@@ -1599,7 +1600,7 @@ export class Parser {
                         // force it into an identifier so the AST makes some sense
                         name.kind = Lexeme.Identifier;
                         countIdentifier(name.text);
-                        expr = new Expr.DottedGet(expr, name as Identifier);
+                        expr = new Expr.DottedGet(expr, name as Identifier, dotToken);
                     }
                 } else {
                     break;

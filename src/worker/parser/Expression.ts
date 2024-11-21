@@ -107,7 +107,7 @@ export class AtSignGet implements Expression {
 }
 
 export class DottedGet implements Expression {
-    constructor(readonly obj: Expression, readonly name: Identifier) {}
+    constructor(readonly obj: Expression, readonly name: Identifier, readonly token: Token) {}
 
     accept<R>(visitor: Visitor<R>): R {
         return visitor.visitDottedGet(this);

@@ -1301,9 +1301,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._dotLevel++;
         }
         let source = this.evaluate(expression.obj);
+        if (source instanceof BrsInvalid && expression.token.text !== "?.") {
+            this.addError(
+                new RuntimeError(RuntimeErrorDetail.DotOnNonObject, expression.name.location)
+            );
+        }
         let boxedSource = isBoxable(source) ? source.box() : source;
-
-        // TODO: Short-circuit if the source is invalid or uninitialized (consider the ?. operator)
 
         if (boxedSource instanceof BrsComponent) {
             if (boxedSource.hasInterface(expression.name.text)) {

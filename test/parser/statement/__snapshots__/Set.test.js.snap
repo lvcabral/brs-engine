@@ -438,6 +438,22 @@ exports[`parser indexed assignment dotted assignment operator 1`] = `
             "text": "foo",
           },
         },
+        "token": {
+          "isReserved": false,
+          "kind": "Dot",
+          "literal": undefined,
+          "location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": ".",
+        },
       },
       "right": Literal {
         "_location": {
