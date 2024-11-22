@@ -20,7 +20,7 @@ import {
     AppData,
     AppExitReason,
 } from "../worker/common";
-import models from "../worker/libraries/models.csv";
+import models from "../worker/libraries/common/models.csv";
 import packageInfo from "../../package.json";
 
 // Default Device Data
