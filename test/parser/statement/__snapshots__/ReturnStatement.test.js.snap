@@ -72,6 +72,7 @@ exports[`parser return statements parses expression returns 1`] = `
                 },
                 "text": ")",
               },
+              "optional": false,
             },
           },
         ],

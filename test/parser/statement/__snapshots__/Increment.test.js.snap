@@ -184,6 +184,7 @@ exports[`parser postfix unary expressions parses postfix '++' for indexed get ex
           "text": "obj",
         },
       },
+      "optional": false,
     },
   },
 ]
@@ -284,22 +285,7 @@ exports[`parser postfix unary expressions parses postfix '--' for dotted get exp
           "text": "obj",
         },
       },
-      "token": {
-        "isReserved": false,
-        "kind": "Dot",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": ".",
-      },
+      "optional": false,
     },
   },
 ]

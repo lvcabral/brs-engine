@@ -1541,6 +1541,7 @@ export class Parser {
             let expr = primary();
 
             function indexedGet() {
+                const optional = previous().text === "?[";
                 let elements: Expression[] = [];
 
                 while (match(Lexeme.Newline));
@@ -1566,7 +1567,7 @@ export class Parser {
                     Lexeme.RightSquare
                 );
 
-                expr = new Expr.IndexedGet(expr, elements, closingSquare);
+                expr = new Expr.IndexedGet(expr, elements, closingSquare, optional);
             }
 
             while (true) {
@@ -1575,6 +1576,7 @@ export class Parser {
                 } else if (match(Lexeme.LeftSquare)) {
                     indexedGet();
                 } else if (match(Lexeme.AtSymbol)) {
+                    const optional = previous().text === "?@";
                     while (match(Lexeme.Newline));
                     let name = consume(
                         "Expected identifier name after '@'",
@@ -1583,12 +1585,12 @@ export class Parser {
                     );
                     // force it into an identifier so the AST makes some sense
                     name.kind = Lexeme.Identifier;
-                    expr = new Expr.AtSignGet(expr, name as Identifier);
+                    expr = new Expr.AtSignGet(expr, name as Identifier, optional);
                 } else if (match(Lexeme.Dot)) {
                     if (match(Lexeme.LeftSquare)) {
                         indexedGet();
                     } else {
-                        const dotToken = previous();
+                        const optional = previous().text === "?.";
                         while (match(Lexeme.Newline));
 
                         let name = consume(
@@ -1600,7 +1602,7 @@ export class Parser {
                         // force it into an identifier so the AST makes some sense
                         name.kind = Lexeme.Identifier;
                         countIdentifier(name.text);
-                        expr = new Expr.DottedGet(expr, name as Identifier, dotToken);
+                        expr = new Expr.DottedGet(expr, name as Identifier, optional);
                     }
                 } else {
                     break;
@@ -1611,6 +1613,7 @@ export class Parser {
         }
 
         function finishCall(callee: Expression): Expression {
+            const optional = previous().text === "?(";
             let args = [];
             while (match(Lexeme.Newline));
 
@@ -1647,7 +1650,7 @@ export class Parser {
                     }
                 }
             }
-            return new Expr.Call(callee, closingParen, args);
+            return new Expr.Call(callee, closingParen, args, optional);
         }
 
         function primary(): Expression {

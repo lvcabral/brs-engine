@@ -2585,23 +2585,7 @@ exports[`parser if statements dotted set in else block 1`] = `
                 "text": "m",
               },
             },
-            "token": {
-              "isReserved": false,
-              "kind": "Dot",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": 53,
-                  "line": 2,
-                },
-                "file": "",
-                "start": {
-                  "column": 52,
-                  "line": 2,
-                },
-              },
-              "text": ".",
-            },
+            "optional": false,
           },
           "value": Literal {
             "_location": {
@@ -2692,23 +2676,7 @@ exports[`parser if statements dotted set in else block 1`] = `
                 "text": "m",
               },
             },
-            "token": {
-              "isReserved": false,
-              "kind": "Dot",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": 27,
-                  "line": 2,
-                },
-                "file": "",
-                "start": {
-                  "column": 26,
-                  "line": 2,
-                },
-              },
-              "text": ".",
-            },
+            "optional": false,
           },
           "value": Literal {
             "_location": {
@@ -3455,41 +3423,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                   "text": "component",
                 },
               },
-              "token": {
-                "isReserved": false,
-                "kind": "Dot",
-                "literal": undefined,
-                "location": {
-                  "end": {
-                    "column": 30,
-                    "line": 2,
-                  },
-                  "file": "",
-                  "start": {
-                    "column": 29,
-                    "line": 2,
-                  },
-                },
-                "text": ".",
-              },
+              "optional": false,
             },
-            "token": {
-              "isReserved": false,
-              "kind": "Dot",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": 40,
-                  "line": 2,
-                },
-                "file": "",
-                "start": {
-                  "column": 39,
-                  "line": 2,
-                },
-              },
-              "text": ".",
-            },
+            "optional": false,
           },
         ],
         "callee": Variable {
@@ -3528,6 +3464,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
           },
           "text": ")",
         },
+        "optional": false,
       },
       "right": Literal {
         "_location": {
@@ -3689,59 +3626,11 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "m",
                     },
                   },
-                  "token": {
-                    "isReserved": false,
-                    "kind": "Dot",
-                    "literal": undefined,
-                    "location": {
-                      "end": {
-                        "column": 25,
-                        "line": 8,
-                      },
-                      "file": "",
-                      "start": {
-                        "column": 24,
-                        "line": 8,
-                      },
-                    },
-                    "text": ".",
-                  },
+                  "optional": false,
                 },
-                "token": {
-                  "isReserved": false,
-                  "kind": "Dot",
-                  "literal": undefined,
-                  "location": {
-                    "end": {
-                      "column": 31,
-                      "line": 8,
-                    },
-                    "file": "",
-                    "start": {
-                      "column": 30,
-                      "line": 8,
-                    },
-                  },
-                  "text": ".",
-                },
+                "optional": false,
               },
-              "token": {
-                "isReserved": false,
-                "kind": "Dot",
-                "literal": undefined,
-                "location": {
-                  "end": {
-                    "column": 35,
-                    "line": 8,
-                  },
-                  "file": "",
-                  "start": {
-                    "column": 34,
-                    "line": 8,
-                  },
-                },
-                "text": ".",
-              },
+              "optional": false,
             },
             "closingParen": {
               "isReserved": false,
@@ -3760,6 +3649,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
               },
               "text": ")",
             },
+            "optional": false,
           },
         },
       ],
@@ -3824,41 +3714,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "component",
                     },
                   },
-                  "token": {
-                    "isReserved": false,
-                    "kind": "Dot",
-                    "literal": undefined,
-                    "location": {
-                      "end": {
-                        "column": 35,
-                        "line": 5,
-                      },
-                      "file": "",
-                      "start": {
-                        "column": 34,
-                        "line": 5,
-                      },
-                    },
-                    "text": ".",
-                  },
+                  "optional": false,
                 },
-                "token": {
-                  "isReserved": false,
-                  "kind": "Dot",
-                  "literal": undefined,
-                  "location": {
-                    "end": {
-                      "column": 45,
-                      "line": 5,
-                    },
-                    "file": "",
-                    "start": {
-                      "column": 44,
-                      "line": 5,
-                    },
-                  },
-                  "text": ".",
-                },
+                "optional": false,
               },
             ],
             "callee": Variable {
@@ -3897,6 +3755,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
               },
               "text": ")",
             },
+            "optional": false,
           },
           "right": Literal {
             "_location": {
@@ -4038,41 +3897,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "component",
                     },
                   },
-                  "token": {
-                    "isReserved": false,
-                    "kind": "Dot",
-                    "literal": undefined,
-                    "location": {
-                      "end": {
-                        "column": 33,
-                        "line": 6,
-                      },
-                      "file": "",
-                      "start": {
-                        "column": 32,
-                        "line": 6,
-                      },
-                    },
-                    "text": ".",
-                  },
+                  "optional": false,
                 },
-                "token": {
-                  "isReserved": false,
-                  "kind": "Dot",
-                  "literal": undefined,
-                  "location": {
-                    "end": {
-                      "column": 43,
-                      "line": 6,
-                    },
-                    "file": "",
-                    "start": {
-                      "column": 42,
-                      "line": 6,
-                    },
-                  },
-                  "text": ".",
-                },
+                "optional": false,
               },
             },
           ],
@@ -4186,41 +4013,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "component",
                     },
                   },
-                  "token": {
-                    "isReserved": false,
-                    "kind": "Dot",
-                    "literal": undefined,
-                    "location": {
-                      "end": {
-                        "column": 48,
-                        "line": 3,
-                      },
-                      "file": "",
-                      "start": {
-                        "column": 47,
-                        "line": 3,
-                      },
-                    },
-                    "text": ".",
-                  },
+                  "optional": false,
                 },
-                "token": {
-                  "isReserved": false,
-                  "kind": "Dot",
-                  "literal": undefined,
-                  "location": {
-                    "end": {
-                      "column": 58,
-                      "line": 3,
-                    },
-                    "file": "",
-                    "start": {
-                      "column": 57,
-                      "line": 3,
-                    },
-                  },
-                  "text": ".",
-                },
+                "optional": false,
               },
             ],
             "callee": DottedGet {
@@ -4278,41 +4073,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                     "text": "m",
                   },
                 },
-                "token": {
-                  "isReserved": false,
-                  "kind": "Dot",
-                  "literal": undefined,
-                  "location": {
-                    "end": {
-                      "column": 25,
-                      "line": 3,
-                    },
-                    "file": "",
-                    "start": {
-                      "column": 24,
-                      "line": 3,
-                    },
-                  },
-                  "text": ".",
-                },
+                "optional": false,
               },
-              "token": {
-                "isReserved": false,
-                "kind": "Dot",
-                "literal": undefined,
-                "location": {
-                  "end": {
-                    "column": 31,
-                    "line": 3,
-                  },
-                  "file": "",
-                  "start": {
-                    "column": 30,
-                    "line": 3,
-                  },
-                },
-                "text": ".",
-              },
+              "optional": false,
             },
             "closingParen": {
               "isReserved": false,
@@ -4331,6 +4094,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
               },
               "text": ")",
             },
+            "optional": false,
           },
         },
         If {
@@ -4495,41 +4259,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                         "text": "m",
                       },
                     },
-                    "token": {
-                      "isReserved": false,
-                      "kind": "Dot",
-                      "literal": undefined,
-                      "location": {
-                        "end": {
-                          "column": 48,
-                          "line": 4,
-                        },
-                        "file": "",
-                        "start": {
-                          "column": 47,
-                          "line": 4,
-                        },
-                      },
-                      "text": ".",
-                    },
+                    "optional": false,
                   },
-                  "token": {
-                    "isReserved": false,
-                    "kind": "Dot",
-                    "literal": undefined,
-                    "location": {
-                      "end": {
-                        "column": 54,
-                        "line": 4,
-                      },
-                      "file": "",
-                      "start": {
-                        "column": 53,
-                        "line": 4,
-                      },
-                    },
-                    "text": ".",
-                  },
+                  "optional": false,
                 },
               },
             ],

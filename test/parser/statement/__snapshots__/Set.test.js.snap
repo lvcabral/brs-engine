@@ -109,6 +109,7 @@ exports[`parser indexed assignment bracketed assignment operator 1`] = `
             "text": "someArray",
           },
         },
+        "optional": false,
       },
       "right": Literal {
         "_location": {
@@ -438,22 +439,7 @@ exports[`parser indexed assignment dotted assignment operator 1`] = `
             "text": "foo",
           },
         },
-        "token": {
-          "isReserved": false,
-          "kind": "Dot",
-          "literal": undefined,
-          "location": {
-            "end": {
-              "column": -9,
-              "line": -9,
-            },
-            "start": {
-              "column": -9,
-              "line": -9,
-            },
-          },
-          "text": ".",
-        },
+        "optional": false,
       },
       "right": Literal {
         "_location": {

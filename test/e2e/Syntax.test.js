@@ -129,6 +129,21 @@ describe("end to end syntax", () => {
         ]);
     });
 
+    test("optional-chaining-operators.brs", async () => {
+        await execute([resourceFile("optional-chaining-operators.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "invalid",
+            "invalid",
+            "invalid",
+            "invalid",
+            "invalid",
+            "invalid",
+            "invalid",
+            "invalid as string",
+        ]);
+    });
+
     test("conditionals.brs", async () => {
         await execute([resourceFile("conditionals.brs")], outputStreams);
 
