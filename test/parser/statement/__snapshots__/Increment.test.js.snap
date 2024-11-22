@@ -184,6 +184,7 @@ exports[`parser postfix unary expressions parses postfix '++' for indexed get ex
           "text": "obj",
         },
       },
+      "optional": false,
     },
   },
 ]
@@ -284,6 +285,7 @@ exports[`parser postfix unary expressions parses postfix '--' for dotted get exp
           "text": "obj",
         },
       },
+      "optional": false,
     },
   },
 ]
