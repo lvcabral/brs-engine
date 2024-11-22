@@ -52,7 +52,8 @@ export class Call implements Expression {
     constructor(
         readonly callee: Expression,
         readonly closingParen: Token,
-        readonly args: Expression[]
+        readonly args: Expression[],
+        readonly optional: boolean = false
     ) {}
 
     accept<R>(visitor: Visitor<R>): R {
@@ -91,7 +92,11 @@ export class Function implements Expression {
 }
 
 export class AtSignGet implements Expression {
-    constructor(readonly obj: Expression, readonly name: Identifier) {}
+    constructor(
+        readonly obj: Expression,
+        readonly name: Identifier,
+        readonly optional: boolean = false
+    ) {}
 
     accept<R>(visitor: Visitor<R>): R {
         return visitor.visitAtSignGet(this);
@@ -107,7 +112,11 @@ export class AtSignGet implements Expression {
 }
 
 export class DottedGet implements Expression {
-    constructor(readonly obj: Expression, readonly name: Identifier) {}
+    constructor(
+        readonly obj: Expression,
+        readonly name: Identifier,
+        readonly optional: boolean = false
+    ) {}
 
     accept<R>(visitor: Visitor<R>): R {
         return visitor.visitDottedGet(this);
@@ -126,7 +135,8 @@ export class IndexedGet implements Expression {
     constructor(
         readonly obj: Expression,
         readonly indexes: Expression[],
-        readonly closingSquare: Token
+        readonly closingSquare: Token,
+        readonly optional: boolean = false
     ) {}
 
     accept<R>(visitor: Visitor<R>): R {

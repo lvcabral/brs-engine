@@ -72,6 +72,7 @@ exports[`parser call expressions accepts arguments 1`] = `
         },
         "text": ")",
       },
+      "optional": false,
     },
   },
 ]
@@ -116,6 +117,7 @@ exports[`parser call expressions allows closing parentheses on separate line 1`]
         },
         "text": ")",
       },
+      "optional": false,
     },
   },
 ]
@@ -510,6 +512,7 @@ exports[`parser call expressions parses named function calls 1`] = `
         },
         "text": ")",
       },
+      "optional": false,
     },
   },
 ]

@@ -2585,6 +2585,7 @@ exports[`parser if statements dotted set in else block 1`] = `
                 "text": "m",
               },
             },
+            "optional": false,
           },
           "value": Literal {
             "_location": {
@@ -2675,6 +2676,7 @@ exports[`parser if statements dotted set in else block 1`] = `
                 "text": "m",
               },
             },
+            "optional": false,
           },
           "value": Literal {
             "_location": {
@@ -3421,7 +3423,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                   "text": "component",
                 },
               },
+              "optional": false,
             },
+            "optional": false,
           },
         ],
         "callee": Variable {
@@ -3460,6 +3464,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
           },
           "text": ")",
         },
+        "optional": false,
       },
       "right": Literal {
         "_location": {
@@ -3621,8 +3626,11 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "m",
                     },
                   },
+                  "optional": false,
                 },
+                "optional": false,
               },
+              "optional": false,
             },
             "closingParen": {
               "isReserved": false,
@@ -3641,6 +3649,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
               },
               "text": ")",
             },
+            "optional": false,
           },
         },
       ],
@@ -3705,7 +3714,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "component",
                     },
                   },
+                  "optional": false,
                 },
+                "optional": false,
               },
             ],
             "callee": Variable {
@@ -3744,6 +3755,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
               },
               "text": ")",
             },
+            "optional": false,
           },
           "right": Literal {
             "_location": {
@@ -3885,7 +3897,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "component",
                     },
                   },
+                  "optional": false,
                 },
+                "optional": false,
               },
             },
           ],
@@ -3999,7 +4013,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                       "text": "component",
                     },
                   },
+                  "optional": false,
                 },
+                "optional": false,
               },
             ],
             "callee": DottedGet {
@@ -4057,7 +4073,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                     "text": "m",
                   },
                 },
+                "optional": false,
               },
+              "optional": false,
             },
             "closingParen": {
               "isReserved": false,
@@ -4076,6 +4094,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
               },
               "text": ")",
             },
+            "optional": false,
           },
         },
         If {
@@ -4240,7 +4259,9 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
                         "text": "m",
                       },
                     },
+                    "optional": false,
                   },
+                  "optional": false,
                 },
               },
             ],

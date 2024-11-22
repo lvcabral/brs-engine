@@ -275,7 +275,6 @@ export class Lexer {
                     break;
                 case "?":
                     switch (peek()) {
-                        // TODO: support optional chaining properly
                         case ".":
                             advance();
                             addToken(Lexeme.Dot);
@@ -286,7 +285,7 @@ export class Lexer {
                             break;
                         case "[":
                             advance();
-                            addToken(Lexeme.LeftBrace);
+                            addToken(Lexeme.LeftSquare);
                             break;
                         case "@":
                             advance();

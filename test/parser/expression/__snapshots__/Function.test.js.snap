@@ -2822,6 +2822,7 @@ exports[`parser usage allows sub expressions in call arguments 1`] = `
         },
         "text": ")",
       },
+      "optional": false,
     },
   },
 ]

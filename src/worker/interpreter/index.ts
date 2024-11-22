@@ -1149,6 +1149,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let args = expression.args.map(this.evaluate, this);
 
         if (!isBrsCallable(callee)) {
+            if (callee instanceof BrsInvalid && expression.optional) {
+                return callee;
+            }
             this.addError(
                 new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location)
             );
@@ -1276,7 +1279,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitAtSignGet(expression: Expr.AtSignGet) {
         let source = this.evaluate(expression.obj);
-
+        if (source instanceof BrsInvalid && expression.optional) {
+            return source;
+        }
         if (isIterable(source) && (source instanceof RoXMLElement || source instanceof RoXMLList)) {
             try {
                 return source.getAttribute(new BrsString(expression.name.text));
@@ -1302,8 +1307,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         let source = this.evaluate(expression.obj);
         let boxedSource = isBoxable(source) ? source.box() : source;
-
-        // TODO: Short-circuit if the source is invalid or uninitialized (consider the ?. operator)
 
         if (boxedSource instanceof BrsComponent) {
             if (boxedSource.hasInterface(expression.name.text)) {
@@ -1335,21 +1338,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         if (boxedSource instanceof BrsComponent) {
+            // This check is supposed to be placed below the try/catch block,
+            // but it's here to mimic the behavior of Roku, if they fix, we move it.
+            if (source instanceof BrsInvalid && expression.optional) {
+                return source;
+            }
             try {
                 return boxedSource.getMethod(expression.name.text) ?? BrsInvalid.Instance;
             } catch (err: any) {
                 this.addError(new BrsError(err.message, expression.name.location));
             }
-        } else {
-            this.addError(
-                new RuntimeError(RuntimeErrorDetail.DotOnNonObject, expression.name.location)
-            );
         }
+        this.addError(
+            new RuntimeError(RuntimeErrorDetail.DotOnNonObject, expression.name.location)
+        );
     }
 
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
         let source = this.evaluate(expression.obj);
         if (!isIterable(source)) {
+            if (source instanceof BrsInvalid && expression.optional) {
+                return source;
+            }
             this.addError(new RuntimeError(RuntimeErrorDetail.UndimmedArray, expression.location));
         }
 
