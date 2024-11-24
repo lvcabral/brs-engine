@@ -184,9 +184,7 @@ function closeApp() {
     fileSelector.value = null;
     if (document.fullscreenElement) {
         document.exitFullscreen().catch((err) => {
-            console.error(
-                `Error attempting to exit fullscreen mode: ${err.message} (${err.name})`
-            );
+            console.error(`Error attempting to exit fullscreen mode: ${err.message} (${err.name})`);
         });
     }
 }
@@ -292,13 +290,13 @@ function openBrowser(url, width, height) {
                 },
             },
         },
-    }
+    };
     BrowserFS.configure(fsOptions, (err) => {
         if (err) {
             return console.error(err);
         }
         OpenLocalFile(filePath, width, height);
-     });
+    });
 }
 
 // Function called when BrowserFS is ready
@@ -350,9 +348,7 @@ function replaceRelativePaths(html, fs, basePath) {
                     reject(err);
                     return;
                 }
-                const base64Data = btoa(
-                    String.fromCharCode.apply(null, new Uint8Array(fileData))
-                );
+                const base64Data = btoa(String.fromCharCode.apply(null, new Uint8Array(fileData)));
                 let mimeType = "application/octet-stream";
                 const extension = path.extname(p1).replace(/^\./, "");
                 if (extension !== "") {
@@ -371,7 +367,6 @@ function replaceRelativePaths(html, fs, basePath) {
 
     return Promise.all(promises).then(() => html);
 }
-
 
 function openPopup(url, width, height) {
     const newWindow = window.open(url, "_blank", `width=${width},height=${height},popup`);
