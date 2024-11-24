@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int32, isBrsString, RoArray, RoMessagePort } from "..";
+import { BrsType, Int32, isBrsString, RoArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 

@@ -76,22 +76,7 @@ brs.subscribe("app", (event, data) => {
             openBrowser(data.url, data.width, data.height);
         }
     } else if (event === "closed" || event === "error") {
-        currentApp = { id: "", running: false };
-        currentZip = null;
-        display.style.opacity = 0;
-        channelInfo.innerHTML = "<br/>";
-        fileButton.style.visibility = "visible";
-        loading.style.visibility = "hidden";
-        stats.style.visibility = "hidden";
-        channelIcons("visible");
-        fileSelector.value = null;
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch((err) => {
-                console.error(
-                    `Error attempting to exit fullscreen mode: ${err.message} (${err.name})`
-                );
-            });
-        }
+        closeApp();
     } else if (event === "debug") {
         if (["stop", "pause", "continue"].includes(data.level)) {
             debugMode = data.level;
@@ -184,6 +169,26 @@ function loadZip(zip) {
         .catch((err) => {
             console.error(`Error attempting to load zip: ${err.message} (${err.name})`);
         });
+}
+
+// Clear App data and display
+function closeApp() {
+    currentApp = { id: "", running: false };
+    currentZip = null;
+    display.style.opacity = 0;
+    channelInfo.innerHTML = "<br/>";
+    fileButton.style.visibility = "visible";
+    loading.style.visibility = "hidden";
+    stats.style.visibility = "hidden";
+    channelIcons("visible");
+    fileSelector.value = null;
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch((err) => {
+            console.error(
+                `Error attempting to exit fullscreen mode: ${err.message} (${err.name})`
+            );
+        });
+    }
 }
 
 // Display Fullscreen control
