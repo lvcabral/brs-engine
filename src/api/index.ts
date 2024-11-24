@@ -270,7 +270,7 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
 }
 
 // Restore engine state and terminate Worker
-export function terminate(reason: AppExitReason) {
+export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
     if (currentApp.running) {
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
@@ -453,6 +453,25 @@ function workerCallback(event: MessageEvent) {
         notifyAll("reset");
     } else if (event.data.startsWith("version,")) {
         notifyAll("version", event.data.slice(8));
+    } else if (event.data.startsWith("ndk,")) {
+        const data = event.data.split(",");
+        if (data[1] === "roku_browser") {
+            const params = JSON.parse(data.slice(2).join(","));
+            let winDim = deviceData.displayMode === "1080p" ? ["1920", "1080"] : ["1280", "720"];
+            if (
+                params.windowSize?.toLowerCase() === "1280x720" ||
+                params.windowSize?.toLowerCase() === "1920x1080"
+            ) {
+                winDim = params.windowSize.split("x");
+            }
+            notifyAll("browser", {
+                url: params.url,
+                width: parseInt(winDim[0]),
+                height: parseInt(winDim[1]),
+            });
+        } else {
+            notifyAll("launch", { app: data[1], params: data[2] });
+        }
     }
 }
 
