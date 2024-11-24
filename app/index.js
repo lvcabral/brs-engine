@@ -263,6 +263,7 @@ window.onblur = function () {
     }
 };
 
+// Browser Event Handler
 function openBrowser(url, width, height) {
     if (!url.startsWith("file://")) {
         openPopup(url, width, height);
@@ -273,97 +274,99 @@ function openBrowser(url, width, height) {
         return;
     }
     const Buffer = BrowserFS.BFSRequire("buffer").Buffer;
-    const path = BrowserFS.BFSRequire("path");
-
     const filePath = url.replace("file:///pkg_", "");
-    const basePath = path.dirname(filePath);
 
-    // Configure BrowserFS to use InMemory and mount ZipFS at /zip
-    BrowserFS.configure(
-        {
-            fs: "MountableFileSystem",
-            options: {
-                "pkg:": {
-                    fs: "ZipFS",
-                    options: {
-                        zipData: Buffer.from(currentZip),
-                    },
+    // Configure BrowserFS
+    const fsOptions = {
+        fs: "MountableFileSystem",
+        options: {
+            "pkg:": {
+                fs: "ZipFS",
+                options: {
+                    zipData: Buffer.from(currentZip),
                 },
             },
         },
-        function (err) {
-            if (err) {
-                return console.error(err);
-            }
-            const fs = BrowserFS.BFSRequire("fs");
-            fs.readFile(`pkg:/${filePath}`, "utf8", function (err, data) {
-                if (err) {
-                    return console.error(err);
-                }
-
-                // Function to replace relative paths with base64 URLs and add crossorigin attribute
-                function replaceRelativePaths(html, fs, basePath) {
-                    const imgRegex = /<img[^>]+src="([^">]+)"/g;
-                    let match;
-                    const promises = [];
-
-                    function processMatch(match, p1) {
-                        return new Promise((resolve, reject) => {
-                            // Check if the path is relative
-                            if (p1.startsWith("http://") || p1.startsWith("https://")) {
-                                // Add crossorigin attribute to non-local images if it doesn't already exist
-                                if (!match[0].includes("crossorigin=")) {
-                                    html = html.replace(
-                                        match[0],
-                                        match[0].replace("<img", "<img crossorigin='anonymous'")
-                                    );
-                                }
-                                resolve();
-                                return;
-                            }
-
-                            const resolvedPath = path.resolve(basePath, p1);
-                            fs.readFile(`pkg:/${resolvedPath}`, function (err, fileData) {
-                                if (err) {
-                                    console.error(err);
-                                    reject(err);
-                                    return;
-                                }
-                                const base64Data = btoa(
-                                    String.fromCharCode.apply(null, new Uint8Array(fileData))
-                                );
-                                let mimeType = "application/octet-stream";
-                                const extension = path.extname(p1).replace(/^\./, "");
-                                if (extension !== "") {
-                                    mimeType = `image/${extension}`;
-                                }
-                                const dataURL = `data:${mimeType};base64,${base64Data}`;
-                                html = html.replace(p1, dataURL);
-                                resolve();
-                            });
-                        });
-                    }
-
-                    while ((match = imgRegex.exec(html)) !== null) {
-                        promises.push(processMatch(match, match[1]));
-                    }
-
-                    return Promise.all(promises).then(() => html);
-                }
-
-                replaceRelativePaths(data, fs, basePath)
-                    .then((updatedData) => {
-                        // Open a new window to display the content
-                        const popup = openPopup("about:blank", width, height);
-                        popup?.document?.write(updatedData);
-                    })
-                    .catch((err) => {
-                        console.error("Error processing images:", err);
-                    });
-            });
+    }
+    BrowserFS.configure(fsOptions, (err) => {
+        if (err) {
+            return console.error(err);
         }
-    );
+        OpenLocalFile(filePath, width, height);
+     });
 }
+
+// Function called when BrowserFS is ready
+function OpenLocalFile(filePath, width, height) {
+    const path = BrowserFS.BFSRequire("path");
+    const basePath = path.dirname(filePath);
+    const fs = BrowserFS.BFSRequire("fs");
+    fs.readFile(`pkg:/${filePath}`, "utf8", function (err, data) {
+        if (err) {
+            return console.error(err);
+        }
+        replaceRelativePaths(data, fs, basePath)
+            .then((updatedData) => {
+                // Open a new window to display the content
+                const popup = openPopup("about:blank", width, height);
+                popup?.document?.write(updatedData);
+            })
+            .catch((err) => {
+                console.error("Error processing images:", err);
+            });
+    });
+}
+
+// Function to replace relative paths with base64 URLs and add crossorigin attribute
+function replaceRelativePaths(html, fs, basePath) {
+    const imgRegex = /<img[^>]+src="([^">]+)"/g;
+    let match;
+    const promises = [];
+
+    function processMatch(match, p1) {
+        return new Promise((resolve, reject) => {
+            // Check if the path is relative
+            if (p1.startsWith("http://") || p1.startsWith("https://")) {
+                // Add crossorigin attribute to non-local images if it doesn't already exist
+                if (!match[0].includes("crossorigin=")) {
+                    html = html.replace(
+                        match[0],
+                        match[0].replace("<img", "<img crossorigin='anonymous'")
+                    );
+                }
+                resolve();
+                return;
+            }
+            const path = BrowserFS.BFSRequire("path");
+            const resolvedPath = path.resolve(basePath, p1);
+            fs.readFile(`pkg:/${resolvedPath}`, function (err, fileData) {
+                if (err) {
+                    console.error(err);
+                    reject(err);
+                    return;
+                }
+                const base64Data = btoa(
+                    String.fromCharCode.apply(null, new Uint8Array(fileData))
+                );
+                let mimeType = "application/octet-stream";
+                const extension = path.extname(p1).replace(/^\./, "");
+                if (extension !== "") {
+                    mimeType = `image/${extension}`;
+                }
+                const dataURL = `data:${mimeType};base64,${base64Data}`;
+                html = html.replace(p1, dataURL);
+                resolve();
+            });
+        });
+    }
+
+    while ((match = imgRegex.exec(html)) !== null) {
+        promises.push(processMatch(match, match[1]));
+    }
+
+    return Promise.all(promises).then(() => html);
+}
+
 
 function openPopup(url, width, height) {
     const newWindow = window.open(url, "_blank", `width=${width},height=${height},popup`);

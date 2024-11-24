@@ -5,7 +5,6 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
 export class RoNDK extends BrsComponent implements BrsValue {
-    private port?: RoMessagePort;
     readonly kind = ValueKind.Object;
 
     constructor() {
