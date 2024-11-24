@@ -59,14 +59,13 @@ function brsValueOf(x: any): BrsType {
  * Converts a BrsType value to its representation as a JSON string. If no such
  * representation is possible, throws an Error. Objects with cyclical references
  * are rejected.
- * @param {Interpreter} interpreter An Interpreter.
  * @param {BrsType} x Some BrsType value.
  * @param {Set<BrsAggregate>} visited An optional Set of visited of RoArray or
  *   RoAssociativeArray. If not provided, a new Set will be created.
  * @return {string} The JSON string representation of `x`.
  * @throws {Error} If `x` cannot be represented as a JSON string.
  */
-function jsonOf(interpreter: Interpreter, x: BrsType, flags: number = 0, key: string = ""): string {
+function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
     switch (x.kind) {
         case ValueKind.Invalid:
             return "null";
@@ -84,7 +83,7 @@ function jsonOf(interpreter: Interpreter, x: BrsType, flags: number = 0, key: st
                     .getElements()
                     .map((k: BrsString) => {
                         key = k.toString();
-                        return `"${key}":${jsonOf(interpreter, x.get(k), flags, key)}`;
+                        return `"${key}":${jsonOf(x.get(k), flags, key)}`;
                     })
                     .join(",")}}`;
             }
@@ -92,12 +91,12 @@ function jsonOf(interpreter: Interpreter, x: BrsType, flags: number = 0, key: st
                 return `[${x
                     .getElements()
                     .map((el: BrsType) => {
-                        return jsonOf(interpreter, el, flags, key);
+                        return jsonOf(el, flags, key);
                     })
                     .join(",")}]`;
             }
             if (isUnboxable(x)) {
-                return jsonOf(interpreter, x.unbox(), flags, key);
+                return jsonOf(x.unbox(), flags, key);
             }
             break;
         case ValueKind.Callable:
@@ -143,7 +142,7 @@ export const FormatJson = new Callable("FormatJson", {
     },
     impl: (interpreter: Interpreter, x: BrsType, flags: Int32) => {
         try {
-            return new BrsString(jsonOf(interpreter, x, flags.getValue()));
+            return new BrsString(jsonOf(x, flags.getValue()));
         } catch (err: any) {
             if (err instanceof RangeError) {
                 err = new Error("Nested object reference");

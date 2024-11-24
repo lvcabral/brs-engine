@@ -20,6 +20,7 @@ import {
 import { FileSystem } from "./interpreter/FileSystem";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
+import { ParseResults } from "./parser/Parser";
 import * as PP from "./preprocessor";
 import * as BrsError from "./Error";
 import * as BrsTypes from "./brsTypes";
@@ -29,9 +30,10 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
-import bslCore from "./common/v30/bslCore.brs";
-import bslDefender from "./common/v30/bslDefender.brs";
-import Roku_Ads from "./common/Roku_Ads.brs";
+import bslCore from "./libraries/common/v30/bslCore.brs";
+import bslDefender from "./libraries/common/v30/bslDefender.brs";
+import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
+import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
 
 export * as lexer from "./lexer";
@@ -367,6 +369,10 @@ function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
         volume.mkdirSync("/LibCore/v30");
         volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
         volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
+        volume.mkdirSync("/roku_ads");
+        volume.writeFileSync("/roku_ads/Roku_Ads.brs", Roku_Ads);
+        volume.mkdirSync("/roku_browser");
+        volume.writeFileSync("/roku_browser/RokuBrowser.brs", RokuBrowser);
     }
 }
 
@@ -564,9 +570,6 @@ export function lexParseSync(
     const allStatements = new Array<Stmt.Statement>();
     const lib = new Map<string, string>();
     let tokens: Token[] = [];
-    lib.set("v30/bslDefender.brs", "");
-    lib.set("v30/bslCore.brs", "");
-    lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
     let exitReason = AppExitReason.FINISHED;
@@ -590,15 +593,7 @@ export function lexParseSync(
             exitReason = AppExitReason.CRASHED;
             break;
         }
-        if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-            lib.set("v30/bslDefender.brs", bslDefender);
-            lib.set("v30/bslCore.brs", bslCore);
-        } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-            lib.set("v30/bslCore.brs", bslCore);
-        }
-        if (parseResults.libraries.get("Roku_Ads.brs") === true) {
-            lib.set("Roku_Ads.brs", Roku_Ads);
-        }
+        parseLibraries(parseResults, lib);
         allStatements.push(...parseResults.statements);
     }
     if (password.length === 0) {
@@ -714,9 +709,6 @@ function runBinary(
     const parser = new Parser();
     const allStatements = new Array<Stmt.Statement>();
     const lib = new Map<string, string>();
-    lib.set("v30/bslDefender.brs", "");
-    lib.set("v30/bslCore.brs", "");
-    lib.set("Roku_Ads.brs", "");
     lexer.onError(logError);
     parser.onError(logError);
     let tokens: Token[] = [];
@@ -746,15 +738,7 @@ function runBinary(
             if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
                 return { exitReason: AppExitReason.CRASHED };
             }
-            if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-                lib.set("v30/bslDefender.brs", bslDefender);
-                lib.set("v30/bslCore.brs", bslCore);
-            } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-                lib.set("v30/bslCore.brs", bslCore);
-            }
-            if (parseResults.libraries.get("Roku_Ads.brs") === true) {
-                lib.set("Roku_Ads.brs", Roku_Ads);
-            }
+            parseLibraries(parseResults, lib);
             allStatements.push(...parseResults.statements);
             tokens = [];
         }
@@ -776,6 +760,34 @@ function runBinary(
         }
     }
     return { exitReason: exitReason };
+}
+
+/**
+ * Evaluates parsed BrightScript code and add Libraries source
+ * @param parseResults ParseResults object with the parsed code
+ * @param lib Collection with the libraries source code
+ */
+function parseLibraries(parseResults: ParseResults, lib: Map<string, string>) {
+    // Initialize Libraries on first run
+    if (!lib.has("v30/bslDefender.brs")) {
+        lib.set("v30/bslDefender.brs", "");
+        lib.set("v30/bslCore.brs", "");
+        lib.set("Roku_Ads.brs", "");
+        lib.set("RokuBrowser.brs", "");
+    }
+    // Check for Libraries and add to the collection
+    if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
+        lib.set("v30/bslDefender.brs", bslDefender);
+        lib.set("v30/bslCore.brs", bslCore);
+    } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
+        lib.set("v30/bslCore.brs", bslCore);
+    }
+    if (parseResults.libraries.get("Roku_Ads.brs") === true) {
+        lib.set("Roku_Ads.brs", Roku_Ads);
+    }
+    if (parseResults.libraries.get("RokuBrowser.brs") === true) {
+        lib.set("RokuBrowser.brs", RokuBrowser);
+    }
 }
 
 /**

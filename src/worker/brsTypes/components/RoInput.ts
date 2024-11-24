@@ -35,7 +35,7 @@ export class RoInput extends BrsComponent implements BrsValue {
     // ifInput ------------------------------------------------------------------------------------
 
     /** Sets the current Order which must be an roList of roAssociativeArray items. */
-    private readonly eventResponse = new Callable("setOrder", {
+    private readonly eventResponse = new Callable("eventResponse", {
         signature: {
             args: [new StdlibArgument("aa", ValueKind.Object)],
             returns: ValueKind.Boolean,
