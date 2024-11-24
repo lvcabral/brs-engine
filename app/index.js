@@ -72,18 +72,8 @@ brs.subscribe("app", (event, data) => {
             loadZip(data.app);
         }
     } else if (event === "browser") {
-        if (data?.url) {
-            if (data.url.startsWith("file://")) {
-                if (!data.url.startsWith("file:///pkg_")) {
-                    console.error("Error: Invalid file path!");
-                    return;
-                }
-                if (currentZip) {
-                    openLocalFile(data.url, data.width, data.height);
-                }
-                return;
-            }
-            openPopup(data.url, data.width, data.height);
+        if (data?.url && currentZip) {
+            openBrowser(data.url, data.width, data.height);
         }
     } else if (event === "closed" || event === "error") {
         currentApp = { id: "", running: false };
@@ -273,14 +263,20 @@ window.onblur = function () {
     }
 };
 
-function openLocalFile(url, width, height) {
-    let filePath = url.replace("file:///pkg_", "");
+function openBrowser(url, width, height) {
+    if (!url.startsWith("file://")) {
+        openPopup(url, width, height);
+        return;
+    }
+    if (!url.startsWith("file:///pkg_")) {
+        console.error("Error: Invalid local file path!", data.url);
+        return;
+    }
+    const Buffer = BrowserFS.BFSRequire("buffer").Buffer;
+    const path = BrowserFS.BFSRequire("path");
 
-    let Buffer = BrowserFS.BFSRequire("buffer").Buffer;
-    let path = BrowserFS.BFSRequire("path");
-
-    // Extract the base path from the filePath
-    let basePath = path.dirname(filePath);
+    const filePath = url.replace("file:///pkg_", "");
+    const basePath = path.dirname(filePath);
 
     // Configure BrowserFS to use InMemory and mount ZipFS at /zip
     BrowserFS.configure(
@@ -327,7 +323,6 @@ function openLocalFile(url, width, height) {
                             }
 
                             const resolvedPath = path.resolve(basePath, p1);
-                            console.log(basePath, p1, resolvedPath);
                             fs.readFile(`pkg:/${resolvedPath}`, function (err, fileData) {
                                 if (err) {
                                     console.error(err);
@@ -342,7 +337,6 @@ function openLocalFile(url, width, height) {
                                 if (extension !== "") {
                                     mimeType = `image/${extension}`;
                                 }
-                                console.log(mimeType);
                                 const dataURL = `data:${mimeType};base64,${base64Data}`;
                                 html = html.replace(p1, dataURL);
                                 resolve();
@@ -359,14 +353,9 @@ function openLocalFile(url, width, height) {
 
                 replaceRelativePaths(data, fs, basePath)
                     .then((updatedData) => {
-                        console.log("Opening new window with updated content");
                         // Open a new window to display the content
-                        const popup = window.open(
-                            "about:blank",
-                            "_blank",
-                            `width=${width},height=${height},popup`
-                        );
-                        popup.document.write(updatedData);
+                        const popup = openPopup("about:blank", width, height);
+                        popup?.document?.write(updatedData);
                     })
                     .catch((err) => {
                         console.error("Error processing images:", err);
@@ -383,4 +372,5 @@ function openPopup(url, width, height) {
     } else {
         console.error("Failed to open popup window");
     }
+    return newWindow;
 }
