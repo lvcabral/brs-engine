@@ -68,20 +68,20 @@ export class RoLocalization extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter, dirName: BrsString, fileName: BrsString) => {
-            const volume = interpreter.fileSystem.get("pkg:");
+            const volume = interpreter.fileSystem;
             let assetPath = "";
             if (volume) {
                 try {
                     if (
                         volume.existsSync(
-                            `/locale/${this.locale}/${dirName.value}/${fileName.value}`
+                            `pkg:/locale/${this.locale}/${dirName.value}/${fileName.value}`
                         )
                     ) {
                         assetPath = `pkg:/locale/${this.locale}/${dirName.value}/${fileName.value}`;
-                    } else if (volume.existsSync(`/locale/default/${dirName}/${fileName}`)) {
+                    } else if (volume.existsSync(`pkg:/locale/default/${dirName}/${fileName}`)) {
                         assetPath = `pkg:/locale/default/${dirName.value}/${fileName.value}`;
                     } else if (
-                        volume.existsSync(`/locale/en_US/${dirName.value}/${fileName.value}`)
+                        volume.existsSync(`pkg:/locale/en_US/${dirName.value}/${fileName.value}`)
                     ) {
                         assetPath = `pkg:/locale/en_US/${dirName.value}/${fileName.value}`;
                     }

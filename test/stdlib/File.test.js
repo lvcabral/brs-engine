@@ -13,12 +13,11 @@ const {
     MatchFiles,
     getPath,
     getScopedPath,
-    getVolumeByPath,
 } = brs.stdlib;
 const { BrsString, RoList } = brs.types;
 
 let interpreter;
-let tempVolume;
+let volume;
 let pkgVolume;
 
 brs.registerCallback(() => {}); // register a callback to avoid display errors
@@ -28,15 +27,10 @@ describe("global file I/O functions", () => {
         interpreter = new Interpreter({
             root: "hello/world",
         }); // reset the file systems
-        tempVolume = interpreter.fileSystem.get("tmp:");
-        pkgVolume = interpreter.fileSystem.get("pkg:");
+        volume = interpreter.fileSystem;
     });
 
     describe("file I/O utility utilities", () => {
-        it("gets a volume by path", () => {
-            expect(getVolumeByPath(interpreter, "tmp:///test.txt")).toEqual(tempVolume);
-        });
-
         it("converts a brs path to a memfs path", () => {
             expect(getPath("tmp:/test.txt")).toEqual("/test.txt");
             expect(getPath("tmp:///test.txt")).toEqual("/test.txt");
@@ -50,10 +44,10 @@ describe("global file I/O functions", () => {
 
     describe("ListDir", () => {
         it("returns files in a directory", () => {
-            tempVolume.writeFileSync("/test1.txt", "test contents 1");
-            tempVolume.writeFileSync("/test2.txt", "test contents 2");
-            tempVolume.mkdirSync("/test_dir");
-            tempVolume.writeFileSync("/test_dir/test3.txt", "test contents 3");
+            volume.writeFileSync("tmp:/test1.txt", "test contents 1");
+            volume.writeFileSync("tmp:/test2.txt", "test contents 2");
+            volume.mkdirSync("tmp:/test_dir");
+            volume.writeFileSync("tmp:/test_dir/test3.txt", "test contents 3");
 
             expect(ListDir.call(interpreter, new BrsString("tmp:///")).elements).toEqual([
                 new BrsString("test1.txt"),
@@ -69,7 +63,7 @@ describe("global file I/O functions", () => {
 
     describe("CopyFile", () => {
         it("copies a file", () => {
-            tempVolume.writeFileSync("/test1.txt", "test contents 1");
+            volume.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
                 CopyFile.call(
@@ -78,8 +72,8 @@ describe("global file I/O functions", () => {
                     new BrsString("tmp:///test1.1.txt")
                 ).value
             ).toBeTruthy();
-            expect(tempVolume.existsSync("/test1.txt")).toBeTruthy();
-            expect(tempVolume.existsSync("/test1.1.txt")).toBeTruthy();
+            expect(volume.existsSync("tmp:/test1.txt")).toBeTruthy();
+            expect(volume.existsSync("tmp:/test1.1.txt")).toBeTruthy();
         });
 
         it("fails with a false", () => {
@@ -103,7 +97,7 @@ describe("global file I/O functions", () => {
 
     describe("MoveFile", () => {
         it("moves a file", () => {
-            tempVolume.writeFileSync("/test1.txt", "test contents 1");
+            volume.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
                 MoveFile.call(
@@ -112,8 +106,8 @@ describe("global file I/O functions", () => {
                     new BrsString("tmp:///test5.txt")
                 ).value
             ).toBeTruthy();
-            expect(tempVolume.existsSync("/test1.txt")).toBeFalsy();
-            expect(tempVolume.existsSync("/test5.txt")).toBeTruthy();
+            expect(volume.existsSync("tmp:/test1.txt")).toBeFalsy();
+            expect(volume.existsSync("tmp:/test5.txt")).toBeTruthy();
         });
 
         it("fails with a false", () => {
@@ -137,12 +131,12 @@ describe("global file I/O functions", () => {
 
     describe("DeleteFile", () => {
         it("deletes a file", () => {
-            tempVolume.writeFileSync("/test1.txt", "test contents 1");
+            volume.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
                 DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt")).value
             ).toBeTruthy();
-            expect(tempVolume.existsSync("/test1.txt")).toBeFalsy();
+            expect(volume.existsSync("tmp:/test1.txt")).toBeFalsy();
         });
 
         it("fails with a false", () => {
@@ -154,17 +148,17 @@ describe("global file I/O functions", () => {
 
     describe("DeleteDirectory", () => {
         it("deletes a directory", () => {
-            tempVolume.mkdirSync("/test_dir");
+            volume.mkdirSync("tmp:/test_dir");
 
             expect(
                 DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
             ).toBeTruthy();
-            expect(tempVolume.existsSync("/test_dir")).toBeFalsy();
+            expect(volume.existsSync("/test_dir")).toBeFalsy();
         });
 
         it("fails with a false", () => {
-            tempVolume.mkdirSync("/test_dir");
-            tempVolume.writeFileSync("/test_dir/test1.txt", "test contents 1");
+            volume.mkdirSync("/test_dir");
+            volume.writeFileSync("/test_dir/test1.txt", "test contents 1");
 
             // can't remove a non-empty directory
             expect(
@@ -178,17 +172,17 @@ describe("global file I/O functions", () => {
             expect(
                 CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
             ).toBeTruthy();
-            expect(tempVolume.existsSync("/test_dir")).toBeTruthy();
+            expect(volume.existsSync("/test_dir")).toBeTruthy();
 
             expect(
                 CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir/test_sub_dir"))
                     .value
             ).toBeTruthy();
-            expect(tempVolume.existsSync("/test_dir/test_sub_dir")).toBeTruthy();
+            expect(volume.existsSync("/test_dir/test_sub_dir")).toBeTruthy();
         });
 
         it("fails with a false", () => {
-            tempVolume.mkdirSync("/test_dir");
+            volume.mkdirSync("/test_dir");
 
             // can't recreate a directory
             expect(
@@ -207,7 +201,7 @@ describe("global file I/O functions", () => {
 
     describe("ReadAsciiFile", () => {
         it("reads an ascii file", () => {
-            tempVolume.writeFileSync("/test.txt", "test contents");
+            volume.writeFileSync("/test.txt", "test contents");
 
             expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt")).value).toEqual(
                 "test contents"
@@ -239,7 +233,7 @@ describe("global file I/O functions", () => {
                 ).value
             ).toBeTruthy();
 
-            expect(tempVolume.readFileSync("/hello.txt").toString()).toEqual("test contents");
+            expect(volume.readFileSync("/hello.txt").toString()).toEqual("test contents");
         });
     });
 

@@ -129,7 +129,8 @@ function runAppFiles(files: string[]) {
             } else {
                 console.log(chalk.blueBright(`Executing ${filePath}...\n`));
             }
-            loadAppZip(fileName, fs.readFileSync(filePath), runApp);
+            const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer
+            loadAppZip(fileName, fileData, runApp);
             return;
         }
         // Run BrightScript files
@@ -164,7 +165,7 @@ function showAppTitle() {
  * if a password is passed with parameter --pack.
  *
  */
-function runApp(payload: AppPayload) {
+async function runApp(payload: AppPayload) {
     payload.stopOnCrash = program.debug ?? false;
     payload.password = program.pack;
     if (program.ecp && !workerReady) {
@@ -185,34 +186,39 @@ function runApp(payload: AppPayload) {
         brsWorker.postMessage(sharedBuffer);
         return;
     }
-    const pkg = brs.executeFile(payload);
-    if (program.ecp) {
-        brsWorker?.terminate();
-    }
-    if (pkg.exitReason === AppExitReason.PACKAGED) {
-        const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
-        try {
-            const buffer = updateAppZip(pkg.cipherText, pkg.iv);
-            fs.writeFileSync(filePath, buffer);
-            console.log(
-                chalk.blueBright(
-                    `Package file created as ${filePath} with ${Math.round(
-                        buffer.length / 1024
-                    )} KB.\n`
-                )
-            );
-        } catch (err: any) {
-            console.error(chalk.red(`Error generating the file ${filePath}: ${err.message}`));
-            process.exitCode = 1;
+    try {
+        const pkg = await brs.executeFile(payload);
+        if (program.ecp) {
+            brsWorker?.terminate();
         }
-    } else {
-        const msg = `------ Finished '${appFileName}' execution [${pkg.exitReason}] ------\n`;
-        if (pkg.exitReason === AppExitReason.FINISHED) {
-            console.log(chalk.blueBright(msg));
+        if (pkg.exitReason === AppExitReason.PACKAGED) {
+            const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
+            try {
+                const buffer = updateAppZip(pkg.cipherText, pkg.iv);
+                fs.writeFileSync(filePath, buffer);
+                console.log(
+                    chalk.blueBright(
+                        `Package file created as ${filePath} with ${Math.round(
+                            buffer.length / 1024
+                        )} KB.\n`
+                    )
+                );
+            } catch (err: any) {
+                console.error(chalk.red(`Error generating the file ${filePath}: ${err.message}`));
+                process.exitCode = 1;
+            }
         } else {
-            process.exitCode = 1;
-            console.log(chalk.redBright(msg));
+            const msg = `------ Finished '${appFileName}' execution [${pkg.exitReason}] ------\n`;
+            if (pkg.exitReason === AppExitReason.FINISHED) {
+                console.log(chalk.blueBright(msg));
+            } else {
+                process.exitCode = 1;
+                console.log(chalk.redBright(msg));
+            }
         }
+    } catch (err: any) {
+        console.error(chalk.red(`Error executing app: ${err.message}`));
+        process.exitCode = 1;
     }
 }
 
@@ -272,8 +278,8 @@ function getRegistry(): Map<string, string> {
  *
  * **NOTE:** Currently limited to single-line inputs :(
  */
-function repl() {
-    const replInterpreter = brs.getInterpreter({ device: deviceData });
+async function repl() {
+    const replInterpreter = await brs.getReplInterpreter({ device: deviceData });
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,

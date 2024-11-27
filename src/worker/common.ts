@@ -70,8 +70,8 @@ export type AppPayload = {
     input: Map<string, string>;
     paths: AppFilePath[];
     brs: string[];
-    texts: string[];
-    binaries: any[];
+    pkgZip: ArrayBuffer;
+    extZip?: ArrayBuffer;
     password?: string;
     entryPoint?: boolean;
     stopOnCrash?: boolean;

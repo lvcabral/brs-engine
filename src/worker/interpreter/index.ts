@@ -59,6 +59,7 @@ import {
     numberToHex,
     parseTextFile,
 } from "../common";
+import * as zenFS from "@zenfs/core";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -94,12 +95,13 @@ export interface TracePoint {
 /** The definition of a local file data with parsed url and volume */
 export interface LocalFileData {
     url: URL | undefined;
-    volume: FileSystem | undefined;
+    volume: typeof zenFS.fs | undefined;
 }
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private readonly _startTime = Date.now();
     private readonly _stack = new Array<TracePoint>();
+    private _fileSystem?: FileSystem;
     private _environment: Environment;
     private _sourceMap = new Map<string, string>();
     private _tryMode = false;
@@ -119,7 +121,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     };
 
     readonly options: ExecutionOptions = defaultExecutionOptions;
-    readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
@@ -135,6 +136,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /** The set of errors detected from executing an AST. */
     errors: (BrsError | RuntimeError)[] = [];
+
+    get fileSystem() {
+        return this._fileSystem;
+    }
 
     get environment() {
         return this._environment;
@@ -156,10 +161,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._singleKeyEvents;
     }
 
-    public audioId: number = 0;
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();
     public debugMode: boolean = false;
+
+    public setFileSystem(fileSystem: typeof zenFS.fs) {
+        if (!this._fileSystem) {
+            this._fileSystem = new FileSystem(fileSystem);
+        }
+    }
 
     /**
      * Updates the interpreter manifest with the provided data
@@ -215,15 +225,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param options configuration for the execution
      */
-    constructor(options?: Partial<ExecutionOptions>) {
+    constructor(options?: Partial<ExecutionOptions>, fileSystem?: typeof zenFS.fs) {
         this._environment = new Environment(new RoAssociativeArray([]));
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
-        this.fileSystem.set("common:", new FileSystem());
-        this.fileSystem.set("pkg:", new FileSystem());
-        this.fileSystem.set("tmp:", new FileSystem());
-        this.fileSystem.set("cachefs:", new FileSystem());
+        if (fileSystem) {
+            this._fileSystem = new FileSystem(fileSystem);
+        }
         Object.keys(defaultDeviceInfo).forEach((key) => {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, defaultDeviceInfo[key]);
@@ -1938,29 +1947,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     // Helper methods
-
-    /**
-     * Returns the file data for a given url
-     * @param urlString the url string
-     * @returns the file data (parsed url and volume)
-     */
-    getFileData(urlString: string): LocalFileData {
-        const fileData: LocalFileData = {
-            url: undefined,
-            volume: undefined,
-        };
-        try {
-            fileData.url = new URL(urlString);
-            fileData.volume = this.fileSystem.get(fileData.url.protocol);
-        } catch (e: any) {
-            if (this.isDevMode) {
-                this.stderr.write(
-                    `warning,[interpreter.getFileData] URL ${urlString}: ${e.message}`
-                );
-            }
-        }
-        return fileData;
-    }
 
     /**
      * Returns the Backtrace formatted as a string or an array

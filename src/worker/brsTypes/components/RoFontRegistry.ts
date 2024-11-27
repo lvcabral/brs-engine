@@ -3,6 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { validUri } from "../../interpreter/FileSystem";
 import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
@@ -53,46 +54,46 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     }
 
     registerFont(interpreter: Interpreter, fontPath: string) {
-        const fileData = interpreter.getFileData(fontPath);
-        if (fileData.url && fileData.volume) {
-            try {
-                const fontArray = fileData.volume.readFileSync(fileData.url.pathname);
-                const fontObj = opentype.parse(fontArray);
-                // Get font metrics
-                const fontMetrics = {
-                    ascent: fontObj.ascender / fontObj.unitsPerEm,
-                    descent: Math.abs(fontObj.descender / fontObj.unitsPerEm),
-                    maxAdvance: fontObj.tables.hhea.advanceWidthMax / fontObj.unitsPerEm,
-                    lineHeight:
-                        (fontObj.ascender -
-                            fontObj.descender +
-                            (fontObj.tables.hhea.lineGap as number)) /
-                        fontObj.unitsPerEm,
-                    style: fontObj.tables.head.macStyle & (1 << 1) ? "italic" : "normal",
-                    weight: fontObj.tables.head.macStyle & (1 << 0) ? "bold" : "normal",
-                };
-                // Register font family
-                const fontFamily = fontObj.names.fontFamily.en;
-                if (typeof FontFace !== "undefined") {
-                    const fontFace = new FontFace(fontFamily, fontArray, {
-                        weight: fontMetrics.weight,
-                        style: fontMetrics.style,
-                    });
-                    (self as any).fonts.add(fontFace);
-                }
-                const familyArray = this.fontRegistry.get(fontFamily);
-                if (familyArray) {
-                    familyArray.push(fontMetrics);
-                } else {
-                    this.fontRegistry.set(fontFamily, [fontMetrics]);
-                }
-            } catch (err: any) {
-                interpreter.stderr.write(
-                    `error,Error loading font:${fileData.url.pathname} - ${err.message}`
-                );
+        try {
+            const fsys = interpreter.fileSystem;
+            if (!fsys || !validUri(fontPath)) {
+                return BrsBoolean.False;
             }
-        } else {
-            interpreter.stderr.write(`error,Invalid volume in font path: ${fontPath}`);
+            const fontData = interpreter.fileSystem.readFileSync(fontPath);
+            const fontObj = opentype.parse(fontData.buffer);
+            // Get font metrics
+            const fontMetrics = {
+                ascent: fontObj.ascender / fontObj.unitsPerEm,
+                descent: Math.abs(fontObj.descender / fontObj.unitsPerEm),
+                maxAdvance: fontObj.tables.hhea.advanceWidthMax / fontObj.unitsPerEm,
+                lineHeight:
+                    (fontObj.ascender -
+                        fontObj.descender +
+                        (fontObj.tables.hhea.lineGap as number)) /
+                    fontObj.unitsPerEm,
+                style: fontObj.tables.head.macStyle & (1 << 1) ? "italic" : "normal",
+                weight: fontObj.tables.head.macStyle & (1 << 0) ? "bold" : "normal",
+            };
+            // Register font family
+            const fontFamily = fontObj.names.fontFamily.en;
+            if (typeof FontFace !== "undefined") {
+                const fontFace = new FontFace(fontFamily, fontData, {
+                    weight: fontMetrics.weight,
+                    style: fontMetrics.style,
+                });
+                (self as any).fonts.add(fontFace);
+            }
+            const familyArray = this.fontRegistry.get(fontFamily);
+            if (familyArray) {
+                familyArray.push(fontMetrics);
+            } else {
+                this.fontRegistry.set(fontFamily, [fontMetrics]);
+            }
+        } catch (err: any) {
+            interpreter.stderr.write(
+                `error,Error loading font:${fontPath} - ${err.message}`
+            );
+            return BrsBoolean.False;
         }
         return BrsBoolean.True;
     }
@@ -141,7 +142,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             bold: BrsBoolean,
             italic: BrsBoolean
         ) => {
-            /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic), 
+            /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic),
             but if it's not available returns the first one registered. */
             const array = this.fontRegistry.get(family.value);
             const weight = bold.toBoolean() ? "bold" : "normal";

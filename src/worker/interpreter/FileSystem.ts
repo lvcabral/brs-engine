@@ -1,21 +1,22 @@
-import MemoryFileSystem from "memory-fs";
 import * as Path from "path";
+import * as zenFS from "@zenfs/core";
 
-/** Proxy to make MemoryFileSystem case insensitive as Roku File System */
+/** Proxy to make InMemory volumes case insensitive as Roku File System */
+
 export class FileSystem {
-    private fs: MemoryFileSystem;
     private paths: Map<string, string>;
+    private fs: typeof zenFS.fs;
 
-    constructor() {
-        this.fs = new MemoryFileSystem();
+    constructor(fs: typeof zenFS.fs) {
         this.paths = new Map();
+        this.fs = fs;
     }
 
     existsSync(path: string) {
         return this.fs.existsSync(path.toLowerCase());
     }
 
-    readFileSync(path: string, encoding?: string) {
+    readFileSync(path: string, encoding?: any): any {
         return this.fs.readFileSync(path.toLowerCase(), encoding);
     }
 
@@ -34,23 +35,29 @@ export class FileSystem {
     }
 
     mkdirSync(path: string) {
-        this.paths.set(path.toLowerCase(), path);
         this.fs.mkdirSync(path.toLowerCase());
+        this.paths.set(path.toLowerCase(), path);
     }
 
     rmdirSync(path: string) {
-        this.paths.delete(path.toLowerCase());
         this.fs.rmdirSync(path.toLowerCase());
-    }
-
-    rmfileSync(path: string) {
         this.paths.delete(path.toLowerCase());
-        this.fs.unlinkSync(path.toLowerCase());
     }
 
-    writeFileSync(path: string, content: string | Buffer, encoding?: string) {
-        this.paths.set(path.toLowerCase(), path);
+    unlinkSync(path: string) {
+        this.fs.unlinkSync(path.toLowerCase());
+        this.paths.delete(path.toLowerCase());
+    }
+
+    renameSync(oldPath: string, newPath: string) {
+        this.fs.renameSync(oldPath.toLowerCase(), newPath.toLowerCase());
+        this.paths.delete(oldPath.toLowerCase());
+        this.paths.set(newPath.toLowerCase(), newPath);
+    }
+
+    writeFileSync(path: string, content: string | Buffer, encoding?: any) {
         this.fs.writeFileSync(path.toLowerCase(), content, encoding);
+        this.paths.set(path.toLowerCase(), path);
     }
 
     statSync(path: string) {
@@ -58,6 +65,29 @@ export class FileSystem {
     }
 
     normalize(path: string) {
-        return this.fs.normalize(path);
+        return zenFS.normalizePath(path);
     }
 }
+
+/*
+ * Returns the volume from a brs file uri
+ *   ex. "tmp:/test/test1.txt" -> "tmp:"
+ */
+export function getVolume(fileUri: string) {
+    return fileUri.substring(0, fileUri.indexOf(":") + 1);
+}
+
+/*
+ * Returns true if the Uri is valid
+ */
+export function validUri(uri: string): boolean {
+    return uri.trim() !== "" && !uri.startsWith("/") && !uri.startsWith("\\") && uri.includes(":/");
+}
+
+/*
+ * Returns true if the Uri is from one of the two writeable volumes
+ */
+export function writeUri(uri: string): boolean {
+    return validUri(uri) && (uri.startsWith("tmp:/") || uri.startsWith("cachefs:/"));
+}
+

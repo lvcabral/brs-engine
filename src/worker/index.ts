@@ -17,7 +17,6 @@ import {
     defaultDeviceInfo,
     parseManifest,
 } from "./common";
-import { FileSystem } from "./interpreter/FileSystem";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import { ParseResults } from "./parser/Parser";
@@ -28,6 +27,8 @@ import * as path from "path";
 import * as xml2js from "xml2js";
 import * as crypto from "crypto";
 import * as fs from "fs";
+import * as zenFS from "@zenfs/core";
+import { Zip } from "@lvcabral/zip";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
 import bslCore from "./libraries/common/v30/bslCore.brs";
@@ -113,12 +114,34 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  * Returns a new instance of the Interpreter for REPL
  *
  */
-export function getInterpreter(payload: AppPayload) {
-    const replInterpreter = new Interpreter();
+export async function getReplInterpreter(payload: Partial<AppPayload>) {
+    try {
+        await configureFileSystem(payload.pkgZip, payload.extZip);
+    } catch (err: any) {
+        postMessage(`error,Error mounting File System: ${err.message}`);
+        return null;
+    }
+    const replInterpreter = new Interpreter({}, zenFS.fs);
     replInterpreter.onError(logError);
-    setupDeviceData(payload.device, replInterpreter);
-    setupDeviceFonts(payload.device, replInterpreter);
+    if (payload.device) {
+        setupDeviceData(payload.device, replInterpreter);
+        setupDeviceFonts(payload.device, replInterpreter);
+    }
     return replInterpreter;
+}
+
+/**
+ * Returns a new instance of the Interpreter for Testing
+ *
+ */
+export async function getTestInterpreter() {
+    try {
+        await configureFileSystem();
+    } catch (err: any) {
+        postMessage(`error,Error mounting File System: ${err.message}`);
+        return null;
+    }
+    return new Interpreter({}, zenFS.fs);
 }
 
 /**
@@ -222,8 +245,7 @@ export function createPayload(files: string[], customDeviceData?: Partial<Device
             input: new Map(),
             paths: paths,
             brs: source,
-            texts: texts,
-            binaries: [],
+            pkgZip: new ArrayBuffer(0), // TODO: Create a Zip file in memory with the provided files
             entryPoint: false,
             stopOnCrash: false,
         };
@@ -255,6 +277,31 @@ export function getFonts(fontPath: string, fontFamily: string) {
 }
 /// #endif
 
+function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
+    let fsConfig = {
+        mounts: {
+            "common:": zenFS.InMemory,
+            "tmp:": zenFS.InMemory,
+            "cachefs:": zenFS.InMemory,
+        },
+    };
+    if (pkgZip) {
+        Object.assign(fsConfig.mounts, {
+            "pkg:": { backend: Zip, data: pkgZip, caseSensitive: false },
+        });
+    } else {
+        Object.assign(fsConfig.mounts, {
+            "pkg:": zenFS.InMemory,
+        });
+    }
+    if (extZip) {
+        Object.assign(fsConfig.mounts, {
+            "ext1:": { backend: Zip, data: extZip, caseSensitive: false },
+        });
+    }
+    return zenFS.configure(fsConfig);
+}
+
 /**
  * Runs a Brightscript app with full zip folder structure.
  * @param payload with the source code and all the assets of the app.
@@ -263,10 +310,10 @@ export function getFonts(fontPath: string, fontFamily: string) {
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 
-export function executeFile(
+export async function executeFile(
     payload: AppPayload,
     customOptions?: Partial<ExecutionOptions>
-): RunResult {
+): Promise<RunResult> {
     const options = {
         ...{
             entryPoint: payload.entryPoint ?? true,
@@ -276,7 +323,14 @@ export function executeFile(
     };
     bscs.clear();
     stats.clear();
-    const interpreter = new Interpreter(options);
+    try {
+        await configureFileSystem(payload.pkgZip, payload.extZip);
+        console.log("File System mounted successfully");
+    } catch (err: any) {
+        postMessage(`error,Error mounting File System: ${err.message}`);
+        return { exitReason: AppExitReason.CRASHED };
+    }
+    const interpreter = new Interpreter(options, zenFS.fs);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
@@ -363,16 +417,16 @@ function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
         }
     });
     // Internal Libraries
-    let volume = interpreter.fileSystem.get("common:");
+    const volume = interpreter.fileSystem;
     if (volume) {
-        volume.mkdirSync("/LibCore");
-        volume.mkdirSync("/LibCore/v30");
-        volume.writeFileSync("/LibCore/v30/bslCore.brs", bslCore);
-        volume.writeFileSync("/LibCore/v30/bslDefender.brs", bslDefender);
-        volume.mkdirSync("/roku_ads");
-        volume.writeFileSync("/roku_ads/Roku_Ads.brs", Roku_Ads);
-        volume.mkdirSync("/roku_browser");
-        volume.writeFileSync("/roku_browser/RokuBrowser.brs", RokuBrowser);
+        volume.mkdirSync("common:/LibCore");
+        volume.mkdirSync("common:/LibCore/v30");
+        volume.writeFileSync("common:/LibCore/v30/bslCore.brs", bslCore);
+        volume.writeFileSync("common:/LibCore/v30/bslDefender.brs", bslDefender);
+        volume.mkdirSync("common:/roku_ads");
+        volume.writeFileSync("common:/roku_ads/Roku_Ads.brs", Roku_Ads);
+        volume.mkdirSync("common:/roku_browser");
+        volume.writeFileSync("common:/roku_browser/RokuBrowser.brs", RokuBrowser);
     }
 }
 
@@ -388,12 +442,12 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
     let fontFamily = device.defaultFont ?? "Asap";
     let fontPath = device.fontPath ?? "../fonts/";
 
-    let volume = interpreter.fileSystem.get("common:");
-    if (!volume) {
+    const volume = interpreter.fileSystem;
+    if (!volume?.existsSync("common:")) {
         postMessage("error,Common file system not found");
         return;
     }
-    volume.mkdirSync("/Fonts");
+    volume.mkdirSync("common:/Fonts");
     let fontRegular, fontBold, fontItalic, fontBoldIt;
     if (typeof XMLHttpRequest !== "undefined") {
         // Running as a Worker in the browser
@@ -403,28 +457,28 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
         fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
     } else if (device.fonts) {
         // Running locally in NodeJS
-        fontRegular = device.fonts.get("regular")?.buffer;
-        fontBold = device.fonts.get("bold")?.buffer;
-        fontItalic = device.fonts.get("italic")?.buffer;
-        fontBoldIt = device.fonts.get("bold-italic")?.buffer;
+        fontRegular = device.fonts.get("regular");
+        fontBold = device.fonts.get("bold");
+        fontItalic = device.fonts.get("italic");
+        fontBoldIt = device.fonts.get("bold-italic");
     }
     if (fontRegular) {
-        volume.writeFileSync(`/Fonts/${fontFamily}-Regular.ttf`, fontRegular);
+        volume.writeFileSync(`common:/Fonts/${fontFamily}-Regular.ttf`, Buffer.from(fontRegular));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Regular.ttf`);
     }
     if (fontBold) {
-        volume.writeFileSync(`/Fonts/${fontFamily}-Bold.ttf`, fontBold);
+        volume.writeFileSync(`common:/Fonts/${fontFamily}-Bold.ttf`, Buffer.from(fontBold));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Bold.ttf`);
     }
     if (fontItalic) {
-        volume.writeFileSync(`/Fonts/${fontFamily}-Italic.ttf`, fontItalic);
+        volume.writeFileSync(`common:/Fonts/${fontFamily}-Italic.ttf`, Buffer.from(fontItalic));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Italic.ttf`);
     }
     if (fontBoldIt) {
-        volume.writeFileSync(`/Fonts/${fontFamily}-BoldItalic.ttf`, fontBoldIt);
+        volume.writeFileSync(`common:/Fonts/${fontFamily}-BoldItalic.ttf`, Buffer.from(fontBoldIt));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-BoldItalic.ttf`);
     }
@@ -444,50 +498,43 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
  */
 function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
-    let volume = interpreter.fileSystem.get("pkg:");
-    if (volume && Array.isArray(payload.paths)) {
-        for (let filePath of payload.paths) {
-            const pathDirName = path.dirname(`/${filePath.url}`);
-            if (!volume.existsSync(pathDirName)) {
-                try {
-                    mkdirTreeSync(volume, pathDirName);
-                } catch (err: any) {
-                    postMessage(`error,Error creating directory ${pathDirName} - ${err.message}`);
-                }
-            }
-            try {
-                if (filePath.type === "binary" && Array.isArray(payload.binaries)) {
-                    volume.writeFileSync(`/${filePath.url}`, payload.binaries[filePath.id]);
-                } else if (filePath.type === "pcode" && Array.isArray(payload.binaries)) {
-                    result.pcode = Buffer.from(payload.binaries[filePath.id]);
-                } else if (["audio", "video"].includes(filePath.type)) {
-                    // As the media files are played on the renderer process we need to
-                    // save a mock file to allow file exist checking and save the index
-                    let fileData = Buffer.from(filePath.id.toString());
-                    if (filePath.type === "audio") {
-                        interpreter.audioId = filePath.id;
-                        if (filePath.binId) {
-                            // If audio metadata is enabled we have the audio file data
-                            fileData = Buffer.from(payload.binaries[filePath.binId]);
-                        }
-                    }
-                    volume.writeFileSync(`/${filePath.url}`, fileData);
-                } else if (filePath.type === "text" && Array.isArray(payload.texts)) {
-                    if (filePath.url === "source/var") {
-                        result.iv = payload.texts[filePath.id];
-                    } else {
-                        volume.writeFileSync(`/${filePath.url}`, payload.texts[filePath.id]);
-                    }
-                } else if (filePath.type === "source" && Array.isArray(payload.brs)) {
-                    result.sourceMap.set(filePath.url, payload.brs[filePath.id]);
-                    volume.writeFileSync(`/${filePath.url}`, payload.brs[filePath.id]);
-                }
-            } catch (err: any) {
-                postMessage(`error,Error writing file ${filePath.url} - ${err.message}`);
-            }
-        }
-        loadTranslations(interpreter, volume);
+    const fsys = interpreter.fileSystem;
+    if (!fsys || !Array.isArray(payload.paths)) {
+        return result;
     }
+    for (let filePath of payload.paths) {
+        try {
+            console.log("Loading file:", filePath.url, "Type:", filePath.type, "ID:", filePath.id);
+            if (filePath.type === "pcode" && filePath.id === 0) {
+                if (fsys.existsSync(filePath.url)) {
+                    result.pcode = fsys.readFileSync(filePath.url);
+                    console.log("PCode file loaded successfully");
+                } else {
+                    console.log("PCode file not found:", filePath.url);
+                }
+            } else if (filePath.type === "pcode" && filePath.id === 1) {
+                if (fsys.existsSync(filePath.url)) {
+                    result.iv = fsys.readFileSync(filePath.url, "utf8");
+                    console.log("IV file loaded successfully:", result.iv);
+                } else {
+                    // TODO: The files are not being found! Check the order of execution
+                    console.log("IV file not found:", filePath.url);
+                }
+            } else if (filePath.type === "source") {
+                if (fsys.existsSync(filePath.url)) {
+                    result.sourceMap.set(
+                        filePath.url,
+                        fsys.readFileSync(filePath.url, "utf8")
+                    );
+                } else if (Array.isArray(payload.brs)) {
+                    result.sourceMap.set(filePath.url, payload.brs[filePath.id]);
+                }
+            }
+        } catch (err: any) {
+            postMessage(`error,Error writing file ${filePath.url} - ${err.message}`);
+        }
+    }
+    loadTranslations(interpreter);
     return result;
 }
 
@@ -497,18 +544,19 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
  * @param volume the file system volume to use
  */
 
-function loadTranslations(interpreter: Interpreter, volume: FileSystem) {
+function loadTranslations(interpreter: Interpreter) {
     let xmlText = "";
     let trType = "";
     let trTarget = "";
     const locale = interpreter.deviceInfo.get("locale") || "en_US";
     try {
-        if (volume.existsSync(`/locale/${locale}/translations.ts`)) {
-            xmlText = volume.readFileSync(`/locale/${locale}/translations.ts`);
+        const volume = interpreter.fileSystem;
+        if (volume?.existsSync(`pkg:/locale/${locale}/translations.ts`)) {
+            xmlText = volume.readFileSync(`pkg:/locale/${locale}/translations.ts`, "utf8");
             trType = "TS";
             trTarget = "translation";
-        } else if (volume.existsSync(`/locale/${locale}/translations.xml`)) {
-            xmlText = volume.readFileSync(`/locale/${locale}/translations.xml`);
+        } else if (volume?.existsSync(`pkg:/locale/${locale}/translations.xml`)) {
+            xmlText = volume.readFileSync(`pkg:/locale/${locale}/translations.xml`, "utf8");
             trType = "xliff";
             trTarget = "target";
         }
@@ -593,7 +641,7 @@ export function lexParseSync(
             exitReason = AppExitReason.CRASHED;
             break;
         }
-        parseLibraries(parseResults, lib);
+        parseLibraries(parseResults, lib, manifest);
         allStatements.push(...parseResults.statements);
     }
     if (password.length === 0) {
@@ -637,6 +685,7 @@ function runSource(
     input: RoAssociativeArray,
     password: string = ""
 ): RunResult {
+    console.log("Running the app");
     const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
     let exitReason = parseResult.exitReason;
     if (password.length > 0) {
@@ -685,6 +734,7 @@ function runBinary(
 ): RunResult {
     let decodedTokens: Map<string, any>;
     // Decode Source PCode
+    console.log("Decrypting the app");
     try {
         if (password.length > 0 && sourceResult.pcode && sourceResult.iv) {
             const decipher = crypto.createDecipheriv(algorithm, password, sourceResult.iv);
@@ -738,7 +788,7 @@ function runBinary(
             if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
                 return { exitReason: AppExitReason.CRASHED };
             }
-            parseLibraries(parseResults, lib);
+            parseLibraries(parseResults, lib, interpreter.manifest);
             allStatements.push(...parseResults.statements);
             tokens = [];
         }
@@ -767,7 +817,11 @@ function runBinary(
  * @param parseResults ParseResults object with the parsed code
  * @param lib Collection with the libraries source code
  */
-function parseLibraries(parseResults: ParseResults, lib: Map<string, string>) {
+function parseLibraries(
+    parseResults: ParseResults,
+    lib: Map<string, string>,
+    manifest: Map<string, any>
+) {
     // Initialize Libraries on first run
     if (!lib.has("v30/bslDefender.brs")) {
         lib.set("v30/bslDefender.brs", "");
@@ -782,10 +836,16 @@ function parseLibraries(parseResults: ParseResults, lib: Map<string, string>) {
     } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
         lib.set("v30/bslCore.brs", bslCore);
     }
-    if (parseResults.libraries.get("Roku_Ads.brs") === true) {
+    if (
+        parseResults.libraries.get("Roku_Ads.brs") === true &&
+        manifest.get("bs_libs_required")?.includes("roku_ads_lib")
+    ) {
         lib.set("Roku_Ads.brs", Roku_Ads);
     }
-    if (parseResults.libraries.get("RokuBrowser.brs") === true) {
+    if (
+        parseResults.libraries.get("RokuBrowser.brs") === true &&
+        manifest.get("bs_libs_required")?.includes("Roku_Browser")
+    ) {
         lib.set("RokuBrowser.brs", RokuBrowser);
     }
 }
@@ -796,20 +856,6 @@ function parseLibraries(parseResults: ParseResults, lib: Map<string, string>) {
  */
 function logError(err: BrsError.BrsError) {
     postMessage(`error,${err.format()}`);
-}
-
-/**
- * Splits the provided path into folders and recreates directory tree from the root.
- * @param directory the path to be created
- */
-function mkdirTreeSync(fs: FileSystem, directory: string) {
-    const pathArray = directory.replace(/\/$/, "").split("/");
-    for (let i = 1; i <= pathArray.length; i++) {
-        const segment = pathArray.slice(0, i).join("/");
-        if (fs.normalize(segment) !== "" && !fs.existsSync(segment)) {
-            fs.mkdirSync(segment);
-        }
-    }
 }
 
 /**

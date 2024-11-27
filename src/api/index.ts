@@ -22,8 +22,6 @@ import {
 import {
     source,
     paths,
-    txts,
-    bins,
     manifestMap,
     currentApp,
     lastApp,
@@ -73,7 +71,7 @@ let brsWorker: Worker;
 let home: Howl;
 
 // Package API
-export { deviceData, loadAppZip, updateAppZip, getSerialNumber } from "./package";
+export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umountExt } from "./package";
 
 // Control API
 export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons } from "./control";
@@ -370,8 +368,6 @@ function loadSourceCode(fileName: string, fileData: any) {
             currentApp.id = "brs";
             currentApp.title = fileName;
             paths.length = 0;
-            bins.length = 0;
-            txts.length = 0;
             source.push(this.result);
             paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
             clearDisplay();
@@ -386,13 +382,22 @@ function loadSourceCode(fileName: string, fileData: any) {
 
 // Execute Engine Web Worker
 function runApp(payload: AppPayload) {
-    showDisplay();
-    currentApp.running = true;
-    brsWorker = new Worker(brsWrkLib);
-    brsWorker.addEventListener("message", workerCallback);
-    brsWorker.postMessage(sharedBuffer);
-    brsWorker.postMessage(payload, bins);
-    enableSendKeys(true);
+    try {
+        showDisplay();
+        currentApp.running = true;
+        brsWorker = new Worker(brsWrkLib);
+        brsWorker.addEventListener("message", workerCallback);
+        brsWorker.postMessage(sharedBuffer);
+        const transfArray = [];
+        if (!manifestMap.get("bs_libs_required")?.includes("Roku_Browser")) {
+            // Prevent cloning the zip data in worker (if not needed on main thread)
+            transfArray.push(payload.pkgZip);
+        }
+        brsWorker.postMessage(payload, transfArray);
+        enableSendKeys(true);
+    } catch (err: any) {
+        apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
+    }
 }
 
 // Receive Messages from the Interpreter (Web Worker)

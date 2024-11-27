@@ -13,7 +13,7 @@ import {
     isBrsString,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { getVolumeByPath, getPath } from "./File";
+import { getPath } from "./File";
 
 /**
  * Runs a file (or set of files) with the provided arguments, returning either the value returned by those files'
@@ -27,23 +27,27 @@ import { getVolumeByPath, getPath } from "./File";
  */
 function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
     /// #if !BROWSER
-    let volumes = filenames.map((filename) => getVolumeByPath(interpreter, filename.value));
+    let validFiles = filenames.map((filename) => interpreter.fileSystem?.existsSync(filename.value));
     let pathsToFiles = filenames.map((filename) =>
         path.join(interpreter.options.root ?? process.cwd(), getPath(filename.value))
     );
 
     // if the file-to-run doesn't exist, RBI returns invalid
-    if (!volumes.every((volume) => volume != null)) {
+    if (!validFiles.every((valid) => valid === true)) {
         return BrsInvalid.Instance;
     }
 
     try {
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
-        const sandbox = new Interpreter(interpreter.options);
-        const sourceMap = brs.setupPayload(sandbox, brs.createPayload(pathsToFiles)).sourceMap;
-        const parseResult = brs.lexParseSync(sourceMap, sandbox.manifest);
-        const result = sandbox.exec(parseResult.statements, sourceMap, ...args);
-        return result[0] || BrsInvalid.Instance;
+        brs.getTestInterpreter().then((sandbox) => {
+            if (sandbox == null) {
+                return BrsInvalid.Instance;
+            }
+            const sourceMap = brs.setupPayload(sandbox, brs.createPayload(pathsToFiles)).sourceMap;
+            const parseResult = brs.lexParseSync(sourceMap, sandbox.manifest);
+            const result = sandbox.exec(parseResult.statements, sourceMap, ...args);
+            return result[0] || BrsInvalid.Instance;
+        })
     } catch (err: any) {
         // swallow errors and just return invalid; RBI returns invalid for "file doesn't exist" errors,
         // syntax errors, etc.

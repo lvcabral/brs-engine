@@ -53,20 +53,14 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.name = "";
         let image;
         if (param instanceof BrsString) {
-            const fileData = interpreter.getFileData(param.value);
-            if (fileData.url && fileData.volume) {
-                try {
-                    image = fileData.volume.readFileSync(fileData.url.pathname);
-                    this.alphaEnable = false;
-                    this.name = fileData.url.pathname;
-                } catch (err: any) {
-                    interpreter.stderr.write(
-                        `error,Error loading bitmap:${fileData.url.pathname} - ${err.message}`
-                    );
-                    this.valid = false;
-                }
-            } else {
-                interpreter.stderr.write(`error,Invalid URL or volume:${param.value}`);
+            try {
+                image = interpreter.fileSystem?.readFileSync(param.value);
+                this.alphaEnable = false;
+                this.name = param.value;
+            } catch (err: any) {
+                interpreter.stderr.write(
+                    `error,Error loading bitmap:${param.value} - ${err.message}`
+                );
                 this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
@@ -101,65 +95,68 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         if (image) {
+            console.log(`Loading image:${this.name}`);
             try {
-                if (image instanceof Uint8Array || image instanceof ArrayBuffer) {
-                    let data;
-                    const type = fileType(image);
-                    if (type && type.mime === "image/png") {
-                        let png = UPNG.decode(image);
-                        data = UPNG.toRGBA8(png)[0];
+                let data;
+                const type = fileType(image);
+                console.log(type);
+                if (type && type.mime === "image/png") {
+                    console.log(image?.buffer);
+                    const png = UPNG.decode(image.buffer);
+                    console.log(png);
+                    const dataArray = UPNG.toRGBA8(png);
+                    if (dataArray.length) {
+                        data = dataArray[0];
                         this.width = png.width;
                         this.height = png.height;
-                    } else if (type && type.mime === "image/jpeg") {
-                        let jpg = JPEG.decode(image);
-                        data = jpg.data;
-                        this.width = jpg.width;
-                        this.height = jpg.height;
-                    } else if (type && type.mime === "image/webp") {
-                        const webpDecoder = new WebPDecoder();
-                        const imgBuffer = Buffer.from(image);
-                        const imgArray = WebPRiffParser(imgBuffer, 0);
-                        if (imgArray?.frames?.length) {
-                            let aHeight = [0];
-                            let aWidth = [0];
-                            // Get only the first frame (animations not supported)
-                            let frame = imgArray.frames[0];
-                            data = webpDecoder.WebPDecodeRGBA(
-                                imgBuffer,
-                                frame["src_off"],
-                                frame["src_size"],
-                                aWidth,
-                                aHeight
-                            );
-                            if (data) {
-                                this.height = aHeight[0];
-                                this.width = aWidth[0];
-                            }
+                    }
+                } else if (type && type.mime === "image/jpeg") {
+                    let jpg = JPEG.decode(image);
+                    data = jpg.data;
+                    this.width = jpg.width;
+                    this.height = jpg.height;
+                } else if (type && type.mime === "image/webp") {
+                    const webpDecoder = new WebPDecoder();
+                    const imgBuffer = Buffer.from(image);
+                    const imgArray = WebPRiffParser(imgBuffer, 0);
+                    if (imgArray?.frames?.length) {
+                        let aHeight = [0];
+                        let aWidth = [0];
+                        // Get only the first frame (animations not supported)
+                        let frame = imgArray.frames[0];
+                        data = webpDecoder.WebPDecodeRGBA(
+                            imgBuffer,
+                            frame["src_off"],
+                            frame["src_size"],
+                            aWidth,
+                            aHeight
+                        );
+                        if (data) {
+                            this.height = aHeight[0];
+                            this.width = aWidth[0];
                         }
-                    } else if (type && type.mime === "image/gif") {
-                        let gif = new GifReader(Buffer.from(image));
-                        data = new Uint8Array(gif.width * gif.height * 4);
-                        gif.decodeAndBlitFrameRGBA(0, data);
-                        this.width = gif.width;
-                        this.height = gif.height;
-                    } else if (type && type.mime === "image/bmp") {
-                        let bmp = BMP(image);
-                        data = bmp.data;
-                        this.width = bmp.width;
-                        this.height = bmp.height;
                     }
-                    if (data) {
-                        let imageData = this.context.createImageData(this.width, this.height);
-                        this.canvas.width = this.width;
-                        this.canvas.height = this.height;
-                        imageData.data.set(new Uint8Array(data));
-                        putImageAtPos(imageData, this.context, 0, 0);
-                    } else {
-                        interpreter.stderr.write(`warning,Invalid image format: ${type?.mime}`);
-                        this.valid = false;
-                    }
+                } else if (type && type.mime === "image/gif") {
+                    let gif = new GifReader(Buffer.from(image));
+                    data = new Uint8Array(gif.width * gif.height * 4);
+                    gif.decodeAndBlitFrameRGBA(0, data.buffer);
+                    this.width = gif.width;
+                    this.height = gif.height;
+                } else if (type && type.mime === "image/bmp") {
+                    let bmp = BMP(image);
+                    data = bmp.data;
+                    this.width = bmp.width;
+                    this.height = bmp.height;
+                }
+                if (data) {
+                    let imageData = this.context.createImageData(this.width, this.height);
+                    this.canvas.width = this.width;
+                    this.canvas.height = this.height;
+                    imageData.data.set(new Uint8Array(data));
+                    putImageAtPos(imageData, this.context, 0, 0);
+                    console.log(`Loaded image:${this.width}x${this.height}`);
                 } else {
-                    interpreter.stderr.write(`warning,Invalid bitmap file format: ${image}`);
+                    interpreter.stderr.write(`warning,Invalid image format: ${type?.mime}`);
                     this.valid = false;
                 }
             } catch (err: any) {

@@ -83,6 +83,7 @@ brs.subscribe("app", (event, data) => {
         }
     } else if (event === "version") {
         console.info(`Interpreter Library v${data}`);
+        mountZip("./channels/data.zip");
     }
 });
 brs.initialize(customDeviceInfo, {
@@ -170,6 +171,25 @@ function loadZip(zip) {
             console.error(`Error attempting to load zip: ${err.message} (${err.name})`);
         });
 }
+
+function mountZip(zip) {
+    fetch(zip)
+        .then(function (response) {
+            if (response.status === 200 || response.status === 0) {
+                return response.blob().then(function (zipBlob) {
+                    zipBlob.arrayBuffer().then(function (zipData) {
+                        brs.mountExt(zipData);
+                    });
+                });
+            } else {
+                return Promise.reject(new Error(response.statusText));
+            }
+        })
+        .catch((err) => {
+            console.error(`Error attempting to mount zip: ${err.message} (${err.name})`);
+        });
+}
+
 
 // Clear App data and display
 function closeApp() {

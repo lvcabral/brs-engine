@@ -133,13 +133,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
 
     getToFileSync(filePath: string): BrsType {
         try {
-            const path = new URL(filePath);
-            const volume = this.interpreter.fileSystem.get(path.protocol);
             const xhr = this.getConnection("GET", "arraybuffer");
             xhr.send();
             this.failureReason = xhr.statusText;
-            if (xhr.status === 200 && volume) {
-                this.saveDownloadedFile(volume, path, xhr.response);
+            if (xhr.status === 200) {
+                this.saveDownloadedFile(filePath, xhr.response);
             }
             return new RoURLEvent(
                 this.identity,
@@ -199,10 +197,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     postFromFileSync(filePath: string): BrsType {
         try {
             const xhr = this.getConnection("POST", "text");
-            const path = new URL(filePath);
-            const volume = this.interpreter.fileSystem.get(path.protocol);
+            const volume = this.interpreter.fileSystem;
             if (volume) {
-                let body = volume.readFileSync(path.pathname);
+                let body = volume.readFileSync(filePath);
                 xhr.send(body);
                 this.failureReason = xhr.statusText;
             } else {
@@ -239,15 +236,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     postFromFileToFileSync(inputPath: string, outputPath: string): BrsType {
         try {
             const xhr = this.getConnection("POST", "arraybuffer");
-            const inPath = new URL(inputPath);
-            const inVolume = this.interpreter.fileSystem.get(inPath.protocol);
-            if (inVolume) {
-                let body = inVolume.readFileSync(inPath.pathname);
+            const volume = this.interpreter.fileSystem;
+            if (volume) {
+                let body = volume.readFileSync(inputPath);
                 xhr.send(body);
-                const outPath = new URL(outputPath);
-                const outVolume = this.interpreter.fileSystem.get(outPath.protocol);
-                if (xhr.status === 200 && outVolume) {
-                    this.saveDownloadedFile(outVolume, outPath, xhr.response);
+                if (xhr.status === 200) {
+                    this.saveDownloadedFile(outputPath, xhr.response);
                 }
                 this.failureReason = xhr.statusText;
             } else {
@@ -282,29 +276,32 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         return this.postFromFileToFileSync(inPath, outPath);
     }
 
-    saveDownloadedFile(volume: FileSystem, path: URL, data: any) {
+    saveDownloadedFile(filePath: string, data: any) {
+        const fsys = this.interpreter.fileSystem;
+        if (!fsys) {
+            return;
+        }
         const bytes = data.slice(0, fileType.minimumBytes);
         const type = fileType(bytes);
         if (type && audioExt.has(type.ext)) {
-            this.interpreter.audioId++;
             if (this.interpreter.manifest.get("requires_audiometadata") === "1") {
-                volume.writeFileSync(path.pathname, data);
+                fsys.writeFileSync(filePath, Buffer.from(data));
             } else {
-                volume.writeFileSync(path.pathname, this.interpreter.audioId.toString());
+                fsys.writeFileSync(filePath, "audio");
             }
             postMessage({
-                audioPath: path.protocol + path.pathname,
+                audioPath: filePath,
                 audioFormat: type.ext,
                 audioData: data,
             });
         } else if (type && videoExt.has(type.ext)) {
-            volume.writeFileSync(path.pathname, "video");
+            fsys.writeFileSync(filePath, "video");
             postMessage({
-                videoPath: path.protocol + path.pathname,
+                videoPath: filePath,
                 videoData: data,
             });
         } else {
-            volume.writeFileSync(path.pathname, data);
+            fsys.writeFileSync(filePath, Buffer.from(data));
         }
     }
 
