@@ -103,10 +103,8 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         source.push(strFromU8(fileData));
         srcId++;
     } else if (lcasePath === "source/data") {
-        console.log("source/data");
         paths.push({ id: 0, url: relativePath, type: "pcode" });
     } else if (lcasePath === "source/var") {
-        console.log("source/var");
         paths.push({ id: 1, url: relativePath, type: "pcode" });
     } else if (context.inBrowser && audioExt.has(ext)) {
         addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));

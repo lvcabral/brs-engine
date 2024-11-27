@@ -417,16 +417,16 @@ function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
         }
     });
     // Internal Libraries
-    const volume = interpreter.fileSystem;
-    if (volume) {
-        volume.mkdirSync("common:/LibCore");
-        volume.mkdirSync("common:/LibCore/v30");
-        volume.writeFileSync("common:/LibCore/v30/bslCore.brs", bslCore);
-        volume.writeFileSync("common:/LibCore/v30/bslDefender.brs", bslDefender);
-        volume.mkdirSync("common:/roku_ads");
-        volume.writeFileSync("common:/roku_ads/Roku_Ads.brs", Roku_Ads);
-        volume.mkdirSync("common:/roku_browser");
-        volume.writeFileSync("common:/roku_browser/RokuBrowser.brs", RokuBrowser);
+    const fsys = interpreter.fileSystem;
+    if (fsys) {
+        fsys.mkdirSync("common:/LibCore");
+        fsys.mkdirSync("common:/LibCore/v30");
+        fsys.writeFileSync("common:/LibCore/v30/bslCore.brs", bslCore);
+        fsys.writeFileSync("common:/LibCore/v30/bslDefender.brs", bslDefender);
+        fsys.mkdirSync("common:/roku_ads");
+        fsys.writeFileSync("common:/roku_ads/Roku_Ads.brs", Roku_Ads);
+        fsys.mkdirSync("common:/roku_browser");
+        fsys.writeFileSync("common:/roku_browser/RokuBrowser.brs", RokuBrowser);
     }
 }
 
@@ -442,12 +442,12 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
     let fontFamily = device.defaultFont ?? "Asap";
     let fontPath = device.fontPath ?? "../fonts/";
 
-    const volume = interpreter.fileSystem;
-    if (!volume?.existsSync("common:")) {
+    const fsys = interpreter.fileSystem;
+    if (!fsys?.existsSync("common:")) {
         postMessage("error,Common file system not found");
         return;
     }
-    volume.mkdirSync("common:/Fonts");
+    fsys.mkdirSync("common:/Fonts");
     let fontRegular, fontBold, fontItalic, fontBoldIt;
     if (typeof XMLHttpRequest !== "undefined") {
         // Running as a Worker in the browser
@@ -463,22 +463,22 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
         fontBoldIt = device.fonts.get("bold-italic");
     }
     if (fontRegular) {
-        volume.writeFileSync(`common:/Fonts/${fontFamily}-Regular.ttf`, Buffer.from(fontRegular));
+        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Regular.ttf`, Buffer.from(fontRegular));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Regular.ttf`);
     }
     if (fontBold) {
-        volume.writeFileSync(`common:/Fonts/${fontFamily}-Bold.ttf`, Buffer.from(fontBold));
+        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Bold.ttf`, Buffer.from(fontBold));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Bold.ttf`);
     }
     if (fontItalic) {
-        volume.writeFileSync(`common:/Fonts/${fontFamily}-Italic.ttf`, Buffer.from(fontItalic));
+        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Italic.ttf`, Buffer.from(fontItalic));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Italic.ttf`);
     }
     if (fontBoldIt) {
-        volume.writeFileSync(`common:/Fonts/${fontFamily}-BoldItalic.ttf`, Buffer.from(fontBoldIt));
+        fsys.writeFileSync(`common:/Fonts/${fontFamily}-BoldItalic.ttf`, Buffer.from(fontBoldIt));
     } else {
         postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-BoldItalic.ttf`);
     }
@@ -504,30 +504,20 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
     }
     for (let filePath of payload.paths) {
         try {
-            console.log("Loading file:", filePath.url, "Type:", filePath.type, "ID:", filePath.id);
-            if (filePath.type === "pcode" && filePath.id === 0) {
-                if (fsys.existsSync(filePath.url)) {
-                    result.pcode = fsys.readFileSync(filePath.url);
-                    console.log("PCode file loaded successfully");
+            if (filePath.type === "pcode" && fsys.existsSync(`pkg:/${filePath.url}`)) {
+                if (filePath.id === 0) {
+                    result.pcode = fsys.readFileSync(`pkg:/${filePath.url}`);
                 } else {
-                    console.log("PCode file not found:", filePath.url);
-                }
-            } else if (filePath.type === "pcode" && filePath.id === 1) {
-                if (fsys.existsSync(filePath.url)) {
-                    result.iv = fsys.readFileSync(filePath.url, "utf8");
-                    console.log("IV file loaded successfully:", result.iv);
-                } else {
-                    // TODO: The files are not being found! Check the order of execution
-                    console.log("IV file not found:", filePath.url);
+                    result.iv = fsys.readFileSync(`pkg:/${filePath.url}`, "utf8");
                 }
             } else if (filePath.type === "source") {
-                if (fsys.existsSync(filePath.url)) {
+                if (Array.isArray(payload.brs) && typeof payload.brs[filePath.id] === "string") {
+                    result.sourceMap.set(filePath.url, payload.brs[filePath.id]);
+                } else if (fsys.existsSync(`pkg:/${filePath.url}`)) {
                     result.sourceMap.set(
                         filePath.url,
-                        fsys.readFileSync(filePath.url, "utf8")
+                        fsys.readFileSync(`pkg:/${filePath.url}`, "utf8")
                     );
-                } else if (Array.isArray(payload.brs)) {
-                    result.sourceMap.set(filePath.url, payload.brs[filePath.id]);
                 }
             }
         } catch (err: any) {
@@ -550,13 +540,13 @@ function loadTranslations(interpreter: Interpreter) {
     let trTarget = "";
     const locale = interpreter.deviceInfo.get("locale") || "en_US";
     try {
-        const volume = interpreter.fileSystem;
-        if (volume?.existsSync(`pkg:/locale/${locale}/translations.ts`)) {
-            xmlText = volume.readFileSync(`pkg:/locale/${locale}/translations.ts`, "utf8");
+        const fsys = interpreter.fileSystem;
+        if (fsys?.existsSync(`pkg:/locale/${locale}/translations.ts`)) {
+            xmlText = fsys.readFileSync(`pkg:/locale/${locale}/translations.ts`, "utf8");
             trType = "TS";
             trTarget = "translation";
-        } else if (volume?.existsSync(`pkg:/locale/${locale}/translations.xml`)) {
-            xmlText = volume.readFileSync(`pkg:/locale/${locale}/translations.xml`, "utf8");
+        } else if (fsys?.existsSync(`pkg:/locale/${locale}/translations.xml`)) {
+            xmlText = fsys.readFileSync(`pkg:/locale/${locale}/translations.xml`, "utf8");
             trType = "xliff";
             trTarget = "target";
         }

@@ -197,14 +197,14 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     postFromFileSync(filePath: string): BrsType {
         try {
             const xhr = this.getConnection("POST", "text");
-            const volume = this.interpreter.fileSystem;
-            if (volume) {
-                let body = volume.readFileSync(filePath);
+            const fsys = this.interpreter.fileSystem;
+            if (fsys) {
+                const body = fsys.readFileSync(filePath);
                 xhr.send(body);
                 this.failureReason = xhr.statusText;
             } else {
                 this.interpreter.stderr.write(
-                    `warning,[postFromFileSync] Invalid volume: ${filePath}`
+                    `warning,[postFromFileSync] Invalid path: ${filePath}`
                 );
                 return BrsInvalid.Instance;
             }
@@ -236,9 +236,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     postFromFileToFileSync(inputPath: string, outputPath: string): BrsType {
         try {
             const xhr = this.getConnection("POST", "arraybuffer");
-            const volume = this.interpreter.fileSystem;
-            if (volume) {
-                let body = volume.readFileSync(inputPath);
+            const fsys = this.interpreter.fileSystem;
+            if (fsys) {
+                const body = fsys.readFileSync(inputPath);
                 xhr.send(body);
                 if (xhr.status === 200) {
                     this.saveDownloadedFile(outputPath, xhr.response);
@@ -246,7 +246,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = xhr.statusText;
             } else {
                 this.interpreter.stderr.write(
-                    `warning,[postFromFileToFileSync] Invalid volume: ${inputPath}`
+                    `warning,[postFromFileToFileSync] Invalid path: ${inputPath}`
                 );
                 return BrsInvalid.Instance;
             }
