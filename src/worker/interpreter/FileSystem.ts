@@ -1,71 +1,118 @@
-import * as Path from "path";
+import MemoryFileSystem from "memory-fs";
+import * as path from "path";
 import * as zenFS from "@zenfs/core";
 
-/** Proxy to make InMemory volumes case insensitive as Roku File System */
+/** Proxy to make File System volumes case insensitive, same as Roku devices */
 
 export class FileSystem {
     private paths: Map<string, string>;
-    private fs: typeof zenFS.fs;
+    private zfs: typeof zenFS.fs; // pkg: and ext1:
+    private tfs: MemoryFileSystem; // tmp:
+    private cfs: MemoryFileSystem; // cachefs:
+    private mfs: MemoryFileSystem; // common:
 
-    constructor(fs: typeof zenFS.fs) {
+    constructor(zfs: typeof zenFS.fs) {
         this.paths = new Map();
-        this.fs = fs;
+        this.zfs = zfs;
+        this.tfs = new MemoryFileSystem();
+        this.cfs = new MemoryFileSystem();
+        this.mfs = new MemoryFileSystem();
     }
 
-    existsSync(path: string) {
-        return this.fs.existsSync(path.toLowerCase());
+    private getFS(uri: string) {
+        if (uri.toLowerCase().startsWith("tmp:")) {
+            return this.tfs;
+        } else if (uri.toLowerCase().startsWith("cachefs:")) {
+            return this.cfs;
+        } else if (uri.toLowerCase().startsWith("common:")) {
+            return this.mfs;
+        }
+        return this.zfs;
+    }
+    private getPath(uri: string) {
+        return uri
+            .toLowerCase()
+            .replace("tmp:", "")
+            .replace("cachefs:", "")
+            .replace("common:", "")
+            .replace(/\/+/g, "/")
+            .trim();
+    }
+    private savePath(uri: string) {
+        this.paths.set(
+            uri.toLowerCase().replace(/\/+/g, "/").trim(),
+            uri.replace(/\/+/g, "/").trim()
+        );
+    }
+    private deletePath(uri: string) {
+        return this.paths.delete(uri.toLowerCase().replace(/\/+/g, "/").trim());
+    }
+    private getOriginalPath(uri: string) {
+        return this.paths.get(uri.toLowerCase().replace(/\/+/g, "/").trim());
     }
 
-    readFileSync(path: string, encoding?: any): any {
-        return this.fs.readFileSync(path.toLowerCase(), encoding);
+    volumesSync() {
+        const volumes = this.zfs.readdirSync("/");
+        volumes.push("tmp:");
+        volumes.push("cachefs:");
+        return volumes;
     }
 
-    readdirSync(path: string) {
-        const files = this.fs.readdirSync(path.toLowerCase());
-        const paths = this.paths;
-        if (files.length > 0) {
+    existsSync(uri: string) {
+        return validUri(uri) && this.getFS(uri).existsSync(this.getPath(uri));
+    }
+
+    readFileSync(uri: string, encoding?: any): any {
+        return this.getFS(uri).readFileSync(this.getPath(uri), encoding);
+    }
+
+    readdirSync(uri: string) {
+        const files = this.getFS(uri).readdirSync(this.getPath(uri));
+        if (memoryUri(uri) && files.length > 0) {
+            const self = this;
             files.forEach(function (file: string, index: number) {
-                let fullPath = Path.join(path.toLowerCase(), file);
-                if (paths.has(fullPath)) {
-                    files[index] = Path.basename(paths.get(fullPath) as string);
+                const fullPath = path.posix.join(uri.toLowerCase(), file);
+                const originalPath = self.getOriginalPath(fullPath);
+                if (originalPath) {
+                    files[index] = path.posix.basename(originalPath);
                 }
             });
         }
         return files;
     }
 
-    mkdirSync(path: string) {
-        this.fs.mkdirSync(path.toLowerCase());
-        this.paths.set(path.toLowerCase(), path);
+    mkdirSync(uri: string) {
+        this.getFS(uri).mkdirSync(this.getPath(uri));
+        this.savePath(uri);
     }
 
-    rmdirSync(path: string) {
-        this.fs.rmdirSync(path.toLowerCase());
-        this.paths.delete(path.toLowerCase());
+    rmdirSync(uri: string) {
+        this.getFS(uri).rmdirSync(this.getPath(uri));
+        this.deletePath(uri);
     }
 
-    unlinkSync(path: string) {
-        this.fs.unlinkSync(path.toLowerCase());
-        this.paths.delete(path.toLowerCase());
+    unlinkSync(uri: string) {
+        this.getFS(uri).unlinkSync(this.getPath(uri));
+        this.deletePath(uri);
     }
 
-    renameSync(oldPath: string, newPath: string) {
-        this.fs.renameSync(oldPath.toLowerCase(), newPath.toLowerCase());
-        this.paths.delete(oldPath.toLowerCase());
-        this.paths.set(newPath.toLowerCase(), newPath);
+    renameSync(oldName: string, newName: string) {
+        const content = this.readFileSync(oldName);
+        this.writeFileSync(newName, content);
+        this.unlinkSync(oldName);
     }
 
-    writeFileSync(path: string, content: string | Buffer, encoding?: any) {
-        this.fs.writeFileSync(path.toLowerCase(), content, encoding);
-        this.paths.set(path.toLowerCase(), path);
+    writeFileSync(uri: string, content: string | Buffer, encoding?: any) {
+        this.getFS(uri).writeFileSync(this.getPath(uri), content, encoding);
+        this.savePath(uri);
     }
 
-    statSync(path: string) {
-        return this.fs.statSync(path.toLowerCase());
+    statSync(uri: string) {
+        return this.getFS(uri).statSync(this.getPath(uri));
     }
 
-    normalize(path: string) {
-        return zenFS.normalizePath(path);
+    normalize(uri: string) {
+        return zenFS.normalizePath(uri);
     }
 }
 
@@ -74,7 +121,7 @@ export class FileSystem {
  *   ex. "tmp:/test/test1.txt" -> "tmp:"
  */
 export function getVolume(fileUri: string) {
-    return fileUri.substring(0, fileUri.indexOf(":") + 1);
+    return fileUri.toLowerCase().substring(0, fileUri.indexOf(":") + 1);
 }
 
 /*
@@ -88,6 +135,14 @@ export function validUri(uri: string): boolean {
  * Returns true if the Uri is from one of the two writeable volumes
  */
 export function writeUri(uri: string): boolean {
+    uri = uri.toLowerCase();
     return validUri(uri) && (uri.startsWith("tmp:/") || uri.startsWith("cachefs:/"));
 }
 
+/*
+ * Returns true if the Uri is from one of the in memory volumes (not zip based)
+ */
+export function memoryUri(uri: string): boolean {
+    uri = uri.toLowerCase();
+    return validUri(uri) && !(uri.startsWith("pkg:/") || uri.startsWith("ext1:/"));
+}

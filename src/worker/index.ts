@@ -278,13 +278,7 @@ export function getFonts(fontPath: string, fontFamily: string) {
 /// #endif
 
 function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
-    let fsConfig = {
-        mounts: {
-            "common:": zenFS.InMemory,
-            "tmp:": zenFS.InMemory,
-            "cachefs:": zenFS.InMemory,
-        },
-    };
+    const fsConfig = { mounts: {} };
     if (pkgZip) {
         Object.assign(fsConfig.mounts, {
             "pkg:": { backend: Zip, data: pkgZip, caseSensitive: false },
@@ -443,7 +437,7 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
     let fontPath = device.fontPath ?? "../fonts/";
 
     const fsys = interpreter.fileSystem;
-    if (!fsys?.existsSync("common:")) {
+    if (!fsys?.existsSync("common:/")) {
         postMessage("error,Common file system not found");
         return;
     }

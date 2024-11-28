@@ -95,15 +95,12 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         if (image) {
-            console.log(`Loading image:${this.name}`);
             try {
                 let data;
                 const type = fileType(image);
-                console.log(type);
                 if (type && type.mime === "image/png") {
-                    console.log(image?.buffer);
                     const png = UPNG.decode(image.buffer);
-                    console.log(png);
+                    // TODO: Decode is not working on CLI for some PNG files
                     const dataArray = UPNG.toRGBA8(png);
                     if (dataArray.length) {
                         data = dataArray[0];
@@ -154,7 +151,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                     this.canvas.height = this.height;
                     imageData.data.set(new Uint8Array(data));
                     putImageAtPos(imageData, this.context, 0, 0);
-                    console.log(`Loaded image:${this.width}x${this.height}`);
                 } else {
                     interpreter.stderr.write(`warning,Invalid image format: ${type?.mime}`);
                     this.valid = false;
