@@ -6,10 +6,10 @@ import * as zenFS from "@zenfs/core";
 
 export class FileSystem {
     private paths: Map<string, string>;
-    private zfs: typeof zenFS.fs; // pkg: and ext1:
-    private tfs: MemoryFileSystem; // tmp:
-    private cfs: MemoryFileSystem; // cachefs:
-    private mfs: MemoryFileSystem; // common:
+    readonly zfs: typeof zenFS.fs; // pkg: and ext1:
+    readonly tfs: MemoryFileSystem; // tmp:
+    readonly cfs: MemoryFileSystem; // cachefs:
+    readonly mfs: MemoryFileSystem; // common:
 
     constructor(zfs: typeof zenFS.fs) {
         this.paths = new Map();

@@ -635,8 +635,9 @@
   resolved "https://registry.yarnpkg.com/@leichtgewicht/ip-codec/-/ip-codec-2.0.5.tgz#4fc56c15c580b9adb7dc3c333a134e540b44bfb1"
   integrity sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==
 
-"@lvcabral/zip@file:../../../../../../Projects/zip":
-  version "0.5.2"
+"@lvcabral/zip@lvcabral/zip":
+  version "0.5.3"
+  resolved "https://codeload.github.com/lvcabral/zip/tar.gz/e8aba01e413ef31ea2825e88d79bc8bd785712bf"
   dependencies:
     fflate "^0.8.2"
     utilium "^1.0.0"

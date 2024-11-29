@@ -131,20 +131,6 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
 }
 
 /**
- * Returns a new instance of the Interpreter for Testing
- *
- */
-export async function getTestInterpreter() {
-    try {
-        await configureFileSystem();
-    } catch (err: any) {
-        postMessage(`error,Error mounting File System: ${err.message}`);
-        return null;
-    }
-    return new Interpreter({}, zenFS.fs);
-}
-
-/**
  * Runs an arbitrary string of BrightScript code.
  * @param contents the BrightScript code to lex, parse and interpret.
  * @param interpreter an interpreter to use when executing `contents`. Required

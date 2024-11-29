@@ -56,7 +56,7 @@
     "types/src/api/"
   ],
   "dependencies": {
-    "@lvcabral/zip": "file:../../../../../../Projects/zip",
+    "@lvcabral/zip": "lvcabral/zip",
     "@msgpack/msgpack": "^2.8.0",
     "@zenfs/core": "^1.4.0",
     "canvas": "^2.11.2",

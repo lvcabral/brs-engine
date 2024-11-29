@@ -7,7 +7,6 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { FileSystem } from "../../interpreter/FileSystem";
 import { audioExt, videoExt } from "../../common";
 import fileType from "file-type";
 /// #if !BROWSER
