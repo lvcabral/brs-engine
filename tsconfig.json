@@ -57,5 +57,5 @@
         "plugins": []
     },
     "include": ["./src/"],
-    "exclude": ["./src/cli/"]
+    "exclude": ["./src/cli/", "node_modules"]
 }

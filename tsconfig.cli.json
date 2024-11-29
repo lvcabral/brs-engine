@@ -56,5 +56,5 @@
         "plugins": []
     },
     "include": ["./src/"],
-    "exclude": ["./src/api/index.ts"]
+    "exclude": ["./src/api/index.ts", "node_modules"]
 }
