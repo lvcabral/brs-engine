@@ -70,7 +70,7 @@ export type AppPayload = {
     input: Map<string, string>;
     paths: AppFilePath[];
     brs: string[];
-    pkgZip: ArrayBuffer;
+    pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     password?: string;
     entryPoint?: boolean;

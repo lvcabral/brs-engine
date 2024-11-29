@@ -192,7 +192,6 @@ export function executeLine(contents: string, interpreter: Interpreter) {
 export function createPayload(files: string[], customDeviceData?: Partial<DeviceInfo>): AppPayload {
     const paths: AppFilePath[] = [];
     const source: string[] = [];
-    const texts: string[] = [];
     let manifest: Map<string, string> | undefined;
 
     let id = 0;
@@ -215,8 +214,6 @@ export function createPayload(files: string[], customDeviceData?: Partial<Device
                 const fileData = fs.readFileSync(filePath);
                 if (fileData) {
                     manifest = parseManifest(fileData.toString());
-                    texts.push(fileData.toString());
-                    paths.push({ id: 0, url: "manifest", type: "text" });
                 }
             } catch (err: any) {
                 throw err;
@@ -245,7 +242,6 @@ export function createPayload(files: string[], customDeviceData?: Partial<Device
             input: new Map(),
             paths: paths,
             brs: source,
-            pkgZip: new ArrayBuffer(0), // TODO: Create a Zip file in memory with the provided files
             entryPoint: false,
             stopOnCrash: false,
         };
@@ -279,6 +275,9 @@ export function getFonts(fontPath: string, fontFamily: string) {
 
 function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
     const fsConfig = { mounts: {} };
+    if (zenFS.fs?.existsSync("pkg:/")) {
+        zenFS.umount("pkg:");
+    }
     if (pkgZip) {
         Object.assign(fsConfig.mounts, {
             "pkg:": { backend: Zip, data: pkgZip, caseSensitive: false },
@@ -289,6 +288,9 @@ function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promis
         });
     }
     if (extZip) {
+        if (zenFS.fs?.existsSync("ext1:/")) {
+            zenFS.umount("ext1:");
+        }
         Object.assign(fsConfig.mounts, {
             "ext1:": { backend: Zip, data: extZip, caseSensitive: false },
         });
@@ -319,7 +321,6 @@ export async function executeFile(
     stats.clear();
     try {
         await configureFileSystem(payload.pkgZip, payload.extZip);
-        console.log("File System mounted successfully");
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
@@ -669,7 +670,6 @@ function runSource(
     input: RoAssociativeArray,
     password: string = ""
 ): RunResult {
-    console.log("Running the app");
     const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
     let exitReason = parseResult.exitReason;
     if (password.length > 0) {

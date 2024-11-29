@@ -76,7 +76,6 @@ export interface ExecutionOptions {
 
 /** The default set of execution options.  */
 export const defaultExecutionOptions: ExecutionOptions = {
-    root: process.cwd(),
     entryPoint: false,
     stopOnCrash: false,
     stdout: process.stdout,
@@ -101,7 +100,6 @@ export interface LocalFileData {
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private readonly _startTime = Date.now();
     private readonly _stack = new Array<TracePoint>();
-    private _fileSystem?: FileSystem;
     private _environment: Environment;
     private _sourceMap = new Map<string, string>();
     private _tryMode = false;
@@ -120,6 +118,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: -1, column: -1 },
     };
 
+    readonly fileSystem: FileSystem;
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly manifest: Map<string, any> = new Map<string, any>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
@@ -136,10 +135,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /** The set of errors detected from executing an AST. */
     errors: (BrsError | RuntimeError)[] = [];
-
-    get fileSystem() {
-        return this._fileSystem;
-    }
 
     get environment() {
         return this._environment;
@@ -164,12 +159,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();
     public debugMode: boolean = false;
-
-    public setFileSystem(fileSystem: typeof zenFS.fs) {
-        if (!this._fileSystem) {
-            this._fileSystem = new FileSystem(fileSystem);
-        }
-    }
 
     /**
      * Updates the interpreter manifest with the provided data
@@ -230,9 +219,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
-        if (fileSystem) {
-            this._fileSystem = new FileSystem(fileSystem);
-        }
+        this.fileSystem = new FileSystem(fileSystem ?? zenFS.fs);
         Object.keys(defaultDeviceInfo).forEach((key) => {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, defaultDeviceInfo[key]);

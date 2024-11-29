@@ -11,5 +11,4 @@ sub main()
 
     print array[4]
     print array[3][5]
-    rokuExample()
 end sub

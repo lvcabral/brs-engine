@@ -5,6 +5,7 @@ describe("end to end standard libary", () => {
 
     beforeAll(() => {
         outputStreams = createMockStreams();
+        outputStreams.root = ".";
     });
 
     afterEach(() => {

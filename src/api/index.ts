@@ -71,7 +71,14 @@ let brsWorker: Worker;
 let home: Howl;
 
 // Package API
-export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umountExt } from "./package";
+export {
+    deviceData,
+    loadAppZip,
+    updateAppZip,
+    getSerialNumber,
+    mountExt,
+    umountExt,
+} from "./package";
 
 // Control API
 export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons } from "./control";
@@ -389,7 +396,7 @@ function runApp(payload: AppPayload) {
         brsWorker.addEventListener("message", workerCallback);
         brsWorker.postMessage(sharedBuffer);
         const transfArray = [];
-        if (!manifestMap.get("bs_libs_required")?.includes("Roku_Browser")) {
+        if (!manifestMap.get("bs_libs_required")?.includes("Roku_Browser") && payload.pkgZip) {
             // Prevent cloning the zip data in worker (if not needed on main thread)
             transfArray.push(payload.pkgZip);
         }

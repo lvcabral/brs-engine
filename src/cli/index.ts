@@ -104,7 +104,7 @@ program
         if (brsFiles.length > 0) {
             runAppFiles(brsFiles);
         } else {
-            showAppTitle();
+            displayTitle();
             repl();
         }
     })
@@ -112,18 +112,18 @@ program
     .parse(process.argv);
 
 /**
- * Run the BrightScript files or the App Zip file.
+ * Run the BrightScript files or the App package file.
  * @param files the list of files to run.
  */
 function runAppFiles(files: string[]) {
     try {
-        // Run App Zip file
         const filePath = files[0];
         const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
         const fileExt = fileName.split(".").pop()?.toLowerCase();
         appFileName = fileName;
         if (fileExt === "zip" || fileExt === "bpk") {
-            showAppTitle();
+            // Run App Package file
+            displayTitle();
             if (program.pack.length > 0 && fileExt === "zip") {
                 console.log(chalk.blueBright(`Packaging ${filePath}...\n`));
             } else {
@@ -150,7 +150,7 @@ function runAppFiles(files: string[]) {
  * Display the CLI application title on the console
  *
  */
-function showAppTitle() {
+function displayTitle() {
     const appTitle = `${packageInfo.title} CLI`;
     const appVersion = `v${packageInfo.version}`;
     /// #if DEBUG
@@ -169,6 +169,7 @@ async function runApp(payload: AppPayload) {
     payload.stopOnCrash = program.debug ?? false;
     payload.password = program.pack;
     if (program.ecp && !workerReady) {
+        // Load ECP service as Worker
         const workerPath = path.join(__dirname, "brs.ecp.js");
         const workerData = { device: { ...deviceData, serialNumber: getSerialNumber() } };
         brsWorker = new Worker(workerPath, { workerData: workerData });
@@ -192,6 +193,7 @@ async function runApp(payload: AppPayload) {
             brsWorker?.terminate();
         }
         if (pkg.exitReason === AppExitReason.PACKAGED) {
+            // Generate the Encrypted App Package
             const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
             try {
                 const buffer = updateAppZip(pkg.cipherText, pkg.iv);

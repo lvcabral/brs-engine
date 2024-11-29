@@ -18,26 +18,6 @@ export class FileSystem {
         this.cfs = new MemoryFileSystem();
         this.mfs = new MemoryFileSystem();
     }
-
-    private getFS(uri: string) {
-        if (uri.toLowerCase().startsWith("tmp:")) {
-            return this.tfs;
-        } else if (uri.toLowerCase().startsWith("cachefs:")) {
-            return this.cfs;
-        } else if (uri.toLowerCase().startsWith("common:")) {
-            return this.mfs;
-        }
-        return this.zfs;
-    }
-    private getPath(uri: string) {
-        return uri
-            .toLowerCase()
-            .replace("tmp:", "")
-            .replace("cachefs:", "")
-            .replace("common:", "")
-            .replace(/\/+/g, "/")
-            .trim();
-    }
     private savePath(uri: string) {
         this.paths.set(
             uri.toLowerCase().replace(/\/+/g, "/").trim(),
@@ -49,6 +29,27 @@ export class FileSystem {
     }
     private getOriginalPath(uri: string) {
         return this.paths.get(uri.toLowerCase().replace(/\/+/g, "/").trim());
+    }
+
+    getFS(uri: string) {
+        if (uri.toLowerCase().startsWith("tmp:")) {
+            return this.tfs;
+        } else if (uri.toLowerCase().startsWith("cachefs:")) {
+            return this.cfs;
+        } else if (uri.toLowerCase().startsWith("common:")) {
+            return this.mfs;
+        }
+        return this.zfs;
+    }
+
+    getPath(uri: string) {
+        return uri
+            .toLowerCase()
+            .replace("tmp:", "")
+            .replace("cachefs:", "")
+            .replace("common:", "")
+            .replace(/\/+/g, "/")
+            .trim();
     }
 
     volumesSync() {
