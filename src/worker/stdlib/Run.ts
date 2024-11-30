@@ -47,7 +47,10 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
             }
             /// #endif
             if (interpreter.fileSystem.existsSync(filename.value)) {
-                sourceMap.set(filename.value, interpreter.fileSystem.readFileSync(filename.value, "utf-8"));
+                sourceMap.set(
+                    filename.value,
+                    interpreter.fileSystem.readFileSync(filename.value, "utf-8")
+                );
             }
         });
         if (sourceMap.size !== 0) {

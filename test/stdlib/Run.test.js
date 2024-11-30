@@ -11,7 +11,7 @@ describe("global Run function", () => {
     brs.registerCallback(() => {}); // register a callback to avoid display errors
 
     beforeEach(() => {
-        interpreter = new Interpreter({root: process.cwd()});
+        interpreter = new Interpreter({ root: process.cwd() });
     });
 
     afterEach(() => {

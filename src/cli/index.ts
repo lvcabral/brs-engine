@@ -129,7 +129,7 @@ function runAppFiles(files: string[]) {
             } else {
                 console.log(chalk.blueBright(`Executing ${filePath}...\n`));
             }
-            const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer
+            const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
             loadAppZip(fileName, fileData, runApp);
             return;
         }

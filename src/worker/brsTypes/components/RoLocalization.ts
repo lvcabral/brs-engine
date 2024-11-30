@@ -79,9 +79,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
                     assetPath = `pkg:/locale/${this.locale}/${filePath}`;
                 } else if (fsys.existsSync(`pkg:/locale/default/${filePath}`)) {
                     assetPath = `pkg:/locale/default/${filePath}`;
-                } else if (
-                    fsys.existsSync(`pkg:/locale/en_US/${filePath}`)
-                ) {
+                } else if (fsys.existsSync(`pkg:/locale/en_US/${filePath}`)) {
                     assetPath = `pkg:/locale/en_US/${filePath}`;
                 }
                 return new BrsString(assetPath);

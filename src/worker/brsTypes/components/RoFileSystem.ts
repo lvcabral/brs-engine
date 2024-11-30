@@ -77,9 +77,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 if (!fsys) {
                     return new RoList([]);
                 }
-                const volumes = fsys
-                    .volumesSync()
-                    .map((s) => new BrsString(s));
+                const volumes = fsys.volumesSync().map((s) => new BrsString(s));
                 return new RoList(volumes);
             } catch (err: any) {
                 return new RoList([]);

@@ -190,7 +190,6 @@ function mountZip(zip) {
         });
 }
 
-
 // Clear App data and display
 function closeApp() {
     currentApp = { id: "", running: false };
