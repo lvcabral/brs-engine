@@ -99,8 +99,7 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                 let data;
                 const type = fileType(image);
                 if (type && type.mime === "image/png") {
-                    const png = UPNG.decode(image.buffer);
-                    // TODO: Decode is not working on CLI for some PNG files
+                    const png = UPNG.decode(image);
                     const dataArray = UPNG.toRGBA8(png);
                     if (dataArray.length) {
                         data = dataArray[0];
