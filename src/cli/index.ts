@@ -61,9 +61,13 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
-    .option("-r, --registry", "Persist the simulated device registry on disk.", false)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
+    .option(
+        "-r, --root <directory>",
+        "The root directory from which `pkg:` paths will be resolved."
+    )
+    .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
         if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
             chalk.level = Math.trunc(program.colors) as chalk.Level;
@@ -134,7 +138,7 @@ function runAppFiles(files: string[]) {
             return;
         }
         // Run BrightScript files
-        const payload = brs.createPayload(files, deviceData);
+        const payload = brs.createPayload(files, deviceData, program.root);
         runApp(payload);
     } catch (err: any) {
         if (err.messages?.length) {
@@ -281,7 +285,15 @@ function getRegistry(): Map<string, string> {
  * **NOTE:** Currently limited to single-line inputs :(
  */
 async function repl() {
-    const replInterpreter = await brs.getReplInterpreter({ device: deviceData });
+    if (program.root && !fs.existsSync(program.root)) {
+        console.error(chalk.red(`Root path not found: ${program.root}\n`));
+        process.exitCode = 1;
+        return;
+    }
+    const replInterpreter = await brs.getReplInterpreter({
+        device: deviceData,
+        root: program.root,
+    });
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -294,11 +306,13 @@ async function repl() {
             process.stdout.write("\x1Bc");
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
+        } else if (["root", "path"].includes(line.toLowerCase().trim())) {
+            const rootPath = replInterpreter.options.root ?? "not defined!";
+            process.stdout.write(chalk.cyanBright(`Root path for 'pkg:' is ${rootPath}\n`));
         } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
+            const localVars = replInterpreter.formatLocalVariables().trimEnd();
             process.stdout.write(chalk.cyanBright(`\r\nLocal variables:\n\n`));
-            process.stdout.write(
-                chalk.cyanBright(replInterpreter.formatLocalVariables().trimEnd())
-            );
+            process.stdout.write(chalk.cyanBright(localVars));
             process.stdout.write("\n");
         } else {
             brs.executeLine(line, replInterpreter);
@@ -417,6 +431,7 @@ function printHelp() {
     helpMsg += "   var|vars        Display variables and their types/values\r\n";
     helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
+    helpMsg += "   root|path       Display the root path (if defined with --root)\r\n";
     helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";
     helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
     process.stdout.write(chalk.cyanBright(helpMsg));

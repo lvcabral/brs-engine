@@ -1,5 +1,3 @@
-import * as path from "path";
-import * as fs from "fs";
 import * as brs from "../";
 import {
     BrsType,
@@ -13,7 +11,6 @@ import {
     isBrsString,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { getPath } from "./File";
 
 /**
  * Runs a file (or set of files) with the provided arguments, returning either the value returned by those files'
@@ -36,16 +33,10 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         });
         const sourceMap = new Map<string, string>();
         filenames.forEach((filename) => {
-            /// #if !BROWSER
-            if (interpreter.options.root) {
-                const filePath = path.join(interpreter.options.root, getPath(filename.value));
-                sourceMap.set(filePath, fs.readFileSync(filePath, "utf-8"));
-            }
-            /// #endif
             if (interpreter.fileSystem.existsSync(filename.value)) {
                 sourceMap.set(
                     filename.value,
-                    interpreter.fileSystem.readFileSync(filename.value, "utf-8")
+                    interpreter.fileSystem.readFileSync(filename.value, "utf8")
                 );
             }
         });
@@ -74,15 +65,15 @@ export const Run = new Callable(
     }),
     ...Callable.variadic({
         signature: {
-            args: [new StdlibArgument("filenamearray", ValueKind.Object)],
+            args: [new StdlibArgument("filenameArray", ValueKind.Object)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, filenamearray: BrsComponent, ...args: BrsType[]) => {
+        impl: (interpreter: Interpreter, filenameArray: BrsComponent, ...args: BrsType[]) => {
             if (
-                filenamearray instanceof RoArray &&
-                filenamearray.getElements().every(isBrsString)
+                filenameArray instanceof RoArray &&
+                filenameArray.getElements().every(isBrsString)
             ) {
-                return runFiles(interpreter, filenamearray.getElements() as BrsString[], args);
+                return runFiles(interpreter, filenameArray.getElements() as BrsString[], args);
             }
 
             // RBI seems to hard-reboot when passed a non-empty associative array, but returns invalid for empty

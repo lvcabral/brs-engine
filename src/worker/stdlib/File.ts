@@ -2,41 +2,6 @@ import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } fr
 import { Interpreter } from "../interpreter";
 import { getVolume, validUri, writeUri } from "../interpreter/FileSystem";
 import * as nanomatch from "nanomatch";
-import * as path from "path";
-
-/*
- * Returns a memfs file path from a brs file uri
- *   ex. "tmp:/test/test1.txt" -> "/test/test1.txt"
- */
-export function getPath(fileUri: string) {
-    try {
-        return new URL(fileUri).pathname;
-    } catch (err: any) {
-        return fileUri;
-    }
-}
-
-/*
- * Returns a memfs file path from a brs file uri. If the brs file uri
- * has the "pkg" protocol, append the file path with our root directory
- * so that we're searching the correct place.
- *   ex. "tmp:/test/test1.txt" -> "/test/test1.txt"
- *   ex. "pkg:/test/test1.txt" -> "/path/to/proj/test/test1.txt"
- *
- */
-export function getScopedPath(interpreter: Interpreter, fileUri: string) {
-    try {
-        let url = new URL(fileUri);
-        let filePath = getPath(fileUri);
-        let scopedPath = filePath;
-        if (url.protocol === "pkg:") {
-            scopedPath = path.join(interpreter.options.root ?? "", filePath);
-        }
-        return scopedPath.replace(/[\/\\]+/g, path.posix.sep);
-    } catch (err: any) {
-        return fileUri;
-    }
-}
 
 /** Copies a file from src to dst, return true if successful */
 export const CopyFile = new Callable("CopyFile", {
@@ -50,7 +15,7 @@ export const CopyFile = new Callable("CopyFile", {
     impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!writeUri(src.value) || !writeUri(dst.value) || !fsys?.existsSync(src.value)) {
+            if (!writeUri(src.value) || !writeUri(dst.value) || !fsys.existsSync(src.value)) {
                 return BrsBoolean.False;
             }
             const content = fsys.readFileSync(src.value);
@@ -78,7 +43,7 @@ export const MoveFile = new Callable("MoveFile", {
                 !writeUri(src.value) ||
                 !writeUri(dst.value) ||
                 getVolume(src.value) !== getVolume(dst.value) ||
-                !fsys?.existsSync(src.value)
+                !fsys.existsSync(src.value)
             ) {
                 return BrsBoolean.False;
             }
@@ -99,7 +64,7 @@ export const DeleteFile = new Callable("DeleteFile", {
     impl: (interpreter: Interpreter, file: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!fsys || !writeUri(file.value)) {
+            if (!writeUri(file.value)) {
                 return BrsBoolean.False;
             }
             fsys.unlinkSync(file.value);
@@ -119,7 +84,7 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
     impl: (interpreter: Interpreter, dir: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!fsys || !writeUri(dir.value)) {
+            if (!writeUri(dir.value)) {
                 return BrsBoolean.False;
             }
             fsys.rmdirSync(dir.value);
@@ -139,7 +104,7 @@ export const CreateDirectory = new Callable("CreateDirectory", {
     impl: (interpreter: Interpreter, dir: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!fsys || !writeUri(dir.value)) {
+            if (!writeUri(dir.value)) {
                 return BrsBoolean.False;
             }
             fsys.mkdirSync(dir.value);
@@ -180,7 +145,7 @@ export const ListDir = new Callable("ListDir", {
                 interpreter.stderr.write(
                     `warning,*** ERROR: Missing or invalid PHY: '${dir.value}'`
                 );
-            } else if (fsys?.existsSync(dir.value)) {
+            } else if (fsys.existsSync(dir.value)) {
                 const subPaths = fsys.readdirSync(dir.value).map((s) => new BrsString(s));
                 return new RoList(subPaths);
             }
@@ -200,7 +165,7 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
     impl: (interpreter: Interpreter, filepath: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!fsys || !validUri(filepath.value)) {
+            if (!validUri(filepath.value)) {
                 return new BrsString("");
             }
             return new BrsString(fsys.readFileSync(filepath.value, "utf8"));
@@ -222,7 +187,7 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
     impl: (interpreter: Interpreter, filePath: BrsString, text: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!fsys || !writeUri(filePath.value)) {
+            if (!writeUri(filePath.value)) {
                 return BrsBoolean.False;
             }
             fsys.writeFileSync(filePath.value, text.value, "utf8");
@@ -245,7 +210,7 @@ export const MatchFiles = new Callable("MatchFiles", {
     impl: (interpreter: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!fsys || !validUri(pathArg.value)) {
+            if (!validUri(pathArg.value)) {
                 return new RoList([]);
             }
             let knownFiles = fsys.readdirSync(pathArg.value);

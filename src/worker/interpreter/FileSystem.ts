@@ -1,19 +1,26 @@
 import MemoryFileSystem from "memory-fs";
 import * as path from "path";
 import * as zenFS from "@zenfs/core";
+import * as nodeFS from "fs";
 
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 
 export class FileSystem {
     private paths: Map<string, string>;
-    readonly zfs: typeof zenFS.fs; // pkg: and ext1:
+    private root?: string;
+    readonly pfs: typeof zenFS.fs | typeof nodeFS; // pkg: and ext1:
     readonly tfs: MemoryFileSystem; // tmp:
     readonly cfs: MemoryFileSystem; // cachefs:
     readonly mfs: MemoryFileSystem; // common:
 
-    constructor() {
+    constructor(root?: string) {
         this.paths = new Map();
-        this.zfs = zenFS.fs;
+        if (root) {
+            this.root = root;
+            this.pfs = nodeFS;
+        } else {
+            this.pfs = zenFS.fs;
+        }
         this.tfs = new MemoryFileSystem();
         this.cfs = new MemoryFileSystem();
         this.mfs = new MemoryFileSystem();
@@ -39,10 +46,16 @@ export class FileSystem {
         } else if (uri.trim().toLowerCase().startsWith("common:")) {
             return this.mfs;
         }
-        return this.zfs;
+        return this.pfs;
     }
 
     getPath(uri: string) {
+        if (this.root && uri.trim().toLowerCase().startsWith("pkg:")) {
+            uri = uri
+                .trim()
+                .toLowerCase()
+                .replace("pkg:", this.root + "/");
+        }
         return uri
             .toLowerCase()
             .replace("tmp:", "")
@@ -53,7 +66,12 @@ export class FileSystem {
     }
 
     volumesSync() {
-        const volumes = this.zfs.readdirSync("/");
+        const volumes: string[] = [];
+        if (this.root) {
+            volumes.push("pkg:");
+        } else {
+            this.pfs.readdirSync("/");
+        }
         volumes.push("tmp:");
         volumes.push("cachefs:");
         return volumes;
@@ -63,8 +81,13 @@ export class FileSystem {
         return validUri(uri) && this.getFS(uri).existsSync(this.getPath(uri));
     }
 
-    readFileSync(uri: string, encoding?: any): any {
-        return this.getFS(uri).readFileSync(this.getPath(uri), encoding);
+    readFileSync(uri: string, encoding?: any) {
+        const fs = this.getFS(uri);
+        if (fs === zenFS.fs || fs instanceof MemoryFileSystem) {
+            return fs.readFileSync(this.getPath(uri), encoding);
+        } else {
+            return fs.readFileSync(this.getPath(uri), encoding);
+        }
     }
 
     readdirSync(uri: string) {
@@ -88,6 +111,12 @@ export class FileSystem {
     }
 
     rmdirSync(uri: string) {
+        if (memoryUri(uri)) {
+            const files = this.readdirSync(uri);
+            if (files.length > 0) {
+                throw new Error("Directory not empty!");
+            }
+        }
         this.getFS(uri).rmdirSync(this.getPath(uri));
         this.deletePath(uri);
     }
@@ -110,10 +139,6 @@ export class FileSystem {
 
     statSync(uri: string) {
         return this.getFS(uri).statSync(this.getPath(uri));
-    }
-
-    normalize(uri: string) {
-        return zenFS.normalizePath(uri);
     }
 }
 

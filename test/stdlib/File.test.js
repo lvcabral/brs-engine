@@ -11,8 +11,6 @@ const {
     ReadAsciiFile,
     WriteAsciiFile,
     MatchFiles,
-    getPath,
-    getScopedPath,
 } = brs.stdlib;
 const { BrsString, RoList } = brs.types;
 
@@ -27,18 +25,6 @@ describe("global file I/O functions", () => {
             root: "hello/world",
         }); // reset the file systems
         fsys = interpreter.fileSystem;
-    });
-
-    describe("file I/O utility utilities", () => {
-        it("converts a brs path to a memfs path", () => {
-            expect(getPath("tmp:/test.txt")).toEqual("/test.txt");
-            expect(getPath("tmp:///test.txt")).toEqual("/test.txt");
-        });
-
-        it("converts a brs path to a scoped memfs path", () => {
-            expect(getScopedPath(interpreter, "tmp:/test.txt")).toEqual("/test.txt");
-            expect(getScopedPath(interpreter, "pkg:/test.txt")).toEqual("hello/world/test.txt");
-        });
     });
 
     describe("ListDir", () => {
@@ -152,16 +138,16 @@ describe("global file I/O functions", () => {
             expect(
                 DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
             ).toBeTruthy();
-            expect(fsys.existsSync("/test_dir")).toBeFalsy();
+            expect(fsys.existsSync("tmp:/test_dir")).toBeFalsy();
         });
 
         it("fails with a false", () => {
-            fsys.mkdirSync("/test_dir");
-            fsys.writeFileSync("/test_dir/test1.txt", "test contents 1");
+            fsys.mkdirSync("tmp:/test_dir");
+            fsys.writeFileSync("tmp://test_dir/test1.txt", "test contents 1");
 
             // can't remove a non-empty directory
             expect(
-                DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir/test1.txt")).value
+                DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
             ).toBeFalsy();
         });
     });

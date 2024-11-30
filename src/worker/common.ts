@@ -75,6 +75,7 @@ export type AppPayload = {
     password?: string;
     entryPoint?: boolean;
     stopOnCrash?: boolean;
+    root?: string;
 };
 
 export type AppFilePath = {

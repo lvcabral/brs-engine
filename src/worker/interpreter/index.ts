@@ -208,7 +208,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
-        this.fileSystem = new FileSystem();
+        this.fileSystem = new FileSystem(this.options.root);
         Object.keys(defaultDeviceInfo).forEach((key) => {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, defaultDeviceInfo[key]);

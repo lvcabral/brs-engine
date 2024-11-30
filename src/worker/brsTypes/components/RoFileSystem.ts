@@ -74,9 +74,6 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             try {
                 const fsys = interpreter.fileSystem;
-                if (!fsys) {
-                    return new RoList([]);
-                }
                 const volumes = fsys.volumesSync().map((s) => new BrsString(s));
                 return new RoList(volumes);
             } catch (err: any) {
@@ -93,7 +90,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             const result = new RoAssociativeArray([]);
-            if (interpreter.fileSystem?.existsSync(pathArg.value)) {
+            if (interpreter.fileSystem.existsSync(pathArg.value)) {
                 result.set(new BrsString("blocks"), new Int32(0));
                 result.set(new BrsString("blocksize"), new Int32(0));
                 result.set(new BrsString("freeblocks"), new Int32(0));
@@ -112,7 +109,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             const fsys = interpreter.fileSystem;
             try {
-                if (validUri(pathArg.value) && fsys?.existsSync(pathArg.value)) {
+                if (validUri(pathArg.value) && fsys.existsSync(pathArg.value)) {
                     const subPaths = fsys.readdirSync(pathArg.value).map((s) => new BrsString(s));
                     return new RoList(subPaths);
                 }
@@ -132,7 +129,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             try {
                 const fsys = interpreter.fileSystem;
-                if (!fsys || !writeUri(pathArg.value)) {
+                if (!writeUri(pathArg.value)) {
                     return BrsBoolean.False;
                 }
                 fsys.mkdirSync(pathArg.value);
@@ -152,7 +149,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             const fsys = interpreter.fileSystem;
             try {
-                if (!fsys || !writeUri(pathArg.value)) {
+                if (!writeUri(pathArg.value)) {
                     return BrsBoolean.False;
                 } else if (fsys.statSync(pathArg.value).isDirectory()) {
                     fsys.rmdirSync(pathArg.value);
@@ -181,7 +178,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 if (
                     !writeUri(fromPath.value) ||
                     !writeUri(toPath.value) ||
-                    !fsys?.existsSync(fromPath.value)
+                    !fsys.existsSync(fromPath.value)
                 ) {
                     return BrsBoolean.False;
                 }
@@ -210,7 +207,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                     !writeUri(fromPath.value) ||
                     !writeUri(toPath.value) ||
                     getVolume(fromPath.value) !== getVolume(toPath.value) ||
-                    !fsys?.existsSync(fromPath.value)
+                    !fsys.existsSync(fromPath.value)
                 ) {
                     return BrsBoolean.False;
                 }
@@ -231,9 +228,6 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             try {
                 const fsys = interpreter.fileSystem;
-                if (!fsys) {
-                    return BrsBoolean.False;
-                }
                 return BrsBoolean.from(fsys.existsSync(pathArg.value));
             } catch (err: any) {
                 return BrsBoolean.False;
@@ -254,7 +248,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             const jsRegex = new RegExp(regEx.value);
             try {
                 const fsys = interpreter.fileSystem;
-                if (!fsys || !validUri(pathArg.value)) {
+                if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
                 let knownFiles = fsys.readdirSync(pathArg.value);
@@ -284,7 +278,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             const jsRegex = new RegExp(regEx.value);
             try {
                 const fsys = interpreter.fileSystem;
-                if (!fsys || !validUri(pathArg.value)) {
+                if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
                 return new RoList(this.findOnTree(fsys, jsRegex, pathArg.value));
@@ -306,7 +300,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString, pattern: BrsString) => {
             try {
                 const fsys = interpreter.fileSystem;
-                if (!fsys || !validUri(pathArg.value)) {
+                if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
                 let knownFiles = interpreter.fileSystem.readdirSync(pathArg.value);
@@ -336,7 +330,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             const result = new RoAssociativeArray([]);
             try {
                 const fsys = interpreter.fileSystem;
-                if (!fsys || !validUri(pathArg.value)) {
+                if (!validUri(pathArg.value)) {
                     return result;
                 }
                 const stat = interpreter.fileSystem.statSync(pathArg.value);

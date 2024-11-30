@@ -121,7 +121,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
     }
-    const replInterpreter = new Interpreter();
+    const replInterpreter = new Interpreter({ root: payload.root });
     replInterpreter.onError(logError);
     if (payload.device) {
         setupDeviceData(payload.device, replInterpreter);
@@ -172,16 +172,24 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  * Create the payload to run the app with the provided files.
  * @param files Code files to be executed
  * @param customDeviceData optional object with device info data
+ * @param root optional root path for the interpreter
  *
  * @returns object with the payload to run the app.
  */
-export function createPayload(files: string[], customDeviceData?: Partial<DeviceInfo>): AppPayload {
+export function createPayload(
+    files: string[],
+    customDeviceData?: Partial<DeviceInfo>,
+    root?: string
+): AppPayload {
     const paths: AppFilePath[] = [];
     const source: string[] = [];
     let manifest: Map<string, string> | undefined;
 
     let id = 0;
     files.forEach((filePath) => {
+        if (root) {
+            filePath = path.join(root, filePath);
+        }
         const fileName = path.basename(filePath) ?? filePath;
         const fileExt = fileName.split(".").pop();
         if (fileExt?.toLowerCase() === "brs") {
@@ -214,6 +222,12 @@ export function createPayload(files: string[], customDeviceData?: Partial<Device
         if (!deviceData.fonts || deviceData.fonts.size === 0) {
             deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
         }
+        if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
+            const fileData = fs.readFileSync(path.join(root, "manifest"));
+            if (fileData) {
+                manifest = parseManifest(fileData.toString());
+            }
+        }
         if (manifest === undefined) {
             manifest = new Map();
             manifest.set("title", "BRS App");
@@ -230,6 +244,7 @@ export function createPayload(files: string[], customDeviceData?: Partial<Device
             brs: source,
             entryPoint: false,
             stopOnCrash: false,
+            root: root,
         };
     } else {
         throw new Error("Invalid or inexistent file(s)!");
@@ -275,6 +290,7 @@ export async function executeFile(
         ...{
             entryPoint: payload.entryPoint ?? true,
             stopOnCrash: payload.stopOnCrash ?? false,
+            root: payload.root,
         },
         ...customOptions,
     };
