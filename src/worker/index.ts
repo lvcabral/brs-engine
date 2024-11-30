@@ -260,36 +260,6 @@ export function getFonts(fontPath: string, fontFamily: string) {
 /// #endif
 
 /**
- * Initializes the File System with the provided zip files.
- * @param pkgZip ArrayBuffer with the package zip file.
- * @param extZip ArrayBuffer with the external storage zip file.
- */
-async function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
-    const fsConfig = { mounts: {} };
-    if (zenFS.fs?.existsSync("pkg:/")) {
-        zenFS.umount("pkg:");
-    }
-    if (pkgZip) {
-        Object.assign(fsConfig.mounts, {
-            "pkg:": { backend: Zip, data: pkgZip, caseSensitive: false },
-        });
-    } else {
-        Object.assign(fsConfig.mounts, {
-            "pkg:": zenFS.InMemory,
-        });
-    }
-    if (extZip) {
-        if (zenFS.fs?.existsSync("ext1:/")) {
-            zenFS.umount("ext1:");
-        }
-        Object.assign(fsConfig.mounts, {
-            "ext1:": { backend: Zip, data: extZip, caseSensitive: false },
-        });
-    }
-    return zenFS.configure(fsConfig);
-}
-
-/**
  * Runs a Brightscript app with full zip folder structure.
  * @param payload with the source code and all the assets of the app.
  * @param customOptions optional object with the output streams.
@@ -337,6 +307,36 @@ export async function executeFile(
 }
 
 /**
+ * Initializes the File System with the provided zip files.
+ * @param pkgZip ArrayBuffer with the package zip file.
+ * @param extZip ArrayBuffer with the external storage zip file.
+ */
+async function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
+    const fsConfig = { mounts: {} };
+    if (zenFS.fs?.existsSync("pkg:/")) {
+        zenFS.umount("pkg:");
+    }
+    if (pkgZip) {
+        Object.assign(fsConfig.mounts, {
+            "pkg:": { backend: Zip, data: pkgZip, caseSensitive: false },
+        });
+    } else {
+        Object.assign(fsConfig.mounts, {
+            "pkg:": zenFS.InMemory,
+        });
+    }
+    if (extZip) {
+        if (zenFS.fs?.existsSync("ext1:/")) {
+            zenFS.umount("ext1:");
+        }
+        Object.assign(fsConfig.mounts, {
+            "ext1:": { backend: Zip, data: extZip, caseSensitive: false },
+        });
+    }
+    return zenFS.configure(fsConfig);
+}
+
+/**
  * Setup the interpreter with the provided payload.
  * @param interpreter The interpreter instance to setup
  * @param payload The payload with the source code and all the assets of the app.
@@ -350,7 +350,7 @@ interface SourceResult {
     iv?: string;
 }
 
-export function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
+function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
     if (payload.device.registry) {
         interpreter.setRegistry(payload.device.registry);
@@ -704,7 +704,6 @@ function runBinary(
 ): RunResult {
     let decodedTokens: Map<string, any>;
     // Decode Source PCode
-    console.log("Decrypting the app");
     try {
         if (password.length > 0 && sourceResult.pcode && sourceResult.iv) {
             const decipher = crypto.createDecipheriv(algorithm, password, sourceResult.iv);
