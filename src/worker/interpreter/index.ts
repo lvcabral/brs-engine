@@ -155,9 +155,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Updates the interpreter manifest with the provided data
-     *
      * @param manifest Map with manifest content.
-     *
      */
     public setManifest(manifest: Map<string, string>) {
         manifest.forEach((value: string, key: string) => {
@@ -171,9 +169,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Updates the interpreter registry with the provided data
-     *
      * @param registry Map with registry content.
-     *
      */
     public setRegistry(registry: Map<string, string>) {
         registry.forEach((value: string, key: string) => {

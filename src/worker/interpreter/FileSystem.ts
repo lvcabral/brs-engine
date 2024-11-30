@@ -2,7 +2,7 @@ import MemoryFileSystem from "memory-fs";
 import * as path from "path";
 import * as zenFS from "@zenfs/core";
 
-/** Proxy to make File System volumes case insensitive, same as Roku devices */
+/** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 
 export class FileSystem {
     private paths: Map<string, string>;

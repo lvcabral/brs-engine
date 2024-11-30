@@ -18,7 +18,6 @@ import { getPath } from "./File";
 /**
  * Runs a file (or set of files) with the provided arguments, returning either the value returned by those files'
  * `main` function or `invalid` if an error occurs.
- *
  * @param interpreter the interpreter hosting this call to `Run`
  * @param filenames a list of files to lex, parse, and run
  * @param args the arguments to pass into the found `main` function

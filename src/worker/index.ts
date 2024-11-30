@@ -259,6 +259,11 @@ export function getFonts(fontPath: string, fontFamily: string) {
 }
 /// #endif
 
+/**
+ * Initializes the File System with the provided zip files.
+ * @param pkgZip ArrayBuffer with the package zip file.
+ * @param extZip ArrayBuffer with the external storage zip file.
+ */
 async function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
     const fsConfig = { mounts: {} };
     if (zenFS.fs?.existsSync("pkg:/")) {
@@ -361,7 +366,6 @@ interface SerializedPCode {
 
 /**
  * Process the application input parameters including deep links
- *
  * @param input Map with parameters.
  *
  * @returns an array of parameters in AA member format.
@@ -386,7 +390,6 @@ function setupInputArray(input: Map<string, string>): AAMember[] {
 /**
  * Updates the interpreter DeviceInfo Map with the provided data and
  * initializes the common: file system with device internal libraries.
- *
  * @param device object with device info data
  * @param interpreter the Interpreter instance to update
  *
@@ -414,7 +417,6 @@ function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
 /**
  * Updates the interpreter common: file system with
  * device internal fonts.
- *
  * @param device object with device info data
  * @param interpreter the Interpreter instance to update
  *
@@ -468,7 +470,6 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
 /**
  * Updates the interpreter pkg: file system with the provided package files and
  * loads the translation data based on the configured locale.
- *
  * @param paths Map with package paths
  * @param binaries Map with binary files data
  * @param text Map with text files data
@@ -566,7 +567,6 @@ function loadTranslations(interpreter: Interpreter) {
 
 /**
  * A synchronous version of the lexer-parser flow.
- *
  * @param interpreter the interpreter to use when executing the provided files
  * @param password string with the encryption password (optional)
  *
