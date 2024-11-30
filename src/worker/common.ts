@@ -80,9 +80,7 @@ export type AppPayload = {
 export type AppFilePath = {
     id: number;
     url: string;
-    type: "source" | "text" | "binary" | "audio" | "video" | "pcode";
-    format?: string;
-    binId?: number;
+    type: "source" | "pcode";
 };
 
 export enum AppExitReason {
