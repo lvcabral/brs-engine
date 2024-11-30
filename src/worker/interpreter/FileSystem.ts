@@ -11,9 +11,9 @@ export class FileSystem {
     readonly cfs: MemoryFileSystem; // cachefs:
     readonly mfs: MemoryFileSystem; // common:
 
-    constructor(zfs: typeof zenFS.fs) {
+    constructor() {
         this.paths = new Map();
-        this.zfs = zfs;
+        this.zfs = zenFS.fs;
         this.tfs = new MemoryFileSystem();
         this.cfs = new MemoryFileSystem();
         this.mfs = new MemoryFileSystem();

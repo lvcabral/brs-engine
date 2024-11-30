@@ -28,10 +28,7 @@ import { getPath } from "./File";
 function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
     try {
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
-        const sandbox = new Interpreter(
-            interpreter.options,
-            interpreter.fileSystem.getFS("pkg:/") as any
-        );
+        const sandbox = new Interpreter(interpreter.options);
         interpreter.manifest.forEach((value, key) => {
             sandbox.manifest.set(key, value);
         });

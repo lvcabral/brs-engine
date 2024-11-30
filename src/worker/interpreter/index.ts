@@ -59,7 +59,6 @@ import {
     numberToHex,
     parseTextFile,
 } from "../common";
-import * as zenFS from "@zenfs/core";
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -89,12 +88,6 @@ export interface TracePoint {
     functionLocation: Location;
     callLocation: Location;
     signature: Signature;
-}
-
-/** The definition of a local file data with parsed url and volume */
-export interface LocalFileData {
-    url: URL | undefined;
-    volume: typeof zenFS.fs | undefined;
 }
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -214,12 +207,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param options configuration for the execution
      */
-    constructor(options?: Partial<ExecutionOptions>, fileSystem?: typeof zenFS.fs) {
+    constructor(options?: Partial<ExecutionOptions>) {
         this._environment = new Environment(new RoAssociativeArray([]));
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
-        this.fileSystem = new FileSystem(fileSystem ?? zenFS.fs);
+        this.fileSystem = new FileSystem();
         Object.keys(defaultDeviceInfo).forEach((key) => {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, defaultDeviceInfo[key]);

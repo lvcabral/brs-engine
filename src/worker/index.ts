@@ -121,7 +121,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
     }
-    const replInterpreter = new Interpreter({}, zenFS.fs);
+    const replInterpreter = new Interpreter();
     replInterpreter.onError(logError);
     if (payload.device) {
         setupDeviceData(payload.device, replInterpreter);
@@ -311,7 +311,7 @@ export async function executeFile(
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
-    const interpreter = new Interpreter(options, zenFS.fs);
+    const interpreter = new Interpreter(options);
     // Input Parameters / Deep Link
     const inputArray = setupInputArray(payload.input);
     // Process Payload Content
