@@ -7,7 +7,7 @@ import * as nodeFS from "fs";
 
 export class FileSystem {
     private paths: Map<string, string>;
-    private root?: string;
+    readonly root?: string;
     readonly pfs: typeof zenFS.fs | typeof nodeFS; // pkg: and ext1:
     readonly tfs: MemoryFileSystem; // tmp:
     readonly cfs: MemoryFileSystem; // cachefs:
@@ -83,11 +83,7 @@ export class FileSystem {
 
     readFileSync(uri: string, encoding?: any) {
         const fs = this.getFS(uri);
-        if (fs === zenFS.fs || fs instanceof MemoryFileSystem) {
-            return fs.readFileSync(this.getPath(uri), encoding);
-        } else {
-            return fs.readFileSync(this.getPath(uri), encoding);
-        }
+        return (fs as any).readFileSync(this.getPath(uri), encoding);
     }
 
     readdirSync(uri: string) {

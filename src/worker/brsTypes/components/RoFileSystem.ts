@@ -299,7 +299,6 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, pathArg: BrsString, pattern: BrsString) => {
             try {
-                const fsys = interpreter.fileSystem;
                 if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
@@ -329,7 +328,6 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             const result = new RoAssociativeArray([]);
             try {
-                const fsys = interpreter.fileSystem;
                 if (!validUri(pathArg.value)) {
                     return result;
                 }
