@@ -32,11 +32,11 @@ export class FileSystem {
     }
 
     getFS(uri: string) {
-        if (uri.toLowerCase().startsWith("tmp:")) {
+        if (uri.trim().toLowerCase().startsWith("tmp:")) {
             return this.tfs;
-        } else if (uri.toLowerCase().startsWith("cachefs:")) {
+        } else if (uri.trim().toLowerCase().startsWith("cachefs:")) {
             return this.cfs;
-        } else if (uri.toLowerCase().startsWith("common:")) {
+        } else if (uri.trim().toLowerCase().startsWith("common:")) {
             return this.mfs;
         }
         return this.zfs;
