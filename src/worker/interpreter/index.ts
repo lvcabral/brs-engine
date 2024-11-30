@@ -266,10 +266,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         sourceMap?: Map<string, string>,
         ...args: BrsType[]
     ) {
-        let results = statements.map((statement) => this.execute(statement));
         if (sourceMap) {
             this._sourceMap = sourceMap;
         }
+        let results = statements.map((statement) => this.execute(statement));
         try {
             let mainName = "RunUserInterface";
             let maybeMain = this.getCallableFunction(mainName.toLowerCase());
