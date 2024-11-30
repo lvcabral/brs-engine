@@ -929,19 +929,26 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^22.10.0":
+"@types/node@*":
+  version "22.10.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.10.1.tgz#41ffeee127b8975a05f8c4f83fb89bcb2987d766"
+  integrity sha512-qKgsUwfHZV2WCWLAnVP1JqnpE6Im6h3Y0+fYgMTasNQ7V++CBX5OT1as0g0f+OyubbFqhf6XVNIsmN4IIhEgGQ==
+  dependencies:
+    undici-types "~6.20.0"
+
+"@types/node@^20.16.10":
+  version "20.17.9"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.9.tgz#5f141d4b7ee125cdee5faefe28de095398865bab"
+  integrity sha512-0JOXkRyLanfGPE2QRCwgxhzlBAvaRdCNMcvbd7jFfpmD4eEXll7LRwy5ymJmyeZqk7Nh7eD2LeUyQ68BbndmXw==
+  dependencies:
+    undici-types "~6.19.2"
+
+"@types/node@^22.10.0":
   version "22.10.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.10.0.tgz#89bfc9e82496b9c7edea3382583fa94f75896e81"
   integrity sha512-XC70cRZVElFHfIUB40FgZOBbgJYFKKMa5nb9lxcwYstFG/Mi+/Y0bGS+rs6Dmhmkpq4pnNiLiuZAbc02YCOnmA==
   dependencies:
     undici-types "~6.20.0"
-
-"@types/node@^20.16.10":
-  version "20.17.8"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.8.tgz#42748cdb169adf5be7c9760604c72820c7b7d560"
-  integrity sha512-ahz2g6/oqbKalW9sPv6L2iRbhLnojxjYWspAqhjvqSWBgGebEJT5GvRmk0QXPj3sbC6rU0GTQjPLQkmR8CObvA==
-  dependencies:
-    undici-types "~6.19.2"
 
 "@types/opentype.js@^0.7.2":
   version "0.7.2"
@@ -1327,16 +1334,16 @@
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
 "@zenfs/core@^1.4.0":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@zenfs/core/-/core-1.4.0.tgz#71a1b4ea321ce2a705f6d426eaefab4c380c7658"
-  integrity sha512-8nYKm81H/m2VB+/tDkUfhUgTbVixlcPMLrno/6K0sWDlQqKOtt7/31aD+paqBl1SNa+d0Ky5RTNtTo7fU6t/9Q==
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/@zenfs/core/-/core-1.4.3.tgz#4f0b380b90cff5b15de41a8d5ac493cdfbfb668d"
+  integrity sha512-YyQW+wTWVj7r3VH94aEGzIla34tbk90B1/1fK12nbpYIECbmpfHqhvgVyYnpScNGzJcv2/cuJH1g7FdzmF5Bcg==
   dependencies:
     "@types/node" "^20.16.10"
     "@types/readable-stream" "^4.0.10"
     buffer "^6.0.3"
     eventemitter3 "^5.0.1"
     readable-stream "^4.5.2"
-    utilium "^1.0.0"
+    utilium "^1.1.1"
   optionalDependencies:
     minimatch "^9.0.3"
 
@@ -3323,7 +3330,7 @@ fb-watchman@^2.0.0:
   dependencies:
     bser "2.1.1"
 
-fflate@^0.8.1, fflate@^0.8.2:
+fflate@^0.8.2:
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.8.2.tgz#fc8631f5347812ad6028bbe4a2308b2792aa1dea"
   integrity sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==
@@ -7212,10 +7219,10 @@ update-browserslist-db@^1.1.0:
     picocolors "^1.1.0"
 
 upng-js@lvcabral/UPNG.js:
-  version "2.2.0"
-  resolved "https://codeload.github.com/lvcabral/UPNG.js/tar.gz/4c85b067242e9da92757271b81cbc4d884d82279"
+  version "2.2.1"
+  resolved "https://codeload.github.com/lvcabral/UPNG.js/tar.gz/bbbc0068e96542624e53d10b73d7ce2f52d04edb"
   dependencies:
-    fflate "^0.8.1"
+    fflate "^0.8.2"
 
 uri-js@^4.2.2:
   version "4.4.1"
@@ -7258,10 +7265,10 @@ util@^0.12.0:
     is-typed-array "^1.1.3"
     which-typed-array "^1.1.2"
 
-utilium@^1.0.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/utilium/-/utilium-1.1.0.tgz#ed1877eabc3d66286609b6ec9e23de08683ee7bc"
-  integrity sha512-02uMD58LHEacpSkzx46JZ0FDvFGpSGUYN6mSHY9wqNUi4sZVNzDdUXa9unLLCj5pRxK28HcYqqe/iQToBpmxTw==
+utilium@^1.0.0, utilium@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/utilium/-/utilium-1.1.1.tgz#2a1860c4079ff52b1663c24f27f1d4fdf5db4ed7"
+  integrity sha512-uNwrjhLA+KN5/EuDJaofvRerLffPSQ1aj6uot21tCwiU2oHKWHU2F3xW+wETgjJ3JFqDIloY6zSutQRmTbjAVw==
   dependencies:
     eventemitter3 "^5.0.1"
   optionalDependencies:
