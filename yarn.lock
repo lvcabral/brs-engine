@@ -5115,8 +5115,8 @@ memfs@^3.4.3:
     fs-monkey "^1.0.4"
 
 memory-fs@lvcabral/memory-fs:
-  version "0.5.0"
-  resolved "https://codeload.github.com/lvcabral/memory-fs/tar.gz/be7b304f4bdf1d3ee874f364d67c3cc544a3dbc9"
+  version "0.5.1"
+  resolved "https://codeload.github.com/lvcabral/memory-fs/tar.gz/887d6c45991850a25666904537fce4f83baec697"
   dependencies:
     errno "^0.1.3"
     readable-stream "^2.0.1"
