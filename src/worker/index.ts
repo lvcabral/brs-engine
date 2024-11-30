@@ -259,7 +259,7 @@ export function getFonts(fontPath: string, fontFamily: string) {
 }
 /// #endif
 
-function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
+async function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
     const fsConfig = { mounts: {} };
     if (zenFS.fs?.existsSync("pkg:/")) {
         zenFS.umount("pkg:");
