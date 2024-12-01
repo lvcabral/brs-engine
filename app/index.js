@@ -31,7 +31,7 @@ const customDeviceInfo = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
     fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
-    maxFps: 30, // Reduced to minimize issues with iOS/iPadOS
+    maxFps: 30, // Limited to minimize issues with iOS/iPadOS
 };
 const customKeys = new Map();
 customKeys.set("Comma", "rev"); // Keep consistency with older versions
@@ -83,6 +83,7 @@ brs.subscribe("app", (event, data) => {
         }
     } else if (event === "version") {
         console.info(`Interpreter Library v${data}`);
+        mountZip("./channels/data.zip");
     }
 });
 brs.initialize(customDeviceInfo, {
@@ -168,6 +169,24 @@ function loadZip(zip) {
         })
         .catch((err) => {
             console.error(`Error attempting to load zip: ${err.message} (${err.name})`);
+        });
+}
+
+function mountZip(zip) {
+    fetch(zip)
+        .then(function (response) {
+            if (response.status === 200 || response.status === 0) {
+                return response.blob().then(function (zipBlob) {
+                    zipBlob.arrayBuffer().then(function (zipData) {
+                        brs.mountExt(zipData);
+                    });
+                });
+            } else {
+                return Promise.reject(new Error(response.statusText));
+            }
+        })
+        .catch((err) => {
+            console.error(`Error attempting to mount zip: ${err.message} (${err.name})`);
         });
 }
 

@@ -5,6 +5,8 @@ describe("end to end standard libary", () => {
 
     beforeAll(() => {
         outputStreams = createMockStreams();
+        outputStreams.root = ".";
+        outputStreams.ext = "./app/images";
     });
 
     afterEach(() => {
@@ -29,6 +31,7 @@ describe("end to end standard libary", () => {
             "true",
             "false",
             '<Component: roList> =\n(\n    "test_backup.txt"\n)',
+            "true",
             "true",
         ]);
     });

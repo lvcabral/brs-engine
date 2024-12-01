@@ -68,29 +68,26 @@ export class RoLocalization extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter, dirName: BrsString, fileName: BrsString) => {
-            const volume = interpreter.fileSystem.get("pkg:");
-            let assetPath = "";
-            if (volume) {
-                try {
-                    if (
-                        volume.existsSync(
-                            `/locale/${this.locale}/${dirName.value}/${fileName.value}`
-                        )
-                    ) {
-                        assetPath = `pkg:/locale/${this.locale}/${dirName.value}/${fileName.value}`;
-                    } else if (volume.existsSync(`/locale/default/${dirName}/${fileName}`)) {
-                        assetPath = `pkg:/locale/default/${dirName.value}/${fileName.value}`;
-                    } else if (
-                        volume.existsSync(`/locale/en_US/${dirName.value}/${fileName.value}`)
-                    ) {
-                        assetPath = `pkg:/locale/en_US/${dirName.value}/${fileName.value}`;
-                    }
-                } catch (err: any) {
-                    const badPath = `pkg:/locale/${this.locale}/${dirName.value}/${fileName.value}`;
-                    interpreter.stderr.write(`error,Invalid path: ${badPath} ${err.message}`);
-                }
+            const fsys = interpreter.fileSystem;
+            if (!fsys) {
+                return new BrsString("");
             }
-            return new BrsString(assetPath);
+            const filePath = `${dirName.value}/${fileName.value}`;
+            try {
+                let assetPath = "";
+                if (fsys.existsSync(`pkg:/locale/${this.locale}/${filePath}`)) {
+                    assetPath = `pkg:/locale/${this.locale}/${filePath}`;
+                } else if (fsys.existsSync(`pkg:/locale/default/${filePath}`)) {
+                    assetPath = `pkg:/locale/default/${filePath}`;
+                } else if (fsys.existsSync(`pkg:/locale/en_US/${filePath}`)) {
+                    assetPath = `pkg:/locale/en_US/${filePath}`;
+                }
+                return new BrsString(assetPath);
+            } catch (err: any) {
+                const badPath = `pkg:/locale/${this.locale}/${filePath}`;
+                interpreter.stderr.write(`error,Invalid path: ${badPath} ${err.message}`);
+            }
+            return new BrsString("");
         },
     });
 }

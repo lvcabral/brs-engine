@@ -22,6 +22,7 @@ import {
     updateAppZip,
     subscribePackage,
     getSerialNumber,
+    mountExt,
 } from "../api/package";
 import { isNumber } from "../api/util";
 import {
@@ -61,33 +62,24 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
-    .option("-r, --registry", "Persist the simulated device registry on disk.", false)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
+    .option(
+        "-r, --root <directory>",
+        "The root directory from which `pkg:` paths will be resolved."
+    )
+    .option(
+        "-x, --ext-root <directory>",
+        "The root directory from which `ext1:` paths will be resolved."
+    )
+    .option(
+        "-f, --ext-file <file>",
+        "The zip file to mount as `ext1:` volume. (takes precedence over -x)"
+    )
+    .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
-        if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
-            chalk.level = Math.trunc(program.colors) as chalk.Level;
-        } else {
-            console.warn(
-                chalk.yellow(
-                    `Invalid color level! Valid range is 0-3, keeping default: ${defaultLevel}.`
-                )
-            );
-        }
-        if (program.ascii) {
-            if (isNumber(program.ascii)) {
-                program.ascii = +program.ascii;
-            } else {
-                program.ascii = 0;
-            }
-            if (program.ascii < 32) {
-                program.ascii = maxColumns;
-                console.warn(
-                    chalk.yellow(
-                        `Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`
-                    )
-                );
-            }
+        if (!checkParameters()) {
+            return;
         }
         if (typeof deviceData === "object") {
             deviceData.deviceModel = "3930X";
@@ -104,7 +96,7 @@ program
         if (brsFiles.length > 0) {
             runAppFiles(brsFiles);
         } else {
-            showAppTitle();
+            displayTitle();
             repl();
         }
     })
@@ -112,28 +104,84 @@ program
     .parse(process.argv);
 
 /**
- * Run the BrightScript files or the App Zip file.
+ * Check the CLI parameters and set the default values.
+ *  @returns true if the parameters are valid, false otherwise.
+ */
+function checkParameters() {
+    if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
+        chalk.level = Math.trunc(program.colors) as chalk.Level;
+    } else {
+        console.warn(
+            chalk.yellow(
+                `Invalid color level! Valid range is 0-3, keeping default: ${defaultLevel}.`
+            )
+        );
+    }
+    if (program.ascii) {
+        if (isNumber(program.ascii)) {
+            program.ascii = +program.ascii;
+        } else {
+            program.ascii = 0;
+        }
+        if (program.ascii < 32) {
+            program.ascii = maxColumns;
+            console.warn(
+                chalk.yellow(
+                    `Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`
+                )
+            );
+        }
+    }
+    if (program.root && !fs.existsSync(program.root)) {
+        console.error(chalk.red(`Root path not found: ${program.root}\n`));
+        process.exitCode = 1;
+        return;
+    }
+    if (program.extRoot && !fs.existsSync(program.extRoot)) {
+        console.error(chalk.red(`External storage path not found: ${program.extRoot}\n`));
+        process.exitCode = 1;
+        return;
+    }
+    if (program.extFile && !fs.existsSync(program.extFile)) {
+        console.error(chalk.red(`External storage file not found: ${program.extFile}\n`));
+        process.exitCode = 1;
+        return;
+    }
+    return process.exitCode !== 1;
+}
+
+/**
+ * Run the BrightScript files or the App package file.
  * @param files the list of files to run.
  */
 function runAppFiles(files: string[]) {
     try {
-        // Run App Zip file
         const filePath = files[0];
         const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
         const fileExt = fileName.split(".").pop()?.toLowerCase();
         appFileName = fileName;
         if (fileExt === "zip" || fileExt === "bpk") {
-            showAppTitle();
+            // Run App Package file
+            displayTitle();
             if (program.pack.length > 0 && fileExt === "zip") {
                 console.log(chalk.blueBright(`Packaging ${filePath}...\n`));
             } else {
                 console.log(chalk.blueBright(`Executing ${filePath}...\n`));
             }
-            loadAppZip(fileName, fs.readFileSync(filePath), runApp);
+            if (program.extFile) {
+                mountExt(new Uint8Array(fs.readFileSync(program.extFile)).buffer);
+            }
+            const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
+            loadAppZip(fileName, fileData, runApp);
             return;
         }
         // Run BrightScript files
-        const payload = brs.createPayload(files, deviceData);
+        const payload = brs.createPayload(
+            files,
+            deviceData,
+            program.root,
+            program.extFile ?? program.extRoot
+        );
         runApp(payload);
     } catch (err: any) {
         if (err.messages?.length) {
@@ -149,7 +197,7 @@ function runAppFiles(files: string[]) {
  * Display the CLI application title on the console
  *
  */
-function showAppTitle() {
+function displayTitle() {
     const appTitle = `${packageInfo.title} CLI`;
     const appVersion = `v${packageInfo.version}`;
     /// #if DEBUG
@@ -164,10 +212,11 @@ function showAppTitle() {
  * if a password is passed with parameter --pack.
  *
  */
-function runApp(payload: AppPayload) {
+async function runApp(payload: AppPayload) {
     payload.stopOnCrash = program.debug ?? false;
     payload.password = program.pack;
     if (program.ecp && !workerReady) {
+        // Load ECP service as Worker
         const workerPath = path.join(__dirname, "brs.ecp.js");
         const workerData = { device: { ...deviceData, serialNumber: getSerialNumber() } };
         brsWorker = new Worker(workerPath, { workerData: workerData });
@@ -185,34 +234,40 @@ function runApp(payload: AppPayload) {
         brsWorker.postMessage(sharedBuffer);
         return;
     }
-    const pkg = brs.executeFile(payload);
-    if (program.ecp) {
-        brsWorker?.terminate();
-    }
-    if (pkg.exitReason === AppExitReason.PACKAGED) {
-        const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
-        try {
-            const buffer = updateAppZip(pkg.cipherText, pkg.iv);
-            fs.writeFileSync(filePath, buffer);
-            console.log(
-                chalk.blueBright(
-                    `Package file created as ${filePath} with ${Math.round(
-                        buffer.length / 1024
-                    )} KB.\n`
-                )
-            );
-        } catch (err: any) {
-            console.error(chalk.red(`Error generating the file ${filePath}: ${err.message}`));
-            process.exitCode = 1;
+    try {
+        const pkg = await brs.executeFile(payload);
+        if (program.ecp) {
+            brsWorker?.terminate();
         }
-    } else {
-        const msg = `------ Finished '${appFileName}' execution [${pkg.exitReason}] ------\n`;
-        if (pkg.exitReason === AppExitReason.FINISHED) {
-            console.log(chalk.blueBright(msg));
+        if (pkg.exitReason === AppExitReason.PACKAGED) {
+            // Generate the Encrypted App Package
+            const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
+            try {
+                const buffer = updateAppZip(pkg.cipherText, pkg.iv);
+                fs.writeFileSync(filePath, buffer);
+                console.log(
+                    chalk.blueBright(
+                        `Package file created as ${filePath} with ${Math.round(
+                            buffer.length / 1024
+                        )} KB.\n`
+                    )
+                );
+            } catch (err: any) {
+                console.error(chalk.red(`Error generating the file ${filePath}: ${err.message}`));
+                process.exitCode = 1;
+            }
         } else {
-            process.exitCode = 1;
-            console.log(chalk.redBright(msg));
+            const msg = `------ Finished '${appFileName}' execution [${pkg.exitReason}] ------\n`;
+            if (pkg.exitReason === AppExitReason.FINISHED) {
+                console.log(chalk.blueBright(msg));
+            } else {
+                process.exitCode = 1;
+                console.log(chalk.redBright(msg));
+            }
         }
+    } catch (err: any) {
+        console.error(chalk.red(`Error executing app: ${err.message}`));
+        process.exitCode = 1;
     }
 }
 
@@ -272,8 +327,15 @@ function getRegistry(): Map<string, string> {
  *
  * **NOTE:** Currently limited to single-line inputs :(
  */
-function repl() {
-    const replInterpreter = brs.getInterpreter({ device: deviceData });
+async function repl() {
+    const replInterpreter = await brs.getReplInterpreter({
+        device: deviceData,
+        extZip: program.extFile
+            ? new Uint8Array(fs.readFileSync(program.extFile)).buffer
+            : undefined,
+        root: program.root,
+        ext: program.extRoot,
+    });
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -286,11 +348,19 @@ function repl() {
             process.stdout.write("\x1Bc");
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
+        } else if (["vol", "vols"].includes(line.toLowerCase().trim())) {
+            process.stdout.write(chalk.cyanBright(`\nMounted volumes:\n\n`));
+            const rootPath = replInterpreter.options.root ?? "not mounted";
+            process.stdout.write(chalk.cyanBright(`pkg:      ${rootPath}\n`));
+            const extPath = program.extFile ?? replInterpreter.options.ext ?? "not mounted";
+            process.stdout.write(chalk.cyanBright(`ext1:     ${extPath}\n`));
+            process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
+            process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
+            process.stdout.write(chalk.cyanBright(`common:   [In Memory]\n`));
         } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
-            process.stdout.write(chalk.cyanBright(`\r\nLocal variables:\n\n`));
-            process.stdout.write(
-                chalk.cyanBright(replInterpreter.formatLocalVariables().trimEnd())
-            );
+            const localVars = replInterpreter.formatLocalVariables().trimEnd();
+            process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
+            process.stdout.write(chalk.cyanBright(localVars));
             process.stdout.write("\n");
         } else {
             brs.executeLine(line, replInterpreter);
@@ -407,6 +477,7 @@ function printHelp() {
     helpMsg += "REPL Command List:\r\n";
     helpMsg += "   print|?         Print variable value or expression\r\n";
     helpMsg += "   var|vars        Display variables and their types/values\r\n";
+    helpMsg += "   vol|vols        Display file system mounted volumes`\r\n";
     helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
     helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";

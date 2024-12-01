@@ -70,19 +70,19 @@ export type AppPayload = {
     input: Map<string, string>;
     paths: AppFilePath[];
     brs: string[];
-    texts: string[];
-    binaries: any[];
+    pkgZip?: ArrayBuffer;
+    extZip?: ArrayBuffer;
     password?: string;
     entryPoint?: boolean;
     stopOnCrash?: boolean;
+    root?: string;
+    ext?: string;
 };
 
 export type AppFilePath = {
     id: number;
     url: string;
-    type: "source" | "text" | "binary" | "audio" | "video" | "pcode";
-    format?: string;
-    binId?: number;
+    type: "source" | "pcode";
 };
 
 export enum AppExitReason {
