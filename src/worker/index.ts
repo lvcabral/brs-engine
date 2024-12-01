@@ -196,71 +196,61 @@ export function createPayload(
         }
         const fileName = path.basename(filePath) ?? filePath;
         const fileExt = fileName.split(".").pop();
-        if (fileExt?.toLowerCase() === "brs") {
-            try {
-                const sourceCode = fs.readFileSync(filePath);
-                if (sourceCode) {
-                    source.push(sourceCode.toString());
-                    paths.push({ id: id, url: `source/${fileName}`, type: "source" });
-                    id++;
-                }
-            } catch (err: any) {
-                throw err;
+        if (fileExt?.toLowerCase() === "brs" && fs.existsSync(filePath)) {
+            const sourceCode = fs.readFileSync(filePath);
+            if (sourceCode.length > 0) {
+                source.push(sourceCode.toString());
+                paths.push({ id: id, url: `source/${fileName}`, type: "source" });
+                id++;
             }
-        } else if (fileName === "manifest") {
-            try {
-                const fileData = fs.readFileSync(filePath);
-                if (fileData) {
-                    manifest = parseManifest(fileData.toString());
-                }
-            } catch (err: any) {
-                throw err;
-            }
-        }
-    });
-    if (id > 0) {
-        let deviceData = defaultDeviceInfo;
-        if (customDeviceData !== undefined) {
-            deviceData = Object.assign(deviceData, customDeviceData);
-        }
-        if (!deviceData.fonts || deviceData.fonts.size === 0) {
-            deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
-        }
-        if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
-            const fileData = fs.readFileSync(path.join(root, "manifest"));
-            if (fileData) {
+        } else if (fileName === "manifest" && fs.existsSync(filePath)) {
+            const fileData = fs.readFileSync(filePath);
+            if (fileData.length > 0) {
                 manifest = parseManifest(fileData.toString());
             }
         }
-        if (manifest === undefined) {
-            manifest = new Map();
-            manifest.set("title", "BRS App");
-            manifest.set("major_version", "0");
-            manifest.set("minor_version", "0");
-            manifest.set("build_version", "1");
-            manifest.set("requires_audiometadata", "1");
-        }
-        const payload: AppPayload = {
-            device: deviceData,
-            manifest: manifest,
-            input: new Map(),
-            paths: paths,
-            brs: source,
-            entryPoint: false,
-            stopOnCrash: false,
-            root: root,
-        };
-        if (ext && fs.existsSync(ext)) {
-            if (fs.statSync(ext).isDirectory()) {
-                payload.ext = ext;
-            } else {
-                payload.extZip = new Uint8Array(fs.readFileSync(ext)).buffer;
-            }
-        }
-        return payload;
-    } else {
+    });
+    if (id === 0) {
         throw new Error("Invalid or inexistent file(s)!");
     }
+    const deviceData = customDeviceData
+        ? Object.assign(defaultDeviceInfo, customDeviceData)
+        : defaultDeviceInfo;
+    if (!deviceData.fonts || deviceData.fonts.size === 0) {
+        deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
+    }
+    if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
+        const fileData = fs.readFileSync(path.join(root, "manifest"));
+        if (fileData) {
+            manifest = parseManifest(fileData.toString());
+        }
+    }
+    if (manifest === undefined) {
+        manifest = new Map();
+        manifest.set("title", "BRS App");
+        manifest.set("major_version", "0");
+        manifest.set("minor_version", "0");
+        manifest.set("build_version", "1");
+        manifest.set("requires_audiometadata", "1");
+    }
+    const payload: AppPayload = {
+        device: deviceData,
+        manifest: manifest,
+        input: new Map(),
+        paths: paths,
+        brs: source,
+        entryPoint: false,
+        stopOnCrash: false,
+        root: root,
+    };
+    if (ext && fs.existsSync(ext)) {
+        if (fs.statSync(ext).isDirectory()) {
+            payload.ext = ext;
+        } else {
+            payload.extZip = new Uint8Array(fs.readFileSync(ext)).buffer;
+        }
+    }
+    return payload;
 }
 
 /**

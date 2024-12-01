@@ -78,43 +78,7 @@ program
     )
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
-        if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
-            chalk.level = Math.trunc(program.colors) as chalk.Level;
-        } else {
-            console.warn(
-                chalk.yellow(
-                    `Invalid color level! Valid range is 0-3, keeping default: ${defaultLevel}.`
-                )
-            );
-        }
-        if (program.ascii) {
-            if (isNumber(program.ascii)) {
-                program.ascii = +program.ascii;
-            } else {
-                program.ascii = 0;
-            }
-            if (program.ascii < 32) {
-                program.ascii = maxColumns;
-                console.warn(
-                    chalk.yellow(
-                        `Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`
-                    )
-                );
-            }
-        }
-        if (program.root && !fs.existsSync(program.root)) {
-            console.error(chalk.red(`Root path not found: ${program.root}\n`));
-            process.exitCode = 1;
-            return;
-        }
-        if (program.extRoot && !fs.existsSync(program.extRoot)) {
-            console.error(chalk.red(`External storage path not found: ${program.extRoot}\n`));
-            process.exitCode = 1;
-            return;
-        }
-        if (program.extFile && !fs.existsSync(program.extFile)) {
-            console.error(chalk.red(`External storage file not found: ${program.extFile}\n`));
-            process.exitCode = 1;
+        if (!checkParameters()) {
             return;
         }
         if (typeof deviceData === "object") {
@@ -138,6 +102,53 @@ program
     })
     .version(packageInfo.version, "-v, --version")
     .parse(process.argv);
+
+/**
+ * Check the CLI parameters and set the default values.
+ *  @returns true if the parameters are valid, false otherwise.
+ */
+function checkParameters() {
+    if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
+        chalk.level = Math.trunc(program.colors) as chalk.Level;
+    } else {
+        console.warn(
+            chalk.yellow(
+                `Invalid color level! Valid range is 0-3, keeping default: ${defaultLevel}.`
+            )
+        );
+    }
+    if (program.ascii) {
+        if (isNumber(program.ascii)) {
+            program.ascii = +program.ascii;
+        } else {
+            program.ascii = 0;
+        }
+        if (program.ascii < 32) {
+            program.ascii = maxColumns;
+            console.warn(
+                chalk.yellow(
+                    `Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`
+                )
+            );
+        }
+    }
+    if (program.root && !fs.existsSync(program.root)) {
+        console.error(chalk.red(`Root path not found: ${program.root}\n`));
+        process.exitCode = 1;
+        return;
+    }
+    if (program.extRoot && !fs.existsSync(program.extRoot)) {
+        console.error(chalk.red(`External storage path not found: ${program.extRoot}\n`));
+        process.exitCode = 1;
+        return;
+    }
+    if (program.extFile && !fs.existsSync(program.extFile)) {
+        console.error(chalk.red(`External storage file not found: ${program.extFile}\n`));
+        process.exitCode = 1;
+        return;
+    }
+    return process.exitCode !== 1;
+}
 
 /**
  * Run the BrightScript files or the App package file.
