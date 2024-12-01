@@ -20,7 +20,7 @@ import {
     releaseCanvas,
 } from "../draw2d";
 import { RoByteArray } from "./RoByteArray";
-import { GifReader } from "omggif";
+import { parseGIF, decompressFrames } from "gifuct-js";
 import fileType from "file-type";
 import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
@@ -133,11 +133,13 @@ export class RoBitmap extends BrsComponent implements BrsValue {
                         }
                     }
                 } else if (type && type.mime === "image/gif") {
-                    let gif = new GifReader(Buffer.from(image));
-                    data = new Uint8Array(gif.width * gif.height * 4);
-                    gif.decodeAndBlitFrameRGBA(0, data.buffer);
-                    this.width = gif.width;
-                    this.height = gif.height;
+                    const gif = parseGIF(image);
+                    const frames = decompressFrames(gif, true);
+                    if (frames.length) {
+                        data = frames[0].patch;
+                        this.width = frames[0].dims.width;
+                        this.height = frames[0].dims.height;
+                    }
                 } else if (type && type.mime === "image/bmp") {
                     let bmp = BMP(image);
                     data = bmp.data;
