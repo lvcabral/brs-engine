@@ -63,6 +63,7 @@ import {
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
     root?: string;
+    ext?: string;
     entryPoint?: boolean;
     stopOnCrash?: boolean;
     /** The stdout stream that brs should use. Default: process.stdout. */
@@ -208,7 +209,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
-        this.fileSystem = new FileSystem(this.options.root);
+        this.fileSystem = new FileSystem(this.options.root, this.options.ext);
         Object.keys(defaultDeviceInfo).forEach((key) => {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, defaultDeviceInfo[key]);

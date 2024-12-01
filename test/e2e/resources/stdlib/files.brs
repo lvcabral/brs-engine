@@ -9,5 +9,8 @@ print DeleteDirectory("tmp:///test_dir") ' good delete
 print FormatDrive("does not matter", "will always fail") ' always fail
 print ListDir("tmp:///") 'what's left?
 
-stdlibTestFiles = MatchFiles("tmp:///", "*.txt")
-print stdlibTestFiles.count() > 0
+tmpTestFiles = MatchFiles("tmp:///", "*.txt")
+print tmpTestFiles.count() > 0
+
+extTestFiles = MatchFiles("ext1:///", "*.png")
+print extTestFiles.count() > 0

@@ -76,6 +76,7 @@ export type AppPayload = {
     entryPoint?: boolean;
     stopOnCrash?: boolean;
     root?: string;
+    ext?: string;
 };
 
 export type AppFilePath = {

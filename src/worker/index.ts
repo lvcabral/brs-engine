@@ -121,7 +121,10 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
     }
-    const replInterpreter = new Interpreter({ root: payload.root });
+    const replInterpreter = new Interpreter({
+        root: payload.root,
+        ext: payload.extZip ? undefined : payload.ext,
+    });
     replInterpreter.onError(logError);
     if (payload.device) {
         setupDeviceData(payload.device, replInterpreter);
@@ -179,7 +182,8 @@ export function executeLine(contents: string, interpreter: Interpreter) {
 export function createPayload(
     files: string[],
     customDeviceData?: Partial<DeviceInfo>,
-    root?: string
+    root?: string,
+    ext?: string
 ): AppPayload {
     const paths: AppFilePath[] = [];
     const source: string[] = [];
@@ -236,7 +240,7 @@ export function createPayload(
             manifest.set("build_version", "1");
             manifest.set("requires_audiometadata", "1");
         }
-        return {
+        const payload: AppPayload = {
             device: deviceData,
             manifest: manifest,
             input: new Map(),
@@ -246,6 +250,14 @@ export function createPayload(
             stopOnCrash: false,
             root: root,
         };
+        if (ext && fs.existsSync(ext)) {
+            if (fs.statSync(ext).isDirectory()) {
+                payload.ext = ext;
+            } else {
+                payload.extZip = new Uint8Array(fs.readFileSync(ext)).buffer;
+            }
+        }
+        return payload;
     } else {
         throw new Error("Invalid or inexistent file(s)!");
     }
@@ -291,6 +303,7 @@ export async function executeFile(
             entryPoint: payload.entryPoint ?? true,
             stopOnCrash: payload.stopOnCrash ?? false,
             root: payload.root,
+            ext: payload.extZip ? undefined : payload.ext,
         },
         ...customOptions,
     };

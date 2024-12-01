@@ -8,18 +8,26 @@ import * as nodeFS from "fs";
 export class FileSystem {
     private paths: Map<string, string>;
     readonly root?: string;
-    readonly pfs: typeof zenFS.fs | typeof nodeFS; // pkg: and ext1:
+    readonly ext?: string;
+    readonly pfs: typeof zenFS.fs | typeof nodeFS; // pkg:
+    readonly xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
     readonly tfs: MemoryFileSystem; // tmp:
     readonly cfs: MemoryFileSystem; // cachefs:
     readonly mfs: MemoryFileSystem; // common:
 
-    constructor(root?: string) {
+    constructor(root?: string, ext?: string) {
         this.paths = new Map();
         if (root) {
             this.root = root;
             this.pfs = nodeFS;
         } else {
             this.pfs = zenFS.fs;
+        }
+        if (ext) {
+            this.ext = ext;
+            this.xfs = nodeFS;
+        } else {
+            this.xfs = zenFS.fs;
         }
         this.tfs = new MemoryFileSystem();
         this.cfs = new MemoryFileSystem();
@@ -45,6 +53,8 @@ export class FileSystem {
             return this.cfs;
         } else if (uri.trim().toLowerCase().startsWith("common:")) {
             return this.mfs;
+        } else if (uri.trim().toLowerCase().startsWith("ext1:")) {
+            return this.xfs;
         }
         return this.pfs;
     }
@@ -55,6 +65,11 @@ export class FileSystem {
                 .trim()
                 .toLowerCase()
                 .replace("pkg:", this.root + "/");
+        } else if (this.ext && uri.trim().toLowerCase().startsWith("ext1:")) {
+            uri = uri
+                .trim()
+                .toLowerCase()
+                .replace("ext1:", this.ext + "/");
         }
         return uri
             .toLowerCase()
@@ -67,13 +82,15 @@ export class FileSystem {
 
     volumesSync() {
         const volumes: string[] = [];
-        if (this.root) {
+        if (this.root || this.pfs.existsSync("pkg:/")) {
             volumes.push("pkg:");
-        } else {
-            this.pfs.readdirSync("/");
+        }
+        if (this.ext || this.xfs.existsSync("ext1:/")) {
+            volumes.push("ext1:");
         }
         volumes.push("tmp:");
         volumes.push("cachefs:");
+        volumes.push("common:");
         return volumes;
     }
 

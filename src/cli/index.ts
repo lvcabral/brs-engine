@@ -22,6 +22,7 @@ import {
     updateAppZip,
     subscribePackage,
     getSerialNumber,
+    mountExt,
 } from "../api/package";
 import { isNumber } from "../api/util";
 import {
@@ -67,6 +68,14 @@ program
         "-r, --root <directory>",
         "The root directory from which `pkg:` paths will be resolved."
     )
+    .option(
+        "-x, --ext-root <directory>",
+        "The root directory from which `ext1:` paths will be resolved."
+    )
+    .option(
+        "-f, --ext-file <file>",
+        "The zip file to mount as `ext1:` volume. (takes precedence over -x)"
+    )
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
         if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
@@ -92,6 +101,21 @@ program
                     )
                 );
             }
+        }
+        if (program.root && !fs.existsSync(program.root)) {
+            console.error(chalk.red(`Root path not found: ${program.root}\n`));
+            process.exitCode = 1;
+            return;
+        }
+        if (program.extRoot && !fs.existsSync(program.extRoot)) {
+            console.error(chalk.red(`External storage path not found: ${program.extRoot}\n`));
+            process.exitCode = 1;
+            return;
+        }
+        if (program.extFile && !fs.existsSync(program.extFile)) {
+            console.error(chalk.red(`External storage file not found: ${program.extFile}\n`));
+            process.exitCode = 1;
+            return;
         }
         if (typeof deviceData === "object") {
             deviceData.deviceModel = "3930X";
@@ -133,12 +157,20 @@ function runAppFiles(files: string[]) {
             } else {
                 console.log(chalk.blueBright(`Executing ${filePath}...\n`));
             }
+            if (program.extFile) {
+                mountExt(new Uint8Array(fs.readFileSync(program.extFile)).buffer);
+            }
             const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
             loadAppZip(fileName, fileData, runApp);
             return;
         }
         // Run BrightScript files
-        const payload = brs.createPayload(files, deviceData, program.root);
+        const payload = brs.createPayload(
+            files,
+            deviceData,
+            program.root,
+            program.extFile ?? program.extRoot
+        );
         runApp(payload);
     } catch (err: any) {
         if (err.messages?.length) {
@@ -285,14 +317,13 @@ function getRegistry(): Map<string, string> {
  * **NOTE:** Currently limited to single-line inputs :(
  */
 async function repl() {
-    if (program.root && !fs.existsSync(program.root)) {
-        console.error(chalk.red(`Root path not found: ${program.root}\n`));
-        process.exitCode = 1;
-        return;
-    }
     const replInterpreter = await brs.getReplInterpreter({
         device: deviceData,
+        extZip: program.extFile
+            ? new Uint8Array(fs.readFileSync(program.extFile)).buffer
+            : undefined,
         root: program.root,
+        ext: program.extRoot,
     });
     const rl = readline.createInterface({
         input: process.stdin,
@@ -306,12 +337,18 @@ async function repl() {
             process.stdout.write("\x1Bc");
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
-        } else if (["root", "path"].includes(line.toLowerCase().trim())) {
-            const rootPath = replInterpreter.options.root ?? "not defined!";
-            process.stdout.write(chalk.cyanBright(`Root path for 'pkg:' is ${rootPath}\n`));
+        } else if (["vol", "vols"].includes(line.toLowerCase().trim())) {
+            process.stdout.write(chalk.cyanBright(`\nMounted volumes:\n\n`));
+            const rootPath = replInterpreter.options.root ?? "not mounted";
+            process.stdout.write(chalk.cyanBright(`pkg:      ${rootPath}\n`));
+            const extPath = program.extFile ?? replInterpreter.options.ext ?? "not mounted";
+            process.stdout.write(chalk.cyanBright(`ext1:     ${extPath}\n`));
+            process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
+            process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
+            process.stdout.write(chalk.cyanBright(`common:   [In Memory]\n`));
         } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
             const localVars = replInterpreter.formatLocalVariables().trimEnd();
-            process.stdout.write(chalk.cyanBright(`\r\nLocal variables:\n\n`));
+            process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
             process.stdout.write(chalk.cyanBright(localVars));
             process.stdout.write("\n");
         } else {
@@ -429,9 +466,9 @@ function printHelp() {
     helpMsg += "REPL Command List:\r\n";
     helpMsg += "   print|?         Print variable value or expression\r\n";
     helpMsg += "   var|vars        Display variables and their types/values\r\n";
+    helpMsg += "   vol|vols        Display file system mounted volumes`\r\n";
     helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
-    helpMsg += "   root|path       Display the root path (if defined with --root)\r\n";
     helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";
     helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
     process.stdout.write(chalk.cyanBright(helpMsg));
