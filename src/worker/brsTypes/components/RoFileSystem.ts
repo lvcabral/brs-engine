@@ -175,11 +175,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, fromPath: BrsString, toPath: BrsString) => {
             const fsys = interpreter.fileSystem;
             try {
-                if (
-                    !writeUri(fromPath.value) ||
-                    !writeUri(toPath.value) ||
-                    !fsys.existsSync(fromPath.value)
-                ) {
+                if (!writeUri(toPath.value) || !fsys.existsSync(fromPath.value)) {
                     return BrsBoolean.False;
                 }
                 const content = fsys.readFileSync(fromPath.value);

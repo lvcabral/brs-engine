@@ -15,7 +15,7 @@ export const CopyFile = new Callable("CopyFile", {
     impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!writeUri(src.value) || !writeUri(dst.value) || !fsys.existsSync(src.value)) {
+            if (!writeUri(dst.value) || !fsys.existsSync(src.value)) {
                 return BrsBoolean.False;
             }
             const content = fsys.readFileSync(src.value);
@@ -126,7 +126,7 @@ export const FormatDrive = new Callable("FormatDrive", {
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
         if (interpreter.isDevMode) {
-            interpreter.stderr.write("warning,`FormatDrive` is not implemented in `brs`.");
+            interpreter.stderr.write("warning,`FormatDrive` is not implemented in `brs-engine`.");
         }
         return BrsBoolean.False;
     },
