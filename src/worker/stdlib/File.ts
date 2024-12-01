@@ -1,77 +1,7 @@
 import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { FileSystem } from "../interpreter/FileSystem";
+import { getVolume, validUri, writeUri } from "../interpreter/FileSystem";
 import * as nanomatch from "nanomatch";
-import * as path from "path";
-
-type Volume = FileSystem;
-
-/*
- * Returns a memfs volume based on the brs path uri.  For example, passing in
- * "tmp:/test.txt" will return the memfs temporary volume on the interpreter.
- *
- * Returns invalid in no appopriate volume is found for the path
- */
-export function getVolumeByPath(interpreter: Interpreter, path: string): Volume | null {
-    try {
-        const protocol = new URL(path).protocol;
-        const volume = interpreter.fileSystem.get(protocol);
-        if (volume) {
-            return volume;
-        }
-    } catch (err: any) {
-        return null;
-    }
-    return null;
-}
-
-/*
- * Returns a memfs file path from a brs file uri
- *   ex. "tmp:/test/test1.txt" -> "/test/test1.txt"
- */
-export function getPath(fileUri: string) {
-    try {
-        return new URL(fileUri).pathname;
-    } catch (err: any) {
-        return fileUri;
-    }
-}
-
-/*
- * Returns a memfs file path from a brs file uri. If the brs file uri
- * has the "pkg" protocol, append the file path with our root directory
- * so that we're searching the correct place.
- *   ex. "tmp:/test/test1.txt" -> "/test/test1.txt"
- *   ex. "pkg:/test/test1.txt" -> "/path/to/proj/test/test1.txt"
- *
- */
-export function getScopedPath(interpreter: Interpreter, fileUri: string) {
-    try {
-        let url = new URL(fileUri);
-        let filePath = getPath(fileUri);
-        let scopedPath = filePath;
-        if (url.protocol === "pkg:") {
-            scopedPath = path.join(interpreter.options.root ?? "", filePath);
-        }
-        return scopedPath.replace(/[\/\\]+/g, path.posix.sep);
-    } catch (err: any) {
-        return fileUri;
-    }
-}
-
-export function createDir(interpreter: Interpreter, dir: string) {
-    const volume = getVolumeByPath(interpreter, dir);
-    if (volume === null) {
-        return BrsBoolean.False;
-    }
-    const memfsPath = getPath(dir);
-    try {
-        volume.mkdirSync(memfsPath);
-        return BrsBoolean.True;
-    } catch (err: any) {
-        return BrsBoolean.False;
-    }
-}
 
 /** Copies a file from src to dst, return true if successful */
 export const CopyFile = new Callable("CopyFile", {
@@ -83,20 +13,13 @@ export const CopyFile = new Callable("CopyFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
-        const srcVolume = getVolumeByPath(interpreter, src.value);
-        if (srcVolume === null) {
-            return BrsBoolean.False;
-        }
-        const dstVolume = getVolumeByPath(interpreter, dst.value);
-        if (dstVolume === null) {
-            return BrsBoolean.False;
-        }
-
-        const srcMemfsPath = getPath(src.value);
-        const dstMemfsPath = getPath(dst.value);
+        const fsys = interpreter.fileSystem;
         try {
-            let contents = srcVolume.readFileSync(srcMemfsPath);
-            dstVolume.writeFileSync(dstMemfsPath, contents);
+            if (!writeUri(dst.value) || !fsys.existsSync(src.value)) {
+                return BrsBoolean.False;
+            }
+            const content = fsys.readFileSync(src.value);
+            fsys.writeFileSync(dst.value, content);
             return BrsBoolean.True;
         } catch (err: any) {
             return BrsBoolean.False;
@@ -114,21 +37,17 @@ export const MoveFile = new Callable("MoveFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
-        const srcVolume = getVolumeByPath(interpreter, src.value);
-        if (srcVolume === null) {
-            return BrsBoolean.False;
-        }
-        const dstVolume = getVolumeByPath(interpreter, dst.value);
-        if (dstVolume === null) {
-            return BrsBoolean.False;
-        }
-
-        const srcMemfsPath = getPath(src.value);
-        const dstMemfsPath = getPath(dst.value);
+        const fsys = interpreter.fileSystem;
         try {
-            let contents = srcVolume.readFileSync(srcMemfsPath);
-            dstVolume.writeFileSync(dstMemfsPath, contents);
-            srcVolume.rmfileSync(srcMemfsPath);
+            if (
+                !writeUri(src.value) ||
+                !writeUri(dst.value) ||
+                getVolume(src.value) !== getVolume(dst.value) ||
+                !fsys.existsSync(src.value)
+            ) {
+                return BrsBoolean.False;
+            }
+            fsys.renameSync(src.value, dst.value);
             return BrsBoolean.True;
         } catch (err: any) {
             return BrsBoolean.False;
@@ -143,14 +62,12 @@ export const DeleteFile = new Callable("DeleteFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, file: BrsString) => {
-        const volume = getVolumeByPath(interpreter, file.value);
-        if (volume === null) {
-            return BrsBoolean.False;
-        }
-
-        const memfsPath = getPath(file.value);
+        const fsys = interpreter.fileSystem;
         try {
-            volume.rmfileSync(memfsPath);
+            if (!writeUri(file.value)) {
+                return BrsBoolean.False;
+            }
+            fsys.unlinkSync(file.value);
             return BrsBoolean.True;
         } catch (err: any) {
             return BrsBoolean.False;
@@ -165,14 +82,12 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
-        const volume = getVolumeByPath(interpreter, dir.value);
-        if (volume === null) {
-            return BrsBoolean.False;
-        }
-
-        const memfsPath = getPath(dir.value);
+        const fsys = interpreter.fileSystem;
         try {
-            volume.rmdirSync(memfsPath);
+            if (!writeUri(dir.value)) {
+                return BrsBoolean.False;
+            }
+            fsys.rmdirSync(dir.value);
             return BrsBoolean.True;
         } catch (err: any) {
             return BrsBoolean.False;
@@ -187,7 +102,16 @@ export const CreateDirectory = new Callable("CreateDirectory", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
-        return createDir(interpreter, dir.value);
+        const fsys = interpreter.fileSystem;
+        try {
+            if (!writeUri(dir.value)) {
+                return BrsBoolean.False;
+            }
+            fsys.mkdirSync(dir.value);
+            return BrsBoolean.True;
+        } catch (err: any) {
+            return BrsBoolean.False;
+        }
     },
 });
 
@@ -202,7 +126,7 @@ export const FormatDrive = new Callable("FormatDrive", {
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
         if (interpreter.isDevMode) {
-            interpreter.stderr.write("warning,`FormatDrive` is not implemented in `brs`.");
+            interpreter.stderr.write("warning,`FormatDrive` is not implemented in `brs-engine`.");
         }
         return BrsBoolean.False;
     },
@@ -214,19 +138,21 @@ export const ListDir = new Callable("ListDir", {
         args: [new StdlibArgument("path", ValueKind.String)],
         returns: ValueKind.Object,
     },
-    impl: (interpreter: Interpreter, path: BrsString) => {
-        const volume = getVolumeByPath(interpreter, path.value);
-        if (volume === null) {
-            return new RoList([]);
-        }
-
-        const memfsPath = getPath(path.value);
+    impl: (interpreter: Interpreter, dir: BrsString) => {
+        const fsys = interpreter.fileSystem;
         try {
-            let subPaths = volume.readdirSync(memfsPath).map((s) => new BrsString(s));
-            return new RoList(subPaths);
+            if (!validUri(dir.value)) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Missing or invalid PHY: '${dir.value}'`
+                );
+            } else if (fsys.existsSync(dir.value)) {
+                const subPaths = fsys.readdirSync(dir.value).map((s) => new BrsString(s));
+                return new RoList(subPaths);
+            }
         } catch (err: any) {
-            return new RoList([]);
+            interpreter.stderr.write(`warning,*** ERROR: Listing '${dir.value}': ${err.message}`);
         }
+        return new RoList([]);
     },
 });
 
@@ -237,17 +163,15 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, filepath: BrsString) => {
-        const volume = getVolumeByPath(interpreter, filepath.value);
-        if (volume) {
-            try {
-                const memfsPath = getPath(filepath.value);
-                const textDecoder = new TextDecoder();
-                return new BrsString(textDecoder.decode(volume.readFileSync(memfsPath)));
-            } catch (err: any) {
+        const fsys = interpreter.fileSystem;
+        try {
+            if (!validUri(filepath.value)) {
                 return new BrsString("");
             }
+            return new BrsString(fsys.readFileSync(filepath.value, "utf8"));
+        } catch (err: any) {
+            return new BrsString("");
         }
-        return new BrsString("");
     },
 });
 
@@ -261,13 +185,12 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, filePath: BrsString, text: BrsString) => {
-        const volume = getVolumeByPath(interpreter, filePath.value);
-        if (volume === null) {
-            return BrsBoolean.False;
-        }
-        const memfsPath = getPath(filePath.value);
+        const fsys = interpreter.fileSystem;
         try {
-            volume.writeFileSync(memfsPath, text.value, "utf-8");
+            if (!writeUri(filePath.value)) {
+                return BrsBoolean.False;
+            }
+            fsys.writeFileSync(filePath.value, text.value, "utf8");
             return BrsBoolean.True;
         } catch (err: any) {
             return BrsBoolean.False;
@@ -285,13 +208,12 @@ export const MatchFiles = new Callable("MatchFiles", {
         returns: ValueKind.Object,
     },
     impl: (interpreter: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
-        let volume = getVolumeByPath(interpreter, pathArg.value);
-        if (volume == null) {
-            return new RoList([]);
-        }
-        let localPath = getPath(pathArg.value);
+        const fsys = interpreter.fileSystem;
         try {
-            let knownFiles = volume.readdirSync(localPath);
+            if (!validUri(pathArg.value)) {
+                return new RoList([]);
+            }
+            let knownFiles = fsys.readdirSync(pathArg.value);
             let matchedFiles = nanomatch.match(knownFiles, patternIn.value, {
                 nocase: true,
                 nodupes: true,

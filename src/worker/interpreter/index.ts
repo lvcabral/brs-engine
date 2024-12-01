@@ -63,6 +63,7 @@ import {
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
     root?: string;
+    ext?: string;
     entryPoint?: boolean;
     stopOnCrash?: boolean;
     /** The stdout stream that brs should use. Default: process.stdout. */
@@ -75,7 +76,6 @@ export interface ExecutionOptions {
 
 /** The default set of execution options.  */
 export const defaultExecutionOptions: ExecutionOptions = {
-    root: process.cwd(),
     entryPoint: false,
     stopOnCrash: false,
     stdout: process.stdout,
@@ -89,12 +89,6 @@ export interface TracePoint {
     functionLocation: Location;
     callLocation: Location;
     signature: Signature;
-}
-
-/** The definition of a local file data with parsed url and volume */
-export interface LocalFileData {
-    url: URL | undefined;
-    volume: FileSystem | undefined;
 }
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
@@ -118,8 +112,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: -1, column: -1 },
     };
 
+    readonly fileSystem: FileSystem;
     readonly options: ExecutionOptions = defaultExecutionOptions;
-    readonly fileSystem: Map<string, FileSystem> = new Map<string, FileSystem>();
     readonly manifest: Map<string, any> = new Map<string, any>();
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
@@ -156,16 +150,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._singleKeyEvents;
     }
 
-    public audioId: number = 0;
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();
     public debugMode: boolean = false;
 
     /**
      * Updates the interpreter manifest with the provided data
-     *
      * @param manifest Map with manifest content.
-     *
      */
     public setManifest(manifest: Map<string, string>) {
         manifest.forEach((value: string, key: string) => {
@@ -179,9 +170,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Updates the interpreter registry with the provided data
-     *
      * @param registry Map with registry content.
-     *
      */
     public setRegistry(registry: Map<string, string>) {
         registry.forEach((value: string, key: string) => {
@@ -220,10 +209,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
-        this.fileSystem.set("common:", new FileSystem());
-        this.fileSystem.set("pkg:", new FileSystem());
-        this.fileSystem.set("tmp:", new FileSystem());
-        this.fileSystem.set("cachefs:", new FileSystem());
+        this.fileSystem = new FileSystem(this.options.root, this.options.ext);
         Object.keys(defaultDeviceInfo).forEach((key) => {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, defaultDeviceInfo[key]);
@@ -281,10 +267,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         sourceMap?: Map<string, string>,
         ...args: BrsType[]
     ) {
-        let results = statements.map((statement) => this.execute(statement));
         if (sourceMap) {
             this._sourceMap = sourceMap;
         }
+        let results = statements.map((statement) => this.execute(statement));
         try {
             let mainName = "RunUserInterface";
             let maybeMain = this.getCallableFunction(mainName.toLowerCase());
@@ -1938,29 +1924,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     // Helper methods
-
-    /**
-     * Returns the file data for a given url
-     * @param urlString the url string
-     * @returns the file data (parsed url and volume)
-     */
-    getFileData(urlString: string): LocalFileData {
-        const fileData: LocalFileData = {
-            url: undefined,
-            volume: undefined,
-        };
-        try {
-            fileData.url = new URL(urlString);
-            fileData.volume = this.fileSystem.get(fileData.url.protocol);
-        } catch (e: any) {
-            if (this.isDevMode) {
-                this.stderr.write(
-                    `warning,[interpreter.getFileData] URL ${urlString}: ${e.message}`
-                );
-            }
-        }
-        return fileData;
-    }
 
     /**
      * Returns the Backtrace formatted as a string or an array

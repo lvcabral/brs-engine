@@ -2,7 +2,7 @@
 
 Once you have built the CLI library you can link it to your path with the following command:
 
-```shell
+```console
 $ npm link
 ```
 
@@ -11,29 +11,32 @@ $ npm link
 This repo provides the `brs-cli` executable, which operates as a REPL, running source files or creating encrypted app packages.
 For a list of options run:
 
-```shell
+```console
 $ brs-cli --help
 Usage: brs-cli [options] [brsFiles...]
 
 BrightScript Simulation Engine CLI
 
 Options:
-  -a, --ascii <columns>  Enable ASCII screen mode passing the width in columns. (default: 0)
-  -c, --colors <level>   Define the console color level (0 to disable). (default: 3)
-  -d, --debug            Open the micro debugger if the app crashes.
-  -e, --ecp              Enable the ECP server for control simulation.
-  -r, --registry         Persist the simulated device registry on disk.
-  -p, --pack <password>  The password to generate the encrypted package. (default: "")
-  -o, --out <directory>  The directory to save the encrypted package file. (default: "./")
-  -v, --version          output the version number
-  -h, --help             output usage information
+  -a, --ascii <columns>       Enable ASCII screen mode with # of columns.
+  -c, --colors <level>        Define the console color level (0 to disable). (default: 3)
+  -d, --debug                 Open the micro debugger if the app crashes.
+  -e, --ecp                   Enable the ECP server for control simulation.
+  -p, --pack <password>       The password to generate the encrypted package. (default: "")
+  -o, --out <directory>       The directory to save the encrypted package file. (default: "./")
+  -r, --root <directory>      The root directory from which `pkg:` paths will be resolved.
+  -x, --ext-root <directory>  The root directory from which `ext1:` paths will be resolved.
+  -f, --ext-file <file>       The zip file to mount as `ext1:` volume. (takes precedence over -x)
+  -y, --registry              Persist the simulated device registry on disk.
+  -v, --version               output the version number
+  -h, --help                  output usage information
 ```
 
 ### REPL
 
 An interactive BrightScript REPL (Read-Execute-Print Loop) is available by running `brs-cli` with no arguments, e.g.:
 
-```shell
+```console
 $ brs-cli
 
 BrightScript Simulation Engine CLI [v1.0.0]
@@ -50,7 +53,7 @@ Quit by pressing `^D` (Control-D) or executing `exit`.
 
 By default the CLI will display text in ANSI Truecolor mode (level 3 below), but you can change it for the session by running:
 
-```shell
+```console
 $ brs-cli --color 0
 ```
 
@@ -65,7 +68,7 @@ $ brs-cli --color 0
 
 The CLI can execute an arbitrary list of BrightScript files (`.brs`) as well!  Simply pass the file(s) to the `brs-cli` executable, e.g.:
 
-```shell
+```console
 $ cat hello-world.brs
 ? "Dennis Ritchie said ""Hello, World!"""
 
@@ -73,9 +76,11 @@ $ brs hello-world.brs
 Dennis Ritchie said "Hello, World!"
 ```
 
+A folder can be passed with the flag `--root` to mount the `pkg:/` volume, and in this case, the BrightScript files path should be relative to the mounted root folder.
+
 It is also possible to run a full BrightScript application `.zip` or `.bpk` file, e.g:
 
-```shell
+```console
 $ brs-cli ../tests/test-sandbox.zip
 ```
 
@@ -84,14 +89,16 @@ $ brs-cli ../tests/test-sandbox.zip
 * If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
 * As the CLI will run on a single thread, if you need to control the app you will have to enable the `--ecp` option (see below).
 * Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions.
+* Use the flags `--ext-file` or `-ext-root` to mount a file/path as the `ext1:` volume in the engine file system.
 
 ### Showing Screen as ASCII Art on the Terminal
 
 If you pass the `--ascii <columns>` option, the CLI will run the application and show a representation of the screen bitmap as ASCII Art on the terminal screen.
 
-```shell
+```console
 $ brs-cli ../apps/collisions.zip --ascii 170
 ```
+
 The `<columns>` defines the width in number of character columns, the height will follow the screen proportion.
 
 <p align="center"><img alt="Screen Rendering as ASCII Art" title="Screen Rendering as ASCII Art" src="images/screen-as-ascii-art.gif?raw=true"/></p>
@@ -109,7 +116,7 @@ If you want to protect your BrightScript application source code, you can create
 
 If no password is provided the app will be executed and no encryption happens, below an example of how to encrypt a package:
 
-```shell
+```console
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
 
 BrightScript Simulation Engine CLI [v1.0.0]

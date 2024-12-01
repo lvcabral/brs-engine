@@ -3,6 +3,7 @@ import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsTy
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { validUri, writeUri } from "../../interpreter/FileSystem";
 import { crc32 } from "crc";
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
@@ -175,9 +176,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
-                const fileData = interpreter.getFileData(filepath.value);
-                if (fileData.url && fileData.volume) {
-                    let array: Uint8Array = fileData.volume.readFileSync(fileData.url.pathname);
+                const fsys = interpreter.fileSystem;
+                if (fsys && validUri(filepath.value)) {
+                    let array: Uint8Array = fsys.readFileSync(filepath.value);
                     if (index.getValue() > 0 || length.getValue() > 0) {
                         let start = index.getValue();
                         let end = length.getValue() < 1 ? undefined : start + length.getValue();
@@ -209,22 +210,19 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
-                const url = new URL(filepath.value);
-                if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
-                    const volume = interpreter.fileSystem.get(url.protocol);
-                    if (volume) {
-                        if (index.getValue() > 0 || length.getValue() > 0) {
-                            let start = index.getValue();
-                            let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                            volume.writeFileSync(
-                                url.pathname,
-                                Buffer.from(this.elements.slice(start, end))
-                            );
-                        } else {
-                            volume.writeFileSync(url.pathname, Buffer.from(this.elements));
-                        }
-                        return BrsBoolean.True;
+                const fsys = interpreter.fileSystem;
+                if (fsys && writeUri(filepath.value)) {
+                    if (index.getValue() > 0 || length.getValue() > 0) {
+                        let start = index.getValue();
+                        let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                        fsys.writeFileSync(
+                            filepath.value,
+                            Buffer.from(this.elements.slice(start, end))
+                        );
+                    } else {
+                        fsys.writeFileSync(filepath.value, Buffer.from(this.elements));
                     }
+                    return BrsBoolean.True;
                 }
             } catch (err: any) {
                 return BrsBoolean.False;
@@ -245,27 +243,24 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
-                const url = new URL(filepath.value);
-                if (url.protocol === "tmp:" || url.protocol === "cachefs:") {
-                    const volume = interpreter.fileSystem.get(url.protocol);
-                    if (volume) {
-                        let file: Uint8Array = volume.readFileSync(url.pathname);
-                        let array: Uint8Array;
-                        if (index.getValue() > 0 || length.getValue() > 0) {
-                            let start = index.getValue();
-                            let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                            let elements = this.elements.slice(start, end);
-                            array = new Uint8Array(file.length + elements.length);
-                            array.set(file, 0);
-                            array.set(elements, file.length);
-                        } else {
-                            array = new Uint8Array(file.length + this.elements.length);
-                            array.set(file, 0);
-                            array.set(this.elements, file.length);
-                        }
-                        volume.writeFileSync(url.pathname, Buffer.from(array));
-                        return BrsBoolean.True;
+                const fsys = interpreter.fileSystem;
+                if (fsys && writeUri(filepath.value)) {
+                    let file: Uint8Array = fsys.readFileSync(filepath.value);
+                    let array: Uint8Array;
+                    if (index.getValue() > 0 || length.getValue() > 0) {
+                        let start = index.getValue();
+                        let end = length.getValue() < 1 ? undefined : start + length.getValue();
+                        let elements = this.elements.slice(start, end);
+                        array = new Uint8Array(file.length + elements.length);
+                        array.set(file, 0);
+                        array.set(elements, file.length);
+                    } else {
+                        array = new Uint8Array(file.length + this.elements.length);
+                        array.set(file, 0);
+                        array.set(this.elements, file.length);
                     }
+                    fsys.writeFileSync(filepath.value, Buffer.from(array));
+                    return BrsBoolean.True;
                 }
             } catch (err: any) {
                 return BrsBoolean.False;

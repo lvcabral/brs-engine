@@ -28,19 +28,14 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
 
     private loadFile(interpreter: Interpreter, file: string) {
         let audio: Buffer | undefined;
-        const fileData = interpreter.getFileData(file);
-        if (fileData.url && fileData.volume) {
-            try {
-                audio = fileData.volume.readFileSync(fileData.url.pathname);
-            } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
-                        `warning,[roAudioMetadata] Error loading audio:${file} - ${err.message}`
-                    );
-                }
+        try {
+            audio = interpreter.fileSystem?.readFileSync(file);
+        } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,[roAudioMetadata] Error loading audio:${file} - ${err.message}`
+                );
             }
-        } else if (interpreter.isDevMode) {
-            interpreter.stderr.write(`warning,[roAudioMetadata] Invalid file/volume:${file}`);
         }
         if (audio instanceof Buffer) {
             return new DataView(audio.buffer);

@@ -5,7 +5,6 @@ describe("Runtime errors", () => {
 
     beforeAll(() => {
         outputStreams = createMockStreams();
-        outputStreams.root = __dirname + "/resources";
     });
 
     afterEach(() => {

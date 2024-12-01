@@ -36,8 +36,6 @@ const defaultSplashTime = 1600;
 let splashTimeout = 0;
 export const source: string[] = [];
 export const paths: AppFilePath[] = [];
-export const txts: string[] = [];
-export const bins: any[] = [];
 export const manifestMap: Map<string, string> = new Map();
 export const currentApp = createAppStatus();
 export const lastApp = createAppStatus();
@@ -58,13 +56,13 @@ function notifyAll(eventName: string, eventData?: any) {
 
 // Decompress Zip and execute
 let currentZip: Unzipped;
-let binId: number;
-let txtId: number;
 let srcId: number;
-let audId: number;
+let pkgZip: ArrayBuffer;
+let extZip: ArrayBuffer | undefined;
 
-export function loadAppZip(fileName: string, file: any, callback: Function) {
+export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Function) {
     try {
+        pkgZip = file;
         currentZip = unzipSync(new Uint8Array(file));
     } catch (e: any) {
         notifyAll("error", `[package] Error reading ${fileName}: ${e.message}`);
@@ -84,14 +82,9 @@ export function loadAppZip(fileName: string, file: any, callback: Function) {
         notifyAll("error", "[package] Invalid App Package: missing manifest.");
         return;
     }
-    binId = 0;
-    txtId = 0;
     srcId = 0;
-    audId = 0;
     source.length = 0;
     paths.length = 0;
-    txts.length = 0;
-    bins.length = 0;
 
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
@@ -106,63 +99,18 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     if (relativePath.endsWith("/")) {
         // ignore directory
     } else if (lcasePath.startsWith("source") && ext === "brs") {
-        processSourceFile(relativePath, fileData);
-    } else if (
-        ["manifest", "source/var"].includes(lcasePath) ||
-        ["csv", "xml", "json", "txt", "ts", "yaml", "md", "htm", "html"].includes(ext)
-    ) {
-        processTextFile(relativePath, fileData);
-    } else if (audioExt.has(ext)) {
-        processAudioFile(relativePath, fileData, ext);
-    } else if (videoExt.has(ext)) {
-        processVideoFile(relativePath, fileData, ext);
-    } else {
-        const binType = lcasePath === "source/data" ? "pcode" : "binary";
-        processBinaryFile(relativePath, fileData, binType);
-    }
-}
-
-function processSourceFile(relativePath: string, fileData: Uint8Array) {
-    paths.push({ id: srcId, url: relativePath, type: "source" });
-    source.push(strFromU8(fileData));
-    srcId++;
-}
-
-function processTextFile(relativePath: string, fileData: Uint8Array) {
-    paths.push({ id: txtId, url: relativePath, type: "text" });
-    txts.push(strFromU8(fileData));
-    txtId++;
-}
-
-function processAudioFile(relativePath: string, fileData: Uint8Array, ext: string) {
-    if (currentApp.audioMetadata) {
-        paths.push({ id: audId, url: relativePath, binId: binId, type: "audio", format: ext });
-        bins.push(fileData.buffer);
-        binId++;
-    } else {
-        paths.push({ id: audId, url: relativePath, type: "audio", format: ext });
-    }
-    if (context.inBrowser) {
+        paths.push({ id: srcId, url: relativePath, type: "source" });
+        source.push(strFromU8(fileData));
+        srcId++;
+    } else if (lcasePath === "source/data") {
+        paths.push({ id: 0, url: relativePath, type: "pcode" });
+    } else if (lcasePath === "source/var") {
+        paths.push({ id: 1, url: relativePath, type: "pcode" });
+    } else if (context.inBrowser && audioExt.has(ext)) {
         addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
-    }
-    audId++;
-}
-
-function processVideoFile(relativePath: string, fileData: Uint8Array, ext: string) {
-    paths.push({ id: 0, url: relativePath, type: "video", format: ext });
-    if (context.inBrowser) {
+    } else if (context.inBrowser && videoExt.has(ext)) {
         addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
     }
-}
-
-function processBinaryFile(
-    relativePath: string,
-    fileData: Uint8Array,
-    binType: "binary" | "pcode"
-) {
-    paths.push({ id: binId, url: relativePath, type: binType });
-    bins.push(fileData.buffer);
-    binId++;
 }
 
 function processManifest(content: string) {
@@ -267,8 +215,8 @@ export function createPayload(timeOut?: number, entryPoint?: boolean): AppPayloa
         input: input,
         paths: paths,
         brs: source,
-        texts: txts,
-        binaries: bins,
+        pkgZip: pkgZip,
+        extZip: extZip,
         password: currentApp.password,
         entryPoint: entryPoint,
         stopOnCrash: currentApp.debugOnCrash,
@@ -295,4 +243,14 @@ function createAppStatus(): AppData {
         audioMetadata: false,
         running: false,
     };
+}
+
+// External Storage Handling
+// TODO: Support dynamic mounting and unmounting of external storage
+export function mountExt(zipData: ArrayBuffer) {
+    extZip = zipData;
+}
+
+export function umountExt() {
+    extZip = undefined;
 }

@@ -11,7 +11,7 @@ describe("global Run function", () => {
     brs.registerCallback(() => {}); // register a callback to avoid display errors
 
     beforeEach(() => {
-        interpreter = new Interpreter();
+        interpreter = new Interpreter({ root: process.cwd() });
     });
 
     afterEach(() => {
@@ -67,6 +67,7 @@ describe("global Run function", () => {
     });
 
     it("returns whatever the executed file returns", () => {
+        fs.existsSync.mockImplementationOnce(() => true);
         fs.readFileSync.mockImplementationOnce(
             () => `function main(): return "I'm a return value!": end function`
         );
@@ -76,6 +77,7 @@ describe("global Run function", () => {
     });
 
     it("returns whatever the executed set of files return", () => {
+        fs.existsSync.mockImplementationOnce(() => true).mockImplementationOnce(() => true);
         fs.readFileSync
             .mockImplementationOnce(() => `function main(): return greet(): end function`)
             .mockImplementationOnce(() => `function greet(): return "hello!": end function`);
@@ -93,6 +95,7 @@ describe("global Run function", () => {
 
     describe("args", () => {
         it("accepts one argument", () => {
+            fs.existsSync.mockImplementationOnce(() => true);
             fs.readFileSync.mockImplementationOnce(
                 () => `function main(i as integer): return i: end function`
             );
@@ -102,6 +105,7 @@ describe("global Run function", () => {
         });
 
         it("accepts two arguments", () => {
+            fs.existsSync.mockImplementationOnce(() => true);
             fs.readFileSync.mockImplementationOnce(
                 () => `function main(a as integer, b as integer): return a + b: end function`
             );
