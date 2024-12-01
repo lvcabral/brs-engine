@@ -13,9 +13,6 @@ Sub Main()
     bmp = CreateObject("roBitmap", files[fileIdx])
     screen.DrawObject(0,0, bmp)
     screen.SwapBuffers()
-    print "Manifest File"
-    print GetString("https://raw.githubusercontent.com/lvcabral/Prince-of-Persia-Roku/master/manifest")
-    app = CreateObject("roAppManager")
     while true
         key = wait(0, port).getInt()
         if key = 0
@@ -58,10 +55,3 @@ function CacheFile(url as string, file as string, overwrite = false as boolean) 
     end if
     return tmpFile
 end function
-
-Function GetString(url as string) as string
-    http = CreateObject("roUrlTransfer")
-    http.SetUrl(url)
-    ret = http.GetToString()
-    return ret
-End Function
