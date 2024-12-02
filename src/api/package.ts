@@ -57,7 +57,7 @@ function notifyAll(eventName: string, eventData?: any) {
 // Decompress Zip and execute
 let currentZip: Unzipped;
 let srcId: number;
-let pkgZip: ArrayBuffer;
+let pkgZip: ArrayBuffer | undefined;
 let extZip: ArrayBuffer | undefined;
 
 export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Function) {
@@ -226,6 +226,7 @@ export function createPayload(timeOut?: number, entryPoint?: boolean): AppPayloa
 // Current App object
 export function resetCurrentApp() {
     Object.assign(currentApp, createAppStatus());
+    pkgZip = undefined;
 }
 
 function createAppStatus(): AppData {
