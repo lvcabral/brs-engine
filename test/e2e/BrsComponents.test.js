@@ -268,6 +268,35 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
+    test("components/roRegistry.brs", () => {
+        return execute([resourceFile("components", "roRegistry.brs")], outputStreams).then(() => {
+            expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+                "true",
+                "true",
+                ".value",
+                "true",
+                `<Component: roList> =\n` +
+                    `(\n` +
+                    `    "option1"\n` +
+                    `    "option2"\n` +
+                    `)`,
+                "true",
+                "true",
+                "false",
+                `<Component: roAssociativeArray> =\n` +
+                    `{\n` +
+                    `    option1: ".value"\n` +
+                    `    option2: "other"\n` +
+                    `}`,
+                `<Component: roList> =\n` +
+                    `(\n` +
+                    `    "MySection"\n` +
+                    `)`,
+                " 32641",
+            ]);
+        });
+    });
+
     test("components/roString.brs", async () => {
         await execute([resourceFile("components", "roString.brs")], outputStreams);
 
