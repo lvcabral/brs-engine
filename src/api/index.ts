@@ -119,7 +119,6 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         });
         Object.assign(deviceData, customDeviceInfo);
     }
-    const storage: Storage = window.localStorage;
     let initMsg = `${packageInfo.title} - v${packageInfo.version}`;
     /// #if DEBUG
     initMsg += " - dev";
@@ -136,13 +135,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     if (typeof options.showStats === "boolean") {
         showStats = options.showStats;
     }
-    // Load Registry
-    for (let index = 0; index < storage.length; index++) {
-        const key = storage.key(index);
-        if (key?.startsWith(deviceData.developerId)) {
-            deviceData.registry?.set(key, storage.getItem(key) ?? "");
-        }
-    }
+    loadRegistry();
     // Shared buffer (Keys, Sounds and Debug Commands)
     const length = dataBufferIndex + dataBufferSize;
     try {
@@ -405,6 +398,22 @@ function runApp(payload: AppPayload) {
     } catch (err: any) {
         apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
     }
+}
+
+function loadRegistry() {
+    const storage: Storage = window.localStorage;
+    const transientKeys: string[] = [];
+    for (let index = 0; index < storage.length; index++) {
+        const key = storage.key(index);
+        if (key?.split(".")[0] === deviceData.developerId) {
+            if (key.split(".")[1] !== "Transient") {
+                deviceData.registry?.set(key, storage.getItem(key) ?? "");
+            } else {
+                transientKeys.push(key);
+            }
+        }
+    }
+    transientKeys.forEach((key) => storage.removeItem(key));
 }
 
 // Receive Messages from the Interpreter (Web Worker)
