@@ -86,7 +86,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             let space = 32 * 1024;
             interpreter.registry.forEach((value, key) => {
                 if (key.split(".")[0] === devId) {
-                    space -= Buffer.byteLength(key, "utf8");
+                    space -= Buffer.byteLength(key.substring(devId.length + 1), "utf8");
                     space -= Buffer.byteLength(value, "utf8");
                 }
             });
