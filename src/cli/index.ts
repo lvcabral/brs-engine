@@ -218,7 +218,7 @@ async function runApp(payload: AppPayload) {
     if (program.ecp && !workerReady) {
         // Load ECP service as Worker
         const workerPath = path.join(__dirname, "brs.ecp.js");
-        const workerData = { device: { ...deviceData, serialNumber: getSerialNumber() } };
+        const workerData = { device: { ...payload.device, serialNumber: getSerialNumber() } };
         brsWorker = new Worker(workerPath, { workerData: workerData });
         brsWorker.once("message", (value: any) => {
             if (value?.ready) {
@@ -302,17 +302,13 @@ function getLocalIps() {
  * @returns the Map containing the persisted registry content
  */
 function getRegistry(): Map<string, string> {
-    const registry = new Map<string, string>();
+    let registry = new Map<string, string>();
     try {
         const strRegistry = fs.readFileSync(path.resolve(paths.data, "registry.json"));
         if (strRegistry?.length) {
-            const parsed = JSON.parse(strRegistry.toString());
+            const parsed = JSON.parse(strRegistry.toString("utf8"));
             if (typeof parsed === "object" && parsed !== null) {
-                Object.entries(parsed).forEach(([key, value]) => {
-                    if (typeof key === "string" && typeof value === "string") {
-                        registry.set(key, value);
-                    }
-                });
+                registry = new Map(parsed);
             }
         }
     } catch (err: any) {
