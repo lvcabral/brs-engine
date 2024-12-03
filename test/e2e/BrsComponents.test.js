@@ -285,7 +285,7 @@ describe("end to end brightscript functions", () => {
                     `    option2: "other"\n` +
                     `}`,
                 `<Component: roList> =\n(\n    "Transient"\n)`,
-                " 32641",
+                " 32723",
             ]);
         });
     });
