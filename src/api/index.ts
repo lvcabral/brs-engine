@@ -400,6 +400,7 @@ function runApp(payload: AppPayload) {
     }
 }
 
+// Load device Registry from Local Storage
 function loadRegistry() {
     const storage: Storage = window.localStorage;
     const transientKeys: string[] = [];
