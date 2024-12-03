@@ -1,5 +1,5 @@
 sub main()
-    rs = CreateObject("roRegistrySection", "MySection")
+    rs = CreateObject("roRegistrySection", "Transient")
     opt = rs.read("option1")
     print opt = ""
     print rs.write("option1",opt + ".value")

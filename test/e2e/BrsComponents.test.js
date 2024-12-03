@@ -284,7 +284,7 @@ describe("end to end brightscript functions", () => {
                     `    option1: ".value"\n` +
                     `    option2: "other"\n` +
                     `}`,
-                `<Component: roList> =\n(\n    "MySection"\n)`,
+                `<Component: roList> =\n(\n    "Transient"\n)`,
                 " 32641",
             ]);
         });
