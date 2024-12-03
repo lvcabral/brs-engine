@@ -308,7 +308,15 @@ function getRegistry(): Map<string, string> {
         if (strRegistry?.length) {
             const parsed = JSON.parse(strRegistry.toString("utf8"));
             if (typeof parsed === "object" && parsed !== null) {
-                registry = new Map(parsed);
+                new Map(parsed).forEach((value, key) => {
+                    if (
+                        typeof key === "string" &&
+                        typeof value === "string" &&
+                        key.split(".")[1] !== "Transient"
+                    ) {
+                        registry.set(key, value);
+                    }
+                });
             }
         }
     } catch (err: any) {
@@ -395,8 +403,10 @@ function messageCallback(message: any, _?: any) {
         canvas.height = message.height;
         ctx.putImageData(message, 0, 0);
         printAsciiScreen(program.ascii, canvas);
-    } else if (program.ecp && message instanceof Map) {
-        brsWorker?.postMessage(message);
+    } else if (message instanceof Map) {
+        if (program.ecp) {
+            brsWorker?.postMessage(message);
+        }
         if (program.registry) {
             const strRegistry = JSON.stringify([...message]);
             try {
@@ -404,6 +414,7 @@ function messageCallback(message: any, _?: any) {
                     fs.mkdirSync(paths.data, { recursive: true });
                 }
                 fs.writeFileSync(path.resolve(paths.data, "registry.json"), strRegistry);
+                console.log(paths.data, "registry.json");
             } catch (err: any) {
                 console.error(chalk.red(err.message));
             }
