@@ -275,11 +275,7 @@ describe("end to end brightscript functions", () => {
                 "true",
                 ".value",
                 "true",
-                `<Component: roList> =\n` +
-                    `(\n` +
-                    `    "option1"\n` +
-                    `    "option2"\n` +
-                    `)`,
+                `<Component: roList> =\n(\n    "option1"\n    "option2"\n)`,
                 "true",
                 "true",
                 "false",
@@ -288,10 +284,7 @@ describe("end to end brightscript functions", () => {
                     `    option1: ".value"\n` +
                     `    option2: "other"\n` +
                     `}`,
-                `<Component: roList> =\n` +
-                    `(\n` +
-                    `    "MySection"\n` +
-                    `)`,
+                `<Component: roList> =\n(\n    "MySection"\n)`,
                 " 32641",
             ]);
         });
