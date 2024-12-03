@@ -127,6 +127,9 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
     });
     replInterpreter.onError(logError);
     if (payload.device) {
+        if (payload.device.registry?.size) {
+            replInterpreter.setRegistry(payload.device.registry);
+        }
         setupDeviceData(payload.device, replInterpreter);
         setupDeviceFonts(payload.device, replInterpreter);
     }
@@ -371,7 +374,7 @@ interface SourceResult {
 
 function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
-    if (payload.device.registry) {
+    if (payload.device.registry?.size) {
         interpreter.setRegistry(payload.device.registry);
     }
     setupDeviceData(payload.device, interpreter);
