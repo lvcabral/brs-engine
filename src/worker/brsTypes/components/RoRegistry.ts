@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoList } from "./RoList";
@@ -10,7 +10,9 @@ export class RoRegistry extends BrsComponent implements BrsValue {
 
     constructor() {
         super("roRegistry");
-        this.registerMethods({ ifRegistry: [this.delete, this.flush, this.getSectionList] });
+        this.registerMethods({
+            ifRegistry: [this.delete, this.flush, this.getSectionList, this.getSpaceAvailable],
+        });
     }
 
     toString(parent?: BrsType): string {
@@ -70,6 +72,25 @@ export class RoRegistry extends BrsComponent implements BrsValue {
                     return new BrsString(value);
                 })
             );
+        },
+    });
+
+    /** Returns the number of bytes available in the channel application's device registry (32K) */
+    private readonly getSpaceAvailable = new Callable("getSpaceAvailable", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter) => {
+            const devId = interpreter.deviceInfo.get("developerId");
+            let space = 32 * 1024;
+            interpreter.registry.forEach((value, key) => {
+                if (key.split(".")[0] === devId) {
+                    space -= Buffer.byteLength(key, "utf8");
+                    space -= Buffer.byteLength(value, "utf8");
+                }
+            });
+            return new Int32(space);
         },
     });
 }
