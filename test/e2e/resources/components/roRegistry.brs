@@ -1,7 +1,7 @@
 sub main()
     rs = CreateObject("roRegistrySection", "MySection")
     opt = rs.read("option1")
-    print opt
+    print opt = ""
     print rs.write("option1",opt + ".value")
     print rs.read("option1")
     print rs.write("option2","other")
@@ -13,4 +13,5 @@ sub main()
     rs.flush()
     reg = CreateObject("roRegistry")
     print reg.getSectionList()
+	print reg.getSpaceAvailable()
 end sub
