@@ -155,7 +155,14 @@ export function isBrsCallable(value: BrsType): value is Callable {
  * @returns `true` if `value` can be iterated across, otherwise `false`.
  */
 export function isIterable(value: BrsType): value is Iterable {
-    return "get" in value && "getElements" in value && "set" in value;
+    return (
+        "get" in value &&
+        "getElements" in value &&
+        "set" in value &&
+        "hasNext" in value &&
+        "getNext" in value &&
+        "resetNext" in value
+    );
 }
 
 /**

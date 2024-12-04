@@ -1543,7 +1543,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.environment.continueForEach = 0;
         }
         let index = 0;
-        target.getElements().every((element) => {
+
+        target.resetNext();
+        while (target.hasNext() === BrsBoolean.True) {
+            const element = target.getNext();
             this.environment.define(Scope.Function, statement.item.text!, element);
 
             // execute the block
@@ -1554,7 +1557,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } catch (reason) {
                 if (reason instanceof Stmt.ExitForReason) {
                     // break out of the loop
-                    return false;
+                    break;
                 } else if (reason instanceof Stmt.ContinueForReason) {
                     // continue to the next iteration
                 } else if (reason instanceof Stmt.GotoLabel) {
@@ -1568,8 +1571,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
             // keep looping
             index++;
-            return true;
-        });
+        }
 
         return BrsInvalid.Instance;
     }
