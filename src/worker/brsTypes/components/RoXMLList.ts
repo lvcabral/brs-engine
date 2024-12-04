@@ -101,6 +101,18 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
+    hasNext() {
+        return this.roList.hasNext();
+    }
+
+    getNext() {
+        return this.roList.getNext();
+    }
+
+    resetNext() {
+        this.roList.resetNext();
+    }
+
     add(element: RoXMLElement) {
         this.roList.add(element);
     }
@@ -409,7 +421,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.roList.enumIndex >= 0);
+            return this.hasNext();
         },
     });
 
@@ -420,7 +432,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.roList.enumIndex = this.length() > 0 ? 0 : -1;
+            this.resetNext();
             return BrsInvalid.Instance;
         },
     });
@@ -432,7 +444,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.roList.getNext() ?? BrsInvalid.Instance;
+            return this.getNext();
         },
     });
 }

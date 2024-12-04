@@ -68,6 +68,18 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         return BrsInvalid.Instance;
     }
 
+    hasNext() {
+        return this.childElements().hasNext();
+    }
+
+    getNext() {
+        return this.childElements().getNext();
+    }
+
+    resetNext() {
+        this.childElements().resetNext();
+    }
+
     getAttribute(index: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element attribute must be strings");

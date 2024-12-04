@@ -133,6 +133,10 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return BrsInvalid.Instance;
     }
 
+    hasNext() {
+        return BrsBoolean.from(this.enumIndex >= 0);
+    }
+
     getNext() {
         const keys = Array.from(this.elements.keys());
         const index = this.enumIndex;
@@ -142,7 +146,12 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
                 this.enumIndex = -1;
             }
         }
-        return keys[index];
+        const next = keys[index];
+        return next ? new BrsString(next) : BrsInvalid.Instance;
+    }
+
+    resetNext() {
+        this.enumIndex = this.elements.size > 0 ? 0 : -1;
     }
 
     updateNext() {
@@ -392,7 +401,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.enumIndex >= 0);
+            return this.hasNext();
         },
     });
 
@@ -403,7 +412,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.enumIndex = this.elements.size > 0 ? 0 : -1;
+            this.resetNext();
             return BrsInvalid.Instance;
         },
     });
@@ -415,8 +424,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            const item = this.getNext();
-            return item ? new BrsString(item) : BrsInvalid.Instance;
+            return this.getNext();
         },
     });
 }

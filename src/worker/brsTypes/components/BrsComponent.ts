@@ -1,6 +1,6 @@
 import { bscs } from "../..";
 import { BrsType } from "..";
-import { BrsInvalid } from "../BrsType";
+import { BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable } from "../Callable";
 import { BrsInterface } from "../BrsInterface";
 
@@ -105,5 +105,28 @@ export interface BrsIterable {
      */
     get(index: BrsType, isCaseSensitive?: boolean): BrsType;
 
+    /**
+     * Sets the element at the provided `index` to the provided `value`.
+     * @param index the index in this component at which to set the provided `value`.
+     * @param value the value to update at the provided `index`.
+     * @param isCaseSensitive determinate whether operation of setting should be case sensitive or not.
+     */
     set(index: BrsType, value: BrsType, isCaseSensitive?: boolean): BrsInvalid;
+
+    /**
+     * Determines if the iteration index is at the end of the iterable component.
+     * @returns `true` if there are more elements to iterate, otherwise `false`.
+     */
+    hasNext(): BrsBoolean;
+
+    /**
+     * Retrieves the next element in the iteration sequence.
+     * @returns the next element in the iteration sequence.
+     */
+    getNext(): BrsType;
+
+    /**
+     * Resets the iteration sequence to the beginning of the iterable component.
+     */
+    resetNext(): void;
 }
