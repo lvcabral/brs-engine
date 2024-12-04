@@ -42,7 +42,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getModelType,
                 this.getModelDetails,
                 this.getFriendlyName,
-                this.getVersion,
+                this.getVersion, // deprecated
                 this.getOSVersion,
                 this.getDisplayType,
                 this.getDisplayMode,
@@ -93,6 +93,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.enableLowGeneralMemoryEvent,
                 this.enableAppFocusEvent,
                 this.enableScreensaverExitedEvent,
+                this.getCreationTime, // undocumented
                 this.getMessagePort,
                 this.setMessagePort,
             ],
@@ -159,11 +160,14 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             let result = new Array<AAMember>();
-            result.push({ name: new BrsString("VendorName"), value: new BrsString("Roku") });
+            result.push({ name: new BrsString("Manufacturer"), value: new BrsString("") });
             result.push({
                 name: new BrsString("ModelNumber"),
                 value: new BrsString(interpreter.deviceInfo.get("deviceModel")),
             });
+            result.push({ name: new BrsString("VendorName"), value: new BrsString("Roku") });
+            result.push({ name: new BrsString("VendorUSBName"), value: new BrsString("Roku") });
+            // TODO: Add the engine host platform info here
             return new RoAssociativeArray(result);
         },
     });
@@ -991,6 +995,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
             return enable;
+        },
+    });
+
+    /** Returns the date/time of the device manufacturing (the library build date/time here). */
+    private readonly getCreationTime = new Callable("getCreationTime", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            return new BrsString(interpreter.creationTime ?? "");
         },
     });
 
