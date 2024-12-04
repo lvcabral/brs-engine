@@ -119,6 +119,10 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
+    hasNext() {
+        return BrsBoolean.from(this.enumIndex >= 0);
+    }
+
     getNext() {
         const index = this.enumIndex;
         if (index >= 0) {
@@ -137,6 +141,10 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         } else if (this.enumIndex >= this.elements.length || !hasItems) {
             this.enumIndex = -1;
         }
+    }
+
+    resetNext() {
+        this.enumIndex = this.elements.length > 0 ? 0 : -1;
     }
 
     updateCapacity(growthFactor = 0) {
@@ -685,7 +693,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.enumIndex >= 0);
+            return this.hasNext();
         },
     });
 
@@ -696,7 +704,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.enumIndex = this.elements.length > 0 ? 0 : -1;
+            this.resetNext();
             return BrsInvalid.Instance;
         },
     });
