@@ -101,6 +101,34 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
+    hasNext() {
+        return BrsBoolean.from(this.enumIndex >= 0);
+    }
+
+    getNext() {
+        const index = this.enumIndex;
+        if (index >= 0) {
+            this.enumIndex++;
+            if (this.enumIndex >= this.elements.length) {
+                this.enumIndex = -1;
+            }
+        }
+        return this.elements[index];
+    }
+
+    resetNext() {
+        this.enumIndex = this.elements.length > 0 ? 0 : -1;
+    }
+
+    updateNext() {
+        const hasItems = this.elements.length > 0;
+        if (this.enumIndex === -1 && hasItems) {
+            this.enumIndex = 0;
+        } else if (this.enumIndex >= this.elements.length || !hasItems) {
+            this.enumIndex = -1;
+        }
+    }
+
     add(element: BrsType, onTail: boolean = true) {
         this.addChildRef(element);
         if (onTail) {
@@ -147,17 +175,6 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             this.listIndex++;
             if (this.listIndex >= this.elements.length) {
                 this.listIndex = -1;
-            }
-        }
-        return this.elements[index];
-    }
-
-    getNext() {
-        const index = this.enumIndex;
-        if (index >= 0) {
-            this.enumIndex++;
-            if (this.enumIndex >= this.elements.length) {
-                this.enumIndex = -1;
             }
         }
         return this.elements[index];
@@ -469,7 +486,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.enumIndex >= 0);
+            return this.hasNext();
         },
     });
 
@@ -480,7 +497,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.enumIndex = this.elements.length > 0 ? 0 : -1;
+            this.resetNext();
             return BrsInvalid.Instance;
         },
     });

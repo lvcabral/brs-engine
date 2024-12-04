@@ -224,6 +224,29 @@ describe("end to end syntax", () => {
         ]);
     });
 
+    test("foreach-loops.brs", async () => {
+        await execute([resourceFile("foreach-loops.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "orange",
+            "lemon",
+            "lime",
+            "dog eats orange",
+            "dog eats lemon",
+            "dog eats lime",
+            "cat eats orange",
+            "cat eats lemon",
+            "cat eats lime",
+            "bird eats orange",
+            "bird eats lemon",
+            "bird eats lime",
+            "dog likes dog",
+            "dog likes cat",
+            "dog likes bird",
+            "false",
+        ]);
+    });
+
     test("continue.brs", async () => {
         await execute([resourceFile("continue.brs")], outputStreams);
 
@@ -265,11 +288,10 @@ describe("end to end syntax", () => {
         await execute([resourceFile("reserved-words.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            // note: associative array keys are sorted before iteration
             "createObject",
             "in",
-            "run",
             "stop",
+            "run",
             "then",
             "Hello from line  14",
         ]);

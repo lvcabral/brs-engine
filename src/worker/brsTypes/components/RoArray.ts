@@ -107,6 +107,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
+    hasNext() {
+        return BrsBoolean.from(this.enumIndex >= 0);
+    }
+
     getNext() {
         const index = this.enumIndex;
         if (index >= 0) {
@@ -116,6 +120,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
         return this.elements[index];
+    }
+
+    resetNext() {
+        this.enumIndex = this.elements.length > 0 ? 0 : -1;
     }
 
     updateNext() {
@@ -518,7 +526,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.enumIndex >= 0);
+            return this.hasNext();
         },
     });
 
@@ -529,7 +537,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.enumIndex = this.elements.length > 0 ? 0 : -1;
+            this.resetNext();
             return BrsInvalid.Instance;
         },
     });
