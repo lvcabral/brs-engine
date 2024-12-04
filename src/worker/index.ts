@@ -419,6 +419,10 @@ function setupInputArray(input: Map<string, string>): AAMember[] {
 function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
     Object.keys(device).forEach((key) => {
         if (key !== "registry" && key !== "fonts") {
+            if (key === "developerId") {
+                // Prevent the developerId from having dots to avoid issues with the registry persistence
+                interpreter.deviceInfo.set(key, device[key].replace(".", ":"));
+            }
             interpreter.deviceInfo.set(key, device[key]);
         }
     });
