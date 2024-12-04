@@ -72,6 +72,9 @@ module.exports = (env) => {
                         chunkModules: true
                     }
                 }),
+                new webpack.DefinePlugin({
+                    "process.env.CREATION_TIME": JSON.stringify(new Date().toISOString())
+                })
             ],
             externals: {
                 canvas: "commonjs canvas" // Important (2)
