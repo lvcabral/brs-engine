@@ -1,5 +1,20 @@
 # Changelog
 
+<a name="v1.7.3"></a>
+
+## [v1.7.3 - Fixed Optional Operators and For Each](https://github.com/lvcabral/brs-engine/releases/tag/v1.7.3) - 05 December 2024
+
+### Release Changes
+
+* Changed the `For Each` behavior to match Roku, using `ifEnum` iteration index by [@lvcabral](https://github.com/lvcabral) in [#410](https://github.com/lvcabral/brs-engine/pull/410)
+* Finished optional chaining operator implementation by [@lvcabral](https://github.com/lvcabral) in [#400](https://github.com/lvcabral/brs-engine/pull/400)
+* Implemented `roDeviceInfo.getExternalIP()` by [@lvcabral](https://github.com/lvcabral) in [#397](https://github.com/lvcabral/brs-engine/pull/397)
+* Prevent crash when using invalid URL() by [@lvcabral](https://github.com/lvcabral) in [#398](https://github.com/lvcabral/brs-engine/pull/398)
+* Improved check for `SharedArrayBuffer` suport by [@lvcabral](https://github.com/lvcabral) in [#399](https://github.com/lvcabral/brs-engine/pull/399)
+* build(deps): bump elliptic from 6.5.7 to 6.6.0 by @dependabot in https://github.com/lvcabral/brs-engine/pull/394
+
+[Full Changelog][v1.7.3]
+
 <a name="v1.7.0"></a>
 
 ## [v1.7.0 - FormatJSON() fixes and MicroDebugger stats](https://github.com/lvcabral/brs-engine/releases/tag/v1.7.0) - 12 October 2024
@@ -796,6 +811,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.7.3]: https://github.com/lvcabral/brs-engine/compare/v1.7.0...v1.7.3
 [v1.7.0]: https://github.com/lvcabral/brs-engine/compare/v1.6.1...v1.7.0
 [v1.6.1]: https://github.com/lvcabral/brs-engine/compare/v1.6.0...v1.6.1
 [v1.6.0]: https://github.com/lvcabral/brs-engine/compare/v1.5.7...v1.6.0
