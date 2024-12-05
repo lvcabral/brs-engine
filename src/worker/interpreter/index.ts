@@ -1337,20 +1337,23 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         }
 
+        let errorDetail = RuntimeErrorDetail.DotOnNonObject;
         if (boxedSource instanceof BrsComponent) {
-            // This check is supposed to be placed below the try/catch block,
+            const invalidSource = BrsInvalid.Instance.equalTo(source).toBoolean();
+            // This check is supposed to be placed after method check,
             // but it's here to mimic the behavior of Roku, if they fix, we move it.
-            if (source instanceof BrsInvalid && expression.optional) {
+            if (invalidSource && expression.optional) {
                 return source;
             }
-            try {
-                return boxedSource.getMethod(expression.name.text) ?? BrsInvalid.Instance;
-            } catch (err: any) {
-                this.addError(new BrsError(err.message, expression.name.location));
+            const method = boxedSource.getMethod(expression.name.text);
+            if (method) {
+                return method;
+            } else if (!invalidSource) {
+                errorDetail = RuntimeErrorDetail.MemberFunctionNotFound;
             }
         }
         this.addError(
-            new RuntimeError(RuntimeErrorDetail.DotOnNonObject, expression.name.location)
+            new RuntimeError(errorDetail, expression.name.location)
         );
     }
 
