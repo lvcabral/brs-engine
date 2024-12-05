@@ -231,7 +231,7 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute App Zip or Source File
-export function execute(filePath: string, fileData: any, options: any = {}) {
+export function execute(filePath: string, fileData: any, options: any = {}, deepLink?: Map<string, string>) {
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
     source.length = 0;
@@ -245,6 +245,9 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     }
     if (typeof options.password === "string") {
         currentApp.password = options.password;
+    }
+    if (deepLink) {
+        currentApp.deepLink = deepLink;
     }
     if (disableDebug) {
         currentApp.debugOnCrash = false;

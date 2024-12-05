@@ -487,4 +487,18 @@ describe("end to end brightscript functions", () => {
             "1",
         ]);
     });
+
+    test("components/roAppManager.brs", async () => {
+        const deepLink = new Map([
+            ["contentId", "12345678"],
+            ["mediaType", "movie"],
+        ]);
+        await execute([resourceFile("components", "roAppManager.brs")], outputStreams, deepLink);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "Content Id: 12345678",
+            "Media Type: movie",
+            "Uptime: <Component: roTimespan>",
+            "ScreenSaverTimeout: 0",
+        ]);
+    });
 });

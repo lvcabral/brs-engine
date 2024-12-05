@@ -239,7 +239,7 @@ export function createPayload(
     const payload: AppPayload = {
         device: deviceData,
         manifest: manifest,
-        input: new Map(),
+        deepLink: new Map(),
         paths: paths,
         brs: source,
         entryPoint: false,
@@ -310,17 +310,16 @@ export async function executeFile(
     }
     const interpreter = new Interpreter(options);
     // Input Parameters / Deep Link
-    const inputArray = setupInputArray(payload.input);
+    const deepLink = setupDeepLink(payload.deepLink);
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
     // Run App
     const password = payload.password ?? "";
     let result: RunResult;
-    let input = new RoAssociativeArray(inputArray);
     if (sourceResult.pcode && sourceResult.iv) {
-        result = runBinary(interpreter, sourceResult, input, password);
+        result = runBinary(interpreter, sourceResult, deepLink, password);
     } else {
-        result = runSource(interpreter, sourceResult.sourceMap, input, password);
+        result = runSource(interpreter, sourceResult.sourceMap, deepLink, password);
     }
     if (!result.cipherText) {
         postMessage(`end,${result.exitReason}`);
@@ -388,25 +387,25 @@ interface SerializedPCode {
 
 /**
  * Process the application input parameters including deep links
- * @param input Map with parameters.
+ * @param deepLinkMap Map with parameters.
  *
  * @returns an array of parameters in AA member format.
  */
-function setupInputArray(input: Map<string, string>): AAMember[] {
-    const inputArray = new Array<AAMember>();
+function setupDeepLink(deepLinkMap: Map<string, string>): RoAssociativeArray {
+    const deepLinkArray = new Array<AAMember>();
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
         ["source", "auto-run-dev"],
         ["splashTime", "0"],
     ]);
-    input.forEach((value, key) => {
+    deepLinkMap.forEach((value, key) => {
         inputMap.set(key, value);
     });
     inputMap.forEach((value, key) => {
-        inputArray.push({ name: new BrsString(key), value: new BrsString(value) });
+        deepLinkArray.push({ name: new BrsString(key), value: new BrsString(value) });
     });
-    return inputArray;
+    return new RoAssociativeArray(deepLinkArray);
 }
 
 /**
@@ -679,7 +678,7 @@ export interface RunResult {
 function runSource(
     interpreter: Interpreter,
     sourceMap: Map<string, string>,
-    input: RoAssociativeArray,
+    deepLink: RoAssociativeArray,
     password: string = ""
 ): RunResult {
     const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
@@ -696,7 +695,7 @@ function runSource(
     try {
         if (exitReason !== AppExitReason.CRASHED) {
             exitReason = AppExitReason.FINISHED;
-            interpreter.exec(parseResult.statements, sourceMap, input);
+            interpreter.exec(parseResult.statements, sourceMap, deepLink);
         }
     } catch (err: any) {
         exitReason = AppExitReason.FINISHED;
@@ -717,7 +716,7 @@ function runSource(
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  * @param sourceResult with the pcode data and iv.
- * @param input associative array with the input parameters
+ * @param deepLink associative array with the input parameters
  * @param password decryption password.
  *
  * @returns RunResult with the end reason.
@@ -725,7 +724,7 @@ function runSource(
 function runBinary(
     interpreter: Interpreter,
     sourceResult: SourceResult,
-    input: RoAssociativeArray,
+    deepLink: RoAssociativeArray,
     password: string
 ): RunResult {
     let decodedTokens: Map<string, any>;
@@ -797,7 +796,7 @@ function runBinary(
     });
     let exitReason = AppExitReason.FINISHED;
     try {
-        interpreter.exec(allStatements, undefined, input);
+        interpreter.exec(allStatements, undefined, deepLink);
     } catch (err: any) {
         if (err.message !== "debug-exit") {
             postMessage(`error,${err.message}`);

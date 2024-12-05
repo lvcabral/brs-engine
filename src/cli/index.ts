@@ -18,6 +18,7 @@ import stripAnsi from "strip-ansi";
 import readline from "readline";
 import {
     deviceData,
+    currentApp,
     loadAppZip,
     updateAppZip,
     subscribePackage,
@@ -76,6 +77,7 @@ program
         "-f, --ext-file <file>",
         "The zip file to mount as `ext1:` volume. (takes precedence over -x)"
     )
+    .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
         if (!checkParameters()) {
@@ -171,6 +173,7 @@ function runAppFiles(files: string[]) {
             if (program.extFile) {
                 mountExt(new Uint8Array(fs.readFileSync(program.extFile)).buffer);
             }
+            processDeepLink(currentApp.deepLink);
             const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
             loadAppZip(fileName, fileData, runApp);
             return;
@@ -182,6 +185,7 @@ function runAppFiles(files: string[]) {
             program.root,
             program.extFile ?? program.extRoot
         );
+        processDeepLink(payload.deepLink);
         runApp(payload);
     } catch (err: any) {
         if (err.messages?.length) {
@@ -191,6 +195,17 @@ function runAppFiles(files: string[]) {
         }
         process.exitCode = 1;
     }
+}
+
+function processDeepLink(deepLinkMap: Map<string, string>) {
+    program.deepLink?.split(",")?.forEach((value: string) => {
+        if (value?.includes("=")) {
+            const [key, val] = value.split("=");
+            deepLinkMap.set(key, val);
+        } else {
+            console.warn(chalk.yellow(`Invalid deep link parameter: ${value}`));
+        }
+    });
 }
 
 /**

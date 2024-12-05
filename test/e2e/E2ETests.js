@@ -43,8 +43,11 @@ exports.createMockStreams = function () {
 };
 
 /** Executes the specified BrightScript files, capturing their output in the provided streams. */
-exports.execute = async function (filenames, options) {
+exports.execute = async function (filenames, options, deepLink) {
     const payload = createPayload(filenames, deviceData);
+    if (deepLink) {
+        payload.deepLink = deepLink;
+    }
     await executeFile(payload, options);
 };
 

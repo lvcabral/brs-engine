@@ -35,11 +35,12 @@ export interface DeviceInfo {
     registry?: Map<string, string>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
-    context?: RunContext;
+    appList?: [AppInfo];
+    runContext?: RunContext;
 }
 
 export const defaultDeviceInfo: DeviceInfo = {
-    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
+    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "BSC.50E04330A", // v11.5
@@ -67,7 +68,7 @@ export const defaultDeviceInfo: DeviceInfo = {
 export type AppPayload = {
     device: DeviceInfo;
     manifest: Map<string, string>;
-    input: Map<string, string>;
+    deepLink: Map<string, string>;
     paths: AppFilePath[];
     brs: string[];
     pkgZip?: ArrayBuffer;
@@ -109,8 +110,16 @@ export type AppData = {
     clearDisplay: boolean;
     debugOnCrash: boolean;
     audioMetadata: boolean;
+    deepLink: Map<string, string>;
     running: boolean;
 };
+
+export type AppInfo = {
+    id: string;
+    title: string;
+    version: string;
+    icon?: string;
+}
 
 export type RunContext = {
     inElectron: boolean;

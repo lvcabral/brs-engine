@@ -199,20 +199,20 @@ export function createPayload(timeOut?: number, entryPoint?: boolean): AppPayloa
     if (!timeOut) {
         timeOut = splashTimeout;
     }
-    const input = new Map([
+    const inputParams = new Map([
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
         ["splashTime", timeOut.toString()],
     ]);
     if (currentApp.id === lastApp.id) {
-        input.set("lastExitOrTerminationReason", lastApp.exitReason);
+        inputParams.set("lastExitOrTerminationReason", lastApp.exitReason);
     }
     if (currentApp.execSource !== "") {
-        input.set("source", currentApp.execSource);
+        inputParams.set("source", currentApp.execSource);
     }
     return {
         device: deviceData,
         manifest: manifestMap,
-        input: input,
+        deepLink: new Map([...inputParams, ...currentApp.deepLink]),
         paths: paths,
         brs: source,
         pkgZip: pkgZip,
@@ -242,6 +242,7 @@ function createAppStatus(): AppData {
         clearDisplay: true,
         debugOnCrash: false,
         audioMetadata: false,
+        deepLink: new Map(),
         running: false,
     };
 }
