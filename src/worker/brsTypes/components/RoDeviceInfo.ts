@@ -573,7 +573,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Checks for the DRM system used by the channel. */
+    /** Checks for the DRM system used by the app. */
     private readonly getDrmInfo = new Callable("getDrmInfo", {
         signature: {
             args: [],
@@ -584,7 +584,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Checks for the DRM system used by the channel. */
+    /** Checks for the DRM system used by the app. */
     private readonly getDrmInfoEx = new Callable("getDrmInfoEx", {
         signature: {
             args: [],
@@ -738,7 +738,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Notifies the channel when the audio or video codec changes. */
+    /** Notifies the app when the audio or video codec changes. */
     private readonly enableCodecCapChangedEvent = new Callable("enableCodecCapChangedEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
@@ -847,7 +847,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Notifies the channel when a link status event occurs. */
+    /** Notifies the app when a link status event occurs. */
     private readonly enableLinkStatusEvent = new Callable("enableLinkStatusEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
@@ -874,7 +874,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Notifies the channel when an internet connection status event occurs. */
+    /** Notifies the app when an internet connection status event occurs. */
     private readonly enableInternetStatusEvent = new Callable("enableInternetStatusEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
@@ -962,7 +962,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Notifies the channel when a lowGeneralMemoryLevel event occurs. */
+    /** Notifies the app when a lowGeneralMemoryLevel event occurs. */
     private readonly enableLowGeneralMemoryEvent = new Callable("enableLowGeneralMemoryEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
@@ -974,7 +974,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Notifies the channel when a system overlay event is displayed. */
+    /** Notifies the app when a system overlay event is displayed. */
     private readonly enableAppFocusEvent = new Callable("enableAppFocusEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
@@ -986,7 +986,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Notifies the channel when a screensaver exit event occurs. */
+    /** Notifies the app when a screensaver exit event occurs. */
     private readonly enableScreensaverExitedEvent = new Callable("enableScreensaverExitedEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],

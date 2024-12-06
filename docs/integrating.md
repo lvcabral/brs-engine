@@ -52,7 +52,7 @@ If your code does show an error in some scenario not listed on the [limitations 
 
 ## Games and Demos
 
-You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `app/index.html`. In addition to those, you can load your own code, either as a single **.brs** file or a channel **.zip or .bpk package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
+You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `app/index.html`. In addition to those, you can load your own code, either as a single **.brs** file or an app **.zip/.bpk package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
 
 - [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.18.3778/Prince-of-Persia-Roku-018.zip)
 - [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.18.707/Lode-Runner-Roku-018.zip)

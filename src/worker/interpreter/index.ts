@@ -2071,8 +2071,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to return the current channel formatted version
-     * @returns the current channel version
+     * Method to return the current app formatted version
+     * @returns the current app version
      */
     getChannelVersion(): string {
         let majorVersion = parseInt(this.manifest.get("major_version")) || 0;

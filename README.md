@@ -20,7 +20,7 @@ This repository was originally a fork from [**brs**](https://github.com/rokucomm
 **Important Notes:**
 
 - At this stage, apps based on **SceneGraph** are not yet supported, but this feature is in the backlog to be implemented. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is still missing and what is out of scope.
-- Although **brs-engine** runs channels with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**, and also to be used as a framework for running the **BrighScript** language in other platforms.<br /><br />
+- Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**, and also to be used as a framework for running the **BrighScript** language in other platforms.<br /><br />
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
