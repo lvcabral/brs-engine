@@ -30,8 +30,8 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 
 | Library File | Description |
 | --- | --- |
-| `app/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be imported and used by the Web applications hosting the Simulator.|
-| `app/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform.|
+| `browser/lib/brs.api.js` | Provides the **[Engine API](docs/engine-api.md)** to be imported and used by the Web applications hosting the Simulator.|
+| `browser/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform.|
 |`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application that can be used from the terminal: <br/>- As a language shell - [REPL (read-eval-print loop)](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop)<br/>- Executing `brs`, `zip` or `bpk` files<br/>- Packaging `zip` files into encrypted `bpk` packages.|
 |`bin/brs.node.js`| A NodeJS library, similar to `brs.worker.js` that exposes the language parser and interpreter to be used by Node.js applications, the engine CLI and automated tests.|
 |`bin/brs.ecp.js`| A **[NodeJS Worker](https://nodejs.org/api/worker_threads.html)** library, used by the CLI to launch the ECP and SSDP services.|

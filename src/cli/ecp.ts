@@ -428,7 +428,7 @@ function genAppsXml(encrypt: boolean) {
 }
 
 function genAppIcon(encrypt: boolean) {
-    const image = fs.readFileSync(path.join(__dirname, "../app/images/icons", "channel-icon.png"));
+    const image = fs.readFileSync(path.join(__dirname, "../browser/images/icons", "channel-icon.png"));
     return encrypt ? image.toString("base64") : image;
 }
 

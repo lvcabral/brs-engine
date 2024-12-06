@@ -5,7 +5,7 @@ const { StatsWriterPlugin } = require("webpack-stats-plugin");
 module.exports = (env) => {
     let mode, sourceMap;
     let libName = "brs";
-    let distPath = "app/lib";
+    let distPath = "browser/lib";
     if (env.production) {
         mode = "production";
         sourceMap = false;
@@ -95,7 +95,7 @@ module.exports = (env) => {
             devtool: sourceMap,
             devServer: {
                 https: false,
-                static: "./app",
+                static: "./browser",
                 port: 6502,
                 headers: {
                     "cross-origin-embedder-policy": "require-corp",

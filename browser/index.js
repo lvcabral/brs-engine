@@ -200,15 +200,15 @@ function runFile(file, password = "") {
  */
 function loadZip(appId) {
     if (currentApp.running) {
-        console.warn("There is an App already running");
+        console.warn("There is an App already running!");
         return;
     }
     app = appList.find((app) => app.id === appId);
     if (!app) {
-        console.error(`App not found: ${appId}`);
+        console.error(`App not found: ${appId}!`);
         return;
     }
-    console.log(`Loading selected App: ${app.id} - ${app.title}`);
+    console.log(`Selected App: ${app.id} - ${app.title}`);
     display.style.opacity = 0;
     loading.style.visibility = "visible";
     appIconsVisibility("visible");
@@ -456,7 +456,7 @@ function openPopup(url, width, height) {
     if (newWindow) {
         newWindow.focus();
     } else {
-        console.error("Failed to open popup window");
+        console.error("Failed to open popup window!");
     }
     return newWindow;
 }

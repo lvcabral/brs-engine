@@ -89,7 +89,7 @@ program
         if (typeof deviceData === "object") {
             deviceData.deviceModel = "3930X";
             deviceData.customFeatures.push("ascii_rendering");
-            deviceData.fontPath = "../app/fonts";
+            deviceData.fontPath = "../browser/fonts";
             deviceData.fonts = brs.getFonts(deviceData.fontPath, deviceData.defaultFont);
             deviceData.localIps = getLocalIps();
             deviceData.stopOnCrash = program.debug ?? false;

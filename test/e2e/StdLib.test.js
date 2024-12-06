@@ -6,7 +6,7 @@ describe("end to end standard libary", () => {
     beforeAll(() => {
         outputStreams = createMockStreams();
         outputStreams.root = ".";
-        outputStreams.ext = "./app/images";
+        outputStreams.ext = "./browser/images";
     });
 
     afterEach(() => {

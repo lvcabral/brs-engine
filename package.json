@@ -26,8 +26,8 @@
     "interpreter",
     "worker"
   ],
-  "main": "app/lib/brs.api.js",
-  "browser": "app/lib/brs.api.js",
+  "main": "browser/lib/brs.api.js",
+  "browser": "browser/lib/brs.api.js",
   "typings": "types/src/api/index.d.ts",
   "bin": {
     "brs-cli": "./bin/brs.cli.js"
@@ -38,9 +38,9 @@
     "build:cli": "webpack --config webpack.cli.config.js --env development",
     "release": "webpack --env production && webpack --config webpack.cli.config.js --env production",
     "start": "webpack serve --open",
-    "stats": "webpack-bundle-analyzer ./app/lib/stats.json",
-    "stats:api": "webpack-bundle-analyzer ./app/lib/stats-api.json",
-    "clean": "rimraf ./app/lib ./bin ./types",
+    "stats": "webpack-bundle-analyzer ./browser/lib/stats.json",
+    "stats:api": "webpack-bundle-analyzer ./browser/lib/stats-api.json",
+    "clean": "rimraf ./browser/lib ./bin ./types",
     "test": "jest",
     "lint": "eslint -c .eslintrc.js --ext .ts ./src",
     "prettier:write": "prettier --write \"{app,src,test}/**/*.{js,ts}\"",
@@ -48,10 +48,10 @@
     "prepublishOnly": "npm-run-all --serial clean lint prettier release"
   },
   "files": [
-    "app/audio/",
-    "app/fonts/",
-    "app/lib/brs.worker.js",
-    "app/lib/*.LICENSE.txt",
+    "browser/audio/",
+    "browser/fonts/",
+    "browser/lib/brs.worker.js",
+    "browser/lib/*.LICENSE.txt",
     "bin/",
     "types/src/api/"
   ],

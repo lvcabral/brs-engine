@@ -2,19 +2,19 @@
 
 The **brs-engine** project is published as a `node` package, so you can use `npm`:
 
-```shell
+```console
 $ npm install brs-engine
 ```
 
 or `yarn` if that's your preference:
 
-```shell
+```console
 $ yarn add brs-engine
 ```
 
 ## Sample Application
 
-This repository provides a sample web application for testing the engine, located under the `app/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
+This repository provides a sample web application for testing the engine, located under the `browser/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
 
 To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](engine-api.md).
 
@@ -26,13 +26,13 @@ Your web application cannot be executed as pure HTML page, because some function
 
 The repository provides a script to run the Webpack DevServer, with COOP and COEP headers, to help testing the web application on development environment. In order to start the web server, execute:
 
-```shell
-npm run start
+```console
+$ npm run start
 ```
 or
 
-```shell
-yarn start
+```console
+$ yarn start
 ```
 
 By default the server will use the port `6502`, if you prefer another port just change it inside the file `webpack.config.js`. The command above, will open a new tab in the default browser, directly on the address: `http://localhost:6502/`. It may take a few seconds to the web page to show up, as the script will build the API library first.
@@ -52,7 +52,7 @@ If your code does show an error in some scenario not listed on the [limitations 
 
 ## Games and Demos
 
-You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `app/index.html`. In addition to those, you can load your own code, either as a single **.brs** file or an app **.zip/.bpk package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
+You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `browser/index.html` and `browser/index.js`. In addition to those, you can load your own code, either as a single **.brs** file or an app **.zip/.bpk package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
 
 - [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.18.3778/Prince-of-Persia-Roku-018.zip)
 - [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.18.707/Lode-Runner-Roku-018.zip)
@@ -60,23 +60,24 @@ You can try the engine by running one of the demonstration apps included in the 
 
 ## Simple Web Example
 
-Here's the most simple example to use the app to run BrightScript code. Make sure the library files `brs.api.js` and `brs.worker.js` are located in a folder name `lib/` under the main folder where you host the files `example.html` and `example.js` (code below). Remember that you need to host these files on a web server like the one described in the section above.
+Here's the most simple example to use the app to run BrightScript code. Make sure the library files `brs.api.js` and `brs.worker.js` are located in a folder name `lib/` under the main folder where you host the file `example.html` (code below). Remember that you need to host this files on a web server like the one described in the section above.
 
 ### example.html
 
 ```html
 <!DOCTYPE html>
+<html lang="en">
 <head>
     <title>BrightScript Engine Example</title>
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
 </head>
 <body>
-<canvas id="display" width="854px" height="480px"></canvas>
-<video id="player" style="display: none" crossorigin="anonymous"></video><br />
-<label for="story">
-Type some BrightScript code: (open Developer Tools console to see <b>print</b> outputs)
-</label><br />
-<textarea id="source-code" name="source-code" rows="15" cols="100">
+    <canvas id="display" width="854px" height="480px"></canvas>
+    <video id="player" style="display: none" crossorigin="anonymous"></video><br /><br />
+    <label for="source-code">
+    Type some BrightScript code: (open Developer Tools console to see <b>print</b> outputs)
+    </label><br /><br />
+    <textarea id="source-code" name="source-code" rows="15" cols="100">
 ' BrightScript Hello World
 sub main()
     text = "Hello World"
@@ -93,32 +94,28 @@ sub main()
     print text
     screen.swapBuffers()
 end sub
-</textarea><br />
-<input id="clickMe" type="button" value="Run Code!" onclick="executeBrs();" />
-<script type="text/javascript" src="lib/brs.api.js"></script>
-<script type="text/javascript" src="example.js"></script>
+    </textarea><br />
+    <input id="clickMe" type="button" value="Run Code!" onclick="executeBrs();" />
+    <script type="text/javascript" src="lib/brs.api.js"></script>
+    <script type="text/javascript" >
+        // Subscribe to Events (optional)
+        brs.subscribe("myApp", (event, data) => {
+            if (event === "loaded") {
+                console.info(`Source code loaded: ${data.id}`);
+            } else if (event === "started") {
+                console.info(`Source code executing: ${data.id}`);
+            } else if (event === "closed" || event === "error") {
+                console.info(`Execution terminated! ${event}: ${data}`);
+            }
+        });
+        // Initialize Simulated Device
+        brs.initialize({}, { debugToConsole: true, disableKeys: true });
+        // OnClick handler to execute the code
+        function executeBrs() {
+            source = document.getElementById("source-code").value;
+            brs.execute("main.brs", source, { clearDisplayOnExit: false });
+        }
+    </script>
 </body>
 </html>
-```
-
-### example.js
-
-```javascript
-// Subscribe to Events (optional)
-brs.subscribe("myApp", (event, data) => {
-    if (event === "loaded") {
-        console.info(`Source code loaded: ${data.id}`);
-    } else if (event === "started") {
-        console.info(`Source code executing: ${data.id}`);
-    } else if (event === "closed" || event === "error") {
-        console.info(`Execution terminated! ${event}: ${data}`);
-    }
-});
-// Initialize Simulated Device
-brs.initialize({}, { debugToConsole: true, disableKeys: true });
-// OnClick handler to execute the code
-function executeBrs() {
-    source = document.getElementById("source-code").value;
-    brs.execute("main.brs", source, { clearDisplayOnExit: false });
-}
 ```
