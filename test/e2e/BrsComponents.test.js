@@ -422,7 +422,7 @@ describe("end to end brightscript functions", () => {
             "8000X",
             "Roku (8000X)",
             "STB",
-            " 2",
+            " 4",
             "BrightScript Engine Library",
             " 4",
             "BSC.50E04330A",

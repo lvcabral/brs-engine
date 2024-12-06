@@ -16,7 +16,7 @@ import {
     videoExt,
     parseManifest,
     AppPayload,
-    AppFilePath,
+    PkgFilePath,
     AppData,
     AppExitReason,
 } from "../worker/common";
@@ -32,10 +32,11 @@ export const deviceData = Object.assign(defaultDeviceInfo, {
 });
 
 // App Data
+const inputParams: Map<string, string> = new Map();
 const defaultSplashTime = 1600;
 let splashTimeout = 0;
 export const source: string[] = [];
-export const paths: AppFilePath[] = [];
+export const paths: PkgFilePath[] = [];
 export const manifestMap: Map<string, string> = new Map();
 export const currentApp = createAppStatus();
 export const lastApp = createAppStatus();
@@ -120,7 +121,6 @@ function processManifest(content: string) {
     });
     currentApp.title = manifestMap.get("title") ?? "No Title";
     currentApp.subtitle = manifestMap.get("subtitle") ?? "";
-    currentApp.audioMetadata = manifestMap.get("requires_audiometadata") === "1";
 
     const majorVersion = parseInt(manifestMap.get("major_version") ?? "") ?? 0;
     const minorVersion = parseInt(manifestMap.get("minor_version") ?? "") ?? 0;
@@ -195,32 +195,34 @@ export function updateAppZip(source: Uint8Array, iv: string) {
 }
 
 // Create App Payload
-export function createPayload(timeOut?: number, entryPoint?: boolean): AppPayload {
+export function createPayload(timeOut?: number): AppPayload {
     if (!timeOut) {
         timeOut = splashTimeout;
     }
-    const inputParams = new Map([
-        ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
-        ["splashTime", timeOut.toString()],
-    ]);
-    if (currentApp.id === lastApp.id) {
+    inputParams.set("splashTime", timeOut.toString());
+    if (currentApp.id === lastApp.id && lastApp.exitReason) {
         inputParams.set("lastExitOrTerminationReason", lastApp.exitReason);
-    }
-    if (currentApp.execSource !== "") {
-        inputParams.set("source", currentApp.execSource);
     }
     return {
         device: deviceData,
         manifest: manifestMap,
-        deepLink: new Map([...inputParams, ...currentApp.deepLink]),
+        deepLink: inputParams,
         paths: paths,
         brs: source,
         pkgZip: pkgZip,
         extZip: extZip,
         password: currentApp.password,
-        entryPoint: entryPoint,
-        stopOnCrash: currentApp.debugOnCrash,
     };
+}
+
+export function setupDeepLink(deepLink: Map<string, string>) {
+    inputParams.clear();
+    inputParams.set("lastExitOrTerminationReason", AppExitReason.UNKNOWN);
+    inputParams.set("splashTime", defaultSplashTime.toString());
+    inputParams.set("source", "auto-run-dev");
+    deepLink.forEach((value, key) => {
+        inputParams.set(key, value);
+    });
 }
 
 // Current App object
@@ -232,17 +234,12 @@ export function resetCurrentApp() {
 function createAppStatus(): AppData {
     return {
         id: "",
-        file: "",
         title: "",
         subtitle: "",
         version: "",
-        execSource: "auto-run-dev",
-        exitReason: AppExitReason.UNKNOWN,
+        file: "",
         password: "",
-        clearDisplay: true,
-        debugOnCrash: false,
-        audioMetadata: false,
-        deepLink: new Map(),
+        exitReason: AppExitReason.UNKNOWN,
         running: false,
     };
 }

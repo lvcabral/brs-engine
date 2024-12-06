@@ -6,8 +6,14 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// Default Device Information
-// Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
+/* Device Simulation Information Interface
+ *
+ * This interface is used to simulate a Roku device environment in the engine.
+ * It feeds the interpreter with several device features like registry, fonts,
+ * audio codecs, video formats, and other device information provided by `roDeviceInfo`.
+ *
+ * Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
+ */
 export interface DeviceInfo {
     [key: string]: any;
     developerId: string;
@@ -35,10 +41,13 @@ export interface DeviceInfo {
     registry?: Map<string, string>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
-    appList?: [AppInfo];
+    appList?: [AppData];
+    entryPoint?: boolean;
+    stopOnCrash?: boolean;
     runContext?: RunContext;
 }
 
+// Default Device Information
 export const defaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
@@ -65,27 +74,47 @@ export const defaultDeviceInfo: DeviceInfo = {
     maxFps: 60,
 };
 
+/* Execution Payload Interface
+ *
+ * This interface is used to provide information to the interpreter about the
+ * device and app that will be executed. It contains the DeviceInfo object,
+ * the app manifest, source code, deep link, encryption password, paths,
+ * some execution flags and file system paths.
+ *
+ */
 export type AppPayload = {
     device: DeviceInfo;
     manifest: Map<string, string>;
     deepLink: Map<string, string>;
-    paths: AppFilePath[];
+    paths: PkgFilePath[];
     brs: string[];
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     password?: string;
-    entryPoint?: boolean;
-    stopOnCrash?: boolean;
     root?: string;
     ext?: string;
 };
 
-export type AppFilePath = {
+/* Package File Path Interface
+ *
+ * This interface is used to provide information about the paths to the
+ * source code and pcode files that are available in the app package.
+ * It is sent to the interpreter via `ExecPayload.paths`.
+ *
+ */
+export type PkgFilePath = {
     id: number;
     url: string;
     type: "source" | "pcode";
 };
 
+/* App Exit Reason Enumerator
+ *
+ * This enumerator is used to provide information about the reason
+ * why the app was terminated.
+ *
+ * Roku documentation: https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter
+ */
 export enum AppExitReason {
     UNKNOWN = "EXIT_UNKNOWN",
     CRASHED = "EXIT_BRIGHTSCRIPT_CRASH",
@@ -98,29 +127,30 @@ export enum AppExitReason {
     UNPACK = "EXIT_UNPACK_FAILED",
 }
 
+/* App Data Interface
+ *
+ * This interface is used to provide information about the apps that are
+ * available in the device and status of the app that is currently running.
+ *
+ */
 export type AppData = {
     id: string;
-    file: string;
     title: string;
-    subtitle: string;
+    subtitle?: string;
     version: string;
-    execSource: string;
-    exitReason: AppExitReason;
-    password: string;
-    clearDisplay: boolean;
-    debugOnCrash: boolean;
-    audioMetadata: boolean;
-    deepLink: Map<string, string>;
-    running: boolean;
+    file?: string; // same as url
+    icon?: string;
+    password?: string;
+    exitReason?: AppExitReason;
+    running?: boolean;
 };
 
-export type AppInfo = {
-    id: string;
-    title: string;
-    version: string;
-    icon?: string;
-}
-
+/* Run Context Interface
+ *
+ * This interface is used to provide information about the environment
+ * where the engine is running.
+ *
+ */
 export type RunContext = {
     inElectron: boolean;
     inChromium: boolean;
@@ -234,6 +264,7 @@ export const audioExt = new Set<string>([
 
 export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
+// Function to parse the Manifest file into a Map
 export function parseManifest(contents: string) {
     let keyValuePairs = contents
         // for each line
@@ -268,6 +299,7 @@ export function parseManifest(contents: string) {
     return new Map<string, string>(keyValuePairs);
 }
 
+// Function to return the Exit Reason from the enumerator based on a string
 export function getExitReason(value: string): AppExitReason {
     if (Object.values(AppExitReason).includes(value as any)) {
         return value as AppExitReason;
@@ -276,6 +308,7 @@ export function getExitReason(value: string): AppExitReason {
     }
 }
 
+// Function to convert a number to a hexadecimal string
 export function numberToHex(value: number, pad: string = ""): string {
     return (value >>> 0).toString(16).padStart(8, pad);
 }

@@ -8,4 +8,7 @@ sub Main(args)
     m.app = CreateObject("roAppManager")
     print "Uptime: "; m.app.GetUpTime()
     print "ScreenSaverTimeout:"; m.app.GetScreenSaverTimeout()
+    for each app in m.app.getAppList()
+        print "App Title: "; app.title
+    end for
 end sub

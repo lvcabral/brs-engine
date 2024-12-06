@@ -39,7 +39,8 @@ export class RoNDK extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, app: BrsString, params: RoArray, _env: RoArray) => {
             const stringParams = params.elements.filter((el) => isBrsString(el));
             const csvParams = stringParams.map((el) => el.toString()).join(",");
-            postMessage(`ndk,${app.value},${csvParams}`);
+            //TODO: change to pass an object
+            postMessage(`launch,${app.value},${csvParams}`);
             return new Int32(0);
         },
     });

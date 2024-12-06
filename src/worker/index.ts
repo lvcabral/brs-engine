@@ -9,7 +9,7 @@ import { ExecutionOptions, Interpreter } from "./interpreter";
 import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import {
     AppExitReason,
-    AppFilePath,
+    PkgFilePath,
     AppPayload,
     DeviceInfo,
     dataBufferIndex,
@@ -182,13 +182,14 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  *
  * @returns object with the payload to run the app.
  */
-export function createPayload(
+export function createPayloadFromFiles(
     files: string[],
     customDeviceData?: Partial<DeviceInfo>,
+    deepLink?: Map<string, string>,
     root?: string,
     ext?: string
 ): AppPayload {
-    const paths: AppFilePath[] = [];
+    const paths: PkgFilePath[] = [];
     const source: string[] = [];
     let manifest: Map<string, string> | undefined;
 
@@ -239,11 +240,9 @@ export function createPayload(
     const payload: AppPayload = {
         device: deviceData,
         manifest: manifest,
-        deepLink: new Map(),
+        deepLink: deepLink ?? new Map(),
         paths: paths,
         brs: source,
-        entryPoint: false,
-        stopOnCrash: false,
         root: root,
     };
     if (ext && fs.existsSync(ext)) {
@@ -293,8 +292,8 @@ export async function executeFile(
 ): Promise<RunResult> {
     const options = {
         ...{
-            entryPoint: payload.entryPoint ?? true,
-            stopOnCrash: payload.stopOnCrash ?? false,
+            entryPoint: payload.device.entryPoint ?? true,
+            stopOnCrash: payload.device.debugOnCrash ?? false,
             root: payload.root,
             ext: payload.extZip ? undefined : payload.ext,
         },

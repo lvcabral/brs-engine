@@ -30,6 +30,7 @@ import {
     resetCurrentApp,
     deviceData,
     subscribePackage,
+    setupDeepLink,
 } from "./package";
 import {
     subscribeDisplay,
@@ -92,6 +93,7 @@ export {
     enableStats,
 } from "./display";
 
+let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
@@ -231,28 +233,33 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute App Zip or Source File
-export function execute(filePath: string, fileData: any, options: any = {}, deepLink?: Map<string, string>) {
+export function execute(
+    filePath: string,
+    fileData: any,
+    options: any = {},
+    deepLink?: Map<string, string>
+) {
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
     source.length = 0;
     currentApp.id = filePath.hashCode();
     currentApp.file = filePath;
     if (typeof options.clearDisplayOnExit === "boolean") {
-        currentApp.clearDisplay = options.clearDisplayOnExit;
-    }
-    if (typeof options.execSource === "string") {
-        currentApp.execSource = options.execSource;
+        clearDisplayOnExit = options.clearDisplayOnExit;
     }
     if (typeof options.password === "string") {
         currentApp.password = options.password;
     }
     if (deepLink) {
-        currentApp.deepLink = deepLink;
+        setupDeepLink(deepLink);
+    }
+    if (typeof options.entryPoint === "boolean") {
+        deviceData.entryPoint = options.entryPoint;
     }
     if (disableDebug) {
-        currentApp.debugOnCrash = false;
+        deviceData.debugOnCrash = false;
     } else if (typeof options.debugOnCrash === "boolean") {
-        currentApp.debugOnCrash = options.debugOnCrash;
+        deviceData.debugOnCrash = options.debugOnCrash;
     }
     if (typeof brsWorker !== "undefined") {
         resetWorker();
@@ -273,14 +280,15 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
 // Restore engine state and terminate Worker
 export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
     if (currentApp.running) {
+        currentApp.running = false;
+        currentApp.exitReason = reason;
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
     }
-    if (currentApp.clearDisplay) {
+    if (clearDisplayOnExit) {
         clearDisplay();
     }
     resetWorker();
-    currentApp.running = false;
     Object.assign(lastApp, currentApp);
     resetCurrentApp();
     enableSendKeys(false);
@@ -375,7 +383,7 @@ function loadSourceCode(fileName: string, fileData: any) {
             paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
             clearDisplay();
             notifyAll("loaded", currentApp);
-            runApp(createPayload(1, false));
+            runApp(createPayload(1));
         } else {
             apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);
         }

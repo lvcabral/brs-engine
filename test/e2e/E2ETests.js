@@ -1,7 +1,7 @@
 const path = require("path");
 const stream = require("stream");
 const brs = require("../../bin/brs.node");
-const { createPayload, executeFile } = brs;
+const { createPayloadFromFiles, executeFile } = brs;
 
 brs.registerCallback(() => {}); // register a callback to avoid display errors
 
@@ -44,7 +44,7 @@ exports.createMockStreams = function () {
 
 /** Executes the specified BrightScript files, capturing their output in the provided streams. */
 exports.execute = async function (filenames, options, deepLink) {
-    const payload = createPayload(filenames, deviceData);
+    const payload = createPayloadFromFiles(filenames, deviceData);
     if (deepLink) {
         payload.deepLink = deepLink;
     }

@@ -31,7 +31,13 @@ const customDeviceInfo = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
     fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
-    maxFps: 30, // Limited to minimize issues with iOS/iPadOS
+    maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
+    appList: [
+        { id: "channels/Rect-Bounce.zip", title: "Rect Bounce Example", version: "12.5.18" },
+        { id: "channels/Ball-Boing.zip", title: "Ball Boing Example", version: "1.0.0" },
+        { id: "channels/Collisions.zip", title: "Collisions Example", version: "1.0.0" },
+        { id: "channels/custom-video-player.zip", title: "Custom Video Player", version: "1.0.0" },
+    ],
 };
 const customKeys = new Map();
 customKeys.set("Comma", "rev"); // Keep consistency with older versions
@@ -127,13 +133,17 @@ function runFile(file, password = "") {
             // file is loaded
             if (password !== null) {
                 currentZip = evt.target.result;
-                brs.execute(file.name, currentZip, {
-                    clearDisplayOnExit: true,
-                    muteSound: false,
-                    execSource: "auto-run-dev",
-                    password: password,
-                    debugOnCrash: true,
-                });
+                brs.execute(
+                    file.name,
+                    currentZip,
+                    {
+                        clearDisplayOnExit: true,
+                        muteSound: false,
+                        password: password,
+                        debugOnCrash: true,
+                    },
+                    new Map([["source", "auto-run-dev"]])
+                );
             }
         };
         reader.onerror = function (evt) {
@@ -158,7 +168,12 @@ function loadZip(zip) {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
                         currentZip = zipData;
-                        brs.execute(zip, zipData, { execSource: "homescreen" });
+                        brs.execute(
+                            zip,
+                            zipData,
+                            { entryPoint: true, debugOnCrash: false },
+                            new Map([["source", "homescreen"]])
+                        );
                         display.focus();
                     });
                 });
