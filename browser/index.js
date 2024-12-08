@@ -205,7 +205,7 @@ function loadZip(appId, params) {
         console.warn("There is an App already running!");
         return;
     }
-    app = appList.find((app) => app.id === appId);
+    const app = appList.find((app) => app.id === appId);
     if (!app) {
         console.error(`App not found: ${appId}!`);
         return;
