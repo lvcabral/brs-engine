@@ -32,6 +32,7 @@ import {
     dataBufferSize,
     AppPayload,
     AppExitReason,
+    AppData,
 } from "../worker/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
@@ -96,6 +97,7 @@ program
             if (program.registry) {
                 deviceData.registry = getRegistry();
             }
+            deviceData.appList = new Array<AppData>();
         }
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);

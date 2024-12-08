@@ -294,8 +294,8 @@ function setupCurrentApp(filePath: string) {
             } else {
                 deviceData.appList.push({
                     id: "dev",
-                    title: "Side-loaded App",
-                    version: "0.0.0",
+                    title: currentApp.title,
+                    version: currentApp.version,
                     path: filePath,
                 });
             }

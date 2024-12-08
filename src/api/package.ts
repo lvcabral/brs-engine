@@ -86,6 +86,15 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     source.length = 0;
     paths.length = 0;
 
+    if (deviceData.appList && deviceData.appList.length === 0) {
+        deviceData.appList.push({
+            id: "dev",
+            title: currentApp.title,
+            version: currentApp.version,
+            path: currentApp.path,
+        });
+    }
+
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
     }
@@ -120,10 +129,11 @@ function processManifest(content: string): number {
     currentApp.title = manifestMap.get("title") ?? "No Title";
     currentApp.subtitle = manifestMap.get("subtitle") ?? "";
 
-    const majorVersion = parseInt(manifestMap.get("major_version") ?? "") ?? 0;
-    const minorVersion = parseInt(manifestMap.get("minor_version") ?? "") ?? 0;
-    const buildVersion = parseInt(manifestMap.get("build_version") ?? "") ?? 0;
-    currentApp.version = `${majorVersion}.${minorVersion}.${buildVersion}`;
+    const majorVersion = parseInt(manifestMap.get("major_version") ?? "0");
+    const minorVersion = parseInt(manifestMap.get("minor_version") ?? "0");
+    const buildVersion = parseInt(manifestMap.get("build_version") ?? "0");
+    currentApp.version = `${majorVersion}.${minorVersion}.${buildVersion}`.replace("NaN", "0");
+    console.log(`[package] App: ${currentApp.title} v${currentApp.version}`);
 
     const resKeys = ["hd", "fhd"];
     if (deviceData.displayMode === "480p") {

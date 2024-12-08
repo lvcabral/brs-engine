@@ -41,7 +41,7 @@ export interface DeviceInfo {
     registry?: Map<string, string>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
-    appList?: [AppData];
+    appList?: AppData[];
     entryPoint?: boolean;
     stopOnCrash?: boolean;
     runContext?: RunContext;

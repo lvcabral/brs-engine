@@ -234,7 +234,7 @@ export function createPayloadFromFiles(
         manifest.set("title", "BRS App");
         manifest.set("major_version", "0");
         manifest.set("minor_version", "0");
-        manifest.set("build_version", "1");
+        manifest.set("build_version", "0");
         manifest.set("splash_min_time", "0");
         manifest.set("requires_audiometadata", "1");
     }

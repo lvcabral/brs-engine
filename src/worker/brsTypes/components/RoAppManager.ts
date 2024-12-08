@@ -38,7 +38,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roChannelStore>";
+        return "<Component: roAppManager>";
     }
 
     equalTo(other: BrsType) {
@@ -154,6 +154,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
+                console.log("comparing versions", app?.version, version?.value);
                 return BrsBoolean.from(app && compareVersions(app.version, version.value) >= 0);
             }
             return BrsBoolean.False;
@@ -252,32 +253,31 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 }
 
-// Utility function to compare versions
-function compareVersions(version1: string, version2: string): number {
-    const splitVersion = (version: string) =>
-        version.split(".").map((part) => part.match(/\d+|\D+/g) || []);
-    const v1Parts = splitVersion(version1);
-    const v2Parts = splitVersion(version2);
-    const maxLength = Math.max(v1Parts.length, v2Parts.length);
-    for (let i = 0; i < maxLength; i++) {
-        const part1 = v1Parts[i] || [];
-        const part2 = v2Parts[i] || [];
-        const maxPartLength = Math.max(part1.length, part2.length);
-        for (let j = 0; j < maxPartLength; j++) {
-            const subPart1 = part1[j] || "";
-            const subPart2 = part2[j] || "";
-            if (subPart1 !== subPart2) {
-                const num1 = parseInt(subPart1, 10);
-                const num2 = parseInt(subPart2, 10);
-                if (!isNaN(num1) && !isNaN(num2)) {
-                    if (num1 !== num2) {
-                        return num1 > num2 ? 1 : -1;
-                    }
-                } else {
-                    return subPart1 > subPart2 ? 1 : -1;
-                }
-            }
+// Utility functions to compare versions
+export function compareVersions(installedVersion: string, userVersion: string): number {
+    const installedParts = formatVersion(installedVersion).split(".");
+    const userParts = userVersion.trim() === "" ? ["0"] : userVersion.split(".");
+    for (let i = 0; i < 3; i++) {
+        const installed = Number(installedParts[i]);
+        const user = !userParts[i] || userParts[i].trim() === "" ? 0 : Number(userParts[i]);
+        if (installed < user || isNaN(user)) {
+            return -1;
+        } else if (installed > user) {
+            return 1;
         }
     }
     return 0;
+}
+
+function formatVersion(version: string): string {
+    let parts = version.split(".");
+    parts = parts.slice(0, 3);
+    const formattedParts = parts.map((part) => {
+        const num = parseInt(part, 10);
+        return isNaN(num) ? 0 : num;
+    });
+    while (formattedParts.length < 3) {
+        formattedParts.push(0);
+    }
+    return formattedParts.join(".");
 }
