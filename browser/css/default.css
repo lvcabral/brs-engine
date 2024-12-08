@@ -10,9 +10,6 @@ body {
     z-index: 1;
 }
 
-/* * {
-	border: 1px solid #f00 !important;
-  } */
 #container {
     margin: 0 auto;
     background: whiteSmoke;
