@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoTimespan } from "./RoTimespan";
+import { isAppData } from "../../common";
 
 export class RoAppManager extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -46,7 +47,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
 
     // ifAppManager ------------------------------------------------------------------------------------
 
-    /** Returns an roTimespan object which is "marked" when the user started the channel. */
+    /** Returns an roTimespan object which is "marked" when the user started the app. */
     private readonly getUpTime = new Callable("getUpTime", {
         signature: {
             args: [],
@@ -80,7 +81,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Allows a channel to tell Roku when the user is signed in or signed out of the channel. */
+    /** Allows an app to tell Roku when the user is signed in or signed out of the app. */
     private readonly setUserSignedIn = new Callable("setUserSignedIn", {
         signature: {
             args: [new StdlibArgument("signedIn", ValueKind.Boolean)],
@@ -138,7 +139,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if a channel with the specified channelID and the minimum version required is installed. */
+    /** Returns true if an app with the specified channelID and the minimum version required is installed. */
     private readonly isAppInstalled = new Callable("isAppInstalled", {
         signature: {
             args: [
@@ -153,7 +154,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
-                return BrsBoolean.from(compareVersions(app.version, version.value) >= 0);
+                return BrsBoolean.from(app && compareVersions(app.version, version.value) >= 0);
             }
             return BrsBoolean.False;
         },
@@ -170,35 +171,44 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (
-            _: Interpreter,
+            interpreter: Interpreter,
             channelId: BrsString,
             version: BrsString,
             params: RoAssociativeArray
         ) => {
-            // TODO: Consider version check
-            let csvParams = "";
-            params.elements.forEach((value, key) => {
-                csvParams += `${key}:${value},`;
-            });
-            //TODO: change to pass an object
-            postMessage(`launch,${channelId.value},${csvParams}`);
-            return BrsBoolean.True;
+            const appList = interpreter.deviceInfo.get("appList");
+            if (appList instanceof Array) {
+                const app = appList.find((app) => {
+                    return app.id === channelId.value;
+                });
+                if (isAppData(app) && compareVersions(app.version, version.value) >= 0) {
+                    const paramsMap: Map<string, string> = new Map();
+                    params.elements.forEach((value, key) => {
+                        paramsMap.set(key.toString(), value.toString());
+                    });
+                    paramsMap.set("source", "other-channel");
+                    app.params = paramsMap;
+                    postMessage(app);
+                    return BrsBoolean.True;
+                }
+            }
+            return BrsBoolean.False;
         },
     });
 
-    /** Launches the channel store springboard of the specified channel. */
+    /** Launches the channel store springboard of the specified channel id. */
     private readonly showChannelStoreSpringboard = new Callable("showChannelStoreSpringboard", {
         signature: {
             args: [new StdlibArgument("channelId", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, channelId: BrsString) => {
-            postMessage(`launch,springboard,id:${channelId.value}`);
-            return BrsBoolean.True;
+        impl: (_: Interpreter, _channelId: BrsString) => {
+            // Roku Channel Store Springboard is not available
+            return BrsBoolean.False;
         },
     });
 
-    /** Returns the execution parameters passed to the channel. */
+    /** Returns the execution parameters passed to the app. */
     private readonly getRunParams = new Callable("getRunParams", {
         signature: {
             args: [],

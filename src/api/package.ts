@@ -19,27 +19,25 @@ import {
     PkgFilePath,
     AppData,
     AppExitReason,
+    DeviceInfo,
 } from "../worker/common";
 import models from "../worker/libraries/common/models.csv";
 import packageInfo from "../../package.json";
 
-// Default Device Data
-export const deviceData = Object.assign(defaultDeviceInfo, {
+// Device Data Object
+export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {
     models: parseCSV(models),
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
-    context: context,
+    runContext: context,
 });
 
 // App Data
 const inputParams: Map<string, string> = new Map();
-const defaultSplashTime = 1600;
-let splashTimeout = 0;
 export const source: string[] = [];
 export const paths: PkgFilePath[] = [];
 export const manifestMap: Map<string, string> = new Map();
-export const currentApp = createAppStatus();
-export const lastApp = createAppStatus();
+export const currentApp = createAppData();
 
 // Observers Handling
 const observers = new Map();
@@ -70,10 +68,11 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
         currentApp.running = false;
         return;
     }
+    let launchTime = Date.now();
     const manifest = currentZip["manifest"];
     if (manifest) {
         try {
-            processManifest(strFromU8(manifest));
+            launchTime = processManifest(strFromU8(manifest));
         } catch (e: any) {
             currentApp.running = false;
             notifyAll("error", `[package] Error uncompressing manifest: ${e.message}`);
@@ -90,8 +89,7 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
     }
-
-    setTimeout(callback, splashTimeout, createPayload());
+    callback(createPayload(launchTime));
 }
 
 function processFile(relativePath: string, fileData: Uint8Array) {
@@ -114,7 +112,7 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     }
 }
 
-function processManifest(content: string) {
+function processManifest(content: string): number {
     manifestMap.clear();
     parseManifest(content).forEach((value, key) => {
         manifestMap.set(key, value);
@@ -125,10 +123,7 @@ function processManifest(content: string) {
     const majorVersion = parseInt(manifestMap.get("major_version") ?? "") ?? 0;
     const minorVersion = parseInt(manifestMap.get("minor_version") ?? "") ?? 0;
     const buildVersion = parseInt(manifestMap.get("build_version") ?? "") ?? 0;
-    currentApp.version = `v${majorVersion}.${minorVersion}.${buildVersion}`;
-
-    const splashMinTime = parseInt(manifestMap.get("splash_min_time") ?? "");
-    splashTimeout = isNaN(splashMinTime) ? defaultSplashTime : splashMinTime;
+    currentApp.version = `${majorVersion}.${minorVersion}.${buildVersion}`;
 
     const resKeys = ["hd", "fhd"];
     if (deviceData.displayMode === "480p") {
@@ -152,8 +147,11 @@ function processManifest(content: string) {
             }
         }
     }
+    // Set Launch Time to calculate Splash Time later
+    const launchTime = Date.now();
     showSplashOrIcon(splash, iconFile);
     notifyAll("loaded", currentApp);
+    return launchTime;
 }
 
 function showSplashOrIcon(splash?: string, iconFile?: Uint8Array) {
@@ -195,20 +193,14 @@ export function updateAppZip(source: Uint8Array, iv: string) {
 }
 
 // Create App Payload
-export function createPayload(timeOut?: number): AppPayload {
-    if (!timeOut) {
-        timeOut = splashTimeout;
-    }
-    inputParams.set("splashTime", timeOut.toString());
-    if (currentApp.id === lastApp.id && lastApp.exitReason) {
-        inputParams.set("lastExitOrTerminationReason", lastApp.exitReason);
-    }
+export function createPayload(launchTime: number): AppPayload {
     return {
         device: deviceData,
+        launchTime: launchTime,
         manifest: manifestMap,
         deepLink: inputParams,
         paths: paths,
-        brs: source,
+        source: source,
         pkgZip: pkgZip,
         extZip: extZip,
         password: currentApp.password,
@@ -217,8 +209,11 @@ export function createPayload(timeOut?: number): AppPayload {
 
 export function setupDeepLink(deepLink: Map<string, string>) {
     inputParams.clear();
-    inputParams.set("lastExitOrTerminationReason", AppExitReason.UNKNOWN);
-    inputParams.set("splashTime", defaultSplashTime.toString());
+    inputParams.set("lastExitOrTerminationReason", currentApp.exitReason ?? AppExitReason.UNKNOWN);
+    // source: "auto-run-dev" when app is side-loaded (default)
+    // source: "homescreen" when opening from home screen
+    // source: "other-channel" when using launchApp()
+    // source" "external-control" when using deep link
     inputParams.set("source", "auto-run-dev");
     deepLink.forEach((value, key) => {
         inputParams.set(key, value);
@@ -227,17 +222,18 @@ export function setupDeepLink(deepLink: Map<string, string>) {
 
 // Current App object
 export function resetCurrentApp() {
-    Object.assign(currentApp, createAppStatus());
+    Object.assign(currentApp, createAppData());
     pkgZip = undefined;
 }
 
-function createAppStatus(): AppData {
+// Create Default App Data
+function createAppData(): AppData {
     return {
         id: "",
         title: "",
         subtitle: "",
         version: "",
-        file: "",
+        path: "",
         password: "",
         exitReason: AppExitReason.UNKNOWN,
         running: false,

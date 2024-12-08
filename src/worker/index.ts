@@ -16,6 +16,7 @@ import {
     dataBufferSize,
     defaultDeviceInfo,
     parseManifest,
+    isAppPayload,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -55,7 +56,7 @@ const algorithm = "aes-256-ctr";
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
-        if (event.data.device) {
+        if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
@@ -141,7 +142,6 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
  * @param contents the BrightScript code to lex, parse and interpret.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
- * @returns void.
  */
 export function executeLine(contents: string, interpreter: Interpreter) {
     const lexer = new Lexer();
@@ -235,14 +235,16 @@ export function createPayloadFromFiles(
         manifest.set("major_version", "0");
         manifest.set("minor_version", "0");
         manifest.set("build_version", "1");
+        manifest.set("splash_min_time", "0");
         manifest.set("requires_audiometadata", "1");
     }
     const payload: AppPayload = {
         device: deviceData,
+        launchTime: Date.now(),
         manifest: manifest,
         deepLink: deepLink ?? new Map(),
         paths: paths,
-        brs: source,
+        source: source,
         root: root,
     };
     if (ext && fs.existsSync(ext)) {
@@ -280,7 +282,7 @@ export function getFonts(fontPath: string, fontFamily: string) {
 
 /**
  * Runs a Brightscript app with full zip folder structure.
- * @param payload with the source code and all the assets of the app.
+ * @param payload with the source code, manifest and all the assets of the app.
  * @param customOptions optional object with the output streams.
  *
  * @returns RunResult with the end reason and (optionally) the encrypted data.
@@ -308,17 +310,14 @@ export async function executeFile(
         return { exitReason: AppExitReason.CRASHED };
     }
     const interpreter = new Interpreter(options);
-    // Input Parameters / Deep Link
-    const deepLink = setupDeepLink(payload.deepLink);
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
     // Run App
-    const password = payload.password ?? "";
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
-        result = runBinary(interpreter, sourceResult, deepLink, password);
+        result = await runBinary(interpreter, sourceResult, payload);
     } else {
-        result = runSource(interpreter, sourceResult.sourceMap, deepLink, password);
+        result = await runSource(interpreter, sourceResult.sourceMap, payload);
     }
     if (!result.cipherText) {
         postMessage(`end,${result.exitReason}`);
@@ -359,7 +358,7 @@ async function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): 
 /**
  * Setup the interpreter with the provided payload.
  * @param interpreter The interpreter instance to setup
- * @param payload The payload with the source code and all the assets of the app.
+ * @param payload with the source code, manifest and all the assets of the app.
  *
  * @returns a SourceResult object with the source map or the pcode data.
  */
@@ -387,16 +386,20 @@ interface SerializedPCode {
 /**
  * Process the application input parameters including deep links
  * @param deepLinkMap Map with parameters.
+ * @param splashTime elapsed splash time (in milliseconds).
  *
  * @returns an array of parameters in AA member format.
  */
-function setupDeepLink(deepLinkMap: Map<string, string>): RoAssociativeArray {
+function setupInputParams(
+    deepLinkMap: Map<string, string>,
+    splashTime: number
+): RoAssociativeArray {
     const deepLinkArray = new Array<AAMember>();
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
         ["source", "auto-run-dev"],
-        ["splashTime", "0"],
+        ["splashTime", splashTime.toString()],
     ]);
     deepLinkMap.forEach((value, key) => {
         inputMap.set(key, value);
@@ -412,7 +415,6 @@ function setupDeepLink(deepLinkMap: Map<string, string>): RoAssociativeArray {
  * initializes the common: file system with device internal libraries.
  * @param device object with device info data
  * @param interpreter the Interpreter instance to update
- *
  */
 function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
     Object.keys(device).forEach((key) => {
@@ -439,11 +441,9 @@ function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
 }
 
 /**
- * Updates the interpreter common: file system with
- * device internal fonts.
+ * Updates the interpreter `common:` volume with device internal fonts.
  * @param device object with device info data
  * @param interpreter the Interpreter instance to update
- *
  */
 function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
     let fontFamily = device.defaultFont ?? "Asap";
@@ -494,10 +494,7 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
 /**
  * Updates the interpreter pkg: file system with the provided package files and
  * loads the translation data based on the configured locale.
- * @param paths Map with package paths
- * @param binaries Map with binary files data
- * @param text Map with text files data
- * @param brs Map with source code files data
+ * @param payload with the source code, manifest and all the assets of the app.
  * @param interpreter the Interpreter instance to update
  *
  * @returns a SourceResult object with the source map or the pcode data.
@@ -517,8 +514,11 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
                     result.iv = fsys.readFileSync(`pkg:/${filePath.url}`, "utf8");
                 }
             } else if (filePath.type === "source") {
-                if (Array.isArray(payload.brs) && typeof payload.brs[filePath.id] === "string") {
-                    result.sourceMap.set(filePath.url, payload.brs[filePath.id]);
+                if (
+                    Array.isArray(payload.source) &&
+                    typeof payload.source[filePath.id] === "string"
+                ) {
+                    result.sourceMap.set(filePath.url, payload.source[filePath.id]);
                 } else if (fsys.existsSync(`pkg:/${filePath.url}`)) {
                     result.sourceMap.set(
                         filePath.url,
@@ -537,7 +537,6 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
 /**
  * Load the translations data based on the configured locale.
  * @param interpreter the Interpreter instance to update
- * @param volume the file system volume to use
  */
 
 function loadTranslations(interpreter: Interpreter) {
@@ -591,10 +590,11 @@ function loadTranslations(interpreter: Interpreter) {
 
 /**
  * A synchronous version of the lexer-parser flow.
- * @param interpreter the interpreter to use when executing the provided files
+ * @param sourceMap Map with the source code files content.
+ * @param manifest Map with the manifest data.
  * @param password string with the encryption password (optional)
  *
- * @returns the AST produced from lexing and parsing the provided files or the tokens for encryption if password is provided.
+ * @returns the ParseResult with the exit reason and the tokens and statements.
  */
 export interface ParseResult {
     exitReason: AppExitReason;
@@ -660,12 +660,10 @@ export function lexParseSync(
 }
 
 /**
- * Runs an arbitrary string of BrightScript code.
- * @param interpreter an interpreter to use when executing `contents`. Required
- *                    for `repl` to have persistent state between user inputs.
+ * Parse and Execute a set of BrightScript source code files.
+ * @param interpreter an interpreter to use when executing the source code.
  * @param sourceMap Map with the source code files content.
- * @param input associative array with the input parameters
- * @param password string with the encryption password (optional)
+ * @param payload with the source code, manifest and all the assets of the app.
  *
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
@@ -674,60 +672,46 @@ export interface RunResult {
     cipherText?: Uint8Array;
     iv?: string;
 }
-function runSource(
+async function runSource(
     interpreter: Interpreter,
     sourceMap: Map<string, string>,
-    deepLink: RoAssociativeArray,
-    password: string = ""
-): RunResult {
+    payload: AppPayload
+): Promise<RunResult> {
+    const password = payload.password ?? "";
     const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
     let exitReason = parseResult.exitReason;
-    if (password.length > 0) {
-        const tokens = parseResult.tokens;
-        const iv = crypto.randomBytes(12).toString("base64");
-        const cipher = crypto.createCipheriv(algorithm, password, iv);
-        const deflated = zlibSync(encode({ pcode: tokens }));
-        const source = Buffer.from(deflated);
-        const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
-        return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
-    }
-    try {
-        if (exitReason !== AppExitReason.CRASHED) {
-            exitReason = AppExitReason.FINISHED;
-            interpreter.exec(parseResult.statements, sourceMap, deepLink);
+    if (exitReason !== AppExitReason.CRASHED) {
+        if (password.length > 0) {
+            const tokens = parseResult.tokens;
+            const iv = crypto.randomBytes(12).toString("base64");
+            const cipher = crypto.createCipheriv(algorithm, password, iv);
+            const deflated = zlibSync(encode({ pcode: tokens }));
+            const source = Buffer.from(deflated);
+            const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
+            return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
         }
-    } catch (err: any) {
-        exitReason = AppExitReason.FINISHED;
-        if (err.message !== "debug-exit") {
-            if (interpreter.options.post ?? true) {
-                postMessage(`error,${err.message}`);
-            } else {
-                interpreter.options.stderr.write(err.message);
-            }
-            exitReason = AppExitReason.CRASHED;
-        }
+        exitReason = await execApp(interpreter, parseResult.statements, payload, sourceMap);
     }
     return { exitReason: exitReason };
 }
 
 /**
- * Runs a binary package of BrightScript code.
+ * Decode and run a binary encrypted package of BrightScript code.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  * @param sourceResult with the pcode data and iv.
- * @param deepLink associative array with the input parameters
- * @param password decryption password.
+ * @param payload with the source code, manifest and all the assets of the app.
  *
- * @returns RunResult with the end reason.
+ * @returns RunResult with the exit reason.
  */
-function runBinary(
+async function runBinary(
     interpreter: Interpreter,
     sourceResult: SourceResult,
-    deepLink: RoAssociativeArray,
-    password: string
-): RunResult {
+    payload: AppPayload
+): Promise<RunResult> {
+    const password = payload.password ?? "";
     let decodedTokens: Map<string, any>;
-    // Decode Source PCode
+    // Decode Encrypted Parsed Code
     try {
         if (password.length > 0 && sourceResult.pcode && sourceResult.iv) {
             const decipher = crypto.createDecipheriv(algorithm, password, sourceResult.iv);
@@ -793,22 +777,57 @@ function runBinary(
             allStatements.push(...libParse.statements);
         }
     });
-    let exitReason = AppExitReason.FINISHED;
+    const exitReason = await execApp(interpreter, allStatements, payload);
+    return { exitReason: exitReason };
+}
+
+/**
+ * Execute the BrightScript code using the provided interpreter and parsed statements.
+ * @param interpreter the interpreter instance to use.
+ * @param statements the parsed BrightScript code to execute.
+ * @param payload with the source code, manifest and all the assets of the app.
+ * @param sourceMap optional map with the source code files content.
+ *
+ * @returns the exit reason.
+ */
+async function execApp(
+    interpreter: Interpreter,
+    statements: Stmt.Statement[],
+    payload: AppPayload,
+    sourceMap?: Map<string, string>
+) {
+    let exitReason: AppExitReason = AppExitReason.FINISHED;
     try {
-        interpreter.exec(allStatements, undefined, deepLink);
+        let splashMinTime = parseInt(payload.manifest.get("splash_min_time") ?? "");
+        if (isNaN(splashMinTime)) {
+            splashMinTime = 1600; // Roku default value
+        }
+        let splashTime = Date.now() - payload.launchTime;
+        if (splashTime < splashMinTime) {
+            await new Promise((r) => setTimeout(r, splashMinTime - splashTime));
+            splashTime = splashMinTime;
+        }
+        const inputParams = setupInputParams(payload.deepLink, splashTime);
+        interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
+        exitReason = AppExitReason.FINISHED;
         if (err.message !== "debug-exit") {
-            postMessage(`error,${err.message}`);
+            if (interpreter.options.post ?? true) {
+                postMessage(`error,${err.message}`);
+            } else {
+                interpreter.options.stderr.write(err.message);
+            }
             exitReason = AppExitReason.CRASHED;
         }
     }
-    return { exitReason: exitReason };
+    return exitReason;
 }
 
 /**
  * Evaluates parsed BrightScript code and add Libraries source
  * @param parseResults ParseResults object with the parsed code
  * @param lib Collection with the libraries source code
+ * @param manifest Map with the manifest data
  */
 function parseLibraries(
     parseResults: ParseResults,

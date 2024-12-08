@@ -92,13 +92,15 @@ customKeys.set("Shift+ArrowDown", "down"); // Support for Prince of Persia
 
 // Initialize device and subscribe to events
 libVersion.innerHTML = brs.getVersion();
-brs.subscribe("app", (event, data) => {
+brs.subscribe("web-app", (event, data) => {
     if (event === "loaded") {
         currentApp = data;
         fileButton.style.visibility = "hidden";
         let infoHtml = data.title + "<br/>";
         infoHtml += data.subtitle + "<br/>";
-        infoHtml += data.version;
+        if (data.version.trim() !== "") {
+            infoHtml += "v" + data.version;
+        }
         appInfo.innerHTML = infoHtml;
         appIconsVisibility("hidden");
         loading.style.visibility = "hidden";
@@ -110,10 +112,10 @@ brs.subscribe("app", (event, data) => {
             brs.terminate("EXIT_USER_NAV");
             currentApp = { id: "", running: false };
             currentZip = null;
-            loadZip(data.app);
+            loadZip(data.app, data.params);
         }
     } else if (event === "browser") {
-        if (data?.url && currentZip) {
+        if (data?.url) {
             openBrowser(data.url, data.width, data.height);
         }
     } else if (event === "closed" || event === "error") {
@@ -198,7 +200,7 @@ function runFile(file, password = "") {
  * Downloads an app package from the server and execute it
  * @param {string} appId the path to the zip file
  */
-function loadZip(appId) {
+function loadZip(appId, params) {
     if (currentApp.running) {
         console.warn("There is an App already running!");
         return;
@@ -220,11 +222,14 @@ function loadZip(appId) {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
                         currentZip = zipData;
+                        if (!params) {
+                            params = new Map([["source", "homescreen"]]);
+                        }
                         brs.execute(
                             app.path,
                             zipData,
                             { entryPoint: true, debugOnCrash: false },
-                            new Map([["source", "homescreen"]])
+                            params,
                         );
                         display.focus();
                     });
@@ -357,6 +362,10 @@ function openBrowser(url, width, height) {
     }
     if (!url.startsWith("file:///pkg_")) {
         console.error("Error: Invalid local file path!", data.url);
+        return;
+    }
+    if (!currentZip) {
+        console.error("Error: No zip file loaded!", data.url);
         return;
     }
     const Buffer = BrowserFS.BFSRequire("buffer").Buffer;

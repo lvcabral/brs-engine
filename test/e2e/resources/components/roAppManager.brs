@@ -11,4 +11,7 @@ sub Main(args)
     for each app in m.app.getAppList()
         print "App Title: "; app.title
     end for
+    if m.app.isAppInstalled("home-01", "")
+        print "App Installed!"
+    end if
 end sub
