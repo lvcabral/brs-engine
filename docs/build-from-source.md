@@ -8,7 +8,7 @@ As it builds (and runs the CLI) in `node`, so you'll need to [install that first
 
 Once that's ready, install [yarn](https://yarnpkg.com).  Installing it with `npm` is probably the simplest:
 
-```shell
+```console
 $ npm install -g yarn
 ```
 
@@ -16,13 +16,13 @@ $ npm install -g yarn
 
 1. Clone this repo:
 
-   ```shell
+   ```console
    $ git clone https://github.com/lvcabral/brs-engine.git
    ```
 
 2. Install dependencies:
 
-    ```shell
+    ```console
     $ yarn install     # or just `yarn`
     ```
 
@@ -32,10 +32,10 @@ $ npm install -g yarn
 
 This project is written in TypeScript, so it needs to be compiled before it can be executed. `yarn build` compiles files in `src/` into JavaScript and TypeScript declarations, and puts them in `lib/`, `bin/` and `types/`.
 
-```shell
+```console
 $ yarn build
 
-$ ls app/lib/
+$ ls browser/lib/
 brs.api.js
 brs.worker.js
 
@@ -58,7 +58,7 @@ To build and start the web application on your default browser just execute `yar
 
 Tests are written in plain-old JavaScript with [Facebook's Jest](http://facebook.github.io/jest/), and can be run with the `test` target:
 
-```shell
+```console
 $ yarn test
 
 # tests start running
@@ -72,7 +72,7 @@ If you need to update the snapshots use the command: `npx jest --updateSnapshot`
 
 Compiled output in `lib/`, `bin/` and `types/` can be removed with the `clean` target:
 
-```shell
+```console
 $ yarn clean
 
 $ ls lib/

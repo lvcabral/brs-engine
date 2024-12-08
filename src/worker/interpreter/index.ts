@@ -92,10 +92,12 @@ export interface TracePoint {
 }
 
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
-    private readonly _startTime = Date.now();
     private readonly _stack = new Array<TracePoint>();
+    private readonly _startTime = Date.now();
+    private readonly _creationTime = process.env.CREATION_TIME;
     private _environment: Environment;
     private _sourceMap = new Map<string, string>();
+    private _runParams: RoAssociativeArray | undefined;
     private _tryMode = false;
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
@@ -138,6 +140,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._sourceMap;
     }
 
+    get runParams() {
+        return this._runParams;
+    }
+
     get stack() {
         return this._stack;
     }
@@ -148,6 +154,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     get singleKeyEvents() {
         return this._singleKeyEvents;
+    }
+
+    get creationTime() {
+        return this._creationTime;
     }
 
     public lastKeyTime: number = Date.now();
@@ -286,6 +296,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     isReserved: false,
                     location: Interpreter.InternalLocation,
                 });
+                if (args.length > 0 && args[0] instanceof RoAssociativeArray) {
+                    this._runParams = args[0];
+                }
                 if (maybeMain.signatures[0].signature.args.length === 0) {
                     args = [];
                 }
@@ -2058,8 +2071,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to return the current channel formatted version
-     * @returns the current channel version
+     * Method to return the current app formatted version
+     * @returns the current app version
      */
     getChannelVersion(): string {
         let majorVersion = parseInt(this.manifest.get("major_version")) || 0;

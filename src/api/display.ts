@@ -82,8 +82,8 @@ function notifyAll(eventName: string, eventData?: any) {
 
 // Redraw Display Canvas
 export function redrawDisplay(
-    running: boolean,
-    fullScreen: boolean,
+    running?: boolean,
+    fullScreen?: boolean,
     width?: number,
     height?: number,
     dpr?: number

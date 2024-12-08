@@ -1,3 +1,4 @@
+const webpack = require("webpack");
 const path = require("path");
 const ShebangPlugin = require('webpack-shebang-plugin');
 
@@ -93,6 +94,11 @@ module.exports = (env) => {
                 modules: [path.resolve("./node_modules"), path.resolve("./src")],
                 extensions: [".tsx", ".ts", ".js"],
             },
+            plugins: [
+                new webpack.DefinePlugin({
+                    "process.env.CREATION_TIME": JSON.stringify(new Date().toISOString())
+                })
+            ],
             externals: {
                 canvas: "commonjs canvas" // Important (2)
             },

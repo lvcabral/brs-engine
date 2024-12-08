@@ -34,9 +34,9 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
         this.port?.removeReference();
     }
 
-    // ifChannelStore ------------------------------------------------------------------------------------
+    // ifAppMemoryMonitor ------------------------------------------------------------------------------------
 
-    /** Enables a channel to be alerted when it has reached 80% of its memory usage limit. */
+    /** Enables an app to be alerted when it has reached 80% of its memory usage limit. */
     private readonly enableMemoryWarningEvent = new Callable("enableMemoryWarningEvent", {
         signature: {
             args: [new StdlibArgument("enable", ValueKind.Boolean)],
@@ -48,7 +48,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns the usage percentage of memory limit for the channel. */
+    /** Returns the usage percentage of memory limit for the app. */
     private readonly getMemoryLimitPercent = new Callable("getMemoryLimitPercent", {
         signature: {
             args: [],
@@ -60,7 +60,7 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns the estimated kilobytes (Kb) of memory available for the channel. */
+    /** Returns the estimated kilobytes (Kb) of memory available for the app. */
     private readonly getChannelAvailableMemory = new Callable("getChannelAvailableMemory", {
         signature: {
             args: [],

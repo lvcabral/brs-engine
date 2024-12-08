@@ -783,7 +783,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
 
     /** Add the specified HTTP header to the list of headers that will be sent in the HTTP request.
      *  If "x-roku-reserved-dev-id" is passed as a name, the value parameter is ignored and in its place,
-     *  the devId of the currently running channel is used as the value.
+     *  the devId of the currently running app is used as the value.
      */
     private readonly addHeader = new Callable("addHeader", {
         signature: {

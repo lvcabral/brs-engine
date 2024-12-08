@@ -75,7 +75,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns the number of bytes available in the channel application's device registry (32K) */
+    /** Returns the number of bytes available in the application's device registry (32K) */
     private readonly getSpaceAvailable = new Callable("getSpaceAvailable", {
         signature: {
             args: [],
