@@ -240,31 +240,7 @@ export function execute(
     options: any = {},
     deepLink?: Map<string, string>
 ) {
-    if (deviceData.appList?.length) {
-        const app = deviceData.appList.find((app) => app.path === filePath);
-        if (app) {
-            Object.assign(currentApp, app);
-        } else {
-            // Not in the list so is a side-loaded app
-            currentApp.id = "dev";
-            const dev = deviceData.appList.find((app) => app.id === "dev");
-            if (dev) {
-                dev.path = filePath;
-                currentApp.path = filePath;
-                currentApp.exitReason = dev.exitReason ?? AppExitReason.UNKNOWN;
-            } else {
-                deviceData.appList.push({
-                    id: "dev",
-                    title: "Side-loaded App",
-                    version: "0.0.0",
-                    path: filePath,
-                });
-            }
-        }
-    } else {
-        currentApp.id = filePath.hashCode();
-        currentApp.path = filePath;
-    }
+    setupCurrentApp(filePath);
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
     source.length = 0;
@@ -298,6 +274,35 @@ export function execute(
         loadAppZip(fileName, fileData, runApp);
     } else {
         loadSourceCode(fileName, fileData);
+    }
+}
+
+// Function to find the App and setup Current App object
+function setupCurrentApp(filePath: string) {
+    if (deviceData.appList?.length) {
+        const app = deviceData.appList.find((app) => app.path === filePath);
+        if (app) {
+            Object.assign(currentApp, app);
+        } else {
+            // Not in the list so is a side-loaded app
+            currentApp.id = "dev";
+            const dev = deviceData.appList.find((app) => app.id === "dev");
+            if (dev) {
+                dev.path = filePath;
+                currentApp.path = filePath;
+                currentApp.exitReason = dev.exitReason ?? AppExitReason.UNKNOWN;
+            } else {
+                deviceData.appList.push({
+                    id: "dev",
+                    title: "Side-loaded App",
+                    version: "0.0.0",
+                    path: filePath,
+                });
+            }
+        }
+    } else {
+        currentApp.id = filePath.hashCode();
+        currentApp.path = filePath;
     }
 }
 
@@ -492,20 +497,18 @@ function workerCallback(event: MessageEvent) {
         if (event.data.app === "roku_browser") {
             const params = event.data.params;
             let winDim = deviceData.displayMode === "1080p" ? [1920, 1080] : [1280, 720];
-            params.find((el) => {
+            const windowSize = params.find((el) => {
                 if (el.toLowerCase().startsWith("windowsize")) {
-                    const dims = el.split("=")[1]?.split("x");
-                    if (
-                        dims?.length === 2 &&
-                        !isNaN(parseInt(dims[0])) &&
-                        !isNaN(parseInt(dims[1]))
-                    ) {
-                        winDim = dims.map((el) => parseInt(el));
-                    }
                     return true;
                 }
                 return false;
             });
+            if (windowSize) {
+                const dims = windowSize.split("=")[1]?.split("x");
+                if (dims?.length === 2 && !isNaN(parseInt(dims[0])) && !isNaN(parseInt(dims[1]))) {
+                    winDim = dims.map((el) => parseInt(el));
+                }
+            }
             const url = params.find((el) => el.startsWith("url="))?.split("=")[1] ?? "";
             notifyAll("browser", { url: url, width: winDim[0], height: winDim[1] });
         } else if (event.data.app === "SDKLauncher") {
