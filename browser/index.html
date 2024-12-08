@@ -30,19 +30,19 @@
             <input type="button" id="fileButton" class="fileButton" value="Open a ZIP, BPK or BRS file..." />
             <br /><br /><br /><br /><br /><br /><br />
             <div id="expand-new" style="text-align: center;">
-                <img src="./images/expand-new.png" title="Expand Project Information" alt="expand icon" width="298"
-                    role="button" height="100" onclick="toggleDiv('details');"
-                    style="vertical-align: bottom; cursor: pointer;" />
+                <button class="icon-button" title="Expand Project Information" onclick="toggleDiv('details');">
+                    <img src="./images/expand-new.png" alt="Expand Project Information" width="298" height="100" />
+                </button>
             </div>
             <div id="expand" style="text-align: center; display: none;">
-                <img src="./images/expand.png" title="Expand Project Information" alt="expand icon" width="298"
-                    role="button" height="100" onclick="toggleDiv('details');"
-                    style="vertical-align: bottom; cursor: pointer;" />
+                <button class="icon-button" title="Expand Project Information" onclick="toggleDiv('details');">
+                    <img src="./images/expand.png" alt="Expand Project Information" width="298" height="100" />
+                </button>
             </div>
             <div id="collapse" style="text-align: center; display: none;">
-                <img src="./images/collapse.png" title="Hide Project Information" alt="collapse icon" width="298"
-                    role="button" height="100" onclick="toggleDiv('details');"
-                    style="vertical-align: bottom; cursor: pointer;" />
+                <button class="icon-button" title="Hide Project Information" onclick="toggleDiv('details');">
+                    <img src="./images/collapse.png" alt="Hide Project Information" width="298" height="100" />
+                </button>
             </div>
             <dialog id="passwordDialog" class="modal_dialog" closed>
                 <p class="modal_dialog_content">Please enter the password to decrypt the package:</p>

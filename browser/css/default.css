@@ -320,3 +320,14 @@ button.modal_dialog_cancel {
     background-color: #fff;
     color: #662d91;
 }
+
+.icon-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.icon-button img {
+    display: block;
+}
