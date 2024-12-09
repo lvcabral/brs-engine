@@ -3,6 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, Int32, isBrsString, RoArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { NDKStart } from "../../common";
 
 export class RoNDK extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -36,11 +37,20 @@ export class RoNDK extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, app: BrsString, params: RoArray, _env: RoArray) => {
+        impl: (_: Interpreter, app: BrsString, params: RoArray, env: RoArray) => {
             const stringParams = params.elements.filter((el) => isBrsString(el));
-            const csvParams = stringParams.map((el) => el.toString()).join(",");
-            postMessage(`ndk,${app.value},${csvParams}`);
-            return new Int32(0);
+            const stringEnv = env.elements.filter((el) => isBrsString(el));
+            if (app.value === "roku_browser" || app.value === "SDKLauncher") {
+                const ndkStart: NDKStart = {
+                    app: app.value,
+                    params: stringParams.map((el) => el.toString()),
+                    env: stringEnv.map((el) => el.toString()),
+                };
+                ndkStart.params.push("source=other-channel");
+                postMessage(ndkStart);
+                return new Int32(0);
+            }
+            return new Int32(211);
         },
     });
 }

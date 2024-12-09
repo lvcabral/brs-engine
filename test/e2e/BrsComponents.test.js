@@ -422,7 +422,7 @@ describe("end to end brightscript functions", () => {
             "8000X",
             "Roku (8000X)",
             "STB",
-            " 2",
+            " 4",
             "BrightScript Engine Library",
             " 4",
             "BSC.50E04330A",
@@ -480,11 +480,25 @@ describe("end to end brightscript functions", () => {
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "dev",
             "true",
-            "0.0.1",
+            "0.0.0",
             "BRS App",
             "",
             "34c6fceca75e456f25e7e99531e2425c6c1de443",
             "1",
+        ]);
+    });
+
+    test("components/roAppManager.brs", async () => {
+        const deepLink = new Map([
+            ["contentId", "12345678"],
+            ["mediaType", "movie"],
+        ]);
+        await execute([resourceFile("components", "roAppManager.brs")], outputStreams, deepLink);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "Content Id: 12345678",
+            "Media Type: movie",
+            "Uptime: <Component: roTimespan>",
+            "ScreenSaverTimeout: 0",
         ]);
     });
 });

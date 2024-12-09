@@ -1,5 +1,5 @@
 types
-app/lib
+browser/lib
 bin
 package.json
 **/*.js.snap

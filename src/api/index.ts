@@ -17,6 +17,8 @@ import {
     dataBufferIndex,
     dataBufferSize,
     getExitReason,
+    isAppData,
+    isNDKStart,
 } from "../worker/common";
 
 import {
@@ -24,12 +26,12 @@ import {
     paths,
     manifestMap,
     currentApp,
-    lastApp,
     loadAppZip,
     createPayload,
     resetCurrentApp,
     deviceData,
     subscribePackage,
+    setupDeepLink,
 } from "./package";
 import {
     subscribeDisplay,
@@ -92,6 +94,7 @@ export {
     enableStats,
 } from "./display";
 
+let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
@@ -110,7 +113,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             "videoFormats",
             "fonts",
             "password",
-            "context",
+            "runContext",
         ];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {
@@ -231,25 +234,32 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute App Zip or Source File
-export function execute(filePath: string, fileData: any, options: any = {}) {
+export function execute(
+    filePath: string,
+    fileData: any,
+    options: any = {},
+    deepLink?: Map<string, string>
+) {
+    setupCurrentApp(filePath);
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
     source.length = 0;
-    currentApp.id = filePath.hashCode();
-    currentApp.file = filePath;
     if (typeof options.clearDisplayOnExit === "boolean") {
-        currentApp.clearDisplay = options.clearDisplayOnExit;
-    }
-    if (typeof options.execSource === "string") {
-        currentApp.execSource = options.execSource;
+        clearDisplayOnExit = options.clearDisplayOnExit;
     }
     if (typeof options.password === "string") {
         currentApp.password = options.password;
     }
+    if (deepLink) {
+        setupDeepLink(deepLink);
+    }
+    if (typeof options.entryPoint === "boolean") {
+        deviceData.entryPoint = options.entryPoint;
+    }
     if (disableDebug) {
-        currentApp.debugOnCrash = false;
+        deviceData.debugOnCrash = false;
     } else if (typeof options.debugOnCrash === "boolean") {
-        currentApp.debugOnCrash = options.debugOnCrash;
+        deviceData.debugOnCrash = options.debugOnCrash;
     }
     if (typeof brsWorker !== "undefined") {
         resetWorker();
@@ -267,18 +277,48 @@ export function execute(filePath: string, fileData: any, options: any = {}) {
     }
 }
 
+// Function to find the App and setup Current App object
+function setupCurrentApp(filePath: string) {
+    if (deviceData.appList?.length) {
+        const app = deviceData.appList.find((app) => app.path === filePath);
+        if (app) {
+            Object.assign(currentApp, app);
+        } else {
+            // Not in the list so is a side-loaded app
+            currentApp.id = "dev";
+            const dev = deviceData.appList.find((app) => app.id === "dev");
+            if (dev) {
+                dev.path = filePath;
+                currentApp.path = filePath;
+                currentApp.exitReason = dev.exitReason ?? AppExitReason.UNKNOWN;
+            } else {
+                deviceData.appList.push({
+                    id: "dev",
+                    title: currentApp.title,
+                    version: currentApp.version,
+                    path: filePath,
+                });
+            }
+        }
+    } else {
+        currentApp.id = filePath.hashCode();
+        currentApp.path = filePath;
+    }
+}
+
 // Restore engine state and terminate Worker
 export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
     if (currentApp.running) {
+        currentApp.running = false;
+        currentApp.exitReason = reason;
+        updateAppList();
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
     }
-    if (currentApp.clearDisplay) {
+    if (clearDisplayOnExit) {
         clearDisplay();
     }
     resetWorker();
-    currentApp.running = false;
-    Object.assign(lastApp, currentApp);
     resetCurrentApp();
     enableSendKeys(false);
     notifyAll("closed", reason);
@@ -364,15 +404,15 @@ function loadSourceCode(fileName: string, fileData: any) {
             manifestMap.set("major_version", "1");
             manifestMap.set("minor_version", "0");
             manifestMap.set("build_version", "0");
+            manifestMap.set("splash_min_time", "0");
             manifestMap.set("requires_audiometadata", "1");
-            currentApp.id = "brs";
-            currentApp.title = fileName;
+            currentApp.title = `BrightScript file: ${fileName}`;
             paths.length = 0;
             source.push(this.result);
             paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
             clearDisplay();
             notifyAll("loaded", currentApp);
-            runApp(createPayload(1, false));
+            runApp(createPayload(Date.now()));
         } else {
             apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);
         }
@@ -385,18 +425,29 @@ function runApp(payload: AppPayload) {
     try {
         showDisplay();
         currentApp.running = true;
+        updateAppList();
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", workerCallback);
         brsWorker.postMessage(sharedBuffer);
         const transfArray = [];
         if (!manifestMap.get("bs_libs_required")?.includes("Roku_Browser") && payload.pkgZip) {
-            // Prevent cloning the zip data in worker (if not needed on main thread)
+            // Transfer array to prevent cloning the zip data in worker (if not needed on main thread)
             transfArray.push(payload.pkgZip);
         }
         brsWorker.postMessage(payload, transfArray);
         enableSendKeys(true);
     } catch (err: any) {
         apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
+    }
+}
+
+// Update App in the App List from the Current App object
+export function updateAppList() {
+    if (deviceData.appList?.length) {
+        const app = deviceData.appList.find((app) => app.id === currentApp.id);
+        if (app) {
+            Object.assign(app, currentApp);
+        }
     }
 }
 
@@ -440,6 +491,42 @@ function workerCallback(event: MessageEvent) {
         }
     } else if (event.data.videoPath && context.inBrowser) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
+    } else if (isAppData(event.data)) {
+        notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
+    } else if (isNDKStart(event.data)) {
+        if (event.data.app === "roku_browser") {
+            const params = event.data.params;
+            let winDim = deviceData.displayMode === "1080p" ? [1920, 1080] : [1280, 720];
+            const windowSize = params.find((el) => {
+                if (el.toLowerCase().startsWith("windowsize")) {
+                    return true;
+                }
+                return false;
+            });
+            if (windowSize) {
+                const dims = windowSize.split("=")[1]?.split("x");
+                if (dims?.length === 2 && !isNaN(parseInt(dims[0])) && !isNaN(parseInt(dims[1]))) {
+                    winDim = dims.map((el) => parseInt(el));
+                }
+            }
+            const url = params.find((el) => el.startsWith("url="))?.split("=")[1] ?? "";
+            notifyAll("browser", { url: url, width: winDim[0], height: winDim[1] });
+        } else if (event.data.app === "SDKLauncher") {
+            const channelId = event.data.params
+                .find((el) => el.toLowerCase().startsWith("channelid="))
+                ?.split("=")[1];
+            const app = deviceData.appList?.find((app) => app.id === channelId);
+            if (app) {
+                const params = new Map();
+                event.data.params.forEach((el) => {
+                    const [key, value] = el.split("=");
+                    if (key && value && key.toLowerCase() !== "channelid") {
+                        params.set(key, value);
+                    }
+                });
+                notifyAll("launch", { app: app.id, params: params });
+            }
+        }
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${event.data}`);
@@ -466,7 +553,7 @@ function workerCallback(event: MessageEvent) {
         const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
         const subName = event.data.split(",")[1];
         deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
-        deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id 'dev'\r\n`);
+        deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id '${currentApp.id}'\r\n`);
         statsUpdate(true);
         notifyAll("started", currentApp);
     } else if (event.data.startsWith("end,")) {
@@ -475,25 +562,6 @@ function workerCallback(event: MessageEvent) {
         notifyAll("reset");
     } else if (event.data.startsWith("version,")) {
         notifyAll("version", event.data.slice(8));
-    } else if (event.data.startsWith("ndk,")) {
-        const data = event.data.split(",");
-        if (data[1] === "roku_browser") {
-            const params = JSON.parse(data.slice(2).join(","));
-            let winDim = deviceData.displayMode === "1080p" ? ["1920", "1080"] : ["1280", "720"];
-            if (
-                params.windowSize?.toLowerCase() === "1280x720" ||
-                params.windowSize?.toLowerCase() === "1920x1080"
-            ) {
-                winDim = params.windowSize.split("x");
-            }
-            notifyAll("browser", {
-                url: params.url,
-                width: parseInt(winDim[0]),
-                height: parseInt(winDim[1]),
-            });
-        } else {
-            notifyAll("launch", { app: data[1], params: data[2] });
-        }
     }
 }
 

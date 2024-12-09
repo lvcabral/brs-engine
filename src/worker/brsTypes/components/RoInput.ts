@@ -46,7 +46,7 @@ export class RoInput extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Registers a channel to receive roInput events, which are voice commands sent via the Roku remote control. */
+    /** Registers an app to receive roInput events, which are voice commands sent via the Roku remote control. */
     private readonly enableTransportEvents = new Callable("enableTransportEvents", {
         signature: {
             args: [],
