@@ -23,6 +23,7 @@ import {
     subscribePackage,
     getSerialNumber,
     mountExt,
+    setupDeepLink,
 } from "../api/package";
 import { isNumber } from "../api/util";
 import {
@@ -31,6 +32,7 @@ import {
     dataBufferSize,
     AppPayload,
     AppExitReason,
+    AppData,
 } from "../worker/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
@@ -76,6 +78,10 @@ program
         "-f, --ext-file <file>",
         "The zip file to mount as `ext1:` volume. (takes precedence over -x)"
     )
+    .option(
+        "-k, --deep-link <params>",
+        "Parameters to be passed to the application. (format: key=value,...)"
+    )
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
         if (!checkParameters()) {
@@ -84,12 +90,14 @@ program
         if (typeof deviceData === "object") {
             deviceData.deviceModel = "3930X";
             deviceData.customFeatures.push("ascii_rendering");
-            deviceData.fontPath = "../app/fonts";
+            deviceData.fontPath = "../browser/fonts";
             deviceData.fonts = brs.getFonts(deviceData.fontPath, deviceData.defaultFont);
             deviceData.localIps = getLocalIps();
+            deviceData.stopOnCrash = program.debug ?? false;
             if (program.registry) {
                 deviceData.registry = getRegistry();
             }
+            deviceData.appList = new Array<AppData>();
         }
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
@@ -171,14 +179,17 @@ function runAppFiles(files: string[]) {
             if (program.extFile) {
                 mountExt(new Uint8Array(fs.readFileSync(program.extFile)).buffer);
             }
+            setupDeepLink(processDeepLink());
             const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
+            deviceData.entryPoint = true;
             loadAppZip(fileName, fileData, runApp);
             return;
         }
         // Run BrightScript files
-        const payload = brs.createPayload(
+        const payload = brs.createPayloadFromFiles(
             files,
             deviceData,
+            processDeepLink(),
             program.root,
             program.extFile ?? program.extRoot
         );
@@ -191,6 +202,19 @@ function runAppFiles(files: string[]) {
         }
         process.exitCode = 1;
     }
+}
+
+function processDeepLink() {
+    const deepLinkMap: Map<string, string> = new Map();
+    program.deepLink?.split(",")?.forEach((value: string) => {
+        if (value?.includes("=")) {
+            const [key, val] = value.split("=");
+            deepLinkMap.set(key, val);
+        } else {
+            console.warn(chalk.yellow(`Invalid deep link parameter: ${value}`));
+        }
+    });
+    return deepLinkMap;
 }
 
 /**
@@ -213,7 +237,6 @@ function displayTitle() {
  *
  */
 async function runApp(payload: AppPayload) {
-    payload.stopOnCrash = program.debug ?? false;
     payload.password = program.pack;
     if (program.ecp && !workerReady) {
         // Load ECP service as Worker
@@ -484,7 +507,7 @@ function printHelp() {
     helpMsg += "REPL Command List:\r\n";
     helpMsg += "   print|?         Print variable value or expression\r\n";
     helpMsg += "   var|vars        Display variables and their types/values\r\n";
-    helpMsg += "   vol|vols        Display file system mounted volumes`\r\n";
+    helpMsg += "   vol|vols        Display file system mounted volumes\r\n";
     helpMsg += "   help|hint       Show this REPL command list\r\n";
     helpMsg += "   clear|cls       Clear terminal screen\r\n";
     helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";

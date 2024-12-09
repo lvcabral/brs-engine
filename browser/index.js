@@ -6,32 +6,73 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 const fileButton = document.getElementById("fileButton");
-const channelInfo = document.getElementById("channelInfo");
+const appInfo = document.getElementById("appInfo");
 const libVersion = document.getElementById("libVersion");
 const display = document.getElementById("display");
 const stats = document.getElementById("stats");
 const loading = document.getElementById("loading");
-const channel1 = document.getElementById("channel1");
-const channel2 = document.getElementById("channel2");
-const channel3 = document.getElementById("channel3");
-const channel4 = document.getElementById("channel4");
 const passwordDialog = document.getElementById("passwordDialog");
 
-// Channel status object
+// App List
+const appIcons = [
+    document.getElementById("app01"),
+    document.getElementById("app02"),
+    document.getElementById("app03"),
+    document.getElementById("app04"),
+];
+const appList = [
+    {
+        id: "home-01",
+        title: "Rect Bounce Example",
+        version: "1.0.0",
+        path: "apps/Rect-Bounce.zip",
+        icon: "images/icons/rect-bounce-icon.png",
+    },
+    {
+        id: "home-02",
+        title: "Ball Boing Example",
+        version: "1.0.0",
+        path: "apps/Ball-Boing.zip",
+        icon: "images/icons/ball-boing-icon.png",
+    },
+    {
+        id: "home-03",
+        title: "Collisions Example",
+        version: "1.0.3",
+        path: "apps/Collisions.zip",
+        icon: "images/icons/collisions-icon.png",
+    },
+    {
+        id: "home-04",
+        title: "Custom Video Player",
+        version: "1.0.0",
+        path: "apps/custom-video-player.zip",
+        icon: "images/icons/custom-video-player.png",
+    },
+];
+appIcons.forEach((icon, index) => {
+    icon.src = appList[index].icon;
+    icon.title = appList[index].title;
+    icon.alt = appList[index].title;
+    icon.onclick = () => loadZip(appList[index].id);
+});
+
+// App status objects
 let currentApp = { id: "", running: false };
 let currentZip = null;
 let debugMode = "continue";
 
 // Start the engine
-channelInfo.innerHTML = "<br/>";
+appInfo.innerHTML = "<br/>";
 // Custom device configuration (see /api/index.ts for all fields)
 const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
-    locale: "en_US", // Used if channel supports localization
+    locale: "en_US", // Used if app supports localization
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     defaultFont: "Asap", // Default: "Asap" to use alternative fonts "Roboto" or "Open Sans"
     fontPath: "../fonts/", // change the fontPath to "../fonts-alt/"
-    maxFps: 30, // Limited to minimize issues with iOS/iPadOS
+    maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
+    appList: appList,
 };
 const customKeys = new Map();
 customKeys.set("Comma", "rev"); // Keep consistency with older versions
@@ -51,15 +92,17 @@ customKeys.set("Shift+ArrowDown", "down"); // Support for Prince of Persia
 
 // Initialize device and subscribe to events
 libVersion.innerHTML = brs.getVersion();
-brs.subscribe("app", (event, data) => {
+brs.subscribe("web-app", (event, data) => {
     if (event === "loaded") {
         currentApp = data;
         fileButton.style.visibility = "hidden";
         let infoHtml = data.title + "<br/>";
         infoHtml += data.subtitle + "<br/>";
-        infoHtml += data.version;
-        channelInfo.innerHTML = infoHtml;
-        channelIcons("hidden");
+        if (data.version.trim() !== "") {
+            infoHtml += "v" + data.version;
+        }
+        appInfo.innerHTML = infoHtml;
+        appIconsVisibility("hidden");
         loading.style.visibility = "hidden";
     } else if (event === "started") {
         currentApp = data;
@@ -69,10 +112,10 @@ brs.subscribe("app", (event, data) => {
             brs.terminate("EXIT_USER_NAV");
             currentApp = { id: "", running: false };
             currentZip = null;
-            loadZip(data.app);
+            loadZip(data.app, data.params);
         }
     } else if (event === "browser") {
-        if (data?.url && currentZip) {
+        if (data?.url) {
             openBrowser(data.url, data.width, data.height);
         }
     } else if (event === "closed" || event === "error") {
@@ -83,7 +126,7 @@ brs.subscribe("app", (event, data) => {
         }
     } else if (event === "version") {
         console.info(`Interpreter Library v${data}`);
-        mountZip("./channels/data.zip");
+        mountZip("./apps/data.zip");
     }
 });
 brs.initialize(customDeviceInfo, {
@@ -91,6 +134,7 @@ brs.initialize(customDeviceInfo, {
     customKeys: customKeys,
     showStats: true,
 });
+
 // File selector
 const fileSelector = document.getElementById("file");
 fileButton.onclick = function () {
@@ -119,6 +163,11 @@ passwordDialog.addEventListener("close", (e) => {
     document.forms.passwordForm.password.value = "";
 });
 
+/**
+ * Run files from the file system loaded from the purple button
+ * @param {File} file - File object to be executed
+ * @param {string} password - Password to decrypt the `bpk` file
+ */
 function runFile(file, password = "") {
     const reader = new FileReader();
     const fileExt = file?.name.split(".").pop()?.toLowerCase() ?? "";
@@ -127,13 +176,17 @@ function runFile(file, password = "") {
             // file is loaded
             if (password !== null) {
                 currentZip = evt.target.result;
-                brs.execute(file.name, currentZip, {
-                    clearDisplayOnExit: true,
-                    muteSound: false,
-                    execSource: "auto-run-dev",
-                    password: password,
-                    debugOnCrash: true,
-                });
+                brs.execute(
+                    file.name,
+                    currentZip,
+                    {
+                        clearDisplayOnExit: true,
+                        muteSound: false,
+                        password: password,
+                        debugOnCrash: true,
+                    },
+                    new Map([["source", "auto-run-dev"]])
+                );
             }
         };
         reader.onerror = function (evt) {
@@ -143,22 +196,41 @@ function runFile(file, password = "") {
     }
 }
 
-// Download Zip
-function loadZip(zip) {
+/**
+ * Downloads an app package from the server and execute it
+ * @param {string} appId the path to the zip file
+ */
+function loadZip(appId, params) {
     if (currentApp.running) {
+        console.warn("There is an App already running!");
         return;
     }
+    const app = appList.find((app) => app.id === appId);
+    if (!app) {
+        console.error(`App not found: ${appId}!`);
+        return;
+    }
+    console.log(`Selected App: ${app.id} - ${app.title}`);
     display.style.opacity = 0;
     loading.style.visibility = "visible";
-    channelIcons("visible");
+    appIconsVisibility("visible");
     fileSelector.value = null;
-    fetch(zip)
+
+    fetch(app.path)
         .then(function (response) {
             if (response.status === 200 || response.status === 0) {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
                         currentZip = zipData;
-                        brs.execute(zip, zipData, { execSource: "homescreen" });
+                        if (!params) {
+                            params = new Map([["source", "homescreen"]]);
+                        }
+                        brs.execute(
+                            app.path,
+                            zipData,
+                            { entryPoint: true, debugOnCrash: false },
+                            params,
+                        );
                         display.focus();
                     });
                 });
@@ -195,11 +267,11 @@ function closeApp() {
     currentApp = { id: "", running: false };
     currentZip = null;
     display.style.opacity = 0;
-    channelInfo.innerHTML = "<br/>";
+    appInfo.innerHTML = "<br/>";
     fileButton.style.visibility = "visible";
     loading.style.visibility = "hidden";
     stats.style.visibility = "hidden";
-    channelIcons("visible");
+    appIconsVisibility("visible");
     fileSelector.value = null;
     if (document.fullscreenElement) {
         document.exitFullscreen().catch((err) => {
@@ -234,14 +306,11 @@ display.addEventListener("mousedown", function (event) {
     }
 });
 
-// Channel icons Visibility
-function channelIcons(visibility) {
-    if (channel4) {
-        channel1.style.visibility = visibility;
-        channel2.style.visibility = visibility;
-        channel3.style.visibility = visibility;
-        channel4.style.visibility = visibility;
-    }
+// App icons Visibility
+function appIconsVisibility(visibility) {
+    appIcons.forEach((icon) => {
+        icon.style.visibility = visibility;
+    });
 }
 
 function parseVersionString(str) {
@@ -293,6 +362,10 @@ function openBrowser(url, width, height) {
     }
     if (!url.startsWith("file:///pkg_")) {
         console.error("Error: Invalid local file path!", data.url);
+        return;
+    }
+    if (!currentZip) {
+        console.error("Error: No zip file loaded!", data.url);
         return;
     }
     const Buffer = BrowserFS.BFSRequire("buffer").Buffer;
@@ -392,7 +465,7 @@ function openPopup(url, width, height) {
     if (newWindow) {
         newWindow.focus();
     } else {
-        console.error("Failed to open popup window");
+        console.error("Failed to open popup window!");
     }
     return newWindow;
 }

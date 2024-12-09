@@ -15,7 +15,6 @@ module.exports = {
     "plugins": [
         "eslint-plugin-import",
         "eslint-plugin-jsdoc",
-        "eslint-plugin-react",
         "@typescript-eslint"
     ],
     "root": true,

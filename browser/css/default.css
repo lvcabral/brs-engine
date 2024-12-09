@@ -10,9 +10,6 @@ body {
     z-index: 1;
 }
 
-/* * {
-	border: 1px solid #f00 !important;
-  } */
 #container {
     margin: 0 auto;
     background: whiteSmoke;
@@ -59,7 +56,7 @@ body {
     visibility: hidden;
 }
 
-#channelInfo {
+#appInfo {
     position: absolute;
     left: 320px;
     top: 560px;
@@ -67,7 +64,7 @@ body {
     z-index: 30;
 }
 
-#channel1 {
+#app01 {
     position: absolute;
     left: 398px;
     top: 135px;
@@ -76,7 +73,7 @@ body {
     z-index: 30;
 }
 
-#channel2 {
+#app02 {
     position: absolute;
     left: 541px;
     top: 135px;
@@ -85,7 +82,7 @@ body {
     z-index: 30;
 }
 
-#channel3 {
+#app03 {
     position: absolute;
     left: 683px;
     top: 135px;
@@ -94,7 +91,7 @@ body {
     z-index: 30;
 }
 
-#channel4 {
+#app04 {
     position: absolute;
     left: 398px;
     top: 245px;
@@ -103,7 +100,7 @@ body {
     z-index: 30;
 }
 
-#channel5 {
+#app05 {
     position: absolute;
     left: 541px;
     top: 245px;
@@ -112,7 +109,7 @@ body {
     z-index: 30;
 }
 
-#channel6 {
+#app06 {
     position: absolute;
     left: 683px;
     top: 245px;
@@ -121,7 +118,7 @@ body {
     z-index: 30;
 }
 
-#channel7 {
+#app07 {
     position: absolute;
     left: 398px;
     top: 354px;
@@ -130,7 +127,7 @@ body {
     z-index: 30;
 }
 
-#channel8 {
+#app08 {
     position: absolute;
     left: 541px;
     top: 354px;
@@ -139,7 +136,7 @@ body {
     z-index: 30;
 }
 
-#channel9 {
+#app09 {
     position: absolute;
     left: 683px;
     top: 354px;
@@ -322,4 +319,15 @@ button.modal_dialog_cancel {
     border: 1px solid #662d91;
     background-color: #fff;
     color: #662d91;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.icon-button img {
+    display: block;
 }

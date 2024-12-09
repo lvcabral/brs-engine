@@ -6,8 +6,14 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// Default Device Information
-// Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
+/* Device Simulation Information Interface
+ *
+ * This interface is used to simulate a Roku device environment in the engine.
+ * It feeds the interpreter with several device features like registry, fonts,
+ * audio codecs, video formats, and other device information provided by `roDeviceInfo`.
+ *
+ * Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
+ */
 export interface DeviceInfo {
     [key: string]: any;
     developerId: string;
@@ -35,11 +41,15 @@ export interface DeviceInfo {
     registry?: Map<string, string>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
-    context?: RunContext;
+    appList?: AppData[];
+    entryPoint?: boolean;
+    stopOnCrash?: boolean;
+    runContext?: RunContext;
 }
 
+// Default Device Information
 export const defaultDeviceInfo: DeviceInfo = {
-    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data
+    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "BSC.50E04330A", // v11.5
@@ -64,27 +74,100 @@ export const defaultDeviceInfo: DeviceInfo = {
     maxFps: 60,
 };
 
+export function isDeviceInfo(value: any): value is DeviceInfo {
+    return (
+        value &&
+        typeof value.developerId === "string" &&
+        typeof value.friendlyName === "string" &&
+        typeof value.deviceModel === "string" &&
+        typeof value.firmwareVersion === "string" &&
+        typeof value.clientId === "string" &&
+        typeof value.RIDA === "string" &&
+        typeof value.countryCode === "string" &&
+        typeof value.timeZone === "string" &&
+        typeof value.locale === "string" &&
+        typeof value.captionLanguage === "string" &&
+        typeof value.clockFormat === "string" &&
+        typeof value.displayMode === "string" &&
+        typeof value.defaultFont === "string" &&
+        typeof value.fontPath === "string" &&
+        (value.fonts instanceof Map || value.fonts === undefined) &&
+        typeof value.maxSimulStreams === "number" &&
+        Array.isArray(value.customFeatures) &&
+        typeof value.connectionType === "string" &&
+        Array.isArray(value.localIps) &&
+        typeof value.startTime === "number" &&
+        typeof value.audioVolume === "number" &&
+        typeof value.maxFps === "number" &&
+        (value.registry instanceof Map || value.registry === undefined) &&
+        (value.audioCodecs instanceof Array || value.audioCodecs === undefined) &&
+        (value.videoFormats instanceof Map || value.videoFormats === undefined) &&
+        (value.appList instanceof Array || value.appList === undefined) &&
+        (typeof value.entryPoint === "boolean" || value.entryPoint === undefined) &&
+        (typeof value.stopOnCrash === "boolean" || value.stopOnCrash === undefined) &&
+        (value.runContext instanceof Object || value.runContext === undefined)
+    );
+}
+
+/* Execution Payload Interface
+ *
+ * This interface is used to provide information to the interpreter about the
+ * device and app that will be executed. It contains the DeviceInfo object,
+ * the app manifest, source code, deep link, encryption password, paths,
+ * some execution flags and file system paths.
+ *
+ */
 export type AppPayload = {
     device: DeviceInfo;
+    launchTime: number;
     manifest: Map<string, string>;
-    input: Map<string, string>;
-    paths: AppFilePath[];
-    brs: string[];
+    deepLink: Map<string, string>;
+    paths: PkgFilePath[];
+    source: string[];
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     password?: string;
-    entryPoint?: boolean;
-    stopOnCrash?: boolean;
     root?: string;
     ext?: string;
 };
 
-export type AppFilePath = {
+export function isAppPayload(value: any): value is AppPayload {
+    return (
+        value &&
+        isDeviceInfo(value.device) &&
+        typeof value.launchTime === "number" &&
+        value.manifest instanceof Map &&
+        value.deepLink instanceof Map &&
+        Array.isArray(value.paths) &&
+        Array.isArray(value.source) &&
+        (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
+        (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
+        (typeof value.password === "string" || value.password === undefined) &&
+        (typeof value.root === "string" || value.root === undefined) &&
+        (typeof value.ext === "string" || value.ext === undefined)
+    );
+}
+
+/* Package File Path Interface
+ *
+ * This interface is used to provide information about the paths to the
+ * source code and pcode files that are available in the app package.
+ * It is sent to the interpreter via `ExecPayload.paths`.
+ *
+ */
+export type PkgFilePath = {
     id: number;
     url: string;
     type: "source" | "pcode";
 };
 
+/* App Exit Reason Enumerator
+ *
+ * This enumerator is used to provide information about the reason
+ * why the app was terminated.
+ *
+ * Roku documentation: https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter
+ */
 export enum AppExitReason {
     UNKNOWN = "EXIT_UNKNOWN",
     CRASHED = "EXIT_BRIGHTSCRIPT_CRASH",
@@ -97,21 +180,67 @@ export enum AppExitReason {
     UNPACK = "EXIT_UNPACK_FAILED",
 }
 
+/* App Data Interface
+ *
+ * This interface is used to provide information about the apps that are
+ * available in the device and status of the app that is currently running.
+ *
+ */
 export type AppData = {
     id: string;
-    file: string;
     title: string;
-    subtitle: string;
+    subtitle?: string;
     version: string;
-    execSource: string;
-    exitReason: AppExitReason;
-    password: string;
-    clearDisplay: boolean;
-    debugOnCrash: boolean;
-    audioMetadata: boolean;
-    running: boolean;
+    path?: string;
+    icon?: string;
+    password?: string;
+    exitReason?: AppExitReason;
+    params?: Map<string, string>;
+    running?: boolean;
 };
 
+// Function to check if a value is an AppData object
+export function isAppData(value: any): value is AppData {
+    return (
+        value &&
+        typeof value.id === "string" &&
+        typeof value.title === "string" &&
+        typeof value.version === "string" &&
+        (typeof value.path === "string" || value.path === undefined) &&
+        (typeof value.icon === "string" || value.icon === undefined) &&
+        (typeof value.password === "string" || value.password === undefined) &&
+        (typeof value.exitReason === "string" || value.exitReason === undefined) &&
+        (value.params instanceof Map || value.params === undefined) &&
+        (typeof value.running === "boolean" || value.running === undefined)
+    );
+}
+
+/**
+ * NDK Start Interface
+ */
+export type NDKStart = {
+    app: "roku_browser" | "SDKLauncher";
+    params: string[];
+    env: string[];
+};
+
+// Function to check if a value is an NDKStart object
+export function isNDKStart(value: any): value is NDKStart {
+    return (
+        value &&
+        typeof value.app === "string" &&
+        ["roku_browser", "SDKLauncher"].includes(value.app) &&
+        Array.isArray(value.params) &&
+        Array.isArray(value.env)
+    );
+}
+
+/* Run Context Interface
+ *
+ * This interface is used to provide information about the environment
+ * where the engine is running.
+ *
+ */
 export type RunContext = {
     inElectron: boolean;
     inChromium: boolean;
@@ -225,6 +354,7 @@ export const audioExt = new Set<string>([
 
 export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
+// Function to parse the Manifest file into a Map
 export function parseManifest(contents: string) {
     let keyValuePairs = contents
         // for each line
@@ -259,6 +389,7 @@ export function parseManifest(contents: string) {
     return new Map<string, string>(keyValuePairs);
 }
 
+// Function to return the Exit Reason from the enumerator based on a string
 export function getExitReason(value: string): AppExitReason {
     if (Object.values(AppExitReason).includes(value as any)) {
         return value as AppExitReason;
@@ -267,6 +398,7 @@ export function getExitReason(value: string): AppExitReason {
     }
 }
 
+// Function to convert a number to a hexadecimal string
 export function numberToHex(value: number, pad: string = ""): string {
     return (value >>> 0).toString(16).padStart(8, pad);
 }
