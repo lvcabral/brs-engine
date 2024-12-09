@@ -480,7 +480,7 @@ describe("end to end brightscript functions", () => {
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "dev",
             "true",
-            "0.0.1",
+            "0.0.0",
             "BRS App",
             "",
             "34c6fceca75e456f25e7e99531e2425c6c1de443",
