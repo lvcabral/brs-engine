@@ -5,7 +5,7 @@ const { StatsWriterPlugin } = require("webpack-stats-plugin");
 module.exports = (env) => {
     let mode, sourceMap;
     let libName = "brs";
-    let distPath = "browser/lib";
+    let distPath = "../browser/lib";
     if (env.production) {
         mode = "production";
         sourceMap = false;
@@ -29,6 +29,9 @@ module.exports = (env) => {
                     {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
+                        options: {
+                            configFile: "tsconfig.json",
+                        },
                         exclude: /node_modules/,
                     },
                     {
@@ -107,6 +110,9 @@ module.exports = (env) => {
                     {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
+                        options: {
+                            configFile: "tsconfig.json",
+                        },
                         exclude: /node_modules/,
                     },
                     {

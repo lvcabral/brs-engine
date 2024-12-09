@@ -5,7 +5,7 @@ const ShebangPlugin = require('webpack-shebang-plugin');
 module.exports = (env) => {
     let mode, sourceMap;
     let libName = "brs";
-    let cliPath = "bin";
+    let cliPath = "../bin";
     if (env.production) {
         mode = "production";
         sourceMap = false;
@@ -30,7 +30,7 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
                         options: {
-                            configFile: "tsconfig.cli.json",
+                            configFile: "config/tsconfig.cli.json",
                         },
                         exclude: /node_modules/,
                     },
@@ -122,7 +122,7 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
                         options: {
-                            configFile: "tsconfig.cli.json",
+                            configFile: "config/tsconfig.cli.json",
                         },
                         exclude: /node_modules/,
                     },

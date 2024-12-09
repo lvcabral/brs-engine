@@ -33,10 +33,10 @@
     "brs-cli": "./bin/brs.cli.js"
   },
   "scripts": {
-    "build": "webpack --env development && webpack --config webpack.cli.config.js --env development",
-    "build:libs": "webpack --env development",
-    "build:cli": "webpack --config webpack.cli.config.js --env development",
-    "release": "webpack --env production && webpack --config webpack.cli.config.js --env production",
+    "build": "webpack --config ./config/webpack.config.js --env development && webpack --config ./config/webpack.cli.config.js --env development",
+    "build:libs": "webpack --config ./config/webpack.config.js --env development",
+    "build:cli": "webpack --config ./config/webpack.cli.config.js --env development",
+    "release": "webpack --config ./config/webpack.config.js --env production && webpack --config ./config/webpack.cli.config.js --env production",
     "start": "webpack serve --open",
     "stats": "webpack-bundle-analyzer ./browser/lib/stats.json",
     "stats:api": "webpack-bundle-analyzer ./browser/lib/stats-api.json",
