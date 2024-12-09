@@ -6,7 +6,8 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { player, subscribeVideo } from "./video";
-import { SubscribeCallback, context } from "./util";
+import { SubscribeCallback } from "./util";
+import { platform } from "../worker/common";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -264,7 +265,7 @@ export function showDisplay() {
 // Clear Display and Buffer
 export function clearDisplay() {
     window.cancelAnimationFrame(lastFrameReq);
-    if (ctx && context.inSafari) {
+    if (ctx && platform.inSafari) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     } else if (ctx) {
