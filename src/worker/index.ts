@@ -315,7 +315,7 @@ export async function executeFile(
     // Run App
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
-        result = await runBinary(interpreter, sourceResult, payload);
+        result = await runEncrypted(interpreter, sourceResult, payload);
     } else {
         result = await runSource(interpreter, sourceResult.sourceMap, payload);
     }
@@ -690,13 +690,13 @@ async function runSource(
             const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
             return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
         }
-        exitReason = await execApp(interpreter, parseResult.statements, payload, sourceMap);
+        exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
     }
     return { exitReason: exitReason };
 }
 
 /**
- * Decode and run a binary encrypted package of BrightScript code.
+ * Decode and run an encrypted package of BrightScript code.
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  * @param sourceResult with the pcode data and iv.
@@ -704,7 +704,7 @@ async function runSource(
  *
  * @returns RunResult with the exit reason.
  */
-async function runBinary(
+async function runEncrypted(
     interpreter: Interpreter,
     sourceResult: SourceResult,
     payload: AppPayload
@@ -732,6 +732,24 @@ async function runBinary(
         return { exitReason: AppExitReason.UNPACK };
     }
     // Execute the decrypted source code
+    try {
+        const allStatements = parseDecodedTokens(interpreter, decodedTokens);
+        const exitReason = await executeApp(interpreter, allStatements, payload);
+        return { exitReason: exitReason };
+    } catch (err: any) {
+        postMessage(`error,Error executing the app: ${err.message}`);
+        return { exitReason: AppExitReason.CRASHED };
+    }
+}
+
+/**
+ * Fun to parse the decoded tokens and return the statements to be executed.
+ * @param interpreter an interpreter to use when executing the source code.
+ * @param decodedTokens a Map with the decoded tokens to parse.
+ *
+ * @returns the parsed statements array.
+ */
+function parseDecodedTokens(interpreter: Interpreter, decodedTokens: Map<string, any>) {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<Stmt.Statement>();
@@ -763,7 +781,7 @@ async function runBinary(
         if (token.kind === "Eof") {
             const parseResults = parser.parse(tokens);
             if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
-                return { exitReason: AppExitReason.CRASHED };
+                throw new Error("Error parsing the tokens!");
             }
             parseLibraries(parseResults, lib, interpreter.manifest);
             allStatements.push(...parseResults.statements);
@@ -777,8 +795,7 @@ async function runBinary(
             allStatements.push(...libParse.statements);
         }
     });
-    const exitReason = await execApp(interpreter, allStatements, payload);
-    return { exitReason: exitReason };
+    return allStatements;
 }
 
 /**
@@ -790,7 +807,7 @@ async function runBinary(
  *
  * @returns the exit reason.
  */
-async function execApp(
+async function executeApp(
     interpreter: Interpreter,
     statements: Stmt.Statement[],
     payload: AppPayload,
