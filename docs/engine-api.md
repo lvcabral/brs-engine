@@ -47,7 +47,7 @@ Check the [documentation](docs/integrating.md) to learn how to start using it. T
 | control    | Triggered when a control key is sent to the engine | object: `{key: string, mod: number}`. The property `key` contains an [ECP key code](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md#keypress-key-values) and `mod` contains `0` for keydown or `100` for keyup |
 | redraw     | Triggered when the display canvas is redrawn/resized | boolean: If `true` the display canvas is in **full screen** mode |
 | resolution | Triggered when the emulated screen resolution changes (controlled via BrightScript) | object: `{width: integer, height: integer}` |
-| launch     | Triggered when the method `roNDK.start()` is called from BrightScript | object: `{app: string, params: string}`. The object's `params` property is formated as CSV |
-| browser    | Triggered when the library sub `RokuBrowser` is called from BrightScript | object: `{url: string, width: integer, height: integer}`. The parameters `width` and `height` defines the dimentions of the browser window |
+| launch     | Triggered when the methods `roAppManager.launchApp()` or `roNDK.start()` (with `SDKLauncher` app) are called from BrightScript | object: `{app: string, params: Map}`. |
+| browser    | Triggered when the library sub `RokuBrowser` is called from BrightScript | object: `{url: string, width: integer, height: integer}`. The parameters `width` and `height` defines the dimensions of the browser window |
 | debug      | Triggered when debug messages arrive from the worker library (BrightScript Interpreter) | object: `{level: string, content: string}`, levels are: `print`, `beacon`, `warning`, `error`, `stop`, `pause`, `continue` |
 | error      | Triggered when the any execution exception happens on the API library | string: The message describing the error |
