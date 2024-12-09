@@ -1335,7 +1335,7 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zenfs/core@^1.6.6":
+"@zenfs/core@1.6.6":
   version "1.6.6"
   resolved "https://registry.yarnpkg.com/@zenfs/core/-/core-1.6.6.tgz#157b5a81285525b46f22bd9f1a5d9d3fa54d34fd"
   integrity sha512-dciOscuQfElSyS2pZJwhJ0EoKNxYsn227hwXmZi+gcAmaupcHdBuAS52QA8iYmZR58PjhOljRAJAhWsXFpMsdQ==
