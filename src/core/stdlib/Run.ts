@@ -1,4 +1,4 @@
-import * as brs from "../";
+import * as brs from "..";
 import {
     BrsType,
     BrsComponent,

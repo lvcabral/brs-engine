@@ -33,7 +33,7 @@ import {
     AppPayload,
     AppExitReason,
     AppData,
-} from "../worker/common";
+} from "../core/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";

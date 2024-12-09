@@ -67,7 +67,7 @@ module.exports = (env) => {
             },
         },
         {
-            entry: "./src/worker/index.ts",
+            entry: "./src/core/index.ts",
             target: "node",
             mode: mode,
             devtool: sourceMap,

@@ -1,4 +1,4 @@
-import { BrsType } from "./";
+import { BrsType } from ".";
 
 export interface Boxable {
     box(): BrsType;
