@@ -413,7 +413,7 @@ export function getPlatform(): Platform {
             inAndroid = true;
         } else if (/CrOS/.test(ua)) {
             inChromeOS = true;
-        } else if (/iPad|iPhone|iPod/.test(navigator.platform)) {
+        } else if ((/iP[ao]d|iPhone/i).test(ua)) {
             inIOS = true;
         } else if (/Mac OS/.test(ua) && !/like Mac OS/.test(ua)) {
             inMacOS = true;
