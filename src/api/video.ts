@@ -5,8 +5,8 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, context, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent } from "../worker/common";
+import { SubscribeCallback, saveDataBuffer } from "./util";
+import { BufferType, DataType, MediaEvent, platform } from "../worker/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -172,7 +172,7 @@ export function switchVideoState(play: boolean) {
 export function videoFormats() {
     const codecs: string[] = [];
     const containers: string[] = [];
-    if (context.inBrowser) {
+    if (platform.inBrowser) {
         // Mime and Codecs browser test page
         // https://cconcolato.github.io/media-mime-support/
         const formats = new Map([
@@ -198,7 +198,7 @@ export function videoFormats() {
         if (player.canPlayType("video/mp2t") !== "") {
             containers.push("ts");
         }
-        if (context.inChromium) {
+        if (platform.inChromium) {
             containers.push("mkv");
         }
     }

@@ -220,11 +220,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
         this.fileSystem = new FileSystem(this.options.root, this.options.ext);
-        Object.keys(defaultDeviceInfo).forEach((key) => {
+        for (const [key, value] of Object.entries(defaultDeviceInfo)) {
             if (!["registry", "fonts"].includes(key)) {
-                this.deviceInfo.set(key, defaultDeviceInfo[key]);
+                this.deviceInfo.set(key, value);
             }
-        });
+        }
         Object.keys(StdLib)
             .map((name) => (StdLib as any)[name])
             .filter((func) => func instanceof Callable)

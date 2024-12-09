@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
-import { bufferToBase64, parseCSV, SubscribeCallback, context } from "./util";
+import { bufferToBase64, parseCSV, SubscribeCallback } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
@@ -20,6 +20,7 @@ import {
     AppData,
     AppExitReason,
     DeviceInfo,
+    platform,
 } from "../worker/common";
 import models from "../worker/libraries/common/models.csv";
 import packageInfo from "../../package.json";
@@ -29,7 +30,6 @@ export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {
     models: parseCSV(models),
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
-    runContext: context,
 });
 
 // App Data
@@ -114,9 +114,9 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ id: 0, url: relativePath, type: "pcode" });
     } else if (lcasePath === "source/var") {
         paths.push({ id: 1, url: relativePath, type: "pcode" });
-    } else if (context.inBrowser && audioExt.has(ext)) {
+    } else if (platform.inBrowser && audioExt.has(ext)) {
         addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
-    } else if (context.inBrowser && videoExt.has(ext)) {
+    } else if (platform.inBrowser && videoExt.has(ext)) {
         addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
     }
 }
@@ -148,7 +148,7 @@ function processManifest(content: string): number {
     if (icon?.slice(0, 5) === "pkg:/") {
         iconFile = currentZip[icon.slice(5)];
         if (iconFile) {
-            if (context.inBrowser) {
+            if (platform.inBrowser) {
                 bufferToBase64(iconFile).then(function (iconBase64: string) {
                     notifyAll("icon", iconBase64);
                 });

@@ -49,12 +49,40 @@ By default, the feature `simulation_engine` is defined internally in the library
 
 ## App Manifest
 
-There is also a way BrightScript apps can change the behavior of the simulation engine, by using custom `manifest` entries. Currently the only custom option is:
+There is also a way BrightScript apps can change the behavior of the simulation engine, by using special `manifest` entries. Currently the only option is:
 
 - `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
 
-Note: custom `manifest` entries are ignored by Roku Devices.
+Note: this special `manifest` entry is ignored by Roku Devices.
 
 ## Control Mapping
 
 It is also possible to customize the Remote Control mapping for the Keyboard and Game Pad, either by sending the custom mapping in the `Options` parameter when running `initialize()` method, or by using `setCustomKeys()` and `setCustomPadButtons()` later on. Check the details in the [engine API documentation](engine-api.md). To know the default mapping please check the source code at `src/api/control.ts`.
+
+## Platform Details
+
+The engine will also extend the results of the method `roDeviceInfo.getModelDetails()` with several attributes giving information about the platform the app is being executed:
+
+```brs
+brs> di = createObject("roDeviceInfo")
+
+brs> print di.getModelDetails()
+<Component: roAssociativeArray> =
+{
+    Manufacturer: ""
+    ModelNumber: "3930X"
+    VendorName: "Roku"
+    VendorUSBName: "Roku"
+    inAndroid: false
+    inBrowser: false
+    inChromeOS: false
+    inChromium: false
+    inElectron: false
+    inFirefox: false
+    inIOS: false
+    inLinux: false
+    inMacOS: true
+    inSafari: false
+    inWindows: false
+}
+```
