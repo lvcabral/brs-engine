@@ -13,7 +13,7 @@ import {
     keyBufferSize,
     keyArraySpots,
     platform,
-} from "../worker/common";
+} from "../core/common";
 /// #if BROWSER
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 /// #endif

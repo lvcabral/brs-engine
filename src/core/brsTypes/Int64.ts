@@ -1,5 +1,5 @@
 import Long from "long";
-import { BrsType, BrsBoolean, isNumberComp } from "./";
+import { BrsType, BrsBoolean, isNumberComp } from ".";
 import { BrsNumber, Numeric } from "./BrsNumber";
 import { ValueKind, Comparable } from "./BrsType";
 import { Float } from "./Float";

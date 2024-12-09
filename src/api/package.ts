@@ -21,8 +21,8 @@ import {
     AppExitReason,
     DeviceInfo,
     platform,
-} from "../worker/common";
-import models from "../worker/libraries/common/models.csv";
+} from "../core/common";
+import models from "../core/libraries/common/models.csv";
 import packageInfo from "../../package.json";
 
 // Device Data Object

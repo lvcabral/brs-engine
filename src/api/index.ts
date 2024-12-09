@@ -20,7 +20,7 @@ import {
     isAppData,
     isNDKStart,
     platform,
-} from "../worker/common";
+} from "../core/common";
 
 import {
     source,

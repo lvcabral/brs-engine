@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { DataType, MediaEvent } from "../worker/common";
+import { DataType, MediaEvent } from "../core/common";
 import { Howl, Howler } from "howler";
 
 // Sound Objects

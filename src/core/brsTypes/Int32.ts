@@ -1,15 +1,15 @@
-import { BrsType, BrsBoolean, isNumberComp } from "./";
-import { ValueKind, Comparable } from "./BrsType";
+import { ValueKind, Comparable, BrsBoolean } from "./BrsType";
 import { BrsNumber, Numeric } from "./BrsNumber";
-import { Int32 } from "./Int32";
-import { Int64 } from "./Int64";
-import { Float } from "./Float";
-import { RoDouble } from "./components/RoDouble";
+import { BrsType, isNumberComp } from ".";
 import { Boxable } from "./Boxing";
+import { Float } from "./Float";
+import { Double } from "./Double";
+import { Int64 } from "./Int64";
+import { RoInt } from "./components/RoInt";
 import Long from "long";
 
-export class Double implements Numeric, Comparable, Boxable {
-    readonly kind = ValueKind.Double;
+export class Int32 implements Numeric, Comparable, Boxable {
+    readonly kind = ValueKind.Int32;
     private readonly value: number;
 
     getValue(): number {
@@ -17,36 +17,47 @@ export class Double implements Numeric, Comparable, Boxable {
     }
 
     toBoolean(): boolean {
-        return Math.trunc(this.value) !== 0;
+        return this.value !== 0;
     }
 
     /**
-     * Creates a new BrightScript double-precision value representing the provided `value`.
-     * @param value the value to store in the BrightScript double, rounded to 64-bit (double)
-     *              precision.
+     * Creates a new BrightScript 32-bit integer value representing the provided `value`.
+     * @param value the value to store in the BrightScript number, truncated to a 32-bit
+     *              integer.
      */
     constructor(value: number | Long) {
-        this.value = value instanceof Long ? value.toNumber() : value;
+        if (value instanceof Long) {
+            // RBI ignores the 32 most significant bits when converting a 64-bit int to a 32-bit int, effectively
+            // performing a bitwise AND with `0x00000000FFFFFFFF`.  Since Long already tracks the lower and upper
+            // portions as separate 32-bit values, we can simply extract the least-significant portion.
+            value = value.low;
+        }
+        this.value = Math.trunc(value);
     }
 
     /**
-     * Creates a new BrightScript double-precision value representing the floating point value
-     * contained in `asString`.
-     * @param asString the string representation of the value to store in the BrightScript double.
-     *                 Will be rounded to 64-bit (double) precision.
-     * @returns a BrightScript double value representing `asString`.
+     * Creates a new BrightScript 32-bit integer value representing the integer contained in
+     * `asString`.
+     * @param asString the string representation of the value to store in the BrightScript 32-bit
+     *                 int. Will be truncated to a 32-bit integer.
+     * @returns a BrightScript 32-bit integer value representing `asString`.
      */
-    static fromString(asString: string): Double {
-        return new Double(Number.parseFloat(asString));
+    static fromString(asString: string): Int32 {
+        if (asString.toLowerCase().startsWith("&h")) {
+            asString = asString.slice(2); // remove "&h" from the string representation
+            return new Int32(Number.parseInt(asString, 16));
+        }
+        return new Int32(Number.parseFloat(asString));
     }
 
     add(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
-            case ValueKind.Int64:
-                // TODO: Confirm that (double) + (int64) -> (double)
-                return new Double(this.getValue() + rhs.getValue().toNumber());
             case ValueKind.Int32:
+                return new Int32((this.getValue() + rhs.getValue()) | 0);
+            case ValueKind.Int64:
+                return new Int64(rhs.getValue().add(this.getValue()));
             case ValueKind.Float:
+                return new Float(this.getValue() + rhs.getValue());
             case ValueKind.Double:
                 return new Double(this.getValue() + rhs.getValue());
         }
@@ -54,10 +65,12 @@ export class Double implements Numeric, Comparable, Boxable {
 
     subtract(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
-            case ValueKind.Int64:
-                return new Double(this.getValue() - rhs.getValue().toNumber());
             case ValueKind.Int32:
+                return new Int32((this.getValue() - rhs.getValue()) | 0);
+            case ValueKind.Int64:
+                return new Int64(this.getValue()).subtract(rhs);
             case ValueKind.Float:
+                return new Float(this.getValue() - rhs.getValue());
             case ValueKind.Double:
                 return new Double(this.getValue() - rhs.getValue());
         }
@@ -65,10 +78,12 @@ export class Double implements Numeric, Comparable, Boxable {
 
     multiply(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
-            case ValueKind.Int64:
-                return new Double(this.getValue() * rhs.getValue().toNumber());
             case ValueKind.Int32:
+                return new Int32((this.getValue() * rhs.getValue()) | 0);
+            case ValueKind.Int64:
+                return new Int64(rhs.getValue().multiply(this.getValue()));
             case ValueKind.Float:
+                return new Float(this.getValue() * rhs.getValue());
             case ValueKind.Double:
                 return new Double(this.getValue() * rhs.getValue());
         }
@@ -76,10 +91,12 @@ export class Double implements Numeric, Comparable, Boxable {
 
     divide(rhs: BrsNumber): Float | Double {
         switch (rhs.kind) {
-            case ValueKind.Int64:
-                return new Double(this.getValue() / rhs.getValue().toNumber());
             case ValueKind.Int32:
+                return new Float(this.getValue() / rhs.getValue());
+            case ValueKind.Int64:
+                return new Float(this.getValue() / rhs.getValue().toNumber());
             case ValueKind.Float:
+                return new Float(this.getValue() / rhs.getValue());
             case ValueKind.Double:
                 return new Double(this.getValue() / rhs.getValue());
         }
@@ -88,22 +105,25 @@ export class Double implements Numeric, Comparable, Boxable {
     modulo(rhs: BrsNumber): BrsNumber {
         switch (rhs.kind) {
             case ValueKind.Int32:
+                return new Int32(this.getValue() % rhs.getValue());
             case ValueKind.Float:
+                return new Float(Math.trunc(this.getValue() % rhs.getValue()));
             case ValueKind.Double:
                 return new Double(Math.trunc(this.getValue() % rhs.getValue()));
             case ValueKind.Int64:
-                return new Double(Math.trunc(this.getValue() % rhs.getValue().toNumber()));
+                return new Int64(this.getValue()).modulo(rhs);
         }
     }
 
     intDivide(rhs: BrsNumber): Int32 | Int64 {
         switch (rhs.kind) {
-            case ValueKind.Int64:
-                return new Int64(Math.trunc(this.getValue() / rhs.getValue().toNumber()));
             case ValueKind.Int32:
             case ValueKind.Float:
             case ValueKind.Double:
+                // TODO: Is 32-bit precision enough here?
                 return new Int32(Math.trunc(this.getValue() / rhs.getValue()));
+            case ValueKind.Int64:
+                return new Int64(Math.trunc(this.getValue() / rhs.getValue().toNumber()));
         }
     }
 
@@ -112,9 +132,9 @@ export class Double implements Numeric, Comparable, Boxable {
             case ValueKind.Int32:
             case ValueKind.Float:
             case ValueKind.Double:
-                return new Int32(Math.trunc(this.getValue()) << Math.trunc(rhs.getValue()));
+                return new Int32(this.getValue() << Math.trunc(rhs.getValue()));
             case ValueKind.Int64:
-                return new Int32(Math.trunc(this.getValue()) << rhs.getValue().toNumber());
+                return new Int32(this.getValue() << rhs.getValue().toNumber());
         }
     }
 
@@ -123,9 +143,9 @@ export class Double implements Numeric, Comparable, Boxable {
             case ValueKind.Int32:
             case ValueKind.Float:
             case ValueKind.Double:
-                return new Int32(Math.trunc(this.getValue()) >> Math.trunc(rhs.getValue()));
+                return new Int32(this.getValue() >>> Math.trunc(rhs.getValue()));
             case ValueKind.Int64:
-                return new Int32(Math.trunc(this.getValue()) >> rhs.getValue().toNumber());
+                return new Int32(this.getValue() >>> rhs.getValue().toNumber());
         }
     }
 
@@ -144,10 +164,12 @@ export class Double implements Numeric, Comparable, Boxable {
 
     and(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean {
         switch (rhs.kind) {
+            case ValueKind.Int32:
+                return new Int32(this.getValue() & rhs.getValue());
             case ValueKind.Int64:
                 return new Int64(this.getValue()).and(rhs);
-            case ValueKind.Int32:
             case ValueKind.Float:
+                return new Int32(this.getValue() & rhs.getValue());
             case ValueKind.Double:
                 return new Int32(this.getValue() & rhs.getValue());
             case ValueKind.Boolean:
@@ -157,10 +179,12 @@ export class Double implements Numeric, Comparable, Boxable {
 
     or(rhs: BrsNumber | BrsBoolean): BrsNumber | BrsBoolean {
         switch (rhs.kind) {
+            case ValueKind.Int32:
+                return new Int32(this.getValue() | rhs.getValue());
             case ValueKind.Int64:
                 return new Int64(this.getValue()).or(rhs);
-            case ValueKind.Int32:
             case ValueKind.Float:
+                return new Int32(this.getValue() | rhs.getValue());
             case ValueKind.Double:
                 return new Int32(this.getValue() | rhs.getValue());
             case ValueKind.Boolean:
@@ -206,6 +230,6 @@ export class Double implements Numeric, Comparable, Boxable {
     }
 
     box() {
-        return new RoDouble(this);
+        return new RoInt(this);
     }
 }

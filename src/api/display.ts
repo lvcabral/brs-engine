@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { platform } from "../worker/common";
+import { platform } from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display

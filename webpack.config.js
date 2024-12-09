@@ -20,7 +20,7 @@ module.exports = (env) => {
     };
     return [
         {
-            entry: "./src/worker/index.ts",
+            entry: "./src/core/index.ts",
             target: "webworker",
             mode: mode,
             devtool: sourceMap,
