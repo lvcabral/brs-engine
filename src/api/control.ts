@@ -5,8 +5,15 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, context } from "./util";
-import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots } from "../worker/common";
+import { SubscribeCallback } from "./util";
+import {
+    DataType,
+    RemoteType,
+    DebugCommand,
+    keyBufferSize,
+    keyArraySpots,
+    platform,
+} from "../worker/common";
 /// #if BROWSER
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 /// #endif
@@ -174,7 +181,7 @@ keysMap.set("Shift+Escape", "home");
 keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
 keysMap.set("End", "play");
-if (context.inApple) {
+if (platform.inIOS || platform.inMacOS) {
     keysMap.set("Command+Backspace", "backspace");
     keysMap.set("Command+Enter", "play");
     keysMap.set("Command+ArrowLeft", "rev");

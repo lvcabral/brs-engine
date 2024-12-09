@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
+import { isPlatform } from "../../common";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
 /// #if !BROWSER
@@ -167,7 +168,12 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             });
             result.push({ name: new BrsString("VendorName"), value: new BrsString("Roku") });
             result.push({ name: new BrsString("VendorUSBName"), value: new BrsString("Roku") });
-            // TODO: Add the engine host platform info here
+            const platform = interpreter.deviceInfo.get("platform");
+            if (isPlatform(platform)) {
+                for (const [key, value] of Object.entries(platform)) {
+                    result.push({ name: new BrsString(key), value: BrsBoolean.from(value) });
+                }
+            }
             return new RoAssociativeArray(result);
         },
     });

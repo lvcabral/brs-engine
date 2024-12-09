@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, getNow, getWorkerLibPath, context, saveDataBuffer } from "./util";
+import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./util";
 
 import {
     AppExitReason,
@@ -19,6 +19,7 @@ import {
     getExitReason,
     isAppData,
     isNDKStart,
+    platform,
 } from "../worker/common";
 
 import {
@@ -113,7 +114,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             "videoFormats",
             "fonts",
             "password",
-            "runContext",
+            "platform",
         ];
         invalidKeys.forEach((key) => {
             if (key in customDeviceInfo) {
@@ -474,7 +475,7 @@ function workerCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
-        if (context.inBrowser) {
+        if (platform.inBrowser) {
             const storage: Storage = window.localStorage;
             deviceData.registry.forEach(function (value: string, key: string) {
                 storage.setItem(key, value);
@@ -483,13 +484,13 @@ function workerCallback(event: MessageEvent) {
         notifyAll("registry", event.data);
     } else if (event.data instanceof Array) {
         addSoundPlaylist(event.data);
-    } else if (event.data.audioPath && context.inBrowser) {
+    } else if (event.data.audioPath && platform.inBrowser) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
-    } else if (event.data.videoPlaylist && context.inBrowser) {
+    } else if (event.data.videoPlaylist && platform.inBrowser) {
         if (event.data.videoPlaylist instanceof Array) {
             addVideoPlaylist(event.data.videoPlaylist);
         }
-    } else if (event.data.videoPath && context.inBrowser) {
+    } else if (event.data.videoPath && platform.inBrowser) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });

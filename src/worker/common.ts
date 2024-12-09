@@ -44,10 +44,11 @@ export interface DeviceInfo {
     appList?: AppData[];
     entryPoint?: boolean;
     stopOnCrash?: boolean;
-    runContext?: RunContext;
+    platform?: Platform;
 }
 
 // Default Device Information
+export const platform = getPlatform();
 export const defaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
@@ -72,6 +73,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     audioVolume: 40,
     registry: new Map(),
     maxFps: 60,
+    platform: platform,
 };
 
 export function isDeviceInfo(value: any): value is DeviceInfo {
@@ -235,20 +237,43 @@ export function isNDKStart(value: any): value is NDKStart {
     );
 }
 
-/* Run Context Interface
+/* Platform Interface
  *
  * This interface is used to provide information about the environment
  * where the engine is running.
  *
  */
-export type RunContext = {
-    inElectron: boolean;
-    inChromium: boolean;
+export type Platform = {
     inBrowser: boolean;
+    inChromium: boolean;
+    inFirefox: boolean;
     inSafari: boolean;
-    inApple: boolean;
+    inElectron: boolean;
+    inAndroid: boolean;
     inIOS: boolean;
+    inMacOS: boolean;
+    inWindows: boolean;
+    inLinux: boolean;
+    inChromeOS: boolean;
 };
+
+// Function to check if a value is a Platform object
+export function isPlatform(value: any): value is Platform {
+    return (
+        value &&
+        typeof value.inBrowser === "boolean" &&
+        typeof value.inChromium === "boolean" &&
+        typeof value.inFirefox === "boolean" &&
+        typeof value.inSafari === "boolean" &&
+        typeof value.inElectron === "boolean" &&
+        typeof value.inAndroid === "boolean" &&
+        typeof value.inIOS === "boolean" &&
+        typeof value.inMacOS === "boolean" &&
+        typeof value.inWindows === "boolean" &&
+        typeof value.inLinux === "boolean" &&
+        typeof value.inChromeOS === "boolean"
+    );
+}
 
 // Shared array data types enumerator
 export enum DataType {
@@ -353,6 +378,75 @@ export const audioExt = new Set<string>([
 ]);
 
 export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
+
+// Check the platform where the library is running
+export function getPlatform(): Platform {
+    let inBrowser = false;
+    let inChromium = false;
+    let inFirefox = false;
+    let inSafari = false;
+    let inElectron = false;
+    let inAndroid = false;
+    let inChromeOS = false;
+    let inIOS = false;
+    let inMacOS = false;
+    let inLinux = false;
+    let inWindows = false;
+    if (typeof window !== "undefined") {
+        inBrowser = true;
+        inChromium =
+            ("chrome" in window || (window.Intl && "v8BreakIterator" in Intl)) && "CSS" in window;
+    }
+    if (typeof navigator !== "undefined" && typeof navigator.userAgent === "string") {
+        let ua = navigator.userAgent;
+        // Check Browsers
+        if (ua.indexOf("Electron") >= 0) {
+            inElectron = true;
+            inChromium = true;
+        } else if (/Firefox\D+(\d+)/.test(ua)) {
+            inFirefox = true;
+        } else if (/^((?!chrome|android).)*safari/i.test(ua)) {
+            inSafari = true;
+        }
+        // Check OS
+        if (/Android/.test(ua)) {
+            inAndroid = true;
+        } else if (/CrOS/.test(ua)) {
+            inChromeOS = true;
+        } else if (/iPad|iPhone|iPod/.test(navigator.platform)) {
+            inIOS = true;
+        } else if (/Mac OS/.test(ua) && !/like Mac OS/.test(ua)) {
+            inMacOS = true;
+        } else if (/Linux/.test(ua)) {
+            inLinux = true;
+        } else if (/Windows/.test(ua)) {
+            inWindows = true;
+        }
+    } else {
+        if (process.platform === "android") {
+            inAndroid = true;
+        } else if (process.platform === "darwin") {
+            inMacOS = true;
+        } else if (process.platform === "linux") {
+            inLinux = true;
+        } else if (process.platform === "win32") {
+            inWindows = true;
+        }
+    }
+    return {
+        inBrowser: inBrowser,
+        inChromium: inChromium,
+        inFirefox: inFirefox,
+        inSafari: inSafari,
+        inElectron: inElectron,
+        inAndroid: inAndroid,
+        inChromeOS: inChromeOS,
+        inIOS: inIOS,
+        inLinux: inLinux,
+        inMacOS: inMacOS,
+        inWindows: inWindows,
+    };
+}
 
 // Function to parse the Manifest file into a Map
 export function parseManifest(contents: string) {

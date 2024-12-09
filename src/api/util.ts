@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { RunContext, dataBufferIndex, dataBufferSize } from "../worker/common";
+import { dataBufferIndex, dataBufferSize } from "../worker/common";
 import packageInfo from "../../package.json";
 
 // Module callback function definition
@@ -35,42 +35,6 @@ export function getWorkerLibPath(): string {
     let libPath = getApiPath();
     libPath = libPath.replace(".api.js", `.worker.js?v=${packageInfo.version}`);
     return libPath;
-}
-
-// Check the context where the library is running
-export const context = getContext();
-function getContext(): RunContext {
-    let inElectron = false;
-    let inChromium = false;
-    let inBrowser = false;
-    let inSafari = false;
-    let inApple = false;
-    let inIOS = false;
-    if (typeof window !== "undefined") {
-        inBrowser = true;
-        inChromium =
-            ("chrome" in window || (window.Intl && "v8BreakIterator" in Intl)) && "CSS" in window;
-    }
-    if (typeof navigator !== "undefined" && typeof navigator.userAgent === "string") {
-        inElectron = navigator.userAgent.indexOf("Electron") >= 0;
-        inApple = /(Mac|iPhone|iPad|iPod)/i.test(navigator.platform);
-        inSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        inIOS =
-            /iPad|iPhone|iPod/.test(navigator.platform) ||
-            (typeof navigator.maxTouchPoints !== "undefined" &&
-                navigator.maxTouchPoints > 2 &&
-                /MacIntel/.test(navigator.platform));
-    } else {
-        inApple = process.platform === "darwin";
-    }
-    return {
-        inElectron: inElectron,
-        inChromium: inChromium,
-        inBrowser: inBrowser,
-        inSafari: inSafari,
-        inApple: inApple,
-        inIOS: inIOS,
-    };
 }
 
 export function saveDataBuffer(sharedArray: Int32Array, data: string) {
