@@ -413,7 +413,7 @@ export function getPlatform(): Platform {
             inAndroid = true;
         } else if (/CrOS/.test(ua)) {
             inChromeOS = true;
-        } else if ((/iP[ao]d|iPhone/i).test(ua)) {
+        } else if (/iP[ao]d|iPhone/i.test(ua)) {
             inIOS = true;
         } else if (/Mac OS/.test(ua) && !/like Mac OS/.test(ua)) {
             inMacOS = true;
@@ -422,17 +422,16 @@ export function getPlatform(): Platform {
         } else if (/Windows/.test(ua)) {
             inWindows = true;
         }
-    } else {
-        if (process.platform === "android") {
-            inAndroid = true;
-        } else if (process.platform === "darwin") {
-            inMacOS = true;
-        } else if (process.platform === "linux") {
-            inLinux = true;
-        } else if (process.platform === "win32") {
-            inWindows = true;
-        }
+    } else if (process.platform === "android") {
+        inAndroid = true;
+    } else if (process.platform === "darwin") {
+        inMacOS = true;
+    } else if (process.platform === "linux") {
+        inLinux = true;
+    } else if (process.platform === "win32") {
+        inWindows = true;
     }
+
     return {
         inBrowser: inBrowser,
         inChromium: inChromium,
