@@ -26,6 +26,7 @@ export class Environment {
         } else {
             this.rootM = rootM;
         }
+        this.function.set("m", mPointer);
         mPointer.addReference();
         this.mPointer = mPointer;
     }
@@ -91,14 +92,7 @@ export class Environment {
      */
     public setM(newMPointer: RoAssociativeArray): void {
         this.mPointer = newMPointer;
-    }
-
-    /**
-     * Retrieves the current value of the special `m` variable, which is analogous to JavaScript's `this`.
-     * @returns the current value used for the `m` pointer.
-     */
-    public getM(): RoAssociativeArray {
-        return this.mPointer;
+        this.function.set("m", this.mPointer);
     }
 
     /**
@@ -162,11 +156,6 @@ export class Environment {
         // the special "LINE_NUM" variable always resolves to the line number on which it appears
         if (lowercaseName === "line_num") {
             return new Int32(name.location.start.line);
-        }
-
-        // "m" always maps to the special `m` pointer
-        if (lowercaseName === "m") {
-            return this.mPointer;
         }
 
         let source = [this.function, this.module, this.global].find((scope) =>

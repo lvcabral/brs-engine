@@ -98,6 +98,21 @@ describe("end to end functions", () => {
         ]);
     });
 
+    test("function/m-pointer-reassign.brs", async () => {
+        await execute([resourceFile("function", "m-pointer-reassign.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "bar",
+            " 2",
+            "bar",
+            "abc",
+            " 2",
+            "abcdef",
+            "invalid",
+            "bar",
+        ]);
+    });
+
     test("function/scoping.brs", async () => {
         await execute([resourceFile("function", "scoping.brs")], outputStreams);
 
