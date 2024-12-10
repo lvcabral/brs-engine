@@ -1991,13 +1991,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     formatLocalVariables(): string {
         let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
-        debugMsg += `${"m".padEnd(16)} roAssociativeArray refcnt=2 count:${
-            this.environment.getM().getElements().length
-        }\r\n`;
         let fnc = this.environment.getList(Scope.Function);
         fnc.forEach((value, key) => {
             const varName = key.padEnd(17);
-            if (PrimitiveKinds.has(value.kind)) {
+            if (value.kind === ValueKind.Uninitialized) {
+                debugMsg += `${varName}${ValueKind.toString(value.kind)}\r\n`;
+            } else if (PrimitiveKinds.has(value.kind)) {
                 debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(
                     value
                 )}`;
