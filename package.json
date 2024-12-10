@@ -37,7 +37,7 @@
     "build:libs": "webpack --config ./config/webpack.config.js --env development",
     "build:cli": "webpack --config ./config/webpack.cli.config.js --env development",
     "release": "webpack --config ./config/webpack.config.js --env production && webpack --config ./config/webpack.cli.config.js --env production",
-    "start": "webpack serve --open",
+    "start": "webpack serve --open --config ./config/webpack.config.js",
     "stats": "webpack-bundle-analyzer ./browser/lib/stats.json",
     "stats:api": "webpack-bundle-analyzer ./browser/lib/stats-api.json",
     "clean": "rimraf ./browser/lib ./bin ./types",
