@@ -182,7 +182,8 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
                 subInterpreter.environment.define(
                     Scope.Function,
                     param.name.text,
-                    mutableArgs[index]
+                    mutableArgs[index],
+                    interpreter.location
                 );
             });
 
