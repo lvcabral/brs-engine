@@ -1345,6 +1345,20 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ifFilter = boxedSource.hasInterface(ifName) ? ifName : "";
             }
             boxedSource.setFilter(ifFilter);
+        } else if (
+            boxedSource instanceof BrsInterface &&
+            boxedSource.name === "ifGlobal" &&
+            boxedSource.hasMethod(expression.name.text)
+        ) {
+            for (const key in StdLib) {
+                if (key.toLowerCase() === expression.name.text.toLowerCase()) {
+                    const callable = (StdLib as any)[key];
+                    if (callable instanceof Callable) {
+                        return callable;
+                    }
+                    break;
+                }
+            }
         }
         this._dotLevel = 0;
 
