@@ -1,5 +1,4 @@
 import { ValueKind, BrsValue, BrsBoolean } from "./BrsType";
-import { Callable } from "./Callable";
 
 /**
  * A small typed wrapper around a BrightScript Interface.
@@ -10,10 +9,8 @@ export class BrsInterface implements BrsValue {
     readonly kind = ValueKind.Interface;
     readonly methodNames: Set<string>;
 
-    constructor(readonly name: string, methods: Callable[]) {
-        this.methodNames = new Set(
-            methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)
-        );
+    constructor(readonly name: string, methods: Set<string>) {
+        this.methodNames = new Set(Array.from(methods).map((method) => method.toLowerCase()));
     }
 
     hasMethod(method: string): boolean {
