@@ -1,12 +1,6 @@
 import { Identifier } from "../lexer";
 import { Location } from "../lexer/Token";
-import {
-    BrsComponent,
-    BrsType,
-    Int32,
-    RoAssociativeArray,
-    ValueKind,
-} from "../brsTypes";
+import { BrsComponent, BrsType, Int32, RoAssociativeArray, ValueKind } from "../brsTypes";
 import { TypeMismatch } from "./TypeMismatch";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */

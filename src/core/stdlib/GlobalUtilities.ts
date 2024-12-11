@@ -62,7 +62,11 @@ export const FindMemberFunction = new Callable(
             ],
             returns: ValueKind.Interface,
         },
-        impl: (_: Interpreter, object: BrsComponent, funName: BrsString): BrsInterface | BrsInvalid => {
+        impl: (
+            _: Interpreter,
+            object: BrsComponent,
+            funName: BrsString
+        ): BrsInterface | BrsInvalid => {
             if (object instanceof BrsComponent) {
                 for (let [_, iface] of object.interfaces) {
                     if (iface.hasMethod(funName.value)) {
@@ -81,7 +85,11 @@ export const FindMemberFunction = new Callable(
             ],
             returns: ValueKind.Interface,
         },
-        impl: (_: Interpreter, iface: BrsInterface, funName: BrsString): BrsInterface | BrsInvalid => {
+        impl: (
+            _: Interpreter,
+            iface: BrsInterface,
+            funName: BrsString
+        ): BrsInterface | BrsInvalid => {
             if (iface.hasMethod(funName.value)) {
                 return iface;
             }

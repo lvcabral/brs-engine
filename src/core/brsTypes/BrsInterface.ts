@@ -10,7 +10,7 @@ export class BrsInterface implements BrsValue {
     readonly methodNames: Set<string>;
 
     constructor(readonly name: string, methods: Set<string>) {
-        this.methodNames = new Set(Array.from(methods).map(method => method.toLowerCase()));
+        this.methodNames = new Set(Array.from(methods).map((method) => method.toLowerCase()));
     }
 
     hasMethod(method: string): boolean {
