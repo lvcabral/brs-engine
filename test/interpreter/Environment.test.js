@@ -38,7 +38,7 @@ describe("Environment", () => {
 
     it("gets and sets an m pointer", () => {
         let newM = new RoAssociativeArray([{ name: new BrsString("id"), value: new Int32(1738) }]);
-        env.setM(newM);
+        env.define(Scope.Function, "m", newM);
 
         expect(env.get(identifier("m"))).toBe(newM);
     });
