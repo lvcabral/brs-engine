@@ -33,10 +33,11 @@ import {
     RoXMLList,
     RoFunction,
     Signature,
+    BrsInterface,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/coercion";
 import { shared, stats } from "..";
-import { Lexeme } from "../lexer";
+import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
 import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../Error";
@@ -225,6 +226,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this.deviceInfo.set(key, value);
             }
         }
+        const global = new Set<string>();
         Object.keys(StdLib)
             .map((name) => (StdLib as any)[name])
             .filter((func) => func instanceof Callable)
@@ -235,9 +237,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return !!func.name;
             })
-            .forEach((func: Callable) =>
-                this._environment.define(Scope.Global, func.name ?? "", func)
-            );
+            .forEach((func: Callable) => {
+                this._environment.define(Scope.Global, func.name ?? "", func);
+                if (func.name && GlobalFunctions.has(func.name)) {
+                    global.add(func.name);
+                }
+            });
+        this._environment.define(Scope.Global, "global", new BrsInterface("ifGlobal", global));
     }
 
     /**
@@ -495,7 +501,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             }
         }
-        this.environment.define(Scope.Function, statement.name.text, value);
+        try {
+            this.environment.define(
+                Scope.Function,
+                statement.name.text,
+                value,
+                statement.name.location
+            );
+        } catch (err: any) {
+            this.addError(err);
+        }
         return BrsInvalid.Instance;
     }
 
@@ -538,7 +553,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         let array = createArrayTree();
 
-        this.environment.define(Scope.Function, statement.name.text, array);
+        try {
+            this.environment.define(
+                Scope.Function,
+                statement.name.text,
+                array,
+                statement.name.location
+            );
+        } catch (err: any) {
+            this.addError(err);
+        }
 
         return BrsInvalid.Instance;
     }
@@ -1321,6 +1345,20 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ifFilter = boxedSource.hasInterface(ifName) ? ifName : "";
             }
             boxedSource.setFilter(ifFilter);
+        } else if (
+            boxedSource instanceof BrsInterface &&
+            boxedSource.name === "ifGlobal" &&
+            boxedSource.hasMethod(expression.name.text)
+        ) {
+            for (const key in StdLib) {
+                if (key.toLowerCase() === expression.name.text.toLowerCase()) {
+                    const callable = (StdLib as any)[key];
+                    if (callable instanceof Callable) {
+                        return callable;
+                    }
+                    break;
+                }
+            }
         }
         this._dotLevel = 0;
 

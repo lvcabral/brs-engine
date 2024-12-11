@@ -1,5 +1,7 @@
 import { Identifier } from "../lexer";
-import { BrsType, RoAssociativeArray, Int32, BrsComponent } from "../brsTypes";
+import { Location } from "../lexer/Token";
+import { BrsComponent, BrsType, Int32, RoAssociativeArray, ValueKind } from "../brsTypes";
+import { TypeMismatch } from "./TypeMismatch";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -59,10 +61,30 @@ export class Environment {
      * @param scope The logical region from a particular variable or function that defines where it may be accessed from
      * @param name the name of the variable to define (in the form of an `Identifier`)
      * @param value the value of the variable to define
+     * @param location the location in the source file where this variable was defined (only for Function scope)
      */
-    public define(scope: Scope, name: string, value: BrsType): void {
+    public define(scope: Scope, name: string, value: BrsType, location?: Location): void {
         let destination: Map<string, BrsType>;
         const lowercaseName = name.toLowerCase();
+        if (
+            lowercaseName === "global" &&
+            scope === Scope.Function &&
+            value.kind !== ValueKind.Interface &&
+            location
+        ) {
+            throw new TypeMismatch({
+                message: `Unable to cast`,
+                left: {
+                    type: this.global.get("global")!,
+                    location: location,
+                },
+                right: {
+                    type: value,
+                    location: location,
+                },
+                cast: true,
+            });
+        }
         switch (scope) {
             case Scope.Function: {
                 destination = this.function;

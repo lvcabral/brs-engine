@@ -14,9 +14,7 @@ describe("Interface", () => {
     });
 
     it("exposes known method names", () => {
-        let ifArray = new BrsInterface("ifArray", [
-            new Callable("clear", { args: [], impl: () => {} }),
-        ]);
+        let ifArray = new BrsInterface("ifArray", new Set(["clear"]));
         expect(ifArray.methodNames).toContain("clear");
     });
 });
