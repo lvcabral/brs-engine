@@ -92,7 +92,6 @@ export class Environment {
      */
     public setM(newMPointer: RoAssociativeArray): void {
         this.mPointer = newMPointer;
-        this.function.set("m", this.mPointer);
     }
 
     /**
