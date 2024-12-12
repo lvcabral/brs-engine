@@ -288,18 +288,14 @@ function setupCurrentApp(filePath: string) {
         } else {
             // Not in the list so is a side-loaded app
             currentApp.id = "dev";
+            currentApp.path = filePath;
             const dev = deviceData.appList.find((app) => app.id === "dev");
             if (dev) {
                 dev.path = filePath;
-                currentApp.path = filePath;
                 currentApp.exitReason = dev.exitReason ?? AppExitReason.UNKNOWN;
+                currentApp.exitTime = dev.exitTime;
             } else {
-                deviceData.appList.push({
-                    id: "dev",
-                    title: currentApp.title,
-                    version: currentApp.version,
-                    path: filePath,
-                });
+                deviceData.appList.push(currentApp);
             }
         }
     } else {
@@ -313,6 +309,7 @@ export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
     if (currentApp.running) {
         currentApp.running = false;
         currentApp.exitReason = reason;
+        currentApp.exitTime = Date.now();
         updateAppList();
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);

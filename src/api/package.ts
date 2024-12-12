@@ -248,6 +248,7 @@ function createAppData(): AppData {
         path: "",
         password: "",
         exitReason: AppExitReason.UNKNOWN,
+        exitTime: undefined,
         running: false,
     };
 }

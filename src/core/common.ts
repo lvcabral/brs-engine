@@ -198,6 +198,7 @@ export type AppData = {
     icon?: string;
     password?: string;
     exitReason?: AppExitReason;
+    exitTime?: number;
     params?: Map<string, string>;
     running?: boolean;
 };
@@ -213,6 +214,7 @@ export function isAppData(value: any): value is AppData {
         (typeof value.icon === "string" || value.icon === undefined) &&
         (typeof value.password === "string" || value.password === undefined) &&
         (typeof value.exitReason === "string" || value.exitReason === undefined) &&
+        (typeof value.exitTime === "number" || value.exitTime === undefined) &&
         (value.params instanceof Map || value.params === undefined) &&
         (typeof value.running === "boolean" || value.running === undefined)
     );

@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoTimespan } from "./RoTimespan";
-import { isAppData } from "../../common";
+import { AppData, AppExitReason, isAppData } from "../../common";
 
 export class RoAppManager extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -23,9 +23,9 @@ export class RoAppManager extends BrsComponent implements BrsValue {
                 this.isAppInstalled,
                 this.launchApp, // Blocked by Static Analysis on Roku Channel Store
                 this.updateLastKeyPressTime, // Blocked by Static Analysis on Roku Channel Store
-                // this.startVoiceActionSelectionRequest,
-                // this.setVoiceActionStrings,
-                // this.getLastExitInfo, // Roku OS 13.0
+                this.startVoiceActionSelectionRequest,
+                this.setVoiceActionStrings,
+                this.getLastExitInfo, // Roku OS 13.0
                 this.setTheme, // Deprecated
                 this.setThemeAttribute, // Deprecated
                 this.clearThemeAttribute, // Deprecated
@@ -93,13 +93,70 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Updates video or audio content metadata during playback. This method takes a subset of content metadata parameters to be updated. */
-    private readonly setNowPlayingContentMetaData = new Callable("launchApp", {
+    private readonly setNowPlayingContentMetaData = new Callable("setNowPlayingContentMetaData", {
         signature: {
             args: [new StdlibArgument("contentMetaData", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentMetaData: RoAssociativeArray) => {
             return BrsInvalid.Instance;
+        },
+    });
+
+    /** Triggers a voice request for the viewer to select a user profile if the device is paired with a hands-free Roku Voice remote control. */
+    private readonly startVoiceActionSelectionRequest = new Callable(
+        "startVoiceActionSelectionRequest",
+        {
+            signature: {
+                args: [],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter) => {
+                return BrsInvalid.Instance;
+            },
+        }
+    );
+
+    /** Specifies a list of text strings, such as user profile names, that can be matched to voice requests. */
+    private readonly setVoiceActionStrings = new Callable("setVoiceActionStrings", {
+        signature: {
+            args: [new StdlibArgument("actions", ValueKind.Object)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, actions: RoArray) => {
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns a roAssociativeArray that includes an exit code indicating why an app was terminated. */
+    private readonly getLastExitInfo = new Callable("getLastExitInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            let exitCode: BrsType = new BrsString(AppExitReason.UNKNOWN);
+            let exitTime: BrsType = BrsInvalid.Instance;
+            let appState: BrsType = BrsInvalid.Instance;
+            let mediaState: BrsType = BrsInvalid.Instance;
+            const app = interpreter.deviceInfo.get("appList")?.find((app: AppData) => app.running);
+            if (app) {
+                console.log("found app", app.id, app.title, app.exitReason, app.exitTime);
+                exitCode = new BrsString(app.exitReason);
+                if (app.exitTime) {
+                    exitTime = new BrsString(new Date(app.exitTime).toISOString());
+                    appState = new BrsString("foreground");
+                    mediaState = new BrsString("stopped");
+                }
+            }
+            const exitInfo = new RoAssociativeArray([]);
+            exitInfo.set(new BrsString("timestamp"), exitTime);
+            exitInfo.set(new BrsString("exit_code"), exitCode);
+            exitInfo.set(new BrsString("mem_limit"), BrsInvalid.Instance);
+            exitInfo.set(new BrsString("app_state"), appState);
+            exitInfo.set(new BrsString("console_log"), BrsInvalid.Instance);
+            exitInfo.set(new BrsString("media_player_state"), mediaState);
+            return exitInfo;
         },
     });
 
@@ -241,6 +298,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             return result;
         },
     });
+
     /** Enables or disables automatic Audio Guide and override any manifest setting. */
     private readonly setAutomaticAudioGuideEnabled = new Callable("setAutomaticAudioGuideEnabled", {
         signature: {

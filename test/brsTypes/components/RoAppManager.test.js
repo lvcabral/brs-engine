@@ -100,10 +100,22 @@ describe("RoAppManager", () => {
             let appManager = new RoAppManager();
             let getRunParams = appManager.getMethod("getRunParams");
 
-            let list = getRunParams.call(interpreter);
+            let params = getRunParams.call(interpreter);
             expect(getRunParams).toBeTruthy();
-            expect(list).toBeTruthy();
-            expect(list.elements).toEqual(new RoAssociativeArray([]).elements);
+            expect(params).toBeTruthy();
+            expect(params.elements).toEqual(new RoAssociativeArray([]).elements);
+        });
+    });
+
+    describe("getLastExitInfo", () => {
+        it("Returns an AA that includes an exit reason and other stats.", () => {
+            let appManager = new RoAppManager();
+            let getLastExitInfo = appManager.getMethod("getLastExitInfo");
+
+            let exitInfo = getLastExitInfo.call(interpreter);
+            expect(getLastExitInfo).toBeTruthy();
+            expect(exitInfo).toBeTruthy();
+            expect(exitInfo.elements.size).toEqual(6);
         });
     });
 });

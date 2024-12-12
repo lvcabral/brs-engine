@@ -14,4 +14,8 @@ sub Main(args)
     if m.app.isAppInstalled("home-01", "")
         print "App Installed!"
     end if
+    exitInfo = m.app.getLastExitInfo()
+    if exitInfo <> invalid
+        print "Last Exit Code: "; exitInfo.exit_code
+    end if
 end sub

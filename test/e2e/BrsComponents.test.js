@@ -521,6 +521,7 @@ describe("end to end brightscript functions", () => {
             "Media Type: movie",
             "Uptime: <Component: roTimespan>",
             "ScreenSaverTimeout: 0",
+            "Last Exit Code: EXIT_UNKNOWN",
         ]);
     });
 });
