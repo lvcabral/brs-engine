@@ -24,7 +24,7 @@ export interface DeviceInfo {
     RIDA: string;
     countryCode: string;
     timeZone: string;
-    locale: string;
+    locale: "en_US" | "de_DE" | "es_MX" | "fr_CA" | "pt_BR";
     captionLanguage: string;
     clockFormat: string;
     displayMode: "480p" | "720p" | "1080p";
@@ -53,7 +53,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
-    firmwareVersion: "BSC.50E04330A", // v11.5
+    firmwareVersion: "48F.04E12221A", // v14.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US", // App Store Country
@@ -68,7 +68,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     maxSimulStreams: 2,
     customFeatures: [],
     connectionType: "WiredConnection",
-    localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
+    localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
     startTime: Date.now(),
     audioVolume: 40,
     registry: new Map(),
@@ -503,4 +503,18 @@ export function parseTextFile(content?: string): string[] {
         lines = content.trimEnd().split("\n");
     }
     return lines;
+}
+
+// Function to convert the firmware string to a Map with Roku OS version parts
+export function getRokuOSVersion(firmware: string) {
+    const osVersion: Map<string, string> = new Map();
+    if (firmware.length > 0) {
+        const versions = "0123456789ACDEFGHJKLMNPRSTUVWXY";
+        osVersion.set("major", versions.indexOf(firmware.charAt(2)).toString());
+        osVersion.set("minor", firmware.slice(4, 5));
+        osVersion.set("revision", firmware.slice(7, 8));
+        osVersion.set("build", firmware.slice(8, 12));
+        osVersion.set("plid", firmware.slice(0, 2));
+    }
+    return osVersion;
 }
