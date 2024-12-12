@@ -1,6 +1,7 @@
 sub main()
     print "starting video test"
     di = CreateObject("roDeviceInfo")
+    app = CreateObject("roAppManager")
     codec = "mpeg4 avc"
     print "Supports MP4:"; di.canDecodeVideo({codec: codec, container: "mp4"})
     print "Supports HLS:"; di.canDecodeVideo({codec: codec, container: "hls"})
@@ -9,6 +10,7 @@ sub main()
     screen = CreateObject("roScreen", true, 1280, 720)
     screen.setMessagePort(port)
     screen.setAlphaEnable(false)
+    screenDisabled = false
     player = CreateObject("roVideoPlayer")
     player.setMessagePort(port)
     player.setLoop(true)
@@ -53,6 +55,10 @@ sub main()
                 else if index = 5 or index = 9 '<RIGHT> or <FWD>
                     position = position + 60
                     player.Seek(position * 1000)
+                else if index = 7 ' <REPLAY>
+                    screenDisabled = not screenDisabled
+                    print "toggle screen "; screenDisabled
+                    app.setDisplayDisabled(screenDisabled)
                 else if index = 10 '<INFO>
                     player.SetEnableAudio(muted)
                     muted = not muted

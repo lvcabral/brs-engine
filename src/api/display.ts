@@ -29,6 +29,7 @@ let frameLoop = false;
 
 // Initialize Display Module
 let displayMode = "720p";
+let displayState = true;
 let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 export function initDisplayModule(mode: string, perfStats = false) {
@@ -182,25 +183,29 @@ export function updateBuffer(buffer: ImageData) {
 function drawBufferImage() {
     if (ctx) {
         statsUpdate(false);
-        let overscan = 0.04;
-        if (overscanMode === "overscan") {
-            let x = Math.round(bufferCanvas.width * overscan);
-            let y = Math.round(bufferCanvas.height * overscan);
-            let w = bufferCanvas.width - x * 2;
-            let h = bufferCanvas.height - y * 2;
-            ctx.drawImage(bufferCanvas, x, y, w, h, 0, 0, screenSize.width, screenSize.height);
-        } else {
-            ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
-            if (overscanMode === "guidelines") {
-                let x = Math.round(screenSize.width * overscan);
-                let y = Math.round(screenSize.height * overscan);
-                let w = screenSize.width - x * 2;
-                let h = screenSize.height - y * 2;
-                ctx.strokeStyle = "#D0D0D0FF";
-                ctx.lineWidth = 2;
-                ctx.setLineDash([1, 2]);
-                ctx.strokeRect(x, y, w, h);
+        if (displayState) {
+            let overscan = 0.04;
+            if (overscanMode === "overscan") {
+                let x = Math.round(bufferCanvas.width * overscan);
+                let y = Math.round(bufferCanvas.height * overscan);
+                let w = bufferCanvas.width - x * 2;
+                let h = bufferCanvas.height - y * 2;
+                ctx.drawImage(bufferCanvas, x, y, w, h, 0, 0, screenSize.width, screenSize.height);
+            } else {
+                ctx.drawImage(bufferCanvas, 0, 0, screenSize.width, screenSize.height);
+                if (overscanMode === "guidelines") {
+                    let x = Math.round(screenSize.width * overscan);
+                    let y = Math.round(screenSize.height * overscan);
+                    let w = screenSize.width - x * 2;
+                    let h = screenSize.height - y * 2;
+                    ctx.strokeStyle = "#D0D0D0FF";
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([1, 2]);
+                    ctx.strokeRect(x, y, w, h);
+                }
             }
+        } else {
+            clearDisplay();
         }
         statsUpdate(true);
     }
@@ -228,9 +233,11 @@ function drawVideoFrame() {
         }
         bufferCtx.fillStyle = "black";
         bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-        bufferCtx.drawImage(player as any, left, top, width, height);
-        if (lastImage) {
-            bufferCtx.drawImage(lastImage, 0, 0);
+        if (displayState) {
+            bufferCtx.drawImage(player as any, left, top, width, height);
+            if (lastImage) {
+                bufferCtx.drawImage(lastImage, 0, 0);
+            }
         }
         drawBufferImage();
         window.requestAnimationFrame(drawVideoFrame);
@@ -253,6 +260,7 @@ export function statsUpdate(start: boolean) {
 // Show Display and set focus
 export function showDisplay() {
     if (display instanceof HTMLCanvasElement) {
+        displayState = true;
         display.style.opacity = "1";
         display.focus();
         if (statsDiv && statsDiv.style.visibility === "visible") {
@@ -278,6 +286,10 @@ export function setDisplayMode(mode: string) {
     displayMode = mode;
     aspectRatio = mode === "480p" ? 4 / 3 : 16 / 9;
     notifyAll("mode", mode);
+}
+
+export function setDisplayState(enabled: boolean) {
+    displayState = enabled;
 }
 
 export function getDisplayMode() {

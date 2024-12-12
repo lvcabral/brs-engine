@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoArray, RoAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -31,7 +31,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
                 this.clearThemeAttribute, // Deprecated
                 this.getRunParams, // undocumented
                 this.getAppList, // undocumented
-                // this.setDisplayDisabled, // undocumented
+                this.setDisplayDisabled, // undocumented
             ],
         });
         // Undocumented methods found at: https://github.com/rokudev/sublimetext-package/blob/master/plugin_source/BrightScript.sublime-completions
@@ -307,6 +307,18 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enabled: BrsBoolean) => {
             return BrsInvalid.Instance;
+        },
+    });
+
+    /** If set to true disables the TV Display, set to false to restore it. **/
+    private readonly setDisplayDisabled = new Callable("setDisplayDisabled", {
+        signature: {
+            args: [new StdlibArgument("disabled", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, disabled: BrsBoolean) => {
+            postMessage({ displayEnabled: !disabled.toBoolean() });
+            return Uninitialized.Instance;
         },
     });
 }
