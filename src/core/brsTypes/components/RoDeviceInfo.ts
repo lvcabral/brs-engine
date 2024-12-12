@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, Int32, RoInt } from "..";
+import { BrsType, RoMessagePort, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
@@ -215,19 +215,19 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 const os = getRokuOSVersion(firmware);
                 result.push({
                     name: new BrsString("major"),
-                    value: new BrsString(os.get("major")?? "0"),
+                    value: new BrsString(os.get("major") ?? "0"),
                 });
                 result.push({
                     name: new BrsString("minor"),
-                    value: new BrsString(os.get("minor")?? "0"),
+                    value: new BrsString(os.get("minor") ?? "0"),
                 });
                 result.push({
                     name: new BrsString("revision"),
-                    value: new BrsString(os.get("revision")?? "0"),
+                    value: new BrsString(os.get("revision") ?? "0"),
                 });
                 result.push({
                     name: new BrsString("build"),
-                    value: new BrsString(os.get("build")?? "0"),
+                    value: new BrsString(os.get("build") ?? "0"),
                 });
             }
             return new RoAssociativeArray(result);

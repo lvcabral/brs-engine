@@ -300,10 +300,10 @@ describe("end to end brightscript functions", () => {
                 "true",
                 "false",
                 `<Component: roAssociativeArray> =\n` +
-                `{\n` +
-                `    option1: ".value"\n` +
-                `    option2: "other"\n` +
-                `}`,
+                    `{\n` +
+                    `    option1: ".value"\n` +
+                    `    option2: "other"\n` +
+                    `}`,
                 `<Component: roList> =\n(\n    "Transient"\n)`,
                 " 32723",
             ]);
@@ -346,10 +346,10 @@ describe("end to end brightscript functions", () => {
                 "parse good xml string, result = true",
                 "getName() = tag1",
                 `getAttributes() = <Component: roAssociativeArray> =\n` +
-                `{\n` +
-                `    attr1: "0"\n` +
-                `    id: "someId"\n` +
-                `}`,
+                    `{\n` +
+                    `    attr1: "0"\n` +
+                    `    id: "someId"\n` +
+                    `}`,
                 "children type = roXMLList",
                 `getNamedElementsCi("child1") count =  2`,
                 "name of first child  = Child1",
@@ -434,7 +434,7 @@ describe("end to end brightscript functions", () => {
     });
 
     test("components/roDeviceInfo.brs", async () => {
-        const currTZ = Intl.DateTimeFormat().resolvedOptions().timeZone
+        const currTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
         process.env.LOCALE = "en_US";
 
         await execute([resourceFile("components", "roDeviceInfo.brs")], outputStreams);
