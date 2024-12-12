@@ -1,13 +1,3 @@
-// Mock the resolvedOptions method of Intl.DateTimeFormat
-global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
-    return {
-        resolvedOptions: () => {
-            return {
-                timeZone: "America/Fortaleza",
-            };
-        },
-    };
-});
 const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 const lolex = require("lolex");
 
@@ -211,10 +201,18 @@ describe("end to end brightscript functions", () => {
     test("components/roDateTime.brs", async () => {
         await execute([resourceFile("components", "roDateTime.brs")], outputStreams);
 
+        const today = new Date(Date.now());
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "Full Date: Friday November 12, 2010",
+            `Today: ${today.getUTCFullYear()}-${today.getUTCMonth() + 1}-${today.getUTCDate()}`,
+            "No Param: Friday November 12, 2010",
+            "Long Date: Friday November 12, 2010",
+            "Short Week Day: Fri November 12, 2010",
             "No Week Day: November 12, 2010",
+            "Short Month: Friday Nov 12, 2010",
+            "Short Month Short Weekday: Fri Nov 12, 2010",
+            "Short Month No Weekday: Nov 12, 2010",
             "Short Date: 11/12/10",
+            "Short Date Dashes: 11-12-10",
             "Weekday: Friday",
             "Day of Week:  5",
             "Day of Month:  12",
@@ -226,6 +224,28 @@ describe("end to end brightscript functions", () => {
             "Last Day of Month:  30",
             "Milliseconds:  160",
             "ISO String UTC: 2010-11-12T13:14:15Z",
+            "Empty Format: Friday November 12, 2010",
+            "Invalid Format: Friday November 12, 2010",
+            "------ New asDateStringLoc ------",
+            "DateLoc - full: Friday, November 12, 2010",
+            "DateLoc - long: November 12, 2010",
+            "DateLoc - medium: Nov 12, 2010",
+            "DateLoc - short: 11/12/10",
+            "DateLoc - custom: 12:November:10",
+            "DateLoc - custom: 11.Fri/2010",
+            "DateLoc - custom: Before11.Fri/2010",
+            "DateLoc - custom: 11.Fri/2010After",
+            "DateLoc - EMMANUEL: E 11 ANUEL",
+            "DateLoc - EMMANUEL: EMMANUEL",
+            "DateLoc - invalid: something",
+            "------ New asTimeStringLoc ------",
+            "TimeLoc - short: 1:14 pm",
+            "TimeLoc - short-h12: 1:14 pm",
+            "TimeLoc - short-h24: 13:14",
+            "TimeLoc - custom: 1 pm",
+            "TimeLoc - custom: 13 pm",
+            "TimeLoc - empty: 1:14 pm",
+            "TimeLoc - no seconds: 1:14:ss pm",
         ]);
     });
 
@@ -280,10 +300,10 @@ describe("end to end brightscript functions", () => {
                 "true",
                 "false",
                 `<Component: roAssociativeArray> =\n` +
-                    `{\n` +
-                    `    option1: ".value"\n` +
-                    `    option2: "other"\n` +
-                    `}`,
+                `{\n` +
+                `    option1: ".value"\n` +
+                `    option2: "other"\n` +
+                `}`,
                 `<Component: roList> =\n(\n    "Transient"\n)`,
                 " 32723",
             ]);
@@ -326,10 +346,10 @@ describe("end to end brightscript functions", () => {
                 "parse good xml string, result = true",
                 "getName() = tag1",
                 `getAttributes() = <Component: roAssociativeArray> =\n` +
-                    `{\n` +
-                    `    attr1: "0"\n` +
-                    `    id: "someId"\n` +
-                    `}`,
+                `{\n` +
+                `    attr1: "0"\n` +
+                `    id: "someId"\n` +
+                `}`,
                 "children type = roXMLList",
                 `getNamedElementsCi("child1") count =  2`,
                 "name of first child  = Child1",
@@ -414,7 +434,7 @@ describe("end to end brightscript functions", () => {
     });
 
     test("components/roDeviceInfo.brs", async () => {
-        process.env.TZ = "PST";
+        const currTZ = Intl.DateTimeFormat().resolvedOptions().timeZone
         process.env.LOCALE = "en_US";
 
         await execute([resourceFile("components", "roDeviceInfo.brs")], outputStreams);
@@ -430,7 +450,7 @@ describe("end to end brightscript functions", () => {
             "true",
             "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
             " 36",
-            "America/Fortaleza",
+            currTZ,
             "false",
             "en_US",
             "US",
