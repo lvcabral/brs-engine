@@ -108,6 +108,7 @@ let sharedArray: Int32Array;
 export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
         const invalidKeys = [
+            "firmware",
             "registry",
             "models",
             "audioCodecs",
