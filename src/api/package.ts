@@ -160,7 +160,6 @@ function processManifest(content: string): number {
     // Set Launch Time to calculate Splash Time later
     const launchTime = Date.now();
     showSplashOrIcon(splash, iconFile);
-    notifyAll("loaded", currentApp);
     return launchTime;
 }
 
@@ -204,6 +203,7 @@ export function updateAppZip(source: Uint8Array, iv: string) {
 
 // Create App Payload
 export function createPayload(launchTime: number): AppPayload {
+    notifyAll("loaded", currentApp);
     return {
         device: deviceData,
         launchTime: launchTime,
