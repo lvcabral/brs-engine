@@ -1,57 +1,57 @@
-N1000,Roku DVP Classsic,STB,directfb,hd,20
-N1050,Roku SD Classic,STB,directfb,sd,G0
-N1100,Roku HD Classsic,STB,directfb,hd,C0
-N1101,Roku HD-XR Classic,STB,directfb,hd,D0
-2000X,Roku HD,STB,directfb,hd,H0
-2050X,Roku XD,STB,directfb,hd,J0
-2100X,Roku XD|S,STB,directfb,hd,K0
-2400X,Roku LT,STB,directfb,hd,16
-2450X,Roku LT,STB,directfb,hd,19
-2500X,Roku HD,STB,directfb,hd,18
-2600X,Roku XD,STB,directfb,hd,17
-2700X,Roku LT,STB,directfb,hd,1P
-2710X,Roku 1,STB,directfb,hd,1X
-2720X,Roku 2,STB,directfb,hd,1R
-2900X,Roku Test Device,STB,opengl,fhd,X0
-3000X,Roku 2 HD,STB,opengl,hd,11
-3050X,Roku 2 XD,STB,opengl,hd,12
-3100X,Roku 2 XS,STB,opengl,hd,13
-3400X,Roku Stick,STICK,opengl,hd,1E
-3420X,Roku Stick,STICK,opengl,hd,1H
-3500X,Roku Stick (HDMI),STICK,opengl,hd,2L
-3600X,Roku Stick (2016),STICK,opengl,hd,5S
-3700X,Roku Express,STB,directfb,hd,YU
-3710X,Roku Express+,STB,directfb,hd,YU
-3800X,Roku Stick (2017),STICK,opengl,hd,YF
-3810X,Roku Stick+,STICK,opengl,fhd,YH
-3820X,Roku Streaming Stick 4K (2021),STICK,opengl,fhd,X0
-3900X,Roku Express (2017),STB,opengl,hd,YG
-3910X,Roku Express+ (2017),STB,opengl,hd,YG
-3920X,Roku Premiere (2018),STB,opengl,fhd,YH
-3930X,Roku Express (2019),STB,opengl,hd,X0
-3940X,Roku Express 4K,STB,opengl,fhd,X0
-4200X,Roku 3,STB,opengl,hd,1G
-4210X,Roku 2,STB,opengl,hd,4A
-4230X,Roku 3,STB,opengl,hd,4E
-4400X,Roku 4,STB,opengl,hd,4U
-4620X,Roku Premiere,STB,opengl,fhd,YT
-4630X,Roku Premiere+,STB,opengl,fhd,YR
-4640X,Roku Ultra,STB,opengl,fhd,YP
-4660X,Roku Ultra (2017),STB,opengl,fhd,YJ
-4670X,Roku Ultra (2019),STB,opengl,fhd,YJ
-4800X,Roku Ultra (2020),STB,opengl,fhd,X0
-4850X,Roku Ultra (2024),STB,opengl,fhd,X0
-5000X,Roku TV (MIPS),TV,directfb,hd,2N
-6000X,4K Roku TV,TV,opengl,fhd,YW
-7000X,4K Roku TV (TCL),TV,opengl,fhd,YN
-8000X,Roku TV (ARM),TV,opengl,hd,YK
-9100X,Roku Smart Soundbar,BAR,opengl,fhd,YL
-9101X,Roku Streambar Pro,BAR,opengl,fhd,YL
-9102X,Roku Streambar,BAR,opengl,fhd,YL
-A000X,Roku TV 4K,TV,opengl,fhd,X0
-C000X,Roku TV 4K,TV,opengl,fhd,X0
-D000X,Roku TV,TV,opengl,hd,X0
-E000X,Roku TV 8K,TV,opengl,fhd,X0
-G000X,Roku TV 4K,TV,opengl,fhd,X0
-H000X,Roku TV 2K,TV,opengl,hd,X0
-J000X,Roku TV 4K,TV,opengl,fhd,X0
+N1000,Roku DVP Classic,STB,directfb,hd,20,00
+N1050,Roku SD Classic,STB,directfb,sd,G0,00
+N1100,Roku HD Classic,STB,directfb,hd,C0,00
+N1101,Roku HD-XR Classic,STB,directfb,hd,D0,00
+2000X,Roku HD,STB,directfb,hd,H0,00
+2050X,Roku XD,STB,directfb,hd,J0,00
+2100X,Roku XD|S,STB,directfb,hd,K0,00
+2400X,Roku LT,STB,directfb,hd,16,00
+2450X,Roku LT,STB,directfb,hd,19,00
+2500X,Roku HD,STB,directfb,hd,18,00
+2600X,Roku XD,STB,directfb,hd,17,00
+2700X,Roku LT,STB,directfb,hd,1P,00
+2710X,Roku 1,STB,directfb,hd,1X,00
+2720X,Roku 2,STB,directfb,hd,1R,00
+2900X,Roku Test Device,STB,opengl,fhd,X0,00
+3000X,Roku 2 HD,STB,opengl,hd,11,00
+3050X,Roku 2 XD,STB,opengl,hd,12,00
+3100X,Roku 2 XS,STB,opengl,hd,13,00
+3400X,Roku Stick,STICK,opengl,hd,1E,00
+3420X,Roku Stick,STICK,opengl,hd,1H,00
+3500X,Roku Stick (HDMI),STICK,opengl,hd,2L,00
+3600X,Roku Stick (2016),STICK,opengl,hd,5S,24
+3700X,Roku Express,STB,directfb,hd,YU,00
+3710X,Roku Express+,STB,directfb,hd,YU,00
+3800X,Roku Stick (2017),STICK,opengl,hd,YF,00
+3810X,Roku Stick+,STICK,opengl,fhd,YH,50
+3820X,Roku Streaming Stick 4K (2021),STICK,opengl,fhd,X0,00
+3900X,Roku Express (2017),STB,opengl,hd,YG,51
+3910X,Roku Express+ (2017),STB,opengl,hd,YG,00
+3920X,Roku Premiere (2018),STB,opengl,fhd,YH,91
+3930X,Roku Express (2019),STB,opengl,hd,X0,AE
+3940X,Roku Express 4K,STB,opengl,fhd,X0,00
+4200X,Roku 3,STB,opengl,hd,1G,04
+4210X,Roku 2,STB,opengl,hd,4A,04
+4230X,Roku 3,STB,opengl,hd,4E,04
+4400X,Roku 4,STB,opengl,hd,4U,00
+4620X,Roku Premiere,STB,opengl,fhd,YT,00
+4630X,Roku Premiere+,STB,opengl,fhd,YR,00
+4640X,Roku Ultra,STB,opengl,fhd,YP,00
+4660X,Roku Ultra (2017),STB,opengl,fhd,YJ,46
+4670X,Roku Ultra (2019),STB,opengl,fhd,YJ,46
+4800X,Roku Ultra (2020),STB,opengl,fhd,X0,00
+4850X,Roku Ultra (2024),STB,opengl,fhd,X0,G6
+5000X,Roku TV (MIPS),TV,directfb,hd,2N,00
+6000X,4K Roku TV,TV,opengl,fhd,YW,00
+7000X,4K Roku TV (TCL),TV,opengl,fhd,YN,30
+8000X,Roku TV (ARM),TV,opengl,hd,YK,48
+9100X,Roku Smart Soundbar,BAR,opengl,fhd,YL,00
+9101X,Roku Streambar Pro,BAR,opengl,fhd,YL,00
+9102X,Roku Streambar,BAR,opengl,fhd,YL,00
+A000X,Roku TV 4K,TV,opengl,fhd,X0,00
+C000X,Roku TV 4K,TV,opengl,fhd,X0,93
+D000X,Roku TV,TV,opengl,hd,X0,D8
+E000X,Roku TV 8K,TV,opengl,fhd,X0,00
+G000X,Roku TV 4K,TV,opengl,fhd,X0,00
+H000X,Roku TV 2K,TV,opengl,hd,X0,00
+J000X,Roku TV 4K,TV,opengl,fhd,X0,00

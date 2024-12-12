@@ -63,7 +63,8 @@ sub main()
     print deviceInfo.getSoundEffectsVolume()
     print deviceInfo.isAudioGuideEnabled()
     print deviceInfo.enableAudioGuideChangedEvent(true)
-
+    print deviceInfo.enableValidClockEvents(true)
+    print deviceInfo.isAutoPlayEnabled()
 end sub
 
 function isValidIP(ip as String) as Boolean
