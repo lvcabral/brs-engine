@@ -18,11 +18,11 @@ import {
     parseManifest,
     isAppPayload,
 } from "./common";
+import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import { ParseResults } from "./parser/Parser";
 import * as PP from "./preprocessor";
-import * as BrsError from "./Error";
 import * as BrsTypes from "./brsTypes";
 import * as path from "path";
 import * as xml2js from "xml2js";
@@ -168,7 +168,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
             }
         });
     } catch (err: any) {
-        if (!(err instanceof BrsError.BrsError)) {
+        if (!(err instanceof BrsError)) {
             postMessage(`error,Interpreter execution error: ${err.message}`);
         }
     }
@@ -835,6 +835,14 @@ async function executeApp(
                 interpreter.options.stderr.write(err.message);
             }
             exitReason = AppExitReason.CRASHED;
+            const runtimeError = err.cause;
+            if (
+                runtimeError &&
+                runtimeError instanceof RuntimeError &&
+                runtimeError.errorDetail === RuntimeErrorDetail.MemberFunctionNotFound
+            ) {
+                exitReason = AppExitReason.UNKFUNC;
+            }
         }
     }
     return exitReason;
@@ -883,7 +891,7 @@ function parseLibraries(
  * Logs a detected BRS error to the renderer process.
  * @param err the error to log
  */
-function logError(err: BrsError.BrsError) {
+function logError(err: BrsError) {
     postMessage(`error,${err.format()}`);
 }
 
