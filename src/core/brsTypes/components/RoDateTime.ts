@@ -526,8 +526,9 @@ function wrapTokens(input: string, tokens: string[]): string {
  *
  * @borrows from https://github.com/xxczaki/light-date converted to use BrightScript tokens
  */
-const localeFormat = (date: Date, exp: string, locale: string | string[] = "en-US"): string =>
-    exp.replace(/\\?{.*?}/g, (key) => {
+const localeFormat = (date: Date, exp: string, locale: string | string[] = "en-US"): string => {
+    const tokenRegex = /\\?\{(yy|y|MM|M|dd|d|HH|H|hh|h|mm|m|MMMM|MMM|EEEE|EEE|a)\}/g;
+    return exp.replace(tokenRegex, (key) => {
         if (key.startsWith("\\")) {
             return key.slice(1);
         }
@@ -586,3 +587,4 @@ const localeFormat = (date: Date, exp: string, locale: string | string[] = "en-U
                 return "";
         }
     });
+};
