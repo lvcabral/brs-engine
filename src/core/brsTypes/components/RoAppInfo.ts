@@ -10,7 +10,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
     constructor() {
         super("roAppInfo");
         this.registerMethods({
-            ifDeviceInfo: [
+            ifAppInfo: [
                 this.getId,
                 this.isDev,
                 this.getDevId,
@@ -41,7 +41,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if the application is sideloaded, i.e. the channel ID is "dev". */
+    /** Returns true if the application is side-loaded, i.e. the channel ID is "dev". */
     private readonly isDev = new Callable("isDev", {
         signature: {
             args: [],
@@ -53,7 +53,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns the app's developer ID, or the keyed developer ID, if the application is sideloaded. */
+    /** Returns the app's developer ID, or the keyed developer ID, if the application is side-loaded. */
     private readonly getDevId = new Callable("getDevId", {
         signature: {
             args: [],
