@@ -203,7 +203,6 @@ export function updateAppZip(source: Uint8Array, iv: string) {
 
 // Create App Payload
 export function createPayload(launchTime: number): AppPayload {
-    notifyAll("loaded", currentApp);
     return {
         device: deviceData,
         launchTime: launchTime,

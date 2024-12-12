@@ -424,6 +424,7 @@ function loadSourceCode(fileName: string, fileData: any) {
 // Execute Engine Web Worker
 function runApp(payload: AppPayload) {
     try {
+        notifyAll("loaded", currentApp);
         showDisplay();
         currentApp.running = true;
         updateAppList();
