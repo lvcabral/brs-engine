@@ -42,14 +42,15 @@ There are several features from the **BrightScript** language and components tha
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
   * The method `GetTargetIpAddress` from `roUrlEvent` always returns an empty string.
-* Reserved words like `Mod` cannot be used as function parameters (Roku devices allows that).
+* The events for the components `roInput` and `roDeviceInfo` are not being triggered.
+* The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.
+* The string `mod` cannot be used as variable or function parameter name, because it conflicts with remainder operator `Mod` (Roku devices allows that).
 * SDK 1.0 deprecated components are not supported, but will be implemented in the future as a legacy apps preservation initiative.
 
-## In Scope (mocked)
+## Mocked Components and Libraries
 
 * RAF (Roku Ads Framework) object `Roku_Ads` is mocked with the most common methods available.
 * Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked (a fake server feature will be implemented in the future).
-* The component `roAppManager` is mocked with the exception of method `GetUptime` that returns a `roTimeSpan` as Roku does.
 
 ## Out of Scope
 
