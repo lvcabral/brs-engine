@@ -8,9 +8,9 @@ import { MediaEvent } from "../../common";
 
 export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private flags: number;
-    private index: number;
-    private message: string;
+    readonly flags: number;
+    readonly index: number;
+    readonly message: string;
 
     constructor(flags: number, index: number) {
         super("roVideoPlayerEvent");
