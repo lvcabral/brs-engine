@@ -6,8 +6,8 @@ import { Interpreter } from "../../interpreter";
 
 export class RoInputEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly id: number;
-    readonly response?: BrsType;
+    private readonly id: number;
+    private readonly response?: BrsType;
 
     constructor(response?: BrsType) {
         super("roInputEvent");

@@ -8,12 +8,12 @@ import { DataType } from "../../common";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private audioName: string;
-    private audioId?: number;
+    private readonly audioName: string;
+    private readonly audioId?: number;
+    private readonly maxStreams: number;
+    private readonly valid: boolean;
     private currentIndex: number;
     private playing: boolean;
-    private maxStreams: number;
-    private valid: boolean;
 
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource");

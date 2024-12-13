@@ -1,13 +1,11 @@
 import { EventEmitter } from "events";
-
 import { Token } from "../lexer";
-
 import { Parser } from "./Parser";
 import { Preprocessor as InternalPreprocessor, FilterResults } from "./Preprocessor";
 
 export class Preprocessor {
-    private parser = new Parser();
-    private _preprocessor = new InternalPreprocessor();
+    private readonly parser = new Parser();
+    private readonly _preprocessor = new InternalPreprocessor();
 
     readonly events = new EventEmitter();
 

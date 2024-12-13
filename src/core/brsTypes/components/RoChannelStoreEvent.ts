@@ -7,8 +7,8 @@ import { Int32 } from "../Int32";
 
 export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private id: number;
-    private response?: BrsType[];
+    private readonly id: number;
+    private readonly response?: BrsType[];
 
     constructor(id: number, response?: BrsType[]) {
         super("roChannelStoreEvent");

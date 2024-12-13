@@ -8,9 +8,9 @@ import { MediaEvent } from "../../common";
 
 export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private flags: number;
-    private index: number;
-    private message: string;
+    private readonly flags: number;
+    private readonly index: number;
+    private readonly message: string;
 
     constructor(flags: number, index: number) {
         super("roAudioPlayerEvent");
