@@ -293,6 +293,8 @@ export enum DataType {
     WAV, // Wave Audio
     WAV1, // Reserved for second stream
     WAV2, // Reserved for third stream
+    MUHS, // Memory Used Heap Size
+    MHSL, // Memory Heap Size Limit
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code

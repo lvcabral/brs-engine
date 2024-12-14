@@ -193,6 +193,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         } else if (event === "volumemute") {
             setAudioMute(!getAudioMute());
         } else if (event === "control") {
+            updateMemoryInfo();
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
@@ -426,6 +427,7 @@ function runApp(payload: AppPayload) {
         showDisplay();
         currentApp.running = true;
         updateAppList();
+        updateMemoryInfo();
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", workerCallback);
         brsWorker.postMessage(sharedBuffer);
@@ -448,6 +450,22 @@ export function updateAppList() {
         if (app) {
             Object.assign(app, currentApp);
         }
+    }
+}
+
+// Update Memory Usage on Shared Array
+export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
+    if (currentApp.running && usedMemory && totalMemory) {
+        Atomics.store(sharedArray, DataType.MUHS, usedMemory);
+        Atomics.store(sharedArray, DataType.MHSL, totalMemory);
+        return;
+    }
+    const performance = window.performance as ChromiumPerformance;
+    if (currentApp.running && platform.inChromium && performance.memory) {
+        // Only Chromium based browsers support process.memory API
+        const memory = performance.memory;
+        Atomics.store(sharedArray, DataType.MUHS, Math.floor(memory.usedJSHeapSize / 1024));
+        Atomics.store(sharedArray, DataType.MHSL, Math.floor(memory.jsHeapSizeLimit / 1024));
     }
 }
 

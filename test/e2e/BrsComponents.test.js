@@ -524,4 +524,13 @@ describe("end to end brightscript functions", () => {
             "Last Exit Code: EXIT_UNKNOWN",
         ]);
     });
+
+    test("components/roAppMemoryMonitor.brs", async () => {
+        await execute([resourceFile("components", "roAppMemoryMonitor.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "true",
+            "true",
+            "true",
+        ]);
+    });
 });

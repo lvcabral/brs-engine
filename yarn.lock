@@ -1318,10 +1318,10 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zenfs/core@1.6.6":
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/@zenfs/core/-/core-1.6.6.tgz#157b5a81285525b46f22bd9f1a5d9d3fa54d34fd"
-  integrity sha512-dciOscuQfElSyS2pZJwhJ0EoKNxYsn227hwXmZi+gcAmaupcHdBuAS52QA8iYmZR58PjhOljRAJAhWsXFpMsdQ==
+"@zenfs/core@1.6.8":
+  version "1.6.8"
+  resolved "https://registry.yarnpkg.com/@zenfs/core/-/core-1.6.8.tgz#8aca87720d047087e2104bff07d246567cc7488e"
+  integrity sha512-p3kWJxbDWKzsud7P+ZN95YC00+lmWUbnZOoGKnE0L303dUwOBRBtgaApKYlF1eAP0dGUGwE+zQzAiPL4uE21fg==
   dependencies:
     "@types/node" "^22.10.1"
     "@types/readable-stream" "^4.0.10"

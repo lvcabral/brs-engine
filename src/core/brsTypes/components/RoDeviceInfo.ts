@@ -994,8 +994,16 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter) => {
-            return new BrsString("normal");
+        impl: (interpreter: Interpreter) => {
+            const { heapSizeLimit, usedHeapSize } = interpreter.getMemoryHeapInfo();
+            const percent = (usedHeapSize / heapSizeLimit) * 100;
+            let level = "normal";
+            if (percent > 90) {
+                level = "critical";
+            } else if (percent > 80) {
+                level = "low";
+            }
+            return new BrsString(level);
         },
     });
 
