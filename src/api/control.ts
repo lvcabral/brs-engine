@@ -15,6 +15,7 @@ import {
     platform,
 } from "../core/common";
 /// #if BROWSER
+import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 /// #endif
 
@@ -70,6 +71,7 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     if (options.customPadButtons instanceof Map) {
         setCustomPadButtons(options.customPadButtons);
     }
+    deviceData.remoteControls.push({ model: 10001, features: ["wifi", "keyboard"] });
     gameControl.on("connect", gamePadOnHandler);
     gameControl.on("disconnect", gamePadOffHandler);
     /// #endif
@@ -237,7 +239,7 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
     }
     const key = keysMap.get(keyCode);
     if (key && key.toLowerCase() !== "ignore") {
-        sendKey(key, mod, RemoteType.IR);
+        sendKey(key, mod, RemoteType.WD);
         if (mod === 0) {
             event.preventDefault();
         }
@@ -281,6 +283,7 @@ export function setCustomPadButtons(newButtons: Map<number, string>) {
 
 // GamePad handlers
 function gamePadOnHandler(gamePad: GCGamepad) {
+    deviceData.remoteControls.push({ model: 10002, features: ["bluetooth", "gamepad"] });
     axesMap.forEach((events, index) => {
         events.forEach((key: string) => {
             if (gamePad.axes > index) {
@@ -302,7 +305,7 @@ function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: numbe
             key = buttonsMap.get(index) ?? "";
         }
         if (controls.gamePads && key !== "") {
-            sendKey(key, 0, RemoteType.WD, gamePad.id);
+            sendKey(key, 0, RemoteType.BT, gamePad.id + 1);
         }
     });
     gamePad.after(eventName, () => {
@@ -310,7 +313,7 @@ function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: numbe
             key = buttonsMap.get(index) ?? "";
         }
         if (controls.gamePads && key !== "") {
-            sendKey(key, 100, RemoteType.WD, gamePad.id);
+            sendKey(key, 100, RemoteType.BT, gamePad.id + 1);
         }
     });
 }

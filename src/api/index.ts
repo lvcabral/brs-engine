@@ -6,7 +6,6 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./util";
-
 import {
     AppExitReason,
     AppPayload,
@@ -21,7 +20,6 @@ import {
     isNDKStart,
     platform,
 } from "../core/common";
-
 import {
     source,
     paths,
@@ -112,6 +110,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             "firmware",
             "registry",
             "models",
+            "remoteControls",
             "audioCodecs",
             "videoFormats",
             "fonts",

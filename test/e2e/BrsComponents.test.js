@@ -533,4 +533,24 @@ describe("end to end brightscript functions", () => {
             "true",
         ]);
     });
+    test("components/roRemoteInfo.brs", async () => {
+        await execute([resourceFile("components", "roRemoteInfo.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "--- Remote Info ---",
+            "Model:  0",
+            "IsAwake: false",
+            "--- Remote Features ---",
+            "wifi remote? true",
+            "bluetooth remote? false",
+            "motion remote? false",
+            "audio remote? false",
+            "voice capture remote? false",
+            "find remote remote? false",
+            "hasMuteSwitch? false",
+            "Mute Switch? true",
+            "--- Simulator Only Features ---",
+            "Keyboard? false",
+            "GamePad? false",
+        ]);
+    });
 });

@@ -32,6 +32,7 @@ export interface DeviceInfo {
     fontPath: string;
     fonts?: Map<string, any>;
     maxSimulStreams: 1 | 2 | 3;
+    remoteControls: RemoteControl[];
     customFeatures: string[];
     connectionType: "WiFiConnection" | "WiredConnection" | "";
     localIps: string[];
@@ -66,6 +67,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     fontPath: "../fonts/",
     fonts: new Map(),
     maxSimulStreams: 2,
+    remoteControls: [],
     customFeatures: [],
     connectionType: "WiredConnection",
     localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
@@ -240,6 +242,17 @@ export function isNDKStart(value: any): value is NDKStart {
     );
 }
 
+/* Remote Control Interface
+ *
+ * This interface is used to provide information about the remote controls
+ * that are available in the device.
+ *
+ */
+export type RemoteControl = {
+    model: number;
+    features: string[];
+};
+
 /* Platform Interface
  *
  * This interface is used to provide information about the environment
@@ -311,14 +324,14 @@ export const keyArraySpots = 3;
 
 // Remote control type
 export enum RemoteType {
-    SIM = 10, // Simulated (default)
-    IR = 20, // Infra Red
-    WD = 30, // Wifi Direct
-    ECP = 40, // External Control Protocol
-    RMOB = 50, // Roku Mobile App (ECP2)
+    IR = 10, // Infra Red (default)
+    WD = 20, // Wifi Direct (keyboard simulation)
+    BT = 30, // Bluetooth (gamepad simulation)
+    SIM = 40, // Simulated
+    ECP = 50, // External Control Protocol
+    RMOB = 60, // Roku Mobile App (ECP2)
 }
 // Other RBI valid remote codes:
-// BT - Bluetooth
 // CEC - Consumer Electronics Control
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on-device controls)
