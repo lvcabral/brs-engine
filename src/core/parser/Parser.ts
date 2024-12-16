@@ -78,6 +78,7 @@ const allowedProperties = [
     Lexeme.If,
     Lexeme.Invalid,
     Lexeme.Let,
+    Lexeme.Mod,
     Lexeme.Next,
     Lexeme.Not,
     Lexeme.ObjFun,

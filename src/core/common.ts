@@ -24,7 +24,7 @@ export interface DeviceInfo {
     RIDA: string;
     countryCode: string;
     timeZone: string;
-    locale: string;
+    locale: "en_US" | "de_DE" | "es_MX" | "fr_CA" | "pt_BR";
     captionLanguage: string;
     clockFormat: string;
     displayMode: "480p" | "720p" | "1080p";
@@ -32,8 +32,9 @@ export interface DeviceInfo {
     fontPath: string;
     fonts?: Map<string, any>;
     maxSimulStreams: 1 | 2 | 3;
+    remoteControls: RemoteControl[];
     customFeatures: string[];
-    connectionType: "WiFiConnection" | "WiredConnection" | "";
+    connectionInfo: ConnectionInfo;
     localIps: string[];
     startTime: number;
     audioVolume: number;
@@ -53,7 +54,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
-    firmwareVersion: "BSC.50E04330A", // v11.5
+    firmwareVersion: "48F.04E12221A", // v14.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US", // App Store Country
@@ -66,9 +67,17 @@ export const defaultDeviceInfo: DeviceInfo = {
     fontPath: "../fonts/",
     fonts: new Map(),
     maxSimulStreams: 2,
+    remoteControls: [],
     customFeatures: [],
-    connectionType: "WiredConnection",
-    localIps: ["eth1,127.0.0.1"], // Running on the Browser is not possible to get a real IP
+    connectionInfo: {
+        type: "WiredConnection",
+        name: "eth1",
+        gateway: "127.0.0.1",
+        ip: "127.0.0.1",
+        dns: ["8.8.8.8", "8.8.4.4"],
+        quality: "Excellent",
+    },
+    localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
     startTime: Date.now(),
     audioVolume: 40,
     registry: new Map(),
@@ -96,7 +105,7 @@ export function isDeviceInfo(value: any): value is DeviceInfo {
         (value.fonts instanceof Map || value.fonts === undefined) &&
         typeof value.maxSimulStreams === "number" &&
         Array.isArray(value.customFeatures) &&
-        typeof value.connectionType === "string" &&
+        isConnectionInfo(value.connectionInfo) &&
         Array.isArray(value.localIps) &&
         typeof value.startTime === "number" &&
         typeof value.audioVolume === "number" &&
@@ -173,6 +182,7 @@ export type PkgFilePath = {
 export enum AppExitReason {
     UNKNOWN = "EXIT_UNKNOWN",
     CRASHED = "EXIT_BRIGHTSCRIPT_CRASH",
+    UNKFUNC = "EXIT_BRIGHTSCRIPT_UNK_FUNC",
     FINISHED = "EXIT_USER_NAV",
     SETTINGS = "EXIT_SETTINGS_UPDATE",
     POWER = "EXIT_POWER_MODE",
@@ -197,6 +207,7 @@ export type AppData = {
     icon?: string;
     password?: string;
     exitReason?: AppExitReason;
+    exitTime?: number;
     params?: Map<string, string>;
     running?: boolean;
 };
@@ -212,6 +223,7 @@ export function isAppData(value: any): value is AppData {
         (typeof value.icon === "string" || value.icon === undefined) &&
         (typeof value.password === "string" || value.password === undefined) &&
         (typeof value.exitReason === "string" || value.exitReason === undefined) &&
+        (typeof value.exitTime === "number" || value.exitTime === undefined) &&
         (value.params instanceof Map || value.params === undefined) &&
         (typeof value.running === "boolean" || value.running === undefined)
     );
@@ -236,6 +248,17 @@ export function isNDKStart(value: any): value is NDKStart {
         Array.isArray(value.env)
     );
 }
+
+/* Remote Control Interface
+ *
+ * This interface is used to provide information about the remote controls
+ * that are available in the device.
+ *
+ */
+export type RemoteControl = {
+    model: number;
+    features: string[];
+};
 
 /* Platform Interface
  *
@@ -275,6 +298,38 @@ export function isPlatform(value: any): value is Platform {
     );
 }
 
+/* Connection Information Interface
+ *
+ * This interface is used to provide information about the connection
+ * that is available in the device.
+ *
+ */
+export type ConnectionInfo = {
+    type: "WiFiConnection" | "WiredConnection" | "";
+    name: string;
+    ip: string;
+    gateway: string;
+    quality: "Excellent" | "Good" | "Fair" | "Poor";
+    dns?: string[];
+    protocol?: string;
+    ssid?: string;
+};
+// Function to check if a value is a ConnectionInfo object
+export function isConnectionInfo(value: any): value is ConnectionInfo {
+    return (
+        value &&
+        typeof value.type === "string" &&
+        ["WiFiConnection", "WiredConnection", ""].includes(value.type) &&
+        typeof value.name === "string" &&
+        typeof value.ip === "string" &&
+        typeof value.gateway === "string" &&
+        ["Excellent", "Good", "Fair", "Poor"].includes(value.quality) &&
+        (value.dns instanceof Array || value.dns === undefined) &&
+        (typeof value.protocol === "string" || value.protocol === undefined) &&
+        (typeof value.ssid === "string" || value.ssid === undefined)
+    );
+}
+
 // Shared array data types enumerator
 export enum DataType {
     DBG, // Debug Command
@@ -290,6 +345,8 @@ export enum DataType {
     WAV, // Wave Audio
     WAV1, // Reserved for second stream
     WAV2, // Reserved for third stream
+    MUHS, // Memory Used Heap Size
+    MHSL, // Memory Heap Size Limit
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -306,14 +363,14 @@ export const keyArraySpots = 3;
 
 // Remote control type
 export enum RemoteType {
-    SIM = 10, // Simulated (default)
-    IR = 20, // Infra Red
-    WD = 30, // Wifi Direct
-    ECP = 40, // External Control Protocol
-    RMOB = 50, // Roku Mobile App (ECP2)
+    IR = 10, // Infra Red (default)
+    WD = 20, // Wifi Direct (keyboard simulation)
+    BT = 30, // Bluetooth (gamepad simulation)
+    SIM = 40, // Simulated
+    ECP = 50, // External Control Protocol
+    RMOB = 60, // Roku Mobile App (ECP2)
 }
 // Other RBI valid remote codes:
-// BT - Bluetooth
 // CEC - Consumer Electronics Control
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on-device controls)
@@ -503,4 +560,18 @@ export function parseTextFile(content?: string): string[] {
         lines = content.trimEnd().split("\n");
     }
     return lines;
+}
+
+// Function to convert the firmware string to a Map with Roku OS version parts
+export function getRokuOSVersion(firmware: string) {
+    const osVersion: Map<string, string> = new Map();
+    if (firmware.length > 0) {
+        const versions = "0123456789ACDEFGHJKLMNPRSTUVWXY";
+        osVersion.set("major", versions.indexOf(firmware.charAt(2)).toString());
+        osVersion.set("minor", firmware.slice(4, 5));
+        osVersion.set("revision", firmware.slice(7, 8));
+        osVersion.set("build", firmware.slice(8, 12));
+        osVersion.set("plid", firmware.slice(0, 2));
+    }
+    return osVersion;
 }

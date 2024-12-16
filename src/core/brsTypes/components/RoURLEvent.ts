@@ -7,12 +7,12 @@ import { Int32 } from "../Int32";
 
 export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     readonly kind = ValueKind.Object;
-    private id: number;
-    private responseCode: number;
-    private responseString: string;
-    private failureReason: string;
-    private headers: string;
-    private targetIp: string;
+    private readonly id: number;
+    private readonly responseCode: number;
+    private readonly responseString: string;
+    private readonly failureReason: string;
+    private readonly headers: string;
+    private readonly targetIp: string;
 
     constructor(id: number, response: string, status: number, statusText: string, headers: string) {
         super("roUrlEvent");

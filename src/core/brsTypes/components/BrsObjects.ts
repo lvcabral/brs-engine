@@ -34,6 +34,7 @@ import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
 import { RoAppInfo } from "./RoAppInfo";
 import { RoDeviceInfo } from "./RoDeviceInfo";
+import { RoRemoteInfo } from "./RoRemoteInfo";
 import { RoFileSystem } from "./RoFileSystem";
 import { Interpreter } from "../../interpreter";
 import { RoString } from "./RoString";
@@ -138,6 +139,7 @@ export const BrsObjects = new BrsObjectsMap([
     ],
     ["roAppInfo", (interpreter: Interpreter) => new RoAppInfo()],
     ["roDeviceInfo", (interpreter: Interpreter) => new RoDeviceInfo()],
+    ["roRemoteInfo", (interpreter: Interpreter) => new RoRemoteInfo()],
     ["roAppMemoryMonitor", (interpreter: Interpreter) => new RoAppMemoryMonitor()],
     ["roAudioPlayer", (interpreter: Interpreter) => new RoAudioPlayer()],
     [

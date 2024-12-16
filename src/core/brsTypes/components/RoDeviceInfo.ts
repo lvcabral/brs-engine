@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
-import { isPlatform } from "../../common";
+import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
 /// #if !BROWSER
@@ -78,8 +78,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getAudioDecodeInfo,
                 this.canDecodeVideo,
                 this.enableCodecCapChangedEvent,
-                this.IsAudioGuideEnabled,
+                this.isAudioGuideEnabled,
                 this.enableAudioGuideChangedEvent,
+                this.isAutoPlayEnabled, // since OS 13.0
                 this.getRandomUUID,
                 this.getConnectionInfo,
                 this.getConnectionType,
@@ -94,6 +95,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.enableLowGeneralMemoryEvent,
                 this.enableAppFocusEvent,
                 this.enableScreensaverExitedEvent,
+                this.enableValidClockEvent,
                 this.getCreationTime, // undocumented
                 this.getMessagePort,
                 this.setMessagePort,
@@ -168,12 +170,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             });
             result.push({ name: new BrsString("VendorName"), value: new BrsString("Roku") });
             result.push({ name: new BrsString("VendorUSBName"), value: new BrsString("Roku") });
-            const platform = interpreter.deviceInfo.get("platform");
-            if (isPlatform(platform)) {
-                for (const [key, value] of Object.entries(platform)) {
-                    result.push({ name: new BrsString(key), value: BrsBoolean.from(value) });
-                }
-            }
             return new RoAssociativeArray(result);
         },
     });
@@ -207,25 +203,25 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
+            const firmware = interpreter.deviceInfo.get("firmwareVersion");
             let result = new Array<AAMember>();
-            let firmware = interpreter.deviceInfo.get("firmwareVersion");
-            if (firmware.length > 0) {
-                const versions = "0123456789ACDEFGHJKLMNPRSTUVWXY";
+            if (firmware?.length > 0) {
+                const os = getRokuOSVersion(firmware);
                 result.push({
                     name: new BrsString("major"),
-                    value: new BrsString(versions.indexOf(firmware.charAt(2)).toString()),
+                    value: new BrsString(os.get("major") ?? "0"),
                 });
                 result.push({
                     name: new BrsString("minor"),
-                    value: new BrsString(firmware.slice(4, 5)),
+                    value: new BrsString(os.get("minor") ?? "0"),
                 });
                 result.push({
                     name: new BrsString("revision"),
-                    value: new BrsString(firmware.slice(7, 8)),
+                    value: new BrsString(os.get("revision") ?? "0"),
                 });
                 result.push({
                     name: new BrsString("build"),
-                    value: new BrsString(firmware.slice(8, 12)),
+                    value: new BrsString(os.get("build") ?? "0"),
                 });
             }
             return new RoAssociativeArray(result);
@@ -570,10 +566,18 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, feature: BrsString) => {
-            const features = ["gaming_hardware", "simulation_engine"];
+            const features = ["gaming_hardware", "usb_hardware", "simulation_engine"];
             const custom = interpreter.deviceInfo.get("customFeatures");
             if (custom instanceof Array && custom.length > 0) {
                 features.push(...custom);
+            }
+            const platform = interpreter.deviceInfo.get("platform");
+            if (isPlatform(platform)) {
+                for (const [key, value] of Object.entries(platform)) {
+                    if (value) {
+                        features.push(`platform_${key.slice(2).toLowerCase()}`);
+                    }
+                }
             }
             return BrsBoolean.from(features.includes(feature.value.toLowerCase()));
         },
@@ -752,12 +756,12 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
-            return enable;
+            return BrsBoolean.False;
         },
     });
 
     /** Checks if the screen reader is enabled. */
-    private readonly IsAudioGuideEnabled = new Callable("IsAudioGuideEnabled", {
+    private readonly isAudioGuideEnabled = new Callable("isAudioGuideEnabled", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -774,7 +778,18 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
-            return enable;
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Returns a flag indicating whether autoplay is enabled on a device. */
+    private readonly isAutoPlayEnabled = new Callable("isAutoPlayEnabled", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.False;
         },
     });
 
@@ -807,7 +822,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("connectionType"));
+            const connInfo: ConnectionInfo = interpreter.deviceInfo.get("connectionInfo");
+            return new BrsString(connInfo.type);
         },
     });
 
@@ -818,22 +834,79 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
+            const connInfo: ConnectionInfo = interpreter.deviceInfo.get("connectionInfo");
             const result = new Array<AAMember>();
             result.push({
+                name: new BrsString("active"),
+                value: new Int32(1),
+            });
+            result.push({
+                name: new BrsString("default"),
+                value: new Int32(1),
+            });
+            result.push({
                 name: new BrsString("type"),
-                value: new BrsString(interpreter.deviceInfo.get("connectionType")),
+                value: new BrsString(connInfo.type),
+            });
+            if (connInfo.type === "WiFiConnection" && connInfo.ssid) {
+                result.push({
+                    name: new BrsString("ssid"),
+                    value: new BrsString(connInfo.ssid),
+                });
+                result.push({
+                    name: new BrsString("protocol"),
+                    value: new BrsString("IEEE 802.11g"),
+                });
+                result.push({
+                    name: new BrsString("signal"),
+                    value: new Int32(-140),
+                });
+            }
+            result.push({
+                name: new BrsString("name"),
+                value: new BrsString(connInfo.name),
+            });
+            result.push({
+                name: new BrsString("gateway"),
+                value: new BrsString(connInfo.gateway),
             });
             const ips = interpreter.deviceInfo.get("localIps") as string[];
             if (ips.length > 0) {
-                result.push({
-                    name: new BrsString("name"),
-                    value: new BrsString(ips[0].split(",")[0]),
-                });
-                result.push({
-                    name: new BrsString("ip"),
-                    value: new BrsString(ips[0].split(",")[1]),
+                ips.some((iface: string) => {
+                    const name = iface.split(",")[0];
+                    const ip = iface.split(",")[1];
+                    if (name === connInfo.name) {
+                        result.push({
+                            name: new BrsString("ip"),
+                            value: new BrsString(ip),
+                        });
+                        return true;
+                    }
+                    return false;
                 });
             }
+            result.push({
+                name: new BrsString("ipv6"),
+                value: new RoArray([]),
+            });
+            connInfo.dns?.forEach((dns: string, index: number) => {
+                result.push({
+                    name: new BrsString(`dns.${index}`),
+                    value: new BrsString(dns),
+                });
+            });
+            result.push({
+                name: new BrsString("quality"),
+                value: new BrsString(connInfo.quality),
+            });
+            result.push({
+                name: new BrsString("mac"),
+                value: new BrsString("00:00:00:00:00:00"),
+            });
+            result.push({
+                name: new BrsString("expectedThroughput"),
+                value: new Int32(129),
+            });
             return new RoAssociativeArray(result);
         },
     });
@@ -861,7 +934,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
-            return enable;
+            return BrsBoolean.False;
         },
     });
 
@@ -888,7 +961,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
-            return enable;
+            return BrsBoolean.False;
         },
     });
 
@@ -963,8 +1036,16 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter) => {
-            return new BrsString("normal");
+        impl: (interpreter: Interpreter) => {
+            const { heapSizeLimit, usedHeapSize } = interpreter.getMemoryHeapInfo();
+            const percent = (usedHeapSize / heapSizeLimit) * 100;
+            let level = "normal";
+            if (percent > 90) {
+                level = "critical";
+            } else if (percent > 80) {
+                level = "low";
+            }
+            return new BrsString(level);
         },
     });
 
@@ -976,7 +1057,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
-            return enable;
+            return BrsBoolean.False;
         },
     });
 
@@ -988,7 +1069,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
-            return enable;
+            return BrsBoolean.False;
         },
     });
 
@@ -1000,7 +1081,19 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
-            return enable;
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Enables an event to be sent when the system clock becomes valid. */
+    private readonly enableValidClockEvent = new Callable("enableValidClockEvent", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            // Mocked until roDeviceInfoEvent is implemented
+            return BrsBoolean.False;
         },
     });
 

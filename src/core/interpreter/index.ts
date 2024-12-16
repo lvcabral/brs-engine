@@ -60,6 +60,9 @@ import {
     numberToHex,
     parseTextFile,
 } from "../common";
+/// #if !BROWSER
+import * as v8 from "v8";
+/// #endif
 
 /** The set of options used to configure an interpreter's execution. */
 export interface ExecutionOptions {
@@ -161,6 +164,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._creationTime;
     }
 
+    public lastRemote: number = 0;
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();
     public debugMode: boolean = false;
@@ -334,7 +338,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 results = [err.value ?? BrsInvalid.Instance];
             } else if (err instanceof BrsError) {
                 const backTrace = this.formatBacktrace(err.location, true, err.backTrace);
-                throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`);
+                throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
             } else {
                 throw err;
             }
@@ -1978,6 +1982,36 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     // Helper methods
+
+    /**
+     * Returns the Memory Heap information from the interpreter
+     *
+     * @returns an object with the heap size limit and the used heap size
+     * */
+    getMemoryHeapInfo() {
+        let heapSizeLimit = 874299; // Mock value for the heap size limit
+        let usedHeapSize = 26229; // Mock value for the used heap size
+        /// #if BROWSER
+        // Only Chromium based browsers support process.memory API, web workers do not have it yet,
+        // This information comes from the main thread and does not include the worker thread memory.
+        const limit = Atomics.load(this.sharedArray, DataType.MHSL);
+        const used = Atomics.load(this.sharedArray, DataType.MUHS);
+        if (limit > 0 && used > 0) {
+            heapSizeLimit = limit;
+            usedHeapSize = used;
+        }
+        /// #else
+        // More accurate information from the V8 engine in Node.js
+        const memoryUsage = v8.getHeapStatistics();
+        const heapLimit = Math.floor(memoryUsage.heap_size_limit / 1024);
+        const heapUsed = Math.floor(memoryUsage.used_heap_size / 1024);
+        if (heapLimit > 0 && heapUsed > 0) {
+            heapSizeLimit = heapLimit;
+            usedHeapSize = heapUsed;
+        }
+        /// #endif
+        return { heapSizeLimit, usedHeapSize };
+    }
 
     /**
      * Returns the Backtrace formatted as a string or an array

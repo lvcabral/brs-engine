@@ -6,7 +6,7 @@ import * as nodeFS from "fs";
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 
 export class FileSystem {
-    private paths: Map<string, string>;
+    private readonly paths: Map<string, string>;
     readonly root?: string;
     readonly ext?: string;
     readonly pfs: typeof zenFS.fs | typeof nodeFS; // pkg:

@@ -9,11 +9,11 @@ import { BrsCanvasContext2D, createNewCanvas, releaseCanvas } from "../draw2d";
 
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private family: string;
-    private size: number;
-    private bold: boolean;
-    private italic: boolean;
-    private metrics: FontMetrics;
+    private readonly family: string;
+    private readonly size: number;
+    private readonly bold: boolean;
+    private readonly italic: boolean;
+    private readonly metrics: FontMetrics;
 
     // Constructor can only be used by RoFontRegistry()
     constructor(

@@ -137,6 +137,26 @@ describe("RoDateTime", () => {
             });
         });
 
+        describe("asDateStringLoc", () => {
+            it("returns date string localized in 'short' format", () => {
+                let asDateStringLoc = dt.getMethod("asDateStringLoc");
+
+                let result = asDateStringLoc.call(interpreter, new BrsString("short"));
+                expect(asDateStringLoc).toBeTruthy();
+                expect(result).toEqual(new BrsString("1/1/09"));
+            });
+        });
+
+        describe("asTimeStringLoc", () => {
+            it("returns time string localized in 'short' format", () => {
+                let asTimeStringLoc = dt.getMethod("asTimeStringLoc");
+
+                let result = asTimeStringLoc.call(interpreter, new BrsString("short"));
+                expect(asTimeStringLoc).toBeTruthy();
+                expect(result).toEqual(new BrsString("12:00 am"));
+            });
+        });
+
         describe("asSeconds", () => {
             it("returns the date/time as the number of seconds from the Unix epoch", () => {
                 let asSeconds = dt.getMethod("asSeconds");

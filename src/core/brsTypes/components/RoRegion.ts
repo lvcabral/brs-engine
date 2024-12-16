@@ -20,7 +20,7 @@ import UPNG from "upng-js";
 
 export class RoRegion extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private valid: boolean;
+    private readonly valid: boolean;
     private alphaEnable: boolean;
     private bitmap: RoBitmap | RoScreen;
     private x: number;

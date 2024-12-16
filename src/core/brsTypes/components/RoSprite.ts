@@ -11,9 +11,9 @@ import { BrsImageData } from "../draw2d";
 
 export class RoSprite extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly id: number;
+    private readonly regions?: RoArray;
     private region: RoRegion;
-    private regions?: RoArray;
-    private id: number;
     private x: number;
     private y: number;
     private z: number;
