@@ -95,11 +95,10 @@ program
             deviceData.fonts = brs.getFonts(deviceData.fontPath, deviceData.defaultFont);
             deviceData.localIps = getLocalIps();
             try {
-                const {gateway, version, int} = gateway4sync();
+                const { gateway, version, int } = gateway4sync();
                 deviceData.connectionInfo.gateway = gateway;
                 deviceData.connectionInfo.name = int ?? "eth1";
-                }
-            catch (err: any) {
+            } catch (err: any) {
                 console.error(chalk.red(`Unable to get the Network Gateway: ${err.message}`));
             }
             deviceData.connectionInfo.dns = dns.getServers();
