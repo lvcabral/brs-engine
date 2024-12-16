@@ -170,12 +170,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             });
             result.push({ name: new BrsString("VendorName"), value: new BrsString("Roku") });
             result.push({ name: new BrsString("VendorUSBName"), value: new BrsString("Roku") });
-            const platform = interpreter.deviceInfo.get("platform");
-            if (isPlatform(platform)) {
-                for (const [key, value] of Object.entries(platform)) {
-                    result.push({ name: new BrsString(key), value: BrsBoolean.from(value) });
-                }
-            }
             return new RoAssociativeArray(result);
         },
     });
@@ -572,10 +566,18 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, feature: BrsString) => {
-            const features = ["gaming_hardware", "simulation_engine"];
+            const features = ["gaming_hardware", "usb_hardware", "simulation_engine"];
             const custom = interpreter.deviceInfo.get("customFeatures");
             if (custom instanceof Array && custom.length > 0) {
                 features.push(...custom);
+            }
+            const platform = interpreter.deviceInfo.get("platform");
+            if (isPlatform(platform)) {
+                for (const [key, value] of Object.entries(platform)) {
+                    if (value) {
+                        features.push(`platform_${key.slice(2).toLowerCase()}`);
+                    }
+                }
             }
             return BrsBoolean.from(features.includes(feature.value.toLowerCase()));
         },
@@ -831,8 +833,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            // TODO: Add support for missing fields:
-            // dns.x, gateway, expectedThroughput, signal, ssid, quality, protocol, txFailed, txRetries
+            // TODO: Implement missing fields: dns.x, gateway, expectedThroughput, signal, ssid, quality, protocol, txFailed, txRetries
             const result = new Array<AAMember>();
             result.push({
                 name: new BrsString("active"),

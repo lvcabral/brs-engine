@@ -8,14 +8,14 @@ As described on the [engine API documentation](engine-api.md), the `initialize()
 
 ```ts
 const deviceInfo = {
-  developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
+  developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As Roku, segregates Registry data (can't have a dot)
   friendlyName: "BrightScript Engine Library",
   deviceModel: "8000X", // Roku TV (Midland)
   clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
   RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
   countryCode: "US", // App Store Country
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  locale: "en_US", // Used if app supports localization
+  locale: "en_US", // Valid locales: en_US, es_MX, pt_BR, fr_CA, de_DE
   captionLanguage: "eng",
   clockFormat: "12h",
   displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
@@ -24,16 +24,40 @@ const deviceInfo = {
   maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
   customFeatures: [], // String array with custom features (see below)
   connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
-  localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
+  localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron.
   startTime: Date.now(),
   audioVolume: 40,
   maxFps: 60,
 };
 ```
 
-### Custom Features Parameter
+## Simulated Device Features
 
-In the example above, there is an `Array` parameter named `customFeatures`, that can be used to pass to the apps, specific features that the host application implements. This value can be checked using the `roDeviceInfo` method `hasFeature()` in the BrightScript code. An example of this usage would be, if you want to define that your application is running on a device that support touch features, emulating the remote control, you can add `customFeatures: ["touch_controls"]` and inside the app you can check this way:
+In BrightScript, various device features can be checked using the `roDeviceInfo` method `hasFeature()`. The engine leverages this method to provide developers with a way to verify specific simulator features.
+
+Below is a table with the extended set of features, internally created by the engine, that can be used in BrightScript code. This allows apps to behave differently when running on a Roku device or under the simulation engine.
+
+| Feature Name | Description |
+|--------------|-------------|
+| `simulation_engine` | Always `true` when running under `brs-engine` |
+| `ascii_rendering` | Returns `true` when running in the terminal in ASCII screen mode, see the [CLI doc](run-as-cli.md) for more details |
+| `platform_browser` | Returns `true` when running under a Browser |
+| `platform_chromium` | Returns `true` when running under Chromium |
+| `platform_firefox` | Returns `true` when running under Firefox |
+| `platform_safari` | Returns `true` when running under Safari |
+| `platform_electron` | Returns `true` when running under Electron |
+| `platform_linux` | Returns `true` when running under Linux |
+| `platform_macos` | Returns `true` when running under MacOS |
+| `platform_windows` | Returns `true` when running under Windows |
+| `platform_chromeos` | Returns `true` when running under ChromeOS |
+| `platform_ios` | Returns `true` when running under iOS |
+| `platform_android` | Returns `true` when running under Android |
+
+### Custom Features
+
+In the **Device Information** section above, the `deviceInfo` object has an `Array` parameter named `customFeatures` that can be used to pass specific features implemented by the host application to the apps.
+
+For example, if you want to define that your application is running on a device that supports touch features, emulating the remote control, you can add `customFeatures: ["touch_controls"]`. Inside the app, you can check this feature as follows:
 
 ```brs
   di = CreateObject("roDeviceInfo")
@@ -44,44 +68,14 @@ In the example above, there is an `Array` parameter named `customFeatures`, that
   end if
 ```
 
-By default, the feature `simulation_engine` is defined internally in the library, to allow the apps identify that it's running under `brs-engine` and the CLI will add the `ascii_rendering` feature so the apps can adapt to the ASCII Art rendering, see [CLI documentation](run-as-cli.md) to learn more details.
-
 ## App Manifest
 
 There is also a way BrightScript apps can change the behavior of the simulation engine, by using special `manifest` entries. Currently the only option is:
 
 - `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
 
-Note: this special `manifest` entry is ignored by Roku Devices.
+**Note:** this special `manifest` entry is ignored by Roku Devices.
 
 ## Control Mapping
 
-It is also possible to customize the Remote Control mapping for the Keyboard and Game Pad, either by sending the custom mapping in the `Options` parameter when running `initialize()` method, or by using `setCustomKeys()` and `setCustomPadButtons()` later on. Check the details in the [engine API documentation](engine-api.md). To know the default mapping please check the source code at `src/api/control.ts`.
-
-## Platform Details
-
-The engine will also extend the results of the method `roDeviceInfo.getModelDetails()` with several attributes giving information about the platform the app is being executed:
-
-```brs
-brs> di = createObject("roDeviceInfo")
-
-brs> print di.getModelDetails()
-<Component: roAssociativeArray> =
-{
-    Manufacturer: ""
-    ModelNumber: "3930X"
-    VendorName: "Roku"
-    VendorUSBName: "Roku"
-    inAndroid: false
-    inBrowser: false
-    inChromeOS: false
-    inChromium: false
-    inElectron: false
-    inFirefox: false
-    inIOS: false
-    inLinux: false
-    inMacOS: true
-    inSafari: false
-    inWindows: false
-}
-```
+It is also possible to customize the Remote Control mapping for the Keyboard and Game Pad, either by sending the custom mapping in the `Options` parameter when running `initialize()` method, or by using `setCustomKeys()` and `setCustomPadButtons()` later on. Check the details in the [engine API documentation](engine-api.md). To learn about the default mapping check the [Remote Control Simulation](./remote-control.md) page.

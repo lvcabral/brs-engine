@@ -79,7 +79,6 @@ describe("RoDeviceInfo", () => {
                 expect(method).toBeTruthy();
                 expect(aa.get(new BrsString("Manufacturer"))).toEqual(new BrsString(""));
                 expect(aa.get(new BrsString("VendorName"))).toEqual(new BrsString("Roku"));
-                expect(aa.get(new BrsString("inBrowser"))).toEqual(BrsBoolean.False);
             });
         });
         describe("getFriendlyName", () => {
@@ -180,12 +179,25 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("hasFeature", () => {
-            it("should return true when enabling hasFeature flag", () => {
+            it("should return false when feature is not available", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("hasFeature");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("on"))).toEqual(BrsBoolean.False);
+                expect(method.call(interpreter, new BrsString("soundbar_hardware"))).toEqual(
+                    BrsBoolean.False
+                );
+            });
+        });
+        describe("hasFeature", () => {
+            it("should return true when running under the brs-engine", () => {
+                let deviceInfo = new RoDeviceInfo();
+                let method = deviceInfo.getMethod("hasFeature");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter, new BrsString("simulation_engine"))).toEqual(
+                    BrsBoolean.True
+                );
             });
         });
         describe("getCurrentLocale", () => {
