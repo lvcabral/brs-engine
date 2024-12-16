@@ -178,6 +178,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 const mod = Atomics.load(interpreter.sharedArray, DataType.MOD + idx);
                 Atomics.store(interpreter.sharedArray, DataType.KEY + idx, -1);
                 this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+                interpreter.lastRemote = remoteIdx;
             }
         }
     }

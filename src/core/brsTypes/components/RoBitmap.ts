@@ -35,11 +35,11 @@ export class RoBitmap extends BrsComponent implements BrsValue {
     private readonly height: number;
     private readonly name: string;
     private readonly disposeCanvas: boolean;
+    private readonly valid: boolean;
     private alphaEnable: boolean;
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number;
     private rgbaRedraw: boolean;
-    private valid: boolean;
 
     constructor(interpreter: Interpreter, param: BrsComponent) {
         super("roBitmap");

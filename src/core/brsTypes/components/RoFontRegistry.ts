@@ -20,10 +20,10 @@ export interface FontMetrics {
 
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly defaultFontSize = 40;
-    readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
-    private defaultFontFamily: string;
-    private fontRegistry: Map<string, FontMetrics[]>;
+    private readonly defaultFontSize = 40;
+    private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
+    private readonly defaultFontFamily: string;
+    private readonly fontRegistry: Map<string, FontMetrics[]>;
 
     constructor(interpreter: Interpreter) {
         super("roFontRegistry");

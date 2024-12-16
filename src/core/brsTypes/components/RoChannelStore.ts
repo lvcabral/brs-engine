@@ -8,11 +8,11 @@ import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
-    private id: number;
+    readonly kind = ValueKind.Object;
+    private readonly id: number;
     private order: BrsType[];
     private credData: string;
     private port?: RoMessagePort;
-    readonly kind = ValueKind.Object;
 
     constructor() {
         super("roChannelStore");

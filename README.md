@@ -34,7 +34,7 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 | `browser/lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language parser and interpreter in a background thread on the browser platform.|
 |`bin/brs.cli.js`| Executable **[CLI](docs/run-as-cli.md)** application that can be used from the terminal: <br/>- As a language shell - [REPL (read-eval-print loop)](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop)<br/>- Executing `brs`, `zip` or `bpk` files<br/>- Packaging `zip` files into encrypted `bpk` packages.|
 |`bin/brs.node.js`| A NodeJS library, similar to `brs.worker.js` that exposes the language parser and interpreter to be used by Node.js applications, the engine CLI and automated tests.|
-|`bin/brs.ecp.js`| A **[NodeJS Worker](https://nodejs.org/api/worker_threads.html)** library, used by the CLI to launch the ECP and SSDP services.|
+|`bin/brs.ecp.js`| A **[NodeJS Worker](https://nodejs.org/api/worker_threads.html)** library, used by the CLI to launch the [ECP](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) and **SSDP** services.|
 
 The Web Worker library require features like [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) and [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas), that are _relatively recent_ in the browser engines, because of that, it can only be executed on recent versions of:
 
@@ -81,6 +81,7 @@ There are many ways you can use and/or participate in the project, read the docu
 - [How to run as Command Line Interface](docs/run-as-cli.md)
 - [How add the Engine to a Web Application](docs/integrating.md)
 - [How to customize the Engine behavior](docs/customization.md)
+- [Remote Control Simulation](docs/remote-control.md)
 - [BrightScript Engine API reference](docs/engine-api.md)
 - [BrightScript Engine Limitations](docs/limitations.md)
 - [How to contribute to this Project](docs/contributing.md)

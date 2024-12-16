@@ -1,13 +1,3 @@
-// Mock the resolvedOptions method of Intl.DateTimeFormat
-global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
-    return {
-        resolvedOptions: () => {
-            return {
-                timeZone: "America/Fortaleza",
-            };
-        },
-    };
-});
 const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 const lolex = require("lolex");
 
@@ -211,10 +201,18 @@ describe("end to end brightscript functions", () => {
     test("components/roDateTime.brs", async () => {
         await execute([resourceFile("components", "roDateTime.brs")], outputStreams);
 
+        const today = new Date(Date.now());
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "Full Date: Friday November 12, 2010",
+            `Today: ${today.getUTCFullYear()}-${today.getUTCMonth() + 1}-${today.getUTCDate()}`,
+            "No Param: Friday November 12, 2010",
+            "Long Date: Friday November 12, 2010",
+            "Short Week Day: Fri November 12, 2010",
             "No Week Day: November 12, 2010",
+            "Short Month: Friday Nov 12, 2010",
+            "Short Month Short Weekday: Fri Nov 12, 2010",
+            "Short Month No Weekday: Nov 12, 2010",
             "Short Date: 11/12/10",
+            "Short Date Dashes: 11-12-10",
             "Weekday: Friday",
             "Day of Week:  5",
             "Day of Month:  12",
@@ -226,6 +224,28 @@ describe("end to end brightscript functions", () => {
             "Last Day of Month:  30",
             "Milliseconds:  160",
             "ISO String UTC: 2010-11-12T13:14:15Z",
+            "Empty Format: Friday November 12, 2010",
+            "Invalid Format: Friday November 12, 2010",
+            "------ New asDateStringLoc ------",
+            "DateLoc - full: Friday, November 12, 2010",
+            "DateLoc - long: November 12, 2010",
+            "DateLoc - medium: Nov 12, 2010",
+            "DateLoc - short: 11/12/10",
+            "DateLoc - custom: 12:November:10",
+            "DateLoc - custom: 11.Fri/2010",
+            "DateLoc - custom: Before11.Fri/2010",
+            "DateLoc - custom: 11.Fri/2010After",
+            "DateLoc - EMMANUEL: E 11 ANUEL",
+            "DateLoc - EMMANUEL: EMMANUEL",
+            "DateLoc - invalid: something",
+            "------ New asTimeStringLoc ------",
+            "TimeLoc - short: 1:14 pm",
+            "TimeLoc - short-h12: 1:14 pm",
+            "TimeLoc - short-h24: 13:14",
+            "TimeLoc - custom: 1 pm",
+            "TimeLoc - custom: 13 pm",
+            "TimeLoc - empty: 1:14 pm",
+            "TimeLoc - no seconds: 1:14:ss pm",
         ]);
     });
 
@@ -414,7 +434,7 @@ describe("end to end brightscript functions", () => {
     });
 
     test("components/roDeviceInfo.brs", async () => {
-        process.env.TZ = "PST";
+        const currTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
         process.env.LOCALE = "en_US";
 
         await execute([resourceFile("components", "roDeviceInfo.brs")], outputStreams);
@@ -422,15 +442,19 @@ describe("end to end brightscript functions", () => {
             "8000X",
             "Roku (8000X)",
             "STB",
-            " 15",
+            " 4",
             "BrightScript Engine Library",
             " 4",
-            "BSC.50E04330A",
+            "48F.04E12221A",
             "f51ac698-bc60-4409-aae3-8fc3abc025c4",
             "true",
             "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
             " 36",
-            "America/Fortaleza",
+            currTZ,
+            "false",
+            "true",
+            "true",
+            "true",
             "false",
             "en_US",
             "US",
@@ -443,17 +467,17 @@ describe("end to end brightscript functions", () => {
             "On",
             "Default",
             "12h",
-            "true",
-            "true",
-            "true",
+            "false",
+            "false",
+            "false",
             "normal",
             "false",
             "true",
-            "true",
+            "false",
             "WiredConnection",
             "true",
             " 1",
-            " 3",
+            "Excellent",
             "HDTV",
             "720p",
             "16x9",
@@ -465,13 +489,15 @@ describe("end to end brightscript functions", () => {
             "invalid",
             " 3",
             "opengl",
-            "true",
+            "false",
             "Stereo",
             " 0",
             "true",
             " 40",
             "false",
-            "true",
+            "false",
+            "false",
+            "false",
         ]);
     });
 
@@ -499,6 +525,36 @@ describe("end to end brightscript functions", () => {
             "Media Type: movie",
             "Uptime: <Component: roTimespan>",
             "ScreenSaverTimeout: 0",
+            "Last Exit Code: EXIT_UNKNOWN",
+        ]);
+    });
+
+    test("components/roAppMemoryMonitor.brs", async () => {
+        await execute([resourceFile("components", "roAppMemoryMonitor.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "true",
+            "true",
+            "true",
+        ]);
+    });
+    test("components/roRemoteInfo.brs", async () => {
+        await execute([resourceFile("components", "roRemoteInfo.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "--- Remote Info ---",
+            "Model:  0",
+            "IsAwake: false",
+            "--- Remote Features ---",
+            "wifi remote? true",
+            "bluetooth remote? false",
+            "motion remote? false",
+            "audio remote? false",
+            "voice capture remote? false",
+            "find remote remote? false",
+            "hasMuteSwitch? false",
+            "Mute Switch? true",
+            "--- Simulator Only Features ---",
+            "Keyboard? false",
+            "GamePad? false",
         ]);
     });
 });

@@ -14,8 +14,11 @@ sub main()
     uuid = deviceInfo.getRandomUUID()
     print len(uuid)
     print deviceInfo.getTimeZone()
-    print deviceInfo.hasFeature("on")
-
+    print deviceInfo.hasFeature("sdcard_hardware")
+    print deviceInfo.hasFeature("gaming_hardware")
+    print deviceInfo.hasFeature("usb_hardware")
+    print deviceInfo.hasFeature("simulation_engine")
+    print deviceInfo.hasFeature("platform_browser")
     print deviceInfo.getCurrentLocale()
     print deviceInfo.getCountryCode()
     print deviceInfo.getUserCountryCode()
@@ -42,7 +45,7 @@ sub main()
     print deviceInfo.getConnectionType()
     print isValidIP(deviceInfo.getExternalIp())
     print deviceInfo.getIPAddrs().count()
-    print deviceInfo.getConnectionInfo().count()
+    print deviceInfo.getConnectionInfo().quality
     print deviceInfo.getDisplayType()
     print deviceInfo.getDisplayMode()
     print deviceInfo.getDisplayAspectRatio()
@@ -63,7 +66,8 @@ sub main()
     print deviceInfo.getSoundEffectsVolume()
     print deviceInfo.isAudioGuideEnabled()
     print deviceInfo.enableAudioGuideChangedEvent(true)
-
+    print deviceInfo.enableValidClockEvent(true)
+    print deviceInfo.isAutoPlayEnabled()
 end sub
 
 function isValidIP(ip as String) as Boolean

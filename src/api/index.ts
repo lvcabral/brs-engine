@@ -6,7 +6,6 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./util";
-
 import {
     AppExitReason,
     AppPayload,
@@ -21,7 +20,6 @@ import {
     isNDKStart,
     platform,
 } from "../core/common";
-
 import {
     source,
     paths,
@@ -42,6 +40,7 @@ import {
     redrawDisplay,
     clearDisplay,
     statsUpdate,
+    setDisplayState,
 } from "./display";
 import {
     initSoundModule,
@@ -108,8 +107,10 @@ let sharedArray: Int32Array;
 export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
         const invalidKeys = [
+            "firmware",
             "registry",
             "models",
+            "remoteControls",
             "audioCodecs",
             "videoFormats",
             "fonts",
@@ -191,6 +192,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         } else if (event === "volumemute") {
             setAudioMute(!getAudioMute());
         } else if (event === "control") {
+            updateMemoryInfo();
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
@@ -287,18 +289,14 @@ function setupCurrentApp(filePath: string) {
         } else {
             // Not in the list so is a side-loaded app
             currentApp.id = "dev";
+            currentApp.path = filePath;
             const dev = deviceData.appList.find((app) => app.id === "dev");
             if (dev) {
                 dev.path = filePath;
-                currentApp.path = filePath;
                 currentApp.exitReason = dev.exitReason ?? AppExitReason.UNKNOWN;
+                currentApp.exitTime = dev.exitTime;
             } else {
-                deviceData.appList.push({
-                    id: "dev",
-                    title: currentApp.title,
-                    version: currentApp.version,
-                    path: filePath,
-                });
+                deviceData.appList.push(currentApp);
             }
         }
     } else {
@@ -312,6 +310,7 @@ export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
     if (currentApp.running) {
         currentApp.running = false;
         currentApp.exitReason = reason;
+        currentApp.exitTime = Date.now();
         updateAppList();
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
@@ -412,7 +411,6 @@ function loadSourceCode(fileName: string, fileData: any) {
             source.push(this.result);
             paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
             clearDisplay();
-            notifyAll("loaded", currentApp);
             runApp(createPayload(Date.now()));
         } else {
             apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);
@@ -424,9 +422,11 @@ function loadSourceCode(fileName: string, fileData: any) {
 // Execute Engine Web Worker
 function runApp(payload: AppPayload) {
     try {
+        notifyAll("loaded", currentApp);
         showDisplay();
         currentApp.running = true;
         updateAppList();
+        updateMemoryInfo();
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", workerCallback);
         brsWorker.postMessage(sharedBuffer);
@@ -449,6 +449,22 @@ export function updateAppList() {
         if (app) {
             Object.assign(app, currentApp);
         }
+    }
+}
+
+// Update Memory Usage on Shared Array
+export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
+    if (currentApp.running && usedMemory && totalMemory) {
+        Atomics.store(sharedArray, DataType.MUHS, usedMemory);
+        Atomics.store(sharedArray, DataType.MHSL, totalMemory);
+        return;
+    }
+    const performance = window.performance as ChromiumPerformance;
+    if (currentApp.running && platform.inChromium && performance.memory) {
+        // Only Chromium based browsers support process.memory API
+        const memory = performance.memory;
+        Atomics.store(sharedArray, DataType.MUHS, Math.floor(memory.usedJSHeapSize / 1024));
+        Atomics.store(sharedArray, DataType.MHSL, Math.floor(memory.jsHeapSizeLimit / 1024));
     }
 }
 
@@ -492,6 +508,8 @@ function workerCallback(event: MessageEvent) {
         }
     } else if (event.data.videoPath && platform.inBrowser) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
+    } else if (typeof event.data.displayEnabled === "boolean") {
+        setDisplayState(event.data.displayEnabled);
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isNDKStart(event.data)) {

@@ -7,7 +7,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { audioExt, videoExt } from "../../common";
+import { audioExt, videoExt, getRokuOSVersion } from "../../common";
 import fileType from "file-type";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
@@ -77,6 +77,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.enableHostVerification,
                 this.enableFreshConnection,
                 this.setHttpVersion,
+                this.getUserAgent, // Since OS 12.5
             ],
             ifHttpAgent: [
                 this.addHeader,
@@ -776,6 +777,21 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // This method is mocked for compatibility
             return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns the user agent of the device, which can then be passed into server-side ad requests. */
+    private readonly getUserAgent = new Callable("getUserAgent", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter) => {
+            const firmware = interpreter.deviceInfo.get("firmwareVersion");
+            const os = getRokuOSVersion(firmware);
+            const short = `${os.get("major")}.${os.get("minor")}`;
+            const long = `${short}.${os.get("revision")}.${os.get("build")}-${os.get("plid")}`;
+            return new BrsString(`Roku/DVP-${short} (${long})`);
         },
     });
 

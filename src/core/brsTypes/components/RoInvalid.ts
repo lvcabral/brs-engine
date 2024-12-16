@@ -7,7 +7,7 @@ import { Unboxable } from "../Boxing";
 
 export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
-    private intrinsic: BrsInvalid;
+    private readonly intrinsic: BrsInvalid;
 
     public getValue(): BrsInvalid {
         return this.intrinsic;

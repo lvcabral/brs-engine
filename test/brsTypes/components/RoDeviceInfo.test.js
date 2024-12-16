@@ -79,7 +79,6 @@ describe("RoDeviceInfo", () => {
                 expect(method).toBeTruthy();
                 expect(aa.get(new BrsString("Manufacturer"))).toEqual(new BrsString(""));
                 expect(aa.get(new BrsString("VendorName"))).toEqual(new BrsString("Roku"));
-                expect(aa.get(new BrsString("inBrowser"))).toEqual(BrsBoolean.False);
             });
         });
         describe("getFriendlyName", () => {
@@ -113,7 +112,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getVersion");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("BSC.50E04330A"));
+                expect(method.call(interpreter)).toEqual(new BrsString("48F.04E12221A"));
             });
         });
         describe("getRIDA", () => {
@@ -180,12 +179,25 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("hasFeature", () => {
-            it("should return true when enabling hasFeature flag", () => {
+            it("should return false when feature is not available", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("hasFeature");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("on"))).toEqual(BrsBoolean.False);
+                expect(method.call(interpreter, new BrsString("soundbar_hardware"))).toEqual(
+                    BrsBoolean.False
+                );
+            });
+        });
+        describe("hasFeature", () => {
+            it("should return true when running under the brs-engine", () => {
+                let deviceInfo = new RoDeviceInfo();
+                let method = deviceInfo.getMethod("hasFeature");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter, new BrsString("simulation_engine"))).toEqual(
+                    BrsBoolean.True
+                );
             });
         });
         describe("getCurrentLocale", () => {
@@ -320,30 +332,39 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableAppFocusEvent", () => {
-            it("should notify that event notification has been enabled", () => {
+            it("should notify that event notification has not been enabled", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableAppFocusEvent");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.False);
             });
         });
         describe("enableScreensaverExitedEvent", () => {
-            it("should enable screensaver exited event", () => {
+            it("should not enable screensaver exited event", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableScreensaverExitedEvent");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.False);
             });
         });
         describe("enableLowGeneralMemoryEvent", () => {
-            it("should enable low memory event", () => {
+            it("should not enable low memory event", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableLowGeneralMemoryEvent");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.False);
+            });
+        });
+        describe("enableValidClockEvent", () => {
+            it("should not enable low memory event", () => {
+                let deviceInfo = new RoDeviceInfo();
+                let method = deviceInfo.getMethod("enableValidClockEvent");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.False);
             });
         });
         describe("getGeneralMemoryLevel", () => {
@@ -374,12 +395,12 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableLinkStatusEvent", () => {
-            it("should return true to confirm the Link Status", () => {
+            it("should return false as the Link Status Event is not supported", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableLinkStatusEvent");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.False);
             });
         });
         describe("getConnectionType", () => {
@@ -427,7 +448,7 @@ describe("RoDeviceInfo", () => {
 
                 expect(method).toBeTruthy();
                 expect(items).toBeTruthy();
-                expect(result.elements.length).toEqual(3);
+                expect(result.elements.length).toBeGreaterThan(9);
             });
         });
         describe("getDisplayType", () => {
@@ -548,12 +569,12 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableCodecCapChangedEvent", () => {
-            it("should enable codec cap changed event", () => {
+            it("should not enable codec cap changed event", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableCodecCapChangedEvent");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.False);
             });
         });
         describe("getAudioOutputChannel", () => {
@@ -584,12 +605,21 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("enableAudioGuideChangedEvent", () => {
-            it("should return true when enabling audio guide change event", () => {
+            it("should return false as enabling audio guide change event is not supported", () => {
                 let deviceInfo = new RoDeviceInfo();
                 let method = deviceInfo.getMethod("enableAudioGuideChangedEvent");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.True);
+                expect(method.call(interpreter, BrsBoolean.True)).toEqual(BrsBoolean.False);
+            });
+        });
+        describe("isAutoPlayEnabled", () => {
+            it("should return false as auto play is not supported", () => {
+                let deviceInfo = new RoDeviceInfo();
+                let method = deviceInfo.getMethod("isAutoPlayEnabled");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter)).toEqual(BrsBoolean.False);
             });
         });
     });

@@ -21,6 +21,8 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 this.mark,
                 this.asDateString,
                 this.asDateStringNoParam,
+                this.asDateStringLoc, // Since OS 12.0
+                this.asTimeStringLoc, // Since OS 12.0
                 this.asSeconds,
                 this.fromISO8601String,
                 this.fromSeconds,
@@ -44,6 +46,163 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         } else {
             this.markTime = seconds * 1000;
         }
+    }
+
+    formatDate(format: string, locale: string): string {
+        const date = new Date(this.markTime);
+        let dateString = "";
+        switch (format.toLowerCase()) {
+            case "long-date": {
+                dateString = date
+                    .toLocaleDateString(locale, {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        timeZone: "UTC",
+                    })
+                    .replace(",", "");
+                break;
+            }
+            case "full": {
+                dateString = date.toLocaleDateString(locale, {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    timeZone: "UTC",
+                });
+                break;
+            }
+            case "short-weekday": {
+                dateString = date
+                    .toLocaleDateString(locale, {
+                        weekday: "short",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        timeZone: "UTC",
+                    })
+                    .replace(",", "");
+                break;
+            }
+            case "no-weekday":
+            case "long": {
+                dateString = date.toLocaleDateString(locale, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    timeZone: "UTC",
+                });
+                break;
+            }
+            case "short-month": {
+                dateString = date
+                    .toLocaleDateString(locale, {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "UTC",
+                    })
+                    .replace(",", "");
+                break;
+            }
+            case "short-month-short-weekday": {
+                dateString = date
+                    .toLocaleDateString(locale, {
+                        weekday: "short",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "UTC",
+                    })
+                    .replace(",", "");
+                break;
+            }
+            case "medium":
+            case "short-month-no-weekday": {
+                dateString = date.toLocaleDateString(locale, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    timeZone: "UTC",
+                });
+                break;
+            }
+            case "short": {
+                dateString = date.toLocaleDateString(locale, {
+                    year: locale !== "en-US" ? "numeric" : "2-digit",
+                    month: "numeric",
+                    day: "numeric",
+                    timeZone: "UTC",
+                });
+                break;
+            }
+            case "short-date": {
+                const dateArray = date
+                    .toLocaleDateString("en-US", {
+                        year: "2-digit",
+                        month: "numeric",
+                        day: "numeric",
+                        timeZone: "UTC",
+                    })
+                    .split("/");
+                dateString =
+                    dateArray[0] + "/" + dateArray[1] + "/" + parseInt(dateArray[2]).toString();
+                break;
+            }
+            case "short-date-dashes": {
+                const dateArray = date
+                    .toLocaleDateString("en-US", {
+                        year: "2-digit",
+                        month: "numeric",
+                        day: "numeric",
+                        timeZone: "UTC",
+                    })
+                    .split("/");
+                dateString =
+                    dateArray[0] + "-" + dateArray[1] + "-" + parseInt(dateArray[2]).toString();
+                break;
+            }
+        }
+        return dateString;
+    }
+
+    formatTime(format: string, locale: string): string {
+        const date = new Date(this.markTime);
+        let timeString = "";
+        switch (format.toLowerCase()) {
+            case "short": {
+                const fmt = new Intl.DateTimeFormat(locale, {
+                    timeStyle: "short",
+                    timeZone: "UTC",
+                });
+                timeString = fmt.format(date).toLowerCase();
+                break;
+            }
+            case "short-h12": {
+                timeString = new Intl.DateTimeFormat(locale, {
+                    hour: "numeric",
+                    minute: "numeric",
+                    hour12: true,
+                    timeZone: "UTC",
+                })
+                    .format(date)
+                    .toLowerCase();
+                break;
+            }
+            case "short-h24": {
+                timeString = new Intl.DateTimeFormat(locale, {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                    timeZone: "UTC",
+                }).format(date);
+                break;
+            }
+        }
+        return timeString;
     }
 
     resetTime() {
@@ -77,102 +236,9 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, format: BrsString) => {
-            const date = new Date(this.markTime);
-            let dateString = "";
-            switch (format.toString()) {
-                case "short-weekday": {
-                    dateString = date
-                        .toLocaleDateString("en-US", {
-                            weekday: "short",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            timeZone: "UTC",
-                        })
-                        .replace(",", "");
-                    break;
-                }
-                case "no-weekday": {
-                    dateString = date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    });
-                    break;
-                }
-                case "short-month": {
-                    dateString = date
-                        .toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            timeZone: "UTC",
-                        })
-                        .replace(",", "");
-                    break;
-                }
-                case "short-month-short-weekday": {
-                    dateString = date
-                        .toLocaleDateString("en-US", {
-                            weekday: "short",
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            timeZone: "UTC",
-                        })
-                        .replace(",", "");
-                    break;
-                }
-                case "short-month-no-weekday": {
-                    dateString = date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    });
-                    break;
-                }
-                case "short-date": {
-                    const dateArray = date
-                        .toLocaleDateString("en-US", {
-                            year: "2-digit",
-                            month: "numeric",
-                            day: "numeric",
-                            timeZone: "UTC",
-                        })
-                        .split("/");
-                    dateString =
-                        dateArray[0] + "/" + dateArray[1] + "/" + parseInt(dateArray[2]).toString();
-                    break;
-                }
-                case "short-date-dashes": {
-                    const dateArray = date
-                        .toLocaleDateString("en-US", {
-                            year: "2-digit",
-                            month: "numeric",
-                            day: "numeric",
-                            timeZone: "UTC",
-                        })
-                        .split("/");
-                    dateString =
-                        dateArray[0] + "-" + dateArray[1] + "-" + parseInt(dateArray[2]).toString();
-                    break;
-                }
-                default: {
-                    // default format: long-date
-                    dateString = date
-                        .toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                            timeZone: "UTC",
-                        })
-                        .replace(",", "");
-                    break;
-                }
+            let dateString = this.formatDate(format.value, "en-US");
+            if (dateString === "") {
+                dateString = this.formatDate("long-date", "en-US");
             }
             return new BrsString(dateString);
         },
@@ -185,15 +251,45 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            const date = new Date(this.markTime);
-            const dtoptions = {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                timeZone: "UTC",
-            } as Intl.DateTimeFormatOptions;
-            return new BrsString(date.toLocaleDateString("en-US", dtoptions).replace(",", ""));
+            return new BrsString(this.formatDate("long-date", "en-US"));
+        },
+    });
+
+    /** Returns the localized date of the device. */
+    private readonly asDateStringLoc = new Callable("asDateStringLoc", {
+        signature: {
+            args: [new StdlibArgument("format", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter, format: BrsString) => {
+            const rokuDateTokens = ["EEEE", "EEE", "dd", "d", "MMMM", "MMM", "MM", "M", "yy", "y"];
+            const locale = (interpreter.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
+            const dateFormat = format.value.trim() === "" ? "short" : format.value;
+            let dateString = this.formatDate(dateFormat, locale);
+            if (dateString === "") {
+                const date = new Date(this.markTime);
+                dateString = localeFormat(date, wrapTokens(format.value, rokuDateTokens), locale);
+            }
+            return new BrsString(dateString);
+        },
+    });
+
+    /** Returns the localized time of the device. */
+    private readonly asTimeStringLoc = new Callable("asTimeStringLoc", {
+        signature: {
+            args: [new StdlibArgument("format", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (interpreter: Interpreter, format: BrsString) => {
+            const rokuTimeTokens = ["HH", "H", "hh", "h", "mm", "m", "a"];
+            const locale = (interpreter.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
+            const dateFormat = format.value.trim() === "" ? "short" : format.value;
+            let timeString = this.formatTime(dateFormat, locale);
+            if (timeString === "") {
+                const date = new Date(this.markTime);
+                timeString = localeFormat(date, wrapTokens(format.value, rokuTimeTokens), locale);
+            }
+            return new BrsString(timeString);
         },
     });
 
@@ -401,3 +497,94 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
     });
 }
+
+/**
+ * Function to Wrap date/time tokens with curly braces
+ * @param input - String to wrap tokens
+ * @param tokens - Array of tokens to find and wrap
+ * @returns String with wrapped tokens
+ */
+function wrapTokens(input: string, tokens: string[]): string {
+    const tokenRegex = new RegExp(`(${tokens.join("|")})`, "g");
+    return input.replace(tokenRegex, (match, token, offset, string) => {
+        const before = string[offset - 1];
+        const after = string[offset + token.length];
+        if (before && /[a-zA-Z0-9]/.test(before) && after && /[a-zA-Z0-9]/.test(after)) {
+            return token;
+        }
+        return `{${token}}`;
+    });
+}
+
+/**
+ * Use this API for locale-based formatting.
+ *
+ * @param {Date}  date - Date object, which should be used.
+ * @param {string} exp - String, which you want to format
+ * @param {string | string[]} [locale="en-US"] - Locale(s), which will be used for formatting.
+ * @return {string} String with formatted date.
+ *
+ * @borrows from https://github.com/xxczaki/light-date converted to use BrightScript tokens
+ */
+const localeFormat = (date: Date, exp: string, locale: string | string[] = "en-US"): string => {
+    const tokenRegex = /\\?\{(yy|y|MM|M|dd|d|HH|H|hh|h|mm|m|MMMM|MMM|EEEE|EEE|a)\}/g;
+    return exp.replace(tokenRegex, (key) => {
+        if (key.startsWith("\\")) {
+            return key.slice(1);
+        }
+
+        switch (key) {
+            case "{yy}":
+                return `${date.getUTCFullYear()}`.slice(-2);
+            case "{y}":
+                return `${date.getUTCFullYear()}`;
+            case "{MM}":
+                return `${date.getUTCMonth() + 1}`.padStart(2, "0");
+            case "{M}":
+                return `${date.getUTCMonth() + 1}`;
+            case "{dd}":
+                return `${date.getUTCDate()}`.padStart(2, "0");
+            case "{d}":
+                return `${date.getUTCDate()}`;
+            case "{HH}":
+                return `${date.getUTCHours()}`.padStart(2, "0");
+            case "{H}":
+                return `${date.getUTCHours()}`;
+            case "{hh}":
+                return `${date.getUTCHours() % 12 || 12}`.padStart(2, "0");
+            case "{h}":
+                return `${date.getUTCHours() % 12 || 12}`;
+            case "{mm}":
+                return `${date.getUTCMinutes()}`.padStart(2, "0");
+            case "{m}":
+                return `${date.getUTCMinutes()}`;
+            case "{MMMM}":
+                return new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" }).format(
+                    date
+                );
+            case "{MMM}":
+                return new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(
+                    date
+                );
+            case "{EEEE}":
+                return new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(
+                    date
+                );
+            case "{EEE}":
+                return new Intl.DateTimeFormat(locale, {
+                    weekday: "short",
+                    timeZone: "UTC",
+                }).format(date);
+            case "{a}": {
+                const parts = new Intl.DateTimeFormat(locale, {
+                    hour: "numeric",
+                    hour12: true,
+                    timeZone: "UTC",
+                }).formatToParts(date);
+                return parts.find((part) => part.type === "dayPeriod")?.value.toLowerCase() ?? "";
+            }
+            default:
+                return "";
+        }
+    });
+};

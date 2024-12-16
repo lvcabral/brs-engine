@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { enableSendKeys, initControlModule, sendKey, subscribeControl } from "../api/control";
-import { DataType, DebugCommand } from "../core/common";
+import { DataType, DebugCommand, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
 import xmlbuilder from "xmlbuilder";
@@ -356,8 +356,8 @@ function genDeviceInfoXml(encrypt: boolean) {
     xml.ele("default-device-name", {}, `${device.friendlyName} - ${device.serialNumber}`);
     xml.ele("user-device-name", {}, device.friendlyName);
     xml.ele("build-number", {}, device.firmwareVersion);
-    xml.ele("software-version", {}, getRokuOS(device.firmwareVersion));
-    xml.ele("software-build", {}, getRokuOS(device.firmwareVersion, false));
+    xml.ele("software-version", {}, getOSVersion(device.firmwareVersion));
+    xml.ele("software-build", {}, getOSVersion(device.firmwareVersion, false));
     xml.ele("secure-device", {}, true);
     xml.ele("language", {}, device.locale.split("_")[0]);
     xml.ele("country", {}, device.countryCode);
@@ -447,7 +447,7 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
         const regXml = xml.ele("registry");
         regXml.ele("dev-id", {}, device.developerId);
         regXml.ele("plugins", {}, plugin);
-        regXml.ele("space-available", {}, 32768);
+        regXml.ele("space-available", {}, getSpaceAvailable());
         const secsXml = regXml.ele("sections");
         let curSection = "";
         let scXml: xmlbuilder.XMLNode;
@@ -484,7 +484,7 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
 // Helper Functions
 
 function launchApp(appID: string) {
-    // not supported
+    // Not supported on CLI
 }
 
 function getMacAddress() {
@@ -512,14 +512,11 @@ function getMacAddress() {
     return mac;
 }
 
-function getRokuOS(firmware: string, version = true) {
+function getOSVersion(firmware: string, version = true) {
     if (firmware?.length) {
         if (version) {
-            const versions = "0123456789ACDEFGHJKLMNPRSTUVWXY";
-            const major = versions.indexOf(firmware.charAt(2));
-            const minor = firmware.slice(4, 5);
-            const revision = firmware.slice(7, 8);
-            return `${major}.${minor}.${revision}`;
+            const os = getRokuOSVersion(firmware);
+            return `${os.get("major")}.${os.get("minor")}.${os.get("revision")}`;
         } else {
             return firmware.slice(8, 12);
         }
@@ -530,4 +527,16 @@ function getRokuOS(firmware: string, version = true) {
 function getModelName(model: string) {
     const modelName = device.models.get(model);
     return modelName ? modelName[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`;
+}
+
+function getSpaceAvailable() {
+    const devId = device.developerId;
+    let space = 32 * 1024;
+    cliRegistry.forEach((value, key) => {
+        if (key.split(".")[0] === devId) {
+            space -= Buffer.byteLength(key.substring(devId.length + 1), "utf8");
+            space -= Buffer.byteLength(value, "utf8");
+        }
+    });
+    return space;
 }

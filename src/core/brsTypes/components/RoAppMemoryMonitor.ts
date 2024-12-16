@@ -1,13 +1,13 @@
-import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort } from "..";
+import { BrsType, RoAssociativeArray, RoMessagePort } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
 export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
-    private port?: RoMessagePort;
     readonly kind = ValueKind.Object;
+    private port?: RoMessagePort;
 
     constructor() {
         super("roAppMemoryMonitor");
@@ -15,7 +15,8 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
             ifAppMemoryMonitor: [
                 this.enableMemoryWarningEvent,
                 this.getMemoryLimitPercent,
-                this.getChannelAvailableMemory,
+                this.getChannelAvailableMemory, // Since OS 12.5
+                this.getChannelMemoryLimit, // Since OS 13.0
             ],
             ifSetMessagePort: [this.setMessagePort],
             ifGetMessagePort: [this.getMessagePort],
@@ -54,9 +55,9 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
-            // Returning 5% until proper memory management is implemented
-            return new Int32(5);
+        impl: (interpreter: Interpreter) => {
+            const { heapSizeLimit, usedHeapSize } = interpreter.getMemoryHeapInfo();
+            return new Int32((usedHeapSize / heapSizeLimit) * 100);
         },
     });
 
@@ -64,11 +65,27 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
     private readonly getChannelAvailableMemory = new Callable("getChannelAvailableMemory", {
         signature: {
             args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter) => {
+            const { heapSizeLimit, usedHeapSize } = interpreter.getMemoryHeapInfo();
+            return new Int32(heapSizeLimit - usedHeapSize);
+        },
+    });
+
+    /** Returns the amount of foreground and background memory the app may use and the maximum that the RokuOS may allocate to the app. */
+    private readonly getChannelMemoryLimit = new Callable("getChannelMemoryLimit", {
+        signature: {
+            args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
-            // Returning 486400kb until proper memory management is implemented
-            return new Int32(486400);
+        impl: (interpreter: Interpreter) => {
+            const { heapSizeLimit } = interpreter.getMemoryHeapInfo();
+            const memArray = new RoAssociativeArray([]);
+            memArray.set(new BrsString("maxForegroundMemory"), new Int32(0), true);
+            memArray.set(new BrsString("maxBackgroundMemory"), new Int32(0), true);
+            memArray.set(new BrsString("maxRokuManagedHeapMemory"), new Int32(heapSizeLimit), true);
+            return memArray;
         },
     });
 

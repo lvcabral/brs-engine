@@ -18,11 +18,11 @@ import {
     parseManifest,
     isAppPayload,
 } from "./common";
+import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import { ParseResults } from "./parser/Parser";
 import * as PP from "./preprocessor";
-import * as BrsError from "./Error";
 import * as BrsTypes from "./brsTypes";
 import * as path from "path";
 import * as xml2js from "xml2js";
@@ -131,8 +131,8 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         if (payload.device.registry?.size) {
             replInterpreter.setRegistry(payload.device.registry);
         }
-        setupDeviceData(payload.device, replInterpreter);
-        setupDeviceFonts(payload.device, replInterpreter);
+        setupDeviceData(replInterpreter, payload.device);
+        setupDeviceFonts(replInterpreter, payload.device);
     }
     return replInterpreter;
 }
@@ -168,7 +168,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
             }
         });
     } catch (err: any) {
-        if (!(err instanceof BrsError.BrsError)) {
+        if (!(err instanceof BrsError)) {
             postMessage(`error,Interpreter execution error: ${err.message}`);
         }
     }
@@ -374,9 +374,10 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResu
     if (payload.device.registry?.size) {
         interpreter.setRegistry(payload.device.registry);
     }
-    setupDeviceData(payload.device, interpreter);
-    setupDeviceFonts(payload.device, interpreter);
-    return setupPackageFiles(payload, interpreter);
+    setupDeviceData(interpreter, payload.device);
+    setupDeviceFonts(interpreter, payload.device);
+    setupTranslations(interpreter);
+    return setupPackageFiles(interpreter, payload);
 }
 
 interface SerializedPCode {
@@ -413,10 +414,10 @@ function setupInputParams(
 /**
  * Updates the interpreter DeviceInfo Map with the provided data and
  * initializes the common: file system with device internal libraries.
- * @param device object with device info data
  * @param interpreter the Interpreter instance to update
+ * @param device object with device info data
  */
-function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
+function setupDeviceData(interpreter: Interpreter, device: DeviceInfo) {
     Object.keys(device).forEach((key) => {
         if (key !== "registry" && key !== "fonts") {
             if (key === "developerId") {
@@ -442,10 +443,10 @@ function setupDeviceData(device: DeviceInfo, interpreter: Interpreter) {
 
 /**
  * Updates the interpreter `common:` volume with device internal fonts.
- * @param device object with device info data
  * @param interpreter the Interpreter instance to update
+ * @param device object with device info data
  */
-function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
+function setupDeviceFonts(interpreter: Interpreter, device: DeviceInfo) {
     let fontFamily = device.defaultFont ?? "Asap";
     let fontPath = device.fontPath ?? "../fonts/";
 
@@ -494,12 +495,12 @@ function setupDeviceFonts(device: DeviceInfo, interpreter: Interpreter) {
 /**
  * Updates the interpreter pkg: file system with the provided package files and
  * loads the translation data based on the configured locale.
- * @param payload with the source code, manifest and all the assets of the app.
  * @param interpreter the Interpreter instance to update
+ * @param payload with the source code, manifest and all the assets of the app.
  *
  * @returns a SourceResult object with the source map or the pcode data.
  */
-function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): SourceResult {
+function setupPackageFiles(interpreter: Interpreter, payload: AppPayload): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
     const fsys = interpreter.fileSystem;
     if (!fsys || !Array.isArray(payload.paths)) {
@@ -513,24 +514,18 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
                 } else {
                     result.iv = fsys.readFileSync(`pkg:/${filePath.url}`, "utf8");
                 }
-            } else if (filePath.type === "source") {
-                if (
-                    Array.isArray(payload.source) &&
-                    typeof payload.source[filePath.id] === "string"
-                ) {
-                    result.sourceMap.set(filePath.url, payload.source[filePath.id]);
-                } else if (fsys.existsSync(`pkg:/${filePath.url}`)) {
-                    result.sourceMap.set(
-                        filePath.url,
-                        fsys.readFileSync(`pkg:/${filePath.url}`, "utf8")
-                    );
-                }
+            } else if (filePath.type === "source" && Array.isArray(payload.source)) {
+                result.sourceMap.set(filePath.url, payload.source[filePath.id]);
+            } else if (filePath.type === "source" && fsys.existsSync(`pkg:/${filePath.url}`)) {
+                result.sourceMap.set(
+                    filePath.url,
+                    fsys.readFileSync(`pkg:/${filePath.url}`, "utf8")
+                );
             }
         } catch (err: any) {
-            postMessage(`error,Error writing file ${filePath.url} - ${err.message}`);
+            postMessage(`error,Error accessing file ${filePath.url} - ${err.message}`);
         }
     }
-    loadTranslations(interpreter);
     return result;
 }
 
@@ -539,7 +534,7 @@ function setupPackageFiles(payload: AppPayload, interpreter: Interpreter): Sourc
  * @param interpreter the Interpreter instance to update
  */
 
-function loadTranslations(interpreter: Interpreter) {
+function setupTranslations(interpreter: Interpreter) {
     let xmlText = "";
     let trType = "";
     let trTarget = "";
@@ -835,6 +830,14 @@ async function executeApp(
                 interpreter.options.stderr.write(err.message);
             }
             exitReason = AppExitReason.CRASHED;
+            const runtimeError = err.cause;
+            if (
+                runtimeError &&
+                runtimeError instanceof RuntimeError &&
+                runtimeError.errorDetail === RuntimeErrorDetail.MemberFunctionNotFound
+            ) {
+                exitReason = AppExitReason.UNKFUNC;
+            }
         }
     }
     return exitReason;
@@ -883,7 +886,7 @@ function parseLibraries(
  * Logs a detected BRS error to the renderer process.
  * @param err the error to log
  */
-function logError(err: BrsError.BrsError) {
+function logError(err: BrsError) {
     postMessage(`error,${err.format()}`);
 }
 

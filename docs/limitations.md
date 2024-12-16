@@ -13,7 +13,6 @@ There are several features from the **BrightScript** language and components tha
   * `roHdmiStatus`
   * `roHttpAgent`
   * `roMicrophone`
-  * `roRemoteInfo`
   * `roRSA`
   * `roSocketAddress`
   * `roStreamSocket`
@@ -32,7 +31,7 @@ There are several features from the **BrightScript** language and components tha
   * The following methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
   * Check what formats (container and codec) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
   * DASH streams are not yet supported.
-* The component `roUrlTransfer` is implemented with basic functionality but has some limitations:
+* The component `roUrlTransfer` is implemented with basic functionality but with the following limitations:
   * To make a **web app** access urls from domains other than the one it is hosted, requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
   * The _async_ methods are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
   * If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
@@ -42,14 +41,16 @@ There are several features from the **BrightScript** language and components tha
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
   * The method `GetTargetIpAddress` from `roUrlEvent` always returns an empty string.
-* Reserved words like `Mod` cannot be used as function parameters (Roku devices allows that).
+* The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API.
+* The events for the components `roInput` and `roDeviceInfo` are not being triggered.
+* The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.
+* The string `mod` cannot be used as variable or function parameter name, because it conflicts with remainder operator `Mod` (Roku devices allows that).
 * SDK 1.0 deprecated components are not supported, but will be implemented in the future as a legacy apps preservation initiative.
 
-## In Scope (mocked)
+## Mocked Components and Libraries
 
 * RAF (Roku Ads Framework) object `Roku_Ads` is mocked with the most common methods available.
 * Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked (a fake server feature will be implemented in the future).
-* The component `roAppManager` is mocked with the exception of method `GetUptime` that returns a `roTimeSpan` as Roku does.
 
 ## Out of Scope
 

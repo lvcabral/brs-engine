@@ -84,6 +84,7 @@ export * from "./components/RoLocalization";
 export * from "./components/RoRegistry";
 export * from "./components/RoRegistrySection";
 export * from "./components/RoDeviceInfo";
+export * from "./components/RoRemoteInfo";
 export * from "./components/RoAppMemoryMonitor";
 export * from "./components/RoFileSystem";
 export * from "./components/RoChannelStore";
