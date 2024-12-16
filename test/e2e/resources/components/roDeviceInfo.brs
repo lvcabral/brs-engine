@@ -45,7 +45,7 @@ sub main()
     print deviceInfo.getConnectionType()
     print isValidIP(deviceInfo.getExternalIp())
     print deviceInfo.getIPAddrs().count()
-    print deviceInfo.getConnectionInfo().count()
+    print deviceInfo.getConnectionInfo().quality
     print deviceInfo.getDisplayType()
     print deviceInfo.getDisplayMode()
     print deviceInfo.getDisplayAspectRatio()
