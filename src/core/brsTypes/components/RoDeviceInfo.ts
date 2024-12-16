@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
-import { getRokuOSVersion, isPlatform } from "../../common";
+import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
 /// #if !BROWSER
@@ -822,7 +822,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("connectionType"));
+            const connInfo: ConnectionInfo = interpreter.deviceInfo.get("connectionInfo");
+            return new BrsString(connInfo.type);
         },
     });
 
@@ -833,7 +834,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            // TODO: Implement missing fields: dns.x, gateway, expectedThroughput, signal, ssid, quality, protocol, txFailed, txRetries
+            // TODO: Implement missing fields: dns.x, gateway
+            const connInfo: ConnectionInfo = interpreter.deviceInfo.get("connectionInfo");
             const result = new Array<AAMember>();
             result.push({
                 name: new BrsString("active"),
@@ -845,26 +847,66 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             });
             result.push({
                 name: new BrsString("type"),
-                value: new BrsString(interpreter.deviceInfo.get("connectionType")),
+                value: new BrsString(connInfo.type),
+            });
+            if (connInfo.type === "WiFiConnection" && connInfo.ssid) {
+                result.push({
+                    name: new BrsString("ssid"),
+                    value: new BrsString(connInfo.ssid),
+                });
+                result.push({
+                    name: new BrsString("protocol"),
+                    value: new BrsString("IEEE 802.11g"),
+                });
+                result.push({
+                    name: new BrsString("signal"),
+                    value: new Int32(-140),
+                });
+            }
+            result.push({
+                name: new BrsString("name"),
+                value: new BrsString(connInfo.name),
+            });
+            result.push({
+                name: new BrsString("gateway"),
+                value: new BrsString(connInfo.gateway),
             });
             const ips = interpreter.deviceInfo.get("localIps") as string[];
             if (ips.length > 0) {
-                result.push({
-                    name: new BrsString("name"),
-                    value: new BrsString(ips[0].split(",")[0]),
-                });
-                result.push({
-                    name: new BrsString("ip"),
-                    value: new BrsString(ips[0].split(",")[1]),
+                ips.some((iface: string) => {
+                    const name = iface.split(",")[0];
+                    const ip = iface.split(",")[1];
+                    if (name === connInfo.name) {
+                        result.push({
+                            name: new BrsString("ip"),
+                            value: new BrsString(ip),
+                        });
+                        return true;
+                    }
+                    return false;
                 });
             }
             result.push({
                 name: new BrsString("ipv6"),
                 value: new RoArray([]),
             });
+            connInfo.dns?.forEach((dns: string, index: number) => {
+                result.push({
+                    name: new BrsString(`dns.${index}`),
+                    value: new BrsString(dns),
+                });
+            });
+            result.push({
+                name: new BrsString("quality"),
+                value: new BrsString(connInfo.quality),
+            });
             result.push({
                 name: new BrsString("mac"),
                 value: new BrsString("00:00:00:00:00:00"),
+            });
+            result.push({
+                name: new BrsString("expectedThroughput"),
+                value: new Int32(129),
             });
             return new RoAssociativeArray(result);
         },

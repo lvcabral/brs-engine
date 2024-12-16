@@ -34,7 +34,7 @@ export interface DeviceInfo {
     maxSimulStreams: 1 | 2 | 3;
     remoteControls: RemoteControl[];
     customFeatures: string[];
-    connectionType: "WiFiConnection" | "WiredConnection" | "";
+    connectionInfo: ConnectionInfo;
     localIps: string[];
     startTime: number;
     audioVolume: number;
@@ -69,7 +69,14 @@ export const defaultDeviceInfo: DeviceInfo = {
     maxSimulStreams: 2,
     remoteControls: [],
     customFeatures: [],
-    connectionType: "WiredConnection",
+    connectionInfo: {
+        type: "WiredConnection",
+        name: "eth1",
+        gateway: "127.0.0.1",
+        ip: "127.0.0.1",
+        dns: ["8.8.8.8", "8.8.4.4"],
+        quality: "Excellent",
+    },
     localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
     startTime: Date.now(),
     audioVolume: 40,
@@ -98,7 +105,7 @@ export function isDeviceInfo(value: any): value is DeviceInfo {
         (value.fonts instanceof Map || value.fonts === undefined) &&
         typeof value.maxSimulStreams === "number" &&
         Array.isArray(value.customFeatures) &&
-        typeof value.connectionType === "string" &&
+        isConnectionInfo(value.connectionInfo) &&
         Array.isArray(value.localIps) &&
         typeof value.startTime === "number" &&
         typeof value.audioVolume === "number" &&
@@ -288,6 +295,38 @@ export function isPlatform(value: any): value is Platform {
         typeof value.inWindows === "boolean" &&
         typeof value.inLinux === "boolean" &&
         typeof value.inChromeOS === "boolean"
+    );
+}
+
+/* Connection Information Interface
+ *
+ * This interface is used to provide information about the connection
+ * that is available in the device.
+ *
+ */
+export type ConnectionInfo = {
+    type: "WiFiConnection" | "WiredConnection" | "";
+    name: string;
+    ip: string;
+    gateway: string;
+    quality: "Excellent" | "Good" | "Fair" | "Poor";
+    dns?: string[];
+    protocol?: string;
+    ssid?: string;
+};
+// Function to check if a value is a ConnectionInfo object
+export function isConnectionInfo(value: any): value is ConnectionInfo {
+    return (
+        value &&
+        typeof value.type === "string" &&
+        ["WiFiConnection", "WiredConnection", ""].includes(value.type) &&
+        typeof value.name === "string" &&
+        typeof value.ip === "string" &&
+        typeof value.gateway === "string" &&
+        ["Excellent", "Good", "Fair", "Poor"].includes(value.quality) &&
+        (value.dns instanceof Array || value.dns === undefined) &&
+        (typeof value.protocol === "string" || value.protocol === undefined) &&
+        (typeof value.ssid === "string" || value.ssid === undefined)
     );
 }
 

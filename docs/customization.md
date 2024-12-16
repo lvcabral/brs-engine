@@ -23,7 +23,6 @@ const deviceInfo = {
   fontPath: "../fonts/",
   maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
   customFeatures: [], // String array with custom features (see below)
-  connectionType: "WiredConnection", // Options: "WiFiConnection", "WiredConnection", ""
   localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron.
   startTime: Date.now(),
   audioVolume: 40,
@@ -55,7 +54,7 @@ Below is a table with the extended set of features, internally created by the en
 
 ### Custom Features
 
-In the **Device Information** section above, the `deviceInfo` object has an `Array` parameter named `customFeatures` that can be used to pass specific features implemented by the host application to the apps.
+In the **Device Information** section above, the `deviceInfo` object has an `Array` parameter named `customFeatures` that can be used to pass specific features implemented by the host application to the BrightScript apps.
 
 For example, if you want to define that your application is running on a device that supports touch features, emulating the remote control, you can add `customFeatures: ["touch_controls"]`. Inside the app, you can check this feature as follows:
 

@@ -9,7 +9,9 @@
 import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
+import dns from "node:dns";
 import { Worker } from "node:worker_threads";
+import { gateway4sync } from "default-gateway";
 import envPaths from "env-paths";
 import { Canvas, ImageData, createCanvas } from "canvas";
 import chalk from "chalk";
@@ -92,6 +94,15 @@ program
             deviceData.fontPath = "../browser/fonts";
             deviceData.fonts = brs.getFonts(deviceData.fontPath, deviceData.defaultFont);
             deviceData.localIps = getLocalIps();
+            try {
+                const {gateway, version, int} = gateway4sync();
+                deviceData.connectionInfo.gateway = gateway;
+                deviceData.connectionInfo.name = int ?? "eth1";
+                }
+            catch (err: any) {
+                console.error(chalk.red(`Unable to get the Network Gateway: ${err.message}`));
+            }
+            deviceData.connectionInfo.dns = dns.getServers();
             deviceData.stopOnCrash = program.debug ?? false;
             if (program.registry) {
                 deviceData.registry = getRegistry();
@@ -316,6 +327,7 @@ function getLocalIps() {
             ++alias;
         });
     });
+    console.log(chalk.blueBright(`Local IPs: ${ips.join(" | ")}`));
     return ips;
 }
 

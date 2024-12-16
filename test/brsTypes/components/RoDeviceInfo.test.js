@@ -448,7 +448,7 @@ describe("RoDeviceInfo", () => {
 
                 expect(method).toBeTruthy();
                 expect(items).toBeTruthy();
-                expect(result.elements.length).toEqual(7);
+                expect(result.elements.length).toEqual(10);
             });
         });
         describe("getDisplayType", () => {

@@ -477,7 +477,7 @@ describe("end to end brightscript functions", () => {
             "WiredConnection",
             "true",
             " 1",
-            " 7",
+            " 10",
             "HDTV",
             "720p",
             "16x9",
