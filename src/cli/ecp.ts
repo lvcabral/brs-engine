@@ -67,8 +67,6 @@ function enableECP() {
     ecp.get("/query/active-app", sendActiveApp);
     ecp.get("/query/icon/:appID", sendAppIcon);
     ecp.get("/query/registry/:appID", sendRegistry);
-    // ecp.get("/query/graphic-frame-rate", sendFrameRate);
-    // ecp.get("/query/sgnodes", sendSGNodes);
     ecp.post("/launch/:appID", sendLaunchApp);
     ecp.post("/keypress/:key", sendKeyPress);
     ecp.post("/keydown/:key", sendKeyDown);
