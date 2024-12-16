@@ -834,7 +834,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            // TODO: Implement missing fields: dns.x, gateway
             const connInfo: ConnectionInfo = interpreter.deviceInfo.get("connectionInfo");
             const result = new Array<AAMember>();
             result.push({
