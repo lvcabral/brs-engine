@@ -45,6 +45,13 @@ const rokuKeys: Map<string, number> = new Map([
     ["b", 18],
     ["playonly", 22],
     ["stop", 23],
+    ["channelup", 1114134],
+    ["channeldown", 1114135],
+    ["red", 1114226],
+    ["green", 1114227],
+    ["yellow", 1114228],
+    ["blue", 1114229],
+    ["exit", 1114230],
 ]);
 
 // Initialize Control Module
