@@ -68,6 +68,7 @@ function enableECP() {
     ecp.get("/query/icon/:appID", sendAppIcon);
     ecp.get("/query/registry/:appID", sendRegistry);
     ecp.post("/launch/:appID", sendLaunchApp);
+    ecp.post("/exit-app/:appID", sendExitApp);
     ecp.post("/keypress/:key", sendKeyPress);
     ecp.post("/keydown/:key", sendKeyDown);
     ecp.post("/keyup/:key", sendKeyUp);
@@ -106,6 +107,7 @@ function enableECP() {
                 .then(() => {
                     subscribeControl("ecp", (event: string) => {
                         if (event === "home" || event === "poweroff") {
+                            // TODO: exiting with error `Dot` operator attempted with a non-object value
                             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
                         }
                     });
@@ -276,6 +278,11 @@ function sendRegistry(req: any, res: any) {
 
 function sendLaunchApp(req: any, res: any) {
     launchApp(req.params.appID);
+    res?.end();
+}
+
+function sendExitApp(req: any, res: any) {
+    Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
     res?.end();
 }
 
