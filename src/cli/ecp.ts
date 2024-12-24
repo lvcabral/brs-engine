@@ -107,7 +107,6 @@ function enableECP() {
                 .then(() => {
                     subscribeControl("ecp", (event: string) => {
                         if (event === "home" || event === "poweroff") {
-                            // TODO: exiting with error `Dot` operator attempted with a non-object value
                             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
                         }
                     });
