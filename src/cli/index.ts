@@ -326,7 +326,6 @@ function getLocalIps() {
             ++alias;
         });
     });
-    console.log(chalk.blueBright(`Local IPs: ${ips.join(" | ")}`));
     return ips;
 }
 
