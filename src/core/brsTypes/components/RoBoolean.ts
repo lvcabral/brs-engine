@@ -7,7 +7,7 @@ import { Unboxable } from "../Boxing";
 
 export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
-    private intrinsic: BrsBoolean;
+    private intrinsic: BrsBoolean = BrsBoolean.False;
 
     public getValue(): boolean {
         return this.intrinsic.toBoolean();
@@ -16,7 +16,9 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
     constructor(initialValue: BrsBoolean) {
         super("roBoolean");
 
-        this.intrinsic = initialValue;
+        if (initialValue instanceof BrsBoolean) {
+            this.intrinsic = initialValue;
+        }
         this.registerMethods({
             ifBoolean: [this.getBoolean, this.setBoolean],
             ifToStr: [this.toStr],

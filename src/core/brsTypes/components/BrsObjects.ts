@@ -21,7 +21,7 @@ import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
 import { createRegion } from "./RoRegion";
-import { RoScreen } from "./RoScreen";
+import { createScreen, RoScreen } from "./RoScreen";
 import { RoImageMetadata } from "./RoImageMetadata";
 import { RoAudioMetadata } from "./RoAudioMetadata";
 import { RoAudioPlayer } from "./RoAudioPlayer";
@@ -54,10 +54,13 @@ import { RoNDK } from "./RoNDK";
 
 // Class to define a case-insensitive map of BrightScript objects.
 class BrsObjectsMap {
-    private readonly map = new Map<string, { originalKey: string; value: Function }>();
+    private readonly map = new Map<
+        string,
+        { originalKey: string; value: Function; params: number }
+    >();
 
-    constructor(entries: [string, Function][]) {
-        entries.forEach(([key, value]) => this.set(key, value));
+    constructor(entries: [string, Function, number?][]) {
+        entries.forEach(([key, value, params]) => this.set(key, value, params));
     }
 
     get(key: string) {
@@ -65,8 +68,12 @@ class BrsObjectsMap {
         return entry ? entry.value : undefined;
     }
 
-    set(key: string, value: Function) {
-        return this.map.set(key.toLowerCase(), { originalKey: key, value: value });
+    set(key: string, value: Function, params?: number) {
+        return this.map.set(key.toLowerCase(), {
+            originalKey: key,
+            value: value,
+            params: params ?? 0,
+        });
     }
 
     has(key: string) {
@@ -88,6 +95,15 @@ class BrsObjectsMap {
     keys() {
         return Array.from(this.map.values()).map((entry) => entry.originalKey);
     }
+
+    // Returns the number of parameters required by the object constructor.
+    // >=0 = exact number of parameters required
+    // -1  = ignore parameters, create object with no parameters
+    // -2  = do not check for minimum number of parameters
+    params(key: string) {
+        const entry = this.map.get(key.toLowerCase());
+        return entry ? entry.params : -1;
+    }
 }
 
 /** Map containing a list of BrightScript components that can be created with CreateObject(). */
@@ -98,6 +114,7 @@ export const BrsObjects = new BrsObjectsMap([
         "roArray",
         (interpreter: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) =>
             new RoArray(capacity, resizable),
+        2,
     ],
     ["roByteArray", (interpreter: Interpreter) => new RoByteArray()],
     ["roEVPCipher", (interpreter: Interpreter) => new RoEVPCipher()],
@@ -112,18 +129,20 @@ export const BrsObjects = new BrsObjectsMap([
         "roRegex",
         (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
             new RoRegex(expression, flags),
+        2,
     ],
-    ["roString", (interpreter: Interpreter) => new RoString()],
-    ["roBoolean", (interpreter: Interpreter, literal: BrsBoolean) => new RoBoolean(literal)],
-    ["roDouble", (interpreter: Interpreter, literal: Double) => new RoDouble(literal)],
-    ["roFloat", (interpreter: Interpreter, literal: Float) => new RoFloat(literal)],
-    ["roInt", (interpreter: Interpreter, literal: Int32) => new RoInt(literal)],
-    ["roLongInteger", (interpreter: Interpreter, literal: Int64) => new RoLongInteger(literal)],
+    ["roString", (interpreter: Interpreter) => new RoString(), -1],
+    ["roBoolean", (interpreter: Interpreter, literal: BrsBoolean) => new RoBoolean(literal), -1],
+    ["roDouble", (interpreter: Interpreter, literal: Double) => new RoDouble(literal), -1],
+    ["roFloat", (interpreter: Interpreter, literal: Float) => new RoFloat(literal), -1],
+    ["roInt", (interpreter: Interpreter, literal: Int32) => new RoInt(literal), -1],
+    ["roLongInteger", (interpreter: Interpreter, literal: Int64) => new RoLongInteger(literal), -1],
     ["roFunction", (interpreter: Interpreter, sub: Callable) => new RoFunction(sub)],
-    ["roPath", (interpreter: Interpreter, path: BrsString) => new RoPath(path)],
+    ["roPath", (interpreter: Interpreter, path: BrsString) => new RoPath(path), 1],
     [
         "roBitmap",
         (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
+        1,
     ],
     ["roImageMetadata", (interpreter: Interpreter) => new RoImageMetadata()],
     ["roMessagePort", (interpreter: Interpreter) => new RoMessagePort()],
@@ -136,6 +155,7 @@ export const BrsObjects = new BrsObjectsMap([
         "roRegistrySection",
         (interpreter: Interpreter, section: BrsString) =>
             new RoRegistrySection(interpreter, section),
+        1,
     ],
     ["roAppInfo", (interpreter: Interpreter) => new RoAppInfo()],
     ["roDeviceInfo", (interpreter: Interpreter) => new RoDeviceInfo()],
@@ -145,6 +165,7 @@ export const BrsObjects = new BrsObjectsMap([
     [
         "roAudioResource",
         (interpreter: Interpreter, name: BrsString) => createAudioResource(interpreter, name),
+        1,
     ],
     ["roAudioMetadata", (interpreter: Interpreter) => new RoAudioMetadata()],
     ["roVideoPlayer", (interpreter: Interpreter) => new RoVideoPlayer()],
@@ -159,14 +180,16 @@ export const BrsObjects = new BrsObjectsMap([
             width: Int32,
             height: Int32
         ) => createRegion(bitmap, x, y, width, height),
+        5,
     ],
     [
         "roScreen",
         (interpreter: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
-            new RoScreen(interpreter, dblbuffer, width, height),
+            createScreen(interpreter, dblbuffer, width, height),
+        -2,
     ],
     ["roXMLElement", (interpreter: Interpreter) => new RoXMLElement()],
     ["roURLTransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
-    ["roInvalid", (interpreter: Interpreter) => new RoInvalid()],
+    ["roInvalid", (interpreter: Interpreter) => new RoInvalid(), -1],
     ["roNDK", (interpreter: Interpreter) => new RoNDK()],
 ]);
