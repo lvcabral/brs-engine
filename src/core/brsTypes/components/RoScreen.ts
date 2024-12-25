@@ -27,6 +27,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private readonly height: number;
     private readonly maxMs: number;
     private readonly disposeCanvas: boolean;
+    private readonly valid: boolean;
     private alphaEnable: boolean;
     private currentBuffer: number;
     private lastBuffer: number;
@@ -36,7 +37,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private isDirty: boolean;
     private lastMessage: number;
 
-    // TODO: Check the Roku behavior on 4:3 resolutions in HD/FHD devices
     constructor(
         interpreter: Interpreter,
         doubleBuffer?: BrsBoolean,
@@ -53,24 +53,35 @@ export class RoScreen extends BrsComponent implements BrsValue {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
-        this.disposeCanvas = interpreter.deviceInfo.get("context")?.inIOS ?? false;
+        const platform = interpreter.deviceInfo.get("platform");
+        this.disposeCanvas = platform?.inIOS ?? false;
         this.lastMessage = performance.now();
         this.isDirty = true;
         this.width = defaultWidth;
         this.height = defaultHeight;
+        this.valid = true;
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
             if (this.width <= 0) {
                 this.width = defaultWidth;
             }
+        } else if (width !== undefined) {
+            this.valid = false;
         }
         if (height instanceof Float || height instanceof Double || height instanceof Int32) {
             this.height = Math.trunc(height.getValue());
             if (this.height <= 0) {
                 this.height = defaultHeight;
             }
+        } else if (height !== undefined) {
+            this.valid = false;
         }
-        this.doubleBuffer = doubleBuffer instanceof BrsBoolean && doubleBuffer.toBoolean();
+        this.doubleBuffer = false;
+        if (doubleBuffer instanceof BrsBoolean) {
+            this.doubleBuffer = doubleBuffer.toBoolean();
+        } else if (doubleBuffer !== undefined) {
+            this.valid = false;
+        }
         this.currentBuffer = 0;
         this.lastBuffer = 0;
         this.canvas = new Array<BrsCanvas>(this.doubleBuffer ? 2 : 1);
@@ -184,6 +195,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
             this.canvas.forEach((c) => releaseCanvas(c));
         }
     }
+    isValid() {
+        return this.valid;
+    }
+
     // ifScreen ------------------------------------------------------------------------------------
 
     /** If the screen is double buffered, SwapBuffers swaps the back buffer with the front buffer */
@@ -601,4 +616,20 @@ export class RoScreen extends BrsComponent implements BrsValue {
             return BrsInvalid.Instance;
         },
     });
+}
+
+export function createScreen(
+    interpreter: Interpreter,
+    doubleBuffer?: BrsBoolean,
+    width?: Int32,
+    height?: Int32
+) {
+    if (
+        (width !== undefined && height === undefined) ||
+        (width === undefined && height !== undefined)
+    ) {
+        return BrsInvalid.Instance;
+    }
+    const screen = new RoScreen(interpreter, doubleBuffer, width, height);
+    return screen.isValid() ? screen : BrsInvalid.Instance;
 }

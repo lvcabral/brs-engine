@@ -74,7 +74,7 @@ function isValidIP(ip as String) as Boolean
     ' Regular expression pattern for a valid IPv4 address
     ipPattern = "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
     ' Create a regex object
-    regex = CreateObject("roRegex", ipPattern)
+    regex = CreateObject("roRegex", ipPattern, "")
     ' Check if the IP matches the pattern
     if regex.IsMatch(ip)
         return true

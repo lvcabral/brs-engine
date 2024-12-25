@@ -1,10 +1,15 @@
 sub main()
-    booleanObjectA = createObject("roBoolean", true)
-    booleanObjectB = createObject("roBoolean", false)
-    doubleObject = createObject("roDouble", 123.456)
-    floatObject = createObject("roFloat", 789.012)
-    integerObject = createObject("roInt", 23)
-    longIntegerObject = createObject("roLongInteger", 2000111222333)
+    booleanObjectA = createObject("roBoolean")
+    booleanObjectA.setBoolean(true)
+    booleanObjectB = createObject("roBoolean")
+    doubleObject = createObject("roDouble")
+    doubleObject.setDouble(123.456)
+    floatObject = createObject("roFloat")
+    floatObject.setFloat(789.012)
+    integerObject = createObject("roInt")
+    integerObject.setInt(23)
+    longIntegerObject = createObject("roLongInteger")
+    longIntegerObject.setLongInt(2000111222333)
 
     print "Boolean object A " booleanObjectA.toStr()
     print "Boolean object B " booleanObjectB
@@ -20,5 +25,4 @@ sub main()
     print "Integer to string "integerObject.toStr()
     print "LongInteger object type"type(longIntegerObject)
     print "LongInteger to string "longIntegerObject.toStr()
-
 end sub
