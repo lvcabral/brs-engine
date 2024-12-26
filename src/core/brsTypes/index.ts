@@ -80,6 +80,8 @@ export * from "./components/RoVideoPlayer";
 export * from "./components/RoVideoPlayerEvent";
 export * from "./components/RoInput";
 export * from "./components/RoInputEvent";
+export * from "./components/RoSystemLog";
+export * from "./components/RoSystemLogEvents";
 export * from "./components/RoLocalization";
 export * from "./components/RoRegistry";
 export * from "./components/RoRegistrySection";
