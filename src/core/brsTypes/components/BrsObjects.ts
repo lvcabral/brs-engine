@@ -16,6 +16,7 @@ import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoInput } from "./RoInput";
+import { RoSystemLog } from "./RoSystemLog";
 import { RoFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
@@ -147,6 +148,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roImageMetadata", (interpreter: Interpreter) => new RoImageMetadata()],
     ["roMessagePort", (interpreter: Interpreter) => new RoMessagePort()],
     ["roInput", (interpreter: Interpreter) => new RoInput()],
+    ["roSystemLog", (interpreter: Interpreter) => new RoSystemLog()],
     ["roFileSystem", (interpreter: Interpreter) => new RoFileSystem()],
     ["roLocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],
     ["roFontRegistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
