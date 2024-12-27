@@ -534,8 +534,7 @@ function createHlsInstance() {
     });
 }
 
-function destroyHls()
-{
+function destroyHls() {
     hls?.destroy();
     hls = undefined;
 }
