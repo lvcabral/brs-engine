@@ -24,7 +24,21 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         });
     }
 
-    getSystemLogEvent() {
+    toString(parent?: BrsType): string {
+        return "<Component: roSystemLog>";
+    }
+
+    equalTo(other: BrsType) {
+        return BrsBoolean.False;
+    }
+
+    dispose() {
+        this.port?.unregisterCallback(this.getComponentName());
+    }
+
+    // System Log Event -------------------------------------------------------------------------------
+
+    private getSystemLogEvent() {
         if (this.bandwidthMinute) {
             const bandwidth = Atomics.load(this.interpreter.sharedArray, DataType.MBWD);
             if (bandwidth > 0) {
@@ -40,20 +54,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         }
         return BrsInvalid.Instance;
     }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roSystemLog>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
-    }
-
-    dispose() {
-        this.port?.removeReference();
-    }
-
-    // ifInput ------------------------------------------------------------------------------------
+    // ifSystemLog ------------------------------------------------------------------------------------
 
     /** Enables log message of type logType. */
     private readonly enableType = new Callable("enableType", {
@@ -103,10 +104,10 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
-            this.port?.removeReference();
+            const component = port.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
-            this.port.registerSystemLog(this.getSystemLogEvent.bind(this));
+            this.port.registerCallback(component, this.getSystemLogEvent.bind(this));
             return BrsInvalid.Instance;
         },
     });

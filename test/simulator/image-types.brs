@@ -1,13 +1,14 @@
-sub Main()
+Sub Main()
     m.files = CreateObject("roFileSystem")
     port = CreateObject("roMessagePort")
-    syslog = CreateObject("roSystemLog")
-    syslog.SetMessagePort(port)
-    syslog.enableType("http.connect")
-    syslog.enableType("http.error")
-    syslog.enableType("http.complete")
-    syslog.EnableType("bandwidth.minute")
-    m.screen = CreateObject("roScreen", true, 854, 480)
+	syslog = CreateObject("roSystemLog")
+	syslog.SetMessagePort(port)
+	syslog.enableType("http.connect")
+	syslog.enableType("http.error")
+	syslog.enableType("http.complete")
+	m.screens = []
+    m.screens.push(CreateObject("roScreen", true, 854, 480))
+	m.screen = m.screens[0]
     m.screen.SetMessagePort(port)
     files = []
     files.push("https://raw.githubusercontent.com/lvcabral/Prince-of-Persia-Roku/master/assets/titles/intro-screen-mac.png")
@@ -16,49 +17,58 @@ sub Main()
     files.push("https://brsfiddle.net/images/gif-example-file-500x500.gif")
     files.push("https://brsfiddle.net/images/bmp-example-file-download-1024x1024.bmp")
     fileIdx = 0
-    bmp = CreateObject("roBitmap", CacheFile(files[fileIdx], "image.png"))
-    m.screen.DrawObject(0, 0, bmp)
+    bmp = CreateObject("roBitmap", CacheFile(files[fileIdx],"image.png"))
+    m.screen.DrawObject(0,0, bmp)
     m.screen.SwapBuffers()
     while true
         msg = wait(0, port)
-        if type(msg) = "roUniversalControlEvent"
-            key = msg.getInt()
+		if type(msg) = "roUniversalControlEvent"
+			key = msg.getInt()
             if key = 0
                 exit while
+			else if key = 2
+				m.screens.push(CreateObject("roScreen", true, 1280, 720))
+				m.screen = m.screens[m.screens.count() - 1]
+				m.screen.SetMessagePort(port)
+			else if key = 3
+				if m.screens.count() > 1
+                    ' Force the screen to no respond to events
+					m.screens.delete(m.screens.count() - 1)
+					m.screen = m.screens[m.screens.count() - 1]
+				end if
             else if key = 4
                 fileIdx--
                 if fileIdx < 0
                     fileIdx = files.count() - 1
                 end if
-                showImage(files[fileIdx])
+				showImage(files[fileIdx])
             else if key = 5 or key = 6
                 fileIdx++
                 if fileIdx = files.count()
                     fileIdx = 0
                 end if
-                showImage(files[fileIdx])
+				showImage(files[fileIdx])
             else
                 print key
             end if
-        else if type(msg) = "roSystemLogEvent"
-            logEvent = msg.getInfo()
-            print logEvent.logType, logEvent.dateTime.toISOString(), logEvent.bandwidth
+        else
+            print msg
         end if
     end while
-end sub
+End Sub
 
 function showImage(url)
-    bmp = CreateObject("roBitmap", CacheFile(url))
-    m.screen.DrawObject(0, 0, bmp)
-    m.screen.SwapBuffers()
+	bmp = CreateObject("roBitmap", CacheFile(url))
+	m.screen.DrawObject(0,0, bmp)
+	m.screen.SwapBuffers()
 end function
 
 function CacheFile(url as string, file = "", overwrite = false) as string
-    if file = ""
-        dot = Right(url, 5).inStr(".")
-        file = "image" + Mid(Right(url, 5), dot)
-        print "Downloading "; url; " to "; file
-    end if
+	if file = ""
+		dot = Right(url, 5).inStr(".")
+		file = "image" + Mid(Right(url, 5), dot)
+		print "Downloading "; url; " to "; file
+	end if
     tmpFile = "tmp:/" + file
     if overwrite or not m.files.Exists(tmpFile)
         http = CreateObject("roUrlTransfer")

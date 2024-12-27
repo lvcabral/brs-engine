@@ -22,12 +22,17 @@ import { BrsInterface } from "./BrsInterface";
 import { RoXMLList } from "./components/RoXMLList";
 import { RoXMLElement } from "./components/RoXMLElement";
 import { RoPath } from "./components/RoPath";
-import { RoURLEvent } from "./components/RoURLEvent";
-import { RoUniversalControlEvent } from "./components/RoUniversalControlEvent";
 import { RoInt } from "./components/RoInt";
 import { RoFloat } from "./components/RoFloat";
 import { RoDouble } from "./components/RoDouble";
 import { RoLongInteger } from "./components/RoLongInteger";
+import { RoURLEvent } from "./components/RoURLEvent";
+import { RoUniversalControlEvent } from "./components/RoUniversalControlEvent";
+import { RoSystemLogEvent } from "./components/RoSystemLogEvent";
+import { RoInputEvent } from "./components/RoInputEvent";
+import { RoAudioPlayerEvent } from "./components/RoAudioPlayerEvent";
+import { RoVideoPlayerEvent } from "./components/RoVideoPlayerEvent";
+import { RoChannelStoreEvent } from "./components/RoChannelStoreEvent";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -186,7 +191,8 @@ export function isStringComp(value: BrsType): value is BrsString & Comparable {
     return isBrsString(value) || value instanceof RoPath || value instanceof RoURLEvent;
 }
 
-/** Determines whether or not the given value is a BrightScript boxed number.
+/**
+ * Determines whether or not the given value is a BrightScript boxed number.
  * @param value the BrightScript value in question.
  * @returns `true` if `value` is a boxed number, otherwise `false`.
  */
@@ -204,6 +210,33 @@ export type BrsNumber = Int32 | Int64 | Float | Double;
 
 /** The set of BrightScript boxed numeric types. */
 export type BoxedNumber = RoInt | RoFloat | RoDouble | RoLongInteger;
+
+/**
+ * Determines whether or not the given value is a BrightScript event component.
+ * @param value the BrightScript value in question.
+ * @returns `true` if `value` is a BrightScript event component, otherwise `false`.
+ */
+export function isBrsEvent(value: BrsType): value is BrsEvent {
+    return (
+        value instanceof RoURLEvent ||
+        value instanceof RoUniversalControlEvent ||
+        value instanceof RoSystemLogEvent ||
+        value instanceof RoInputEvent ||
+        value instanceof RoAudioPlayerEvent ||
+        value instanceof RoVideoPlayerEvent ||
+        value instanceof RoChannelStoreEvent
+    );
+}
+
+// The set of BrightScript Event components
+export type BrsEvent =
+    | RoURLEvent
+    | RoUniversalControlEvent
+    | RoSystemLogEvent
+    | RoInputEvent
+    | RoAudioPlayerEvent
+    | RoVideoPlayerEvent
+    | RoChannelStoreEvent;
 
 /**
  * The set of all comparable BrightScript types. Only primitive (i.e. intrinsic * and unboxed)
