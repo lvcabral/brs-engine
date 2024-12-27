@@ -98,47 +98,23 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     wait(interpreter: Interpreter, ms: number) {
         const loop = ms === 0;
         ms += performance.now();
-        if (this.screen || this.audio || this.video) {
-            while (loop || performance.now() < ms) {
-                this.updateMessageQueue(interpreter);
-                if (this.messageQueue.length > 0) {
-                    return this.messageQueue.shift();
-                }
-                const cmd = interpreter.checkBreakCommand();
-                if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
-                    return BrsInvalid.Instance;
-                }
-            }
-        } else {
+
+        while (loop || performance.now() < ms) {
+            this.updateMessageQueue(interpreter);
             if (this.messageQueue.length > 0) {
                 return this.messageQueue.shift();
             } else if (this.callbackQueue.length > 0) {
                 let callback = this.callbackQueue.shift();
-                if (callback) {
-                    return callback();
+                if (typeof callback === "function") {
+                    const event = callback();
+                    if (event !== BrsInvalid.Instance) {
+                        return event;
+                    }
                 }
             }
-            if (ms === 0) {
-                interpreter.stderr.write(
-                    "warning,[roMessagePort] No message in the queue, engine will loop forever!"
-                );
-                while (true) {
-                    // Loop forever
-                    const cmd = interpreter.checkBreakCommand();
-                    if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
-                        return BrsInvalid.Instance;
-                    }
-                }
-            } else {
-                interpreter.stderr.write("warning,[roMessagePort] No message in the queue!");
-                ms += performance.now();
-                while (performance.now() < ms) {
-                    //wait the timeout time
-                    const cmd = interpreter.checkBreakCommand();
-                    if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
-                        return BrsInvalid.Instance;
-                    }
-                }
+            const cmd = interpreter.checkBreakCommand();
+            if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
+                return BrsInvalid.Instance;
             }
         }
         return BrsInvalid.Instance;
@@ -161,7 +137,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         if (this.video) {
             this.processVideoMessages(interpreter);
         }
-        return BrsInvalid.Instance;
     }
 
     updateKeysBuffer(interpreter: Interpreter) {

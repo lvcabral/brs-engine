@@ -7,12 +7,6 @@ sub main()
     print "Supports HLS:"; di.canDecodeVideo({codec: codec, container: "hls"})
     rect = {x: 249, y: 177, w: 391, h: 291}
     port = CreateObject("roMessagePort")
-	syslog = CreateObject("roSystemLog")
-	syslog.SetMessagePort(port)
-	syslog.enableType("http.connect")
-    syslog.enableType("http.error")
-    syslog.enableType("http.complete")
-	syslog.EnableType("bandwidth.minute")
     screen = CreateObject("roScreen", true, 1280, 720)
     screen.setMessagePort(port)
     screen.setAlphaEnable(false)
@@ -27,6 +21,12 @@ sub main()
         StreamFormat: "mp4"
     }])
     player.Play()
+    syslog = CreateObject("roSystemLog")
+    syslog.SetMessagePort(port)
+    syslog.enableType("http.connect")
+    syslog.enableType("http.error")
+    syslog.enableType("http.complete")
+    syslog.EnableType("bandwidth.minute")
     position = 0
     paused = false
     muted = false
@@ -41,8 +41,13 @@ sub main()
             else if type(msg) = "roVideoPlayerEvent" and msg.isPlaybackPosition()
                 position = msg.GetIndex()
                 print position
-			else if type(msg) = "roSystemLogEvent"
-				print "System Log event: "; msg.getInfo()
+            else if type(msg) = "roSystemLogEvent"
+                logEvent = msg.getInfo()
+                if logEvent.logType = "bandwidth.minute"
+                    print logEvent.logType, logEvent.dateTime.toISOString(), logEvent.bandwidth
+                else
+                    print "System Log event: "; logEvent
+                end if
             else if type(msg) = "roUniversalControlEvent"
                 index = msg.GetInt()
                 print "Remote button pressed: " + index.tostr()
@@ -74,15 +79,15 @@ sub main()
                     if paused player.Resume() else player.Pause()
                 end if
             else if type(msg) = "roVideoPlayerEvent"
-				if msg.isPaused()
-					paused = true
-					print "video paused"
-				else if msg.isResumed()
-					paused = false
-					print "video resumed"
-				end if
-			else
-				print "unhandled event"; msg
+                if msg.isPaused()
+                    paused = true
+                    print "video paused"
+                else if msg.isResumed()
+                    paused = false
+                    print "video resumed"
+                end if
+            else
+                print "unhandled event"; msg
             end if
         end if
     end while

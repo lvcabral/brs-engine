@@ -13,9 +13,7 @@ export class RoSystemLogEvent extends BrsComponent implements BrsValue {
         super("roSystemLogEvent");
         this.data = data;
         this.logType = logType;
-        this.registerMethods({
-            ifSystemLogEvent: [this.getInfo],
-        });
+        this.registerMethods({ ifSystemLogEvent: [this.getInfo] });
     }
 
     toString(parent?: BrsType): string {
@@ -36,7 +34,7 @@ export class RoSystemLogEvent extends BrsComponent implements BrsValue {
             const response = new RoAssociativeArray([]);
             response.set(new BrsString("LogType"), this.logType, true);
             response.set(new BrsString("DateTime"), new RoDateTime(), true);
-            if (this.logType.value.toLowerCase() === "bandwidth.minute" && isBrsNumber(this.data)) {
+            if (this.logType.value === "bandwidth.minute" && isBrsNumber(this.data)) {
                 response.set(new BrsString("bandwidth"), this.data, true);
             }
             return response;

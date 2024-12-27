@@ -14,6 +14,7 @@ import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 /// #endif
 export class RoURLTransfer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly interpreter: Interpreter;
     private identity: number;
     private url: string;
     private reqMethod: string;
@@ -26,13 +27,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private inFile: string[];
     private outFile: string[];
     private postBody: string[];
-    private interpreter: Interpreter;
     private user?: string;
     private password?: string;
 
-    // Constructor can only be used by RoFontRegistry()
     constructor(interpreter: Interpreter) {
         super("roUrlTransfer");
+        this.interpreter = interpreter;
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
         this.reqMethod = "";
@@ -44,7 +44,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.inFile = new Array<string>();
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
-        this.interpreter = interpreter;
         this.registerMethods({
             ifUrlTransfer: [
                 this.getIdentity,
