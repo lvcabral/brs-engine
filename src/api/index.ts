@@ -9,6 +9,7 @@ import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./u
 import {
     AppExitReason,
     AppPayload,
+    BufferType,
     DataType,
     DebugCommand,
     DeviceInfo,
@@ -378,7 +379,7 @@ export function debug(command: string): boolean {
             Atomics.notify(sharedArray, DataType.DBG);
             handled = true;
         } else {
-            saveDataBuffer(sharedArray, command.trim());
+            saveDataBuffer(sharedArray, command.trim(), BufferType.DEBUG_EXPR);
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
             handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
         }

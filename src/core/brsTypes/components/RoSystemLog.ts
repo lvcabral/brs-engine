@@ -25,7 +25,6 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
     }
 
     getSystemLogEvent() {
-        this.port?.registerCallback(this.getSystemLogEvent.bind(this));
         if (this.bandwidthMinute) {
             const bandwidth = Atomics.load(this.interpreter.sharedArray, DataType.MBWD);
             if (bandwidth > 0) {
@@ -107,7 +106,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             port.addReference();
             this.port?.removeReference();
             this.port = port;
-            this.port.registerCallback(this.getSystemLogEvent.bind(this));
+            this.port.registerSystemLog(this.getSystemLogEvent.bind(this));
             return BrsInvalid.Instance;
         },
     });

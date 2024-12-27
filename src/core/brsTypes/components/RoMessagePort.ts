@@ -1,9 +1,7 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { RoUniversalControlEvent, KeyEvent } from "./RoUniversalControlEvent";
-import { RoAudioPlayerEvent } from "./RoAudioPlayerEvent";
-import { RoVideoPlayerEvent } from "./RoVideoPlayerEvent";
-import { BrsType } from "..";
+import { BrsType, RoSystemLogEvent, RoAudioPlayerEvent, RoVideoPlayerEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -22,6 +20,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private readonly messageQueue: BrsType[];
     private readonly callbackQueue: Function[]; // TODO: consider having the id of the connected objects
     private readonly keysBuffer: KeyEvent[];
+    private systemLogCallback?: Function;
     private lastKey: number;
     private screen: boolean;
     private audioFlags: number;
@@ -83,6 +82,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.callbackQueue.push(callback);
     }
 
+    registerSystemLog(callback: Function) {
+        this.systemLogCallback = callback;
+    }
+
     asyncCancel() {
         this.callbackQueue.length = 0;
     }
@@ -136,6 +139,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         }
         if (this.video) {
             this.processVideoMessages(interpreter);
+        }
+        if (this.systemLogCallback) {
+            const event = this.systemLogCallback();
+            if (event instanceof RoSystemLogEvent) {
+                this.messageQueue.push(event);
+            }
         }
     }
 
@@ -208,7 +217,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             } catch (e) {
                 this.audioTracks = [];
             }
-            Atomics.store(interpreter.sharedArray, DataType.BUF, -1);
         }
         const flags = Atomics.load(interpreter.sharedArray, DataType.VDO);
         const index = Atomics.load(interpreter.sharedArray, DataType.VDX);

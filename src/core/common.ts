@@ -416,7 +416,7 @@ export enum MediaEvent {
 
 // Buffer Data Types enumerator
 export enum BufferType {
-    NONE,
+    DEBUG_EXPR,
     AUDIO_TRACKS,
     VIDEO_INFO,
 }

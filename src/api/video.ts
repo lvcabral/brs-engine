@@ -291,8 +291,7 @@ function loadAudioTracks() {
             playList[playIndex].audioTrack = hls.audioTrack;
         }
     }
-    saveDataBuffer(sharedArray, JSON.stringify(audioTracks));
-    Atomics.store(sharedArray, DataType.BUF, BufferType.AUDIO_TRACKS);
+    saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
 }
 
 function setAudioTrack(index: number) {
