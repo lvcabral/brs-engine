@@ -16,6 +16,7 @@ import { RoRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoInput } from "./RoInput";
+import { RoSystemLog } from "./RoSystemLog";
 import { RoFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
@@ -108,72 +109,73 @@ class BrsObjectsMap {
 
 /** Map containing a list of BrightScript components that can be created with CreateObject(). */
 export const BrsObjects = new BrsObjectsMap([
-    ["roAppManager", (interpreter: Interpreter) => new RoAppManager()],
-    ["roAssociativeArray", (interpreter: Interpreter) => new RoAssociativeArray([])],
+    ["roAppManager", (_: Interpreter) => new RoAppManager()],
+    ["roAssociativeArray", (_: Interpreter) => new RoAssociativeArray([])],
     [
         "roArray",
-        (interpreter: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) =>
+        (_: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) =>
             new RoArray(capacity, resizable),
         2,
     ],
-    ["roByteArray", (interpreter: Interpreter) => new RoByteArray()],
-    ["roEVPCipher", (interpreter: Interpreter) => new RoEVPCipher()],
-    ["roEVPDigest", (interpreter: Interpreter) => new RoEVPDigest()],
-    ["roHMAC", (interpreter: Interpreter) => new RoHMAC()],
+    ["roByteArray", (_: Interpreter) => new RoByteArray()],
+    ["roEVPCipher", (_: Interpreter) => new RoEVPCipher()],
+    ["roEVPDigest", (_: Interpreter) => new RoEVPDigest()],
+    ["roHMAC", (_: Interpreter) => new RoHMAC()],
     ["roDeviceCrypto", (interpreter: Interpreter) => new RoDeviceCrypto(interpreter)],
-    ["roChannelStore", (interpreter: Interpreter) => new RoChannelStore()],
-    ["roDateTime", (interpreter: Interpreter) => new RoDateTime()],
-    ["roList", (interpreter: Interpreter) => new RoList()],
-    ["roTimespan", (interpreter: Interpreter) => new RoTimespan()],
+    ["roChannelStore", (_: Interpreter) => new RoChannelStore()],
+    ["roDateTime", (_: Interpreter) => new RoDateTime()],
+    ["roList", (_: Interpreter) => new RoList()],
+    ["roTimespan", (_: Interpreter) => new RoTimespan()],
     [
         "roRegex",
         (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
             new RoRegex(expression, flags),
         2,
     ],
-    ["roString", (interpreter: Interpreter) => new RoString(), -1],
-    ["roBoolean", (interpreter: Interpreter, literal: BrsBoolean) => new RoBoolean(literal), -1],
-    ["roDouble", (interpreter: Interpreter, literal: Double) => new RoDouble(literal), -1],
-    ["roFloat", (interpreter: Interpreter, literal: Float) => new RoFloat(literal), -1],
-    ["roInt", (interpreter: Interpreter, literal: Int32) => new RoInt(literal), -1],
-    ["roLongInteger", (interpreter: Interpreter, literal: Int64) => new RoLongInteger(literal), -1],
-    ["roFunction", (interpreter: Interpreter, sub: Callable) => new RoFunction(sub)],
-    ["roPath", (interpreter: Interpreter, path: BrsString) => new RoPath(path), 1],
+    ["roString", (_: Interpreter) => new RoString(), -1],
+    ["roBoolean", (_: Interpreter, literal: BrsBoolean) => new RoBoolean(literal), -1],
+    ["roDouble", (_: Interpreter, literal: Double) => new RoDouble(literal), -1],
+    ["roFloat", (_: Interpreter, literal: Float) => new RoFloat(literal), -1],
+    ["roInt", (_: Interpreter, literal: Int32) => new RoInt(literal), -1],
+    ["roLongInteger", (_: Interpreter, literal: Int64) => new RoLongInteger(literal), -1],
+    ["roFunction", (_: Interpreter, sub: Callable) => new RoFunction(sub)],
+    ["roPath", (_: Interpreter, path: BrsString) => new RoPath(path), 1],
     [
         "roBitmap",
         (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
         1,
     ],
-    ["roImageMetadata", (interpreter: Interpreter) => new RoImageMetadata()],
-    ["roMessagePort", (interpreter: Interpreter) => new RoMessagePort()],
-    ["roInput", (interpreter: Interpreter) => new RoInput()],
-    ["roFileSystem", (interpreter: Interpreter) => new RoFileSystem()],
+    ["roImageMetadata", (_: Interpreter) => new RoImageMetadata()],
+    ["roMessagePort", (_: Interpreter) => new RoMessagePort()],
+    ["roInput", (_: Interpreter) => new RoInput()],
+    ["roSystemLog", (interpreter: Interpreter) => new RoSystemLog(interpreter)],
+    ["roFileSystem", (_: Interpreter) => new RoFileSystem()],
     ["roLocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],
     ["roFontRegistry", (interpreter: Interpreter) => new RoFontRegistry(interpreter)],
-    ["roRegistry", (interpreter: Interpreter) => new RoRegistry()],
+    ["roRegistry", (_: Interpreter) => new RoRegistry()],
     [
         "roRegistrySection",
         (interpreter: Interpreter, section: BrsString) =>
             new RoRegistrySection(interpreter, section),
         1,
     ],
-    ["roAppInfo", (interpreter: Interpreter) => new RoAppInfo()],
-    ["roDeviceInfo", (interpreter: Interpreter) => new RoDeviceInfo()],
-    ["roRemoteInfo", (interpreter: Interpreter) => new RoRemoteInfo()],
-    ["roAppMemoryMonitor", (interpreter: Interpreter) => new RoAppMemoryMonitor()],
-    ["roAudioPlayer", (interpreter: Interpreter) => new RoAudioPlayer()],
+    ["roAppInfo", (_: Interpreter) => new RoAppInfo()],
+    ["roDeviceInfo", (_: Interpreter) => new RoDeviceInfo()],
+    ["roRemoteInfo", (_: Interpreter) => new RoRemoteInfo()],
+    ["roAppMemoryMonitor", (_: Interpreter) => new RoAppMemoryMonitor()],
+    ["roAudioPlayer", (interpreter: Interpreter) => new RoAudioPlayer(interpreter)],
     [
         "roAudioResource",
         (interpreter: Interpreter, name: BrsString) => createAudioResource(interpreter, name),
         1,
     ],
-    ["roAudioMetadata", (interpreter: Interpreter) => new RoAudioMetadata()],
-    ["roVideoPlayer", (interpreter: Interpreter) => new RoVideoPlayer()],
-    ["roCompositor", (interpreter: Interpreter) => new RoCompositor()],
+    ["roAudioMetadata", (_: Interpreter) => new RoAudioMetadata()],
+    ["roVideoPlayer", (interpreter: Interpreter) => new RoVideoPlayer(interpreter)],
+    ["roCompositor", (_: Interpreter) => new RoCompositor()],
     [
         "roRegion",
         (
-            interpreter: Interpreter,
+            _: Interpreter,
             bitmap: RoBitmap | RoScreen,
             x: Int32,
             y: Int32,
@@ -188,8 +190,8 @@ export const BrsObjects = new BrsObjectsMap([
             createScreen(interpreter, dblbuffer, width, height),
         -2,
     ],
-    ["roXMLElement", (interpreter: Interpreter) => new RoXMLElement()],
+    ["roXMLElement", (_: Interpreter) => new RoXMLElement()],
     ["roURLTransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
-    ["roInvalid", (interpreter: Interpreter) => new RoInvalid(), -1],
-    ["roNDK", (interpreter: Interpreter) => new RoNDK()],
+    ["roInvalid", (_: Interpreter) => new RoInvalid(), -1],
+    ["roNDK", (_: Interpreter) => new RoNDK()],
 ]);

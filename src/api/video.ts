@@ -11,7 +11,7 @@ import Hls from "hls.js";
 
 // Video Objects
 export let player: HTMLVideoElement;
-let hls: Hls;
+let hls: Hls | undefined;
 let packageVideos = new Map();
 let audioTracks = new Array();
 let currentFrame = 0;
@@ -30,6 +30,8 @@ let videoDuration = 0;
 let startPosition = 0;
 let videoMuted = false;
 let uiMuted = false;
+let previousBuffered = 0;
+let previousTime = Date.now();
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
@@ -67,6 +69,7 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.addEventListener("durationchange", setDuration);
         player.addEventListener("loadedmetadata", startProgress);
         player.addEventListener("loadeddata", startProgress);
+        player.addEventListener("progress", calculateBandwidth);
         player.muted = true;
         player.defaultMuted = true;
         uiMuted = mute;
@@ -74,7 +77,23 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
     sharedArray = array;
     resetVideo();
 }
-
+function calculateBandwidth(e: Event) {
+    if (hls === undefined && player && player.buffered.length > 0) {
+        let totalBuffered = 0;
+        for (let i = 0; i < player.buffered.length; i++) {
+            totalBuffered += player.buffered.end(i) - player.buffered.start(i);
+        }
+        totalBuffered = player.videoWidth * player.videoHeight * 4 * totalBuffered;
+        const bufferedSinceLast = totalBuffered - previousBuffered;
+        let downloadedBits = bufferedSinceLast * 8;
+        const currentTime = Date.now();
+        const timeElapsed = (currentTime - previousTime) / 1000; // Convert to seconds
+        const bandwidth = downloadedBits / timeElapsed / 1024;
+        previousBuffered = totalBuffered;
+        previousTime = currentTime;
+        notifyAll("bandwidth", Math.round(bandwidth));
+    }
+}
 // Observers Handling
 const observers = new Map();
 export function subscribeVideo(observerId: string, observerCallback: SubscribeCallback) {
@@ -227,7 +246,7 @@ export function resetVideo() {
     if (player.src.startsWith("blob:")) {
         revokeVideoURL(player.src);
     }
-    hls?.destroy();
+    destroyHls();
     playList = new Array();
     packageVideos = new Map();
     playIndex = 0;
@@ -272,8 +291,7 @@ function loadAudioTracks() {
             playList[playIndex].audioTrack = hls.audioTrack;
         }
     }
-    saveDataBuffer(sharedArray, JSON.stringify(audioTracks));
-    Atomics.store(sharedArray, DataType.BUF, BufferType.AUDIO_TRACKS);
+    saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
 }
 
 function setAudioTrack(index: number) {
@@ -299,7 +317,7 @@ function loadVideo(buffer = false) {
         clearVideoTracking();
         bufferOnly = buffer;
         if (["mp4", "mkv"].includes(video.streamFormat)) {
-            hls?.destroy();
+            destroyHls();
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
             if (!loadHls(videoSrc)) {
@@ -323,8 +341,8 @@ function loadHls(videoSrc: string): boolean {
     let native = false;
     if (Hls.isSupported()) {
         createHlsInstance();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(player);
+        hls?.loadSource(videoSrc);
+        hls?.attachMedia(player);
     } else if (player.canPlayType("application/vnd.apple.mpegurl")) {
         // Fallback to native HLS support
         player.setAttribute("type", "application/vnd.apple.mpegurl");
@@ -350,6 +368,8 @@ function getVideoUrl(video: any): string {
 
 function playVideo() {
     if (canPlay) {
+        previousBuffered = 0;
+        previousTime = Date.now();
         const promise = player.play();
         if (promise !== undefined) {
             promise
@@ -485,7 +505,7 @@ function createHlsInstance() {
                         "warning",
                         "[video] fatal media error encountered, will try to recover"
                     );
-                    hls.recoverMediaError();
+                    hls?.recoverMediaError();
                     break;
                 case Hls.ErrorTypes.NETWORK_ERROR:
                     // All retries and media options have been exhausted.
@@ -493,14 +513,33 @@ function createHlsInstance() {
                     break;
                 default:
                     // cannot recover
-                    hls.destroy();
+                    destroyHls();
                     break;
             }
         }
     });
+
+    hls.on(Hls.Events.MANIFEST_LOADED, function (event, data) {
+        if (data.networkDetails) {
+            notifyAll("http.connect", data.networkDetails);
+        }
+    });
+
+    hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+        const bandwidth = hls?.bandwidthEstimate || NaN;
+        if (!isNaN(bandwidth)) {
+            notifyAll("bandwidth", Math.round(bandwidth / 1000));
+        }
+    });
+
     hls.on(Hls.Events.FRAG_CHANGED, function (event, data) {
         if (typeof data.frag.sn === "number") {
             currentFrame = data.frag.sn;
         }
     });
+}
+
+function destroyHls() {
+    hls?.destroy();
+    hls = undefined;
 }

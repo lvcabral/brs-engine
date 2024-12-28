@@ -59,6 +59,8 @@ export function initDisplayModule(mode: string, perfStats = false) {
         if (event === "rect") {
             videoRect = data;
             return;
+        } else if (event === "bandwidth") {
+            return;
         }
         videoState = event;
         if (videoState === "play" && !frameLoop) {

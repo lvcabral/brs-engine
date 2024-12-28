@@ -14,7 +14,7 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
         this.id = Math.floor(Math.random() * 100) + 1;
         this.response = response;
         this.registerMethods({
-            ifChannelStoreEvent: [this.isInput, this.getInfo],
+            ifInputEvent: [this.isInput, this.getInfo],
         });
     }
 
@@ -38,7 +38,7 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
     });
 
     /** Returns an roAssociativeArray describing the input event. */
-    private readonly getInfo = new Callable("getSourceIdentity", {
+    private readonly getInfo = new Callable("getInfo", {
         signature: {
             args: [],
             returns: ValueKind.Object,

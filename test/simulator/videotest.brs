@@ -21,6 +21,12 @@ sub main()
         StreamFormat: "mp4"
     }])
     player.Play()
+    syslog = CreateObject("roSystemLog")
+    syslog.SetMessagePort(port)
+    syslog.enableType("http.connect")
+    syslog.enableType("http.error")
+    syslog.enableType("http.complete")
+    syslog.EnableType("bandwidth.minute")
     position = 0
     paused = false
     muted = false
@@ -35,6 +41,13 @@ sub main()
             else if type(msg) = "roVideoPlayerEvent" and msg.isPlaybackPosition()
                 position = msg.GetIndex()
                 print position
+            else if type(msg) = "roSystemLogEvent"
+                logEvent = msg.getInfo()
+                if logEvent.logType = "bandwidth.minute"
+                    print logEvent.logType, logEvent.dateTime.toISOString(), logEvent.bandwidth
+                else
+                    print "System Log event: "; logEvent
+                end if
             else if type(msg) = "roUniversalControlEvent"
                 index = msg.GetInt()
                 print "Remote button pressed: " + index.tostr()
@@ -65,12 +78,16 @@ sub main()
                 else if index = 13 '<PAUSE/PLAY>
                     if paused player.Resume() else player.Pause()
                 end if
-            else if msg.isPaused()
-                paused = true
-                print "video paused"
-            else if msg.isResumed()
-                paused = false
-                print "video resumed"
+            else if type(msg) = "roVideoPlayerEvent"
+                if msg.isPaused()
+                    paused = true
+                    print "video paused"
+                else if msg.isResumed()
+                    paused = false
+                    print "video resumed"
+                end if
+            else
+                print "unhandled event"; msg
             end if
         end if
     end while

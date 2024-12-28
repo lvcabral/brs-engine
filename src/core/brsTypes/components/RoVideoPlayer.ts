@@ -1,21 +1,42 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, BrsNumber, AAMember } from "..";
+import {
+    BrsType,
+    RoMessagePort,
+    RoAssociativeArray,
+    RoArray,
+    BrsNumber,
+    AAMember,
+    BrsEvent,
+    RoVideoPlayerEvent,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../common";
+import { BufferType, DataType, MediaEvent } from "../../common";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
+    private videoFlags: number;
+    private videoIndex: number;
+    private videoPosition: number;
+    private videoProgress: number;
+    private audioTracks: any[];
 
-    constructor() {
+    constructor(interpreter: Interpreter) {
         super("roVideoPlayer");
+        this.interpreter = interpreter;
         this.contentList = new Array();
         this.notificationPeriod = 0;
+        this.videoFlags = -1;
+        this.videoIndex = -1;
+        this.videoPosition = 0;
+        this.videoProgress = -1;
+        this.audioTracks = [];
         postMessage(new Array<string>());
         postMessage("video,loop,false");
         postMessage("video,next,-1");
@@ -46,7 +67,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 this.setMacrovisionLevel,
             ],
             ifSetMessagePort: [this.setMessagePort, this.setPort],
-            ifGetMessagePort: [this.getMessagePort],
+            ifGetMessagePort: [this.getMessagePort, this.getPort],
         });
     }
 
@@ -87,6 +108,53 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         this.port?.removeReference();
     }
 
+    getNewEvents() {
+        const events: BrsEvent[] = [];
+        const selected = Atomics.load(this.interpreter.sharedArray, DataType.VSE);
+        if (selected >= 0) {
+            events.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
+            Atomics.store(this.interpreter.sharedArray, DataType.VSE, -1);
+        }
+        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
+        if (bufferFlag === BufferType.AUDIO_TRACKS) {
+            const strTracks = this.interpreter.readDataBuffer();
+            try {
+                this.audioTracks = JSON.parse(strTracks);
+            } catch (e) {
+                this.audioTracks = [];
+            }
+        }
+        const flags = Atomics.load(this.interpreter.sharedArray, DataType.VDO);
+        const index = Atomics.load(this.interpreter.sharedArray, DataType.VDX);
+        if (flags !== this.videoFlags || index !== this.videoIndex) {
+            this.videoFlags = flags;
+            this.videoIndex = index;
+            if (this.videoFlags >= 0) {
+                events.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
+                Atomics.store(this.interpreter.sharedArray, DataType.VDO, -1);
+                Atomics.store(this.interpreter.sharedArray, DataType.VDX, -1);
+            }
+        }
+        const progress = Atomics.load(this.interpreter.sharedArray, DataType.VLP);
+        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
+            this.videoProgress = progress;
+            events.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
+            if (progress === 1000) {
+                events.push(new RoVideoPlayerEvent(MediaEvent.START_PLAY, 0));
+            }
+        }
+        if (this.notificationPeriod >= 1) {
+            const position = Atomics.load(this.interpreter.sharedArray, DataType.VPS);
+            if (Math.abs(this.videoPosition - position) >= this.notificationPeriod) {
+                this.videoPosition = position;
+                events.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position));
+            }
+        }
+        return events;
+    }
+
+    // ifVideoPlayer ---------------------------------------------------------------------------------
+
     /** Sets the content list to be played by the Video Player */
     private readonly setContentList = new Callable("setContentList", {
         signature: {
@@ -94,7 +162,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentList: RoArray) => {
-            this.port?.resetVideo();
+            this.videoPosition = 0;
             this.contentList = contentList.getElements() as RoAssociativeArray[];
             postMessage({ videoPlaylist: this.getContent() });
             return BrsInvalid.Instance;
@@ -121,7 +189,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.port?.resetVideo();
+            this.videoPosition = 0;
             this.contentList = new Array();
             postMessage({ videoPlaylist: new Array<string>() });
             return BrsInvalid.Instance;
@@ -135,7 +203,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.port?.resetVideo();
+            this.videoPosition = 0;
             this.contentList = new Array();
             postMessage("video,load");
             return BrsBoolean.True;
@@ -149,7 +217,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.port?.resetVideo();
+            this.videoPosition = 0;
             postMessage("video,play");
             return BrsBoolean.True;
         },
@@ -162,7 +230,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.port?.resetVideo();
+            this.videoPosition = 0;
             postMessage("video,stop");
             return BrsBoolean.True;
         },
@@ -235,7 +303,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, offsetMs: Int32) => {
-            this.port?.resetVideo();
+            this.videoPosition = 0;
             postMessage(`video,seek,${offsetMs.toString()}`);
             return BrsInvalid.Instance;
         },
@@ -249,9 +317,6 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, period: Int32) => {
             this.notificationPeriod = period.getValue();
-            if (this.port) {
-                this.port.setNotification(this.notificationPeriod);
-            }
             postMessage(`video,notify,${this.notificationPeriod}`);
             return BrsInvalid.Instance;
         },
@@ -342,28 +407,25 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             const result: BrsType[] = [];
-            if (this.port) {
-                const tracks = this.port.getAudioTracks();
-                if (tracks?.length) {
-                    tracks.forEach((track, index) => {
-                        if (track instanceof Array && track.length === 3) {
-                            let item = new Array<AAMember>();
-                            item.push({
-                                name: new BrsString("Track"),
-                                value: new BrsString(`${track[0]}`),
-                            });
-                            item.push({
-                                name: new BrsString("Language"),
-                                value: new BrsString(track[1]),
-                            });
-                            item.push({
-                                name: new BrsString("Name"),
-                                value: new BrsString(track[2]),
-                            });
-                            result.push(new RoAssociativeArray(item));
-                        }
-                    });
-                }
+            if (this.audioTracks.length) {
+                this.audioTracks.forEach((track, index) => {
+                    if (track instanceof Array && track.length === 3) {
+                        let item = new Array<AAMember>();
+                        item.push({
+                            name: new BrsString("Track"),
+                            value: new BrsString(`${track[0]}`),
+                        });
+                        item.push({
+                            name: new BrsString("Language"),
+                            value: new BrsString(track[1]),
+                        });
+                        item.push({
+                            name: new BrsString("Name"),
+                            value: new BrsString(track[2]),
+                        });
+                        result.push(new RoAssociativeArray(item));
+                    }
+                });
             }
             return new RoArray(result);
         },
@@ -427,6 +489,17 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns the message port (if any) currently associated with the object */
+    private readonly getPort = new Callable("getPort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.port ?? BrsInvalid.Instance;
+        },
+    });
+
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the video player */
@@ -436,10 +509,10 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableVideo(true);
-            port.addReference();
-            this.port?.removeReference();
+            const component = this.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });
@@ -451,10 +524,10 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableVideo(true);
-            port.addReference();
-            this.port?.removeReference();
+            const component = this.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });
