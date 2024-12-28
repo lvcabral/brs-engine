@@ -356,7 +356,7 @@ export enum DataType {
 
 // Debug constants
 export const dataBufferIndex = 32;
-export const dataBufferSize = 512;
+export const dataBufferSize = 1024;
 
 // Key Buffer Constants
 export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
@@ -418,7 +418,7 @@ export enum MediaEvent {
 export enum BufferType {
     DEBUG_EXPR,
     AUDIO_TRACKS,
-    VIDEO_INFO,
+    SYS_LOG,
 }
 
 // Media Files Extensions

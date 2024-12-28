@@ -104,6 +104,7 @@ let showStats: boolean = false;
 let bandwidthMinute: boolean = false;
 let bandwidthTimeout: NodeJS.Timeout | null = null;
 let latestBandwidth: number = 0;
+let httpConnectLog: boolean = false;
 
 // App Shared Buffer
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
@@ -214,6 +215,14 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             apiException(event, data);
         } else if (event === "bandwidth") {
             latestBandwidth = data;
+        } else if (event === "http.connect" && httpConnectLog) {
+            const sysLog = {
+                type: event,
+                url: data.responseURL,
+                status: data.statusText,
+                httpCode: data.status,
+            };
+            saveDataBuffer(sharedArray, JSON.stringify(sysLog), BufferType.SYS_LOG);
         }
     });
     subscribePackage("api", (event: string, data: any) => {
@@ -320,6 +329,7 @@ export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
         currentApp.exitReason = reason;
         currentApp.exitTime = Date.now();
         bandwidthMinute = false;
+        httpConnectLog = false;
         updateAppList();
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
@@ -596,6 +606,8 @@ function workerCallback(event: MessageEvent) {
             if (!bandwidthTimeout) {
                 updateBandwidth();
             }
+        } else if (type === "http.connect") {
+            httpConnectLog = true;
         }
     } else if (event.data === "reset") {
         notifyAll("reset");

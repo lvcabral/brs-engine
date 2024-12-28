@@ -1,10 +1,10 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, isBrsEvent, RoAudioPlayerEvent, RoVideoPlayerEvent } from "..";
+import { BrsEvent, BrsType, isBrsEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { BufferType, DataType, DebugCommand, MediaEvent } from "../../common";
+import { DebugCommand } from "../../common";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -81,7 +81,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     private getNextMessage() {
         if (this.messageQueue.length > 0) {
-            console.warn("this.messageQueue", this.messageQueue.length);
             return this.messageQueue.shift();
         } else if (this.callbackQueue.length > 0) {
             let callback = this.callbackQueue.shift();

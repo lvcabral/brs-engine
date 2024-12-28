@@ -1,18 +1,21 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, Int32, RoMessagePort, RoSystemLogEvent } from "..";
+import { BrsEvent, BrsType, RoMessagePort, RoSystemLogEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { DataType } from "../../common";
+import { BufferType, DataType } from "../../common";
 
 export class RoSystemLog extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly interpreter: Interpreter;
+    private readonly validEvents = [
+        "bandwidth.minute",
+        "http.connect",
+        "http.complete",
+        "http.error",
+    ];
     private port?: RoMessagePort;
-    private bandwidthMinute: boolean = false;
-    private httpConnect: boolean = false;
-    private httpComplete: boolean = false;
-    private httpError: boolean = false;
+    private enabledEvents: string[] = [];
 
     constructor(interpreter: Interpreter) {
         super("roSystemLog");
@@ -40,17 +43,28 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        if (this.bandwidthMinute) {
+        if (this.enabledEvents.includes("bandwidth.minute")) {
             const bandwidth = Atomics.load(this.interpreter.sharedArray, DataType.MBWD);
             if (bandwidth > 0) {
                 Atomics.store(this.interpreter.sharedArray, DataType.MBWD, -1);
-                events.push(
-                    new RoSystemLogEvent(new BrsString("bandwidth.minute"), new Int32(bandwidth))
-                );
+                events.push(new RoSystemLogEvent("bandwidth.minute", bandwidth));
             }
         }
-        if (this.httpConnect || this.httpComplete || this.httpError) {
-            // TODO: Implement HTTP log events
+        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
+        if (bufferFlag === BufferType.SYS_LOG) {
+            const strTracks = this.interpreter.readDataBuffer();
+            try {
+                const sysLog = JSON.parse(strTracks);
+                if (typeof sysLog.type === "string" && this.enabledEvents.includes(sysLog.type)) {
+                    events.push(new RoSystemLogEvent(sysLog.type, sysLog));
+                }
+            } catch (e: any) {
+                if (this.interpreter.isDevMode) {
+                    this.interpreter.stdout.write(
+                        `warning,[roSystemLog] Error parsing System Log buffer: ${e.message}`
+                    );
+                }
+            }
         }
         return events;
     }
@@ -63,20 +77,12 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, logType: BrsString) => {
-            postMessage(`syslog,${logType.value}`);
-            switch (logType.value) {
-                case "bandwidth.minute":
-                    this.bandwidthMinute = true;
-                    break;
-                case "http.connect":
-                    this.httpConnect = true;
-                    break;
-                case "http.complete":
-                    this.httpComplete = true;
-                    break;
-                case "http.error":
-                    this.httpError = true;
-                    break;
+            if (
+                this.validEvents.includes(logType.value) &&
+                !this.enabledEvents.includes(logType.value)
+            ) {
+                this.enabledEvents.push(logType.value);
+                postMessage(`syslog,${logType.value}`);
             }
             return BrsInvalid.Instance;
         },

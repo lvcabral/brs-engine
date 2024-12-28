@@ -519,6 +519,12 @@ function createHlsInstance() {
         }
     });
 
+    hls.on(Hls.Events.MANIFEST_LOADED, function (event, data) {
+        if (data.networkDetails) {
+            notifyAll("http.connect", data.networkDetails);
+        }
+    });
+
     hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
         const bandwidth = hls?.bandwidthEstimate || NaN;
         if (!isNaN(bandwidth)) {
