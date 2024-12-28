@@ -163,14 +163,14 @@ export const BrsObjects = new BrsObjectsMap([
     ["roDeviceInfo", (_: Interpreter) => new RoDeviceInfo()],
     ["roRemoteInfo", (_: Interpreter) => new RoRemoteInfo()],
     ["roAppMemoryMonitor", (_: Interpreter) => new RoAppMemoryMonitor()],
-    ["roAudioPlayer", (_: Interpreter) => new RoAudioPlayer()],
+    ["roAudioPlayer", (interpreter: Interpreter) => new RoAudioPlayer(interpreter)],
     [
         "roAudioResource",
         (interpreter: Interpreter, name: BrsString) => createAudioResource(interpreter, name),
         1,
     ],
     ["roAudioMetadata", (_: Interpreter) => new RoAudioMetadata()],
-    ["roVideoPlayer", (_: Interpreter) => new RoVideoPlayer()],
+    ["roVideoPlayer", (interpreter: Interpreter) => new RoVideoPlayer(interpreter)],
     ["roCompositor", (_: Interpreter) => new RoCompositor()],
     [
         "roRegion",

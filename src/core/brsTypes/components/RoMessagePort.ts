@@ -11,15 +11,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private readonly messageQueue: BrsEvent[];
     private readonly callbackQueue: Function[];
     private readonly callbackMap: Map<string, Function>;
-    private audioFlags: number;
-    private videoFlags: number;
-    private videoIndex: number;
-    private videoPosition: number;
-    private videoNotificationPeriod: number;
-    private videoProgress: number;
-    private audio: boolean;
-    private video: boolean;
-    private audioTracks: any[];
 
     constructor() {
         super("roMessagePort");
@@ -29,31 +20,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.messageQueue = [];
         this.callbackQueue = [];
         this.callbackMap = new Map();
-        this.audioFlags = -1;
-        this.videoFlags = -1;
-        this.videoIndex = -1;
-        this.videoPosition = 0;
-        this.videoProgress = -1;
-        this.videoNotificationPeriod = 0;
-        this.audio = false;
-        this.video = false;
-        this.audioTracks = [];
-    }
-
-    enableAudio(enable: boolean) {
-        this.audio = enable;
-    }
-
-    enableVideo(enable: boolean) {
-        this.video = enable;
-    }
-
-    resetVideo() {
-        this.videoPosition = 0;
-    }
-
-    setNotification(period: number) {
-        this.videoNotificationPeriod = period;
     }
 
     pushMessage(object: BrsEvent) {
@@ -91,17 +57,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         ms += performance.now();
 
         while (loop || performance.now() < ms) {
-            this.updateMessageQueue(interpreter);
-            if (this.messageQueue.length > 0) {
-                return this.messageQueue.shift();
-            } else if (this.callbackQueue.length > 0) {
-                let callback = this.callbackQueue.shift();
-                if (typeof callback === "function") {
-                    const event = callback();
-                    if (event !== BrsInvalid.Instance) {
-                        return event;
-                    }
-                }
+            this.updateMessageQueue();
+            const msg = this.getNextMessage();
+            if (msg !== BrsInvalid.Instance) {
+                return msg;
             }
             const cmd = interpreter.checkBreakCommand();
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
@@ -111,86 +70,32 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    updateMessageQueue(interpreter: Interpreter) {
+    private updateMessageQueue() {
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
-                const event = callback();
-                if (isBrsEvent(event)) {
-                    this.messageQueue.push(event);
-                }
+                const events = callback();
+                this.messageQueue.push(...events.filter(isBrsEvent));
             }
-        }
-        if (this.audio) {
-            const audioEvent = this.newAudioEvent(interpreter);
-            if (audioEvent instanceof RoAudioPlayerEvent) {
-                this.messageQueue.push(audioEvent);
-            }
-        }
-        if (this.video) {
-            this.processVideoMessages(interpreter);
         }
     }
 
-    newAudioEvent(interpreter: Interpreter) {
-        const flags = Atomics.load(interpreter.sharedArray, DataType.SND);
-        if (flags !== this.audioFlags) {
-            this.audioFlags = flags;
-            if (this.audioFlags >= 0) {
-                return new RoAudioPlayerEvent(
-                    this.audioFlags,
-                    Atomics.load(interpreter.sharedArray, DataType.IDX)
-                );
+    private getNextMessage() {
+        if (this.messageQueue.length > 0) {
+            console.warn("this.messageQueue", this.messageQueue.length);
+            return this.messageQueue.shift();
+        } else if (this.callbackQueue.length > 0) {
+            let callback = this.callbackQueue.shift();
+            if (typeof callback === "function") {
+                const event = callback();
+                if (event !== BrsInvalid.Instance) {
+                    return event;
+                }
             }
         }
         return BrsInvalid.Instance;
     }
 
-    processVideoMessages(interpreter: Interpreter) {
-        const selected = Atomics.load(interpreter.sharedArray, DataType.VSE);
-        if (selected >= 0) {
-            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
-            Atomics.store(interpreter.sharedArray, DataType.VSE, -1);
-        }
-        const bufferFlag = Atomics.load(interpreter.sharedArray, DataType.BUF);
-        if (bufferFlag === BufferType.AUDIO_TRACKS) {
-            const strTracks = interpreter.readDataBuffer();
-            try {
-                this.audioTracks = JSON.parse(strTracks);
-            } catch (e) {
-                this.audioTracks = [];
-            }
-        }
-        const flags = Atomics.load(interpreter.sharedArray, DataType.VDO);
-        const index = Atomics.load(interpreter.sharedArray, DataType.VDX);
-        if (flags !== this.videoFlags || index !== this.videoIndex) {
-            this.videoFlags = flags;
-            this.videoIndex = index;
-            if (this.videoFlags >= 0) {
-                this.messageQueue.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
-                Atomics.store(interpreter.sharedArray, DataType.VDO, -1);
-                Atomics.store(interpreter.sharedArray, DataType.VDX, -1);
-            }
-        }
-        const progress = Atomics.load(interpreter.sharedArray, DataType.VLP);
-        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
-            this.videoProgress = progress;
-            this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
-            if (progress === 1000) {
-                this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.START_PLAY, 0));
-            }
-        }
-        if (this.videoNotificationPeriod >= 1) {
-            const position = Atomics.load(interpreter.sharedArray, DataType.VPS);
-            if (Math.abs(this.videoPosition - position) >= this.videoNotificationPeriod) {
-                this.videoPosition = position;
-                this.messageQueue.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position));
-            }
-        }
-    }
-
-    getAudioTracks() {
-        return this.audioTracks;
-    }
+    // ifMessagePort ------------------------------------------------------------------------------------
 
     /** Waits until an event object is available or timeout milliseconds have passed. */
     private readonly waitMessage = new Callable("waitMessage", {
@@ -209,17 +114,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
-            this.updateMessageQueue(interpreter);
-            if (this.messageQueue.length > 0) {
-                return this.messageQueue.shift();
-            } else if (this.callbackQueue.length > 0) {
-                let callback = this.callbackQueue.shift();
-                if (callback) {
-                    return callback();
-                }
-            }
-            return BrsInvalid.Instance;
+        impl: (_: Interpreter) => {
+            this.updateMessageQueue();
+            return this.getNextMessage();
         },
     });
 
@@ -229,8 +126,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
-            this.updateMessageQueue(interpreter);
+        impl: (_: Interpreter) => {
+            this.updateMessageQueue();
             if (this.messageQueue.length > 0) {
                 return this.messageQueue[0];
             }

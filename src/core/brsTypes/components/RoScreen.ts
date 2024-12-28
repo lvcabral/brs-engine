@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Double, KeyEvent, RoUniversalControlEvent } from "..";
+import { BrsEvent, BrsType, Double, KeyEvent, RoUniversalControlEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -119,7 +119,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 this.getHeight,
             ],
             ifSetMessagePort: [this.setMessagePort, this.setPort],
-            ifGetMessagePort: [this.getMessagePort],
+            ifGetMessagePort: [this.getMessagePort, this.getPort],
         });
     }
 
@@ -208,7 +208,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
     }
 
     // Control Key Events
-    private getControlEvent() {
+    private getNewEvents() {
+        const events: BrsEvent[] = [];
         this.updateKeysBuffer();
         const nextKey = this.keysBuffer.shift();
         if (nextKey && nextKey.key !== this.lastKey) {
@@ -220,15 +221,15 @@ export class RoScreen extends BrsComponent implements BrsValue {
                         nextKey.mod = 100;
                     }
                 } else if (nextKey.key !== this.lastKey + 100) {
-                    return BrsInvalid.Instance;
+                    return events;
                 }
             }
             this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
             this.interpreter.currKeyTime = performance.now();
             this.lastKey = nextKey.key;
-            return new RoUniversalControlEvent(nextKey);
+            events.push(new RoUniversalControlEvent(nextKey));
         }
-        return BrsInvalid.Instance;
+        return events;
     }
 
     private updateKeysBuffer() {
@@ -636,6 +637,17 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns the message port (if any) currently associated with the object */
+    private readonly getPort = new Callable("getPort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.port ?? BrsInvalid.Instance;
+        },
+    });
+
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
@@ -648,7 +660,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             const component = this.getComponentName();
             this.port?.unregisterCallback(component);
             this.port = port;
-            this.port.registerCallback(component, this.getControlEvent.bind(this));
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });
@@ -663,7 +675,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
             const component = this.getComponentName();
             this.port?.unregisterCallback(component);
             this.port = port;
-            this.port.registerCallback(component, this.getControlEvent.bind(this));
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });

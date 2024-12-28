@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int32, RoMessagePort, RoSystemLogEvent } from "..";
+import { BrsEvent, BrsType, Int32, RoMessagePort, RoSystemLogEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { DataType } from "../../common";
@@ -38,21 +38,22 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
 
     // System Log Event -------------------------------------------------------------------------------
 
-    private getSystemLogEvent() {
+    private getNewEvents() {
+        const events: BrsEvent[] = [];
         if (this.bandwidthMinute) {
             const bandwidth = Atomics.load(this.interpreter.sharedArray, DataType.MBWD);
             if (bandwidth > 0) {
                 Atomics.store(this.interpreter.sharedArray, DataType.MBWD, -1);
-                return new RoSystemLogEvent(
+                events.push(new RoSystemLogEvent(
                     new BrsString("bandwidth.minute"),
                     new Int32(bandwidth)
-                );
+                ));
             }
         }
         if (this.httpConnect || this.httpComplete || this.httpError) {
             // TODO: Implement HTTP log events
         }
-        return BrsInvalid.Instance;
+        return events;
     }
     // ifSystemLog ------------------------------------------------------------------------------------
 
@@ -107,7 +108,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             const component = port.getComponentName();
             this.port?.unregisterCallback(component);
             this.port = port;
-            this.port.registerCallback(component, this.getSystemLogEvent.bind(this));
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });
