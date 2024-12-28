@@ -44,10 +44,9 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             const bandwidth = Atomics.load(this.interpreter.sharedArray, DataType.MBWD);
             if (bandwidth > 0) {
                 Atomics.store(this.interpreter.sharedArray, DataType.MBWD, -1);
-                events.push(new RoSystemLogEvent(
-                    new BrsString("bandwidth.minute"),
-                    new Int32(bandwidth)
-                ));
+                events.push(
+                    new RoSystemLogEvent(new BrsString("bandwidth.minute"), new Int32(bandwidth))
+                );
             }
         }
         if (this.httpConnect || this.httpComplete || this.httpError) {
