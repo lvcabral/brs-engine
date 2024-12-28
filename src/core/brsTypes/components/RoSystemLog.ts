@@ -14,8 +14,8 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         "http.complete",
         "http.error",
     ];
+    private readonly enabledEvents: string[] = [];
     private port?: RoMessagePort;
-    private enabledEvents: string[] = [];
 
     constructor(interpreter: Interpreter) {
         super("roSystemLog");

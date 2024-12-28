@@ -639,13 +639,11 @@ async function measureBandwidth() {
             throw new Error("Failed to get reader from response body");
         }
         let receivedLength = 0;
-        const chunks = [];
         while (true) {
             const { done, value } = await reader.read();
             if (done) {
                 break;
             }
-            chunks.push(value);
             receivedLength += value.length;
         }
         const endTime = Date.now();
