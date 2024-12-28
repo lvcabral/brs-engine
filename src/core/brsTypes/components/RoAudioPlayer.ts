@@ -1,18 +1,30 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, RoAssociativeArray, RoArray } from "..";
+import {
+    BrsType,
+    RoMessagePort,
+    RoAssociativeArray,
+    RoArray,
+    RoAudioPlayerEvent,
+    BrsEvent,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { DataType } from "../../common";
 
 export class RoAudioPlayer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
+    private audioFlags: number;
 
-    constructor() {
+    constructor(interpreter: Interpreter) {
         super("roAudioPlayer");
+        this.interpreter = interpreter;
         this.contentList = new Array();
+        this.audioFlags = -1;
         postMessage(new Array<string>());
         postMessage("audio,loop,false");
         postMessage("audio,next,-1");
@@ -31,7 +43,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
                 this.setTimedMetadataForKeys,
             ],
             ifSetMessagePort: [this.setMessagePort, this.setPort],
-            ifGetMessagePort: [this.getMessagePort],
+            ifGetMessagePort: [this.getMessagePort, this.getPort],
         });
     }
 
@@ -49,6 +61,27 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         });
         this.port?.removeReference();
     }
+
+    // Audio Player Event ----------------------------------------------------------------------------
+
+    private getNewEvents() {
+        const events: BrsEvent[] = [];
+        const flags = Atomics.load(this.interpreter.sharedArray, DataType.SND);
+        if (flags !== this.audioFlags) {
+            this.audioFlags = flags;
+            if (this.audioFlags >= 0) {
+                events.push(
+                    new RoAudioPlayerEvent(
+                        this.audioFlags,
+                        Atomics.load(this.interpreter.sharedArray, DataType.IDX)
+                    )
+                );
+            }
+        }
+        return events;
+    }
+
+    // ifAudioPlayer ---------------------------------------------------------------------------------
 
     /** Sets the content list to be played by the Audio Player */
     private readonly setContentList = new Callable("setContentList", {
@@ -213,6 +246,17 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns the message port (if any) currently associated with the object */
+    private readonly getPort = new Callable("getPort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.port ?? BrsInvalid.Instance;
+        },
+    });
+
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the audio player */
@@ -222,10 +266,10 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableAudio(true);
-            port.addReference();
-            this.port?.removeReference();
+            const component = this.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });
@@ -237,10 +281,10 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableAudio(true);
-            port.addReference();
-            this.port?.removeReference();
+            const component = this.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });

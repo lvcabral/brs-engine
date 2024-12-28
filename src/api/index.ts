@@ -9,6 +9,7 @@ import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./u
 import {
     AppExitReason,
     AppPayload,
+    BufferType,
     DataType,
     DebugCommand,
     DeviceInfo,
@@ -98,6 +99,12 @@ let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
 let showStats: boolean = false;
+
+// roSystemLog Event support
+let bandwidthMinute: boolean = false;
+let bandwidthTimeout: NodeJS.Timeout | null = null;
+let latestBandwidth: number = 0;
+let httpConnectLog: boolean = false;
 
 // App Shared Buffer
 let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
@@ -206,6 +213,16 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribeVideo("api", (event: string, data: any) => {
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "bandwidth") {
+            latestBandwidth = data;
+        } else if (event === "http.connect" && httpConnectLog) {
+            const sysLog = {
+                type: event,
+                url: data.responseURL,
+                status: data.statusText,
+                httpCode: data.status,
+            };
+            saveDataBuffer(sharedArray, JSON.stringify(sysLog), BufferType.SYS_LOG);
         }
     });
     subscribePackage("api", (event: string, data: any) => {
@@ -311,6 +328,8 @@ export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
         currentApp.running = false;
         currentApp.exitReason = reason;
         currentApp.exitTime = Date.now();
+        bandwidthMinute = false;
+        httpConnectLog = false;
         updateAppList();
         deviceDebug(`beacon,${getNow()} [beacon.report] |AppExitComplete\r\n`);
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
@@ -370,7 +389,7 @@ export function debug(command: string): boolean {
             Atomics.notify(sharedArray, DataType.DBG);
             handled = true;
         } else {
-            saveDataBuffer(sharedArray, command.trim());
+            saveDataBuffer(sharedArray, command.trim(), BufferType.DEBUG_EXPR);
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
             handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
         }
@@ -577,10 +596,64 @@ function workerCallback(event: MessageEvent) {
         notifyAll("started", currentApp);
     } else if (event.data.startsWith("end,")) {
         terminate(getExitReason(event.data.slice(4)));
+    } else if (event.data.startsWith("syslog,")) {
+        const type = event.data.slice(7);
+        if (type === "bandwidth.minute") {
+            bandwidthMinute = true;
+            if (latestBandwidth === 0) {
+                measureBandwidth();
+            }
+            if (!bandwidthTimeout) {
+                updateBandwidth();
+            }
+        } else if (type === "http.connect") {
+            httpConnectLog = true;
+        }
     } else if (event.data === "reset") {
         notifyAll("reset");
     } else if (event.data.startsWith("version,")) {
         notifyAll("version", event.data.slice(8));
+    }
+}
+
+// Update Bandwidth Measurement
+function updateBandwidth() {
+    if (currentApp.running && bandwidthMinute && latestBandwidth >= 0) {
+        Atomics.store(sharedArray, DataType.MBWD, latestBandwidth);
+    }
+    bandwidthTimeout = setTimeout(updateBandwidth, 60000);
+}
+
+// Measure Bandwidth
+async function measureBandwidth() {
+    const testFileUrl = "https://brsfiddle.net/images/bmp-example-file-download-1024x1024.bmp";
+    const startTime = Date.now();
+
+    try {
+        const response = await fetch(testFileUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const reader = response.body?.getReader();
+        if (!reader) {
+            throw new Error("Failed to get reader from response body");
+        }
+        let receivedLength = 0;
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                break;
+            }
+            receivedLength += value.length;
+        }
+        const endTime = Date.now();
+        const timeElapsed = (endTime - startTime) / 1000;
+        // Calculate download speed in kbps
+        const downloadSpeed = (receivedLength * 8) / timeElapsed / 1024;
+
+        latestBandwidth = Math.round(downloadSpeed);
+    } catch (error: any) {
+        apiException("warning", `Error measuring bandwidth: ${error.message}`);
     }
 }
 

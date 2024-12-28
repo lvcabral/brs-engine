@@ -5,6 +5,12 @@ sub main()
     screen = CreateObject("roScreen", true, 1280, 720)
     screen.setMessagePort(port)
     screen.setAlphaEnable(false)
+    syslog = CreateObject("roSystemLog")
+    syslog.SetMessagePort(port)
+    syslog.enableType("http.connect")
+    syslog.enableType("http.error")
+    syslog.enableType("http.complete")
+    syslog.EnableType("bandwidth.minute")
     player = CreateObject("roVideoPlayer")
     player.setMessagePort(port)
     player.setLoop(true)
@@ -43,6 +49,13 @@ sub main()
             else if type(msg) = "roVideoPlayerEvent" and msg.isStreamStarted()
                 tracks = player.getAudioTracks()
                 print tracks.count(); " audio tracks available."
+            else if type(msg) = "roSystemLogEvent"
+                logEvent = msg.getInfo()
+                if logEvent.logType = "bandwidth.minute"
+                    print logEvent.logType, logEvent.dateTime.toISOString(), logEvent.bandwidth
+                else
+                    print "System Log event: "; logEvent
+                end if
             else if type(msg) = "roUniversalControlEvent"
                 index = msg.GetInt()
                 print "Remote button pressed: " + index.tostr()

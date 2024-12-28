@@ -2186,6 +2186,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             return char; // if \0 stops decoding
         });
+        Atomics.store(this.sharedArray, DataType.BUF, -1);
         return data;
     }
 

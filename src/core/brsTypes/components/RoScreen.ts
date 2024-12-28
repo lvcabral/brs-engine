@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Double } from "..";
+import { BrsEvent, BrsType, Double, KeyEvent, RoUniversalControlEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -19,15 +19,18 @@ import {
     releaseCanvas,
 } from "../draw2d";
 import UPNG from "upng-js";
+import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly interpreter: Interpreter;
     private readonly doubleBuffer: boolean;
     private readonly width: number;
     private readonly height: number;
     private readonly maxMs: number;
     private readonly disposeCanvas: boolean;
     private readonly valid: boolean;
+    private readonly keysBuffer: KeyEvent[];
     private alphaEnable: boolean;
     private currentBuffer: number;
     private lastBuffer: number;
@@ -36,6 +39,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private port?: RoMessagePort;
     private isDirty: boolean;
     private lastMessage: number;
+    private lastKey: number;
 
     constructor(
         interpreter: Interpreter,
@@ -44,6 +48,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         height?: Int32
     ) {
         super("roScreen");
+        this.interpreter = interpreter;
+
         let defaultWidth = 854;
         let defaultHeight = 480;
         if (interpreter.deviceInfo.get("displayMode") === "1080p") {
@@ -60,6 +66,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.width = defaultWidth;
         this.height = defaultHeight;
         this.valid = true;
+        this.lastKey = -1;
+        this.keysBuffer = [];
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
             if (this.width <= 0) {
@@ -111,7 +119,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 this.getHeight,
             ],
             ifSetMessagePort: [this.setMessagePort, this.setPort],
-            ifGetMessagePort: [this.getMessagePort],
+            ifGetMessagePort: [this.getMessagePort, this.getPort],
         });
     }
 
@@ -190,13 +198,57 @@ export class RoScreen extends BrsComponent implements BrsValue {
     }
 
     dispose() {
-        this.port?.removeReference();
+        this.port?.unregisterCallback(this.getComponentName());
         if (this.disposeCanvas) {
             this.canvas.forEach((c) => releaseCanvas(c));
         }
     }
     isValid() {
         return this.valid;
+    }
+
+    // Control Key Events
+    private getNewEvents() {
+        const events: BrsEvent[] = [];
+        this.updateKeysBuffer();
+        const nextKey = this.keysBuffer.shift();
+        if (nextKey && nextKey.key !== this.lastKey) {
+            if (this.interpreter.singleKeyEvents) {
+                if (nextKey.mod === 0) {
+                    if (this.lastKey >= 0 && this.lastKey < 100) {
+                        this.keysBuffer.unshift({ ...nextKey });
+                        nextKey.key = this.lastKey + 100;
+                        nextKey.mod = 100;
+                    }
+                } else if (nextKey.key !== this.lastKey + 100) {
+                    return events;
+                }
+            }
+            this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
+            this.interpreter.currKeyTime = performance.now();
+            this.lastKey = nextKey.key;
+            events.push(new RoUniversalControlEvent(nextKey));
+        }
+        return events;
+    }
+
+    private updateKeysBuffer() {
+        for (let i = 0; i < keyBufferSize; i++) {
+            const idx = i * keyArraySpots;
+            const key = Atomics.load(this.interpreter.sharedArray, DataType.KEY + idx);
+            if (key === -1) {
+                return;
+            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
+                const remoteId = Atomics.load(this.interpreter.sharedArray, DataType.RID + idx);
+                const remoteType = Math.trunc(remoteId / 10) * 10;
+                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
+                const remoteIdx = remoteId - remoteType;
+                const mod = Atomics.load(this.interpreter.sharedArray, DataType.MOD + idx);
+                Atomics.store(this.interpreter.sharedArray, DataType.KEY + idx, -1);
+                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+                this.interpreter.lastRemote = remoteIdx;
+            }
+        }
     }
 
     // ifScreen ------------------------------------------------------------------------------------
@@ -585,6 +637,17 @@ export class RoScreen extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns the message port (if any) currently associated with the object */
+    private readonly getPort = new Callable("getPort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.port ?? BrsInvalid.Instance;
+        },
+    });
+
     // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
@@ -594,10 +657,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableKeys(true);
-            port.addReference();
-            this.port?.removeReference();
+            const component = this.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });
@@ -609,10 +672,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.enableKeys(true);
-            port.addReference();
-            this.port?.removeReference();
+            const component = this.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });

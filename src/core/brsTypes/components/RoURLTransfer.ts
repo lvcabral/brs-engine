@@ -14,6 +14,7 @@ import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 /// #endif
 export class RoURLTransfer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly interpreter: Interpreter;
     private identity: number;
     private url: string;
     private reqMethod: string;
@@ -26,13 +27,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private inFile: string[];
     private outFile: string[];
     private postBody: string[];
-    private interpreter: Interpreter;
     private user?: string;
     private password?: string;
 
-    // Constructor can only be used by RoFontRegistry()
     constructor(interpreter: Interpreter) {
         super("roUrlTransfer");
+        this.interpreter = interpreter;
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
         this.reqMethod = "";
@@ -44,7 +44,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.inFile = new Array<string>();
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
-        this.interpreter = interpreter;
         this.registerMethods({
             ifUrlTransfer: [
                 this.getIdentity,
@@ -437,7 +436,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             if (this.port) {
                 this.failureReason = "";
-                this.port.registerCallback(this.getToStringSync.bind(this));
+                this.port.pushCallback(this.getToStringSync.bind(this));
                 return BrsBoolean.True;
             } else {
                 this.interpreter.stderr.write(
@@ -460,7 +459,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.outFile.push(filePath.value);
-                this.port.registerCallback(this.getToFileAsync.bind(this));
+                this.port.pushCallback(this.getToFileAsync.bind(this));
                 return BrsBoolean.True;
             } else {
                 this.interpreter.stderr.write(
@@ -508,7 +507,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             if (this.port) {
                 this.failureReason = "";
-                this.port.registerCallback(this.requestHead.bind(this));
+                this.port.pushCallback(this.requestHead.bind(this));
                 return BrsBoolean.True;
             } else {
                 this.interpreter.stderr.write(
@@ -545,7 +544,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.postBody.push(request.value);
-                this.port.registerCallback(this.postFromStringAsync.bind(this));
+                this.port.pushCallback(this.postFromStringAsync.bind(this));
                 return BrsBoolean.True;
             } else {
                 this.interpreter.stderr.write(
@@ -582,7 +581,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.inFile.push(filePath.value);
-                this.port.registerCallback(this.postFromFileAsync.bind(this));
+                this.port.pushCallback(this.postFromFileAsync.bind(this));
                 return BrsBoolean.True;
             } else {
                 this.interpreter.stderr.write(
@@ -607,7 +606,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.inFile.push(fromFile.value);
                 this.outFile.push(toFile.value);
-                this.port.registerCallback(this.postFromFileToFileAsync.bind(this));
+                this.port.pushCallback(this.postFromFileToFileAsync.bind(this));
                 return BrsBoolean.True;
             } else {
                 this.interpreter.stderr.write(

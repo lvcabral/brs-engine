@@ -347,6 +347,7 @@ export enum DataType {
     WAV2, // Reserved for third stream
     MUHS, // Memory Used Heap Size
     MHSL, // Memory Heap Size Limit
+    MBWD, // Measured Bandwidth
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -355,10 +356,10 @@ export enum DataType {
 
 // Debug constants
 export const dataBufferIndex = 32;
-export const dataBufferSize = 512;
+export const dataBufferSize = 1024;
 
 // Key Buffer Constants
-export const keyBufferSize = 5; // Max is 6, if needs more space increase `dataBufferIndex`
+export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
 export const keyArraySpots = 3;
 
 // Remote control type
@@ -415,9 +416,9 @@ export enum MediaEvent {
 
 // Buffer Data Types enumerator
 export enum BufferType {
-    NONE,
+    DEBUG_EXPR,
     AUDIO_TRACKS,
-    VIDEO_INFO,
+    SYS_LOG,
 }
 
 // Media Files Extensions
