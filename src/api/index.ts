@@ -313,7 +313,7 @@ function setupCurrentApp(filePath: string) {
                 currentApp.exitReason = dev.exitReason ?? AppExitReason.UNKNOWN;
                 currentApp.exitTime = dev.exitTime;
             } else {
-                deviceData.appList.push(currentApp);
+                deviceData.appList.push(Object.assign({}, currentApp));
             }
         }
     } else {
