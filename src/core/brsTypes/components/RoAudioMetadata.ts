@@ -1,5 +1,12 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType, Int32, RoAssociativeArray, RoByteArray, toAssociativeArray } from "..";
+import {
+    BrsType,
+    FlexObject,
+    Int32,
+    RoAssociativeArray,
+    RoByteArray,
+    toAssociativeArray,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
@@ -165,7 +172,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             try {
                 const audioProps = mp3Parser.readTags(this.fileData);
                 if (audioProps instanceof Array && audioProps.length > 0) {
-                    const properties = new Map();
+                    const properties: FlexObject = {};
                     for (let section of audioProps) {
                         if (section?._section?.type !== "frame") {
                             continue;
@@ -176,10 +183,10 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                         const length = Math.round(((fileSize - headerSize) * 8) / (bitrate * 1000));
                         const sampleRate = audioProps[1]?.header?.samplingRate ?? 0;
                         const channels = audioProps[1]?.header?.channelModeBits === "11" ? 1 : 2;
-                        properties.set("length", length);
-                        properties.set("bitrate", bitrate);
-                        properties.set("samplerate", sampleRate);
-                        properties.set("channels", channels);
+                        properties.length = length;
+                        properties.bitrate = bitrate;
+                        properties.samplerate = sampleRate;
+                        properties.channels = channels;
                         break;
                     }
                     return toAssociativeArray(properties);
