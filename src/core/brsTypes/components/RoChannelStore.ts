@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
-import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
+import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {

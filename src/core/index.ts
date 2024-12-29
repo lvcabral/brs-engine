@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
-import { RoAssociativeArray, AAMember, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
+import { RoAssociativeArray, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import {
     AppExitReason,
     PkgFilePath,
