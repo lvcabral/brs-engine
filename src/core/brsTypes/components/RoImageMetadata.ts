@@ -1,5 +1,13 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType, Float, Int32, RoAssociativeArray, RoByteArray, RoDateTime } from "..";
+import {
+    BrsType,
+    Float,
+    Int32,
+    RoAssociativeArray,
+    RoByteArray,
+    RoDateTime,
+    toAssociativeArray,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
@@ -84,10 +92,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     tagValue = tag.value.toString();
                 }
         }
-        return new RoAssociativeArray([
-            { name: new BrsString("tag"), value: new Int32(tag.type) },
-            { name: new BrsString("value"), value: new BrsString(tagValue) },
-        ]);
+        return toAssociativeArray({ tag: tag.type, tagValue: tagValue });
     }
 
     private processBufferTag(tagType: string, tagValue: Buffer): string {
@@ -133,24 +138,26 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     }
 
     private decodeUserComment(buffer: Buffer): string {
-        let encoding = buffer.toString("ascii", 0, 8);
-        let commentBuffer = buffer.subarray(8);
-
-        try {
-            switch (encoding) {
-                case "ASCII\0\0\0":
-                    return new TextDecoder("ascii").decode(commentBuffer);
-                case "UNICODE\0":
-                    return new TextDecoder("utf-16").decode(commentBuffer);
-                case "JIS\0\0\0\0\0":
-                    return new TextDecoder("iso-2022-jp").decode(commentBuffer);
-                default:
-                    // If no encoding is specified, assume ASCII
-                    return new TextDecoder("ascii").decode(commentBuffer);
+        if (buffer instanceof Buffer) {
+            const encoding = buffer.toString("ascii", 0, 8);
+            const commentBuffer = buffer.subarray(8);
+            try {
+                switch (encoding) {
+                    case "ASCII\0\0\0":
+                        return new TextDecoder("ascii").decode(commentBuffer);
+                    case "UNICODE\0":
+                        return new TextDecoder("utf-16").decode(commentBuffer);
+                    case "JIS\0\0\0\0\0":
+                        return new TextDecoder("iso-2022-jp").decode(commentBuffer);
+                    default:
+                        // If no encoding is specified, assume ASCII
+                        return new TextDecoder("ascii").decode(commentBuffer);
+                }
+            } catch (err: any) {
+                return "";
             }
-        } catch (err: any) {
-            return "";
         }
+        return "";
     }
 
     private decodeExifSubjectArea(subjectArea: number[]): string {
@@ -202,34 +209,21 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
-            const fields = new RoAssociativeArray([]);
+            const fields = new Map<string, any>();
             try {
                 const parser = exifParser.create(this.fileData);
                 parser.enableBinaryFields(true);
                 const result = parser.parse();
                 let imageSize = result.getImageSize();
                 if (result.tags) {
-                    if (result.tags["UserComment"] instanceof Buffer) {
-                        fields.set(
-                            new BrsString("comment"),
-                            new BrsString(this.decodeUserComment(result.tags["UserComment"]))
-                        );
-                    } else {
-                        fields.set(new BrsString("comment"), new BrsString(""));
-                    }
+                    fields.set("comment", this.decodeUserComment(result.tags["UserComment"]));
                     if (typeof result.tags["CreateDate"] === "number") {
-                        fields.set(
-                            new BrsString("datetime"),
-                            new RoDateTime(result.tags["CreateDate"])
-                        );
+                        fields.set("datetime", new RoDateTime(result.tags["CreateDate"]));
                     }
                     const tagEnum = exifTagEnums["Orientation"];
-                    fields.set(new BrsString("width"), new Int32(imageSize?.width ?? 0));
-                    fields.set(new BrsString("height"), new Int32(imageSize?.height ?? 0));
-                    fields.set(
-                        new BrsString("orientation"),
-                        new BrsString(tagEnum[result.tags["Orientation"] ?? 0] ?? "")
-                    );
+                    fields.set("width", imageSize?.width ?? 0);
+                    fields.set("height", imageSize?.height ?? 0);
+                    fields.set("orientation", tagEnum[result.tags["Orientation"] ?? 0] ?? "");
                 }
             } catch (err: any) {
                 if (interpreter.isDevMode) {
@@ -237,12 +231,12 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                         `warning,[roImageMetadata] Error reading metadata:${err.message}`
                     );
                 }
-                fields.set(new BrsString("width"), new Int32(0));
-                fields.set(new BrsString("height"), new Int32(0));
-                fields.set(new BrsString("comment"), new BrsString(""));
-                fields.set(new BrsString("orientation"), new BrsString(""));
+                fields.set("width", 0);
+                fields.set("height", 0);
+                fields.set("comment", "");
+                fields.set("orientation", "");
             }
-            return fields;
+            return toAssociativeArray(fields);
         },
     });
 
@@ -265,13 +259,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 if (result.hasThumbnail("image/jpeg")) {
                     const thumbnail = result.getThumbnailBuffer();
                     if (thumbnail) {
-                        return new RoAssociativeArray([
-                            {
-                                name: new BrsString("bytes"),
-                                value: new RoByteArray(new Uint8Array(thumbnail)),
-                            },
-                            { name: new BrsString("type"), value: new BrsString("image/jpeg") },
-                        ]);
+                        const thumbData = new RoByteArray(new Uint8Array(thumbnail));
+                        return toAssociativeArray({ bytes: thumbData, type: "image/jpeg" });
                     }
                 }
             } catch (err: any) {
@@ -298,11 +287,11 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 return BrsInvalid.Instance;
             }
             try {
-                const sectionExif = new RoAssociativeArray([]);
-                const sectionGPS = new RoAssociativeArray([]);
-                const sectionImage = new RoAssociativeArray([]);
-                const sectionInterop = new RoAssociativeArray([]);
-                const sectionThumbnail = new RoAssociativeArray([]);
+                const sectionExif = new Map<string, any>();
+                const sectionGPS = new Map<string, any>();
+                const sectionImage = new Map<string, any>();
+                const sectionInterop = new Map<string, any>();
+                const sectionThumbnail = new Map<string, any>();
                 const parser = exifParser.create(this.fileData);
                 parser.enablePointers(true);
                 parser.enableBinaryFields(true);
@@ -317,37 +306,26 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     }
                     if (tag.section === ExifSections.EXIF || tag.section === ExifSections.Interop) {
                         if (tagTypeName.startsWith("Interop")) {
-                            sectionInterop.set(
-                                new BrsString(tagTypeName),
-                                this.getTagData(tag),
-                                true
-                            );
+                            sectionInterop.set(tagTypeName, this.getTagData(tag));
                         } else {
-                            sectionExif.set(new BrsString(tagTypeName), this.getTagData(tag), true);
+                            sectionExif.set(tagTypeName, this.getTagData(tag));
                         }
                     } else if (tag.section === ExifSections.GPS) {
-                        sectionGPS.set(
-                            new BrsString(tagTypeName),
-                            this.getTagData(tag, tagsMap),
-                            true
-                        );
+                        sectionGPS.set(tagTypeName, this.getTagData(tag, tagsMap));
                     } else if (tag.section === ExifSections.Image) {
-                        sectionImage.set(new BrsString(tagTypeName), this.getTagData(tag), true);
+                        sectionImage.set(tagTypeName, this.getTagData(tag));
                     } else if (tag.section === ExifSections.Thumbnail) {
-                        sectionThumbnail.set(
-                            new BrsString(tagTypeName),
-                            this.getTagData(tag),
-                            true
-                        );
+                        sectionThumbnail.set(tagTypeName, this.getTagData(tag));
                     }
                 });
-                return new RoAssociativeArray([
-                    { name: new BrsString("exif"), value: sectionExif },
-                    { name: new BrsString("gps"), value: sectionGPS },
-                    { name: new BrsString("image"), value: sectionImage },
-                    { name: new BrsString("interoperability"), value: sectionInterop },
-                    { name: new BrsString("thumbnail"), value: sectionThumbnail },
-                ]);
+                const rawExif = {
+                    exif: sectionExif,
+                    gps: sectionGPS,
+                    image: sectionImage,
+                    interoperability: sectionInterop,
+                    thumbnail: sectionThumbnail,
+                };
+                return toAssociativeArray(rawExif);
             } catch (err: any) {
                 if (interpreter.isDevMode) {
                     interpreter.stderr.write(

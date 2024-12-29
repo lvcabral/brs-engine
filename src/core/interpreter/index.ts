@@ -34,6 +34,7 @@ import {
     RoFunction,
     Signature,
     BrsInterface,
+    toAssociativeArray,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/coercion";
 import { shared, stats } from "..";
@@ -2032,25 +2033,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 args += args !== "" ? "," : "";
                 args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
             });
-            const funcSignature = `${func.functionName}(${args}) As ${kind}`;
+            const funcSig = `${func.functionName}(${args}) As ${kind}`;
             if (asString) {
-                debugMsg += `#${index}  Function ${funcSignature}\r\n`;
+                debugMsg += `#${index}  Function ${funcSig}\r\n`;
                 debugMsg += `   file/line: ${this.formatLocation(loc)}\r\n`;
             } else {
                 const line = loc.start.line;
-                btArray.unshift(
-                    new RoAssociativeArray([
-                        {
-                            name: new BrsString("filename"),
-                            value: new BrsString(loc?.file ?? "()"),
-                        },
-                        {
-                            name: new BrsString("function"),
-                            value: new BrsString(funcSignature),
-                        },
-                        { name: new BrsString("line_number"), value: new Int32(line) },
-                    ])
-                );
+                const info = { filename: loc?.file ?? "()", function: funcSig, line_number: line };
+                btArray.unshift(toAssociativeArray(info));
             }
             loc = func.callLocation;
         }
@@ -2229,12 +2219,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (err instanceof RuntimeError) {
             errDetail = err.errorDetail;
         }
-        const errorAA = new RoAssociativeArray([
-            { name: new BrsString("backtrace"), value: btArray },
-            { name: new BrsString("message"), value: new BrsString(errMessage) },
-            { name: new BrsString("number"), value: new Int32(errDetail.errno) },
-            { name: new BrsString("rethrown"), value: BrsBoolean.False },
-        ]);
+        const errorAA = toAssociativeArray({
+            backtrace: btArray,
+            message: errMessage,
+            number: errDetail.errno,
+            rethrown: false,
+        });
         if (err instanceof RuntimeError && err.extraFields?.size) {
             for (const [key, value] of err.extraFields) {
                 errorAA.set(new BrsString(key), value);

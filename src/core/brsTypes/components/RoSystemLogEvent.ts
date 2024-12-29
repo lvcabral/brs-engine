@@ -1,18 +1,18 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int32, RoAssociativeArray, RoDateTime } from "..";
+import { BrsType, FlexObject, RoDateTime, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
 export class RoSystemLogEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly logType: BrsString;
+    private readonly logType: string;
     private readonly data: any;
 
     constructor(logType: string, data: any) {
         super("roSystemLogEvent");
         this.data = data;
-        this.logType = new BrsString(logType);
+        this.logType = logType;
         this.registerMethods({ ifSystemLogEvent: [this.getInfo] });
     }
 
@@ -31,20 +31,18 @@ export class RoSystemLogEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            const response = new RoAssociativeArray([]);
-            response.set(new BrsString("LogType"), this.logType, true);
-            response.set(new BrsString("DateTime"), new RoDateTime(), true);
-            if (this.logType.value === "bandwidth.minute" && typeof this.data === "number") {
-                response.set(new BrsString("bandwidth"), new Int32(this.data), true);
-            } else if (this.logType.value === "http.connect") {
-                response.set(new BrsString("HttpCode"), new Int32(this.data.httpCode), true);
-                response.set(new BrsString("Status"), new BrsString(this.data.status), true);
-                response.set(new BrsString("OrigUrl"), new BrsString(this.data.url), true);
-                response.set(new BrsString("Url"), new BrsString(this.data.url), true);
-                response.set(new BrsString("Method"), new BrsString("GET"), true);
-                response.set(new BrsString("TargetIp"), new BrsString(""), true);
+            const info: FlexObject = { logType: this.logType, DateTime: new RoDateTime() };
+            if (this.logType === "bandwidth.minute" && typeof this.data === "number") {
+                info.bandwidth = this.data;
+            } else if (this.logType === "http.connect") {
+                info.HttpCode = this.data.httpCode;
+                info.Status = this.data.status;
+                info.OrigUrl = this.data.url;
+                info.Url = this.data.url;
+                info.Method = "GET";
+                info.TargetIp = "";
             }
-            return response;
+            return toAssociativeArray(info);
         },
     });
 }

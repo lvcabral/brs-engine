@@ -1,11 +1,10 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int32 } from "..";
+import { BrsType, FlexObject, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { FileSystem, getVolume, validUri, writeUri } from "../../interpreter/FileSystem";
 import { RoList } from "./RoList";
-import { RoAssociativeArray } from "./RoAssociativeArray";
 import * as nanomatch from "nanomatch";
 import * as path from "path";
 export class RoFileSystem extends BrsComponent implements BrsValue {
@@ -89,14 +88,11 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
-            const result = new RoAssociativeArray([]);
+            let result = {};
             if (interpreter.fileSystem.existsSync(pathArg.value)) {
-                result.set(new BrsString("blocks"), new Int32(0));
-                result.set(new BrsString("blocksize"), new Int32(0));
-                result.set(new BrsString("freeblocks"), new Int32(0));
-                result.set(new BrsString("usedblocks"), new Int32(0));
+                result = { blocks: 0, blocksize: 0, freeblocks: 0, usedblocks: 0 };
             }
-            return result;
+            return toAssociativeArray(result);
         },
     });
 
@@ -322,37 +318,31 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
-            const result = new RoAssociativeArray([]);
+            const result: FlexObject = {};
+            const arg = pathArg.value;
             try {
-                if (!validUri(pathArg.value)) {
-                    return result;
+                if (!validUri(arg)) {
+                    return toAssociativeArray(result);
                 }
-                const stat = interpreter.fileSystem.statSync(pathArg.value);
-                result.set(new BrsString("hidden"), BrsBoolean.False);
-                if (stat.isFile()) {
-                    const content = interpreter.fileSystem.readFileSync(pathArg.value);
-                    if (typeof content.length === "number") {
-                        result.set(new BrsString("size"), new Int32(content.length));
-                    } else {
-                        result.set(new BrsString("size"), new Int32(0));
-                    }
+                const pathStat = interpreter.fileSystem.statSync(arg);
+                result.hidden = false;
+                if (pathStat.isFile()) {
+                    const content = interpreter.fileSystem.readFileSync(arg);
+                    result.size = typeof content.length === "number" ? content.length : 0;
+                    result.type = "file";
+                } else {
+                    result.type = "directory";
                 }
-                result.set(
-                    new BrsString("permissions"),
-                    new BrsString(
-                        pathArg.value.startsWith("tmp:") || pathArg.value.startsWith("cachefs:")
-                            ? "rw"
-                            : "r"
-                    )
-                );
-                result.set(
-                    new BrsString("type"),
-                    new BrsString(stat.isFile() ? "file" : "directory")
-                );
+                const perm = arg.startsWith("tmp:") || arg.startsWith("cachefs:") ? "rw" : "r";
+                result.permissions = perm;
             } catch (err: any) {
-                return result;
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(
+                        `warning,roFileSystem.stat: Error parsing status: ${err.message}`
+                    );
+                }
             }
-            return result;
+            return toAssociativeArray(result);
         },
     });
     // ifGetMessagePort ----------------------------------------------------------------------------------

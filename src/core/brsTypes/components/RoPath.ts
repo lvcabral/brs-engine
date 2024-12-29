@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoAssociativeArray, AAMember, isStringComp } from "..";
+import { BrsType, RoAssociativeArray, isStringComp, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import path from "path";
@@ -106,7 +106,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
         },
     });
 
-    /** Returns an roAssociativeArrays containing the significant elements of the path */
+    /** Returns an roAssociativeArray containing the significant elements of the path */
     private readonly split = new Callable("split", {
         signature: {
             args: [],
@@ -116,28 +116,14 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
             if (this.fullPath === "") {
                 return new RoAssociativeArray([]);
             }
-            const parts = new Array<AAMember>();
-            parts.push({
-                name: new BrsString("basename"),
-                value: new BrsString(this.parsedPath.name),
-            });
-            parts.push({
-                name: new BrsString("extension"),
-                value: new BrsString(this.parsedPath.ext),
-            });
-            parts.push({
-                name: new BrsString("filename"),
-                value: new BrsString(this.parsedPath.base),
-            });
-            parts.push({
-                name: new BrsString("parent"),
-                value: new BrsString(this.getParentPart()),
-            });
-            parts.push({
-                name: new BrsString("phy"),
-                value: new BrsString(this.parsedUrl.protocol),
-            });
-            return new RoAssociativeArray(parts);
+            const parts = {
+                basename: this.parsedPath.name,
+                extension: this.parsedPath.ext,
+                filename: this.parsedPath.base,
+                parent: this.getParentPart(),
+                phy: this.parsedUrl.protocol,
+            };
+            return toAssociativeArray(parts);
         },
     });
 

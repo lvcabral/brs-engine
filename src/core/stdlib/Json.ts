@@ -3,57 +3,17 @@ import { RoArray } from "../brsTypes/components/RoArray";
 import { Interpreter } from "../interpreter";
 
 import {
-    BrsBoolean,
     BrsComponent,
     BrsInvalid,
     BrsString,
     BrsType,
     Callable,
-    Float,
     Int32,
-    Int64,
     ValueKind,
     StdlibArgument,
     isUnboxable,
+    brsValueOf,
 } from "../brsTypes";
-
-/**
- * Converts a value to its representation as a BrsType. If no such
- * representation is possible, throws an Error.
- * @param {any} x Some value.
- * @return {BrsType} The BrsType representation of `x`.
- * @throws {Error} If `x` cannot be represented as a BrsType.
- */
-function brsValueOf(x: any): BrsType {
-    if (x === null) {
-        return BrsInvalid.Instance;
-    }
-    const maxInt = 0x80000000;
-    let t: string = typeof x;
-    switch (t) {
-        case "boolean":
-            return BrsBoolean.from(x);
-        case "string":
-            return new BrsString(x);
-        case "number":
-            if (Number.isInteger(x)) {
-                return x >= -maxInt && x < maxInt ? new Int32(x) : new Int64(x);
-            }
-            return new Float(x);
-        case "object":
-            if (Array.isArray(x)) {
-                return new RoArray(x.map(brsValueOf));
-            }
-            return new RoAssociativeArray(
-                Object.getOwnPropertyNames(x).map((k: string) => ({
-                    name: new BrsString(k),
-                    value: brsValueOf(x[k]),
-                }))
-            );
-        default:
-            throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
-    }
-}
 
 /**
  * Converts a BrsType value to its representation as a JSON string. If no such

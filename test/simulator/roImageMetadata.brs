@@ -10,7 +10,7 @@ Sub Main()
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/long_description.jpg
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/tests/35-empty.jpg
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/xmp/no_exif.jpg
-	'https://github.com/ianare/exif-samples/blob/master/jpg/Canon_PowerShot_S40.jpg?raw=true
+	'https://raw.githubusercontent.com/ianare/exif-samples/refs/heads/master/jpg/Canon_PowerShot_S40.jpg
 	'https://github.com/ianare/exif-samples/blob/master/jpg/invalid/image00971.jpg?raw=true
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/PaintTool_sample.jpg
 	'https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/gps/DSCN0040.jpg
