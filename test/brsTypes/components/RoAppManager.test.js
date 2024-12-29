@@ -115,13 +115,13 @@ describe("RoAppManager", () => {
             let exitInfo = getLastExitInfo.call(interpreter);
             expect(getLastExitInfo).toBeTruthy();
             expect(exitInfo).toBeTruthy();
-            expect(exitInfo.elements.size).toEqual(6);
+            expect(exitInfo.elements.size).toEqual(4);
         });
     });
 });
 
 describe("compareVersions", () => {
-    let appManager = new RoAppManager();
+    let appManager;
 
     beforeEach(() => {
         appManager = new RoAppManager();

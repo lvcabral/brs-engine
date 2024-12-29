@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoAssociativeArray, RoMessagePort } from "..";
+import { BrsType, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -81,11 +81,12 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const { heapSizeLimit } = interpreter.getMemoryHeapInfo();
-            const memArray = new RoAssociativeArray([]);
-            memArray.set(new BrsString("maxForegroundMemory"), new Int32(0), true);
-            memArray.set(new BrsString("maxBackgroundMemory"), new Int32(0), true);
-            memArray.set(new BrsString("maxRokuManagedHeapMemory"), new Int32(heapSizeLimit), true);
-            return memArray;
+            const memLimit = {
+                maxForegroundMemory: 0,
+                maxBackgroundMemory: 0,
+                maxRokuManagedHeapMemory: heapSizeLimit,
+            };
+            return toAssociativeArray(memLimit);
         },
     });
 

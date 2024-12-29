@@ -259,6 +259,19 @@ export type AllComponents = { kind: ValueKind.Object } & BrsComponent & BrsValue
 /** The set of all supported types in BrightScript. */
 export type BrsType = BrsPrimitive | Iterable | Callable | AllComponents | Uninitialized;
 
+// Function to check if the value is a BrightScript Type
+export function isBrsType(value: any): value is BrsType {
+    return (
+        isBrsBoolean(value) ||
+        isBrsString(value) ||
+        isBrsNumber(value) ||
+        value === BrsInvalid.Instance ||
+        value instanceof BrsComponent ||
+        value instanceof Callable ||
+        value instanceof Uninitialized
+    )
+}
+
 /** The valid ISO Date formats for roDateTime and roTimeSpan parsing */
 export const ValidDateFormats = [
     "YYYY-MM-DDTHH:mm:ss.SSS[Z]",
@@ -277,3 +290,76 @@ export const ValidDateFormats = [
     "YYYY[Z]",
     "YYYY",
 ];
+
+/**
+ * Interface for a flexible object with string keys and any values.
+ * This is to be used to behave like and convert to a BrightScript associative array.
+ */
+export interface FlexObject {
+    [key: string]: any;
+}
+
+/**
+ * Converts a JavaScript object or Map to a RoAssociativeArray, converting each property or entry to the corresponding BrightScript type.
+ * @param input The JavaScript object or Map to convert.
+ * @returns A RoAssociativeArray with the converted properties or entries.
+ */
+export function toAssociativeArray(input: any): RoAssociativeArray {
+    const associativeArray = new RoAssociativeArray([]);
+    if (input instanceof Map) {
+        input.forEach((value, key) => {
+            let brsKey: BrsString;
+            if (typeof key === "string") {
+                brsKey = new BrsString(key);
+            } else {
+                throw new Error(`Unsupported key type: ${typeof key}`);
+            }
+            associativeArray.set(brsKey, brsValueOf(value), true);
+        });
+    } else if (typeof input === "object" && input !== null) {
+        for (const key in input) {
+            if (input.hasOwnProperty(key)) {
+                const brsKey = new BrsString(key);
+                associativeArray.set(brsKey, brsValueOf(input[key]), true);
+            }
+        }
+    } else {
+        throw new Error(`Unsupported input type: ${typeof input}`);
+    }
+    return associativeArray;
+}
+
+/**
+ * Converts a value to its representation as a BrsType. If no such
+ * representation is possible, throws an Error.
+ * @param {any} x Some value.
+ * @return {BrsType} The BrsType representation of `x`.
+ * @throws {Error} If `x` cannot be represented as a BrsType.
+ */
+export function brsValueOf(x: any): BrsType {
+    if (x === null || x === undefined || Number.isNaN(x)) {
+        return BrsInvalid.Instance;
+    }
+    const maxInt = 0x80000000;
+    const t: string = typeof x;
+    switch (t) {
+        case "boolean":
+            return BrsBoolean.from(x);
+        case "string":
+            return new BrsString(x);
+        case "number":
+            if (Number.isInteger(x)) {
+                return x >= -maxInt && x < maxInt ? new Int32(x) : new Int64(x);
+            }
+            return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
+        case "object":
+            if (isBrsType(x)) {
+                return x;
+            } else if (Array.isArray(x)) {
+                return new RoArray(x.map(brsValueOf));
+            }
+            return toAssociativeArray(x);
+        default:
+            throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
+    }
+}

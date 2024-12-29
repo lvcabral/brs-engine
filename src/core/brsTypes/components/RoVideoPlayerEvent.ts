@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { AAMember, BrsType, RoAssociativeArray } from "..";
+import { BrsType, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -81,20 +81,16 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let result = new Array<AAMember>();
             if (this.flags === MediaEvent.START_STREAM) {
-                result.push({ name: new BrsString("Url"), value: new BrsString("") });
-                result.push({ name: new BrsString("StreamBitrate"), value: new Int32(0) });
-                result.push({ name: new BrsString("MeasuredBitrate"), value: new Int32(0) });
-                result.push({ name: new BrsString("IsUnderrun"), value: BrsBoolean.from(false) });
-                return new RoAssociativeArray(result);
+                const info = {
+                    Url: "",
+                    StreamBitrate: 0,
+                    MeasuredBitrate: 0,
+                    IsUnderrun: false,
+                };
+                return toAssociativeArray(info);
             } else if (this.flags === MediaEvent.POSITION) {
-                result.push({ name: new BrsString("ClipIdx"), value: new Int32(0) });
-                result.push({
-                    name: new BrsString("ClipPos"),
-                    value: new Int32(this.index * 1000),
-                });
-                return new RoAssociativeArray(result);
+                return toAssociativeArray({ ClipIdx: 0, ClipPos: this.index * 1000 });
             }
             return BrsInvalid.Instance;
         },

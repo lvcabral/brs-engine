@@ -395,7 +395,6 @@ function setupInputParams(
     deepLinkMap: Map<string, string>,
     splashTime: number
 ): RoAssociativeArray {
-    const deepLinkArray = new Array<AAMember>();
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
@@ -405,10 +404,7 @@ function setupInputParams(
     deepLinkMap.forEach((value, key) => {
         inputMap.set(key, value);
     });
-    inputMap.forEach((value, key) => {
-        deepLinkArray.push({ name: new BrsString(key), value: new BrsString(value) });
-    });
-    return new RoAssociativeArray(deepLinkArray);
+    return BrsTypes.toAssociativeArray(inputMap);
 }
 
 /**

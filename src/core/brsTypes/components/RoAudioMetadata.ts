@@ -1,5 +1,5 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType, Int32, RoAssociativeArray, RoByteArray } from "..";
+import { BrsType, Int32, RoAssociativeArray, RoByteArray, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
@@ -70,15 +70,15 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     private getCoverArtFromSection(frames: any): RoAssociativeArray | null {
         for (let frame of frames) {
             if (frame?.header?.id === "APIC") {
-                const cover = new RoAssociativeArray([]);
-                const imageArray = new Uint8Array(
-                    frame.content.pictureData.buffer,
-                    frame.content.pictureData.byteOffset,
-                    frame.content.pictureData.byteLength
+                const imageArray = new RoByteArray(
+                    new Uint8Array(
+                        frame.content.pictureData.buffer,
+                        frame.content.pictureData.byteOffset,
+                        frame.content.pictureData.byteLength
+                    )
                 );
-                cover.set(new BrsString("bytes"), new RoByteArray(imageArray));
-                cover.set(new BrsString("type"), new BrsString(frame.content.mimeType));
-                return cover;
+                const coverArt = { bytes: imageArray, type: frame.content.mimeType };
+                return toAssociativeArray(coverArt);
             }
         }
         return null;
@@ -120,16 +120,16 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
 
             try {
                 const audioProps = mp3Parser.readTags(this.fileData);
-                let tags = new RoAssociativeArray([
-                    { name: new BrsString("genre"), value: new BrsString("") },
-                    { name: new BrsString("title"), value: new BrsString("") },
-                    { name: new BrsString("artist"), value: new BrsString("") },
-                    { name: new BrsString("album"), value: new BrsString("") },
-                    { name: new BrsString("composer"), value: new BrsString("") },
-                    { name: new BrsString("comment"), value: new BrsString("") },
-                    { name: new BrsString("year"), value: new Int32(0) },
-                    { name: new BrsString("track"), value: new Int32(0) },
-                ]);
+                const tags = toAssociativeArray({
+                    genre: "",
+                    title: "",
+                    artist: "",
+                    album: "",
+                    composer: "",
+                    comment: "",
+                    year: 0,
+                    track: 0,
+                });
                 if (audioProps instanceof Array && audioProps.length > 0) {
                     for (let section of audioProps) {
                         if (section?._section?.type === "ID3v2") {
@@ -165,25 +165,24 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             try {
                 const audioProps = mp3Parser.readTags(this.fileData);
                 if (audioProps instanceof Array && audioProps.length > 0) {
-                    const properties = new RoAssociativeArray([]);
+                    const properties = new Map();
                     for (let section of audioProps) {
                         if (section?._section?.type !== "frame") {
                             continue;
                         }
-                        const fileSizeInBytes = this.fileData.byteLength;
+                        const fileSize = this.fileData.byteLength;
                         const headerSize = section._section?.offset ?? 0;
-                        const bitrateInKbps = section.header?.bitrate ?? 48;
-                        const lengthInSeconds =
-                            ((fileSizeInBytes - headerSize) * 8) / (bitrateInKbps * 1000);
-                        properties.set(new BrsString("length"), new Int32(lengthInSeconds));
-                        properties.set(new BrsString("bitrate"), new Int32(bitrateInKbps));
+                        const bitrate = section.header?.bitrate ?? 48;
+                        const length = Math.round(((fileSize - headerSize) * 8) / (bitrate * 1000));
                         const sampleRate = audioProps[1]?.header?.samplingRate ?? 0;
-                        properties.set(new BrsString("samplerate"), new Int32(sampleRate));
                         const channels = audioProps[1]?.header?.channelModeBits === "11" ? 1 : 2;
-                        properties.set(new BrsString("channels"), new Int32(channels));
+                        properties.set("length", length);
+                        properties.set("bitrate", bitrate);
+                        properties.set("samplerate", sampleRate);
+                        properties.set("channels", channels);
                         break;
                     }
-                    return properties;
+                    return toAssociativeArray(properties);
                 }
             } catch (err: any) {
                 if (interpreter.isDevMode) {

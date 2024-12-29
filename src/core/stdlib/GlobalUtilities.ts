@@ -4,11 +4,10 @@ import {
     BrsInvalid,
     BrsString,
     StdlibArgument,
-    RoAssociativeArray,
-    Int32,
     BrsInterface,
     BrsComponent,
     BrsType,
+    toAssociativeArray,
 } from "../brsTypes";
 import { RuntimeError, RuntimeErrorDetail } from "../Error";
 import { Interpreter } from "../interpreter";
@@ -31,11 +30,7 @@ export const RunGarbageCollector = new Callable("RunGarbageCollector", {
         returns: ValueKind.Object,
     },
     impl: () => {
-        return new RoAssociativeArray([
-            { name: new BrsString("COUNT"), value: new Int32(0) },
-            { name: new BrsString("ORPHANED"), value: new Int32(0) },
-            { name: new BrsString("ROOT"), value: new Int32(0) },
-        ]);
+        return toAssociativeArray({ COUNT: 0, ORPHANED: 0, ROOT: 0 });
     },
 });
 
