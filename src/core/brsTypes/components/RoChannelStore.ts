@@ -1,11 +1,12 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoList, RoArray, RoMessagePort } from "..";
+import { BrsType, RoList, RoArray, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
-import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
+import { RoAssociativeArray } from "./RoAssociativeArray";
+import { AppData } from "../../common";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -220,11 +221,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let result = new Array<AAMember>();
-            result.push({ name: new BrsString("state"), value: new BrsString("") });
-            result.push({ name: new BrsString("zip"), value: new BrsString("") });
-            result.push({ name: new BrsString("country"), value: new BrsString("") });
-            return new RoAssociativeArray(result);
+            return toAssociativeArray({ state: "", zip: "", country: "" });
         },
     });
 
@@ -247,9 +244,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, data: BrsString) => {
             this.credData = data.value;
-            let result = new Array<AAMember>();
-            result.push({ name: new BrsString("status"), value: new Int32(0) });
-            return new RoAssociativeArray(result);
+            return toAssociativeArray({ status: 0 });
         },
     });
 
@@ -266,16 +261,14 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 json = `{channel_data="${this.credData}"}`;
                 status = 0;
             }
-            let clientId = interpreter.deviceInfo.get("clientId");
-            let result = new Array<AAMember>();
-            result.push({ name: new BrsString("channelId"), value: new BrsString("dev") });
-            result.push({ name: new BrsString("json"), value: new BrsString(json) });
-            result.push({
-                name: new BrsString("publisherDeviceId"),
-                value: new BrsString(clientId),
-            });
-            result.push({ name: new BrsString("status"), value: new Int32(status) });
-            return new RoAssociativeArray(result);
+            const app = interpreter.deviceInfo.get("appList")?.find((app: AppData) => app.running);
+            const channelCred = {
+                channelId: app?.id ?? "dev",
+                json: json,
+                publisherDeviceId: interpreter.deviceInfo.get("clientId") ?? "",
+                status: status,
+            };
+            return toAssociativeArray(channelCred);
         },
     });
 
@@ -289,11 +282,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, orderInfo: RoAssociativeArray, productId: BrsString) => {
-            let result = new Array<AAMember>();
-            result.push({ name: new BrsString("errorCode"), value: new BrsString("-1") });
-            result.push({ name: new BrsString("errorMessage"), value: new BrsString("") });
-            result.push({ name: new BrsString("status"), value: new BrsString("Failure") });
-            return new RoAssociativeArray(result);
+            return toAssociativeArray({ errorCode: -1, errorMessage: "", status: "Failure" });
         },
     });
 
@@ -307,11 +296,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, confirmOrderInfo: RoAssociativeArray, productId: BrsString) => {
-            let result = new Array<AAMember>();
-            result.push({ name: new BrsString("errorCode"), value: new BrsString("-1") });
-            result.push({ name: new BrsString("errorMessage"), value: new BrsString("") });
-            result.push({ name: new BrsString("status"), value: new BrsString("Failure") });
-            return new RoAssociativeArray(result);
+            return toAssociativeArray({ errorCode: -1, errorMessage: "", status: "Failure" });
         },
     });
 

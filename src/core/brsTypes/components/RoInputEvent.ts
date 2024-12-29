@@ -1,6 +1,6 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int64, RoAssociativeArray } from "..";
+import { BrsType, Int64, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
@@ -44,13 +44,9 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return new RoAssociativeArray([
-                { name: new BrsString("type"), value: new BrsString("") },
-                { name: new BrsString("id"), value: new Int64(this.id) },
-                { name: new BrsString("command"), value: new BrsString("") },
-                { name: new BrsString("direction"), value: new BrsString("") },
-                { name: new BrsString("duration"), value: new BrsString("") },
-            ]);
+            const id = new Int64(this.id);
+            const info = { type: "", id: id, command: "", direction: "", duration: "" };
+            return toAssociativeArray(info);
         },
     });
 }

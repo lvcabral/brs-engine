@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray } from "..";
+import { BrsType, RoArray, RoAssociativeArray, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -135,28 +135,14 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            let exitCode: BrsType = new BrsString(AppExitReason.UNKNOWN);
-            let exitTime: BrsType = BrsInvalid.Instance;
-            let appState: BrsType = BrsInvalid.Instance;
-            let mediaState: BrsType = BrsInvalid.Instance;
             const app = interpreter.deviceInfo.get("appList")?.find((app: AppData) => app.running);
-            if (app) {
-                console.log("found app", app.id, app.title, app.exitReason, app.exitTime);
-                exitCode = new BrsString(app.exitReason);
-                if (app.exitTime) {
-                    exitTime = new BrsString(new Date(app.exitTime).toISOString());
-                    appState = new BrsString("foreground");
-                    mediaState = new BrsString("stopped");
-                }
-            }
-            const exitInfo = new RoAssociativeArray([]);
-            exitInfo.set(new BrsString("timestamp"), exitTime);
-            exitInfo.set(new BrsString("exit_code"), exitCode);
-            exitInfo.set(new BrsString("mem_limit"), BrsInvalid.Instance);
-            exitInfo.set(new BrsString("app_state"), appState);
-            exitInfo.set(new BrsString("console_log"), BrsInvalid.Instance);
-            exitInfo.set(new BrsString("media_player_state"), mediaState);
-            return exitInfo;
+            const exitInfo = {
+                exit_code: app?.exitReason ?? AppExitReason.UNKNOWN,
+                media_player_state: "stopped",
+                mem_limit: null,
+                timestamp: app?.exitTime ? new Date(app.exitTime).toISOString() : null,
+            };
+            return toAssociativeArray(exitInfo);
         },
     });
 
@@ -211,7 +197,6 @@ export class RoAppManager extends BrsComponent implements BrsValue {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
-                console.log("comparing versions", app?.version, version?.value);
                 return BrsBoolean.from(app && compareVersions(app.version, version.value) >= 0);
             }
             return BrsBoolean.False;
@@ -288,11 +273,8 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             const appList = interpreter.deviceInfo.get("appList");
             if (appList instanceof Array) {
                 appList.forEach((app) => {
-                    const appAA = new RoAssociativeArray([]);
-                    appAA.set(new BrsString("id"), new BrsString(app.id));
-                    appAA.set(new BrsString("title"), new BrsString(app.title));
-                    appAA.set(new BrsString("version"), new BrsString(app.version));
-                    result.elements.push(appAA);
+                    const appObj = { id: app.id, title: app.title, version: app.version };
+                    result.elements.push(toAssociativeArray(appObj));
                 });
             }
             return result;

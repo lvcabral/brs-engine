@@ -6,9 +6,9 @@ import {
     RoAssociativeArray,
     RoArray,
     BrsNumber,
-    AAMember,
     BrsEvent,
     RoVideoPlayerEvent,
+    toAssociativeArray,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -410,20 +410,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             if (this.audioTracks.length) {
                 this.audioTracks.forEach((track, index) => {
                     if (track instanceof Array && track.length === 3) {
-                        let item = new Array<AAMember>();
-                        item.push({
-                            name: new BrsString("Track"),
-                            value: new BrsString(`${track[0]}`),
-                        });
-                        item.push({
-                            name: new BrsString("Language"),
-                            value: new BrsString(track[1]),
-                        });
-                        item.push({
-                            name: new BrsString("Name"),
-                            value: new BrsString(track[2]),
-                        });
-                        result.push(new RoAssociativeArray(item));
+                        const item = { Track: track[0], Language: track[1], Name: track[2] };
+                        result.push(toAssociativeArray(item));
                     }
                 });
             }
