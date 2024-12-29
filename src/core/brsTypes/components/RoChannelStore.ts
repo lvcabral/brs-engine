@@ -267,7 +267,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 json: json,
                 publisherDeviceId: interpreter.deviceInfo.get("clientId") ?? "",
                 status: status,
-            }
+            };
             return toAssociativeArray(channelCred);
         },
     });
@@ -282,7 +282,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, orderInfo: RoAssociativeArray, productId: BrsString) => {
-            return toAssociativeArray({errorCode: -1, errorMessage: "", status: "Failure" });
+            return toAssociativeArray({ errorCode: -1, errorMessage: "", status: "Failure" });
         },
     });
 
@@ -296,7 +296,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, confirmOrderInfo: RoAssociativeArray, productId: BrsString) => {
-            return toAssociativeArray({errorCode: -1, errorMessage: "", status: "Failure" });
+            return toAssociativeArray({ errorCode: -1, errorMessage: "", status: "Failure" });
         },
     });
 

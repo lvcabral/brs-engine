@@ -269,7 +269,7 @@ export function isBrsType(value: any): value is BrsType {
         value instanceof BrsComponent ||
         value instanceof Callable ||
         value instanceof Uninitialized
-    )
+    );
 }
 
 /** The valid ISO Date formats for roDateTime and roTimeSpan parsing */
