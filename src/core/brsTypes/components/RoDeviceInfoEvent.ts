@@ -18,7 +18,9 @@ export class RoDeviceInfoEvent extends BrsComponent implements BrsValue {
         } else {
             this.isStatusMsg = true;
         }
-        this.registerMethods({ ifDeviceInfoEvent: [this.getInfo, this.isStatusMessage, this.isCaptionModeChanged] });
+        this.registerMethods({
+            ifDeviceInfoEvent: [this.getInfo, this.isStatusMessage, this.isCaptionModeChanged],
+        });
     }
 
     toString(parent?: BrsType): string {
@@ -39,7 +41,6 @@ export class RoDeviceInfoEvent extends BrsComponent implements BrsValue {
             return BrsBoolean.from(this.isCaptionModeMsg);
         },
     });
-
 
     /** Indicates whether the user has changed the closed caption mode. */
     private readonly isCaptionModeChanged = new Callable("isCaptionModeChanged", {
