@@ -54,11 +54,11 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         this.displayAspectRatio = "16x9";
         this.displayResolution = { h: 720, w: 1280 };
         this.displayModeName = "HD";
-        if (this.displayMode.slice(0, 3) === "480") {
+        if (this.displayMode.startsWith("480")) {
             this.displayResolution = { h: 480, w: 720 };
             this.displayAspectRatio = "4x3";
             this.displayModeName = "SD";
-        } else if (this.displayMode.slice(0, 4) === "1080") {
+        } else if (this.displayMode.startsWith("1080")) {
             this.displayResolution = { h: 1080, w: 1920 };
             this.displayModeName = "FHD";
         }
