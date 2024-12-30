@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray, RoByteArray } from "..";
+import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "./RoDeviceInfoEvent";
