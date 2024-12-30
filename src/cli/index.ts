@@ -477,7 +477,7 @@ function handleStringMessage(message: string) {
         if (msg !== AppExitReason.FINISHED) {
             process.exitCode = 1;
         }
-    } else if (!["start", "debug", "reset", "video", "audio"].includes(mType)) {
+    } else if (!["start", "debug", "reset", "video", "audio", "syslog"].includes(mType)) {
         console.info(chalk.blueBright(message.trimEnd()));
     }
 }
