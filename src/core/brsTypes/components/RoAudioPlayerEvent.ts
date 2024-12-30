@@ -28,7 +28,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 break;
         }
         this.registerMethods({
-            ifAudioPlayerEvent: [
+            ifroAudioPlayerEvent: [
                 this.getIndex,
                 this.getMessage,
                 this.getInfo,

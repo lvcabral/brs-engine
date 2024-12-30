@@ -22,6 +22,7 @@ Sub Main()
         msg = wait(0, port)
 		if type(msg) = "roAudioPlayerEvent" and msg.isStatusMessage()
 			print  msg.GetMessage(), msg.getIndex()
+			print FindMemberFunction(msg, "getIndex")
 		else if type(msg) = "roUniversalControlEvent"
 			key = msg.getInt()
 			if key = 0 '<BACK>
