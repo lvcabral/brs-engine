@@ -28,6 +28,7 @@ export interface DeviceInfo {
     captionLanguage: string;
     clockFormat: string;
     displayMode: "480p" | "720p" | "1080p";
+    captionsMode: "Off" | "On" | "Instant replay" | "When mute";
     defaultFont: string;
     fontPath: string;
     fonts?: Map<string, any>;
@@ -63,6 +64,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     captionLanguage: "eng",
     clockFormat: "12h",
     displayMode: "720p",
+    captionsMode: "Off",
     defaultFont: "Asap",
     fontPath: "../fonts/",
     fonts: new Map(),

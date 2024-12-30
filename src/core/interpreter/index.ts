@@ -165,6 +165,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._creationTime;
     }
 
+    public displayEnabled: boolean = true;
     public lastRemote: number = 0;
     public lastKeyTime: number = Date.now();
     public currKeyTime: number = Date.now();

@@ -160,7 +160,7 @@ export const BrsObjects = new BrsObjectsMap([
         1,
     ],
     ["roAppInfo", (_: Interpreter) => new RoAppInfo()],
-    ["roDeviceInfo", (_: Interpreter) => new RoDeviceInfo()],
+    ["roDeviceInfo", (interpreter: Interpreter) => new RoDeviceInfo(interpreter)],
     ["roRemoteInfo", (_: Interpreter) => new RoRemoteInfo()],
     ["roAppMemoryMonitor", (_: Interpreter) => new RoAppMemoryMonitor()],
     ["roAudioPlayer", (interpreter: Interpreter) => new RoAudioPlayer(interpreter)],

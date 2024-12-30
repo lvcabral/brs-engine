@@ -17,6 +17,7 @@ describe("RoDeviceInfo", () => {
 
     beforeEach(() => {
         process.env = { ...OLD_ENV };
+        interpreter = new Interpreter();
     });
 
     afterAll(() => {
@@ -25,14 +26,14 @@ describe("RoDeviceInfo", () => {
 
     describe("comparisons", () => {
         it("is equal to nothing", () => {
-            let a = new RoDeviceInfo();
+            let a = new RoDeviceInfo(interpreter);
             expect(a.equalTo(a)).toBe(BrsBoolean.False);
         });
     });
 
     describe("stringification", () => {
         it("lists stringified value", () => {
-            let deviceInfo = new RoDeviceInfo();
+            let deviceInfo = new RoDeviceInfo(interpreter);
             expect(deviceInfo.toString()).toEqual(`<Component: roDeviceInfo>`);
         });
     });
@@ -44,7 +45,7 @@ describe("RoDeviceInfo", () => {
 
         describe("getModel", () => {
             it("should return a fake model number", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getModel");
 
                 expect(method).toBeTruthy();
@@ -53,7 +54,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getModelDisplayName", () => {
             it("should return a fake model display name", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getModelDisplayName");
 
                 expect(method).toBeTruthy();
@@ -62,7 +63,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getModelType", () => {
             it("should return a fake model type", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getModelType");
 
                 expect(method).toBeTruthy();
@@ -71,7 +72,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getModelDetails", () => {
             it("should return a fake model's details", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getModelDetails");
 
                 let aa = method.call(interpreter);
@@ -83,7 +84,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getFriendlyName", () => {
             it("should return a fake friendly name ", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getFriendlyName");
 
                 expect(method).toBeTruthy();
@@ -94,7 +95,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getOSVersion", () => {
             it("should return a fake OS version", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getOSVersion");
 
                 let aa = method.call(interpreter);
@@ -108,7 +109,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getVersion", () => {
             it("should return a fake version number", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getVersion");
 
                 expect(method).toBeTruthy();
@@ -117,7 +118,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getRIDA", () => {
             it("should return a fake RIDA", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getRIDA");
 
                 expect(method).toBeTruthy();
@@ -128,7 +129,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("isRIDADisabled", () => {
             it("should return true when disabling RIDA", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("isRIDADisabled");
 
                 expect(method).toBeTruthy();
@@ -137,7 +138,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getChannelClientId", () => {
             it("should get fake channel client id", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getChannelClientId");
 
                 expect(method).toBeTruthy();
@@ -148,7 +149,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getUserCountryCode", () => {
             it("should return a user's country code from local environment", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getUserCountryCode");
 
                 process.env.LOCALE = "en_US";
@@ -159,7 +160,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getRandomUUID", () => {
             it("should return a random UUID", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getRandomUUID");
 
                 let uuid = method.call(interpreter);
@@ -169,7 +170,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getTimeZone", () => {
             it("should return current time zone from local environment", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getTimeZone");
 
                 process.env.TZ = "PST";
@@ -180,7 +181,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("hasFeature", () => {
             it("should return false when feature is not available", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("hasFeature");
 
                 expect(method).toBeTruthy();
@@ -191,7 +192,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("hasFeature", () => {
             it("should return true when running under the brs-engine", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("hasFeature");
 
                 expect(method).toBeTruthy();
@@ -202,7 +203,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getCurrentLocale", () => {
             it("should locale settings from local environment", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getCurrentLocale");
 
                 process.env.LOCALE = "en_US";
@@ -213,7 +214,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getCountryCode", () => {
             it("should return country code from local environment", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getCountryCode");
 
                 process.env.LOCALE = "en_US";
@@ -224,7 +225,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getPreferredCaptionLanguage", () => {
             it("should return preferred caption language", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getPreferredCaptionLanguage");
 
                 expect(method).toBeTruthy();
@@ -233,7 +234,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("timeSinceLastKeyPress", () => {
             it("should return time since last key press value", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("timeSinceLastKeyPress");
 
                 expect(method).toBeTruthy();
@@ -242,7 +243,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getDrmInfo", () => {
             it("should return fake drm info", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getDrmInfo");
 
                 let aa = method.call(interpreter);
@@ -256,7 +257,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getDrmInfoEx", () => {
             it("should return fake drm info ex", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getDrmInfoEx");
 
                 let aa = method.call(interpreter);
@@ -270,7 +271,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getCaptionsMode", () => {
             it("should fake captions mode setting to On", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getCaptionsMode");
                 let setCapMethod = deviceInfo.getMethod("setCaptionsMode");
 
@@ -282,7 +283,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("setCaptionsMode", () => {
             it("should set a valid caption mode and return true", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("setCaptionsMode");
 
                 expect(method).toBeTruthy();
@@ -292,17 +293,17 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("setCaptionsMode", () => {
-            it("should set an invalid caption mode and return false", () => {
-                let deviceInfo = new RoDeviceInfo();
+            it("should set an invalid caption mode and return true", () => {
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("setCaptionsMode");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString(""))).toEqual(BrsBoolean.False);
+                expect(method.call(interpreter, new BrsString(""))).toEqual(BrsBoolean.True);
             });
         });
         describe("getCaptionsOption", () => {
             it("should return 'Default' for any Captions Option", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getCaptionsOption");
 
                 expect(method).toBeTruthy();
@@ -313,7 +314,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getCaptionsOption", () => {
             it("should return empty string for any invalid Captions Option", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getCaptionsOption");
 
                 expect(method).toBeTruthy();
@@ -324,7 +325,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getClockFormat", () => {
             it("should return fake clock format", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getClockFormat");
 
                 expect(method).toBeTruthy();
@@ -333,7 +334,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("enableAppFocusEvent", () => {
             it("should notify that event notification has not been enabled", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("enableAppFocusEvent");
 
                 expect(method).toBeTruthy();
@@ -342,7 +343,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("enableScreensaverExitedEvent", () => {
             it("should not enable screensaver exited event", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("enableScreensaverExitedEvent");
 
                 expect(method).toBeTruthy();
@@ -351,7 +352,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("enableLowGeneralMemoryEvent", () => {
             it("should not enable low memory event", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("enableLowGeneralMemoryEvent");
 
                 expect(method).toBeTruthy();
@@ -360,7 +361,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("enableValidClockEvent", () => {
             it("should not enable low memory event", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("enableValidClockEvent");
 
                 expect(method).toBeTruthy();
@@ -369,7 +370,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getGeneralMemoryLevel", () => {
             it("return general memory level", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getGeneralMemoryLevel");
 
                 expect(method).toBeTruthy();
@@ -378,7 +379,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("isStoreDemoMode", () => {
             it("should enable store demo mode to true", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("isStoreDemoMode");
 
                 expect(method).toBeTruthy();
@@ -387,7 +388,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getLinkStatus", () => {
             it("should enable link status to true", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getLinkStatus");
 
                 expect(method).toBeTruthy();
@@ -396,7 +397,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("enableLinkStatusEvent", () => {
             it("should return false as the Link Status Event is not supported", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("enableLinkStatusEvent");
 
                 expect(method).toBeTruthy();
@@ -405,7 +406,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getConnectionType", () => {
             it("should return a fake connection type", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getConnectionType");
 
                 expect(method).toBeTruthy();
@@ -414,7 +415,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getExternalIp", () => {
             it("should return a fake external ip address", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getExternalIp");
 
                 expect(method).toBeTruthy();
@@ -425,7 +426,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getIPAddrs", () => {
             it("should return a model number", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getIPAddrs");
 
                 let aa = method.call(interpreter);
@@ -439,7 +440,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getConnectionInfo", () => {
             it("should return connection info map", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getConnectionInfo");
 
                 let aa = method.call(interpreter);
@@ -453,7 +454,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getDisplayType", () => {
             it("should return fake display type", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getDisplayType");
 
                 expect(method).toBeTruthy();
@@ -462,7 +463,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getDisplayMode", () => {
             it("should return fake display mode", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getDisplayMode");
 
                 expect(method).toBeTruthy();
@@ -471,7 +472,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getDisplayAspectRatio", () => {
             it("should return a model number", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getDisplayAspectRatio");
 
                 expect(method).toBeTruthy();
@@ -480,7 +481,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getDisplaySize", () => {
             it("should return fake display size", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getDisplaySize");
                 let aa = method.call(interpreter);
                 let items = aa.getMethod("items");
@@ -493,7 +494,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getVideoMode", () => {
             it("should return a fake video mode spec.", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getVideoMode");
 
                 expect(method).toBeTruthy();
@@ -502,7 +503,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getDisplayProperties", () => {
             it("should return fake display width and height", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getDisplayProperties");
 
                 let aa = method.call(interpreter);
@@ -511,12 +512,12 @@ describe("RoDeviceInfo", () => {
 
                 expect(method).toBeTruthy();
                 expect(items).toBeTruthy();
-                expect(result.elements.length).toEqual(7);
+                expect(result.elements.length).toEqual(11);
             });
         });
         describe("getSupportedGraphicsResolutions", () => {
             it("should return fake supported gfx resolution info.", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getSupportedGraphicsResolutions");
                 let array = method.call(interpreter);
 
@@ -526,7 +527,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("canDecodeVideo", () => {
             it("return fake decoded video info", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("canDecodeVideo");
                 let config = new RoAssociativeArray([
                     { name: new BrsString("codec"), value: new BrsString("") },
@@ -538,7 +539,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getUIResolution", () => {
             it("should return fake ui resolution info.", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getUIResolution");
                 let aa = method.call(interpreter);
                 let items = aa.getMethod("items");
@@ -552,7 +553,7 @@ describe("RoDeviceInfo", () => {
 
         describe("getGraphicsPlatform", () => {
             it("should return fake gfx platform name", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getGraphicsPlatform");
 
                 expect(method).toBeTruthy();
@@ -561,7 +562,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getModel", () => {
             it("should return a model number", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getModel");
 
                 expect(method).toBeTruthy();
@@ -570,7 +571,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("enableCodecCapChangedEvent", () => {
             it("should not enable codec cap changed event", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("enableCodecCapChangedEvent");
 
                 expect(method).toBeTruthy();
@@ -579,7 +580,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getAudioOutputChannel", () => {
             it("should return fake audio output channel", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getAudioOutputChannel");
 
                 expect(method).toBeTruthy();
@@ -588,7 +589,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("getSoundEffectsVolume", () => {
             it("should return a default sound effect volume", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getSoundEffectsVolume");
 
                 expect(method).toBeTruthy();
@@ -597,7 +598,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("isAudioGuideEnabled", () => {
             it("should check that audio guide is disabled", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("isAudioGuideEnabled");
 
                 expect(method).toBeTruthy();
@@ -606,7 +607,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("enableAudioGuideChangedEvent", () => {
             it("should return false as enabling audio guide change event is not supported", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("enableAudioGuideChangedEvent");
 
                 expect(method).toBeTruthy();
@@ -615,7 +616,7 @@ describe("RoDeviceInfo", () => {
         });
         describe("isAutoPlayEnabled", () => {
             it("should return false as auto play is not supported", () => {
-                let deviceInfo = new RoDeviceInfo();
+                let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("isAutoPlayEnabled");
 
                 expect(method).toBeTruthy();

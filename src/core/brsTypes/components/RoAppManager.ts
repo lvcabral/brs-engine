@@ -298,7 +298,8 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("disabled", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, disabled: BrsBoolean) => {
+        impl: (interpreter: Interpreter, disabled: BrsBoolean) => {
+            interpreter.displayEnabled = !disabled.toBoolean();
             postMessage({ displayEnabled: !disabled.toBoolean() });
             return Uninitialized.Instance;
         },
