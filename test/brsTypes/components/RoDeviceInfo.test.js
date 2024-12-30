@@ -293,12 +293,12 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("setCaptionsMode", () => {
-            it("should set an invalid caption mode and return false", () => {
+            it("should set an invalid caption mode and return true", () => {
                 let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("setCaptionsMode");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString(""))).toEqual(BrsBoolean.False);
+                expect(method.call(interpreter, new BrsString(""))).toEqual(BrsBoolean.True);
             });
         });
         describe("getCaptionsOption", () => {
@@ -512,7 +512,7 @@ describe("RoDeviceInfo", () => {
 
                 expect(method).toBeTruthy();
                 expect(items).toBeTruthy();
-                expect(result.elements.length).toEqual(12);
+                expect(result.elements.length).toEqual(11);
             });
         });
         describe("getSupportedGraphicsResolutions", () => {

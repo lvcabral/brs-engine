@@ -38,7 +38,7 @@ export class RoDeviceInfoEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.isCaptionModeMsg);
+            return BrsBoolean.from(this.isStatusMsg);
         },
     });
 
@@ -49,7 +49,7 @@ export class RoDeviceInfoEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.isStatusMsg);
+            return BrsBoolean.from(this.isCaptionModeMsg);
         },
     });
 

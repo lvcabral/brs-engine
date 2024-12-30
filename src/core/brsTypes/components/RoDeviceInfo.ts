@@ -224,7 +224,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let result = { major: "0", minor: "0", revision: "0", build: "0" };
+            const result = { major: "0", minor: "0", revision: "0", build: "0" };
             if (this.firmware?.length > 0) {
                 const os = getRokuOSVersion(this.firmware);
                 result.major = os.get("major") ?? "0";
@@ -437,7 +437,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             const props: FlexObject = {
                 ALLM: false, // Auto Low Latency Mode
                 DolbyVision: false,
-                EDID: new RoByteArray(getEDID()), // Extended Display Identification Data
                 Hdr10: false,
                 Hdr10Plus: false,
                 HdrSeamless: false,
@@ -1067,66 +1066,4 @@ function generateUUID(): string {
         return uuidv4();
     }
     return crypto.randomUUID();
-}
-
-/**
- * Generates a mocked Extended Display Identification Data.
- * @returns A Uint8Array representing the mocked EDID.
- */
-export function getEDID(): Uint8Array {
-    const data = new Uint8Array(128);
-    // Header
-    data.set([0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00], 0);
-    // Manufacturer ID for Roku (RKU)
-    data.set([0x4b, 0x15], 8);
-    // Product Code (2 bytes)
-    data.set([0x01, 0x00], 10);
-    // Serial Number (4 bytes)
-    data.set([0x01, 0x02, 0x03, 0x04], 12);
-    // Week and Year of Manufacture
-    data.set([0x1a, 0x20], 16); // Week 26, Year 2020
-    // EDID Version and Revision
-    data.set([0x01, 0x03], 18); // Version 1.3
-    // Basic Display Parameters
-    data.set([0x80, 0x10, 0x09, 0x78], 20); // Digital display, 16:9 aspect ratio, 120 dpi
-    // Chromaticity Coordinates
-    data.set([0xee, 0x91, 0xa3, 0x54, 0x4c, 0x99, 0x26, 0x0f, 0x50, 0x54], 24);
-    // Established Timings
-    data.set([0x21, 0x08, 0x00], 35);
-    // Standard Timings
-    data.set([0x81, 0x80, 0x81, 0x40, 0x81, 0x00, 0x81, 0xc0], 38);
-    // Detailed Timing Descriptor 1
-    data.set(
-        [0x01, 0x1d, 0x80, 0x18, 0x71, 0x1c, 0x16, 0x20, 0x58, 0x2c, 0x25, 0x00, 0x00, 0x9e],
-        54
-    );
-    // Detailed Timing Descriptor 2
-    data.set(
-        [
-            0x00, 0x00, 0x00, 0xfd, 0x00, 0x38, 0x4b, 0x1e, 0x51, 0x11, 0x00, 0x0a, 0x20, 0x20,
-            0x20, 0x20, 0x20,
-        ],
-        72
-    );
-    // Detailed Timing Descriptor 3
-    data.set(
-        [
-            0x00, 0x00, 0x00, 0xfc, 0x00, 0x4d, 0x6f, 0x63, 0x6b, 0x20, 0x4d, 0x6f, 0x6e, 0x69,
-            0x74, 0x6f, 0x72,
-        ],
-        89
-    );
-    // Detailed Timing Descriptor 4
-    data.set(
-        [
-            0x00, 0x00, 0x00, 0xff, 0x00, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
-            0x39, 0x41, 0x42,
-        ],
-        106
-    );
-    // Extension Flag
-    data.set([0x00], 126);
-    // Checksum (calculated to make the sum of all bytes equal to 0 modulo 256)
-    data[127] = (256 - (data.reduce((sum, byte) => sum + byte, 0) % 256)) % 256;
-    return data;
 }

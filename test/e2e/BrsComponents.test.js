@@ -483,7 +483,7 @@ describe("end to end brightscript functions", () => {
             "16x9",
             " 2",
             "720p",
-            " 12",
+            " 11",
             " 3",
             "true",
             "invalid",
