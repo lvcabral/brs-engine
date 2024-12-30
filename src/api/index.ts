@@ -689,3 +689,16 @@ function apiException(level: string, message: string) {
         console.warn(message);
     }
 }
+
+// CEC Status Update
+window.onfocus = function () {
+    if (currentApp.running) {
+        Atomics.store(sharedArray, DataType.CEC, 1);
+    }
+};
+
+window.onblur = function () {
+    if (currentApp.running) {
+        Atomics.store(sharedArray, DataType.CEC, 0);
+    }
+};

@@ -57,10 +57,15 @@ appIcons.forEach((icon, index) => {
     icon.onclick = () => loadZip(appList[index].id);
 });
 
+// App Configuration
+// Pause the engine when the browser window loses focus
+// If `false` use `roCECStatus` in BrightScript to control app behavior
+const pauseOnBlur = false;
+let debugMode = "continue";
+
 // App status objects
 let currentApp = { id: "", running: false };
 let currentZip = null;
-let debugMode = "continue";
 
 // Start the engine
 appInfo.innerHTML = "<br/>";
@@ -342,17 +347,19 @@ function toggleDiv(divId) {
     }
 }
 
-window.onfocus = function () {
-    if (currentApp.running && debugMode === "pause") {
-        brs.debug("cont");
-    }
-};
+if (pauseOnBlur) {
+    window.onfocus = function () {
+        if (currentApp.running && debugMode === "pause") {
+            brs.debug("cont");
+        }
+    };
 
-window.onblur = function () {
-    if (currentApp.running && debugMode === "continue") {
-        brs.debug("pause");
-    }
-};
+    window.onblur = function () {
+        if (currentApp.running && debugMode === "continue") {
+            brs.debug("pause");
+        }
+    };
+}
 
 // Browser Event Handler
 function openBrowser(url, width, height) {

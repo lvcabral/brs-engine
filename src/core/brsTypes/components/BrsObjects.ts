@@ -52,6 +52,7 @@ import { RoInvalid } from "./RoInvalid";
 import { RoFunction } from "./RoFunction";
 import { Callable } from "../Callable";
 import { RoNDK } from "./RoNDK";
+import { RoCECStatus } from "./RoCECStatus";
 
 // Class to define a case-insensitive map of BrightScript objects.
 class BrsObjectsMap {
@@ -194,4 +195,5 @@ export const BrsObjects = new BrsObjectsMap([
     ["roURLTransfer", (interpreter: Interpreter) => new RoURLTransfer(interpreter)],
     ["roInvalid", (_: Interpreter) => new RoInvalid(), -1],
     ["roNDK", (_: Interpreter) => new RoNDK()],
+    ["roCECStatus", (interpreter: Interpreter) => new RoCECStatus(interpreter)],
 ]);
