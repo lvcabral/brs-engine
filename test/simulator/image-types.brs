@@ -6,6 +6,16 @@ Sub Main()
 	syslog.enableType("http.connect")
 	syslog.enableType("http.error")
 	syslog.enableType("http.complete")
+    di = CreateObject("roDeviceInfo")
+	di.enableAudioGuideChangedEvent(true)
+	di.enableScreenSaverExitedEvent(true)
+	di.enableValidClockEvent(true)
+	di.enableCodecCapChangedEvent(true)
+	di.enableLinkStatusEvent(true)
+	di.enableInternetStatusEvent(true)
+	di.enableLowGeneralMemoryEvent(true)
+	di.enableAppFocusEvent(true)
+	di.SetMessagePort(port)
 	m.screens = []
     m.screens.push(CreateObject("roScreen", true, 854, 480))
 	m.screen = m.screens[0]
@@ -48,9 +58,15 @@ Sub Main()
                     fileIdx = 0
                 end if
 				showImage(files[fileIdx])
+            else if key = 10
+				print "SetCaptionsMode successful: "; di.setCaptionsMode("On")
             else
                 print key
             end if
+		else if type(msg) = "roDeviceInfoEvent"
+			print "isCaptionModeChanged = "; msg.isCaptionModeChanged()
+			print "isStatusMessage = "; msg.isStatusMessage()
+			print msg.getInfo()
         else
             print msg
         end if

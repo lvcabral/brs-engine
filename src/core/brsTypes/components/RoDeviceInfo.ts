@@ -3,7 +3,8 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray, RoByteArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoAssociativeArray, AAMember } from "./RoAssociativeArray";
+import { RoDeviceInfoEvent } from "./RoDeviceInfoEvent";
+import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";
 import { v4 as uuidv4 } from "uuid";
@@ -14,7 +15,7 @@ import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly captionsModes: string[] = ["Off", "On", "Instant replay"];
+    readonly captionsModes: string[] = ["Off", "On", "Instant replay", "When mute"];
     readonly captionsOptions: string[] = [
         "mode",
         "text/font",
@@ -38,7 +39,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private readonly displayModeName: string;
     private readonly displayResolution: { h: number; w: number };
     private readonly displayAspectRatio: string;
-    private captionsMode: BrsString = new BrsString("Off");
+    private captionsMode: string;
     private port?: RoMessagePort;
 
     constructor(interpreter: Interpreter) {
@@ -61,6 +62,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             this.displayResolution = { h: 1080, w: 1920 };
             this.displayModeName = "FHD";
         }
+        this.captionsMode = interpreter.deviceInfo.get("captionsMode") ?? "Off";
         this.registerMethods({
             ifDeviceInfo: [
                 this.getModel,
@@ -210,7 +212,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new BrsString(this.firmware);
         },
     });
@@ -577,7 +579,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return this.captionsMode;
+            return new BrsString(this.captionsMode);
         },
     });
 
@@ -589,10 +591,16 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, mode: BrsString) => {
             if (this.captionsModes.includes(mode.value)) {
-                this.captionsMode = mode;
-                return BrsBoolean.True;
+                if (mode.value === "When mute" && this.modelType !== "TV") {
+                    // Only scenario when the return is false
+                    return BrsBoolean.False;
+                }
+                this.captionsMode = mode.value;
+                this.port?.pushMessage(new RoDeviceInfoEvent({ Mode: mode.value, Mute: false }));
+                postMessage({ captionsMode: this.captionsMode });
             }
-            return BrsBoolean.False;
+            // Roku always returns true, even when get an invalid mode
+            return BrsBoolean.True;
         },
     });
 
@@ -608,7 +616,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 return new BrsString("");
             }
             if (opt === "mode") {
-                return this.captionsMode;
+                return new BrsString(this.captionsMode);
             } else if (opt === "muted") {
                 return new BrsString("Unmuted");
             }
@@ -1048,6 +1056,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             port.addReference();
             this.port?.removeReference();
             this.port = port;
+            this.port.pushMessage(new RoDeviceInfoEvent({ Mode: this.captionsMode, Mute: false }));
             return BrsInvalid.Instance;
         },
     });
