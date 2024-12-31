@@ -84,7 +84,9 @@ declare global {
  */
 const arrayLength = dataBufferIndex + dataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
-shared.set("buffer", new Int32Array(sharedBuffer));
+const sharedArray = new Int32Array(sharedBuffer);
+sharedArray.fill(-1);
+shared.set("buffer", sharedArray);
 
 globalThis.postMessage = (message: any) => {
     if (typeof message === "string") {

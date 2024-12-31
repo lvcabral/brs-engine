@@ -48,7 +48,7 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
     // ifCECStatus ---------------------------------------------------------------------------------
 
     /** Indicates whether the device is the active source. */
-    private readonly isActiveSource = new Callable("eventResponse", {
+    private readonly isActiveSource = new Callable("isActiveSource", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
