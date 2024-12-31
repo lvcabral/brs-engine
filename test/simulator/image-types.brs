@@ -16,6 +16,12 @@ sub Main()
     di.enableLowGeneralMemoryEvent(true)
     di.enableAppFocusEvent(true)
     di.SetMessagePort(port)
+	cec = CreateObject("roCECStatus")
+	cec.SetMessagePort(port)
+    store = CreateObject("roChannelStore")
+    store.SetMessagePort(port)
+    store.GetCatalog()
+    store.GetStoreCatalog()
     m.screens = []
     m.screens.push(CreateObject("roScreen", true, 854, 480))
     m.screen = m.screens[0]
@@ -63,10 +69,21 @@ sub Main()
             else
                 print key
             end if
+            print FindMemberFunction(msg, "getChar")
+            print FindMemberFunction(msg, "getInt")
         else if type(msg) = "roDeviceInfoEvent"
             print "isCaptionModeChanged = "; msg.isCaptionModeChanged()
             print "isStatusMessage = "; msg.isStatusMessage()
             print msg.getInfo()
+            print FindMemberFunction(msg, "getInfo")
+		else if type(msg) = "roCECStatusEvent"
+			print msg.getMessage()
+			print msg.getIndex()
+			print msg.getInfo()
+            print FindMemberFunction(msg, "getInfo")
+        else if type(msg) = "roChannelStoreEvent"
+            print msg.getResponse()
+            print FindMemberFunction(msg, "getResponse")
         else
             print msg
         end if

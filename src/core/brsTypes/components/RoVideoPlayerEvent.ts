@@ -31,7 +31,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
                 break;
         }
         this.registerMethods({
-            ifVideoPlayerEvent: [
+            ifroVideoPlayerEvent: [
                 this.getIndex,
                 this.getMessage,
                 this.getInfo,

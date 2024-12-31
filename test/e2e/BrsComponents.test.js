@@ -557,4 +557,23 @@ describe("end to end brightscript functions", () => {
             "GamePad? false",
         ]);
     });
+    test("components/roEvents.brs", async () => {
+        await execute([resourceFile("components", "roEvents.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "roCECStatus.isActiveSource() = true",
+            "roDeviceInfoEvent",
+            "roDeviceInfoEvent.isCaptionModeChanged = true",
+            "roDeviceInfoEvent.isStatusMessage = false",
+            `<Component: roAssociativeArray> =\n` +
+                "{\n" +
+                `    Mode: "Off"\n` +
+                `    Mute: false\n` +
+                `}`,
+            "<Interface: ifroDeviceInfoEvent>",
+            "roChannelStoreEvent",
+            `<Component: roArray> =\n` + `[\n` + `]`,
+            "<Interface: ifChannelStoreEvent>",
+            "Invalid",
+        ]);
+    });
 });

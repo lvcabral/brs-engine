@@ -13,7 +13,7 @@ export class RoSystemLogEvent extends BrsComponent implements BrsValue {
         super("roSystemLogEvent");
         this.data = data;
         this.logType = logType;
-        this.registerMethods({ ifSystemLogEvent: [this.getInfo] });
+        this.registerMethods({ ifroSystemLogEvent: [this.getInfo] });
     }
 
     toString(parent?: BrsType): string {

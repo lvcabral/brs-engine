@@ -19,7 +19,7 @@ export class RoDeviceInfoEvent extends BrsComponent implements BrsValue {
             this.isStatusMsg = true;
         }
         this.registerMethods({
-            ifDeviceInfoEvent: [this.getInfo, this.isStatusMessage, this.isCaptionModeChanged],
+            ifroDeviceInfoEvent: [this.getInfo, this.isStatusMessage, this.isCaptionModeChanged],
         });
     }
 

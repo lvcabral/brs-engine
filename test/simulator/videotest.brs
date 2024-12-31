@@ -41,6 +41,7 @@ sub main()
             else if type(msg) = "roVideoPlayerEvent" and msg.isPlaybackPosition()
                 position = msg.GetIndex()
                 print position
+                print FindMemberFunction(msg, "getIndex")
             else if type(msg) = "roSystemLogEvent"
                 logEvent = msg.getInfo()
                 if logEvent.logType = "bandwidth.minute"
@@ -48,6 +49,7 @@ sub main()
                 else
                     print "System Log event: "; logEvent
                 end if
+                print FindMemberFunction(msg, "getInfo")
             else if type(msg) = "roUniversalControlEvent"
                 index = msg.GetInt()
                 print "Remote button pressed: " + index.tostr()
@@ -86,6 +88,7 @@ sub main()
                     paused = false
                     print "video resumed"
                 end if
+                print FindMemberFunction(msg, "isPaused")
             else
                 print "unhandled event"; msg
             end if
