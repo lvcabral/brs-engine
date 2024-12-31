@@ -350,6 +350,7 @@ export enum DataType {
     MUHS, // Memory Used Heap Size
     MHSL, // Memory Heap Size Limit
     MBWD, // Measured Bandwidth
+    CEC, // Consumer Electronics Control
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code

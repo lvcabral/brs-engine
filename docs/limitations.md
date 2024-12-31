@@ -6,7 +6,6 @@ There are several features from the **BrightScript** language and components tha
 
 * RSG (Roku SceneGraph) SDK components are not currently supported.
 * The following components are also not implemented yet:
-  * `roCECStatus`
   * `roAudioGuide`
   * `roDataGramSocket`
   * `roDSA`
@@ -16,7 +15,6 @@ There are several features from the **BrightScript** language and components tha
   * `roRSA`
   * `roSocketAddress`
   * `roStreamSocket`
-  * `roSystemLog`
   * `roTextToSpeech`
   * `roTextureManager`
   * `roTextureRequest`
@@ -51,6 +49,7 @@ There are several features from the **BrightScript** language and components tha
 
 * RAF (Roku Ads Framework) object `Roku_Ads` is mocked with the most common methods available.
 * Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked (a fake server feature will be implemented in the future).
+* Several components have their methods and events mocked, they return constant values to prevent crash. Those are mostly related to device behaviors that are not possible to replicate in a browser environment or simply not applicable to the engine.
 
 ## Out of Scope
 
