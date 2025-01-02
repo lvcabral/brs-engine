@@ -43,6 +43,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 this.getPartialUserData,
                 this.storeChannelCredData,
                 this.getChannelCred,
+                this.getDeviceAttestation,
                 this.requestPartnerOrder,
                 this.confirmPartnerOrder,
             ],
@@ -374,6 +375,25 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 status: status,
             };
             return toAssociativeArray(channelCred);
+        },
+    });
+
+    /** Generates a signed JSON web token (JWT) in the Roku cloud and returns it to the app. */
+    private readonly getDeviceAttestation = new Callable("getDeviceAttestation", {
+        signature: {
+            args: [new StdlibArgument("nonce", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, nonce: BrsString) => {
+            // Sample JWT token from Roku documentation
+            const sampleJwt = `eyJ4NXUiOiJodHRwczovL2V4YW1wbGUucm9rdS5jb20vc2FtcGxlY2VydCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.\
+eyJuYmYiOjE2NTYzNzQyNzQsIngtcm9rdS1hdHRlc3RhdGlvbi1kYXRhIjp7Im5vbmNlIjoiNUUwNjkyRTBBMzg5RjRGNiIsImNoYW5uZWxJZCI6Im\
+RldiIsImRldmVsb3BlcklkIjoiY2FhNzNmYmI1ZTc1YTQ2YTRiNjExNGRlNTFhNWFkYTdkNjE2ZTJlZCIsInRpbWVzdGFtcE1zIjoxNjU2Mzc3ODcz\
+OTkwfSwiaXNzIjoidXJuOnJva3U6Y2xvdWQtc2VydmljZXM6ZGV2aWNlLWF0dGVzdGF0aW9uIiwiZXhwIjoxNjU2NDY0Mjc0fQ.nywDvSUys27oeaQ\
+Z3yXwNBfOnXbO-TUDuekOPZYjSssfZhNhWwRXvPLbJKHcNMR5Z0vFOQLVDFeqEVGauIMxMEke5UFLuCRxhr3ayBJJPt_BPfrEFbAvYjFEGdKkxJqYU\
+huFE38R8lU2k7dhO0iFxDw1Qq7W4w8_7CjmDy4YFf7IfyhV7Vf2kGiOx5C94Niw5N2td3s21F3z77Rq_bofQ51DOKIwo_cDVuvPQnDyxG-CNEydZKC\
+ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKylgKwCvbvHRDlgogf7kq`;
+            return new BrsString(sampleJwt);
         },
     });
 
