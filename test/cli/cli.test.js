@@ -20,7 +20,7 @@ describe("cli", () => {
         expect(result.length).toEqual(1);
     }, 10000);
 
-    test("Channel Store Test", async () => {
+    it("Channel Store Test", async () => {
         let command = [
             "node",
             path.join(process.cwd(), "bin", "brs.cli.js"),
