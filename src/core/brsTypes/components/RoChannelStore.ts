@@ -12,7 +12,7 @@ import { parseString, processors } from "xml2js";
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly id: number;
-    private order: BrsType[];
+    private order: RoAssociativeArray[];
     private orderInfo: RoAssociativeArray | BrsInvalid;
     private credData: string;
     private fakeServerEnabled: boolean;
@@ -64,19 +64,19 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         this.port?.removeReference();
     }
 
-    private sendFakeProductEvent(interpreter: Interpreter, xml: string) {
+    private getFakeProductData(interpreter: Interpreter, xml: string) {
         const options = {
             explicitArray: false,
             ignoreAttrs: true,
             valueProcessors: [processors.parseNumbers],
         };
-        const data: BrsType[] = [];
+        const data: RoAssociativeArray[] = [];
         if (interpreter.fileSystem.existsSync(`pkg:/csfake/${xml}.xml`)) {
             const xmlData = interpreter.fileSystem.readFileSync(`pkg:/csfake/${xml}.xml`);
             parseString(xmlData, options, function (err: any, parsed: any) {
                 let errMessage = "";
                 if (err) {
-                    errMessage = `error,Error parsing XML: ${err.message}`;
+                    errMessage = `error,Error parsing Product XML: ${err.message}`;
                 } else if (parsed?.result?.products?.product) {
                     try {
                         parsed.result.products.product.forEach((item: any) => {
@@ -105,17 +105,79 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                             data.push(toAssociativeArray(prod));
                         });
                     } catch (e: any) {
-                        err.message = `error,Error parsing XML: ${e.message}`;
+                        err.message = `error,Error parsing Product XML: ${e.message}`;
                     }
                 } else {
-                    errMessage = "warning,Warning: Empty or invalid result when parsing XML.";
+                    errMessage =
+                        "warning,Warning: Empty or invalid result when parsing Product XML.";
                 }
                 if (errMessage !== "" && interpreter.isDevMode) {
                     interpreter.stderr.write(errMessage);
                 }
             });
         }
-        this.port?.pushMessage(new RoChannelStoreEvent(this.id, data));
+        return data;
+    }
+
+    private getFakeOrderData(interpreter: Interpreter, xml: string) {
+        const options = {
+            explicitArray: false,
+            ignoreAttrs: true,
+            valueProcessors: [processors.parseNumbers],
+        };
+        const fs = interpreter.fileSystem;
+        const data: any = { id: xml };
+        if (fs.existsSync(`pkg:/csfake/${xml}.xml`)) {
+            const xmlData = fs.readFileSync(`pkg:/csfake/${xml}.xml`);
+            parseString(xmlData, options, function (err: any, parsed: any) {
+                let errMessage = "";
+                if (err) {
+                    errMessage = `error,Error parsing Order XML: ${err.message}`;
+                } else if (parsed?.result?.order) {
+                    try {
+                        const order = JSON.parse(JSON.stringify(parsed.result.order));
+                        data.id = order.id;
+                        data.order = new Array<RoAssociativeArray>();
+                        if (order.items.orderItem instanceof Array) {
+                            order.items.orderItem.forEach((item: any) => {
+                                data.order.push(toAssociativeArray(item));
+                            });
+                        } else {
+                            data.order.push(toAssociativeArray(order.items.orderItem));
+                        }
+                    } catch (e: any) {
+                        errMessage = `error,Error parsing Order XML: ${e.message}`;
+                    }
+                } else {
+                    errMessage = "warning,Warning: Empty or invalid result when parsing Order XML.";
+                }
+                if (errMessage !== "" && interpreter.isDevMode) {
+                    interpreter.stderr.write(errMessage);
+                }
+            });
+        }
+        return data;
+    }
+
+    private isValidProductOrder(catalog: RoAssociativeArray[], item: RoAssociativeArray) {
+        const qty = item.get(new BrsString("qty"));
+        if (qty instanceof Int32 && qty.getValue() <= 0) {
+            return false;
+        }
+        return (
+            catalog.find((prod) => {
+                const prodCode = prod.get(new BrsString("code"));
+                const orderCode = item.get(new BrsString("code"));
+                if (
+                    prodCode instanceof BrsString &&
+                    orderCode instanceof BrsString &&
+                    prodCode.value === orderCode.value
+                ) {
+                    return true;
+                }
+                return false;
+            }) !== undefined
+        );
     }
 
     // ifChannelStore ------------------------------------------------------------------------------------
@@ -139,11 +201,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.port) {
+                let catalog: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    this.sendFakeProductEvent(interpreter, "GetCatalog");
-                } else {
-                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                    catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                    status = { code: 1, message: "Items Received" };
                 }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
             }
             return BrsInvalid.Instance;
         },
@@ -157,11 +221,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.port) {
+                let catalog: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    this.sendFakeProductEvent(interpreter, "GetCatalog");
-                } else {
-                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                    catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                    status = { code: 1, message: "Items Received" };
                 }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
             }
             return BrsInvalid.Instance;
         },
@@ -175,11 +241,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.port) {
+                let purchases: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    this.sendFakeProductEvent(interpreter, "GetPurchases");
-                } else {
-                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                    purchases = this.getFakeProductData(interpreter, "GetPurchases");
+                    status = { code: 1, message: "Items Received" };
                 }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
             }
             return BrsInvalid.Instance;
         },
@@ -193,11 +261,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             if (this.port) {
+                let purchases: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    this.sendFakeProductEvent(interpreter, "GetPurchases");
-                } else {
-                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                    purchases = this.getFakeProductData(interpreter, "GetPurchases");
+                    status = { code: 1, message: "Items Received" };
                 }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
             }
             return BrsInvalid.Instance;
         },
@@ -214,7 +284,9 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, order: BrsComponent, orderInfo: RoAssociativeArray | BrsInvalid) => {
             if (order instanceof RoList || order instanceof RoArray) {
-                this.order = order.getElements();
+                this.order = order
+                    .getElements()
+                    .filter((item) => item instanceof RoAssociativeArray);
                 if (this.order.length > 0 && orderInfo instanceof RoAssociativeArray) {
                     this.orderInfo = orderInfo;
                 } else {
@@ -252,18 +324,12 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             const qtyValue = qty.getValue();
             let found = false;
             for (let item of this.order) {
-                if (item instanceof RoAssociativeArray) {
-                    const code = item.get(new BrsString("code"));
-                    const qty = item.get(new BrsString("qty"));
-                    if (
-                        code instanceof BrsString &&
-                        code.value === codeValue &&
-                        qty instanceof Int32
-                    ) {
-                        item.set(new BrsString("qty"), new Int32(qty.getValue() + qtyValue));
-                        found = true;
-                        break;
-                    }
+                const code = item.get(new BrsString("code"));
+                const qty = item.get(new BrsString("qty"));
+                if (code instanceof BrsString && code.value === codeValue && qty instanceof Int32) {
+                    item.set(new BrsString("qty"), new Int32(qty.getValue() + qtyValue));
+                    found = true;
+                    break;
                 }
             }
             if (!found) {
@@ -290,9 +356,33 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
-            // TODO: when there is a Catalog list this should return `true`
-            // when the order list contain valid product, and added to Purchased list.
+        impl: (interpreter: Interpreter) => {
+            if (this.port) {
+                const status = { code: -3, message: "Invalid Order" };
+                let order: RoAssociativeArray[] = [];
+                if (this.fakeServerEnabled && this.order.length > 0) {
+                    status.code = 1;
+                    status.message = "Order Received";
+                    const catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                    for (let item of this.order) {
+                        if (!this.isValidProductOrder(catalog, item)) {
+                            status.code = -3;
+                            break;
+                        }
+                    }
+                    if (status.code === 1) {
+                        const orderData = this.getFakeOrderData(interpreter, "PlaceOrder");
+                        const checkId = this.getFakeOrderData(interpreter, "CheckOrder").id;
+                        if (orderData.id !== checkId) {
+                            status.code = -3;
+                            status.message = "Order Mismatch";
+                        }
+                        order = orderData.order;
+                    }
+                }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
+                return BrsBoolean.from(status.code === 1);
+            }
             return BrsBoolean.False;
         },
     });
