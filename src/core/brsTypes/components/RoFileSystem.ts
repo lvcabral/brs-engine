@@ -76,6 +76,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 const volumes = fsys.volumesSync().map((s) => new BrsString(s));
                 return new RoList(volumes);
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.getVolumeList: ${err.message}`);
+                }
                 return new RoList([]);
             }
         },
@@ -110,6 +113,11 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                     return new RoList(subPaths);
                 }
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(
+                        `warning,roFileSystem.getDirectoryListing: ${err.message}`
+                    );
+                }
                 return new RoList([]);
             }
             return new RoList([]);
@@ -131,6 +139,11 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 fsys.mkdirSync(pathArg.value);
                 return BrsBoolean.True;
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(
+                        `warning,roFileSystem.createDirectory: ${err.message}`
+                    );
+                }
                 return BrsBoolean.False;
             }
         },
@@ -154,6 +167,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
                 return BrsBoolean.True;
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.delete: ${err.message}`);
+                }
                 return BrsBoolean.False;
             }
         },
@@ -178,6 +194,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 fsys.writeFileSync(toPath.value, content);
                 return BrsBoolean.True;
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.copyFile: ${err.message}`);
+                }
                 return BrsBoolean.False;
             }
         },
@@ -206,6 +225,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 fsys.renameSync(fromPath.value, toPath.value);
                 return BrsBoolean.True;
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.rename: ${err.message}`);
+                }
                 return BrsBoolean.False;
             }
         },
@@ -222,6 +244,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 const fsys = interpreter.fileSystem;
                 return BrsBoolean.from(fsys.existsSync(pathArg.value));
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.exists: ${err.message}`);
+                }
                 return BrsBoolean.False;
             }
         },
@@ -252,6 +277,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 });
                 return new RoList(matchedFiles);
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.find: ${err.message}`);
+                }
                 return new RoList([]);
             }
         },
@@ -275,6 +303,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
                 return new RoList(this.findOnTree(fsys, jsRegex, pathArg.value));
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.findRecurse: ${err.message}`);
+                }
                 return new RoList([]);
             }
         },
@@ -306,6 +337,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
 
                 return new RoList(matchedFiles);
             } catch (err: any) {
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roFileSystem.match: ${err.message}`);
+                }
                 return new RoList([]);
             }
         },
@@ -337,9 +371,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 result.permissions = perm;
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
-                        `warning,roFileSystem.stat: Error parsing status: ${err.message}`
-                    );
+                    interpreter.stderr.write(`warning,roFileSystem.stat: ${err.message}`);
                 }
             }
             return toAssociativeArray(result);
