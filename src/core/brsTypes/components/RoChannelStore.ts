@@ -7,19 +7,24 @@ import { Int32 } from "../Int32";
 import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
+import { parseString, processors } from "xml2js";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly id: number;
     private order: BrsType[];
+    private orderInfo: RoAssociativeArray | BrsInvalid;
     private credData: string;
+    private fakeServerEnabled: boolean;
     private port?: RoMessagePort;
 
     constructor() {
         super("roChannelStore");
         this.id = Math.floor(Math.random() * 100) + 1;
         this.order = [];
+        this.orderInfo = BrsInvalid.Instance;
         this.credData = "";
+        this.fakeServerEnabled = false;
         this.registerMethods({
             ifChannelStore: [
                 this.getIdentity,
@@ -58,6 +63,60 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         this.port?.removeReference();
     }
 
+    private sendFakeProductEvent(interpreter: Interpreter, xml: string) {
+        const options = {
+            explicitArray: false,
+            ignoreAttrs: true,
+            valueProcessors: [processors.parseNumbers],
+        };
+        const data: BrsType[] = [];
+        if (interpreter.fileSystem.existsSync(`pkg:/csfake/${xml}.xml`)) {
+            const xmlData = interpreter.fileSystem.readFileSync(`pkg:/csfake/${xml}.xml`);
+            parseString(xmlData, options, function (err: any, parsed: any) {
+                let errMessage = "";
+                if (err) {
+                    errMessage = `error,Error parsing XML: ${err.message}`;
+                } else if (parsed?.result?.products?.product) {
+                    try {
+                        parsed.result.products.product.forEach((item: any) => {
+                            const obj = JSON.parse(JSON.stringify(item));
+                            const prod: any = {};
+                            prod.code = obj.code;
+                            prod.cost = obj.cost;
+                            prod.freeTrialQuantity = obj.freeTrialQuantity;
+                            prod.freeTrialType = obj.freeTrialType;
+                            prod.name = obj.name;
+                            prod.productType = obj.productType;
+                            prod.purchaseDate = obj.purchaseDate;
+                            prod.qty = obj.qty;
+                            prod.inDunning = obj.inDunning ?? "false";
+                            prod.isUpgrade = obj.isUpgrade ?? "false";
+                            prod.trialCost = obj.trialCost ?? "$0.00";
+                            prod.trialQuantity = obj.trialQuantity ?? 0;
+
+                            if (obj.description) prod.description = obj.description;
+                            if (obj.id) prod.id = obj.id;
+                            if (obj.expirationDate) prod.expirationDate = obj.expirationDate;
+                            if (obj.purchaseId) prod.purchaseId = obj.purchaseId;
+                            if (obj.renewalDate) prod.renewalDate = obj.renewalDate;
+                            if (obj.trialType) prod.trialType = obj.trialType;
+                            if (obj.status) prod.status = obj.status;
+                            data.push(toAssociativeArray(prod));
+                        });
+                    } catch (e: any) {
+                        err.message = `error,Error parsing XML: ${e.message}`;
+                    }
+                } else {
+                    errMessage = "warning,Warning: Empty or invalid result when parsing XML.";
+                }
+                if (errMessage !== "" && interpreter.isDevMode) {
+                    interpreter.stderr.write(errMessage);
+                }
+            });
+        }
+        this.port?.pushMessage(new RoChannelStoreEvent(this.id, data));
+    }
+
     // ifChannelStore ------------------------------------------------------------------------------------
 
     /** Returns a unique number that can be used to identify whether a roChannelStoreEvent originated from this object. */
@@ -77,9 +136,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                if (this.fakeServerEnabled) {
+                    this.sendFakeProductEvent(interpreter, "GetCatalog");
+                } else {
+                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -91,9 +154,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                if (this.fakeServerEnabled) {
+                    this.sendFakeProductEvent(interpreter, "GetCatalog");
+                } else {
+                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -105,9 +172,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                if (this.fakeServerEnabled) {
+                    this.sendFakeProductEvent(interpreter, "GetPurchases");
+                } else {
+                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -119,9 +190,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                if (this.fakeServerEnabled) {
+                    this.sendFakeProductEvent(interpreter, "GetPurchases");
+                } else {
+                    this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -130,12 +205,20 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     /** Sets the current Order which must be an roList of roAssociativeArray items. */
     private readonly setOrder = new Callable("setOrder", {
         signature: {
-            args: [new StdlibArgument("order", ValueKind.Object)],
+            args: [
+                new StdlibArgument("order", ValueKind.Object),
+                new StdlibArgument("orderInfo", ValueKind.Object, BrsInvalid.Instance),
+            ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, order: BrsComponent) => {
+        impl: (_: Interpreter, order: BrsComponent, orderInfo: RoAssociativeArray | BrsInvalid) => {
             if (order instanceof RoList || order instanceof RoArray) {
                 this.order = order.getElements();
+                if (this.order.length > 0 && orderInfo instanceof RoAssociativeArray) {
+                    this.orderInfo = orderInfo;
+                } else {
+                    this.orderInfo = BrsInvalid.Instance;
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -149,6 +232,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             this.order = [];
+            this.orderInfo = BrsInvalid.Instance;
             return BrsInvalid.Instance;
         },
     });
@@ -163,7 +247,27 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, code: BrsString, qty: Int32) => {
-            // TODO: Change order quantities
+            const codeValue = code.value;
+            const qtyValue = qty.getValue();
+            let found = false;
+            for (let item of this.order) {
+                if (item instanceof RoAssociativeArray) {
+                    const code = item.get(new BrsString("code"));
+                    const qty = item.get(new BrsString("qty"));
+                    if (
+                        code instanceof BrsString &&
+                        code.value === codeValue &&
+                        qty instanceof Int32
+                    ) {
+                        item.set(new BrsString("qty"), new Int32(qty.getValue() + qtyValue));
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                this.order.push(toAssociativeArray({ code: codeValue, qty: qtyValue }));
+            }
             return new Int32(this.order.length);
         },
     });
@@ -199,6 +303,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
+            this.fakeServerEnabled = enable.toBoolean();
             return BrsInvalid.Instance;
         },
     });

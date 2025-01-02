@@ -18,12 +18,12 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
             ifChannelStoreEvent: [
                 this.isRequestSucceeded,
                 this.isRequestFailed,
-                this.getSourceIdentity,
                 this.getResponse,
                 this.getStatus,
                 this.getStatusMessage,
                 this.isRequestInterrupted,
             ],
+            ifSourceIdentity: [this.getSourceIdentity],
         });
     }
 
