@@ -20,7 +20,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
 
     constructor() {
         super("roChannelStore");
-        this.id = Math.floor(Math.random() * 100) + 1;
+        this.id = 103809000 + Math.floor(Math.random() * 100) + 1;
         this.order = [];
         this.orderInfo = BrsInvalid.Instance;
         this.credData = "";
