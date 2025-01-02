@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray } from "..";
+import { BrsType, RoArray, RoAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -9,21 +9,27 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly id: number;
     private readonly response?: BrsType[];
+    private readonly status: { code: number; message: string };
 
-    constructor(id: number, response?: BrsType[]) {
+    constructor(
+        id: number,
+        response: RoAssociativeArray[],
+        status: { code: number; message: string }
+    ) {
         super("roChannelStoreEvent");
         this.id = id;
         this.response = response;
+        this.status = status;
         this.registerMethods({
             ifChannelStoreEvent: [
                 this.isRequestSucceeded,
                 this.isRequestFailed,
-                this.getSourceIdentity,
                 this.getResponse,
                 this.getStatus,
                 this.getStatusMessage,
                 this.isRequestInterrupted,
             ],
+            ifSourceIdentity: [this.getSourceIdentity],
         });
     }
 
@@ -42,7 +48,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.response !== undefined);
+            return BrsBoolean.from(this.status.code === 1);
         },
     });
 
@@ -53,7 +59,18 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.response === undefined);
+            return BrsBoolean.from(this.status.code < 0);
+        },
+    });
+
+    /** Returns true if the request was not complete. */
+    private readonly isRequestInterrupted = new Callable("isRequestInterrupted", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.status.code === 2);
         },
     });
 
@@ -89,7 +106,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.response === undefined ? -4 : 1);
+            return new Int32(this.status.code);
         },
     });
 
@@ -100,18 +117,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.response === undefined ? "Empty List" : "Items Received");
-        },
-    });
-
-    /** Returns true if the request was not complete. */
-    private readonly isRequestInterrupted = new Callable("isRequestInterrupted", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.False;
+            return new BrsString(this.status.message);
         },
     });
 }

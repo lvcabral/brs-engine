@@ -7,19 +7,24 @@ import { Int32 } from "../Int32";
 import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
+import { parseString, processors } from "xml2js";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly id: number;
-    private order: BrsType[];
+    private order: RoAssociativeArray[];
+    private orderInfo: RoAssociativeArray | BrsInvalid;
     private credData: string;
+    private fakeServerEnabled: boolean;
     private port?: RoMessagePort;
 
     constructor() {
         super("roChannelStore");
-        this.id = Math.floor(Math.random() * 100) + 1;
+        this.id = 103809000 + Math.floor(Math.random() * 100) + 1;
         this.order = [];
+        this.orderInfo = BrsInvalid.Instance;
         this.credData = "";
+        this.fakeServerEnabled = false;
         this.registerMethods({
             ifChannelStore: [
                 this.getIdentity,
@@ -38,6 +43,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 this.getPartialUserData,
                 this.storeChannelCredData,
                 this.getChannelCred,
+                this.getDeviceAttestation,
                 this.requestPartnerOrder,
                 this.confirmPartnerOrder,
             ],
@@ -56,6 +62,122 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
 
     dispose() {
         this.port?.removeReference();
+    }
+
+    private getFakeProductData(interpreter: Interpreter, xml: string) {
+        const options = {
+            explicitArray: false,
+            ignoreAttrs: true,
+            valueProcessors: [processors.parseNumbers],
+        };
+        const data: RoAssociativeArray[] = [];
+        if (interpreter.fileSystem.existsSync(`pkg:/csfake/${xml}.xml`)) {
+            const xmlData = interpreter.fileSystem.readFileSync(`pkg:/csfake/${xml}.xml`);
+            parseString(xmlData, options, function (err: any, parsed: any) {
+                let errMessage = "";
+                if (err) {
+                    errMessage = `error,Error parsing Product XML: ${err.message}`;
+                } else if (parsed?.result?.products?.product) {
+                    try {
+                        parsed.result.products.product.forEach((item: any) => {
+                            const obj = JSON.parse(JSON.stringify(item));
+                            const prod: any = {};
+                            prod.code = obj.code;
+                            prod.cost = obj.cost;
+                            prod.freeTrialQuantity = obj.freeTrialQuantity;
+                            prod.freeTrialType = obj.freeTrialType;
+                            prod.name = obj.name;
+                            prod.productType = obj.productType;
+                            prod.purchaseDate = obj.purchaseDate;
+                            prod.qty = obj.qty;
+                            prod.inDunning = obj.inDunning ?? "false";
+                            prod.isUpgrade = obj.isUpgrade ?? "false";
+                            prod.trialCost = obj.trialCost ?? "$0.00";
+                            prod.trialQuantity = obj.trialQuantity ?? 0;
+
+                            if (obj.description) prod.description = obj.description;
+                            if (obj.id) prod.id = obj.id;
+                            if (obj.expirationDate) prod.expirationDate = obj.expirationDate;
+                            if (obj.purchaseId) prod.purchaseId = obj.purchaseId;
+                            if (obj.renewalDate) prod.renewalDate = obj.renewalDate;
+                            if (obj.trialType) prod.trialType = obj.trialType;
+                            if (obj.status) prod.status = obj.status;
+                            data.push(toAssociativeArray(prod));
+                        });
+                    } catch (e: any) {
+                        err.message = `error,Error parsing Product XML: ${e.message}`;
+                    }
+                } else {
+                    errMessage =
+                        "warning,Warning: Empty or invalid result when parsing Product XML.";
+                }
+                if (errMessage !== "" && interpreter.isDevMode) {
+                    interpreter.stderr.write(errMessage);
+                }
+            });
+        }
+        return data;
+    }
+
+    private getFakeOrderData(interpreter: Interpreter, xml: string) {
+        const options = {
+            explicitArray: false,
+            ignoreAttrs: true,
+            valueProcessors: [processors.parseNumbers],
+        };
+        const fs = interpreter.fileSystem;
+        const data: any = { id: xml };
+        if (fs.existsSync(`pkg:/csfake/${xml}.xml`)) {
+            const xmlData = fs.readFileSync(`pkg:/csfake/${xml}.xml`);
+            parseString(xmlData, options, function (err: any, parsed: any) {
+                let errMessage = "";
+                if (err) {
+                    errMessage = `error,Error parsing Order XML: ${err.message}`;
+                } else if (parsed?.result?.order) {
+                    try {
+                        const order = JSON.parse(JSON.stringify(parsed.result.order));
+                        data.id = order.id;
+                        data.order = new Array<RoAssociativeArray>();
+                        if (order.items.orderItem instanceof Array) {
+                            order.items.orderItem.forEach((item: any) => {
+                                data.order.push(toAssociativeArray(item));
+                            });
+                        } else {
+                            data.order.push(toAssociativeArray(order.items.orderItem));
+                        }
+                    } catch (e: any) {
+                        errMessage = `error,Error parsing Order XML: ${e.message}`;
+                    }
+                } else {
+                    errMessage = "warning,Warning: Empty or invalid result when parsing Order XML.";
+                }
+                if (errMessage !== "" && interpreter.isDevMode) {
+                    interpreter.stderr.write(errMessage);
+                }
+            });
+        }
+        return data;
+    }
+
+    private isValidProductOrder(catalog: RoAssociativeArray[], item: RoAssociativeArray) {
+        const qty = item.get(new BrsString("qty"));
+        if (qty instanceof Int32 && qty.getValue() <= 0) {
+            return false;
+        }
+        return (
+            catalog.find((prod) => {
+                const prodCode = prod.get(new BrsString("code"));
+                const orderCode = item.get(new BrsString("code"));
+                if (
+                    prodCode instanceof BrsString &&
+                    orderCode instanceof BrsString &&
+                    prodCode.value === orderCode.value
+                ) {
+                    return true;
+                }
+                return false;
+            }) !== undefined
+        );
     }
 
     // ifChannelStore ------------------------------------------------------------------------------------
@@ -77,9 +199,15 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                let catalog: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
+                if (this.fakeServerEnabled) {
+                    catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                    status = { code: 1, message: "Items Received" };
+                }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
             }
             return BrsInvalid.Instance;
         },
@@ -91,9 +219,15 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                let catalog: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
+                if (this.fakeServerEnabled) {
+                    catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                    status = { code: 1, message: "Items Received" };
+                }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
             }
             return BrsInvalid.Instance;
         },
@@ -105,9 +239,15 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                let purchases: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
+                if (this.fakeServerEnabled) {
+                    purchases = this.getFakeProductData(interpreter, "GetPurchases");
+                    status = { code: 1, message: "Items Received" };
+                }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
             }
             return BrsInvalid.Instance;
         },
@@ -119,9 +259,15 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (this.port) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, []));
+                let purchases: RoAssociativeArray[] = [];
+                let status = { code: -4, message: "Empty List" };
+                if (this.fakeServerEnabled) {
+                    purchases = this.getFakeProductData(interpreter, "GetPurchases");
+                    status = { code: 1, message: "Items Received" };
+                }
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
             }
             return BrsInvalid.Instance;
         },
@@ -130,12 +276,22 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     /** Sets the current Order which must be an roList of roAssociativeArray items. */
     private readonly setOrder = new Callable("setOrder", {
         signature: {
-            args: [new StdlibArgument("order", ValueKind.Object)],
+            args: [
+                new StdlibArgument("order", ValueKind.Object),
+                new StdlibArgument("orderInfo", ValueKind.Object, BrsInvalid.Instance),
+            ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, order: BrsComponent) => {
+        impl: (_: Interpreter, order: BrsComponent, orderInfo: RoAssociativeArray | BrsInvalid) => {
             if (order instanceof RoList || order instanceof RoArray) {
-                this.order = order.getElements();
+                this.order = order
+                    .getElements()
+                    .filter((item) => item instanceof RoAssociativeArray);
+                if (this.order.length > 0 && orderInfo instanceof RoAssociativeArray) {
+                    this.orderInfo = orderInfo;
+                } else {
+                    this.orderInfo = BrsInvalid.Instance;
+                }
             }
             return BrsInvalid.Instance;
         },
@@ -149,6 +305,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             this.order = [];
+            this.orderInfo = BrsInvalid.Instance;
             return BrsInvalid.Instance;
         },
     });
@@ -163,7 +320,21 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, code: BrsString, qty: Int32) => {
-            // TODO: Change order quantities
+            const codeValue = code.value;
+            const qtyValue = qty.getValue();
+            let found = false;
+            for (let item of this.order) {
+                const code = item.get(new BrsString("code"));
+                const qty = item.get(new BrsString("qty"));
+                if (code instanceof BrsString && code.value === codeValue && qty instanceof Int32) {
+                    item.set(new BrsString("qty"), new Int32(qty.getValue() + qtyValue));
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                this.order.push(toAssociativeArray({ code: codeValue, qty: qtyValue }));
+            }
             return new Int32(this.order.length);
         },
     });
@@ -185,10 +356,34 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
-            // TODO: when there is a Catalog list this should return `true`
-            // when the order list contain valid product, and added to Purchased list.
-            return BrsBoolean.False;
+        impl: (interpreter: Interpreter) => {
+            if (!this.port) {
+                return BrsBoolean.False;
+            }
+            const status = { code: -3, message: "Invalid Order" };
+            let order: RoAssociativeArray[] = [];
+            if (this.fakeServerEnabled && this.order.length > 0) {
+                status.code = 1;
+                status.message = "Order Received";
+                const catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                for (let item of this.order) {
+                    if (!this.isValidProductOrder(catalog, item)) {
+                        status.code = -3;
+                        break;
+                    }
+                }
+                if (status.code === 1) {
+                    const orderData = this.getFakeOrderData(interpreter, "PlaceOrder");
+                    const checkId = this.getFakeOrderData(interpreter, "CheckOrder").id;
+                    if (orderData.id !== checkId) {
+                        status.code = -3;
+                        status.message = "Order Mismatch";
+                    }
+                    order = orderData.order;
+                }
+            }
+            this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
+            return BrsBoolean.from(status.code === 1);
         },
     });
 
@@ -199,6 +394,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
+            this.fakeServerEnabled = enable.toBoolean();
             return BrsInvalid.Instance;
         },
     });
@@ -269,6 +465,25 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 status: status,
             };
             return toAssociativeArray(channelCred);
+        },
+    });
+
+    /** Generates a signed JSON web token (JWT) in the Roku cloud and returns it to the app. */
+    private readonly getDeviceAttestation = new Callable("getDeviceAttestation", {
+        signature: {
+            args: [new StdlibArgument("nonce", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, nonce: BrsString) => {
+            // Sample JWT token from Roku documentation
+            const sampleJwt = `eyJ4NXUiOiJodHRwczovL2V4YW1wbGUucm9rdS5jb20vc2FtcGxlY2VydCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.\
+eyJuYmYiOjE2NTYzNzQyNzQsIngtcm9rdS1hdHRlc3RhdGlvbi1kYXRhIjp7Im5vbmNlIjoiNUUwNjkyRTBBMzg5RjRGNiIsImNoYW5uZWxJZCI6Im\
+RldiIsImRldmVsb3BlcklkIjoiY2FhNzNmYmI1ZTc1YTQ2YTRiNjExNGRlNTFhNWFkYTdkNjE2ZTJlZCIsInRpbWVzdGFtcE1zIjoxNjU2Mzc3ODcz\
+OTkwfSwiaXNzIjoidXJuOnJva3U6Y2xvdWQtc2VydmljZXM6ZGV2aWNlLWF0dGVzdGF0aW9uIiwiZXhwIjoxNjU2NDY0Mjc0fQ.nywDvSUys27oeaQ\
+Z3yXwNBfOnXbO-TUDuekOPZYjSssfZhNhWwRXvPLbJKHcNMR5Z0vFOQLVDFeqEVGauIMxMEke5UFLuCRxhr3ayBJJPt_BPfrEFbAvYjFEGdKkxJqYU\
+huFE38R8lU2k7dhO0iFxDw1Qq7W4w8_7CjmDy4YFf7IfyhV7Vf2kGiOx5C94Niw5N2td3s21F3z77Rq_bofQ51DOKIwo_cDVuvPQnDyxG-CNEydZKC\
+ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKylgKwCvbvHRDlgogf7kq`;
+            return new BrsString(sampleJwt);
         },
     });
 
