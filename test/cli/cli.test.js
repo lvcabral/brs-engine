@@ -57,7 +57,7 @@ describe("cli", () => {
             "16fa3acf-28b7-4ab2-b94b-f6d23834bd09 2013-04-29T23:29:20 NW1  1 $0.99",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
-            ""
+            "",
         ]);
     }, 10000);
 
