@@ -136,7 +136,7 @@ module.exports = (env) => {
             },
             resolve: {
                 modules: [path.resolve("./node_modules"), path.resolve("./src")],
-                extensions: [".tsx", ".ts", ".js"],
+                extensions: [".tsx", ".ts", ".js", ".mjs"],
             },
             externals: {
                 bufferutil: "bufferutil",

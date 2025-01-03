@@ -1,11 +1,11 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback } from "./util";
+import { SubscribeCallback, saveDataBuffer } from "./util";
 import {
     DataType,
     RemoteType,
@@ -13,6 +13,7 @@ import {
     keyBufferSize,
     keyArraySpots,
     platform,
+    BufferType,
 } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
@@ -172,6 +173,11 @@ function getNext() {
         );
     }
     return (keyBufferSize - 1) * keyArraySpots;
+}
+
+// Input API
+export function sendInput(data: object) {
+    saveDataBuffer(sharedArray, JSON.stringify(data), BufferType.INPUT);
 }
 
 /// #if BROWSER
