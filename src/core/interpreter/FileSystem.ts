@@ -61,18 +61,13 @@ export class FileSystem {
 
     getPath(uri: string) {
         if (this.root && uri.trim().toLowerCase().startsWith("pkg:")) {
-            uri = uri
-                .trim()
-                .toLowerCase()
-                .replace("pkg:", this.root + "/");
+            uri = this.root + "/" + uri.trim().slice(4);
         } else if (this.ext && uri.trim().toLowerCase().startsWith("ext1:")) {
-            uri = uri
-                .trim()
-                .toLowerCase()
-                .replace("ext1:", this.ext + "/");
+            uri = this.ext + "/" + uri.trim().slice(5);
+        } else {
+            uri = uri.toLowerCase();
         }
         return uri
-            .toLowerCase()
             .replace("tmp:", "")
             .replace("cachefs:", "")
             .replace("common:", "")

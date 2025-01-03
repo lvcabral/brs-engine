@@ -22,6 +22,11 @@ export const CopyFile = new Callable("CopyFile", {
             fsys.writeFileSync(dst.value, content);
             return BrsBoolean.True;
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Copying '${src.value}' to '${dst.value}': ${err.message}`
+                );
+            }
             return BrsBoolean.False;
         }
     },
@@ -50,6 +55,11 @@ export const MoveFile = new Callable("MoveFile", {
             fsys.renameSync(src.value, dst.value);
             return BrsBoolean.True;
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Moving '${src.value}' to '${dst.value}': ${err.message}`
+                );
+            }
             return BrsBoolean.False;
         }
     },
@@ -70,6 +80,11 @@ export const DeleteFile = new Callable("DeleteFile", {
             fsys.unlinkSync(file.value);
             return BrsBoolean.True;
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Deleting '${file.value}': ${err.message}`
+                );
+            }
             return BrsBoolean.False;
         }
     },
@@ -90,6 +105,11 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
             fsys.rmdirSync(dir.value);
             return BrsBoolean.True;
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Deleting '${dir.value}': ${err.message}`
+                );
+            }
             return BrsBoolean.False;
         }
     },
@@ -110,6 +130,11 @@ export const CreateDirectory = new Callable("CreateDirectory", {
             fsys.mkdirSync(dir.value);
             return BrsBoolean.True;
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Creating '${dir.value}': ${err.message}`
+                );
+            }
             return BrsBoolean.False;
         }
     },
@@ -150,7 +175,11 @@ export const ListDir = new Callable("ListDir", {
                 return new RoList(subPaths);
             }
         } catch (err: any) {
-            interpreter.stderr.write(`warning,*** ERROR: Listing '${dir.value}': ${err.message}`);
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Listing '${dir.value}': ${err.message}`
+                );
+            }
         }
         return new RoList([]);
     },
@@ -162,14 +191,19 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
         args: [new StdlibArgument("filepath", ValueKind.String)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, filepath: BrsString) => {
+    impl: (interpreter: Interpreter, filePath: BrsString) => {
         const fsys = interpreter.fileSystem;
         try {
-            if (!validUri(filepath.value)) {
+            if (!validUri(filePath.value)) {
                 return new BrsString("");
             }
-            return new BrsString(fsys.readFileSync(filepath.value, "utf8"));
+            return new BrsString(fsys.readFileSync(filePath.value, "utf8"));
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Reading '${filePath.value}': ${err.message}`
+                );
+            }
             return new BrsString("");
         }
     },
@@ -193,6 +227,11 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
             fsys.writeFileSync(filePath.value, text.value, "utf8");
             return BrsBoolean.True;
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Writing '${filePath.value}': ${err.message}`
+                );
+            }
             return BrsBoolean.False;
         }
     },
@@ -225,6 +264,11 @@ export const MatchFiles = new Callable("MatchFiles", {
 
             return new RoList(matchedFiles);
         } catch (err: any) {
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(
+                    `warning,*** ERROR: Matching '${pathArg.value}' with '${patternIn.value}': ${err.message}`
+                );
+            }
             return new RoList([]);
         }
     },
