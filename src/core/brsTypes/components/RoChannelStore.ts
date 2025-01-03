@@ -363,28 +363,28 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             }
             const status = { code: -3, message: "Invalid Order" };
             let order: RoAssociativeArray[] = [];
-            if (this.fakeServerEnabled && this.order.length > 0) {
-                status.code = 1;
-                status.message = "Order Received";
-                const catalog = this.getFakeProductData(interpreter, "GetCatalog");
-                for (let item of this.order) {
-                    if (!this.isValidProductOrder(catalog, item)) {
-                        status.code = -3;
-                        break;
-                    }
+            if (!this.fakeServerEnabled || this.order.length === 0) {
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
+                return BrsBoolean.False;
+            }
+            status.code = 1;
+            status.message = "Order Received";
+            const catalog = this.getFakeProductData(interpreter, "GetCatalog");
+            for (let item of this.order) {
+                if (!this.isValidProductOrder(catalog, item)) {
+                    status.code = -3;
+                    break;
                 }
-                if (status.code === 1) {
-                    const orderData = this.getFakeOrderData(interpreter, "PlaceOrder");
-                    const checkId = this.getFakeOrderData(interpreter, "CheckOrder").id;
-                    if (orderData.id !== checkId) {
-                        status.code = -3;
-                        status.message = "Order Mismatch";
-                    }
-                    if (orderData.order instanceof Array) {
-                        order = orderData.order.filter(
-                            (item) => item instanceof RoAssociativeArray
-                        );
-                    }
+            }
+            if (status.code === 1) {
+                const orderData = this.getFakeOrderData(interpreter, "PlaceOrder");
+                const checkId = this.getFakeOrderData(interpreter, "CheckOrder").id;
+                if (orderData.id !== checkId) {
+                    status.code = -3;
+                    status.message = "Order Mismatch";
+                }
+                if (orderData.order instanceof Array) {
+                    order = orderData.order.filter((item) => item instanceof RoAssociativeArray);
                 }
             }
             this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
