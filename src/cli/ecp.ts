@@ -265,7 +265,6 @@ function sendDeviceInfo(req: any, res: any) {
 }
 
 function sendApps(req: any, res: any) {
-    console.log("sendApps");
     res.setHeader("content-type", "application/xml");
     res.send(genAppsXml(false));
 }
