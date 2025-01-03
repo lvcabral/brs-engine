@@ -11,14 +11,22 @@ sub main()
     store = CreateObject("roChannelStore")
     store.SetMessagePort(port)
     store.GetCatalog()
+    input = CreateObject("roInput")
+    input.SetMessagePort(port)
     for t = 1 to 10
-        msg = port.getMessage()
+        msg = port.GetMessage()
         print type(msg)
         if type(msg) = "roCECStatusEvent"
             print msg.getMessage()
             print msg.getIndex()
             print msg.getInfo()
             print FindMemberFunction(msg, "getInfo")
+            print FindMemberFunction(cec, "setMessagePort")
+        else if type(msg) = "roInputEvent"
+            print "roInputEvent.isInput = "; msg.isInput()
+            print msg.getInfo()
+            print FindMemberFunction(msg, "getInfo")
+            print FindMemberFunction(input, "setMessagePort")
         else if type(msg) = "roDeviceInfoEvent"
             print "roDeviceInfoEvent.isCaptionModeChanged = "; msg.isCaptionModeChanged()
             print "roDeviceInfoEvent.isStatusMessage = "; msg.isStatusMessage()
@@ -33,6 +41,7 @@ sub main()
                 print logEvent.logType, logEvent.dateTime.toISOString(), logEvent.bandwidth
             end if
             print FindMemberFunction(msg, "getInfo")
+            print FindMemberFunction(syslog, "setMessagePort")
         else msg = invalid
             exit for
         end if

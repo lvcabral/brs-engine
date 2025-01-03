@@ -1,20 +1,20 @@
 import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int64, toAssociativeArray } from "..";
+import { BrsType, Int64, RoAssociativeArray, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
 export class RoInputEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly id: number;
-    private readonly response?: BrsType;
+    private readonly input?: BrsType;
 
-    constructor(response?: BrsType) {
+    constructor(input?: BrsType) {
         super("roInputEvent");
         this.id = Math.floor(Math.random() * 100) + 1;
-        this.response = response;
+        this.input = input;
         this.registerMethods({
-            ifInputEvent: [this.isInput, this.getInfo],
+            ifroInputEvent: [this.isInput, this.getInfo],
         });
     }
 
@@ -33,7 +33,7 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.response !== undefined);
+            return BrsBoolean.from(this.input !== undefined);
         },
     });
 
@@ -44,8 +44,11 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
+            if (this.input instanceof RoAssociativeArray) {
+                return this.input;
+            }
             const id = new Int64(this.id);
-            const info = { type: "", id: id, command: "", direction: "", duration: "" };
+            const info = { type: "transport", id: id, command: "", direction: "", duration: "" };
             return toAssociativeArray(info);
         },
     });

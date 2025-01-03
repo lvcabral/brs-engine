@@ -46,9 +46,9 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 this.getDeviceAttestation,
                 this.requestPartnerOrder,
                 this.confirmPartnerOrder,
+                this.setMessagePort,
+                this.getMessagePort,
             ],
-            ifSetMessagePort: [this.setMessagePort],
-            ifGetMessagePort: [this.getMessagePort],
         });
     }
 
@@ -520,8 +520,6 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
         },
     });
 
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
     /** Returns the message port (if any) currently associated with the object */
     private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
@@ -532,8 +530,6 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             return this.port ?? BrsInvalid.Instance;
         },
     });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
     private readonly setMessagePort = new Callable("setMessagePort", {

@@ -148,7 +148,7 @@ export const BrsObjects = new BrsObjectsMap([
     ],
     ["roImageMetadata", (_: Interpreter) => new RoImageMetadata()],
     ["roMessagePort", (_: Interpreter) => new RoMessagePort()],
-    ["roInput", (_: Interpreter) => new RoInput()],
+    ["roInput", (interpreter: Interpreter) => new RoInput(interpreter)],
     ["roSystemLog", (interpreter: Interpreter) => new RoSystemLog(interpreter)],
     ["roFileSystem", (_: Interpreter) => new RoFileSystem()],
     ["roLocalization", (interpreter: Interpreter) => new RoLocalization(interpreter)],

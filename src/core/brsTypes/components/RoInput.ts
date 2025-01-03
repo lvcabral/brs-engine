@@ -1,15 +1,18 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort } from "..";
+import { BrsEvent, BrsType, RoInputEvent, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { BufferType, DataType } from "../../common";
 
 export class RoInput extends BrsComponent implements BrsValue {
-    private port?: RoMessagePort;
     readonly kind = ValueKind.Object;
+    private readonly interpreter: Interpreter;
+    private port?: RoMessagePort;
 
-    constructor() {
+    constructor(interpreter: Interpreter) {
         super("roInput");
+        this.interpreter = interpreter;
         this.registerMethods({
             ifInput: [
                 this.enableTransportEvents,
@@ -29,22 +32,31 @@ export class RoInput extends BrsComponent implements BrsValue {
     }
 
     dispose() {
-        this.port?.removeReference();
+        this.port?.unregisterCallback(this.getComponentName());
+    }
+
+    // Input Event -------------------------------------------------------------------------------
+
+    private getNewEvents() {
+        const events: BrsEvent[] = [];
+        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
+        if (bufferFlag === BufferType.INPUT) {
+            const strInput = this.interpreter.readDataBuffer();
+            try {
+                const input = JSON.parse(strInput);
+                events.push(new RoInputEvent(toAssociativeArray(input)));
+            } catch (e: any) {
+                if (this.interpreter.isDevMode) {
+                    this.interpreter.stdout.write(
+                        `warning,[roSystemLog] Error parsing Input buffer: ${e.message}`
+                    );
+                }
+            }
+        }
+        return events;
     }
 
     // ifInput ------------------------------------------------------------------------------------
-
-    /** Sets the current Order which must be an roList of roAssociativeArray items. */
-    private readonly eventResponse = new Callable("eventResponse", {
-        signature: {
-            args: [new StdlibArgument("aa", ValueKind.Object)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, aa: BrsComponent) => {
-            // TODO: Generate the event
-            return BrsBoolean.True;
-        },
-    });
 
     /** Registers an app to receive roInput events, which are voice commands sent via the Roku remote control. */
     private readonly enableTransportEvents = new Callable("enableTransportEvents", {
@@ -53,7 +65,20 @@ export class RoInput extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.True;
+            // Voice commands are not supported
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Marks a transport command as handled, unhandled, or handled with an error. */
+    private readonly eventResponse = new Callable("eventResponse", {
+        signature: {
+            args: [new StdlibArgument("aa", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, aa: BrsComponent) => {
+            // Voice commands are not supported
+            return BrsBoolean.False;
         },
     });
 
@@ -75,9 +100,10 @@ export class RoInput extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
-            this.port?.removeReference();
+            const component = port.getComponentName();
+            this.port?.unregisterCallback(component);
             this.port = port;
+            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });
