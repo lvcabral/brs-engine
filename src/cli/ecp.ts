@@ -1,11 +1,17 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { enableSendKeys, initControlModule, sendKey, subscribeControl } from "../api/control";
+import {
+    enableSendKeys,
+    initControlModule,
+    sendInput,
+    sendKey,
+    subscribeControl,
+} from "../api/control";
 import { DataType, DebugCommand, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
@@ -67,6 +73,7 @@ function enableECP() {
     ecp.get("/query/active-app", sendActiveApp);
     ecp.get("/query/icon/:appID", sendAppIcon);
     ecp.get("/query/registry/:appID", sendRegistry);
+    ecp.post("/input", sendInputQuery);
     ecp.post("/launch/:appID", sendLaunchApp);
     ecp.post("/exit-app/:appID", sendExitApp);
     ecp.post("/keypress/:key", sendKeyPress);
@@ -238,12 +245,27 @@ function sendDeviceRoot(req: any, res: any) {
     res.send(genDeviceRootXml());
 }
 
+function sendInputQuery(req: any, res: any) {
+    const params = req.query ?? {};
+    const sourceIp = req.socket.remoteAddress;
+    if (sourceIp?.startsWith("::ffff:")) {
+        params.source_ip_addr = sourceIp.slice(7);
+    } else if (sourceIp?.startsWith("::1")) {
+        params.source_ip_addr = "127.0.0.1";
+    } else if (isValidIP(sourceIp)) {
+        params.source_ip_addr = sourceIp;
+    }
+    sendInput(params);
+    res?.end();
+}
+
 function sendDeviceInfo(req: any, res: any) {
     res.setHeader("content-type", "application/xml");
     res.send(genDeviceInfoXml(false));
 }
 
 function sendApps(req: any, res: any) {
+    console.log("sendApps");
     res.setHeader("content-type", "application/xml");
     res.send(genAppsXml(false));
 }
@@ -545,4 +567,18 @@ function getSpaceAvailable() {
         }
     });
     return space;
+}
+
+function isValidIP(ip: any): boolean {
+    if (typeof ip !== "string") {
+        return false;
+    }
+    const parts = ip.split(".");
+    return (
+        parts.length === 4 &&
+        parts.every((part) => {
+            const num = Number(part);
+            return !isNaN(num) && num >= 0 && num <= 255;
+        })
+    );
 }

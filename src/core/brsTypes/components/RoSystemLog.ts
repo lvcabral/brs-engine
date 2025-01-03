@@ -21,9 +21,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         super("roSystemLog");
         this.interpreter = interpreter;
         this.registerMethods({
-            ifSystemLog: [this.enableType],
-            ifSetMessagePort: [this.setMessagePort],
-            ifGetMessagePort: [this.getMessagePort],
+            ifSystemLog: [this.enableType, this.setMessagePort, this.getMessagePort],
         });
     }
 
@@ -52,9 +50,9 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         }
         const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
         if (bufferFlag === BufferType.SYS_LOG) {
-            const strTracks = this.interpreter.readDataBuffer();
+            const strSysLog = this.interpreter.readDataBuffer();
             try {
-                const sysLog = JSON.parse(strTracks);
+                const sysLog = JSON.parse(strSysLog);
                 if (typeof sysLog.type === "string" && this.enabledEvents.includes(sysLog.type)) {
                     events.push(new RoSystemLogEvent(sysLog.type, sysLog));
                 }
@@ -88,8 +86,6 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         },
     });
 
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
     /** Returns the message port (if any) currently associated with the object */
     private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
@@ -100,8 +96,6 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             return this.port ?? BrsInvalid.Instance;
         },
     });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
     private readonly setMessagePort = new Callable("setMessagePort", {

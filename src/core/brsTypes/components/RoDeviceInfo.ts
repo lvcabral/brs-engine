@@ -1030,8 +1030,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
     /** Returns the message port (if any) currently associated with the object */
     private readonly getMessagePort = new Callable("getMessagePort", {
         signature: {
@@ -1042,8 +1040,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             return this.port ?? BrsInvalid.Instance;
         },
     });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
 
     /** Sets the roMessagePort to be used for all events from the screen */
     private readonly setMessagePort = new Callable("setMessagePort", {
