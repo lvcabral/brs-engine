@@ -299,35 +299,33 @@ export const ValidDateFormats = [
 ];
 
 /**
- * Interface for a flexible object with string keys and any values.
- * This is to be used to behave like and convert to a BrightScript associative array.
+ * Interface for a flexible object with string keys and convertible values.
+ * This is to be used to behave like and convert to a BrightScript Associative Array.
  */
 export interface FlexObject {
-    [key: string]: any;
+    [key: string]: BrsConvertible | BrsConvertible[] | FlexObject | FlexObject[] | Map<string, any>;
 }
+
+/**
+ * A type that can be converted to a BrightScript type.
+ */
+export type BrsConvertible = boolean | number | string | BrsType | null | undefined;
 
 /**
  * Converts a JavaScript object or Map to a RoAssociativeArray, converting each property or entry to the corresponding BrightScript type.
  * @param input The JavaScript object or Map to convert.
  * @returns A RoAssociativeArray with the converted properties or entries.
  */
-export function toAssociativeArray(input: any): RoAssociativeArray {
+export function toAssociativeArray(input: Map<string, any> | FlexObject): RoAssociativeArray {
     const associativeArray = new RoAssociativeArray([]);
     if (input instanceof Map) {
         input.forEach((value, key) => {
-            let brsKey: BrsString;
-            if (typeof key === "string") {
-                brsKey = new BrsString(key);
-            } else {
-                throw new Error(`Unsupported key type: ${typeof key}`);
-            }
-            associativeArray.set(brsKey, brsValueOf(value), true);
+            associativeArray.set(new BrsString(key), brsValueOf(value), true);
         });
     } else if (typeof input === "object" && input !== null) {
         for (const key in input) {
             if (input.hasOwnProperty(key)) {
-                const brsKey = new BrsString(key);
-                associativeArray.set(brsKey, brsValueOf(input[key]), true);
+                associativeArray.set(new BrsString(key), brsValueOf(input[key]), true);
             }
         }
     } else {
