@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoList, RoArray, RoMessagePort, toAssociativeArray } from "..";
+import { BrsType, RoList, RoArray, RoMessagePort, toAssociativeArray, FlexObject } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -81,7 +81,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                     try {
                         parsed.result.products.product.forEach((item: any) => {
                             const obj = JSON.parse(JSON.stringify(item));
-                            const prod: any = {};
+                            const prod: FlexObject = {};
                             prod.code = obj.code;
                             prod.cost = obj.cost;
                             prod.freeTrialQuantity = obj.freeTrialQuantity;
@@ -126,7 +126,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             valueProcessors: [processors.parseNumbers],
         };
         const fs = interpreter.fileSystem;
-        const data: any = { id: xml };
+        const data: FlexObject = { id: xml };
         if (fs.existsSync(`pkg:/csfake/${xml}.xml`)) {
             const xmlData = fs.readFileSync(`pkg:/csfake/${xml}.xml`);
             parseString(xmlData, options, function (err: any, parsed: any) {
@@ -137,14 +137,15 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                     try {
                         const order = JSON.parse(JSON.stringify(parsed.result.order));
                         data.id = order.id;
-                        data.order = new Array<RoAssociativeArray>();
+                        const orderArray = new Array<RoAssociativeArray>();
                         if (order.items.orderItem instanceof Array) {
                             order.items.orderItem.forEach((item: any) => {
-                                data.order.push(toAssociativeArray(item));
+                                orderArray.push(toAssociativeArray(item));
                             });
                         } else {
-                            data.order.push(toAssociativeArray(order.items.orderItem));
+                            orderArray.push(toAssociativeArray(order.items.orderItem));
                         }
+                        data.order = orderArray;
                     } catch (e: any) {
                         errMessage = `error,Error parsing Order XML: ${e.message}`;
                     }
@@ -362,24 +363,28 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             }
             const status = { code: -3, message: "Invalid Order" };
             let order: RoAssociativeArray[] = [];
-            if (this.fakeServerEnabled && this.order.length > 0) {
-                status.code = 1;
-                status.message = "Order Received";
-                const catalog = this.getFakeProductData(interpreter, "GetCatalog");
-                for (let item of this.order) {
-                    if (!this.isValidProductOrder(catalog, item)) {
-                        status.code = -3;
-                        break;
-                    }
+            if (!this.fakeServerEnabled || this.order.length === 0) {
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
+                return BrsBoolean.False;
+            }
+            status.code = 1;
+            status.message = "Order Received";
+            const catalog = this.getFakeProductData(interpreter, "GetCatalog");
+            for (let item of this.order) {
+                if (!this.isValidProductOrder(catalog, item)) {
+                    status.code = -3;
+                    break;
                 }
-                if (status.code === 1) {
-                    const orderData = this.getFakeOrderData(interpreter, "PlaceOrder");
-                    const checkId = this.getFakeOrderData(interpreter, "CheckOrder").id;
-                    if (orderData.id !== checkId) {
-                        status.code = -3;
-                        status.message = "Order Mismatch";
-                    }
-                    order = orderData.order;
+            }
+            if (status.code === 1) {
+                const orderData = this.getFakeOrderData(interpreter, "PlaceOrder");
+                const checkId = this.getFakeOrderData(interpreter, "CheckOrder").id;
+                if (orderData.id !== checkId) {
+                    status.code = -3;
+                    status.message = "Order Mismatch";
+                }
+                if (orderData.order instanceof Array) {
+                    order = orderData.order.filter((item) => item instanceof RoAssociativeArray);
                 }
             }
             this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
