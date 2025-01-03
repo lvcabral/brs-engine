@@ -47,8 +47,8 @@ There are several features from the **BrightScript** language and components tha
 
 ## Mocked Components and Libraries
 
-* RAF (Roku Ads Framework) object `Roku_Ads` is mocked with the most common methods available.
-* Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked (a fake server feature will be implemented in the future).
+* RAF (Roku Ads Framework) object `Roku_Ads` is mocked with the most common methods available returning static values.
+* Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature.
 * Several components have their methods and events mocked, they return constant values to prevent crash. Those are mostly related to device behaviors that are not possible to replicate in a browser environment or simply not applicable to the engine.
 
 ## Out of Scope

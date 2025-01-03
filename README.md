@@ -1,6 +1,6 @@
 # BrightScript Simulation Engine
 
-An intepreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
+An interpreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
 [![NPM Version](https://badge.fury.io/js/brs-engine.svg?style=flat)](https://npmjs.org/package/brs-engine)
@@ -20,7 +20,7 @@ This repository was originally a fork from [**brs**](https://github.com/rokucomm
 **Important Notes:**
 
 - At this stage, apps based on **SceneGraph** are not yet supported, but this feature is in the backlog to be implemented. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is still missing and what is out of scope.
-- Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**, and also to be used as a framework for running the **BrighScript** language in other platforms.<br /><br />
+- Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**, and also to be used as a framework for running the **BrightScript** language in other platforms.<br /><br />
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
@@ -67,7 +67,7 @@ This repository provides a sample web application you can build and run ([learn 
 
 ### Desktop Application
 
-The simulator is also available as a multi-platform **desktop application** (Windows, Linux & macOS) that uses the package published by this project. The application introduces several aditional Roku features, such as the **ECP** (External Control Protocol) and **Remote Console** servers to allow integration with tools like Telnet or [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript). You can also change the device configurations such as screen resolution, keyboard control customization, localization, among others. Download the installers and find more information in the links below:
+The simulator is also available as a multi-platform **desktop application** (Windows, Linux & macOS) that uses the package published by this project. The application introduces several additional Roku features, such as the **ECP** (External Control Protocol) and **Remote Console** servers to allow integration with tools like Telnet or [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript). You can also change the device configurations such as screen resolution, keyboard control customization, localization, among others. Download the installers and find more information in the links below:
 
 - Source code and documentation: [app repository](https://github.com/lvcabral/brs-desktop).
 - Architecture Overview: [diagram picture](https://github.com/lvcabral/brs-desktop/blob/master/docs/images/brs-desktop-architecture-overview.png).
@@ -101,6 +101,6 @@ There are many ways you can use and/or participate in the project, read the docu
 
 ## License
 
-Copyright © 2019-2024 Marcelo Lv Cabral. All rights reserved.
+Copyright © 2019-2025 Marcelo Lv Cabral. All rights reserved.
 
 Licensed under the [MIT](LICENSE) license.
