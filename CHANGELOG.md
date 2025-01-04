@@ -1,5 +1,44 @@
 # Changelog
 
+<a name="v1.8.0"></a>
+
+## [v1.8.0 - Multiple Improvements](https://github.com/lvcabral/brs-engine/releases/tag/v1.7.3) - 03 January 2025
+
+This release is full of refactorings and improvements on the engine internals, the folder structure was also changed with the `app` folder renamed to `browser` and the `src/worker` folder renamed to `src/core`. The File System now supports the external USB volume (`ext1:`) that can be mounted from an additional `zip` file (or folder in CLI). Several other changes and improvements were done in the registry and apps management. The `roMessagePort` component was simplified and improved, and new events are now supported, in particular: `roInput` (via ECP and API) and `roChannelStore` using the `fakeServer(true)` option. The BrightScript language and components are now synchronized with Roku OS 14.
+Check specific PRs in the log below for more information.
+
+### Release Changes
+
+* Implemented `roDeviceInfo.getExternalIP()` by [@lvcabral](https://github.com/lvcabral) in [#397](https://github.com/lvcabral/brs-engine/pull/397)
+* Prevent crash when using invalid URL() by [@lvcabral](https://github.com/lvcabral) in [398](#https://github.com/lvcabral/brs-engine/pull/398)
+* Improved check for `SharedArrayBuffer` support by [@lvcabral](https://github.com/lvcabral) in [#399](https://github.com/lvcabral/brs-engine/pull/399)
+* Finish optional chaining operator implementation by [@lvcabral](https://github.com/lvcabral) in [#400](https://github.com/lvcabral/brs-engine/pull/400)
+* Added support for `RokuBrowser` library and `roNDK` component. by [@lvcabral](https://github.com/lvcabral) in [#402](https://github.com/lvcabral/brs-engine/pull/402)
+* Implemented support to mount External storage as volume `ext1:` by [@lvcabral](https://github.com/lvcabral) in [#403](https://github.com/lvcabral/brs-engine/pull/403)
+* Several Registry improvements by [@lvcabral](https://github.com/lvcabral) in [#407](https://github.com/lvcabral/brs-engine/pull/407)
+* Changed the `For Each` behavior to match Roku, using `ifEnum` iteration index by [@lvcabral](https://github.com/lvcabral) in [#410](https://github.com/lvcabral/brs-engine/pull/410)
+* Several App handling/management improvements by [@lvcabral](https://github.com/lvcabral) in [#413](https://github.com/lvcabral/brs-engine/pull/413)
+* Added `Platform` info to the result of `roDeviceInfo.getModelDetails()` by [@lvcabral](https://github.com/lvcabral) in [#414](https://github.com/lvcabral/brs-engine/pull/414)
+* Allowed `m` object to be re-assigned in Function scope by [@lvcabral](https://github.com/lvcabral) in [#417](https://github.com/lvcabral/brs-engine/pull/417)
+* Implemented `global` static object by [@lvcabral](https://github.com/lvcabral) in [#418](https://github.com/lvcabral/brs-engine/pull/418)
+* Implemented BrightScript features up to Roku OS 14.0 by [@lvcabral](https://github.com/lvcabral) in [#420](https://github.com/lvcabral/brs-engine/pull/420)
+* Add new supported control buttons and ECP command by [@lvcabral](https://github.com/lvcabral) in [#421](https://github.com/lvcabral/brs-engine/pull/421)
+* Remove debug local ips by [@lvcabral](https://github.com/lvcabral) in [#422](https://github.com/lvcabral/brs-engine/pull/422)
+* Fixed `CreateObject` behavior to match Roku by [@lvcabral](https://github.com/lvcabral) in [#423](https://github.com/lvcabral/brs-engine/pull/423)
+* Raised Runtime Error with Interpreter `addError` method by [@lvcabral](https://github.com/lvcabral) in [#424](https://github.com/lvcabral/brs-engine/pull/424)
+* Implemented `roSystemLog` and refactored `roMessagePort` by [@lvcabral](https://github.com/lvcabral) in [#426](https://github.com/lvcabral/brs-engine/pull/426)
+* Fixed `dev` app saving data on app list by [@lvcabral](https://github.com/lvcabral) in [#427](https://github.com/lvcabral/brs-engine/pull/427)
+* Implemented function `toAssociativeArray()` to simplify creation of AA in TypeScript code by [@lvcabral](https://github.com/lvcabral) in [#428](https://github.com/lvcabral/brs-engine/pull/428)
+* Implemented `roDeviceInfoEvent` by [@lvcabral](https://github.com/lvcabral) in [#429](https://github.com/lvcabral/brs-engine/pull/429)
+* Implement `roCECStatus` component by [@lvcabral](https://github.com/lvcabral) in [#430](https://github.com/lvcabral/brs-engine/pull/430)
+* Add fake server support to `roChannelStore` by [@lvcabral](https://github.com/lvcabral) in [#431](https://github.com/lvcabral/brs-engine/pull/431)
+* Fix File System when using `root` or `ext` CLI flags and running on Linux by [@lvcabral](https://github.com/lvcabral) in [#432](https://github.com/lvcabral/brs-engine/pull/432)
+* Restricted `FlexObject` content types by [@lvcabral](https://github.com/lvcabral) in [#433](https://github.com/lvcabral/brs-engine/pull/433)
+* Implemented support for `roInputEvent` generated via ECP or API by [@lvcabral](https://github.com/lvcabral) in [#434](https://github.com/lvcabral/brs-engine/pull/434)
+* build(deps): bump elliptic from 6.5.7 to 6.6.0 by @dependabot in [#394](https://github.com/lvcabral/brs-engine/pull/394)
+
+[Full Changelog][v1.8.0]
+
 <a name="v1.7.3"></a>
 
 ## [v1.7.3 - Fixed Optional Operators and For Each](https://github.com/lvcabral/brs-engine/releases/tag/v1.7.3) - 05 December 2024
@@ -811,6 +850,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.0]: https://github.com/lvcabral/brs-engine/compare/v1.7.2...v1.8.0
 [v1.7.3]: https://github.com/lvcabral/brs-engine/compare/v1.7.0...v1.7.3
 [v1.7.0]: https://github.com/lvcabral/brs-engine/compare/v1.6.1...v1.7.0
 [v1.6.1]: https://github.com/lvcabral/brs-engine/compare/v1.6.0...v1.6.1
