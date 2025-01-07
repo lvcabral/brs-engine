@@ -26,11 +26,19 @@ export class Int32 implements Numeric, Comparable, Boxable {
      *              integer.
      */
     constructor(value: number | Long) {
+        const maxInt = 0x80000000;
         if (value instanceof Long) {
             // RBI ignores the 32 most significant bits when converting a 64-bit int to a 32-bit int, effectively
             // performing a bitwise AND with `0x00000000FFFFFFFF`.  Since Long already tracks the lower and upper
             // portions as separate 32-bit values, we can simply extract the least-significant portion.
             value = value.low;
+        } else if (value > (maxInt-1) || value < -maxInt) {
+            // RBI truncates the value to a 32-bit integer, if not identified as LongInt, so we'll do the same here
+            if (value > maxInt - 1) {
+                value = maxInt - 1;
+            } else {
+                value = -maxInt;
+            }
         }
         this.value = Math.trunc(value);
     }
