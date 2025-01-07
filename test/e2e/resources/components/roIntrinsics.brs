@@ -10,6 +10,10 @@ sub main()
     integerObject.setInt(23)
     longIntegerObject = createObject("roLongInteger")
     longIntegerObject.setLongInt(2000111222333)
+    intTruncated = createObject("roInt")
+    intTruncated.setInt(2000111222333)
+    intConverted = createObject("roInt")
+    intConverted.setInt(2000111222333&)
 
     print "Boolean object A " booleanObjectA.toStr()
     print "Boolean object B " booleanObjectB
@@ -25,4 +29,6 @@ sub main()
     print "Integer to string "integerObject.toStr()
     print "LongInteger object type"type(longIntegerObject)
     print "LongInteger to string "longIntegerObject.toStr()
+    print "Integer truncated from LongInteger "intTruncated
+    print "Integer converted from LongInteger "intConverted
 end sub
