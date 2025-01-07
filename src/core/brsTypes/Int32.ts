@@ -32,7 +32,7 @@ export class Int32 implements Numeric, Comparable, Boxable {
             // performing a bitwise AND with `0x00000000FFFFFFFF`.  Since Long already tracks the lower and upper
             // portions as separate 32-bit values, we can simply extract the least-significant portion.
             value = value.low;
-        } else if (value > (maxInt-1) || value < -maxInt) {
+        } else if (value > maxInt - 1 || value < -maxInt) {
             // RBI truncates the value to a 32-bit integer, if not identified as LongInt, so we'll do the same here
             if (value > maxInt - 1) {
                 value = maxInt - 1;
