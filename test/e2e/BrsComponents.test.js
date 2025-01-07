@@ -377,6 +377,8 @@ describe("end to end brightscript functions", () => {
             "Integer to string 23",
             "LongInteger object typeroLongInteger",
             "LongInteger to string 2000111222333",
+            "Integer truncated from LongInteger  2147483647",
+            "Integer converted from LongInteger -1343537603",
         ]);
     });
 
