@@ -246,6 +246,12 @@ describe("end to end brightscript functions", () => {
             "TimeLoc - custom: 13 pm",
             "TimeLoc - empty: 1:14 pm",
             "TimeLoc - no seconds: 1:14:ss pm",
+            "------ New Long Integer support ------",
+            "2038-01-19T03:14:07Z",
+            "1914-09-25T18:31:44Z",
+            "2050-11-01T01:00:00Z",
+            " 2147483647",
+            " 2550877200",
         ]);
     });
 
