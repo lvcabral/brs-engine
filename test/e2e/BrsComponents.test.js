@@ -395,7 +395,6 @@ describe("end to end brightscript functions", () => {
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "roInvalid",
             "<Component: roInvalid>",
-            "invalid",
             "true",
         ]);
     });
