@@ -40,7 +40,11 @@ export const CreateObject = new Callable("CreateObject", {
                 return BrsInvalid.Instance;
             } else if (minParams >= 0 && additionalArgs.length !== minParams) {
                 interpreter.addError(
-                    new RuntimeError(RuntimeErrorDetail.RoWrongNumberOfParams, interpreter.location)
+                    new RuntimeError(
+                        RuntimeErrorDetail.RoWrongNumberOfParams,
+                        interpreter.location,
+                        interpreter.stack.slice(0, -1)
+                    )
                 );
             }
             try {

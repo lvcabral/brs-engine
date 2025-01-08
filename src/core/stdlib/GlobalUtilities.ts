@@ -117,7 +117,11 @@ export const ObjFun = new Callable("ObjFun", {
             }
         }
         interpreter.addError(
-            new RuntimeError(RuntimeErrorDetail.MemberFunctionNotFound, interpreter.location)
+            new RuntimeError(
+                RuntimeErrorDetail.MemberFunctionNotFound,
+                interpreter.location,
+                interpreter.stack.slice(0, -1)
+            )
         );
     },
 });
