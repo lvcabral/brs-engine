@@ -89,7 +89,7 @@
     "readable-stream": "^4.3.0",
     "readline-sync": "^1.4.10",
     "restana": "^5.0.0",
-    "sprintf-js": "^1.1.2",
+    "sprintf-js": "lvcabral/sprintf.js",
     "stats.js": "^0.17.0",
     "stream-browserify": "^3.0.0",
     "strip-ansi": "^7.1.0",

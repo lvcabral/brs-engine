@@ -99,6 +99,35 @@ describe("end to end syntax", () => {
         ]);
     });
 
+    test("integer-hex-format.brs", async () => {
+        await execute([resourceFile("integer-hex-format.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "3405705229 = 0xCAFEF00D",
+            "-889262067 = 0xFFFFFFFFCAFEF00D",
+            "150460469257 = 0x2308249009",
+            "-255 = 0xFFFFFFFFFFFFFF01",
+            "-255 = 0xFFFFFF01",
+            "LongInteger",
+            "3405705229 = 0xCAFEF00D",
+            "Integer",
+            "-889262067 = 0xCAFEF00D",
+            "LongInteger",
+            "4294967296 = 0x100000000",
+            " 0",
+            "Integer",
+            "0 = 0x0",
+            " 0",
+            "Double",
+            "4294967296",
+            " 2147483647",
+            "LongInteger",
+            "4294967296 = 0x100000000",
+            " 0",
+        ]);
+    });
+
+
     test("negative-precedence.brs", async () => {
         await execute([resourceFile("negative-precedence.brs")], outputStreams);
 
@@ -273,16 +302,16 @@ describe("end to end syntax", () => {
 
         expect(allArgs(outputStreams.stdout.write).join("")).toEqual(
             "lorem  1psum\r\n" +
-                " 9 is equal to 9\r\n" +
-                //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
-                //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
-                "column a        column b        column c        column d\r\n" +
-                //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
-                //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
-                "   I started at col 3    I started at col 25\r\n" +
-                "0123 4\r\n" +
-                "lorem    ipsum    dolor    sit    amet\r\n" +
-                "no newline"
+            " 9 is equal to 9\r\n" +
+            //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
+            //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
+            "column a        column b        column c        column d\r\n" +
+            //   0   0   0   1   1   2   2   2   3   3   4   4   4   5   5
+            //   0   4   8   2   6   0   4   8   2   6   0   4   8   2   6
+            "   I started at col 3    I started at col 25\r\n" +
+            "0123 4\r\n" +
+            "lorem    ipsum    dolor    sit    amet\r\n" +
+            "no newline"
         );
     });
 

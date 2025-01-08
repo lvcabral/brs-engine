@@ -5,6 +5,8 @@ import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
 import { vsprintf } from "sprintf-js";
+import { RuntimeError, RuntimeErrorDetail } from "../../Error";
+import { Interpreter } from "../../interpreter";
 
 export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -72,7 +74,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
             args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
             returns: ValueKind.String,
         },
-        impl: (_interpreter, format: BrsString) => {
+        impl: (interpreter: Interpreter, format: BrsString) => {
             if (format instanceof BrsString) {
                 const tokens = format.value.split("%").length - 1;
                 if (tokens === 0) {
@@ -82,7 +84,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
                 try {
                     return new BrsString(vsprintf(format.value, params));
                 } catch (error: any) {
-                    throw new Error("Invalid Format Specifier (runtime error &h24)");
+                    throw new RuntimeError(RuntimeErrorDetail.InvalidFormatSpecifier, interpreter.location);
                 }
             }
             return new BrsString(this.intrinsic.toString());
