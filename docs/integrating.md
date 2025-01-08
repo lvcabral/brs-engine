@@ -16,7 +16,7 @@ $ yarn add brs-engine
 
 This repository provides a sample web application for testing the engine, located under the `browser/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
 
-To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](engine-api.md).
+To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](./engine-api.md).
 
 **Important Notes:**
 
@@ -48,7 +48,7 @@ If you added a break point (`stop`) in your code, you can also debug using the _
 
 The Roku `registry` data is stored on the browser **Local Storage** and you can inspect it also using the Developer Tools (Application tab).
 
-If your code does show an error in some scenario not listed on the [limitations documentation](docs/limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-engine/issues).
+If your code does show an error in some scenario not listed on the [limitations documentation](./limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-engine/issues).
 
 ## Games and Demos
 
