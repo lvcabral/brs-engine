@@ -84,7 +84,10 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
                 try {
                     return new BrsString(vsprintf(format.value, params));
                 } catch (error: any) {
-                    throw new RuntimeError(RuntimeErrorDetail.InvalidFormatSpecifier, interpreter.location);
+                    throw new RuntimeError(
+                        RuntimeErrorDetail.InvalidFormatSpecifier,
+                        interpreter.location
+                    );
                 }
             }
             return new BrsString(this.intrinsic.toString());
