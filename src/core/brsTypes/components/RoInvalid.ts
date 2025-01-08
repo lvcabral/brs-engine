@@ -1,7 +1,5 @@
 import { BrsComponent } from "./BrsComponent";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { Callable } from "../Callable";
-import { Interpreter } from "../../interpreter";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 
@@ -17,9 +15,6 @@ export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
         super("roInvalid");
 
         this.intrinsic = BrsInvalid.Instance;
-        this.registerMethods({
-            ifToStr: [this.toStr],
-        });
     }
 
     unbox() {
@@ -41,16 +36,4 @@ export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
     toString(_parent?: BrsType): string {
         return "<Component: roInvalid>";
     }
-
-    // ---------- ifToStr ----------
-
-    private readonly toStr = new Callable("toStr", {
-        signature: {
-            args: [],
-            returns: ValueKind.String,
-        },
-        impl: (_interpreter: Interpreter) => {
-            return new BrsString(this.intrinsic.toString());
-        },
-    });
 }
