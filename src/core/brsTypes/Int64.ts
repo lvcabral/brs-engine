@@ -43,7 +43,7 @@ export class Int64 implements Numeric, Comparable, Boxable {
 
         if (asString.toLowerCase().startsWith("&h")) {
             radix = 16; // it's a hex literal!
-            asString = asString.slice(2); // remove "&h" from the string representation
+            asString = asString.slice(2).replace("&", ""); // remove "&h" from the start and tailing "&" if exists
         }
 
         let i64 = new Int64(Long.fromString(asString, undefined, radix));

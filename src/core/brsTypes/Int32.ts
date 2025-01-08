@@ -53,7 +53,8 @@ export class Int32 implements Numeric, Comparable, Boxable {
     static fromString(asString: string): Int32 {
         if (asString.toLowerCase().startsWith("&h")) {
             asString = asString.slice(2); // remove "&h" from the string representation
-            return new Int32(Number.parseInt(asString, 16));
+            const signedInt32 = Number.parseInt(asString, 16) | 0; // RBI coerces to 32-bit signed int when parsing hex
+            return new Int32(signedInt32);
         }
         return new Int32(Number.parseFloat(asString));
     }
