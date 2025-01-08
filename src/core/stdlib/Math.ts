@@ -48,7 +48,11 @@ export const Cint = new Callable("Cint", {
             return toInt32(x, "round");
         }
         interpreter.addError(
-            new RuntimeError(RuntimeErrorDetail.TypeMismatch, interpreter.location)
+            new RuntimeError(
+                RuntimeErrorDetail.TypeMismatch,
+                interpreter.location,
+                interpreter.stack.slice(0, -1)
+            )
         );
     },
 });
@@ -76,7 +80,11 @@ export const Fix = new Callable("Fix", {
             return toInt32(x, "trunc");
         }
         interpreter.addError(
-            new RuntimeError(RuntimeErrorDetail.TypeMismatch, interpreter.location)
+            new RuntimeError(
+                RuntimeErrorDetail.TypeMismatch,
+                interpreter.location,
+                interpreter.stack.slice(0, -1)
+            )
         );
     },
 });
@@ -95,7 +103,11 @@ export const Int = new Callable("Int", {
             return toInt32(x);
         }
         interpreter.addError(
-            new RuntimeError(RuntimeErrorDetail.TypeMismatch, interpreter.location)
+            new RuntimeError(
+                RuntimeErrorDetail.TypeMismatch,
+                interpreter.location,
+                interpreter.stack.slice(0, -1)
+            )
         );
     },
 });
