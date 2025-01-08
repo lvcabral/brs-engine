@@ -34,11 +34,7 @@ export class Int32 implements Numeric, Comparable, Boxable {
             value = value.low;
         } else if (value > maxInt - 1 || value < -maxInt) {
             // RBI truncates the value to a 32-bit integer, if not identified as LongInt, so we'll do the same here
-            if (value > maxInt - 1) {
-                value = maxInt - 1;
-            } else {
-                value = -maxInt;
-            }
+            value = value < -maxInt ? -maxInt : maxInt - 1;
         }
         this.value = Math.trunc(value);
     }
