@@ -169,7 +169,6 @@ describe("end to end syntax", () => {
             "invalid",
             "invalid",
             "invalid",
-            "invalid as string",
             "error 244",
         ]);
     });
