@@ -20,6 +20,8 @@ import {
 } from "../Draw2D";
 import UPNG from "upng-js";
 import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -98,6 +100,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
         this.alphaEnable = false;
         const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
+        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
@@ -118,8 +122,8 @@ export class RoScreen extends BrsComponent implements BrsValue {
                 this.getWidth,
                 this.getHeight,
             ],
-            ifSetMessagePort: [this.setMessagePort, this.setPort],
-            ifGetMessagePort: [this.getMessagePort, this.getPort],
+            ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
+            ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],
         });
     }
 
@@ -621,62 +625,6 @@ export class RoScreen extends BrsComponent implements BrsValue {
             return new RoByteArray(
                 new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
             );
-        },
-    });
-
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getPort = new Callable("getPort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            const component = this.getComponentName();
-            this.port?.unregisterCallback(component);
-            this.port = port;
-            this.port.registerCallback(component, this.getNewEvents.bind(this));
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setPort = new Callable("setPort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            const component = this.getComponentName();
-            this.port?.unregisterCallback(component);
-            this.port = port;
-            this.port.registerCallback(component, this.getNewEvents.bind(this));
-            return BrsInvalid.Instance;
         },
     });
 }
