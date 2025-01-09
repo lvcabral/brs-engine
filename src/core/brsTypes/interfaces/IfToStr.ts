@@ -1,15 +1,29 @@
-import { BrsComponent, BrsInvalid, BrsString, Callable, StdlibArgument, ValueKind } from "..";
+import {
+    BrsComponent,
+    BrsInvalid,
+    BrsString,
+    Callable,
+    isBoxedNumber,
+    isBrsString,
+    StdlibArgument,
+    ValueKind,
+} from "..";
 import { RuntimeError, RuntimeErrorDetail } from "../../Error";
 import { Interpreter } from "../../interpreter";
 import { vsprintf } from "sprintf-js";
 
 export class IfToStr {
     private readonly component: any;
-    private readonly defaultFormat: string;
+    private readonly defaultFormat?: string;
+    private readonly defaultRegEx?: RegExp;
 
-    constructor(value: BrsComponent, defaultFormat: string = "") {
+    constructor(value: BrsComponent, format: string | RegExp = "") {
         this.component = value;
-        this.defaultFormat = defaultFormat;
+        if (format instanceof RegExp) {
+            this.defaultRegEx = format;
+        } else {
+            this.defaultFormat = format;
+        }
     }
 
     /** Returns the object's value formatted as a string according to the specified printf-like format string. */
@@ -19,10 +33,22 @@ export class IfToStr {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter, format: BrsString | BrsInvalid) => {
-            if (format instanceof BrsInvalid && this.defaultFormat.trim() !== "") {
-                format = new BrsString(this.defaultFormat);
-            } else if (format instanceof BrsInvalid) {
-                return new BrsString(this.component.toString());
+            if (format instanceof BrsInvalid) {
+                if (this.defaultFormat?.length) {
+                    format = new BrsString(this.defaultFormat);
+                } else if (isBoxedNumber(this.component)) {
+                    return new BrsString(this.component.toString());
+                } else if (this.defaultRegEx) {
+                    return new BrsString(this.component.toString().replace(this.defaultRegEx, ""));
+                } else {
+                    return new BrsString(this.component.getValue().toString());
+                }
+            } else if (!isBoxedNumber(this.component) && !isBrsString(this.component)) {
+                throw new RuntimeError(
+                    RuntimeErrorDetail.MemberFunctionNotFound,
+                    interpreter.location,
+                    interpreter.stack.slice(0, -1)
+                );
             }
             const tokens = format.value.split("%").length - 1;
             if (tokens === 0) {
