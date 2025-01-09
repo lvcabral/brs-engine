@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
-import { ifToStr } from "../interfaces/ifToStrModule";
+import { IfToStr } from "../interfaces/IfToStr";
 
 export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -22,7 +22,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
         }
         this.registerMethods({
             ifBoolean: [this.getBoolean, this.setBoolean],
-            ifToStr: [new ifToStr(this).toStr],
+            ifToStr: [new IfToStr(this).toStr],
         });
     }
 

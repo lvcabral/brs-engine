@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
-import { ifToStr } from "../interfaces/ifToStrModule";
+import { IfToStr } from "../interfaces/IfToStr";
 
 export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -20,7 +20,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
         this.intrinsic = new Int64(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
         this.registerMethods({
             ifLongInt: [this.getLongInt, this.setLongInt],
-            ifToStr: [new ifToStr(this).toStr],
+            ifToStr: [new IfToStr(this).toStr],
         });
     }
 
