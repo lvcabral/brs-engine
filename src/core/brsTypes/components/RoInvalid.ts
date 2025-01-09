@@ -2,6 +2,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
+import { IfToStr } from "../interfaces/IfToStr";
 
 export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -15,6 +16,9 @@ export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
         super("roInvalid");
 
         this.intrinsic = BrsInvalid.Instance;
+        this.registerMethods({
+            ifToStr: [new IfToStr(this).toStr],
+        });
     }
 
     unbox() {

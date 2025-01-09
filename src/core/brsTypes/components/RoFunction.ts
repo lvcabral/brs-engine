@@ -17,10 +17,10 @@ export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
     constructor(sub: Callable) {
         super("roFunction");
 
-        this.intrinsic = sub;
+        this.intrinsic = sub ?? new Callable(undefined);
         this.registerMethods({
             ifFunction: [this.getSub, this.setSub],
-            ifToStr: [new IfToStr(this).toStr],
+            ifToStr: [new IfToStr(this, /[<>]/g).toStr],
         });
     }
 
@@ -33,7 +33,7 @@ export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
     }
 
     toString(_parent?: BrsType): string {
-        return this.intrinsic.toString().replace(/[<>]/g, "");
+        return this.intrinsic.toString();
     }
 
     private readonly getSub = new Callable("getSub", {

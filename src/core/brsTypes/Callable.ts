@@ -201,7 +201,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
     constructor(name: string | undefined, ...signatures: SignatureAndImplementation[]) {
         this.name = name;
         this.signatures = signatures;
-        if (!this.name || this.name === "[Function]") {
+        if (this.signatures.length && (!this.name || this.name === "[Function]")) {
             this.name = `$anon_${++anonCounter}`;
         }
     }
@@ -219,7 +219,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
     }
 
     toString(parent?: Brs.BrsType): string {
-        return `<Function: ${this.name?.toLowerCase()}>`;
+        return `<Function: ${this.name?.toLowerCase() ?? "UNDEFINED"}>`;
     }
 
     box() {
