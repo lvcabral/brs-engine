@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
-import { ifToStr } from "../interfaces/ifToStr";
+import { ifToStr } from "../interfaces/ifToStrModule";
 
 export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;

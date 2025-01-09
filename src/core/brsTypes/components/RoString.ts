@@ -10,7 +10,7 @@ import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RuntimeError, RuntimeErrorDetail } from "../../Error";
 import { sprintf } from "sprintf-js";
-import { ifToStr } from "../interfaces/ifToStr";
+import { ifToStr } from "../interfaces/ifToStrModule";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;

@@ -36,7 +36,7 @@ import {
     BrsInterface,
     toAssociativeArray,
 } from "../brsTypes";
-import { tryCoerce } from "../brsTypes/Coercions";
+import { tryCoerce } from "../brsTypes/Coercion";
 import { shared, stats } from "..";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";

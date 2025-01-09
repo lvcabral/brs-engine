@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Double } from "../Double";
-import { ifToStr } from "../interfaces/ifToStr";
+import { ifToStr } from "../interfaces/ifToStrModule";
 
 export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;

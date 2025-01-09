@@ -3,7 +3,7 @@ import * as Brs from ".";
 import * as Expr from "../parser/Expression";
 import { Scope } from "../interpreter/Environment";
 import { Location } from "../lexer";
-import { tryCoerce } from "./Coercions";
+import { tryCoerce } from "./Coercion";
 import { generateArgumentMismatchError } from "../interpreter/ArgumentMismatch";
 
 let anonCounter = 0;

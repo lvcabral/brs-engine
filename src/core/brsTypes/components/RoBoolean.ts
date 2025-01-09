@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
-import { ifToStr } from "../interfaces/ifToStr";
+import { ifToStr } from "../interfaces/ifToStrModule";
 
 export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
