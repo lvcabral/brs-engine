@@ -1,7 +1,7 @@
-import { BrsInvalid, RoBitmap, RoRegion, RoScreen } from ".";
-import { BrsComponent } from "./components/BrsComponent";
-import { RoCompositor } from "./components/RoCompositor";
-import { Int32 } from "./Int32";
+import { BrsInvalid, RoBitmap, RoRegion, RoScreen } from "..";
+import { BrsComponent } from "../components/BrsComponent";
+import { RoCompositor } from "../components/RoCompositor";
+import { Int32 } from "../Int32";
 import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
 
 export type BrsDraw2D = RoBitmap | RoRegion | RoScreen;
