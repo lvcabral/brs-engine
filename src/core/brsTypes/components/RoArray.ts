@@ -4,6 +4,7 @@ import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import { IfEnum } from "../interfaces/IfEnum";
 
 export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -35,6 +36,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             );
         }
         this.enumIndex = this.elements.length ? 0 : -1;
+        const ifEnum = new IfEnum(this);
         this.registerMethods({
             ifArray: [
                 this.peek,
@@ -53,7 +55,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             ifArraySort: [this.sort, this.sortBy, this.reverse],
             ifArraySizeInfo: [this.capacity, this.isResizable],
             ifArraySlice: [this.slice],
-            ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
+            ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
     }
 
@@ -503,53 +505,6 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.resizable);
-        },
-    });
-
-    // ifEnum
-
-    /** Checks whether the array contains no elements. */
-    private readonly isEmpty = new Callable("isEmpty", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.elements.length === 0);
-        },
-    });
-
-    /** Checks whether the current position is not past the end of the enumeration. */
-    private readonly isNext = new Callable("isNext", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return this.hasNext();
-        },
-    });
-
-    /** Resets the current position to the first element of the enumeration. */
-    private readonly reset = new Callable("reset", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            this.resetNext();
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Increments the position of an enumeration. */
-    private readonly next = new Callable("next", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.getNext() ?? BrsInvalid.Instance;
         },
     });
 }
