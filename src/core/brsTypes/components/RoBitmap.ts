@@ -18,7 +18,7 @@ import {
     drawRotatedObject,
     putImageAtPos,
     releaseCanvas,
-} from "../draw2d";
+} from "../Draw2D";
 import { RoByteArray } from "./RoByteArray";
 import { parseGIF, decompressFrames } from "gifuct-js";
 import fileType from "file-type";

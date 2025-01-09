@@ -15,7 +15,7 @@ import {
     drawImageToContext,
     drawObjectToComponent,
     drawRotatedObject,
-} from "../draw2d";
+} from "../Draw2D";
 import UPNG from "upng-js";
 
 export class RoRegion extends BrsComponent implements BrsValue {

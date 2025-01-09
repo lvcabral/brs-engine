@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
-import { ifToStr } from "../interfaces/ifToStr";
+import { IfToStr } from "../interfaces/IfToStr";
 export class RoInt extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Int32;
@@ -17,7 +17,7 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
         super("roInt");
 
         this.intrinsic = new Int32(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
-        const toStr = new ifToStr(this).toStr;
+        const toStr = new IfToStr(this).toStr;
         this.registerMethods({
             ifInt: [this.getInt, this.setInt],
             // Per https://developer.roku.com/docs/references/brightscript/interfaces/ifintops.md,
