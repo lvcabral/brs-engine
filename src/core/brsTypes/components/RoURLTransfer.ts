@@ -8,6 +8,8 @@ import { Int32 } from "../Int32";
 import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { audioExt, videoExt, getRokuOSVersion } from "../../common";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 import fileType from "file-type";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
@@ -44,6 +46,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.inFile = new Array<string>();
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
+        const setPortIface = new IfSetMessagePort(this);
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifUrlTransfer: [
                 this.getIdentity,
@@ -89,8 +93,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.addCookies,
                 this.clearCookies,
             ],
-            ifSetMessagePort: [this.setMessagePort, this.setPort],
-            ifGetMessagePort: [this.getMessagePort, this.getPort],
+            ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
+            ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],
         });
     }
 
@@ -920,60 +924,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             // This method is mocked for compatibility
-            return BrsInvalid.Instance;
-        },
-    });
-
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getPort = new Callable("getPort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
-
-    /** Sets the roMessagePort to be used for all events from the audio player */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
-            this.port?.removeReference();
-            this.port = port;
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the audio player */
-    private readonly setPort = new Callable("setPort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
-            this.port?.removeReference();
-            this.port = port;
             return BrsInvalid.Instance;
         },
     });

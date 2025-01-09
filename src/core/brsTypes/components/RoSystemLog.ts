@@ -4,6 +4,8 @@ import { BrsEvent, BrsType, RoMessagePort, RoSystemLogEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BufferType, DataType } from "../../common";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoSystemLog extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -20,8 +22,14 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
     constructor(interpreter: Interpreter) {
         super("roSystemLog");
         this.interpreter = interpreter;
+        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
-            ifSystemLog: [this.enableType, this.setMessagePort, this.getMessagePort],
+            ifSystemLog: [
+                this.enableType,
+                setPortIface.setMessagePort,
+                getPortIface.getMessagePort,
+            ],
         });
     }
 
@@ -82,32 +90,6 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
                 this.enabledEvents.push(logType.value);
                 postMessage(`syslog,${logType.value}`);
             }
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            const component = port.getComponentName();
-            this.port?.unregisterCallback(component);
-            this.port = port;
-            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });

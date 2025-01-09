@@ -1,9 +1,11 @@
-import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -11,6 +13,8 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
 
     constructor() {
         super("roAppMemoryMonitor");
+        const setPortIface = new IfSetMessagePort(this);
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifAppMemoryMonitor: [
                 this.enableMemoryWarningEvent,
@@ -18,8 +22,8 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
                 this.getChannelAvailableMemory, // Since OS 12.5
                 this.getChannelMemoryLimit, // Since OS 13.0
             ],
-            ifSetMessagePort: [this.setMessagePort],
-            ifGetMessagePort: [this.getMessagePort],
+            ifSetMessagePort: [setPortIface.setMessagePort],
+            ifGetMessagePort: [getPortIface.getMessagePort],
         });
     }
 
@@ -87,35 +91,6 @@ export class RoAppMemoryMonitor extends BrsComponent implements BrsValue {
                 maxRokuManagedHeapMemory: heapSizeLimit,
             };
             return toAssociativeArray(memLimit);
-        },
-    });
-
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
-            this.port?.removeReference();
-            this.port = port;
-            return BrsInvalid.Instance;
         },
     });
 }

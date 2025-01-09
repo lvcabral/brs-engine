@@ -568,6 +568,9 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roEvents.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "roCECStatus.isActiveSource() = true",
+            "roChannelStoreEvent",
+            `<Component: roArray> =\n` + `[\n` + `]`,
+            "<Interface: ifChannelStoreEvent>",
             "roDeviceInfoEvent",
             "roDeviceInfoEvent.isCaptionModeChanged = true",
             "roDeviceInfoEvent.isStatusMessage = false",
@@ -577,9 +580,6 @@ describe("end to end brightscript functions", () => {
                 `    Mute: false\n` +
                 `}`,
             "<Interface: ifroDeviceInfoEvent>",
-            "roChannelStoreEvent",
-            `<Component: roArray> =\n` + `[\n` + `]`,
-            "<Interface: ifChannelStoreEvent>",
             "Invalid",
         ]);
     });

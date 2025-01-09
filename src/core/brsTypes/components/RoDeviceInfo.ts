@@ -1,12 +1,14 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray } from "..";
+import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray, BrsEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "./RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
 /// #if !BROWSER
@@ -39,6 +41,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private readonly displayModeName: string;
     private readonly displayResolution: { h: number; w: number };
     private readonly displayAspectRatio: string;
+    private captionsMessageSent: boolean = false;
     private captionsMode: string;
     private port?: RoMessagePort;
 
@@ -63,6 +66,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             this.displayModeName = "FHD";
         }
         this.captionsMode = interpreter.deviceInfo.get("captionsMode") ?? "Off";
+        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifDeviceInfo: [
                 this.getModel,
@@ -124,8 +129,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.enableScreensaverExitedEvent,
                 this.enableValidClockEvent,
                 this.getCreationTime, // undocumented
-                this.getMessagePort,
-                this.setMessagePort,
+                setPortIface.setMessagePort,
+                getPortIface.getMessagePort,
             ],
         });
     }
@@ -139,7 +144,18 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     }
 
     dispose() {
-        this.port?.removeReference();
+        this.port?.unregisterCallback(this.getComponentName());
+    }
+
+    // DeviceInfo Event -------------------------------------------------------------------------------
+
+    private getNewEvents() {
+        const events: BrsEvent[] = [];
+        if (!this.captionsMessageSent) {
+            events.push(new RoDeviceInfoEvent({ Mode: this.captionsMode, Mute: false }));
+            this.captionsMessageSent = true;
+        }
+        return events;
     }
 
     /** Returns the model name for the Roku Streaming Player device running the script. */
@@ -1027,32 +1043,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             return new BrsString(interpreter.creationTime ?? "");
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
-            this.port?.removeReference();
-            this.port = port;
-            this.port.pushMessage(new RoDeviceInfoEvent({ Mode: this.captionsMode, Mute: false }));
-            return BrsInvalid.Instance;
         },
     });
 }
