@@ -1,12 +1,10 @@
 import { BrsComponent } from "./BrsComponent";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
-import { vsprintf } from "sprintf-js";
-import { RuntimeError, RuntimeErrorDetail } from "../../Error";
-import { Interpreter } from "../../interpreter";
+import { ifToStr } from "../interfaces/ifToStr";
 
 export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -22,7 +20,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
         this.intrinsic = new Int64(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
         this.registerMethods({
             ifLongInt: [this.getLongInt, this.setLongInt],
-            ifToStr: [this.toStr],
+            ifToStr: [new ifToStr(this).toStr],
         });
     }
 
@@ -64,33 +62,6 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
         impl: (_interpreter, value: Int64) => {
             this.intrinsic = value;
             return BrsInvalid.Instance;
-        },
-    });
-
-    // ---------- ifToStr ----------
-
-    private readonly toStr = new Callable("toStr", {
-        signature: {
-            args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
-            returns: ValueKind.String,
-        },
-        impl: (interpreter: Interpreter, format: BrsString) => {
-            if (format instanceof BrsString) {
-                const tokens = format.value.split("%").length - 1;
-                if (tokens === 0) {
-                    return new BrsString(format.value);
-                }
-                const params = Array(tokens).fill(this.intrinsic.getValue());
-                try {
-                    return new BrsString(vsprintf(format.value, params));
-                } catch (error: any) {
-                    throw new RuntimeError(
-                        RuntimeErrorDetail.InvalidFormatSpecifier,
-                        interpreter.location
-                    );
-                }
-            }
-            return new BrsString(this.intrinsic.toString());
         },
     });
 }

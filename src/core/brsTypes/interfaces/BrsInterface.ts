@@ -1,4 +1,4 @@
-import { ValueKind, BrsValue, BrsBoolean } from "./BrsType";
+import { ValueKind, BrsValue, BrsBoolean } from "../BrsType";
 
 /**
  * A small typed wrapper around a BrightScript Interface.

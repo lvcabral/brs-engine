@@ -2,7 +2,7 @@ import { bscs } from "../..";
 import { BrsType } from "..";
 import { BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable } from "../Callable";
-import { BrsInterface } from "../BrsInterface";
+import { BrsInterface } from "../interfaces/BrsInterface";
 
 export class BrsComponent {
     private methods: Map<string, Callable> = new Map();

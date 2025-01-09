@@ -3,11 +3,11 @@ sub acceptsInteger(t as integer)
 end sub
 
 sub acceptsFloat(t as float)
-    print "received: " t.toStr()
+    print "received: " t.toStr("%e")
 end sub
 
 sub acceptsDouble(t as double)
-    print "received: " t.toStr()
+    print "received: " t.toStr("%e")
 end sub
 
 sub acceptsLongInt(t as longinteger)
@@ -27,7 +27,7 @@ function main()
         value = kv.value
 
         for each f in [acceptsInteger, acceptsFloat, acceptsDouble, acceptsLongInt]
-            print "calling '" f "' with argument of type '" _type "' with value: " value.toStr()
+            print "calling '" f.toStr() "' with argument of type '" _type "' with value: " value.toStr()
             f(value)
         end for
     end for

@@ -1,10 +1,10 @@
 import { BrsComponent } from "./BrsComponent";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Float } from "../Float";
-import { vsprintf } from "sprintf-js";
+import { ifToStr } from "../interfaces/ifToStr";
 
 export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -20,7 +20,7 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
         this.intrinsic = new Float(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
         this.registerMethods({
             ifFloat: [this.getFloat, this.setFloat],
-            ifToStr: [this.toStr],
+            ifToStr: [new ifToStr(this, "%g").toStr],
         });
     }
 
@@ -60,30 +60,6 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
         impl: (_interpreter, value: Float) => {
             this.intrinsic = value;
             return BrsInvalid.Instance;
-        },
-    });
-
-    // -------------- ifToStr --------------
-
-    private readonly toStr = new Callable("toStr", {
-        signature: {
-            args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
-            returns: ValueKind.String,
-        },
-        impl: (_interpreter, format: BrsString) => {
-            if (format instanceof BrsString) {
-                const tokens = format.value.split("%").length - 1;
-                if (tokens === 0) {
-                    return new BrsString(format.value);
-                }
-                const params = Array(tokens).fill(this.intrinsic.getValue());
-                try {
-                    return new BrsString(vsprintf(format.value, params));
-                } catch (error: any) {
-                    throw new Error("Invalid Format Specifier (runtime error &h24)");
-                }
-            }
-            return new BrsString(this.intrinsic.toString());
         },
     });
 }
