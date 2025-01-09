@@ -1,10 +1,12 @@
-import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, RoMessagePort } from "..";
-import { Callable, StdlibArgument } from "../Callable";
+import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoCECStatusEvent } from "./RoCECStatusEvent";
 import { DataType } from "../../common";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoCECStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -16,8 +18,14 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
         super("roCECStatus");
         this.interpreter = interpreter;
         this.active = 1; // Default to active
+        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
-            ifCECStatus: [this.isActiveSource, this.getMessagePort, this.setMessagePort],
+            ifCECStatus: [
+                this.isActiveSource,
+                setPortIface.setMessagePort,
+                getPortIface.getMessagePort,
+            ],
         });
     }
 
@@ -33,7 +41,7 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
         this.port?.unregisterCallback(this.getComponentName());
     }
 
-    // System Log Event -------------------------------------------------------------------------------
+    // CEC Status Event -------------------------------------------------------------------------------
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
@@ -56,32 +64,6 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const cecActive = Atomics.load(this.interpreter.sharedArray, DataType.CEC);
             return BrsBoolean.from(cecActive !== 0);
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            const component = port.getComponentName();
-            this.port?.unregisterCallback(component);
-            this.port = port;
-            this.port.registerCallback(component, this.getNewEvents.bind(this));
-            return BrsInvalid.Instance;
         },
     });
 }

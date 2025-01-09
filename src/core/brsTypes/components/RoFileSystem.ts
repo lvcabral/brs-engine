@@ -1,18 +1,22 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, FlexObject, toAssociativeArray } from "..";
+import { BrsType, FlexObject, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { FileSystem, getVolume, validUri, writeUri } from "../../interpreter/FileSystem";
 import { RoList } from "./RoList";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 import * as nanomatch from "nanomatch";
 import * as path from "path";
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private port?: RoMessagePort;
 
     constructor() {
         super("roFileSystem");
-
+        const setPortIface = new IfSetMessagePort(this);
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifFileSystem: [
                 this.getVolumeList,
@@ -28,8 +32,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 this.exists,
                 this.stat,
             ],
-            ifSetMessagePort: [this.setMessagePort],
-            ifGetMessagePort: [this.getMessagePort],
+            ifSetMessagePort: [setPortIface.setMessagePort],
+            ifGetMessagePort: [getPortIface.getMessagePort],
         });
     }
 
@@ -375,33 +379,6 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
             }
             return toAssociativeArray(result);
-        },
-    });
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            // Not supported, always return invalid
-            return BrsInvalid.Instance;
-        },
-    });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: BrsComponent) => {
-            // Not supported, ignore any parameter
-            return BrsInvalid.Instance;
         },
     });
 }

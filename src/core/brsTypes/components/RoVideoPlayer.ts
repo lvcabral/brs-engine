@@ -14,6 +14,8 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { BufferType, DataType, MediaEvent } from "../../common";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -41,6 +43,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         postMessage("video,loop,false");
         postMessage("video,next,-1");
         postMessage("video,mute,false");
+        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifVideoPlayer: [
                 this.setContentList,
@@ -66,8 +70,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 this.getCaptionRenderer,
                 this.setMacrovisionLevel,
             ],
-            ifSetMessagePort: [this.setMessagePort, this.setPort],
-            ifGetMessagePort: [this.getMessagePort, this.getPort],
+            ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
+            ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],
         });
     }
 
@@ -460,62 +464,6 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, level: Int32) => {
-            return BrsInvalid.Instance;
-        },
-    });
-
-    // ifGetMessagePort ----------------------------------------------------------------------------------
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getPort = new Callable("getPort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    // ifSetMessagePort ----------------------------------------------------------------------------------
-
-    /** Sets the roMessagePort to be used for all events from the video player */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            const component = this.getComponentName();
-            this.port?.unregisterCallback(component);
-            this.port = port;
-            this.port.registerCallback(component, this.getNewEvents.bind(this));
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the video player */
-    private readonly setPort = new Callable("setPort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            const component = this.getComponentName();
-            this.port?.unregisterCallback(component);
-            this.port = port;
-            this.port.registerCallback(component, this.getNewEvents.bind(this));
             return BrsInvalid.Instance;
         },
     });

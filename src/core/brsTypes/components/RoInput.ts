@@ -1,9 +1,11 @@
-import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, RoInputEvent, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BufferType, DataType } from "../../common";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoInput extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -13,12 +15,14 @@ export class RoInput extends BrsComponent implements BrsValue {
     constructor(interpreter: Interpreter) {
         super("roInput");
         this.interpreter = interpreter;
+        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifInput: [
                 this.enableTransportEvents,
                 this.eventResponse,
-                this.getMessagePort,
-                this.setMessagePort,
+                setPortIface.setMessagePort,
+                getPortIface.getMessagePort,
             ],
         });
     }
@@ -79,32 +83,6 @@ export class RoInput extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, aa: BrsComponent) => {
             // Voice commands are not supported
             return BrsBoolean.False;
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            const component = port.getComponentName();
-            this.port?.unregisterCallback(component);
-            this.port = port;
-            this.port.registerCallback(component, this.getNewEvents.bind(this));
-            return BrsInvalid.Instance;
         },
     });
 }

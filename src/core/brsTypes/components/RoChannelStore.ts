@@ -8,6 +8,8 @@ import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
 import { parseString, processors } from "xml2js";
+import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
+import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -25,6 +27,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         this.orderInfo = BrsInvalid.Instance;
         this.credData = "";
         this.fakeServerEnabled = false;
+        const setPortIface = new IfSetMessagePort(this);
+        const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifChannelStore: [
                 this.getIdentity,
@@ -46,8 +50,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 this.getDeviceAttestation,
                 this.requestPartnerOrder,
                 this.confirmPartnerOrder,
-                this.setMessagePort,
-                this.getMessagePort,
+                setPortIface.setMessagePort,
+                getPortIface.getMessagePort,
             ],
         });
     }
@@ -517,31 +521,6 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
         },
         impl: (_: Interpreter, confirmOrderInfo: RoAssociativeArray, productId: BrsString) => {
             return toAssociativeArray({ errorCode: -1, errorMessage: "", status: "Failure" });
-        },
-    });
-
-    /** Returns the message port (if any) currently associated with the object */
-    private readonly getMessagePort = new Callable("getMessagePort", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.port ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Sets the roMessagePort to be used for all events from the screen */
-    private readonly setMessagePort = new Callable("setMessagePort", {
-        signature: {
-            args: [new StdlibArgument("port", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, port: RoMessagePort) => {
-            port.addReference();
-            this.port?.removeReference();
-            this.port = port;
-            return BrsInvalid.Instance;
         },
     });
 }
