@@ -18,7 +18,7 @@ import {
     drawRotatedObject,
     putImageAtPos,
     releaseCanvas,
-} from "../Draw2D";
+} from "../interfaces/Draw2D";
 import { RoByteArray } from "./RoByteArray";
 import { parseGIF, decompressFrames } from "gifuct-js";
 import fileType from "file-type";
@@ -594,17 +594,6 @@ export class RoBitmap extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Return the image name (file name or custom) of the bitmap (this method is not on RBI). */
-    private readonly getName = new Callable("getName", {
-        signature: {
-            args: [],
-            returns: ValueKind.String,
-        },
-        impl: (_: Interpreter) => {
-            return new BrsString(this.name);
-        },
-    });
-
     /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
     private readonly getByteArray = new Callable("getByteArray", {
         signature: {
@@ -649,6 +638,17 @@ export class RoBitmap extends BrsComponent implements BrsValue {
             return new RoByteArray(
                 new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
             );
+        },
+    });
+
+    /** Return the image name (file name or custom) of the bitmap (this method is not on RBI). */
+    private readonly getName = new Callable("getName", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return new BrsString(this.name);
         },
     });
 }
