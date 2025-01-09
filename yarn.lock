@@ -6565,7 +6565,7 @@ split-string@^3.0.1:
 
 sprintf-js@lvcabral/sprintf.js:
   version "1.1.3"
-  resolved "https://codeload.github.com/lvcabral/sprintf.js/tar.gz/db33707d1bd999fbd11c760fe3b4281c01b9f06e"
+  resolved "https://codeload.github.com/lvcabral/sprintf.js/tar.gz/18edaf03dabe43367a041532229e73c0b18913b4"
 
 sprintf-js@~1.0.2:
   version "1.0.3"

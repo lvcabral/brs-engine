@@ -1,12 +1,10 @@
 import { BrsComponent } from "./BrsComponent";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
-import { vsprintf } from "sprintf-js";
-import { RuntimeError, RuntimeErrorDetail } from "../../Error";
-import { Interpreter } from "../../interpreter";
+import { ifToStr } from "../interfaces/ifToStr";
 export class RoInt extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Int32;
@@ -19,12 +17,13 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
         super("roInt");
 
         this.intrinsic = new Int32(isBrsNumber(initialValue) ? initialValue.getValue() : 0);
+        const toStr = new ifToStr(this).toStr;
         this.registerMethods({
             ifInt: [this.getInt, this.setInt],
             // Per https://developer.roku.com/docs/references/brightscript/interfaces/ifintops.md,
             // ifIntOps _also_ implements toStr()
-            ifIntOps: [this.toStr],
-            ifToStr: [this.toStr],
+            ifIntOps: [toStr],
+            ifToStr: [toStr],
         });
     }
 
@@ -64,33 +63,6 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
         impl: (_interpreter, value: Int32) => {
             this.intrinsic = value;
             return BrsInvalid.Instance;
-        },
-    });
-
-    // ---------- ifIntOps, ifToStr ----------
-
-    private readonly toStr = new Callable("toStr", {
-        signature: {
-            args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
-            returns: ValueKind.String,
-        },
-        impl: (interpreter: Interpreter, format: BrsString) => {
-            if (format instanceof BrsString) {
-                const tokens = format.value.split("%").length - 1;
-                if (tokens === 0) {
-                    return new BrsString(format.value);
-                }
-                const params = Array(tokens).fill(this.intrinsic.getValue());
-                try {
-                    return new BrsString(vsprintf(format.value, params));
-                } catch (error: any) {
-                    throw new RuntimeError(
-                        RuntimeErrorDetail.InvalidFormatSpecifier,
-                        interpreter.location
-                    );
-                }
-            }
-            return new BrsString(this.intrinsic.toString());
         },
     });
 }

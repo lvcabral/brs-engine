@@ -119,11 +119,73 @@ describe("end to end syntax", () => {
             "0 = 0x0",
             " 0",
             "Double",
-            "4294967296",
+            "4.29497e+09",
             " 2147483647",
             "LongInteger",
             "4294967296 = 0x100000000",
             " 0",
+        ]);
+    });
+
+    test("to-str-with-format.brs", async () => {
+        await execute([resourceFile("to-str-with-format.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "float1 = 10000.45", // RBI 10000.5
+            "float2 = 10000.46", // RBI 10000.5
+            "float3 = 10000.45678",
+            "float3.toStr() = 10000.5",
+            "0.123 = 0.123",
+            "0.123.toStr() = 0.123",
+            "123.4567 = 123.4567", // RBI 123.457
+            "123.4567.toStr() = 123.457",
+            "double = 10000.46", // RBI 10000.45703125
+            "double.toStr() = 10000.5",
+            " 40",
+            "40",
+            "00040",
+            "50",
+            "1f",
+            "1F",
+            "99 red luftballoons",
+            "this is a long s",
+            "                    short string",
+            "A",
+            "'A'",
+            "3.141590",
+            "3.14",
+            "3.141590e+00",
+            "0000003.14",
+            "13",
+            "13 13.00",
+            "%%%",
+            "A",
+            "32 is bigger than 16",
+            "32 is bigger than 12 and smaller than 64",
+            "A",
+            "2.000000e+00",
+            "2.000000",
+            "3.141593",
+            "3.141593e+00",
+            "3.14159",
+            "3",
+            "3e+00",
+            "3",
+            "2.200000",
+            "-2.200000",
+            "+2.200000",
+            "-2.200000",
+            "-12.340000 xxx",
+            "4294967296 = 0x100000000",
+            "00face1",
+            " FACE1",
+            "FACE1 <",
+            "000face1",
+            " FACE1",
+            "FACE1 <",
+            "000face1",
+            "3.14",
+            "Type Mismatch.",
         ]);
     });
 

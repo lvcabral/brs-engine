@@ -8,7 +8,9 @@ import { BrsType, isBrsNumber, isStringComp } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { sprintf, vsprintf } from "sprintf-js";
+import { RuntimeError, RuntimeErrorDetail } from "../../Error";
+import { sprintf } from "sprintf-js";
+import { ifToStr } from "../interfaces/ifToStr";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;
@@ -50,8 +52,9 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 this.startsWith,
                 this.endsWith,
                 this.isEmpty,
+                this.format,
             ],
-            ifToStr: [this.toStr, this.format],
+            ifToStr: [new ifToStr(this).toStr],
         });
     }
 
@@ -531,44 +534,15 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
     });
 
-    /** Undocumented method that allows printf formatting */
-    private readonly toStr = new Callable("toStr", {
-        signature: {
-            args: [new StdlibArgument("format", ValueKind.String, BrsInvalid.Instance)],
-            returns: ValueKind.String,
-        },
-        impl: (_: Interpreter, format: BrsString) => {
-            if (format instanceof BrsString) {
-                const tokens = format.value.split("%").length - 1;
-                if (tokens === 0) {
-                    return new BrsString(format.value);
-                }
-                const params = Array(tokens).fill(this.intrinsic.value);
-                try {
-                    return new BrsString(vsprintf(format.value, params));
-                } catch (error: any) {
-                    throw new Error("Invalid Format Specifier (runtime error &h24)");
-                }
-            }
-            return new BrsString(this.intrinsic.toString());
-        },
-    });
-
-    /** Undocumented method that allows printf formatting */
+    /** Returns a format conversion using the specified printf-like format string and matching dynamic parameters. */
     private readonly format = new Callable("format", {
         signature: {
-            args: [
-                new StdlibArgument("arg1", ValueKind.Dynamic, BrsInvalid.Instance),
-                new StdlibArgument("arg2", ValueKind.Dynamic, BrsInvalid.Instance),
-                new StdlibArgument("arg3", ValueKind.Dynamic, BrsInvalid.Instance),
-                new StdlibArgument("arg4", ValueKind.Dynamic, BrsInvalid.Instance),
-                new StdlibArgument("arg5", ValueKind.Dynamic, BrsInvalid.Instance),
-                new StdlibArgument("arg6", ValueKind.Dynamic, BrsInvalid.Instance),
-                new StdlibArgument("arg7", ValueKind.Dynamic, BrsInvalid.Instance),
-            ],
+            args: [new StdlibArgument("arg", ValueKind.Dynamic, BrsInvalid.Instance)],
+            variadic: true,
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter, ...additionalArgs: BrsType[]) => {
+        impl: (interpreter: Interpreter, ...additionalArgs: BrsType[]) => {
+            // Documentation: https://developer.roku.com/docs/references/brightscript/language/format-strings.md
             let args: any[] = [];
             if (additionalArgs.length > 0) {
                 additionalArgs.forEach((element) => {
@@ -582,7 +556,17 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             try {
                 return new BrsString(sprintf(this.intrinsic.value, ...args));
             } catch (err: any) {
-                throw new Error("Type Mismatch. (runtime error &h18)");
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`warning,roString.format() Error: ${err.message}`);
+                }
+                const errorDetail = err.message?.includes("expecting number")
+                    ? RuntimeErrorDetail.TypeMismatch
+                    : RuntimeErrorDetail.InvalidFormatSpecifier;
+                throw new RuntimeError(
+                    errorDetail,
+                    interpreter.location,
+                    interpreter.stack.slice(0, -1)
+                );
             }
         },
     });
