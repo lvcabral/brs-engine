@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 import { RoRegion } from "./RoRegion";
 import { RoCompositor, Rect, Circle } from "./RoCompositor";
 import { RoArray } from "./RoArray";
-import { BrsImageData } from "../draw2d";
+import { BrsImageData } from "../IfDraw2d";
 
 export class RoSprite extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

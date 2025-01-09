@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { FontMetrics } from "./RoFontRegistry";
-import { BrsCanvasContext2D, createNewCanvas, releaseCanvas } from "../draw2d";
+import { BrsCanvasContext2D, createNewCanvas, releaseCanvas } from "../IfDraw2d";
 
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

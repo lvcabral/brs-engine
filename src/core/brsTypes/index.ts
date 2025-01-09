@@ -102,7 +102,7 @@ export * from "./components/RoChannelStoreEvent";
 export * from "./components/RoUniversalControlEvent";
 export * from "./Boxing";
 export * from "./Callable";
-export * from "./coercion";
+export * from "./Coercions";
 
 /**
  * Determines whether or not the given value is a number.
