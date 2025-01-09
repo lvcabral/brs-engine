@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
+import { IfEnum } from "../interfaces/IfEnum";
 
 /** A member of an `AssociativeArray` in BrightScript. */
 export interface AAMember {
@@ -31,7 +32,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             this.set(member.name, member.value, true);
         });
         this.enumIndex = elements.length ? 0 : -1;
-
+        const ifEnum = new IfEnum(this);
         this.registerMethods({
             ifAssociativeArray: [
                 this.clear,
@@ -46,7 +47,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
                 this.lookupCI,
                 this.setmodecasesensitive,
             ],
-            ifEnum: [this.isEmpty, this.isNext, this.next, this.reset],
+            ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
     }
 
@@ -375,56 +376,6 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         impl: (_: Interpreter) => {
             this.modeCaseSensitive = true;
             return BrsInvalid.Instance;
-        },
-    });
-
-    //--------------------------------- ifEnum ---------------------------------
-
-    // TODO: The way Roku devices handle the order of elements internally for AA is not clear,
-    // not possible to reproduce for now, this implementation follows the same logic used in roArray.
-
-    /** Returns true if enumeration contains no elements, false otherwise	 */
-    private readonly isEmpty = new Callable("isEmpty", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.elements.size === 0);
-        },
-    });
-
-    /** Checks whether the current position is not past the end of the enumeration. */
-    private readonly isNext = new Callable("isNext", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return this.hasNext();
-        },
-    });
-
-    /** Resets the current position to the first element of the enumeration. */
-    private readonly reset = new Callable("reset", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            this.resetNext();
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Increments the position of an enumeration. */
-    private readonly next = new Callable("next", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.getNext();
         },
     });
 }
