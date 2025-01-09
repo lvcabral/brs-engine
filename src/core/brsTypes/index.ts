@@ -18,7 +18,7 @@ import { Double } from "./Double";
 import { Callable } from "./Callable";
 import { BrsComponent } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
-import { BrsInterface } from "./BrsInterface";
+import { BrsInterface } from "./interfaces/BrsInterface";
 import { RoXMLList } from "./components/RoXMLList";
 import { RoXMLElement } from "./components/RoXMLElement";
 import { RoPath } from "./components/RoPath";
@@ -41,7 +41,7 @@ export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
-export * from "./BrsInterface";
+export * from "./interfaces/BrsInterface";
 export * from "./components/BrsComponent";
 export * from "./components/RoArray";
 export * from "./components/RoByteArray";
@@ -274,6 +274,7 @@ export function isBrsType(value: any): value is BrsType {
         isBrsNumber(value) ||
         value === BrsInvalid.Instance ||
         value instanceof BrsComponent ||
+        value instanceof BrsInterface ||
         value instanceof Callable ||
         value instanceof Uninitialized
     );

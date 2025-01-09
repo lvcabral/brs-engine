@@ -1,10 +1,19 @@
 sub main()
-    var1 = 10000.43
-    var2 = CreateObject("roDouble")
-    var2.setDouble(var1)
-    ? "var1 = ";var1
-    ? "var2 = ";var2
-    ? "var2.toStr() = ";var2.toStr()
+	floatVar1 = 10000.45
+	? "float1 =";floatVar1
+	floatVar2 = 10000.4567
+	? "float2 =";floatVar2
+    floatVar3 = 10000.45678
+    doubleObj = CreateObject("roDouble")
+    doubleObj.setDouble(floatVar2)
+    ? "float3 =";floatVar3
+    ? "float3.toStr() = ";floatVar3.toStr()
+    ? "0.123 ="; 0.123
+    ? "0.123.toStr() = "; (0.123).toStr()
+    ? "123.4567 ="; 123.4567
+    ? "123.4567.toStr() = "; (123.4567).toStr()
+    ? "double =";doubleObj
+    ? "double.toStr() = ";doubleObj.toStr()
     ? 40
     ? (40).toStr()
     ? (40).toStr("%05d")
@@ -25,6 +34,43 @@ sub main()
     ? (13).toStr("%%%%%%")
     ? (13).toStr("A")
     ? "%d is bigger than %d".Format(32, 16)
-    ? "%d is bigger than %s".Format(32, "12")
+    ? "%d is bigger than %s and smaller than %d".Format(32, "12", 64)
     ? "A".format()
+    someTests()
+    moreTests()
+end sub
+
+sub moreTests()
+    big_num = &H100000000&
+    ? big_num.ToStr("%d = 0x%0X")
+    ? "%07x".Format(&hFACE1)
+    ? "%6X".Format(&hFACE1)
+    ? "%-6X".Format(&hFACE1); "<"
+    ? "%08x".Format(&hFACE1)
+    ? "%*X".Format(6, &hFACE1)
+    ? "%-*X".Format(6, &hFACE1); "<"
+    ? "%0*x".Format(8, &hFACE1)
+    'Precision
+    ? "%.*f".Format(2, 3.14151)
+    try
+        ? "%.*f".Format("m", 3.14151)
+    catch e
+        ? e.message
+    end try
+end sub
+
+sub someTests()
+    print (2).toStr("%e")
+    print (2).toStr("%f")
+    print (3.141592653589793).toStr("%f")
+    print (3.141592653589793).toStr("%e")
+    print (3.141592653589793).toStr("%g")
+    print (3.141592653589793).toStr("%.0f")
+    print (3.141592653589793).toStr("%.0e")
+    print (3.141592653589793).toStr("%.0g")
+    print (2.2).toStr("%f")
+    print (-2.2).toStr("%f")
+    print (2.2).toStr("%+f")
+    print (-2.2).toStr("%+f")
+    print "%f %s".format(-12.34, "xxx")
 end sub

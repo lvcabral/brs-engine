@@ -71,8 +71,8 @@ describe("roFloat", () => {
             toStrA = a.getMethod("toStr");
             toStrB = b.getMethod("toStr");
 
-            let expectedA = parseFloat(Math.fround(someNumberA).toPrecision(7));
-            let expectedB = parseFloat(Math.fround(someNumberB).toPrecision(7));
+            let expectedA = parseFloat(Math.fround(someNumberA).toPrecision(6));
+            let expectedB = parseFloat(Math.fround(someNumberB).toPrecision(6));
 
             let resultA = toStrA.call(interpreter);
             let resultB = toStrB.call(interpreter);

@@ -213,7 +213,7 @@ export class Float implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return this.value.toString();
+        return this.value.toPrecision();
     }
 
     box() {

@@ -1,9 +1,10 @@
 import { BrsComponent } from "./BrsComponent";
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
+import { ifToStr } from "../interfaces/ifToStr";
 
 export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -21,7 +22,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
         }
         this.registerMethods({
             ifBoolean: [this.getBoolean, this.setBoolean],
-            ifToStr: [this.toStr],
+            ifToStr: [new ifToStr(this).toStr],
         });
     }
 
@@ -50,7 +51,7 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return this.intrinsic;
         },
     });
@@ -60,21 +61,9 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
             args: [new StdlibArgument("value", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_interpreter, value: BrsBoolean) => {
+        impl: (_, value: BrsBoolean) => {
             this.intrinsic = value;
             return BrsInvalid.Instance;
-        },
-    });
-
-    // -------------- ifToStr --------------
-
-    private readonly toStr = new Callable("toStr", {
-        signature: {
-            args: [],
-            returns: ValueKind.String,
-        },
-        impl: (interpreter: Interpreter) => {
-            return new BrsString(this.intrinsic.toString());
         },
     });
 }
