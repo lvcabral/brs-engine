@@ -1,4 +1,4 @@
-import { BrsIterable, BrsType } from "..";
+import { BrsIterable } from "..";
 import { Interpreter } from "../../interpreter";
 import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable } from "../Callable";
