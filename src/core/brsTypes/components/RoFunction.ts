@@ -4,7 +4,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
-import { ifToStr } from "../interfaces/ifToStr";
+import { IfToStr } from "../interfaces/IfToStr";
 
 export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
@@ -20,7 +20,7 @@ export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
         this.intrinsic = sub;
         this.registerMethods({
             ifFunction: [this.getSub, this.setSub],
-            ifToStr: [new ifToStr(this).toStr],
+            ifToStr: [new IfToStr(this).toStr],
         });
     }
 

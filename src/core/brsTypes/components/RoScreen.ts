@@ -17,7 +17,7 @@ import {
     drawObjectToComponent,
     drawRotatedObject,
     releaseCanvas,
-} from "../draw2d";
+} from "../Draw2D";
 import UPNG from "upng-js";
 import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
 

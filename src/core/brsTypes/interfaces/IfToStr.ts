@@ -3,7 +3,7 @@ import { RuntimeError, RuntimeErrorDetail } from "../../Error";
 import { Interpreter } from "../../interpreter";
 import { vsprintf } from "sprintf-js";
 
-export class ifToStr {
+export class IfToStr {
     private readonly component: any;
     private readonly defaultFormat: string;
 
