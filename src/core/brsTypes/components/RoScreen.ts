@@ -1,13 +1,11 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, Double, KeyEvent, RoUniversalControlEvent } from "..";
-import { Callable, StdlibArgument } from "../Callable";
+import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RoMessagePort } from "./RoMessagePort";
-import { RoFont } from "./RoFont";
-import { RoByteArray } from "./RoByteArray";
 import {
     BrsCanvas,
     BrsCanvasContext2D,
@@ -15,11 +13,10 @@ import {
     createNewCanvas,
     drawImageToContext,
     drawObjectToComponent,
-    drawRotatedObject,
+    IfDraw2D,
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
-import UPNG from "upng-js";
 import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
 import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
 import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
@@ -43,7 +40,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private isDirty: boolean;
     private lastMessage: number;
     private lastKey: number;
-    rgbaRedraw: boolean;
 
     constructor(
         interpreter: Interpreter,
@@ -94,7 +90,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         } else if (doubleBuffer !== undefined) {
             this.valid = false;
         }
-        this.rgbaRedraw = false;
         this.currentBuffer = 0;
         this.lastBuffer = 0;
         this.canvas = new Array<BrsCanvas>(this.doubleBuffer ? 2 : 1);
@@ -103,30 +98,31 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.alphaEnable = false;
         const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
-        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
-        const getPortIface = new IfGetMessagePort(this);
+        const ifDraw2D = new IfDraw2D(this);
+        const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const ifGetMsgPort = new IfGetMessagePort(this);
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
-                this.clear,
-                this.drawObject,
-                this.drawRotatedObject,
-                this.drawScaledObject,
-                this.drawTransformedObject,
-                this.drawLine,
-                this.drawPoint,
-                this.drawRect,
-                this.drawText,
-                this.finish,
-                this.getAlphaEnable,
-                this.setAlphaEnable,
-                this.getByteArray,
-                this.getPng,
-                this.getWidth,
-                this.getHeight,
+                ifDraw2D.clear,
+                ifDraw2D.drawObject,
+                ifDraw2D.drawRotatedObject,
+                ifDraw2D.drawScaledObject,
+                ifDraw2D.drawTransformedObject,
+                ifDraw2D.drawLine,
+                ifDraw2D.drawPoint,
+                ifDraw2D.drawRect,
+                ifDraw2D.drawText,
+                ifDraw2D.finish,
+                ifDraw2D.getAlphaEnable,
+                ifDraw2D.setAlphaEnable,
+                ifDraw2D.getByteArray,
+                ifDraw2D.getPng,
+                ifDraw2D.getWidth,
+                ifDraw2D.getHeight,
             ],
-            ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
-            ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],
+            ifSetMessagePort: [ifSetMsgPort.setMessagePort, ifSetMsgPort.setPort],
+            ifGetMessagePort: [ifGetMsgPort.getMessagePort, ifGetMsgPort.getPort],
         });
     }
 
@@ -158,7 +154,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         ctx.fillStyle = rgbaIntToHex(rgba, false);
         ctx.fillRect(0, 0, this.width, this.height);
         this.isDirty = true;
-        return BrsInvalid.Instance;
     }
 
     drawImage(
@@ -198,6 +193,13 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     makeDirty() {
         this.isDirty = true;
+    }
+
+    finishDraw(): void {
+        if (!this.doubleBuffer && this.isDirty) {
+            postMessage(this.context[0].getImageData(0, 0, this.width, this.height));
+            this.isDirty = false;
+        }
     }
 
     dispose() {
@@ -283,347 +285,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.lastMessage = timeStamp;
             }
             return BrsInvalid.Instance;
-        },
-    });
-
-    // ifDraw2D  -----------------------------------------------------------------------------------
-
-    /** Clear the bitmap, and fill with the specified RGBA color */
-    private readonly clear = new Callable("clear", {
-        signature: {
-            args: [new StdlibArgument("rgba", ValueKind.Int32)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, rgba: Int32) => {
-            return this.clearCanvas(rgba.getValue());
-        },
-    });
-
-    /** Draw the source object, where src is an roBitmap or an roRegion object, at position x,y */
-    private readonly drawObject = new Callable("drawObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            const ctx = this.context[this.currentBuffer];
-            this.drawImage(object, rgba, x.getValue(), y.getValue());
-            ctx.globalAlpha = 1.0;
-            return BrsBoolean.from(this.isDirty);
-        },
-    });
-
-    /** Draw the source object at position x,y rotated by angle theta degrees. */
-    private readonly drawRotatedObject = new Callable("drawRotatedObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("theta", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            theta: Float,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            drawRotatedObject(this, object, rgba, x.getValue(), y.getValue(), theta.getValue());
-            return BrsBoolean.from(this.isDirty);
-        },
-    });
-
-    /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
-    private readonly drawScaledObject = new Callable("drawScaledObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("scaleX", ValueKind.Float),
-                new StdlibArgument("scaleY", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            scaleX: Float,
-            scaleY: Float,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            const ctx = this.context[this.currentBuffer];
-            this.drawImage(
-                object,
-                rgba,
-                x.getValue(),
-                y.getValue(),
-                scaleX.getValue(),
-                scaleY.getValue()
-            );
-            ctx.globalAlpha = 1.0;
-            return BrsBoolean.from(this.isDirty);
-        },
-    });
-
-    /** Draw the source object, at position x,y, rotated by theta and scaled horizontally by scaleX and vertically by scaleY. */
-    private readonly drawTransformedObject = new Callable("drawTransformedObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("theta", ValueKind.Float),
-                new StdlibArgument("scaleX", ValueKind.Float),
-                new StdlibArgument("scaleY", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            theta: Float,
-            scaleX: Float,
-            scaleY: Float,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            const ctx = this.context[this.currentBuffer];
-            const positionX = x.getValue();
-            const positionY = y.getValue();
-            const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save();
-            ctx.translate(positionX, positionY);
-            ctx.rotate(angleInRad);
-            this.drawImage(object, rgba, 0, 0, scaleX.getValue(), scaleY.getValue());
-            ctx.globalAlpha = 1.0;
-            ctx.restore();
-            return BrsBoolean.from(this.isDirty);
-        },
-    });
-
-    /** Draw a line from (xStart, yStart) to (xEnd, yEnd) with RGBA color */
-    private readonly drawLine = new Callable("drawLine", {
-        signature: {
-            args: [
-                new StdlibArgument("xStart", ValueKind.Int32),
-                new StdlibArgument("yStart", ValueKind.Int32),
-                new StdlibArgument("xEnd", ValueKind.Int32),
-                new StdlibArgument("yEnd", ValueKind.Int32),
-                new StdlibArgument("rgba", ValueKind.Int32),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            xStart: Int32,
-            yStart: Int32,
-            xEnd: Int32,
-            yEnd: Int32,
-            rgba: Int32
-        ) => {
-            let ctx = this.context[this.currentBuffer];
-            ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
-            ctx.moveTo(xStart.getValue(), yStart.getValue());
-            ctx.lineTo(xEnd.getValue(), yEnd.getValue());
-            ctx.stroke();
-            this.isDirty = true;
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Draws a point at (x,y) with the given size and RGBA color */
-    private readonly drawPoint = new Callable("drawPoint", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("size", ValueKind.Float),
-                new StdlibArgument("rgba", ValueKind.Int32),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
-            let ctx = this.context[this.currentBuffer];
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
-            ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
-            this.isDirty = true;
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Fill the specified rectangle from left (x), top (y) to right (x + width), bottom (y + height) with the RGBA color */
-    private readonly drawRect = new Callable("drawRect", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-                new StdlibArgument("rgba", ValueKind.Int32),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            let ctx = this.context[this.currentBuffer];
-            if (!this.alphaEnable) {
-                ctx.clearRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
-            }
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
-            ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
-            this.isDirty = true;
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Draws the text at position (x,y) using the specified RGBA color and roFont font object. */
-    private readonly drawText = new Callable("drawText", {
-        signature: {
-            args: [
-                new StdlibArgument("text", ValueKind.String),
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("rgba", ValueKind.Int32),
-                new StdlibArgument("font", ValueKind.Object),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            const ctx = this.context[this.currentBuffer];
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
-            ctx.font = font.toFontString();
-            ctx.textBaseline = "top";
-            ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
-            this.isDirty = true;
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Realize the bitmap by finishing all queued draw calls. */
-    private readonly finish = new Callable("finish", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            if (!this.doubleBuffer && this.isDirty) {
-                postMessage(this.context[0].getImageData(0, 0, this.width, this.height));
-                this.isDirty = false;
-            }
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns true if alpha blending is enabled */
-    private readonly getAlphaEnable = new Callable("getAlphaEnable", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.alphaEnable);
-        },
-    });
-
-    /** If enable is true, do alpha blending when this bitmap is the destination */
-    private readonly setAlphaEnable = new Callable("setAlphaEnable", {
-        signature: {
-            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
-            return this.setCanvasAlpha(alphaEnable.toBoolean());
-        },
-    });
-
-    /** Return the width of the screen/bitmap/region. */
-    private readonly getWidth = new Callable("getWidth", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.width);
-        },
-    });
-
-    /** Return the height of the screen/bitmap/region. */
-    private readonly getHeight = new Callable("getHeight", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.height);
-        },
-    });
-
-    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
-    private readonly getByteArray = new Callable("getByteArray", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-            ],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.context[this.lastBuffer].getImageData(
-                x.getValue(),
-                y.getValue(),
-                width.getValue(),
-                height.getValue()
-            );
-            let byteArray = new Uint8Array(imgData.data.buffer);
-            return new RoByteArray(byteArray);
-        },
-    });
-
-    /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
-    private readonly getPng = new Callable("getPng", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-            ],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.context[this.lastBuffer].getImageData(
-                x.getValue(),
-                y.getValue(),
-                width.getValue(),
-                height.getValue()
-            );
-            return new RoByteArray(
-                new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
-            );
         },
     });
 }

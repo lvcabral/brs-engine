@@ -96,7 +96,7 @@ export class IfDraw2D {
                 y.getValue(),
                 theta.getValue()
             );
-            this.component.rgbaRedraw = true;
+            this.component.makeDirty();
             return BrsBoolean.from(didDraw);
         },
     });
@@ -123,6 +123,7 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
+            const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
                 rgba,
@@ -131,7 +132,7 @@ export class IfDraw2D {
                 scaleX.getValue(),
                 scaleY.getValue()
             );
-            this.component.getContext().globalAlpha = 1.0;
+            ctx.globalAlpha = 1.0;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -207,7 +208,7 @@ export class IfDraw2D {
             ctx.moveTo(xStart.getValue(), yStart.getValue());
             ctx.lineTo(xEnd.getValue(), yEnd.getValue());
             ctx.stroke();
-            this.component.rgbaRedraw = true;
+            this.component.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -227,7 +228,7 @@ export class IfDraw2D {
             let ctx = this.component.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
             ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
-            this.component.rgbaRedraw = true;
+            this.component.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -246,9 +247,15 @@ export class IfDraw2D {
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             const ctx = this.component.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
+            if (!this.component.getCanvasAlpha()) {
+                // This was originally only on roScreen, but it makes sense to have it here too
+                ctx.clearRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
+            } else {
+                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
+            }
             ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
-            this.component.rgbaRedraw = true;
+            this.component.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -271,7 +278,7 @@ export class IfDraw2D {
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
             ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
-            this.component.rgbaRedraw = true;
+            this.component.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -283,6 +290,7 @@ export class IfDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            this.component.finishDraw();
             return BrsInvalid.Instance;
         },
     });
@@ -344,9 +352,13 @@ export class IfDraw2D {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            const imgData = this.component
-                .getContext()
-                .getImageData(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            const ctx = this.component.getCanvas().getContext("2d") as BrsCanvasContext2D;
+            const imgData = ctx.getImageData(
+                x.getValue(),
+                y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
             const byteArray = new Uint8Array(imgData.data.buffer);
             return new RoByteArray(byteArray);
         },
@@ -364,9 +376,13 @@ export class IfDraw2D {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            const imgData = this.component
-                .getContext()
-                .getImageData(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            const ctx = this.component.getCanvas().getContext("2d") as BrsCanvasContext2D;
+            const imgData = ctx.getImageData(
+                x.getValue(),
+                y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
             return new RoByteArray(
                 new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
             );
@@ -377,7 +393,6 @@ export class IfDraw2D {
 export interface BrsDraw2D {
     readonly width: number;
     readonly height: number;
-    rgbaRedraw: boolean;
 
     clearCanvas(rgba: number): void;
 
@@ -399,6 +414,10 @@ export interface BrsDraw2D {
         scaleX?: number,
         scaleY?: number
     ): boolean;
+
+    makeDirty(): void;
+
+    finishDraw(): void;
 }
 
 // In Chrome, when this is enabled, it slows down non-alpha draws. However, when this is true, it behaves the same as Roku

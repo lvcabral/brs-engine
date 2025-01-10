@@ -262,6 +262,10 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.rgbaRedraw = true;
     }
 
+    finishDraw(): void {
+        return;
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roBitmap>";
     }

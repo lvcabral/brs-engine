@@ -37,7 +37,6 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     private collisionRect: Rect;
     width: number;
     height: number;
-    rgbaRedraw: boolean;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
@@ -69,7 +68,6 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
         this.alphaEnable = true;
-        this.rgbaRedraw = false;
 
         if (this.x + this.width <= bitmap.width && this.y + this.height <= bitmap.height) {
             this.valid = true;
@@ -273,6 +271,14 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
 
     getSourceBitmap(): RoBitmap | RoScreen {
         return this.bitmap;
+    }
+
+    makeDirty() {
+        this.bitmap.makeDirty();
+    }
+
+    finishDraw(): void {
+        this.bitmap.finishDraw();
     }
 
     toString(parent?: BrsType): string {
