@@ -4,7 +4,9 @@ import {
     BrsString,
     Callable,
     isBoxedNumber,
-    isBrsString,
+    isComparable,
+    RoBoolean,
+    RoString,
     StdlibArgument,
     ValueKind,
 } from "..";
@@ -13,7 +15,7 @@ import { Interpreter } from "../../interpreter";
 import { vsprintf } from "sprintf-js";
 
 export class IfToStr {
-    private readonly component: any;
+    private readonly component: BrsComponent;
     private readonly defaultFormat?: string;
     private readonly defaultRegEx?: RegExp;
 
@@ -36,14 +38,21 @@ export class IfToStr {
             if (format instanceof BrsInvalid) {
                 if (this.defaultFormat?.length) {
                     format = new BrsString(this.defaultFormat);
-                } else if (isBoxedNumber(this.component)) {
-                    return new BrsString(this.component.toString());
                 } else if (this.defaultRegEx) {
                     return new BrsString(this.component.toString().replace(this.defaultRegEx, ""));
-                } else {
+                } else if (isBoxedNumber(this.component)) {
+                    return new BrsString(this.component.toString());
+                } else if (isComparable(this.component) || this.component instanceof RoBoolean) {
                     return new BrsString(this.component.getValue().toString());
+                } else {
+                    throw new RuntimeError(
+                        RuntimeErrorDetail.MemberFunctionNotFound,
+                        interpreter.location,
+                        interpreter.stack.slice(0, -1)
+                    );
                 }
-            } else if (!isBoxedNumber(this.component) && !isBrsString(this.component)) {
+            }
+            if (!(isBoxedNumber(this.component) || this.component instanceof RoString)) {
                 throw new RuntimeError(
                     RuntimeErrorDetail.MemberFunctionNotFound,
                     interpreter.location,
