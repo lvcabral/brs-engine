@@ -90,6 +90,42 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         return this.elements.slice();
     }
 
+    add(element: BrsType, onTail: boolean = true) {
+        this.addChildRef(element);
+        if (onTail) {
+            this.elements.push(element);
+        } else {
+            this.elements.unshift(element);
+        }
+        this.updateNext(true);
+    }
+
+    remove(index: number) {
+        let removed;
+        if (index === 0) {
+            removed = this.elements.shift();
+        } else if (index === this.tail()) {
+            removed = this.elements.pop();
+        } else {
+            removed = this.elements.splice(index, 1)[0];
+        }
+        this.updateNext();
+        this.removeChildRef(removed);
+        return removed;
+    }
+
+    clear() {
+        this.elements.forEach((element) => {
+            this.removeChildRef(element);
+        });
+        this.elements.length = 0;
+        this.enumIndex = -1;
+    }
+
+    tail() {
+        return this.elements.length - 1;
+    }
+
     get(index: BrsType) {
         switch (index.kind) {
             case ValueKind.Float:

@@ -1,13 +1,15 @@
-import { BrsComponent, BrsIterable, BrsType, Float, Int32, RoList } from "..";
+import { BrsComponent, BrsIterable, BrsType, Float, Int32 } from "..";
 import { Interpreter } from "../../interpreter";
 import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 
 export class IfArray {
     private readonly component: BrsComponent & BrsArray;
+    private readonly name: string;
 
     constructor(component: BrsComponent & BrsArray) {
         this.component = component;
+        this.name = component.getComponentName();
     }
 
     readonly peek = new Callable("peek", {
@@ -27,16 +29,7 @@ export class IfArray {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            if (this.component instanceof RoList) {
-                return this.component.remove(this.component.tail()) || BrsInvalid.Instance;
-            }
-            const elements = this.component.getValue();
-            const removed = elements.pop();
-            if (this.component.removeChildRef) {
-                this.component.removeChildRef(removed);
-            }
-            this.component.updateNext();
-            return removed || BrsInvalid.Instance;
+            return this.component.remove(this.component.tail()) || BrsInvalid.Instance;
         },
     });
 
@@ -46,20 +39,14 @@ export class IfArray {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            if (this.component instanceof RoList) {
-                this.component.add(tvalue, true);
-                return BrsInvalid.Instance;
-            }
             const elements = this.component.getValue();
             if (this.component.resizable || elements.length < this.component.maxSize) {
-                if (this.component.addChildRef) {
-                    this.component.addChildRef(tvalue);
-                }
-                elements.push(tvalue);
-                this.component.updateNext(true);
+                this.component.add(tvalue, true);
             } else {
                 interpreter.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: ${this.component.getComponentName()}.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
+                    `warning,BRIGHTSCRIPT: ERROR: ${
+                        this.name
+                    }.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
                 );
             }
             return BrsInvalid.Instance;
@@ -72,16 +59,7 @@ export class IfArray {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            if (this.component instanceof RoList) {
-                return this.component.remove(0) || BrsInvalid.Instance;
-            }
-            const elements = this.component.getValue();
-            const removed = elements.shift();
-            if (this.component.removeChildRef) {
-                this.component.removeChildRef(removed);
-            }
-            this.component.updateNext();
-            return removed || BrsInvalid.Instance;
+            return this.component.remove(0) || BrsInvalid.Instance;
         },
     });
 
@@ -91,20 +69,14 @@ export class IfArray {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            if (this.component instanceof RoList) {
-                this.component.add(tvalue, false);
-                return BrsInvalid.Instance;
-            }
             const elements = this.component.getValue();
             if (this.component.resizable || elements.length < this.component.maxSize) {
-                if (this.component.addChildRef) {
-                    this.component.addChildRef(tvalue);
-                }
-                elements.unshift(tvalue);
-                this.component.updateNext(true);
+                this.component.add(tvalue, false);
             } else {
                 interpreter.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: ${this.component.getComponentName()}.Unshift: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
+                    `warning,BRIGHTSCRIPT: ERROR: ${
+                        this.name
+                    }.Unshift: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
                 );
             }
             return BrsInvalid.Instance;
@@ -121,17 +93,7 @@ export class IfArray {
             if (index.lessThan(new Int32(0)).toBoolean()) {
                 return BrsBoolean.False;
             }
-            if (this.component instanceof RoList) {
-                return this.component.remove(index.getValue()) ? BrsBoolean.True : BrsBoolean.False;
-            }
-            const deleted = elements.splice(index.getValue(), 1);
-            deleted.forEach((element) => {
-                if (this.component.removeChildRef) {
-                    this.component.removeChildRef(element);
-                }
-            });
-            this.component.updateNext();
-            return BrsBoolean.from(deleted.length > 0);
+            return this.component.remove(index.getValue()) ? BrsBoolean.True : BrsBoolean.False;
         },
     });
 
@@ -151,18 +113,7 @@ export class IfArray {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            if (this.component instanceof RoList) {
-                this.component.clear();
-                return BrsInvalid.Instance;
-            }
-            const elements = this.component.getValue();
-            elements.forEach((element) => {
-                if (this.component.removeChildRef) {
-                    this.component.removeChildRef(element);
-                }
-            });
-            elements.length = 0;
-            this.component.resetNext();
+            this.component.clear();
             return BrsInvalid.Instance;
         },
     });
@@ -173,23 +124,28 @@ export class IfArray {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, array: BrsComponent & BrsArray) => {
-            if (this.component.getComponentName() !== array.getComponentName()) {
+            if (this.name !== array.getComponentName()) {
                 interpreter.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: ${this.component.getComponentName()}.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
+                    `warning,BRIGHTSCRIPT: ERROR: ${
+                        this.name
+                    }.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
                 );
                 return BrsInvalid.Instance;
             }
-            const elements = this.component.getValue();
-            if (
-                this.component.resizable ||
-                elements.length + array.getValue().length <= this.component.maxSize
-            ) {
-                array.getValue().forEach((element) => {
-                    if (this.component.addChildRef) {
-                        this.component.addChildRef(element);
+            const comp = this.component;
+            const elem = comp.getValue();
+            if (comp.resizable || elem.length + array.getValue().length <= comp.maxSize) {
+                // don't copy "holes" where no value exists
+                const noGap = array.getValue().filter((element) => {
+                    if (element) {
+                        if (comp.addChildRef) {
+                            comp.addChildRef(element);
+                        }
+                        return true;
                     }
+                    return false;
                 });
-                elements.push(...array.getElements().filter((element) => !!element)); // don't copy "holes" where no value exists
+                elem.push(...noGap);
                 this.component.updateNext(true, 0);
             }
             return BrsInvalid.Instance;
@@ -237,16 +193,21 @@ export class IfArraySet {
     });
 }
 
-/** Represents a BrightScript component that has elements that can be iterated across. */
 export interface BrsArray extends BrsIterable {
     readonly resizable: boolean;
     readonly maxSize: number;
 
     getValue(): Array<any>;
 
+    add(value: BrsType, toTail: boolean): void;
+
+    remove(index: number): BrsType | undefined;
+
+    clear(): void;
+
     updateNext(grow?: boolean, index?: number): void;
 
-    addChildRef?: (value: BrsType | undefined) => void;
+    tail(): number;
 
-    removeChildRef?: (value: BrsType | undefined) => void;
+    addChildRef?: (value: BrsType | undefined) => void;
 }

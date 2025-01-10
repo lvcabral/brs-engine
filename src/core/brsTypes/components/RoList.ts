@@ -1,12 +1,11 @@
-import { BrsType, RoArray } from "..";
+import { BrsType } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { Callable, StdlibArgument } from "../Callable";
-import { Interpreter } from "../../interpreter";
-import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
+import { BrsList, IfList, IfListToArray } from "../interfaces/IfList";
+import { IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
 
-export class RoList extends BrsComponent implements BrsValue, BrsArray {
+export class RoList extends BrsComponent implements BrsValue, BrsList {
     readonly kind = ValueKind.Object;
     readonly resizable: boolean = true;
     maxSize = 0;
@@ -25,23 +24,25 @@ export class RoList extends BrsComponent implements BrsValue, BrsArray {
         }
         this.listIndex = -1;
         this.enumIndex = -1;
+        const ifList = new IfList(this);
+        const ifListToArray = new IfListToArray(this);
         const ifArray = new IfArray(this);
         const ifArrayGet = new IfArrayGet(this);
         const ifArraySet = new IfArraySet(this);
         const ifEnum = new IfEnum(this);
         this.registerMethods({
             ifList: [
-                this.addHead,
-                this.addTail,
-                this.getHead,
-                this.getTail,
-                this.removeHead,
-                this.removeTail,
-                this.resetIndex,
-                this.getIndex,
-                this.removeIndex,
+                ifList.addHead,
+                ifList.addTail,
+                ifList.getHead,
+                ifList.getTail,
+                ifList.removeHead,
+                ifList.removeTail,
+                ifList.resetIndex,
+                ifList.getIndex,
+                ifList.removeIndex,
             ],
-            ifListToArray: [this.toArray],
+            ifListToArray: [ifListToArray.toArray],
             ifArray: [
                 ifArray.peek,
                 ifArray.pop,
@@ -197,6 +198,11 @@ export class RoList extends BrsComponent implements BrsValue, BrsArray {
         return this.elements[index];
     }
 
+    resetCurrent() {
+        this.listIndex = this.elements.length > 0 ? 0 : -1;
+        return this.listIndex === 0;
+    }
+
     length() {
         return this.elements.length;
     }
@@ -222,121 +228,4 @@ export class RoList extends BrsComponent implements BrsValue, BrsArray {
             value.removeReference();
         }
     }
-
-    //--------------------------------- ifList ---------------------------------
-
-    /** Adds typed value to head of list */
-    private readonly addHead = new Callable("addHead", {
-        signature: {
-            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, tvalue: BrsType) => {
-            this.add(tvalue, false);
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Adds typed value to tail of list */
-    private readonly addTail = new Callable("addTail", {
-        signature: {
-            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, tvalue: BrsType) => {
-            this.elements.push(tvalue);
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Gets the entry at head of list and keep entry in list */
-    private readonly getHead = new Callable("getHead", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.elements[0] || BrsInvalid.Instance;
-        },
-    });
-
-    /** Gets the Object at tail of List and keep Object in list */
-    private readonly getTail = new Callable("getTail", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.elements[this.tail()] || BrsInvalid.Instance;
-        },
-    });
-
-    /** Removes entry at head of list */
-    private readonly removeHead = new Callable("removeHead", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.remove(0) || BrsInvalid.Instance;
-        },
-    });
-
-    /** Removes entry at tail of list */
-    private readonly removeTail = new Callable("removeTail", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.remove(this.tail()) || BrsInvalid.Instance;
-        },
-    });
-
-    /** Resets the current index or position in list to the head element */
-    private readonly resetIndex = new Callable("resetIndex", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            this.listIndex = this.elements.length > 0 ? 0 : -1;
-            return BrsBoolean.from(this.listIndex === 0);
-        },
-    });
-
-    /** Gets the entry at current index or position from the list and increments the index or position in the list */
-    private readonly getIndex = new Callable("getIndex", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.getCurrent() ?? BrsInvalid.Instance;
-        },
-    });
-
-    /** Removes the entry at the current index or position from the list and increments the index or position in the list */
-    private readonly removeIndex = new Callable("removeIndex", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.remove(this.listIndex) || BrsInvalid.Instance;
-        },
-    });
-
-    //--------------------------------- ifListToArray ---------------------------------
-
-    /** Returns an roArray containing the same elements as the list */
-    private readonly toArray = new Callable("toArray", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return new RoArray(this.elements);
-        },
-    });
 }
