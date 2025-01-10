@@ -4,7 +4,7 @@ import { BrsType, RoScreen, RoRegion } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
+import { RoBitmap } from "./RoBitmap";
 import { RoSprite } from "./RoSprite";
 import { RoArray } from "./RoArray";
 import {
@@ -14,7 +14,8 @@ import {
     drawObjectToComponent,
     getDimensions,
     releaseCanvas,
-} from "../Draw2D";
+    rgbaIntToHex,
+} from "../interfaces/IfDraw2D";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -94,8 +95,8 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         }
     }
 
-    getAlphaEnableValue(): boolean {
-        return !!this.destBitmap?.getAlphaEnableValue();
+    getCanvasAlpha(): boolean {
+        return !!this.destBitmap?.getCanvasAlpha();
     }
 
     getContext(): BrsCanvasContext2D {
