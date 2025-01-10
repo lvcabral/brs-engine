@@ -199,7 +199,7 @@ export function isStringComp(value: BrsType): value is BrsString & Comparable {
  * @param value the BrightScript value in question.
  * @returns `true` if `value` is a boxed number, otherwise `false`.
  */
-export function isBoxedNumber(value: BrsType): value is BoxedNumber {
+export function isBoxedNumber(value: BrsType | BrsComponent): value is BoxedNumber {
     return (
         value instanceof RoInt ||
         value instanceof RoFloat ||
