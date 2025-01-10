@@ -1,4 +1,4 @@
-import { BrsNumber, BrsType, isBrsNumber, isStringComp } from ".";
+import { BrsComponent, BrsNumber, BrsType, isBrsNumber, isStringComp } from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
@@ -144,8 +144,8 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
  * @param value the BrightScript value to be checked.
  * @returns `true` if `value` is comparable, otherwise `false`.
  */
-export function isComparable(value: BrsType): value is BrsType & Comparable {
-    return "lessThan" in value && "greaterThan" in value;
+export function isComparable(value: BrsType | BrsComponent): value is BrsType & Comparable {
+    return "lessThan" in value && "greaterThan" in value && "getValue" in value;
 }
 
 /** The base for all BrightScript types. */
