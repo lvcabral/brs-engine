@@ -89,7 +89,6 @@ export class IfArray {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, index: Int32) => {
-            const elements = this.component.getValue();
             if (index.lessThan(new Int32(0)).toBoolean()) {
                 return BrsBoolean.False;
             }
@@ -197,7 +196,7 @@ export interface BrsArray extends BrsIterable {
     readonly resizable: boolean;
     readonly maxSize: number;
 
-    getValue(): Array<any>;
+    getValue(): BrsType[];
 
     add(value: BrsType, toTail: boolean): void;
 

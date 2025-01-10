@@ -11,7 +11,7 @@ import { IfEnum } from "../interfaces/IfEnum";
 
 export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     readonly kind = ValueKind.Object;
-    private roList: RoList;
+    private readonly roList: RoList;
     readonly resizable: boolean = true;
     maxSize = 0;
 
