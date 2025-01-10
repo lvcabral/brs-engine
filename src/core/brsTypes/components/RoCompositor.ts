@@ -14,7 +14,7 @@ import {
     drawObjectToComponent,
     getDimensions,
     releaseCanvas,
-} from "../interfaces/Draw2D";
+} from "../interfaces/IfDraw2D";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
