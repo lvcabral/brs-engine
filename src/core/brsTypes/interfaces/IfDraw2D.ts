@@ -202,11 +202,13 @@ export class IfDraw2D {
             yEnd: Int32,
             rgba: Int32
         ) => {
+            const baseX = this.component.x;
+            const baseY = this.component.y;
             const ctx = this.component.getContext();
             ctx.beginPath();
             ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.moveTo(xStart.getValue(), yStart.getValue());
-            ctx.lineTo(xEnd.getValue(), yEnd.getValue());
+            ctx.moveTo(baseX + xStart.getValue(), baseY + yStart.getValue());
+            ctx.lineTo(baseX + xEnd.getValue(), baseY + yEnd.getValue());
             ctx.stroke();
             this.component.makeDirty();
             return BrsBoolean.True;
@@ -225,9 +227,16 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
-            let ctx = this.component.getContext();
+            const baseX = this.component.x;
+            const baseY = this.component.y;
+            const ctx = this.component.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
+            ctx.fillRect(
+                baseX + x.getValue(),
+                baseY + y.getValue(),
+                size.getValue(),
+                size.getValue()
+            );
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -246,15 +255,21 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
+            const baseX = this.component.x;
+            const baseY = this.component.y;
             const ctx = this.component.getContext();
-            if (!this.component.getCanvasAlpha()) {
-                // This was originally only on roScreen, but it makes sense to have it here too
+            if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
                 ctx.clearRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
                 ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
             } else {
                 ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
             }
-            ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            ctx.fillRect(
+                baseX + x.getValue(),
+                baseY + y.getValue(),
+                width.getValue(),
+                height.getValue()
+            );
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -273,11 +288,17 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
+            const baseX = this.component.x;
+            const baseY = this.component.y;
             const ctx = this.component.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
             ctx.font = font.toFontString();
             ctx.textBaseline = "top";
-            ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
+            ctx.fillText(
+                text.value,
+                baseX + x.getValue(),
+                baseY + y.getValue() + font.getTopAdjust()
+            );
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -352,10 +373,12 @@ export class IfDraw2D {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            const baseX = this.component.x;
+            const baseY = this.component.y;
             const ctx = this.component.getCanvas().getContext("2d") as BrsCanvasContext2D;
             const imgData = ctx.getImageData(
-                x.getValue(),
-                y.getValue(),
+                baseX + x.getValue(),
+                baseY + y.getValue(),
                 width.getValue(),
                 height.getValue()
             );
@@ -376,10 +399,12 @@ export class IfDraw2D {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            const baseX = this.component.x;
+            const baseY = this.component.y;
             const ctx = this.component.getCanvas().getContext("2d") as BrsCanvasContext2D;
             const imgData = ctx.getImageData(
-                x.getValue(),
-                y.getValue(),
+                baseX + x.getValue(),
+                baseY + y.getValue(),
                 width.getValue(),
                 height.getValue()
             );
@@ -391,6 +416,8 @@ export class IfDraw2D {
 }
 
 export interface BrsDraw2D {
+    readonly x: number;
+    readonly y: number;
     readonly width: number;
     readonly height: number;
 

@@ -28,6 +28,8 @@ import { WebPRiffParser, WebPDecoder } from "libwebpjs";
 
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
+    readonly x: number = 0;
+    readonly y: number = 0;
     readonly width: number;
     readonly height: number;
     private readonly canvas: BrsCanvas;

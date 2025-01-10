@@ -23,6 +23,8 @@ import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
 export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
+    readonly x: number = 0;
+    readonly y: number = 0;
     readonly width: number;
     readonly height: number;
     private readonly interpreter: Interpreter;
