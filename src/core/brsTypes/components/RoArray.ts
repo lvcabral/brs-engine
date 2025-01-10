@@ -1,15 +1,16 @@
 import { BrsType, isBrsString, isBrsNumber, Int32, Float } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
-import { BrsComponent, BrsIterable } from "./BrsComponent";
+import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
 
-export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
+export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     readonly kind = ValueKind.Object;
-    private readonly resizable: boolean = true;
-    private maxSize = 0;
+    readonly resizable: boolean = true;
+    maxSize = 0;
     elements: BrsType[];
     enumIndex: number;
 
@@ -36,25 +37,28 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             );
         }
         this.enumIndex = this.elements.length ? 0 : -1;
+        const ifArray = new IfArray(this);
+        const ifArrayGet = new IfArrayGet(this);
+        const ifArraySet = new IfArraySet(this);
         const ifEnum = new IfEnum(this);
         this.registerMethods({
             ifArray: [
-                this.peek,
-                this.pop,
-                this.push,
-                this.shift,
-                this.unshift,
-                this.delete,
-                this.count,
-                this.clear,
-                this.append,
+                ifArray.peek,
+                ifArray.pop,
+                ifArray.push,
+                ifArray.shift,
+                ifArray.unshift,
+                ifArray.delete,
+                ifArray.count,
+                ifArray.clear,
+                ifArray.append,
             ],
-            ifArrayGet: [this.getEntry],
-            ifArraySet: [this.setEntry],
+            ifArrayGet: [ifArrayGet.getEntry],
+            ifArraySet: [ifArraySet.setEntry],
             ifArrayJoin: [this.join],
             ifArraySort: [this.sort, this.sortBy, this.reverse],
-            ifArraySizeInfo: [this.capacity, this.isResizable],
             ifArraySlice: [this.slice],
+            ifArraySizeInfo: [this.capacity, this.isResizable],
             ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
     }
@@ -128,16 +132,19 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         this.enumIndex = this.elements.length > 0 ? 0 : -1;
     }
 
-    updateNext() {
+    updateNext(grow?: boolean, factor?: number) {
         const hasItems = this.elements.length > 0;
         if (this.enumIndex === -1 && hasItems) {
             this.enumIndex = 0;
         } else if (this.enumIndex >= this.elements.length || !hasItems) {
             this.enumIndex = -1;
         }
+        if (grow) {
+            this.updateCapacity(factor ?? 1.25);
+        }
     }
 
-    updateCapacity(growthFactor = 0) {
+    private updateCapacity(growthFactor = 0) {
         if (this.resizable && growthFactor > 0) {
             if (this.elements.length > 0 && this.elements.length > this.maxSize) {
                 let count = this.elements.length - 1;
@@ -153,7 +160,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    aaCompare(
+    private aaCompare(
         fieldName: BrsString,
         flags: BrsString,
         a: RoAssociativeArray,
@@ -195,179 +202,6 @@ export class RoArray extends BrsComponent implements BrsValue, BrsIterable {
             value.removeReference();
         }
     }
-
-    // ifArray
-    private readonly peek = new Callable("peek", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.elements[this.elements.length - 1] || BrsInvalid.Instance;
-        },
-    });
-
-    private readonly pop = new Callable("pop", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            const removed = this.elements.pop();
-            this.removeChildRef(removed);
-            this.updateNext();
-            return removed || BrsInvalid.Instance;
-        },
-    });
-
-    private readonly push = new Callable("push", {
-        signature: {
-            args: [new StdlibArgument("talue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            if (this.resizable || this.elements.length < this.maxSize) {
-                this.addChildRef(tvalue);
-                this.elements.push(tvalue);
-                this.updateNext();
-                this.updateCapacity(1.25);
-            } else {
-                interpreter.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roArray.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
-                );
-            }
-            return BrsInvalid.Instance;
-        },
-    });
-
-    private readonly shift = new Callable("shift", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            const removed = this.elements.shift();
-            this.removeChildRef(removed);
-            this.updateNext();
-            return removed || BrsInvalid.Instance;
-        },
-    });
-
-    private readonly unshift = new Callable("unshift", {
-        signature: {
-            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, tvalue: BrsType) => {
-            if (this.resizable || this.elements.length < this.maxSize) {
-                this.addChildRef(tvalue);
-                this.elements.unshift(tvalue);
-                this.updateNext();
-                this.updateCapacity(1.25);
-            } else {
-                interpreter.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roArray.Unshift: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
-                );
-            }
-            return BrsInvalid.Instance;
-        },
-    });
-
-    private readonly delete = new Callable("delete", {
-        signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, index: Int32) => {
-            if (index.lessThan(new Int32(0)).toBoolean()) {
-                return BrsBoolean.False;
-            }
-            const deleted = this.elements.splice(index.getValue(), 1);
-            deleted.forEach((element) => {
-                this.removeChildRef(element);
-            });
-            this.updateNext();
-            return BrsBoolean.from(deleted.length > 0);
-        },
-    });
-
-    private readonly count = new Callable("count", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.elements.length);
-        },
-    });
-
-    private readonly clear = new Callable("clear", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            this.elements.forEach((element) => {
-                this.removeChildRef(element);
-            });
-            this.elements = [];
-            this.enumIndex = -1;
-            return BrsInvalid.Instance;
-        },
-    });
-
-    private readonly append = new Callable("append", {
-        signature: {
-            args: [new StdlibArgument("array", ValueKind.Object)],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, array: BrsComponent) => {
-            if (!(array instanceof RoArray)) {
-                interpreter.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roArray.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
-                );
-                return BrsInvalid.Instance;
-            }
-
-            if (this.resizable || this.elements.length + array.elements.length <= this.maxSize) {
-                array.elements.forEach((element) => {
-                    this.addChildRef(element);
-                });
-                this.elements = [
-                    ...this.elements,
-                    ...array.elements.filter((element) => !!element), // don't copy "holes" where no value exists
-                ];
-                this.updateNext();
-                this.updateCapacity();
-            }
-            return BrsInvalid.Instance;
-        },
-    });
-
-    // ifArrayGet
-    private readonly getEntry = new Callable("getEntry", {
-        signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            return this.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
-        },
-    });
-
-    // ifArraySet
-    private readonly setEntry = new Callable("setEntry", {
-        signature: {
-            args: [
-                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
-                new StdlibArgument("tvalue", ValueKind.Dynamic),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
-            return this.set(index, tvalue);
-        },
-    });
 
     // ifArrayJoin
     private readonly join = new Callable("join", {

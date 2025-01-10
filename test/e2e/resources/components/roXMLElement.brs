@@ -11,4 +11,5 @@ sub main()
     ?"getNamedElementsCi(""child1"") count = " children.count()
     ?"name of first child  = "children[0].getName()
     ?"mame of second child = "children[1].getName()
+    ?children.peek()
 end sub

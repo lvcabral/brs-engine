@@ -1,12 +1,15 @@
-import { BrsType, Float, Int32, RoArray } from "..";
+import { BrsType, RoArray } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent, BrsIterable } from "./BrsComponent";
+import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
 
-export class RoList extends BrsComponent implements BrsValue, BrsIterable {
+export class RoList extends BrsComponent implements BrsValue, BrsArray {
     readonly kind = ValueKind.Object;
+    readonly resizable: boolean = true;
+    maxSize = 0;
     elements: BrsType[];
     listIndex: number;
     enumIndex: number;
@@ -22,6 +25,9 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         }
         this.listIndex = -1;
         this.enumIndex = -1;
+        const ifArray = new IfArray(this);
+        const ifArrayGet = new IfArrayGet(this);
+        const ifArraySet = new IfArraySet(this);
         const ifEnum = new IfEnum(this);
         this.registerMethods({
             ifList: [
@@ -37,18 +43,18 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
             ],
             ifListToArray: [this.toArray],
             ifArray: [
-                this.peek,
-                this.pop,
-                this.push,
-                this.shift,
-                this.unshift,
-                this.delete,
-                this.count,
-                this.clear,
-                this.append,
+                ifArray.peek,
+                ifArray.pop,
+                ifArray.push,
+                ifArray.shift,
+                ifArray.unshift,
+                ifArray.delete,
+                ifArray.count,
+                ifArray.clear,
+                ifArray.append,
             ],
-            ifArrayGet: [this.getEntry],
-            ifArraySet: [this.setEntry],
+            ifArrayGet: [ifArrayGet.getEntry],
+            ifArraySet: [ifArraySet.setEntry],
             ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
     }
@@ -169,6 +175,15 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         }
         this.removeChildRef(removed);
         return removed;
+    }
+
+    clear() {
+        this.elements.forEach((element) => {
+            this.removeChildRef(element);
+        });
+        this.elements.length = 0;
+        this.listIndex = -1;
+        this.enumIndex = -1;
     }
 
     getCurrent() {
@@ -322,149 +337,6 @@ export class RoList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return new RoArray(this.elements);
-        },
-    });
-
-    //--------------------------------- ifArray ---------------------------------
-
-    private readonly peek = new Callable("peek", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.elements[this.tail()] || BrsInvalid.Instance;
-        },
-    });
-
-    private readonly pop = new Callable("pop", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.remove(this.tail()) || BrsInvalid.Instance;
-        },
-    });
-
-    private readonly push = new Callable("push", {
-        signature: {
-            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, tvalue: BrsType) => {
-            this.add(tvalue, true);
-            return BrsInvalid.Instance;
-        },
-    });
-
-    private readonly shift = new Callable("shift", {
-        signature: {
-            args: [],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter) => {
-            return this.remove(0) || BrsInvalid.Instance;
-        },
-    });
-
-    private readonly unshift = new Callable("unshift", {
-        signature: {
-            args: [new StdlibArgument("tvalue", ValueKind.Dynamic)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, tvalue: BrsType) => {
-            this.add(tvalue, false);
-            return BrsInvalid.Instance;
-        },
-    });
-
-    private readonly delete = new Callable("delete", {
-        signature: {
-            args: [new StdlibArgument("index", ValueKind.Dynamic)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, index: BrsType) => {
-            if (
-                (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) &&
-                index.getValue() >= 0
-            ) {
-                return this.remove(index.getValue()) ? BrsBoolean.True : BrsBoolean.False;
-            }
-            return BrsBoolean.False;
-        },
-    });
-
-    private readonly count = new Callable("count", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.elements.length);
-        },
-    });
-
-    private readonly clear = new Callable("clear", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            this.elements = new Array<BrsType>();
-            this.listIndex = -1;
-            this.enumIndex = -1;
-            return BrsInvalid.Instance;
-        },
-    });
-
-    private readonly append = new Callable("append", {
-        signature: {
-            args: [new StdlibArgument("array", ValueKind.Object)],
-            returns: ValueKind.Void,
-        },
-        impl: (interpreter: Interpreter, array: BrsComponent) => {
-            if (!(array instanceof RoList)) {
-                interpreter.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roList.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`
-                );
-                return BrsInvalid.Instance;
-            }
-
-            this.elements = [
-                ...this.elements,
-                ...array.elements.filter((element) => !!element), // don't copy "holes" where no value exists
-            ];
-
-            return BrsInvalid.Instance;
-        },
-    });
-
-    //------------------------------- ifArrayGet --------------------------------
-
-    /** Returns an array entry based on the provided index. */
-    private readonly getEntry = new Callable("getEntry", {
-        signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            return this.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
-        },
-    });
-
-    //------------------------------- ifArraySet --------------------------------
-
-    private readonly setEntry = new Callable("setEntry", {
-        signature: {
-            args: [
-                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
-                new StdlibArgument("tvalue", ValueKind.Dynamic),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
-            return this.set(index, tvalue);
         },
     });
 }

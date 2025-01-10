@@ -1,20 +1,26 @@
-import { BrsType, Float, Int32 } from "..";
+import { BrsType, Int32 } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
-import { BrsComponent, BrsIterable } from "./BrsComponent";
+import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoList } from "./RoList";
 import { RoArray } from "./RoArray";
 import { RoXMLElement } from "./RoXMLElement";
+import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
 
-export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
+export class RoXMLList extends BrsComponent implements BrsValue, BrsArray {
     readonly kind = ValueKind.Object;
     private roList: RoList;
+    readonly resizable: boolean = true;
+    maxSize = 0;
 
     constructor() {
         super("roXMLList");
         this.roList = new RoList();
+        const ifArray = new IfArray(this);
+        const ifArrayGet = new IfArrayGet(this);
+        const ifArraySet = new IfArraySet(this);
         const ifEnum = new IfEnum(this);
         this.registerMethods({
             ifXMLList: [
@@ -38,10 +44,21 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
                 this.getIndex,
                 this.removeIndex,
             ],
-            ifArrayGet: [this.getEntry],
-            ifArraySet: [this.setEntry],
-            ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
             ifListToArray: [this.toArray],
+            ifArray: [
+                ifArray.peek,
+                ifArray.pop,
+                ifArray.push,
+                ifArray.shift,
+                ifArray.unshift,
+                ifArray.delete,
+                ifArray.count,
+                ifArray.clear,
+                ifArray.append,
+            ],
+            ifArrayGet: [ifArrayGet.getEntry],
+            ifArraySet: [ifArraySet.setEntry],
+            ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
     }
 
@@ -113,6 +130,10 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
 
     resetNext() {
         this.roList.resetNext();
+    }
+
+    updateNext(): void {
+        this.roList.updateNext();
     }
 
     add(element: RoXMLElement) {
@@ -372,34 +393,6 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return new RoArray(this.roList.elements);
-        },
-    });
-
-    //------------------------------- ifArrayGet --------------------------------
-
-    /** Returns an array entry based on the provided index. */
-    private readonly getEntry = new Callable("getEntry", {
-        signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            return this.roList.elements[Math.trunc(index.getValue())] || BrsInvalid.Instance;
-        },
-    });
-
-    //------------------------------- ifArraySet --------------------------------
-
-    private readonly setEntry = new Callable("setEntry", {
-        signature: {
-            args: [
-                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
-                new StdlibArgument("tvalue", ValueKind.Dynamic),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
-            return this.set(index, tvalue);
         },
     });
 }
