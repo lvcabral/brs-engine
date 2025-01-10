@@ -5,30 +5,31 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { rgbaIntToHex } from "./RoBitmap";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoFont } from "./RoFont";
 import { RoByteArray } from "./RoByteArray";
 import {
     BrsCanvas,
     BrsCanvasContext2D,
+    BrsDraw2D,
     createNewCanvas,
     drawImageToContext,
     drawObjectToComponent,
     drawRotatedObject,
     releaseCanvas,
+    rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import UPNG from "upng-js";
 import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
 import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
 import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
 
-export class RoScreen extends BrsComponent implements BrsValue {
+export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
+    readonly width: number;
+    readonly height: number;
     private readonly interpreter: Interpreter;
     private readonly doubleBuffer: boolean;
-    private readonly width: number;
-    private readonly height: number;
     private readonly maxMs: number;
     private readonly disposeCanvas: boolean;
     private readonly valid: boolean;
@@ -42,6 +43,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
     private isDirty: boolean;
     private lastMessage: number;
     private lastKey: number;
+    rgbaRedraw: boolean;
 
     constructor(
         interpreter: Interpreter,
@@ -92,6 +94,7 @@ export class RoScreen extends BrsComponent implements BrsValue {
         } else if (doubleBuffer !== undefined) {
             this.valid = false;
         }
+        this.rgbaRedraw = false;
         this.currentBuffer = 0;
         this.lastBuffer = 0;
         this.canvas = new Array<BrsCanvas>(this.doubleBuffer ? 2 : 1);
@@ -138,24 +141,16 @@ export class RoScreen extends BrsComponent implements BrsValue {
         }
     }
 
-    getImageWidth(): number {
-        return this.canvas[this.lastBuffer].width;
-    }
-
-    getImageHeight(): number {
-        return this.canvas[this.lastBuffer].height;
-    }
-
     getCanvas(): BrsCanvas {
+        return this.canvas[this.lastBuffer];
+    }
+
+    getRgbaCanvas(_: number): BrsCanvas {
         return this.canvas[this.lastBuffer];
     }
 
     getContext(): BrsCanvasContext2D {
         return this.context[this.currentBuffer];
-    }
-
-    getAlphaEnableValue(): boolean {
-        return this.alphaEnable;
     }
 
     clearCanvas(rgba: number) {
@@ -187,6 +182,10 @@ export class RoScreen extends BrsComponent implements BrsValue {
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
         return BrsInvalid.Instance;
+    }
+
+    getCanvasAlpha(): boolean {
+        return this.alphaEnable;
     }
 
     toString(parent?: BrsType): string {

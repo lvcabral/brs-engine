@@ -4,29 +4,29 @@ import { BrsType, Double, Float, RoFont } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
+import { RoBitmap } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
 import { RoByteArray } from "./RoByteArray";
 import {
     BrsCanvas,
     BrsCanvasContext2D,
+    BrsDraw2D,
     BrsImageData,
     drawImageToContext,
     drawObjectToComponent,
     drawRotatedObject,
+    rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import UPNG from "upng-js";
 
-export class RoRegion extends BrsComponent implements BrsValue {
+export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     private readonly valid: boolean;
     private alphaEnable: boolean;
     private bitmap: RoBitmap | RoScreen;
     private x: number;
     private y: number;
-    private width: number;
-    private height: number;
     private collisionType: number;
     private translationX: number;
     private translationY: number;
@@ -35,6 +35,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private wrap: boolean;
     private collisionCircle: Circle;
     private collisionRect: Rect;
+    width: number;
+    height: number;
+    rgbaRedraw: boolean;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
@@ -50,11 +53,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
         if (y instanceof Float || y instanceof Double || y instanceof Int32) {
             this.y = Math.trunc(y.getValue());
         }
-        this.width = bitmap.getImageWidth();
+        this.width = bitmap.width;
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
         }
-        this.height = bitmap.getImageHeight();
+        this.height = bitmap.height;
         if (height instanceof Float || height instanceof Double || height instanceof Int32) {
             this.height = Math.trunc(height.getValue());
         }
@@ -66,11 +69,9 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
         this.alphaEnable = true;
+        this.rgbaRedraw = false;
 
-        if (
-            this.x + this.width <= bitmap.getImageWidth() &&
-            this.y + this.height <= bitmap.getImageHeight()
-        ) {
+        if (this.x + this.width <= bitmap.width && this.y + this.height <= bitmap.height) {
             this.valid = true;
         }
         this.registerMethods({
@@ -206,6 +207,14 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.bitmap.getCanvas();
     }
 
+    setCanvasAlpha(alphaEnable: boolean) {
+        return this.bitmap.setCanvasAlpha(alphaEnable);
+    }
+
+    getCanvasAlpha(): boolean {
+        return this.alphaEnable;
+    }
+
     getPosX(): number {
         return this.x;
     }
@@ -256,10 +265,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
 
     getWrapValue(): boolean {
         return this.wrap;
-    }
-
-    getAlphaEnableValue(): boolean {
-        return this.alphaEnable;
     }
 
     getAnimaTime(): number {
@@ -864,7 +869,8 @@ export class RoRegion extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
             this.alphaEnable = alphaEnable.toBoolean();
-            return this.bitmap.setCanvasAlpha(alphaEnable.toBoolean());
+            this.bitmap.setCanvasAlpha(alphaEnable.toBoolean());
+            return BrsInvalid.Instance;
         },
     });
 

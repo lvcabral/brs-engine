@@ -1,13 +1,405 @@
-import { BrsInvalid, RoBitmap, RoRegion, RoScreen } from "..";
+import {
+    BrsBoolean,
+    BrsInvalid,
+    BrsString,
+    Callable,
+    Float,
+    RoBitmap,
+    RoByteArray,
+    RoFont,
+    RoRegion,
+    RoScreen,
+    StdlibArgument,
+    ValueKind,
+} from "..";
+import { numberToHex } from "../../common";
+import { Interpreter } from "../../interpreter";
 import { BrsComponent } from "../components/BrsComponent";
 import { RoCompositor } from "../components/RoCompositor";
 import { Int32 } from "../Int32";
 import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
+import UPNG from "upng-js";
 
-export type BrsDraw2D = RoBitmap | RoRegion | RoScreen;
 export type BrsCanvas = OffscreenCanvas | Canvas;
 export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 export type BrsImageData = ImageData | NodeImageData;
+
+export class IfDraw2D {
+    private readonly component: BrsDraw2D;
+
+    constructor(component: BrsDraw2D) {
+        this.component = component;
+    }
+
+    /** Clear the bitmap, and fill with the specified RGBA color */
+    readonly clear = new Callable("clear", {
+        signature: {
+            args: [new StdlibArgument("rgba", ValueKind.Int32)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, rgba: Int32) => {
+            this.component.clearCanvas(rgba.getValue());
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Draw the source object, where src is an roBitmap or an roRegion object, at position x,y */
+    readonly drawObject = new Callable("drawObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
+        ) => {
+            const ctx = this.component.getContext();
+            const didDraw = this.component.drawImage(object, rgba, x.getValue(), y.getValue());
+            ctx.globalAlpha = 1.0;
+            return BrsBoolean.from(didDraw);
+        },
+    });
+
+    /** Draw the source object at position x,y rotated by angle theta degrees. */
+    readonly drawRotatedObject = new Callable("drawRotatedObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("theta", ValueKind.Float),
+                new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            theta: Float,
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
+        ) => {
+            const didDraw = drawRotatedObject(
+                this.component,
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                theta.getValue()
+            );
+            this.component.rgbaRedraw = true;
+            return BrsBoolean.from(didDraw);
+        },
+    });
+
+    /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
+    readonly drawScaledObject = new Callable("drawScaledObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("scaleX", ValueKind.Float),
+                new StdlibArgument("scaleY", ValueKind.Float),
+                new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            scaleX: Float,
+            scaleY: Float,
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
+        ) => {
+            const didDraw = this.component.drawImage(
+                object,
+                rgba,
+                x.getValue(),
+                y.getValue(),
+                scaleX.getValue(),
+                scaleY.getValue()
+            );
+            this.component.getContext().globalAlpha = 1.0;
+            return BrsBoolean.from(didDraw);
+        },
+    });
+
+    /** Draw the source object, at position x,y, rotated by theta and scaled horizontally by scaleX and vertically by scaleY. */
+    readonly drawTransformedObject = new Callable("drawTransformedObject", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("theta", ValueKind.Float),
+                new StdlibArgument("scaleX", ValueKind.Float),
+                new StdlibArgument("scaleY", ValueKind.Float),
+                new StdlibArgument("object", ValueKind.Object),
+                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            x: Int32,
+            y: Int32,
+            theta: Float,
+            scaleX: Float,
+            scaleY: Float,
+            object: BrsComponent,
+            rgba: Int32 | BrsInvalid
+        ) => {
+            const ctx = this.component.getContext();
+            const positionX = x.getValue();
+            const positionY = y.getValue();
+            const angleInRad = (-theta.getValue() * Math.PI) / 180;
+            ctx.save();
+            ctx.translate(positionX, positionY);
+            ctx.rotate(angleInRad);
+            const didDraw = this.component.drawImage(
+                object,
+                rgba,
+                0,
+                0,
+                scaleX.getValue(),
+                scaleY.getValue()
+            );
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+            return BrsBoolean.from(didDraw);
+        },
+    });
+
+    /** Draw a line from (xStart, yStart) to (xEnd, yEnd) with RGBA color */
+    readonly drawLine = new Callable("drawLine", {
+        signature: {
+            args: [
+                new StdlibArgument("xStart", ValueKind.Int32),
+                new StdlibArgument("yStart", ValueKind.Int32),
+                new StdlibArgument("xEnd", ValueKind.Int32),
+                new StdlibArgument("yEnd", ValueKind.Int32),
+                new StdlibArgument("rgba", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (
+            _: Interpreter,
+            xStart: Int32,
+            yStart: Int32,
+            xEnd: Int32,
+            yEnd: Int32,
+            rgba: Int32
+        ) => {
+            const ctx = this.component.getContext();
+            ctx.beginPath();
+            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
+            ctx.moveTo(xStart.getValue(), yStart.getValue());
+            ctx.lineTo(xEnd.getValue(), yEnd.getValue());
+            ctx.stroke();
+            this.component.rgbaRedraw = true;
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Draws a point at (x,y) with the given size and RGBA color */
+    readonly drawPoint = new Callable("drawPoint", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("size", ValueKind.Float),
+                new StdlibArgument("rgba", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
+            let ctx = this.component.getContext();
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
+            ctx.fillRect(x.getValue(), y.getValue(), size.getValue(), size.getValue());
+            this.component.rgbaRedraw = true;
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Fill the specified rectangle from left (x), top (y) to right (x + width), bottom (y + height) with the RGBA color */
+    readonly drawRect = new Callable("drawRect", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+                new StdlibArgument("rgba", ValueKind.Int32),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
+            const ctx = this.component.getContext();
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
+            ctx.fillRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            this.component.rgbaRedraw = true;
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Draws the text at position (x,y) using the specified RGBA color and roFont font object. */
+    readonly drawText = new Callable("drawText", {
+        signature: {
+            args: [
+                new StdlibArgument("text", ValueKind.String),
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("rgba", ValueKind.Int32),
+                new StdlibArgument("font", ValueKind.Object),
+            ],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
+            const ctx = this.component.getContext();
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
+            ctx.font = font.toFontString();
+            ctx.textBaseline = "top";
+            ctx.fillText(text.value, x.getValue(), y.getValue() + font.getTopAdjust());
+            this.component.rgbaRedraw = true;
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Realize the bitmap by finishing all queued draw calls. */
+    readonly finish = new Callable("finish", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns true if alpha blending is enabled */
+    readonly getAlphaEnable = new Callable("getAlphaEnable", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.component.getCanvasAlpha());
+        },
+    });
+
+    /** If enable is true, do alpha blending when this bitmap is the destination */
+    readonly setAlphaEnable = new Callable("setAlphaEnable", {
+        signature: {
+            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
+            this.component.setCanvasAlpha(alphaEnable.toBoolean());
+            return BrsInvalid.Instance;
+        },
+    });
+
+    /** Return the width of the screen/bitmap/region. */
+    readonly getWidth = new Callable("getWidth", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(this.component.width);
+        },
+    });
+
+    /** Return the height of the screen/bitmap/region. */
+    readonly getHeight = new Callable("getHeight", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(this.component.height);
+        },
+    });
+
+    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
+    readonly getByteArray = new Callable("getByteArray", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            const imgData = this.component
+                .getContext()
+                .getImageData(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            const byteArray = new Uint8Array(imgData.data.buffer);
+            return new RoByteArray(byteArray);
+        },
+    });
+
+    /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
+    readonly getPng = new Callable("getPng", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
+            const imgData = this.component
+                .getContext()
+                .getImageData(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+            return new RoByteArray(
+                new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
+            );
+        },
+    });
+}
+
+export interface BrsDraw2D {
+    readonly width: number;
+    readonly height: number;
+    rgbaRedraw: boolean;
+
+    clearCanvas(rgba: number): void;
+
+    getContext(): BrsCanvasContext2D;
+
+    getCanvas(): BrsCanvas;
+
+    getRgbaCanvas(rgba: number): BrsCanvas;
+
+    setCanvasAlpha(alphaEnable: boolean): void;
+
+    getCanvasAlpha(): boolean;
+
+    drawImage(
+        object: BrsComponent,
+        rgba: Int32 | BrsInvalid,
+        x: number,
+        y: number,
+        scaleX?: number,
+        scaleY?: number
+    ): boolean;
+}
 
 // In Chrome, when this is enabled, it slows down non-alpha draws. However, when this is true, it behaves the same as Roku
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
@@ -71,7 +463,7 @@ export class Dimensions {
 
 export function getDimensions(object: BrsDraw2D | RoCompositor | BrsCanvas): Dimensions {
     if (object instanceof RoRegion || object instanceof RoBitmap) {
-        return new Dimensions(object.getImageWidth(), object.getImageHeight());
+        return new Dimensions(object.width, object.height);
     } else if (object instanceof RoScreen) {
         return new Dimensions(object.getCanvas().width, object.getCanvas().height);
     } else if (object instanceof RoCompositor) {
@@ -112,8 +504,8 @@ function getDrawChunks(
     const ty = preTrans.y * scaleY;
     const sx = offset.x;
     const sy = offset.y;
-    const sw = object.getImageWidth();
-    const sh = object.getImageHeight();
+    const sw = object.width;
+    const sh = object.height;
 
     const dx = x + tx + destOffset.x;
     const dy = y + ty + destOffset.y;
@@ -131,9 +523,11 @@ function getDrawChunks(
         !allowWrap ||
         object instanceof RoBitmap ||
         object instanceof RoScreen ||
-        !object.getWrapValue()
+        (object instanceof RoRegion && !object.getWrapValue())
     ) {
         // No wraps, so just one image chunk to draw
+        return chunks;
+    } else if (!(object instanceof RoRegion)) {
         return chunks;
     }
 
@@ -201,7 +595,7 @@ export function drawObjectToComponent(
     scaleY: number = 1
 ): boolean {
     const ctx = component.getContext();
-    const alphaEnable = component.getAlphaEnableValue();
+    const alphaEnable = component.getCanvasAlpha();
     let image: BrsCanvas;
     if (object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen) {
         image = getCanvasFromDraw2d(object, rgba);
@@ -322,6 +716,21 @@ export function putImageAtPos(
         ctx.putImageData(imageData, x, y);
     }
     /// #endif
+}
+
+export function rgbaIntToHex(rgba: number, alpha: boolean = true): string {
+    if (!alpha) {
+        rgba = rgbaToOpaque(rgba);
+    }
+    return "#" + numberToHex(rgba, "0");
+}
+
+export function rgbaToTransparent(rgba: number): number {
+    return rgba - (rgba & 0xff);
+}
+
+export function rgbaToOpaque(rgba: number): number {
+    return rgba - (rgba & 0xff) + 0xff;
 }
 
 function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) {
