@@ -1,32 +1,28 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Double, Float, RoFont } from "..";
+import { BrsType, Double, Float } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoBitmap, rgbaIntToHex } from "./RoBitmap";
+import { RoBitmap } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
 import { Rect, Circle } from "./RoCompositor";
-import { RoByteArray } from "./RoByteArray";
 import {
     BrsCanvas,
     BrsCanvasContext2D,
+    BrsDraw2D,
     BrsImageData,
     drawImageToContext,
     drawObjectToComponent,
-    drawRotatedObject,
-} from "../Draw2D";
-import UPNG from "upng-js";
+    IfDraw2D,
+    rgbaIntToHex,
+} from "../interfaces/IfDraw2D";
 
-export class RoRegion extends BrsComponent implements BrsValue {
+export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     private readonly valid: boolean;
     private alphaEnable: boolean;
     private bitmap: RoBitmap | RoScreen;
-    private x: number;
-    private y: number;
-    private width: number;
-    private height: number;
     private collisionType: number;
     private translationX: number;
     private translationY: number;
@@ -35,6 +31,10 @@ export class RoRegion extends BrsComponent implements BrsValue {
     private wrap: boolean;
     private collisionCircle: Circle;
     private collisionRect: Rect;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
@@ -50,11 +50,11 @@ export class RoRegion extends BrsComponent implements BrsValue {
         if (y instanceof Float || y instanceof Double || y instanceof Int32) {
             this.y = Math.trunc(y.getValue());
         }
-        this.width = bitmap.getImageWidth();
+        this.width = bitmap.width;
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
         }
-        this.height = bitmap.getImageHeight();
+        this.height = bitmap.height;
         if (height instanceof Float || height instanceof Double || height instanceof Int32) {
             this.height = Math.trunc(height.getValue());
         }
@@ -67,12 +67,10 @@ export class RoRegion extends BrsComponent implements BrsValue {
         this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
         this.alphaEnable = true;
 
-        if (
-            this.x + this.width <= bitmap.getImageWidth() &&
-            this.y + this.height <= bitmap.getImageHeight()
-        ) {
+        if (this.x + this.width <= bitmap.width && this.y + this.height <= bitmap.height) {
             this.valid = true;
         }
+        const ifDraw2D = new IfDraw2D(this);
         this.registerMethods({
             ifRegion: [
                 this.copy,
@@ -98,20 +96,20 @@ export class RoRegion extends BrsComponent implements BrsValue {
                 this.setWrap,
             ],
             ifDraw2D: [
-                this.clear,
-                this.drawObject,
-                this.drawRotatedObject,
-                this.drawScaledObject,
-                this.drawTransformedObject,
-                this.drawLine,
-                this.drawPoint,
-                this.drawRect,
-                this.drawText,
-                this.finish,
-                this.getAlphaEnable,
-                this.setAlphaEnable,
-                this.getByteArray,
-                this.getPng,
+                ifDraw2D.clear,
+                ifDraw2D.drawObject,
+                ifDraw2D.drawRotatedObject,
+                ifDraw2D.drawScaledObject,
+                ifDraw2D.drawTransformedObject,
+                ifDraw2D.drawLine,
+                ifDraw2D.drawPoint,
+                ifDraw2D.drawRect,
+                ifDraw2D.drawText,
+                ifDraw2D.finish,
+                ifDraw2D.getAlphaEnable,
+                ifDraw2D.setAlphaEnable,
+                ifDraw2D.getByteArray,
+                ifDraw2D.getPng,
             ],
         });
     }
@@ -206,6 +204,15 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.bitmap.getCanvas();
     }
 
+    setCanvasAlpha(alphaEnable: boolean) {
+        this.alphaEnable = alphaEnable;
+        this.bitmap.setCanvasAlpha(alphaEnable);
+    }
+
+    getCanvasAlpha(): boolean {
+        return this.alphaEnable;
+    }
+
     getPosX(): number {
         return this.x;
     }
@@ -258,16 +265,20 @@ export class RoRegion extends BrsComponent implements BrsValue {
         return this.wrap;
     }
 
-    getAlphaEnableValue(): boolean {
-        return this.alphaEnable;
-    }
-
     getAnimaTime(): number {
         return this.time;
     }
 
     getSourceBitmap(): RoBitmap | RoScreen {
         return this.bitmap;
+    }
+
+    makeDirty() {
+        this.bitmap.makeDirty();
+    }
+
+    finishDraw(): void {
+        this.bitmap.finishDraw();
     }
 
     toString(parent?: BrsType): string {
@@ -570,352 +581,6 @@ export class RoRegion extends BrsComponent implements BrsValue {
             this.wrap = wrap.toBoolean();
             this.bitmap.makeDirty();
             return BrsInvalid.Instance;
-        },
-    });
-
-    // ifDraw2D  -----------------------------------------------------------------------------------
-
-    /** Clear the bitmap, and fill with the specified RGBA color */
-    private readonly clear = new Callable("clear", {
-        signature: {
-            args: [new StdlibArgument("rgba", ValueKind.Int32)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, rgba: Int32) => {
-            this.clearCanvas(rgba.getValue());
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Draw the source object, where src is an roBitmap or an roRegion object, at position x,y */
-    private readonly drawObject = new Callable("drawObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            const ctx = this.bitmap.getContext();
-            const didDraw = this.drawImage(object, rgba, x.getValue(), y.getValue());
-            ctx.globalAlpha = 1.0;
-            return BrsBoolean.from(didDraw);
-        },
-    });
-
-    /** Draw the source object at position x,y rotated by angle theta degrees. */
-    private readonly drawRotatedObject = new Callable("drawRotatedObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("theta", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            theta: Float,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            const didDraw = drawRotatedObject(
-                this,
-                object,
-                rgba,
-                x.getValue(),
-                y.getValue(),
-                theta.getValue()
-            );
-            return BrsBoolean.from(didDraw);
-        },
-    });
-
-    /** Draw the source object, at position x,y, scaled horizontally by scaleX and vertically by scaleY. */
-    private readonly drawScaledObject = new Callable("drawScaledObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("scaleX", ValueKind.Float),
-                new StdlibArgument("scaleY", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            scaleX: Float,
-            scaleY: Float,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            const ctx = this.bitmap.getContext();
-            const didDraw = this.drawImage(
-                object,
-                rgba,
-                x.getValue(),
-                y.getValue(),
-                scaleX.getValue(),
-                scaleY.getValue()
-            );
-            ctx.globalAlpha = 1.0;
-            return BrsBoolean.from(didDraw);
-        },
-    });
-
-    /** Draw the source object, at position x,y, rotated by theta and scaled horizontally by scaleX and vertically by scaleY. */
-    private readonly drawTransformedObject = new Callable("drawTransformedObject", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("theta", ValueKind.Float),
-                new StdlibArgument("scaleX", ValueKind.Float),
-                new StdlibArgument("scaleY", ValueKind.Float),
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("rgba", ValueKind.Int32, BrsInvalid.Instance),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            theta: Float,
-            scaleX: Float,
-            scaleY: Float,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
-            const ctx = this.bitmap.getContext();
-            const positionX = x.getValue();
-            const positionY = y.getValue();
-            const angleInRad = (-theta.getValue() * Math.PI) / 180;
-            ctx.save();
-            ctx.translate(positionX, positionY);
-            ctx.rotate(angleInRad);
-            const didDraw = this.drawImage(
-                object,
-                rgba,
-                0,
-                0,
-                scaleX.getValue(),
-                scaleY.getValue()
-            );
-            ctx.globalAlpha = 1.0;
-            ctx.restore();
-            return BrsBoolean.from(didDraw);
-        },
-    });
-
-    /** Draw a line from (xStart, yStart) to (xEnd, yEnd) with RGBA color */
-    private readonly drawLine = new Callable("drawLine", {
-        signature: {
-            args: [
-                new StdlibArgument("xStart", ValueKind.Int32),
-                new StdlibArgument("yStart", ValueKind.Int32),
-                new StdlibArgument("xEnd", ValueKind.Int32),
-                new StdlibArgument("yEnd", ValueKind.Int32),
-                new StdlibArgument("rgba", ValueKind.Int32),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (
-            _: Interpreter,
-            xStart: Int32,
-            yStart: Int32,
-            xEnd: Int32,
-            yEnd: Int32,
-            rgba: Int32
-        ) => {
-            let ctx = this.bitmap.getContext();
-            ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
-            ctx.moveTo(this.x + xStart.getValue(), this.y + yStart.getValue());
-            ctx.lineTo(this.x + xEnd.getValue(), this.y + yEnd.getValue());
-            ctx.stroke();
-            this.bitmap.makeDirty();
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Draws a point at (x,y) with the given size and RGBA color */
-    private readonly drawPoint = new Callable("drawPoint", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("size", ValueKind.Float),
-                new StdlibArgument("rgba", ValueKind.Int32),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
-            let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
-            ctx.fillRect(
-                this.x + x.getValue(),
-                this.y + y.getValue(),
-                size.getValue(),
-                size.getValue()
-            );
-            this.bitmap.makeDirty();
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Fill the specified rectangle from left (x), top (y) to right (x + width), bottom (y + height) with the RGBA color */
-    private readonly drawRect = new Callable("drawRect", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-                new StdlibArgument("rgba", ValueKind.Int32),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            let ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
-            ctx.fillRect(
-                this.x + x.getValue(),
-                this.y + y.getValue(),
-                width.getValue(),
-                height.getValue()
-            );
-            this.bitmap.makeDirty();
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Draws the text at position (x,y) using the specified RGBA color and roFont font object. */
-    private readonly drawText = new Callable("drawText", {
-        signature: {
-            args: [
-                new StdlibArgument("text", ValueKind.String),
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("rgba", ValueKind.Int32),
-                new StdlibArgument("font", ValueKind.Object),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            const ctx = this.bitmap.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.alphaEnable);
-            ctx.font = font.toFontString();
-            ctx.textBaseline = "top";
-            ctx.fillText(
-                text.value,
-                this.x + x.getValue(),
-                this.y + y.getValue() + font.getTopAdjust()
-            );
-            this.bitmap.makeDirty();
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Realize the bitmap by finishing all queued draw calls. */
-    private readonly finish = new Callable("finish", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns true if alpha blending is enabled */
-    private readonly getAlphaEnable = new Callable("getAlphaEnable", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.alphaEnable);
-        },
-    });
-
-    /** If enable is true, do alpha blending when this bitmap is the destination */
-    private readonly setAlphaEnable = new Callable("setAlphaEnable", {
-        signature: {
-            args: [new StdlibArgument("alphaEnable", ValueKind.Boolean)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, alphaEnable: BrsBoolean) => {
-            this.alphaEnable = alphaEnable.toBoolean();
-            return this.bitmap.setCanvasAlpha(alphaEnable.toBoolean());
-        },
-    });
-
-    /** Returns an roByteArray representing the RGBA pixel values for the rectangle described by the parameters. */
-    private readonly getByteArray = new Callable("getByteArray", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-            ],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.bitmap
-                .getContext()
-                .getImageData(
-                    x.getValue() + this.x,
-                    y.getValue() + this.y,
-                    width.getValue(),
-                    height.getValue()
-                );
-            let byteArray = new Uint8Array(imgData.data.buffer);
-            return new RoByteArray(byteArray);
-        },
-    });
-
-    /** Returns an roByteArray object containing PNG image data for the specified area of the bitmap. */
-    private readonly getPng = new Callable("getPng", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-            ],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            let imgData = this.bitmap
-                .getContext()
-                .getImageData(
-                    x.getValue() + this.x,
-                    y.getValue() + this.y,
-                    width.getValue(),
-                    height.getValue()
-                );
-            return new RoByteArray(
-                new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
-            );
         },
     });
 }
