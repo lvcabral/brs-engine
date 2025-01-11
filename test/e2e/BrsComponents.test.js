@@ -360,6 +360,7 @@ describe("end to end brightscript functions", () => {
                 `getNamedElementsCi("child1") count =  2`,
                 "name of first child  = Child1",
                 "mame of second child = CHILD1",
+                "<Component: roXMLElement>",
             ]);
         });
     });
