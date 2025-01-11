@@ -7,8 +7,7 @@ import { RoDeviceInfoEvent } from "./RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
 /// #if !BROWSER

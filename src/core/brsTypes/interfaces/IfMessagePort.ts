@@ -1,9 +1,12 @@
-import { Interpreter } from "../../interpreter";
 import { BrsInvalid, ValueKind } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "../components/BrsComponent";
 import { RoMessagePort } from "../components/RoMessagePort";
 
+/**
+ * Interface IfSetMessagePort
+ * https://developer.roku.com/docs/references/brightscript/interfaces/ifsetmessageport.md
+ */
 export class IfSetMessagePort {
     private readonly component: any;
     private readonly callback?: Function;
@@ -33,7 +36,7 @@ export class IfSetMessagePort {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, port: RoMessagePort) => {
+        impl: (_, port: RoMessagePort) => {
             return this.set(port);
         },
     });
@@ -43,8 +46,42 @@ export class IfSetMessagePort {
             args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, port: RoMessagePort) => {
+        impl: (_, port: RoMessagePort) => {
             return this.set(port);
+        },
+    });
+}
+
+/**
+ * Interface IfGetMessagePort
+ * https://developer.roku.com/docs/references/brightscript/interfaces/ifgetmessageport.md
+ */
+export class IfGetMessagePort {
+    private readonly component: any;
+
+    constructor(value: BrsComponent) {
+        this.component = value;
+    }
+
+    /** Returns the message port (if any) currently associated with the object */
+    readonly getMessagePort = new Callable("getMessagePort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_) => {
+            return this.component.port ?? BrsInvalid.Instance;
+        },
+    });
+
+    /** Returns the message port (if any) currently associated with the object */
+    readonly getPort = new Callable("getPort", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_) => {
+            return this.component.port ?? BrsInvalid.Instance;
         },
     });
 }

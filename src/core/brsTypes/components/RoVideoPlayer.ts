@@ -14,8 +14,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { BufferType, DataType, MediaEvent } from "../../common";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

@@ -4,6 +4,10 @@ import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsArray } from "./IfArray";
 
+/**
+ * Interface IfList
+ * https://developer.roku.com/docs/references/brightscript/interfaces/iflist.md
+ */
 export class IfList {
     private readonly component: BrsComponent & BrsList;
 
@@ -116,6 +120,10 @@ export class IfList {
     });
 }
 
+/**
+ * Interface IfListToArray
+ * https://developer.roku.com/docs/references/brightscript/interfaces/iflisttoarray.md
+ */
 export class IfListToArray {
     readonly kind = ValueKind.Object;
     private readonly component: BrsComponent & BrsArray;

@@ -5,8 +5,7 @@ import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoCECStatusEvent } from "./RoCECStatusEvent";
 import { DataType } from "../../common";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoCECStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

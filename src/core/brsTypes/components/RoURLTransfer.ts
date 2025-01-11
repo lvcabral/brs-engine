@@ -8,8 +8,7 @@ import { Int32 } from "../Int32";
 import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { audioExt, videoExt, getRokuOSVersion } from "../../common";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import fileType from "file-type";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";

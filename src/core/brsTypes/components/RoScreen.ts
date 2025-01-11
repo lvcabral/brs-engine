@@ -18,8 +18,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;

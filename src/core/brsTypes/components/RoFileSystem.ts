@@ -5,8 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { FileSystem, getVolume, validUri, writeUri } from "../../interpreter/FileSystem";
 import { RoList } from "./RoList";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import * as nanomatch from "nanomatch";
 import * as path from "path";
 export class RoFileSystem extends BrsComponent implements BrsValue {
