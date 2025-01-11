@@ -132,4 +132,9 @@ export interface BrsIterable {
      * Resets the iteration sequence to the beginning of the iterable component.
      */
     resetNext(): void;
+
+    /**
+     * Update the iteration index to the next element in the iteration sequence.
+     */
+    updateNext(): void;
 }
