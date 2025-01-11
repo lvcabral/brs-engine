@@ -8,8 +8,7 @@ import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
 import { parseString, processors } from "xml2js";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

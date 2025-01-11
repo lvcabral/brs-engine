@@ -4,8 +4,7 @@ import { BrsEvent, BrsType, RoMessagePort, RoSystemLogEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BufferType, DataType } from "../../common";
-import { IfSetMessagePort } from "../interfaces/IfSetMessagePort";
-import { IfGetMessagePort } from "../interfaces/IfGetMessagePort";
+import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoSystemLog extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

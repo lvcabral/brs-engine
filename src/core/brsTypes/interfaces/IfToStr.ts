@@ -14,6 +14,10 @@ import { RuntimeError, RuntimeErrorDetail } from "../../Error";
 import { Interpreter } from "../../interpreter";
 import { vsprintf } from "sprintf-js";
 
+/**
+ * Interface IfToStr
+ * https://developer.roku.com/docs/references/brightscript/interfaces/iftostr.md
+ */
 export class IfToStr {
     private readonly component: BrsComponent;
     private readonly defaultFormat?: string;

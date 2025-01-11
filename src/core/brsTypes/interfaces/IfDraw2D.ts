@@ -24,6 +24,10 @@ export type BrsCanvas = OffscreenCanvas | Canvas;
 export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 export type BrsImageData = ImageData | NodeImageData;
 
+/**
+ * Interface IFDraw2D
+ * https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md
+ */
 export class IfDraw2D {
     private readonly component: BrsDraw2D;
 

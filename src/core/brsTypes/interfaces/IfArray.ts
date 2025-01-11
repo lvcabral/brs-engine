@@ -3,6 +3,10 @@ import { Interpreter } from "../../interpreter";
 import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 
+/**
+ * Interface IfArray
+ * https://developer.roku.com/docs/references/brightscript/interfaces/ifarray.md
+ */
 export class IfArray {
     private readonly component: BrsComponent & BrsArray;
     private readonly name: string;
@@ -152,6 +156,10 @@ export class IfArray {
     });
 }
 
+/**
+ * Interface IfArrayGet
+ * https://developer.roku.com/docs/references/brightscript/interfaces/ifarrayget.md
+ */
 export class IfArrayGet {
     readonly kind = ValueKind.Object;
     private readonly component: BrsComponent & BrsArray;
@@ -171,6 +179,10 @@ export class IfArrayGet {
     });
 }
 
+/**
+ * Interface IfArraySet
+ * https://developer.roku.com/docs/references/brightscript/interfaces/ifarrayset.md
+ */
 export class IfArraySet {
     readonly kind = ValueKind.Object;
     private readonly component: BrsComponent & BrsArray;
