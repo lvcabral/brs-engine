@@ -1,8 +1,34 @@
 # Changelog
 
+<a name="v1.8.1"></a>
+
+## [v1.8.1 - New interface modules and fixes on number parsing](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.1) - 10 January 2025
+
+This release bring several fixes on numeric types parsing to hexadecimal and using the `toStr()` and `String.format()` methods. This also brings the extraction of reused interfaces into separate modules, reducing the replication of code and also improving the maintainability of the `core` library.
+
+### Release Changes
+
+* Fixed `Int32` constructor handling of overflow to match Roku by [@lvcabral](https://github.com/lvcabral) in [#435](https://github.com/lvcabral/brs-engine/pull/435)
+* Upgraded dependency `restana` to v5.0.0 by [@lvcabral](https://github.com/lvcabral) in [#436](https://github.com/lvcabral/brs-engine/pull/436)
+* Added new `roDateTime` methods: `asSecondsLong` and `fromSecondsLong` by [@lvcabral](https://github.com/lvcabral) in [#437](https://github.com/lvcabral/brs-engine/pull/437)
+* Fixed `Int32` and `Int64` hex parsing and formatting by [@lvcabral](https://github.com/lvcabral) in [#438](https://github.com/lvcabral/brs-engine/pull/438)
+* Simplified `Int32` constructor code by [@lvcabral](https://github.com/lvcabral) in [#439](https://github.com/lvcabral/brs-engine/pull/439)
+* Updated some documentation pages by [@lvcabral](https://github.com/lvcabral) in [#440](https://github.com/lvcabral/brs-engine/pull/440)
+* Fixed runtime error stack trace on `Callables` by [@lvcabral](https://github.com/lvcabral) in [#442](https://github.com/lvcabral/brs-engine/pull/442)
+* Created `ifToStr()` and refactored components to use it and improved `sprintf` formatting by [@lvcabral](https://github.com/lvcabral) in [#443](https://github.com/lvcabral/brs-engine/pull/443)
+* Change file names to the standard by [@lvcabral](https://github.com/lvcabral) in [#444](https://github.com/lvcabral/brs-engine/pull/444)
+* Made `ifToStr` to handle components that do not support `format` by [@lvcabral](https://github.com/lvcabral) in [#445](https://github.com/lvcabral/brs-engine/pull/445)
+* Created `IfSetMessagePort`  and  `IfGetMessagePort` interfaces by [@lvcabral](https://github.com/lvcabral) in [#446](https://github.com/lvcabral/brs-engine/pull/446)
+* Implemented `IfEnum` as an interface module and refactored components by [@lvcabral](https://github.com/lvcabral) in [#447](https://github.com/lvcabral/brs-engine/pull/447)
+* Implemented `IfDraw2D` interface to simplify and reuse code by [@lvcabral](https://github.com/lvcabral) in [#448](https://github.com/lvcabral/brs-engine/pull/448)
+* Improved `IfToStr` type checking by [@lvcabral](https://github.com/lvcabral) in [#449](https://github.com/lvcabral/brs-engine/pull/449)
+* Implemented `IfArray` and `IfList` interface modules by [@lvcabral](https://github.com/lvcabral) in [#450](https://github.com/lvcabral/brs-engine/pull/450)
+
+[Full Changelog][v1.8.1]
+
 <a name="v1.8.0"></a>
 
-## [v1.8.0 - Multiple Improvements](https://github.com/lvcabral/brs-engine/releases/tag/v1.7.3) - 03 January 2025
+## [v1.8.0 - Multiple Improvements](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.0) - 03 January 2025
 
 This release is full of refactorings and improvements on the engine internals, the folder structure was also changed with the `app` folder renamed to `browser` and the `src/worker` folder renamed to `src/core`. The File System now supports the external USB volume (`ext1:`) that can be mounted from an additional `zip` file (or folder in CLI). Several other changes and improvements were done in the registry and apps management. The `roMessagePort` component was simplified and improved, and new events are now supported, in particular: `roInput` (via ECP and API) and `roChannelStore` using the `fakeServer(true)` option. The BrightScript language and components are now synchronized with Roku OS 14.
 Check specific PRs in the log below for more information.
@@ -850,6 +876,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.1]: https://github.com/lvcabral/brs-engine/compare/v1.8.0...v1.8.1
 [v1.8.0]: https://github.com/lvcabral/brs-engine/compare/v1.7.2...v1.8.0
 [v1.7.3]: https://github.com/lvcabral/brs-engine/compare/v1.7.0...v1.7.3
 [v1.7.0]: https://github.com/lvcabral/brs-engine/compare/v1.6.1...v1.7.0
