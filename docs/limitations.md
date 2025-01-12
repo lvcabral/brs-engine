@@ -32,7 +32,6 @@ There are several features from the **BrightScript** language and components tha
 * The component `roUrlTransfer` is implemented with basic functionality but with the following limitations:
   * To make a **web app** access urls from domains other than the one it is hosted, requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
   * The _async_ methods are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
-  * If using _async_ methods make sure to use a `roMessagePort` instance per `roUrlTransfer`, do not share.
   * Custom/Self-Signed SSL certificates are not supported, the engine will use default browser client certificate database.
   * As custom certificates are not supported these methods are just mocked and do nothing: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
