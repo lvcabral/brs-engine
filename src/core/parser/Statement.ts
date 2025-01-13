@@ -28,7 +28,7 @@ export interface Visitor<T> {
     visitStop(statement: Stop): BrsType;
     visitIncrement(expression: Increment): Promise<BrsType>;
     visitLibrary(statement: Library): BrsInvalid;
-    visitTryCatch(statement: TryCatch): BrsInvalid;
+    visitTryCatch(statement: TryCatch): Promise<BrsInvalid>;
     visitThrow(statement: Throw): Promise<BrsType>;
 }
 
@@ -554,7 +554,7 @@ export class TryCatch implements Statement {
         }
     ) {}
 
-    accept<R>(visitor: Visitor<R>): BrsType {
+    accept<R>(visitor: Visitor<R>): Promise<BrsType> {
         return visitor.visitTryCatch(this);
     }
 
