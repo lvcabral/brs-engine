@@ -38,6 +38,7 @@ sub main()
     ? "A".format()
     someTests()
     moreTests()
+    otherTests()
 end sub
 
 sub moreTests()
@@ -73,4 +74,41 @@ sub someTests()
     print (2.2).toStr("%+f")
     print (-2.2).toStr("%+f")
     print "%f %s".format(-12.34, "xxx")
+end sub
+
+
+sub otherTests()
+    obj = CreateObject("roBoolean")
+    print obj
+    print obj.toStr()
+    obj = CreateObject("roDouble")
+    print obj
+    print obj.toStr()
+    print obj.toStr("%.1f")
+    obj = CreateObject("roFloat")
+    print obj
+    print obj.toStr()
+    print obj.toStr("%.1f")
+    obj = CreateObject("roFunction")
+    print obj
+    print obj.toStr()
+    print main
+    print main.toStr()
+    obj = CreateObject("roInt")
+    print obj
+    print obj.toStr()
+    print obj.toStr("%.1f")
+    obj = CreateObject("roInvalid")
+    print obj
+    print obj.toStr()
+    print invalid.toStr()
+    obj = CreateObject("roLongInteger")
+    print obj
+    print obj.toStr()
+    print obj.toStr("%.1f")
+    obj = CreateObject("roString")
+    obj.setString("test")
+    print obj
+    print obj.toStr()
+    print obj.toStr("%.3s")
 end sub
