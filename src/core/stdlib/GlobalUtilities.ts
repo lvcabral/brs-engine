@@ -113,7 +113,7 @@ export const ObjFun = new Callable("ObjFun", {
         for (let [_, objI] of object.interfaces) {
             if (iface.name === objI.name && iface.hasMethod(funName.value)) {
                 const func = object.getMethod(funName.value);
-                return await func?.call(interpreter, ...args) || BrsInvalid.Instance;
+                return (await func?.call(interpreter, ...args)) || BrsInvalid.Instance;
             }
         }
         interpreter.addError(

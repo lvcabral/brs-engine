@@ -74,7 +74,10 @@ export class AstPrinter implements Expr.Visitor<string> {
      * @param name The name of the expression type being printed.
      * @param expressions any subexpressions that need to be stringified as well.
      */
-    private async parenthesize(name: string = "", ...expressions: Expr.Expression[]): Promise<string> {
+    private async parenthesize(
+        name: string = "",
+        ...expressions: Expr.Expression[]
+    ): Promise<string> {
         this.indent++;
         let out = [
             `(${name}\n`,

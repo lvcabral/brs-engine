@@ -261,7 +261,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param func the JavaScript function to execute with the sub interpreter.
      * @param environment (Optional) the environment to run the interpreter in.
      */
-    async inSubEnv(func: (interpreter: Interpreter) => Promise<BrsType>, environment?: Environment): Promise<BrsType> {
+    async inSubEnv(
+        func: (interpreter: Interpreter) => Promise<BrsType>,
+        environment?: Environment
+    ): Promise<BrsType> {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
         let retValue: BrsComponent | undefined = undefined;
@@ -351,7 +354,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
-    async getCallableFunction(functionName: string): Promise<Callable|BrsInvalid> {
+    async getCallableFunction(functionName: string): Promise<Callable | BrsInvalid> {
         let callbackVariable = new Expr.Variable({
             kind: Lexeme.Identifier,
             text: functionName,
@@ -447,7 +450,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 printStream += str;
                 this.stdout.position(str);
             }
-        };
+        }
         let lastExpression = statement.expressions[statement.expressions.length - 1];
         if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
             printStream += "\r\n";
@@ -1488,7 +1491,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     async visitFor(statement: Stmt.For): Promise<BrsType> {
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
-        let increment = await this.evaluate(statement.increment) as Int32 | Float;
+        let increment = (await this.evaluate(statement.increment)) as Int32 | Float;
         if (increment instanceof Float) {
             increment = new Int32(Math.trunc(increment.getValue()));
         }
@@ -1510,13 +1513,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let startValue: BrsType;
         if (this.environment.continueFor) {
             await this.execute(step);
-            startValue = await this.evaluate(new Expr.Variable(counterName)) as Int32 | Float;
+            startValue = (await this.evaluate(new Expr.Variable(counterName))) as Int32 | Float;
             this.environment.continueFor = false;
         } else {
             await this.execute(statement.counterDeclaration);
-            startValue = await this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
+            startValue = (await this.evaluate(statement.counterDeclaration.value)) as Int32 | Float;
         }
-        const finalValue = await this.evaluate(statement.finalValue) as Int32 | Float;
+        const finalValue = (await this.evaluate(statement.finalValue)) as Int32 | Float;
         if (
             (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
             (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
@@ -1527,7 +1530,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (increment.getValue() > 0) {
             while (
-                (await this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
+                ((await this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
                     .greaterThan(finalValue)
                     .not()
                     .toBoolean()
@@ -1551,7 +1554,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else {
             while (
-                (await this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
+                ((await this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
                     .lessThan(finalValue)
                     .not()
                     .toBoolean()
