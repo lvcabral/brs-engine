@@ -35,6 +35,7 @@ import {
     Signature,
     BrsInterface,
     toAssociativeArray,
+    AAMember,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { shared, stats, keys } from "..";
@@ -1180,7 +1181,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         const evaluated = await this.evaluate(expression.callee);
         const callee = evaluated instanceof RoFunction ? evaluated.unbox() : evaluated;
         // evaluate all of the arguments as well (they could also be function calls)
-        let args = await Promise.all(expression.args.map(this.evaluate, this));
+        let args = new Array<BrsType>();
+        for (let arg of expression.args) {
+            args.push(await this.evaluate(arg));
+        }
 
         if (!isBrsCallable(callee)) {
             if (callee instanceof BrsInvalid && expression.optional) {
@@ -1673,16 +1677,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     async visitArrayLiteral(expression: Expr.ArrayLiteral): Promise<RoArray> {
-        return new RoArray(await Promise.all(expression.elements.map((expr) => this.evaluate(expr))));
+        const array = new Array<BrsType>();
+        for (let expr of expression.elements) {
+            array.push(await this.evaluate(expr));
+        }
+        return new RoArray(array);
     }
 
     async visitAALiteral(expression: Expr.AALiteral): Promise<BrsType> {
-        return new RoAssociativeArray(
-            await Promise.all(expression.elements.map(async (member) => ({
+        const aaMembers = new Array<AAMember>();
+        for (let member of expression.elements) {
+            aaMembers.push({
                 name: member.name,
                 value: await this.evaluate(member.value),
-            })))
-        );
+            });
+        }
+        return new RoAssociativeArray(aaMembers);
     }
 
     async visitDottedSet(statement: Stmt.DottedSet) {

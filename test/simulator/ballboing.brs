@@ -1,7 +1,7 @@
-Library "v30/bslDefender.brs"
+Library "v30/bslCore.brs"
 
 sub main()
-	m.files = CreateObject("roFileSystem")
+    m.files = CreateObject("roFileSystem")
     screen = CreateObject("roScreen", true, 854, 480)
     screen.SetAlphaEnable(true)
     screen.Clear(&HFF)
@@ -9,6 +9,7 @@ sub main()
     screen.SetMessagePort(port)
     compositor = CreateObject("roCompositor")
     compositor.SetDrawTo(screen, 0)
+    'stop
     scaleblit(screen, port, 0, 0, 854, 480, 1)
 end sub
 
@@ -51,7 +52,7 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
     ballregion.setscalemode(0)
 
     ' construct ball shadow
-	filePath = CacheFile("https://brsfiddle.net/images/BallShadow.png", "BallShadow.png")
+    filePath = CacheFile("https://brsfiddle.net/images/BallShadow.png", "BallShadow.png")
 
     tmpballbitmap = createobject("robitmap", filePath)
     ballshadow = createobject("robitmap", {width: ballsizex, height: ballsizey, alphaenable: true})
@@ -65,6 +66,7 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
     x = w / 10 + ballcenterX
     y = h / 10 + ballcenterY
 
+    da = -15
     dx = 2
     dy = 1
     ay = 1
@@ -82,7 +84,8 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
     running = true
     codes = bslUniversalControlEventCodes()
     print codes
-    grid = createobject("robitmap", {width: screen.getWidth(), height: screen.getheight(), alphaenable: false})
+    params = {width: screen.getWidth(), height: screen.getheight(), alphaenable: false}
+    grid = createobject("robitmap", params)
     regiondrawgrid(grid, background)
     grid.finish()
     while true
@@ -90,11 +93,11 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
         screen.SetAlphaEnable(true)
         scalex = x / rightedge
         scaley = y / bottomedge
-        screen.drawscaledobject((x + shadow_dx), (y + shadow_dy), scalex, scaley, shadowregion)
+        screen.drawscaledobject((x + shadow_dx), (y + shadow_dy), scalex, scalex, shadowregion)
 
-        screen.drawtransformedobject(x, y, angle, scalex, scaley, ballregion)
-        angle += 15
-        if angle >= 360
+        screen.drawtransformedobject(x, y, angle, scalex, scalex, ballregion)
+        angle += da
+        if Abs(angle) >= 360
             angle = 0
         end if
         screen.SetAlphaEnable(false)
@@ -128,6 +131,7 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
         if x < w_over_10
             x = w_over_10 + (w_over_10 - x)
             dx = -dx
+            da = -da
         end if
         if y < 0
             y = -y
@@ -136,6 +140,7 @@ sub scaleblit(screenFull as object, msgport as object, topx, topy, w, h, par)
         if x + ballsizex > rightedge
             x = 2 * rightedge - x - 2 * ballsizex
             dx = -dx
+            da = -da
         end if
         if y + ballsizey > bottomedge
             y = 2 * y - y
@@ -210,7 +215,7 @@ sub regiondrawgrid(screen, background)
     drawline(screen, left - bottomXdeltainit, bottom + deltay_over_2, right - bottomXdelta - deltax_over_20, bottom + deltay_over_2, 1, color)
 end sub
 
-Function CacheFile(url as string, file as string, overwrite = false as boolean) as string
+function CacheFile(url as string, file as string, overwrite = false as boolean) as string
     tmpFile = "tmp:/" + file
     if overwrite or not m.files.Exists(tmpFile)
         http = CreateObject("roUrlTransfer")
@@ -225,4 +230,4 @@ Function CacheFile(url as string, file as string, overwrite = false as boolean) 
         end if
     end if
     return tmpFile
-End Function
+end function
