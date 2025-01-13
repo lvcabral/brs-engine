@@ -1059,11 +1059,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitTryCatch(statement: Stmt.TryCatch): BrsInvalid {
+    async visitTryCatch(statement: Stmt.TryCatch): Promise<BrsInvalid> {
         let tryMode = this._tryMode;
         try {
             this._tryMode = true;
-            this.visitBlock(statement.tryBlock);
+            await this.visitBlock(statement.tryBlock);
             this._tryMode = tryMode;
         } catch (err: any) {
             this._tryMode = tryMode;
@@ -1075,7 +1075,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 statement.errorBinding.name.text,
                 this.formatErrorVariable(err)
             );
-            this.visitBlock(statement.catchBlock);
+            await this.visitBlock(statement.catchBlock);
         }
         return BrsInvalid.Instance;
     }
