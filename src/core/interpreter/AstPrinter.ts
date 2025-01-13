@@ -17,7 +17,7 @@ export class AstPrinter implements Expr.Visitor<string> {
         return JSON.stringify(e, undefined, 2);
     }
 
-    visitBinary(e: Expr.Binary): Promise<string> {
+    async visitBinary(e: Expr.Binary): Promise<string> {
         return this.parenthesize(e.token.text, e.left, e.right);
     }
     visitCall(e: Expr.Call): string {
@@ -46,10 +46,10 @@ export class AstPrinter implements Expr.Visitor<string> {
             return e.value.toString();
         }
     }
-    visitArrayLiteral(e: Expr.ArrayLiteral): Promise<string> {
+    async visitArrayLiteral(e: Expr.ArrayLiteral): Promise<string> {
         return Promise.resolve(JSON.stringify(e, undefined, 2));
     }
-    visitAALiteral(e: Expr.AALiteral): Promise<string> {
+    async visitAALiteral(e: Expr.AALiteral): Promise<string> {
         return Promise.resolve(JSON.stringify(e, undefined, 2));
     }
     visitDottedSet(e: Stmt.DottedSet): string {
@@ -61,7 +61,7 @@ export class AstPrinter implements Expr.Visitor<string> {
     visitIncrement(e: Stmt.Increment): string {
         return JSON.stringify(e, undefined, 2);
     }
-    visitUnary(e: Expr.Unary): Promise<string> {
+    async visitUnary(e: Expr.Unary): Promise<string> {
         return this.parenthesize(e.operator.text, e.right);
     }
     visitVariable(expression: Expr.Variable): string {
