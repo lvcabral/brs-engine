@@ -6,6 +6,7 @@ import {
     isBoxedNumber,
     isComparable,
     RoBoolean,
+    RoInvalid,
     RoString,
     StdlibArgument,
     ValueKind,
@@ -46,7 +47,11 @@ export class IfToStr {
                     return new BrsString(this.component.toString().replace(this.defaultRegEx, ""));
                 } else if (isBoxedNumber(this.component)) {
                     return new BrsString(this.component.toString());
-                } else if (isComparable(this.component) || this.component instanceof RoBoolean) {
+                } else if (
+                    isComparable(this.component) ||
+                    this.component instanceof RoBoolean ||
+                    this.component instanceof RoInvalid
+                ) {
                     return new BrsString(this.component.getValue().toString());
                 } else {
                     throw new RuntimeError(
