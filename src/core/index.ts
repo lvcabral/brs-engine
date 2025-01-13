@@ -49,7 +49,7 @@ export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
 export const shared = new Map<string, Int32Array>();
-export const keys =  new Array<KeyEvent>();
+export const keys = new Array<KeyEvent>();
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 
