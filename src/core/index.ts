@@ -17,6 +17,8 @@ import {
     defaultDeviceInfo,
     parseManifest,
     isAppPayload,
+    KeyEvent,
+    isKeyEvent,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -47,24 +49,25 @@ export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
 export const shared = new Map<string, Int32Array>();
+export const keys =  new Array<KeyEvent>();
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 
 const algorithm = "aes-256-ctr";
 
 /// #if BROWSER
+
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
-        if (isAppPayload(event.data)) {
+        if (isKeyEvent(event.data)) {
+            keys.push(event.data);
+        } else if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
-            // Setup Control Shared Array
             shared.set("buffer", new Int32Array(event.data));
-        } else if (event.data.key) {
-            postMessage(`print, Key Pressed: ${event.data.key}`);
         } else {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }

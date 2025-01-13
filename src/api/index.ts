@@ -188,7 +188,9 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         }
     });
     subscribeControl("api", (event: string, data: any) => {
-        if (event === "home") {
+        if (event === "post") {
+            brsWorker.postMessage(data);
+        } else if (event === "home") {
             if (currentApp.running) {
                 if (!home) {
                     home = new Howl({ src: ["./audio/select.wav"] });
@@ -206,8 +208,6 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             setAudioMute(!getAudioMute());
         } else if (event === "control") {
             updateMemoryInfo();
-            // Sending event for testing purposes
-            brsWorker.postMessage(data);
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
