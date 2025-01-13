@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -63,6 +63,8 @@ if (typeof onmessage !== "undefined") {
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
             // Setup Control Shared Array
             shared.set("buffer", new Int32Array(event.data));
+        } else if (event.data.key) {
+            postMessage(`print, Key Pressed: ${event.data.key}`);
         } else {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
@@ -145,7 +147,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  */
-export function executeLine(contents: string, interpreter: Interpreter) {
+export async function executeLine(contents: string, interpreter: Interpreter) {
     const lexer = new Lexer();
     const parser = new Parser();
     lexer.onError(logError);
@@ -163,7 +165,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
         return;
     }
     try {
-        const results = interpreter.exec(parseResults.statements);
+        const results = await interpreter.exec(parseResults.statements);
         results.forEach((result) => {
             if (result !== BrsTypes.BrsInvalid.Instance) {
                 postMessage(`print,${result.toString()}`);
@@ -818,7 +820,7 @@ async function executeApp(
             splashTime = splashMinTime;
         }
         const inputParams = setupInputParams(payload.deepLink, splashTime);
-        interpreter.exec(statements, sourceMap, inputParams);
+        await interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
         exitReason = AppExitReason.FINISHED;
         if (err.message !== "debug-exit") {

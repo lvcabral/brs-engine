@@ -19,13 +19,15 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             args: func.parameters,
             returns: func.returns,
         },
-        impl: (interpreter: Interpreter, ...args: BrsType[]) => {
+        impl: async (interpreter: Interpreter, ...args: BrsType[]) => {
             interpreter.environment.gotoLabel = "";
             let location = func.location;
             let done = false;
             while (!done) {
                 try {
-                    func.body.statements.forEach((statement) => interpreter.execute(statement));
+                    for (let statement of func.body.statements) {
+                        await interpreter.execute(statement);
+                    }
                     done = true;
                 } catch (reason: any) {
                     if (reason instanceof Stmt.GotoLabel) {

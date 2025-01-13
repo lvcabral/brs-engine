@@ -21,7 +21,7 @@ import { Interpreter } from "../interpreter";
  *
  * @returns the value returned by the executed file(s) if no errors are detected, otherwise `invalid`
  */
-function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
+async function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
     try {
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
         const sandbox = new Interpreter(interpreter.options);
@@ -42,7 +42,7 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         });
         if (sourceMap.size !== 0) {
             const parseResult = brs.lexParseSync(sourceMap, sandbox.manifest);
-            const result = sandbox.exec(parseResult.statements, sourceMap, ...args);
+            const result = await sandbox.exec(parseResult.statements, sourceMap, ...args);
             return result[0] || BrsInvalid.Instance;
         }
     } catch (err: any) {

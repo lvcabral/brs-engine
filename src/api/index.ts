@@ -206,6 +206,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             setAudioMute(!getAudioMute());
         } else if (event === "control") {
             updateMemoryInfo();
+            // Sending event for testing purposes
+            brsWorker.postMessage(data);
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);

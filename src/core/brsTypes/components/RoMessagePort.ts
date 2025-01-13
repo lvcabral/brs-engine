@@ -52,7 +52,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    wait(interpreter: Interpreter, ms: number) {
+    wait(interpreter: Interpreter, ms: number): BrsEvent | BrsInvalid {
         const loop = ms === 0;
         ms += performance.now();
 
@@ -102,7 +102,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("timeout", ValueKind.Int32)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, timeout: Int32) => {
+        impl: async (interpreter: Interpreter, timeout: Int32) => {
             return this.wait(interpreter, timeout.getValue());
         },
     });
@@ -113,7 +113,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
+        impl: async (_: Interpreter) => {
             this.updateMessageQueue();
             return this.getNextMessage();
         },
