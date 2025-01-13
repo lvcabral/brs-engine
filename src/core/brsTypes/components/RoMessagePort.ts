@@ -72,7 +72,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     private async updateMessageQueue() {
         // yield to allow other threads to run and get their messages
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
                 const events = callback();

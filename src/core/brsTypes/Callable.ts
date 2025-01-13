@@ -134,7 +134,10 @@ export type SignatureAndMismatches = SignatureAndImplementation & {
  * description of why.
  */
 /** The function type required for all concrete Callables to provide. */
-export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) => Brs.BrsType | Promise<Brs.BrsType>;
+export type CallableImplementation = (
+    interpreter: Interpreter,
+    ...args: any[]
+) => Brs.BrsType | Promise<Brs.BrsType>;
 
 /** A `function` or `sub` (either "native" or implemented in BrightScript) that can be called in a BrightScript file. */
 export class Callable implements Brs.BrsValue, Brs.Boxable {
@@ -171,7 +174,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
 
         let mutableArgs = [...satisfiedSignature.coercedArgs];
 
-        return interpreter.inSubEnv( async subInterpreter => {
+        return interpreter.inSubEnv(async (subInterpreter) => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
             for (let i = 0; i < signature.args.length; i++) {

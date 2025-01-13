@@ -6,14 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import {
-    DataType,
-    RemoteType,
-    DebugCommand,
-    platform,
-    BufferType,
-    KeyEvent,
-} from "../core/common";
+import { DataType, RemoteType, DebugCommand, platform, BufferType, KeyEvent } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
