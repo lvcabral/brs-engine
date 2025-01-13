@@ -538,11 +538,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     statement.name.location
                 )
             );
-            return BrsInvalid.Instance;
         }
 
         let dimensionValues: number[] = [];
-        statement.dimensions.map(async (expr) => {
+        for (let expr of statement.dimensions) {
             let val = await this.evaluate(expr);
             if (val.kind !== ValueKind.Int32 && val.kind !== ValueKind.Float) {
                 this.addError(
@@ -551,7 +550,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             // dim takes max-index, so +1 to get the actual array size
             dimensionValues.push(val.getValue() + 1);
-        });
+        }
 
         let createArrayTree = (dimIndex: number = 0): RoArray => {
             let children: RoArray[] = [];
