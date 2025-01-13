@@ -10,10 +10,9 @@ import {
     DataType,
     RemoteType,
     DebugCommand,
-    keyBufferSize,
-    keyArraySpots,
     platform,
     BufferType,
+    KeyEvent,
 } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
@@ -123,56 +122,39 @@ export function enableSendKeys(enable: boolean) {
 
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
     key = key.toLowerCase();
+    let handled = false;
+    const keyEvent: KeyEvent = { key: -1, mod: mod, remote: `${RemoteType[type]}:${index}` };
     if (["home", "volumemute", "poweroff"].includes(key)) {
         if (mod === 0) {
             notifyAll(key);
         }
-        notifyAll("control", { key: key, mod: mod });
+        handled = true;
     } else if (!sendKeysEnabled) {
         return;
     } else if (key === "break") {
         if (!disableDebug) {
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
-            notifyAll("control", { key: key, mod: mod });
+            handled = true;
         }
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
-            const next = getNext();
-            Atomics.store(sharedArray, DataType.RID + next, type + index);
-            Atomics.store(sharedArray, DataType.MOD + next, mod);
-            Atomics.store(sharedArray, DataType.KEY + next, code + mod);
-            notifyAll("control", { key: key, mod: mod });
+            keyEvent.key = code + mod;
+            handled = true;
         }
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
+        // TODO: Check Carabiner code for how to better handle literals
         if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            const next = getNext();
-            Atomics.store(sharedArray, DataType.RID + next, type + index);
-            Atomics.store(sharedArray, DataType.MOD + next, mod);
-            Atomics.store(sharedArray, DataType.KEY + next, key.charCodeAt(4) + mod);
-            notifyAll("control", { key: key, mod: mod });
+            keyEvent.key = key.charCodeAt(4) + mod;
+            handled = true;
         }
     }
-}
-
-function getNext() {
-    for (let i = 0; i < keyBufferSize; i++) {
-        const next = i * keyArraySpots;
-        if (Atomics.load(sharedArray, DataType.KEY + next) < 0) {
-            return next;
-        }
+    if (keyEvent.key >= 0) {
+        notifyAll("post", keyEvent);
     }
-    // buffer full
-    for (let i = 1; i < keyBufferSize; i++) {
-        const prev = (i - 1) * keyArraySpots;
-        const next = i * keyArraySpots;
-        Atomics.store(
-            sharedArray,
-            DataType.KEY + prev,
-            Atomics.load(sharedArray, DataType.KEY + next)
-        );
+    if (handled) {
+        notifyAll("control", { key: key, mod: mod });
     }
-    return (keyBufferSize - 1) * keyArraySpots;
 }
 
 // Input API

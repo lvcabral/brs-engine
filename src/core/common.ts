@@ -315,6 +315,22 @@ export const dataBufferSize = 1024;
 export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
 export const keyArraySpots = 3;
 
+// Key Event Interface
+export interface KeyEvent {
+    remote: string; // Remote Id (Remote Type:Remote Index)
+    key: number; // Key Code
+    mod: number; // Modifier (0 = press, 100 = release)
+}
+
+export function isKeyEvent(value: any): value is KeyEvent {
+    return (
+        value &&
+        typeof value.remote === "string" &&
+        typeof value.key === "number" &&
+        typeof value.mod === "number"
+    );
+}
+
 // Remote control type
 export enum RemoteType {
     IR = 10, // Infra Red (default)
