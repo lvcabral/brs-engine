@@ -52,12 +52,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    wait(interpreter: Interpreter, ms: number): BrsEvent | BrsInvalid {
+    async wait(interpreter: Interpreter, ms: number): Promise<BrsEvent | BrsInvalid> {
         const loop = ms === 0;
         ms += performance.now();
 
         while (loop || performance.now() < ms) {
-            this.updateMessageQueue();
+            await this.updateMessageQueue();
             const msg = this.getNextMessage();
             if (msg !== BrsInvalid.Instance) {
                 return msg;
@@ -70,7 +70,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    private updateMessageQueue() {
+    private async updateMessageQueue() {
+        // yield to allow other threads to run and get their messages
+        await new Promise(resolve => setTimeout(resolve, 0));
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
                 const events = callback();
@@ -114,7 +116,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: async (_: Interpreter) => {
-            this.updateMessageQueue();
+            await this.updateMessageQueue();
             return this.getNextMessage();
         },
     });
@@ -125,8 +127,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            this.updateMessageQueue();
+        impl: async (_: Interpreter) => {
+            await this.updateMessageQueue();
             if (this.messageQueue.length > 0) {
                 return this.messageQueue[0];
             }

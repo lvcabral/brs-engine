@@ -29,7 +29,8 @@ Function Main()
     while true
         msg = wait(0, port)
         if type(msg) = "roUniversalControlEvent"
-            print msg.getInt()
+            a = msg.getInt()
+            print "key pressed: "; a.toStr()
         end if
     end while
 End Function

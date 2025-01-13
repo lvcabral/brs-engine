@@ -174,41 +174,21 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
         return interpreter.inSubEnv( async subInterpreter => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
-            signature.args.map( async (param, index) => {
-                if (param.defaultValue && mutableArgs[index] == null) {
-                    mutableArgs[index] = await subInterpreter.evaluate(param.defaultValue);
+            for (let i = 0; i < signature.args.length; i++) {
+                const param = signature.args[i];
+                if (param.defaultValue && mutableArgs[i] == null) {
+                    mutableArgs[i] = await subInterpreter.evaluate(param.defaultValue);
                 }
 
                 subInterpreter.environment.define(
                     Scope.Function,
                     param.name.text,
-                    mutableArgs[index],
+                    mutableArgs[i],
                     interpreter.location
                 );
-                return Promise.resolve();
-            });
-
-            // then return whatever the selected implementation would return
-            const result = impl(subInterpreter, ...mutableArgs);
-            if (result instanceof Promise) {
-                let semaphore = -1;
-                let returnValue: any;
-                result.then((value: Brs.BrsType) => {
-                    returnValue = value;
-                    semaphore = 1;
-                }).catch((error: any) => {
-                    returnValue = error;
-                    semaphore = 0;
-                });
-                while (semaphore < 0) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
-                }
-                if (semaphore === 0) {
-                    throw returnValue;
-                }
-                return returnValue;
             }
-            return result;
+            // then return whatever the selected implementation would return
+            return await impl(subInterpreter, ...mutableArgs);
         });
     }
 
