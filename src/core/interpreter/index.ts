@@ -297,7 +297,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (sourceMap) {
             this._sourceMap = sourceMap;
         }
-        let results = statements.map((statement) => this.execute(statement));
+        let results: BrsType[] = [];
+        // resolve statement promises in a loop to ensure statements are executed in order.
+        for (let statement of statements) {
+            results.push(await this.execute(statement));
+        }
         try {
             let mainName = "RunUserInterface";
             let maybeMain = await this.getCallableFunction(mainName.toLowerCase());
@@ -1952,25 +1956,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      *
      * @returns Invalid if no exception is thrown
      */
-    private searchLabel(this: Interpreter, statement: Stmt.Statement) {
+    private async searchLabel(this: Interpreter, statement: Stmt.Statement) {
         if (statement instanceof Stmt.Label) {
             if (statement.tokens.identifier.text.toLowerCase() === this.environment.gotoLabel) {
                 this.environment.gotoLabel = "";
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.If) {
-            this.visitBlock(statement.thenBranch);
+            await this.visitBlock(statement.thenBranch);
             if (this.environment.gotoLabel !== "" && statement.elseBranch) {
-                this.visitBlock(statement.elseBranch);
+                await this.visitBlock(statement.elseBranch);
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.TryCatch) {
             // Only search on Catch block, as labels are illegal inside Try block
-            this.visitBlock(statement.catchBlock);
+            await this.visitBlock(statement.catchBlock);
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
-                this.visitBlock(statement.body);
+                await this.visitBlock(statement.body);
                 this.environment.continueFor = this.environment.gotoLabel === "";
             } catch (reason) {
                 this.environment.continueFor = false;
@@ -1984,7 +1988,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else if (statement instanceof Stmt.While) {
             try {
-                this.visitBlock(statement.body);
+                await this.visitBlock(statement.body);
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     return BrsInvalid.Instance;
