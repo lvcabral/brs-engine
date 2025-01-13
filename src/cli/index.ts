@@ -2,7 +2,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -377,7 +377,7 @@ async function repl() {
         output: process.stdout,
     });
     rl.setPrompt(`\n${chalk.magenta("brs")}> `);
-    rl.on("line", (line) => {
+    rl.on("line", async (line) => {
         if (["exit", "quit", "q"].includes(line.toLowerCase().trim())) {
             process.exit();
         } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
@@ -399,7 +399,7 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(localVars));
             process.stdout.write("\n");
         } else {
-            brs.executeLine(line, replInterpreter);
+            await brs.executeLine(line, replInterpreter);
         }
         rl.prompt();
     });

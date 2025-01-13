@@ -134,7 +134,7 @@ export type SignatureAndMismatches = SignatureAndImplementation & {
  * description of why.
  */
 /** The function type required for all concrete Callables to provide. */
-export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) => Brs.BrsType;
+export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) => Brs.BrsType | Promise<Brs.BrsType>;
 
 /** A `function` or `sub` (either "native" or implemented in BrightScript) that can be called in a BrightScript file. */
 export class Callable implements Brs.BrsValue, Brs.Boxable {
@@ -161,7 +161,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
      *
      * @returns the return value of the function, or `invalid` if nothing is explicitly returned.
      */
-    call(interpreter: Interpreter, ...args: Brs.BrsType[]) {
+    async call(interpreter: Interpreter, ...args: Brs.BrsType[]) {
         let satisfiedSignature = this.getFirstSatisfiedSignature(args);
         if (satisfiedSignature == null) {
             interpreter.addError(generateArgumentMismatchError(this, args, interpreter.location));
@@ -171,12 +171,12 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
 
         let mutableArgs = [...satisfiedSignature.coercedArgs];
 
-        return interpreter.inSubEnv((subInterpreter) => {
+        return interpreter.inSubEnv( async subInterpreter => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
-            signature.args.forEach((param, index) => {
+            signature.args.map( async (param, index) => {
                 if (param.defaultValue && mutableArgs[index] == null) {
-                    mutableArgs[index] = subInterpreter.evaluate(param.defaultValue);
+                    mutableArgs[index] = await subInterpreter.evaluate(param.defaultValue);
                 }
 
                 subInterpreter.environment.define(
@@ -185,10 +185,30 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
                     mutableArgs[index],
                     interpreter.location
                 );
+                return Promise.resolve();
             });
 
             // then return whatever the selected implementation would return
-            return impl(subInterpreter, ...mutableArgs);
+            const result = impl(subInterpreter, ...mutableArgs);
+            if (result instanceof Promise) {
+                let semaphore = -1;
+                let returnValue: any;
+                result.then((value: Brs.BrsType) => {
+                    returnValue = value;
+                    semaphore = 1;
+                }).catch((error: any) => {
+                    returnValue = error;
+                    semaphore = 0;
+                });
+                while (semaphore < 0) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+                if (semaphore === 0) {
+                    throw returnValue;
+                }
+                return returnValue;
+            }
+            return result;
         });
     }
 

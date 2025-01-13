@@ -103,17 +103,17 @@ export const ObjFun = new Callable("ObjFun", {
         variadic: true,
         returns: ValueKind.Dynamic,
     },
-    impl: (
+    impl: async (
         interpreter: Interpreter,
         object: BrsComponent,
         iface: BrsInterface,
         funName: BrsString,
         ...args: BrsType[]
-    ): BrsType => {
+    ) => {
         for (let [_, objI] of object.interfaces) {
             if (iface.name === objI.name && iface.hasMethod(funName.value)) {
                 const func = object.getMethod(funName.value);
-                return func?.call(interpreter, ...args) || BrsInvalid.Instance;
+                return await func?.call(interpreter, ...args) || BrsInvalid.Instance;
             }
         }
         interpreter.addError(
