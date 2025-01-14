@@ -13,35 +13,35 @@ describe("print utility functions", () => {
     });
 
     describe("Pos", () => {
-        it("returns the current output cursor position", () => {
+        it("returns the current output cursor position", async () => {
             interpreter.stdout.write("ends in a newline so doesn't affect pos\n");
             interpreter.stdout.write("lorem");
 
-            expect(Pos.call(interpreter, new Int32(0))).toEqual(new Int32(5));
+            expect(await Pos.call(interpreter, new Int32(0))).toEqual(new Int32(5));
         });
 
-        it("handles multi-line output correctly", () => {
+        it("handles multi-line output correctly", async () => {
             interpreter.stdout.write("foo\nbar\nbaz");
 
-            expect(Pos.call(interpreter, new Int32(0))).toEqual(new Int32(3));
+            expect(await Pos.call(interpreter, new Int32(0))).toEqual(new Int32(3));
         });
     });
 
     describe("Tab", () => {
-        it("ignores indentations", () => {
-            expect(Tab.call(interpreter, new Int32(-33))).toEqual(new BrsString(""));
+        it("ignores indentations", async () => {
+            expect(await Tab.call(interpreter, new Int32(-33))).toEqual(new BrsString(""));
         });
 
-        it("ignores intendations less than current `pos`", () => {
+        it("ignores indentations less than current `pos`", async () => {
             interpreter.stdout.write("lorem ipsum dolor sit amet");
 
-            expect(Tab.call(interpreter, new Int32(8))).toEqual(new BrsString(""));
+            expect(await Tab.call(interpreter, new Int32(8))).toEqual(new BrsString(""));
         });
 
-        it("provides whitespace to indent to the desired column", () => {
+        it("provides whitespace to indent to the desired column", async () => {
             interpreter.stdout.write("lorem");
 
-            expect(Tab.call(interpreter, new Int32(8))).toEqual(new BrsString("   "));
+            expect(await Tab.call(interpreter, new Int32(8))).toEqual(new BrsString("   "));
         });
     });
 });

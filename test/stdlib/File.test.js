@@ -28,193 +28,216 @@ describe("global file I/O functions", () => {
     });
 
     describe("ListDir", () => {
-        it("returns files in a directory", () => {
+        it("returns files in a directory", async () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
             fsys.writeFileSync("tmp:/test2.txt", "test contents 2");
             fsys.mkdirSync("tmp:/test_dir");
             fsys.writeFileSync("tmp:/test_dir/test3.txt", "test contents 3");
 
-            expect(ListDir.call(interpreter, new BrsString("tmp:///")).elements).toEqual([
+            expect((await ListDir.call(interpreter, new BrsString("tmp:///"))).elements).toEqual([
                 new BrsString("test1.txt"),
                 new BrsString("test2.txt"),
                 new BrsString("test_dir"),
             ]);
         });
 
-        it("returns nothing on a bad path", () => {
-            expect(ListDir.call(interpreter, new BrsString("tmp:///ack")).elements).toEqual([]);
+        it("returns nothing on a bad path", async () => {
+            expect((await ListDir.call(interpreter, new BrsString("tmp:///ack"))).elements).toEqual(
+                []
+            );
         });
     });
 
     describe("CopyFile", () => {
-        it("copies a file", () => {
+        it("copies a file", async () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
-                CopyFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("tmp:///test1.1.txt")
+                (
+                    await CopyFile.call(
+                        interpreter,
+                        new BrsString("tmp:///test1.txt"),
+                        new BrsString("tmp:///test1.1.txt")
+                    )
                 ).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.txt")).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.1.txt")).toBeTruthy();
         });
 
-        it("fails with a false", () => {
+        it("fails with a false", async () => {
             expect(
-                CopyFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("ack:///test1.txt")
+                (
+                    await CopyFile.call(
+                        interpreter,
+                        new BrsString("tmp:///test1.txt"),
+                        new BrsString("ack:///test1.txt")
+                    )
                 ).value
             ).toBeFalsy();
 
             expect(
-                CopyFile.call(
-                    interpreter,
-                    new BrsString("tmp:///no_such_file.txt"),
-                    new BrsString("tmp:///test1.txt")
+                (
+                    await CopyFile.call(
+                        interpreter,
+                        new BrsString("tmp:///no_such_file.txt"),
+                        new BrsString("tmp:///test1.txt")
+                    )
                 ).value
             ).toBeFalsy();
         });
     });
 
     describe("MoveFile", () => {
-        it("moves a file", () => {
+        it("moves a file", async () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
-                MoveFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("tmp:///test5.txt")
+                (
+                    await MoveFile.call(
+                        interpreter,
+                        new BrsString("tmp:///test1.txt"),
+                        new BrsString("tmp:///test5.txt")
+                    )
                 ).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.txt")).toBeFalsy();
             expect(fsys.existsSync("tmp:/test5.txt")).toBeTruthy();
         });
 
-        it("fails with a false", () => {
+        it("fails with a false", async () => {
             expect(
-                MoveFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("ack:///test1.txt")
+                (
+                    await MoveFile.call(
+                        interpreter,
+                        new BrsString("tmp:///test1.txt"),
+                        new BrsString("ack:///test1.txt")
+                    )
                 ).value
             ).toBeFalsy();
 
             expect(
-                MoveFile.call(
-                    interpreter,
-                    new BrsString("tmp:///no_such_file.txt"),
-                    new BrsString("tmp:///test1.txt")
+                (
+                    await MoveFile.call(
+                        interpreter,
+                        new BrsString("tmp:///no_such_file.txt"),
+                        new BrsString("tmp:///test1.txt")
+                    )
                 ).value
             ).toBeFalsy();
         });
     });
 
     describe("DeleteFile", () => {
-        it("deletes a file", () => {
+        it("deletes a file", async () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
-                DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt")).value
+                (await DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt"))).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.txt")).toBeFalsy();
         });
 
-        it("fails with a false", () => {
+        it("fails with a false", async () => {
             expect(
-                DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt")).value
+                (await DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt"))).value
             ).toBeFalsy();
         });
     });
 
     describe("DeleteDirectory", () => {
-        it("deletes a directory", () => {
+        it("deletes a directory", async () => {
             fsys.mkdirSync("tmp:/test_dir");
 
             expect(
-                DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
+                (await DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir"))).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test_dir")).toBeFalsy();
         });
 
-        it("fails with a false", () => {
+        it("fails with a false", async () => {
             fsys.mkdirSync("tmp:/test_dir");
             fsys.writeFileSync("tmp://test_dir/test1.txt", "test contents 1");
 
             // can't remove a non-empty directory
             expect(
-                DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
+                (await DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir"))).value
             ).toBeFalsy();
         });
     });
 
     describe("CreateDirectory", () => {
-        it("creates a directory", () => {
+        it("creates a directory", async () => {
             expect(
-                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
+                (await CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir"))).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test_dir")).toBeTruthy();
 
             expect(
-                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir/test_sub_dir"))
-                    .value
+                (
+                    await CreateDirectory.call(
+                        interpreter,
+                        new BrsString("tmp:///test_dir/test_sub_dir")
+                    )
+                ).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test_dir/test_sub_dir")).toBeTruthy();
         });
 
-        it("fails with a false", () => {
+        it("fails with a false", async () => {
             fsys.mkdirSync("tmp:/test_dir");
 
             // can't recreate a directory
             expect(
-                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
+                (await CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir"))).value
             ).toBeFalsy();
         });
     });
 
     describe("FormatDrive", () => {
-        it("fails", () => {
+        it("fails", async () => {
             expect(
-                FormatDrive.call(interpreter, new BrsString("foo"), new BrsString("bar")).value
+                (await FormatDrive.call(interpreter, new BrsString("foo"), new BrsString("bar")))
+                    .value
             ).toBeFalsy();
         });
     });
 
     describe("ReadAsciiFile", () => {
-        it("reads an ascii file", () => {
+        it("reads an ascii file", async () => {
             fsys.writeFileSync("tmp:/test.txt", "test contents");
 
-            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt")).value).toEqual(
-                "test contents"
-            );
+            expect(
+                (await ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt"))).value
+            ).toEqual("test contents");
 
-            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:/test.txt")).value).toEqual(
-                "test contents"
-            );
+            expect(
+                (await ReadAsciiFile.call(interpreter, new BrsString("tmp:/test.txt"))).value
+            ).toEqual("test contents");
         });
     });
 
     describe("WriteAsciiFile", () => {
-        it("fails writing to bad paths", () => {
+        it("fails writing to bad paths", async () => {
             expect(
-                WriteAsciiFile.call(
-                    interpreter,
-                    new BrsString("hello.txt"),
-                    new BrsString("test contents")
+                (
+                    await WriteAsciiFile.call(
+                        interpreter,
+                        new BrsString("hello.txt"),
+                        new BrsString("test contents")
+                    )
                 ).value
             ).toBeFalsy();
         });
 
-        it("writes an ascii file", () => {
+        it("writes an ascii file", async () => {
             expect(
-                WriteAsciiFile.call(
-                    interpreter,
-                    new BrsString("tmp:///hello.txt"),
-                    new BrsString("test contents")
+                (
+                    await WriteAsciiFile.call(
+                        interpreter,
+                        new BrsString("tmp:///hello.txt"),
+                        new BrsString("test contents")
+                    )
                 ).value
             ).toBeTruthy();
 
@@ -223,8 +246,8 @@ describe("global file I/O functions", () => {
     });
 
     describe("MatchFiles", () => {
-        it("returns an empty array for unrecognized paths", () => {
-            let result = MatchFiles.call(
+        it("returns an empty array for unrecognized paths", async () => {
+            let result = await MatchFiles.call(
                 interpreter,
                 new BrsString("cat:/kitten.cute"),
                 new BrsString("*")
@@ -233,8 +256,8 @@ describe("global file I/O functions", () => {
             expect(result.elements).toEqual([]);
         });
 
-        it("returns an empty array for non-existent directories", () => {
-            let result = MatchFiles.call(
+        it("returns an empty array for non-existent directories", async () => {
+            let result = await MatchFiles.call(
                 interpreter,
                 new BrsString("cachefs:/does-not-exist"),
                 new BrsString("*")
@@ -255,8 +278,8 @@ describe("global file I/O functions", () => {
                 fsys.mkdirSync("cachefs:/directory");
             });
 
-            test("empty patterns", () => {
-                let result = MatchFiles.call(
+            test("empty patterns", async () => {
+                let result = await MatchFiles.call(
                     interpreter,
                     new BrsString("cachefs:/source"),
                     new BrsString("")
@@ -265,8 +288,8 @@ describe("global file I/O functions", () => {
                 expect(result.elements).toEqual([]);
             });
 
-            test("* matches 0 or more characters", () => {
-                let result = MatchFiles.call(
+            test("* matches 0 or more characters", async () => {
+                let result = await MatchFiles.call(
                     interpreter,
                     new BrsString("cachefs:/source"),
                     new BrsString("*.brs")
@@ -280,8 +303,8 @@ describe("global file I/O functions", () => {
                 ]);
             });
 
-            test("? matches a single character", () => {
-                let result = MatchFiles.call(
+            test("? matches a single character", async () => {
+                let result = await MatchFiles.call(
                     interpreter,
                     new BrsString("cachefs:/source"),
                     new BrsString("ba?.brs")
@@ -293,8 +316,8 @@ describe("global file I/O functions", () => {
                 ]);
             });
 
-            test("character classes in […]", () => {
-                let result = MatchFiles.call(
+            test("character classes in […]", async () => {
+                let result = await MatchFiles.call(
                     interpreter,
                     new BrsString("cachefs:/source"),
                     new BrsString("[a-c]ar.brs")
@@ -306,8 +329,8 @@ describe("global file I/O functions", () => {
                 ]);
             });
 
-            test("character class negation with [^…]", () => {
-                let result = MatchFiles.call(
+            test("character class negation with [^…]", async () => {
+                let result = await MatchFiles.call(
                     interpreter,
                     new BrsString("cachefs:/source"),
                     new BrsString("[^d-zD-Z]ar.brs")
@@ -319,8 +342,8 @@ describe("global file I/O functions", () => {
                 ]);
             });
 
-            test("escaped special characters", () => {
-                let result = MatchFiles.call(
+            test("escaped special characters", async () => {
+                let result = await MatchFiles.call(
                     interpreter,
                     new BrsString("cachefs:/source"),
                     new BrsString(String.raw`*\**\?**\[*`)

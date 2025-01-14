@@ -20,13 +20,13 @@ describe("global runtime functions", () => {
     brs.registerCallback(() => {}); // register a callback to avoid display errors
 
     describe("CreateObject", () => {
-        it("creates a new instance of associative array", () => {
-            let obj = CreateObject.call(interpreter, new BrsString("roAssociativeArray"));
+        it("creates a new instance of associative array", async () => {
+            let obj = await CreateObject.call(interpreter, new BrsString("roAssociativeArray"));
             expect(obj.elements).toEqual(new Map());
         });
 
-        it("returns invalid for an undefined BrsObject", () => {
-            let obj = CreateObject.call(interpreter, new BrsString("notAnObject"));
+        it("returns invalid for an undefined BrsObject", async () => {
+            let obj = await CreateObject.call(interpreter, new BrsString("notAnObject"));
             expect(obj).toEqual(BrsInvalid.Instance);
         });
     });
@@ -47,8 +47,8 @@ describe("global runtime functions", () => {
                 { value: new RoAssociativeArray([]), type: "roAssociativeArray" },
                 { value: Uninitialized.Instance, type: "<uninitialized>" },
             ].forEach((testCase) =>
-                test(testCase.type, () => {
-                    expect(Type.call(interpreter, testCase.value, new Int32(3))).toEqual(
+                test(testCase.type, async () => {
+                    expect(await Type.call(interpreter, testCase.value, new Int32(3))).toEqual(
                         new BrsString(testCase.type)
                     );
                 })
@@ -70,8 +70,8 @@ describe("global runtime functions", () => {
                 { value: new RoAssociativeArray([]), type: "roAssociativeArray" },
                 { value: Uninitialized.Instance, type: "<uninitialized>" },
             ].forEach((testCase) =>
-                test(testCase.type, () => {
-                    expect(Type.call(interpreter, testCase.value)).toEqual(
+                test(testCase.type, async () => {
+                    expect(await Type.call(interpreter, testCase.value)).toEqual(
                         new BrsString(testCase.type)
                     );
                 })
