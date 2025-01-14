@@ -74,6 +74,7 @@ function enableECP() {
     ecp.get("/query/icon/:appID", sendAppIcon);
     ecp.get("/query/registry/:appID", sendRegistry);
     ecp.post("/input", sendInputQuery);
+    ecp.post("/input/:appID", sendInputQuery);
     ecp.post("/launch/:appID", sendLaunchApp);
     ecp.post("/exit-app/:appID", sendExitApp);
     ecp.post("/keypress/:key", sendKeyPress);

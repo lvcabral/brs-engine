@@ -42,19 +42,9 @@ export class RoInput extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
-        if (bufferFlag === BufferType.INPUT) {
-            const strInput = this.interpreter.readDataBuffer();
-            try {
-                const input = JSON.parse(strInput);
-                events.push(new RoInputEvent(toAssociativeArray(input)));
-            } catch (e: any) {
-                if (this.interpreter.isDevMode) {
-                    this.interpreter.stdout.write(
-                        `warning,[roSystemLog] Error parsing Input buffer: ${e.message}`
-                    );
-                }
-            }
+        const event = this.interpreter.inputBuffer.shift();
+        if (event) {
+            events.push(new RoInputEvent(toAssociativeArray(event)));
         }
         return events;
     }

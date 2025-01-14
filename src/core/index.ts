@@ -21,6 +21,8 @@ import {
     isControlEvent,
     isMediaEvent,
     MediaEvent,
+    InputEvent,
+    isInputEvent,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -52,6 +54,7 @@ export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
 export const shared = new Map<string, Int32Array>();
 export const controlEvents = new Array<ControlEvent>();
+export const inputEvents = new Array<InputEvent>();
 export const audioEvents = new Array<MediaEvent>();
 export const videoEvents = new Array<MediaEvent>();
 export const bscs = new Map<string, number>();
@@ -66,6 +69,8 @@ if (typeof onmessage !== "undefined") {
     onmessage = function (event: MessageEvent) {
         if (isControlEvent(event.data)) {
             controlEvents.push(event.data);
+        } else if (isInputEvent(event.data)) {
+            inputEvents.push(event.data);
         } else if (isMediaEvent(event.data)) {
             if (event.data.media === "audio") {
                 audioEvents.push(event.data);
@@ -899,6 +904,7 @@ function parseLibraries(
 
 function clearEventBuffers() {
     controlEvents.length = 0;
+    inputEvents.length = 0;
     audioEvents.length = 0;
     videoEvents.length = 0;
 }
