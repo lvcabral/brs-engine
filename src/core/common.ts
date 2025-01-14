@@ -345,6 +345,16 @@ export enum RemoteType {
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on-device controls)
 
+// Input Event Interface
+export interface InputEvent {
+    [key: string]: string;
+    source_ip_addr: string;
+}
+
+export function isInputEvent(value: any): value is InputEvent {
+    return value && typeof value.source_ip_addr === "string";
+}
+
 // Debug prompt
 export const debugPrompt = "Brightscript Debugger> ";
 
