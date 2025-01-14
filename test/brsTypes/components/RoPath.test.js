@@ -31,12 +31,12 @@ describe("RoPath", () => {
             expect(path.toString()).toEqual(str);
         });
 
-        it("lists all values after split()", () => {
+        it("lists all values after split()", async () => {
             let str = new BrsString("pkg:/images/splash.png");
             let path = new RoPath(str);
             let split = path.getMethod("split");
             expect(split).toBeInstanceOf(Callable);
-            let aa = split.call(interpreter);
+            let aa = await split.call(interpreter);
             expect(aa.toString()).toEqual(
                 `<Component: roAssociativeArray> =
 {
@@ -65,45 +65,47 @@ describe("RoPath", () => {
                 expect(change).toBeInstanceOf(Callable);
             });
 
-            it("overwrites string value previously set", () => {
-                expect(change.call(interpreter, new BrsString("pkg:/manifest"))).toEqual(
+            it("overwrites string value previously set", async () => {
+                expect(await change.call(interpreter, new BrsString("pkg:/manifest"))).toEqual(
                     BrsBoolean.True
                 );
                 expect(path.toString()).toEqual("pkg:/manifest");
             });
-            it("set invalid path make it empty", () => {
-                expect(change.call(interpreter, new BrsString(";**;"))).toEqual(BrsBoolean.False);
+            it("set invalid path make it empty", async () => {
+                expect(await change.call(interpreter, new BrsString(";**;"))).toEqual(
+                    BrsBoolean.False
+                );
                 expect(path.toString()).toEqual("");
             });
         });
 
         describe("isValid", () => {
-            it("returns true for valid path", () => {
+            it("returns true for valid path", async () => {
                 let path = new RoPath(new BrsString("pkg:/images/splash.png"));
                 let isValid = path.getMethod("isValid");
                 expect(isValid).toBeInstanceOf(Callable);
-                expect(isValid.call(interpreter)).toEqual(BrsBoolean.True);
+                expect(await isValid.call(interpreter)).toEqual(BrsBoolean.True);
             });
-            it("returns false for invalid path", () => {
+            it("returns false for invalid path", async () => {
                 let path = new RoPath(new BrsString(""));
                 let isValid = path.getMethod("isValid");
                 expect(isValid).toBeInstanceOf(Callable);
-                expect(isValid.call(interpreter)).toEqual(BrsBoolean.False);
+                expect(await isValid.call(interpreter)).toEqual(BrsBoolean.False);
             });
         });
 
         describe("split", () => {
-            it("returns populated AA for valid path", () => {
+            it("returns populated AA for valid path", async () => {
                 let path = new RoPath(new BrsString("pkg:/images/splash.png"));
                 let split = path.getMethod("split");
                 expect(split).toBeInstanceOf(Callable);
-                expect(split.call(interpreter).elements.size).toEqual(5);
+                expect((await split.call(interpreter)).elements.size).toEqual(5);
             });
-            it("returns empty AA for invalid path", () => {
+            it("returns empty AA for invalid path", async () => {
                 let path = new RoPath(new BrsString("<invalid>"));
                 let split = path.getMethod("split");
                 expect(split).toBeInstanceOf(Callable);
-                expect(split.call(interpreter).elements.size).toEqual(0);
+                expect((await split.call(interpreter)).elements.size).toEqual(0);
             });
         });
     });
@@ -124,27 +126,29 @@ describe("RoPath", () => {
                 expect(setString).toBeInstanceOf(Callable);
             });
 
-            it("sets a string into the object", () => {
-                setString.call(interpreter, new BrsString("pkg:/images/splash.png"));
+            it("sets a string into the object", async () => {
+                await setString.call(interpreter, new BrsString("pkg:/images/splash.png"));
                 expect(path.toString()).toEqual("pkg:/images/splash.png");
             });
 
-            it("overwrites string value previously set", () => {
-                setString.call(interpreter, new BrsString("pkg:/images/splash.png"));
-                setString.call(interpreter, new BrsString("pkg:/images/poster.png"));
+            it("overwrites string value previously set", async () => {
+                await setString.call(interpreter, new BrsString("pkg:/images/splash.png"));
+                await setString.call(interpreter, new BrsString("pkg:/images/poster.png"));
                 expect(path.toString()).toEqual("pkg:/images/poster.png");
             });
-            it("set invalid path make it empty", () => {
-                setString.call(interpreter, new BrsString("sdjhj%^"));
+            it("set invalid path make it empty", async () => {
+                await setString.call(interpreter, new BrsString("sdjhj%^"));
                 expect(path.toString()).toEqual("");
             });
         });
 
-        test("getString", () => {
+        test("getString", async () => {
             let path = new RoPath(new BrsString("pkg:/images/splash.png"));
             let getString = path.getMethod("getString");
             expect(getString).toBeInstanceOf(Callable);
-            expect(getString.call(interpreter)).toEqual(new BrsString("pkg:/images/splash.png"));
+            expect(await getString.call(interpreter)).toEqual(
+                new BrsString("pkg:/images/splash.png")
+            );
         });
     });
 });

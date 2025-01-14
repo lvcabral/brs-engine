@@ -33,21 +33,21 @@ describe("roDouble", () => {
             interpreter = new Interpreter();
         });
 
-        it("setDouble", () => {
+        it("setDouble", async () => {
             setDoubleA = a.getMethod("setDouble");
             setDoubleB = b.getMethod("setDouble");
 
             expect(setDoubleA).toBeInstanceOf(Callable);
             expect(setDoubleB).toBeInstanceOf(Callable);
 
-            setDoubleA.call(interpreter, new Double(someNumberA));
-            setDoubleB.call(interpreter, new Double(someNumberB));
+            await setDoubleA.call(interpreter, new Double(someNumberA));
+            await setDoubleB.call(interpreter, new Double(someNumberB));
 
             expect(a.equalTo(new RoDouble(new Double(someNumberA)))).toBe(BrsBoolean.True);
             expect(b.equalTo(new RoDouble(new Double(someNumberB)))).toBe(BrsBoolean.True);
         });
 
-        it("getDouble", () => {
+        it("getDouble", async () => {
             a = new RoDouble(new Double(someNumberA));
             b = new RoDouble(new Double(someNumberB));
 
@@ -57,14 +57,14 @@ describe("roDouble", () => {
             expect(getDoubleA).toBeInstanceOf(Callable);
             expect(getDoubleB).toBeInstanceOf(Callable);
 
-            let resultA = getDoubleA.call(interpreter);
-            let resultB = getDoubleB.call(interpreter);
+            let resultA = await getDoubleA.call(interpreter);
+            let resultB = await getDoubleB.call(interpreter);
 
             expect(resultA).toEqual(new Double(someNumberA));
             expect(resultB).toEqual(new Double(someNumberB));
         });
 
-        it("toStr", () => {
+        it("toStr", async () => {
             a = new RoDouble(new Double(someNumberA));
             b = new RoDouble(new Double(someNumberB));
 
@@ -74,8 +74,8 @@ describe("roDouble", () => {
             let expectedA = parseFloat(Math.fround(someNumberA).toPrecision(6));
             let expectedB = parseFloat(Math.fround(someNumberB).toPrecision(6));
 
-            let resultA = toStrA.call(interpreter);
-            let resultB = toStrB.call(interpreter);
+            let resultA = await toStrA.call(interpreter);
+            let resultB = await toStrB.call(interpreter);
 
             expect(resultA).toEqual(new BrsString(String(expectedA)));
             expect(resultB).toEqual(new BrsString(String(expectedB)));

@@ -14,7 +14,7 @@ describe("RoBoolean", () => {
         });
     });
 
-    test("toString", () => {
+    test("toString", async () => {
         expect(new RoBoolean(new BrsBoolean(true)).toString()).toBe("true");
     });
 
@@ -28,27 +28,27 @@ describe("RoBoolean", () => {
                 interpreter = new Interpreter();
             });
 
-            it("overwrites its stored value", () => {
+            it("overwrites its stored value", async () => {
                 setBooleanA = a.getMethod("setBoolean");
                 setBooleanB = b.getMethod("setBoolean");
                 expect(setBooleanA).toBeInstanceOf(Callable);
                 expect(setBooleanB).toBeInstanceOf(Callable);
 
-                setBooleanA.call(interpreter, new BrsBoolean(false));
-                setBooleanB.call(interpreter, new BrsBoolean(true));
+                await setBooleanA.call(interpreter, new BrsBoolean(false));
+                await setBooleanB.call(interpreter, new BrsBoolean(true));
 
                 expect(a.intrinsic).toEqual(new BrsBoolean(false));
                 expect(b.intrinsic).toEqual(new BrsBoolean(true));
             });
 
-            it("retrieve intrinsic value", () => {
+            it("retrieve intrinsic value", async () => {
                 getBooleanA = a.getMethod("getBoolean");
                 getBooleanB = b.getMethod("getBoolean");
                 expect(getBooleanA).toBeInstanceOf(Callable);
                 expect(getBooleanB).toBeInstanceOf(Callable);
 
-                let aValue = getBooleanA.call(interpreter);
-                let bValue = getBooleanB.call(interpreter);
+                let aValue = await getBooleanA.call(interpreter);
+                let bValue = await getBooleanB.call(interpreter);
                 expect(aValue).toEqual(new BrsBoolean(true));
                 expect(bValue).toEqual(new BrsBoolean(false));
             });
@@ -57,7 +57,7 @@ describe("RoBoolean", () => {
 
     describe("ifToStr", () => {
         describe("toStr", () => {
-            it("Returns the value as a string", () => {
+            it("Returns the value as a string", async () => {
                 let interpreter = new Interpreter();
                 let a = new RoBoolean(new BrsBoolean(true));
                 let b = new RoBoolean(new BrsBoolean(false));
@@ -66,8 +66,8 @@ describe("RoBoolean", () => {
                 expect(strA).toBeInstanceOf(Callable);
                 expect(strB).toBeInstanceOf(Callable);
 
-                let resultA = strA.call(interpreter);
-                let resultB = strB.call(interpreter);
+                let resultA = await strA.call(interpreter);
+                let resultB = await strB.call(interpreter);
                 expect(resultA).toEqual(new BrsString("true"));
                 expect(resultB).toEqual(new BrsString("false"));
             });
