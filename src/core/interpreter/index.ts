@@ -38,7 +38,7 @@ import {
     AAMember,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
-import { shared, stats, keys } from "..";
+import { shared, stats, controlEvents, audioEvents, videoEvents } from "..";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -127,7 +127,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
     readonly sharedArray = shared.get("buffer") || new Int32Array([]);
-    readonly keysBuffer = keys;
+    readonly keysBuffer = controlEvents;
+    readonly audioBuffer = audioEvents;
+    readonly videoBuffer = videoEvents;
     readonly isDevMode = process.env.NODE_ENV === "development";
 
     readonly stdout: OutputProxy;

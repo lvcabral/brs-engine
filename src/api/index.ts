@@ -214,12 +214,16 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         }
     });
     subscribeSound("api", (event: string, data: any) => {
-        if (["error", "warning"].includes(event)) {
+        if (event === "post") {
+            brsWorker.postMessage(data);
+        } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         }
     });
     subscribeVideo("api", (event: string, data: any) => {
-        if (["error", "warning"].includes(event)) {
+        if (event === "post") {
+            brsWorker.postMessage(data);
+        } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         } else if (event === "bandwidth") {
             latestBandwidth = data;

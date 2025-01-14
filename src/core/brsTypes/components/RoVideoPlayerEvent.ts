@@ -4,7 +4,7 @@ import { BrsType, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { MediaEvent } from "../../common";
+import { MediaEventType } from "../../common";
 
 export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -17,13 +17,13 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         this.flags = flags;
         this.index = index;
         switch (this.flags) {
-            case MediaEvent.LOADING:
+            case MediaEventType.LOADING:
                 this.message = "startup progress";
                 break;
-            case MediaEvent.START_PLAY:
+            case MediaEventType.START_PLAY:
                 this.message = "start of play";
                 break;
-            case MediaEvent.FULL:
+            case MediaEventType.FULL:
                 this.message = "end of playlist";
                 break;
             default:
@@ -81,7 +81,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            if (this.flags === MediaEvent.START_STREAM) {
+            if (this.flags === MediaEventType.START_STREAM) {
                 const info = {
                     Url: "",
                     StreamBitrate: 0,
@@ -89,7 +89,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
                     IsUnderrun: false,
                 };
                 return toAssociativeArray(info);
-            } else if (this.flags === MediaEvent.POSITION) {
+            } else if (this.flags === MediaEventType.POSITION) {
                 return toAssociativeArray({ ClipIdx: 0, ClipPos: this.index * 1000 });
             }
             return BrsInvalid.Instance;
@@ -114,7 +114,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.SELECTED);
+            return BrsBoolean.from(this.flags === MediaEventType.SELECTED);
         },
     });
 
@@ -125,7 +125,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FULL);
+            return BrsBoolean.from(this.flags === MediaEventType.FULL);
         },
     });
 
@@ -136,7 +136,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FULL);
+            return BrsBoolean.from(this.flags === MediaEventType.FULL);
         },
     });
 
@@ -147,7 +147,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FAILED);
+            return BrsBoolean.from(this.flags === MediaEventType.FAILED);
         },
     });
 
@@ -158,7 +158,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.PARTIAL);
+            return BrsBoolean.from(this.flags === MediaEventType.PARTIAL);
         },
     });
 
@@ -169,7 +169,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.PAUSED);
+            return BrsBoolean.from(this.flags === MediaEventType.PAUSED);
         },
     });
 
@@ -180,7 +180,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.RESUMED);
+            return BrsBoolean.from(this.flags === MediaEventType.RESUMED);
         },
     });
 
@@ -214,7 +214,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.POSITION);
+            return BrsBoolean.from(this.flags === MediaEventType.POSITION);
         },
     });
 
@@ -249,7 +249,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.START_STREAM);
+            return BrsBoolean.from(this.flags === MediaEventType.START_STREAM);
         },
     });
 
