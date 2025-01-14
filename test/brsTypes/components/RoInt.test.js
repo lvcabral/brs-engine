@@ -33,21 +33,21 @@ describe("roInt", () => {
             interpreter = new Interpreter();
         });
 
-        it("setInt", () => {
+        it("setInt", async () => {
             setIntA = a.getMethod("setInt");
             setIntB = b.getMethod("setInt");
 
             expect(setIntA).toBeInstanceOf(Callable);
             expect(setIntB).toBeInstanceOf(Callable);
 
-            setIntA.call(interpreter, new Int32(someNumberA));
-            setIntB.call(interpreter, new Int32(someNumberB));
+            await setIntA.call(interpreter, new Int32(someNumberA));
+            await setIntB.call(interpreter, new Int32(someNumberB));
 
             expect(a.equalTo(new RoInt(new Int32(someNumberA)))).toBe(BrsBoolean.True);
             expect(b.equalTo(new RoInt(new Int32(someNumberB)))).toBe(BrsBoolean.True);
         });
 
-        it("getInt", () => {
+        it("getInt", async () => {
             a = new RoInt(new Int32(someNumberA));
             b = new RoInt(new Int32(someNumberB));
 
@@ -57,22 +57,22 @@ describe("roInt", () => {
             expect(getIntA).toBeInstanceOf(Callable);
             expect(getIntB).toBeInstanceOf(Callable);
 
-            let resultA = getIntA.call(interpreter);
-            let resultB = getIntB.call(interpreter);
+            let resultA = await getIntA.call(interpreter);
+            let resultB = await getIntB.call(interpreter);
 
             expect(resultA).toEqual(new Int32(someNumberA));
             expect(resultB).toEqual(new Int32(someNumberB));
         });
 
-        it("toStr", () => {
+        it("toStr", async () => {
             a = new RoInt(new Int32(someNumberA));
             b = new RoInt(new Int32(someNumberB));
 
             toStrA = a.getMethod("toStr");
             toStrB = b.getMethod("toStr");
 
-            let resultA = toStrA.call(interpreter);
-            let resultB = toStrB.call(interpreter);
+            let resultA = await toStrA.call(interpreter);
+            let resultB = await toStrB.call(interpreter);
 
             expect(resultA).toEqual(new BrsString(String(someNumberA)));
             expect(resultB).toEqual(new BrsString(String(someNumberB)));

@@ -131,7 +131,7 @@ describe("Callable", () => {
             });
         });
 
-        it("doesn't mutate args while checking for argument mismatches", () => {
+        it("doesn't mutate args while checking for argument mismatches", async () => {
             let func = new BrsTypes.Callable(
                 "acceptsIntOrFloat",
                 {
@@ -160,7 +160,7 @@ describe("Callable", () => {
             );
 
             let pi = new BrsTypes.Float(3.1415927);
-            let result = func.call(new Interpreter(), pi, BrsTypes.BrsBoolean.False);
+            let result = await func.call(new Interpreter(), pi, BrsTypes.BrsBoolean.False);
 
             // mutation between checks would cause `input` to be the integer 3 - make sure that doesn't happen
             expect(result).toEqual(pi);
@@ -182,8 +182,8 @@ describe("Callable", () => {
                     ["float", new BrsTypes.Float(3.14159), new BrsTypes.Int32(3)],
                     ["double", new BrsTypes.Double(2.71828), new BrsTypes.Int32(2)],
                     ["longinteger", new BrsTypes.Int64(2147483647119), new BrsTypes.Int32(-881)],
-                ])("from %s to integer", (_type, input, output) => {
-                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                ])("from %s to integer", async (_type, input, output) => {
+                    expect(await fn.call(new Interpreter(), input)).toEqual(output);
                 });
             });
 
@@ -206,8 +206,8 @@ describe("Callable", () => {
                         new BrsTypes.Int64(2147483647119),
                         new BrsTypes.Float(2147483647119),
                     ],
-                ])("from %s to float", (_type, input, output) => {
-                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                ])("from %s to float", async (_type, input, output) => {
+                    expect(await fn.call(new Interpreter(), input)).toEqual(output);
                 });
             });
 
@@ -230,8 +230,8 @@ describe("Callable", () => {
                         new BrsTypes.Int64(2147483647119),
                         new BrsTypes.Double(2147483647119),
                     ],
-                ])("from %s to double", (_type, input, output) => {
-                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                ])("from %s to double", async (_type, input, output) => {
+                    expect(await fn.call(new Interpreter(), input)).toEqual(output);
                 });
             });
 
@@ -254,8 +254,8 @@ describe("Callable", () => {
                         new BrsTypes.Int64(2147483647119),
                         new BrsTypes.Int64(2147483647119),
                     ],
-                ])("from %s to longinteger", (_type, input, output) => {
-                    expect(fn.call(new Interpreter(), input)).toEqual(output);
+                ])("from %s to longinteger", async (_type, input, output) => {
+                    expect(await fn.call(new Interpreter(), input)).toEqual(output);
                 });
             });
         });
