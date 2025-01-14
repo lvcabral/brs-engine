@@ -5,14 +5,14 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, saveDataBuffer } from "./util";
+import { SubscribeCallback } from "./util";
 import {
     DataType,
     RemoteType,
     DebugCommand,
     platform,
-    BufferType,
     ControlEvent,
+    InputEvent,
 } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
@@ -163,7 +163,8 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
 
 // Input API
 export function sendInput(data: object) {
-    saveDataBuffer(sharedArray, JSON.stringify(data), BufferType.INPUT);
+    const inputEvent: InputEvent = Object.assign({ source_ip_addr: "" }, data);
+    notifyAll("post", inputEvent);
 }
 
 /// #if BROWSER
