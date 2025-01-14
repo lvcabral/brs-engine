@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { DataType, MediaEvent } from "../core/common";
+import { DataType, MediaEventType } from "../core/common";
 import { Howl, Howler } from "howler";
 
 // Sound Objects
@@ -213,14 +213,14 @@ function playSound() {
         } else {
             sound.play();
         }
-        Atomics.store(sharedArray, DataType.IDX, playIndex);
-        Atomics.store(sharedArray, DataType.SND, MediaEvent.SELECTED);
+        notifyAll("post", { media: "audio", type: MediaEventType.SELECTED, index: playIndex });
     } else {
         notifyAll("warning", `[sound] Can't find audio index: ${playIndex}`);
     }
 }
 
 function nextSound() {
+    const currentIndex = playIndex;
     if (playNext >= 0 && playNext < playList.length) {
         playIndex = playNext;
     } else {
@@ -234,7 +234,7 @@ function nextSound() {
         playSound();
     } else {
         playIndex = 0;
-        Atomics.store(sharedArray, DataType.SND, MediaEvent.FULL);
+        notifyAll("post", { media: "audio", type: MediaEventType.FULL, index: currentIndex });
     }
 }
 
@@ -249,7 +249,7 @@ function stopSound() {
                 soundsDat[idx].unload();
             }
         }
-        Atomics.store(sharedArray, DataType.SND, MediaEvent.PARTIAL);
+        notifyAll("post", { media: "audio", type: MediaEventType.PARTIAL, index: playIndex });
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to stop: ${playIndex} - ${audio}`);
     }
@@ -263,7 +263,7 @@ function pauseSound(notify = true) {
             soundsDat[idx].pause();
         }
         if (notify) {
-            Atomics.store(sharedArray, DataType.SND, MediaEvent.PAUSED);
+            notifyAll("post", { media: "audio", type: MediaEventType.PAUSED, index: playIndex });
         }
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to pause: ${playIndex} - ${audio}`);
@@ -278,7 +278,7 @@ function resumeSound(notify = true) {
             soundsDat[idx].play();
         }
         if (notify) {
-            Atomics.store(sharedArray, DataType.SND, MediaEvent.RESUMED);
+            notifyAll("post", { media: "audio", type: MediaEventType.RESUMED, index: playIndex });
         }
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to resume: ${playIndex} - ${audio}`);

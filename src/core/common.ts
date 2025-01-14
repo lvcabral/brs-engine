@@ -316,13 +316,13 @@ export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataB
 export const keyArraySpots = 3;
 
 // Key Event Interface
-export interface KeyEvent {
+export interface ControlEvent {
     remote: string; // Remote Id (Remote Type:Remote Index)
     key: number; // Key Code
     mod: number; // Modifier (0 = press, 100 = release)
 }
 
-export function isKeyEvent(value: any): value is KeyEvent {
+export function isControlEvent(value: any): value is ControlEvent {
     return (
         value &&
         typeof value.remote === "string" &&
@@ -369,8 +369,26 @@ export enum DebugCommand {
     PAUSE,
 }
 
+// Media Event Interface
+export type MediaEvent = {
+    media: "audio" | "video";
+    type: MediaEventType;
+    index: number;
+    tracks?: Array<any>;
+};
+
+export function isMediaEvent(value: any): value is MediaEvent {
+    return (
+        value &&
+        typeof value.media === "string" &&
+        typeof value.type === "number" &&
+        typeof value.index === "number" &&
+        (Array.isArray(value.tracks) || value.tracks === undefined)
+    );
+}
+
 // Media events enumerator
-export enum MediaEvent {
+export enum MediaEventType {
     SELECTED,
     FULL,
     PARTIAL,
@@ -381,6 +399,8 @@ export enum MediaEvent {
     START_STREAM,
     START_PLAY,
     POSITION,
+    DURATION,
+    TRACKS,
 }
 
 // Buffer Data Types enumerator
