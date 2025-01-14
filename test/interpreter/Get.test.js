@@ -19,7 +19,7 @@ describe("property getting", () => {
     });
 
     describe("arrays", () => {
-        test("one-dimensional", () => {
+        test("one-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -45,14 +45,14 @@ describe("property getting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
                 new BrsString("index1")
             );
         });
 
-        test("multi-dimensional", () => {
+        test("multi-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -106,7 +106,7 @@ describe("property getting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
                 new BrsString("(2,1)")
@@ -115,7 +115,7 @@ describe("property getting", () => {
     });
 
     describe("associative arrays", () => {
-        test("one-dimensional", () => {
+        test("one-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -142,14 +142,14 @@ describe("property getting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
                 new BrsString("foo's value")
             );
         });
 
-        test("multi-dimensional", () => {
+        test("multi-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -187,7 +187,7 @@ describe("property getting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
             expect(interpreter.environment.get(identifier("result"))).toEqual(
                 new BrsString("aa.foo.bar's value")
             );

@@ -12,7 +12,7 @@ describe("interpreter increment/decrement operators", () => {
         interpreter = new Interpreter();
     });
 
-    it("increments variables", () => {
+    it("increments variables", async () => {
         let ast = [
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
@@ -22,12 +22,12 @@ describe("interpreter increment/decrement operators", () => {
             new Stmt.Increment(new Expr.Variable(identifier("foo")), token(Lexeme.PlusPlus, "++")),
         ];
 
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
 
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(5));
     });
 
-    it("decrements variables", () => {
+    it("decrements variables", async () => {
         let ast = [
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
@@ -40,12 +40,12 @@ describe("interpreter increment/decrement operators", () => {
             ),
         ];
 
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
 
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(3));
     });
 
-    it("increments with dotted gets", () => {
+    it("increments with dotted gets", async () => {
         let ast = [
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
@@ -67,12 +67,12 @@ describe("interpreter increment/decrement operators", () => {
             ),
         ];
 
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
 
         expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(8));
     });
 
-    it("decrements with indexed gets", () => {
+    it("decrements with indexed gets", async () => {
         let ast = [
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
@@ -102,7 +102,7 @@ describe("interpreter increment/decrement operators", () => {
             ),
         ];
 
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
 
         expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(10));
     });

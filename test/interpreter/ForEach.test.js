@@ -28,7 +28,7 @@ describe("interpreter for-each loops", () => {
         jest.restoreAllMocks();
     });
 
-    it("iterates across all elements of an array", () => {
+    it("iterates across all elements of an array", async () => {
         const emptyBlock = new Stmt.Block([]);
         const receivedElements = [];
         const emptyBlockSpy = jest
@@ -55,13 +55,13 @@ describe("interpreter for-each loops", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         expect(emptyBlockSpy).toHaveBeenCalledTimes(3);
         expect(receivedElements).toEqual(arrayMembers);
     });
 
-    it("doesn't execute the body for empty arrays", () => {
+    it("doesn't execute the body for empty arrays", async () => {
         const emptyBlock = new Stmt.Block([]);
         const emptyBlockSpy = jest.spyOn(emptyBlock, "accept");
 
@@ -83,12 +83,12 @@ describe("interpreter for-each loops", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         expect(emptyBlockSpy).not.toHaveBeenCalled();
     });
 
-    it("leaves the loop variable in-scope after loop", () => {
+    it("leaves the loop variable in-scope after loop", async () => {
         const emptyBlock = new Stmt.Block([]);
 
         const statements = [
@@ -109,14 +109,14 @@ describe("interpreter for-each loops", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         expect(interpreter.environment.get(identifier("element"))).toEqual(
             arrayMembers[arrayMembers.length - 1]
         );
     });
 
-    it("exits early when it encounters 'exit for'", () => {
+    it("exits early when it encounters 'exit for'", async () => {
         const block = new Stmt.Block([
             new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
         ]);
@@ -140,12 +140,12 @@ describe("interpreter for-each loops", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         expect(blockSpy).toHaveBeenCalledTimes(1);
     });
 
-    it("iterates across all elements of an array skipping `exit for` with `continue for`", () => {
+    it("iterates across all elements of an array skipping `exit for` with `continue for`", async () => {
         const block = new Stmt.Block([
             new Stmt.ContinueFor({ continueFor: token(Lexeme.ContinueFor, "continue for") }),
             new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
@@ -169,7 +169,7 @@ describe("interpreter for-each loops", () => {
                 block
             ),
         ];
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         expect(blockSpy).toHaveBeenCalledTimes(3);
     });

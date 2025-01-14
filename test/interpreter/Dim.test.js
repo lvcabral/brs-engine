@@ -18,7 +18,7 @@ describe("creating arrays using dim", () => {
         interpreter = new Interpreter();
     });
 
-    test("one-dimensional creation", () => {
+    test("one-dimensional creation", async () => {
         let maxIndex = 5;
         let statements = [
             new Stmt.Dim(
@@ -46,21 +46,21 @@ describe("creating arrays using dim", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
         expect(interpreter.environment.get(identifier("result"))).toEqual(
             new BrsString("new index4")
         );
 
-        // NOTE: Roku's dim implementation creates a resizeable, empty array for the
-        //   bottom children. Resizeable arrays aren't implemented yet (issue #530),
+        // NOTE: Roku's dim implementation creates a resizable, empty array for the
+        //   bottom children. Resizable arrays aren't implemented yet (issue #530),
         //   so when that's added this code should be updated so the final array size
         //   matches the index of what it expanded to after assignment
         let arr = interpreter.environment.get(identifier("array"));
         let count = arr.getMethod("count");
-        expect(count.call(interpreter)).toEqual(new Int32(maxIndex + 1));
+        expect(await count.call(interpreter)).toEqual(new Int32(maxIndex + 1));
     });
 
-    test("multi-dimensional creation", () => {
+    test("multi-dimensional creation", async () => {
         let maxIndex1 = 6;
         let maxIndex2 = 3;
         let statements = [
@@ -97,18 +97,18 @@ describe("creating arrays using dim", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
         expect(interpreter.environment.has(identifier("baseArray"))).toBe(true);
         expect(interpreter.environment.get(identifier("result"))).toEqual(
             new BrsString("new (2,1)")
         );
 
-        // NOTE: Roku's dim implementation creates a resizeable, empty array for the
-        //   bottom children. Resizeable arrays aren't implemented yet (issue #530),
+        // NOTE: Roku's dim implementation creates a resizable, empty array for the
+        //   bottom children. Resizable arrays aren't implemented yet (issue #530),
         //   so when that's added this code should be updated so the final array size
         //   matches the index of what it expanded to after assignment
         let arr = interpreter.environment.get(identifier("baseArray"));
         let count = arr.getMethod("count");
-        expect(count.call(interpreter)).toEqual(new Int32(maxIndex1 + 1));
+        expect(await count.call(interpreter)).toEqual(new Int32(maxIndex1 + 1));
     });
 });
