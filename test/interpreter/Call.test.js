@@ -16,17 +16,17 @@ describe("interpreter calls", () => {
         interpreter = new Interpreter();
     });
 
-    it("calls functions", () => {
+    it("calls functions", async () => {
         const call = new Stmt.Expression(
             new Expr.Call(new Expr.Variable(identifier("UCase")), token(Lexeme.RightParen, ")"), [
                 new Expr.Literal(new BrsString("h@lL0"), fakeLocation),
             ])
         );
-        const [result] = interpreter.exec([call]);
+        const [result] = await interpreter.exec([call]);
         expect(result.toString()).toBe("H@LL0");
     });
 
-    it("sets a new `m` pointer when called from an associative array", () => {
+    it("sets a new `m` pointer when called from an associative array", async () => {
         const ast = [
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
@@ -63,14 +63,14 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
 
         let foo = interpreter.environment.get(identifier("foo"));
         expect(foo.kind).toBe(ValueKind.Object);
         expect(foo.get(new BrsString("id"))).toEqual(new BrsString("this is an ID"));
     });
 
-    it("automatically boxes return values when appropriate", () => {
+    it("automatically boxes return values when appropriate", async () => {
         const ast = [
             new Stmt.Function(
                 identifier("foo"),
@@ -103,14 +103,14 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
 
         let result = interpreter.environment.get(identifier("result"));
         expect(result.kind).toBe(ValueKind.Object);
         expect(result.value).toEqual(new RoInt(new Int32(5)).value);
     });
 
-    it("automatically boxes arguments when appropriate", () => {
+    it("automatically boxes arguments when appropriate", async () => {
         const ast = [
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
@@ -128,13 +128,13 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
 
         let result = interpreter.environment.get(identifier("result"));
         expect(result.kind).toBe(ValueKind.Interface);
     });
 
-    it("errors when not enough arguments provided", () => {
+    it("errors when not enough arguments provided", async () => {
         const call = new Stmt.Expression(
             new Expr.Call(
                 new Expr.Variable(identifier("UCase")),
@@ -143,10 +143,10 @@ describe("interpreter calls", () => {
             )
         );
 
-        expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
+        await expect(() => interpreter.exec([call])).rejects.toThrow(/UCase.*arguments/);
     });
 
-    it("errors when too many arguments are provided", () => {
+    it("errors when too many arguments are provided", async () => {
         const call = new Stmt.Expression(
             new Expr.Call(new Expr.Variable(identifier("UCase")), token(Lexeme.RightParen, ")"), [
                 new Expr.Literal(new BrsString("h@lL0")),
@@ -154,20 +154,22 @@ describe("interpreter calls", () => {
             ])
         );
 
-        expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
+        await expect(() => interpreter.exec([call])).rejects.toThrow(/UCase.*arguments/);
     });
 
-    it("errors when argument types are incorrect", () => {
+    it("errors when argument types are incorrect", async () => {
         const call = new Stmt.Expression(
             new Expr.Call(new Expr.Variable(identifier("UCase")), token(Lexeme.RightParen, ")"), [
                 new Expr.Literal(new Int32(5)),
             ])
         );
 
-        expect(() => interpreter.exec([call])).toThrow(/Argument '.+' must be of type/);
+        await expect(() => interpreter.exec([call])).rejects.toThrow(
+            /Argument '.+' must be of type/
+        );
     });
 
-    it("errors when return types don't match", () => {
+    it("errors when return types don't match", async () => {
         const ast = [
             new Stmt.Function(
                 identifier("foo"),
@@ -196,10 +198,10 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow("Type Mismatch.");
+        await expect(() => interpreter.exec(ast)).rejects.toThrow("Type Mismatch.");
     });
 
-    it("boxes invalid when return type is Object", () => {
+    it("boxes invalid when return type is Object", async () => {
         const ast = [
             new Stmt.Function(
                 identifier("foo"),
@@ -231,13 +233,13 @@ describe("interpreter calls", () => {
                 )
             ),
         ];
-        interpreter.exec(ast);
+        await interpreter.exec(ast);
         let result = interpreter.environment.get(identifier("result"));
         expect(result.kind).toEqual(ValueKind.Object);
         expect(result.value).toEqual(new RoInvalid().value);
     });
 
-    it("errors when returning from a void return", () => {
+    it("errors when returning from a void return", async () => {
         const ast = [
             new Stmt.Function(
                 identifier("foo"),
@@ -266,12 +268,12 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(
+        await expect(() => interpreter.exec(ast)).rejects.toThrow(
             /Return can not have a return-value if inside a Sub or Function with Void return type./
         );
     });
 
-    it("errors when returning void from a non-void return", () => {
+    it("errors when returning void from a non-void return", async () => {
         const ast = [
             new Stmt.Function(
                 identifier("foo"),
@@ -295,6 +297,6 @@ describe("interpreter calls", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(ast)).toThrow(/Return must return a value./);
+        await expect(() => interpreter.exec(ast)).rejects.toThrow(/Return must return a value./);
     });
 });

@@ -20,7 +20,7 @@ describe("interpreter function expressions", () => {
         stdout = outputStreams.stdout;
     });
 
-    it("creates callable functions", () => {
+    it("creates callable functions", async () => {
         let mainBody = new Stmt.Block([
             new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
         ]);
@@ -45,7 +45,7 @@ describe("interpreter function expressions", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         expect(allArgs(stdout.write).join("")).toEqual("foo\r\n");
     });
