@@ -6,7 +6,14 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { DataType, RemoteType, DebugCommand, platform, BufferType, KeyEvent } from "../core/common";
+import {
+    DataType,
+    RemoteType,
+    DebugCommand,
+    platform,
+    BufferType,
+    ControlEvent,
+} from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
@@ -116,7 +123,11 @@ export function enableSendKeys(enable: boolean) {
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
     key = key.toLowerCase();
     let handled = false;
-    const keyEvent: KeyEvent = { key: -1, mod: mod, remote: `${RemoteType[type]}:${index}` };
+    const controlEvent: ControlEvent = {
+        key: -1,
+        mod: mod,
+        remote: `${RemoteType[type]}:${index}`,
+    };
     if (["home", "volumemute", "poweroff"].includes(key)) {
         if (mod === 0) {
             notifyAll(key);
@@ -132,18 +143,18 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
-            keyEvent.key = code + mod;
+            controlEvent.key = code + mod;
             handled = true;
         }
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
         // TODO: Check Carabiner code for how to better handle literals
         if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            keyEvent.key = key.charCodeAt(4) + mod;
+            controlEvent.key = key.charCodeAt(4) + mod;
             handled = true;
         }
     }
-    if (keyEvent.key >= 0) {
-        notifyAll("post", keyEvent);
+    if (controlEvent.key >= 0) {
+        notifyAll("post", controlEvent);
     }
     if (handled) {
         notifyAll("control", { key: key, mod: mod });

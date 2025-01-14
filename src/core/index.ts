@@ -17,8 +17,10 @@ import {
     defaultDeviceInfo,
     parseManifest,
     isAppPayload,
-    KeyEvent,
-    isKeyEvent,
+    ControlEvent,
+    isControlEvent,
+    isMediaEvent,
+    MediaEvent,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -49,7 +51,9 @@ export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
 export const shared = new Map<string, Int32Array>();
-export const keys = new Array<KeyEvent>();
+export const controlEvents = new Array<ControlEvent>();
+export const audioEvents = new Array<MediaEvent>();
+export const videoEvents = new Array<MediaEvent>();
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 
@@ -60,8 +64,14 @@ const algorithm = "aes-256-ctr";
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
-        if (isKeyEvent(event.data)) {
-            keys.push(event.data);
+        if (isControlEvent(event.data)) {
+            controlEvents.push(event.data);
+        } else if (isMediaEvent(event.data)) {
+            if (event.data.media === "audio") {
+                audioEvents.push(event.data);
+            } else {
+                videoEvents.push(event.data);
+            }
         } else if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
@@ -168,6 +178,7 @@ export async function executeLine(contents: string, interpreter: Interpreter) {
         return;
     }
     try {
+        clearEventBuffers();
         const results = await interpreter.exec(parseResults.statements);
         results.forEach((result) => {
             if (result !== BrsTypes.BrsInvalid.Instance) {
@@ -822,6 +833,7 @@ async function executeApp(
             await new Promise((r) => setTimeout(r, splashMinTime - splashTime));
             splashTime = splashMinTime;
         }
+        clearEventBuffers();
         const inputParams = setupInputParams(payload.deepLink, splashTime);
         await interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
@@ -883,6 +895,12 @@ function parseLibraries(
     ) {
         lib.set("RokuBrowser.brs", RokuBrowser);
     }
+}
+
+function clearEventBuffers() {
+    controlEvents.length = 0;
+    audioEvents.length = 0;
+    videoEvents.length = 0;
 }
 
 /**

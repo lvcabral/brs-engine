@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, platform } from "../core/common";
+import { SubscribeCallback } from "./util";
+import { MediaEventType, platform } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -41,7 +41,11 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
-            Atomics.store(sharedArray, DataType.VLP, loadProgress);
+            notifyAll("post", {
+                media: "video",
+                type: MediaEventType.LOADING,
+                index: loadProgress,
+            });
             canPlay = true;
             if (playerState !== "play" && !bufferOnly) {
                 playVideo();
@@ -50,14 +54,21 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.addEventListener("playing", (e: Event) => {
             if (playerState !== "pause") {
                 setAudioTrack(playList[playIndex]?.audioTrack ?? -1);
-                Atomics.store(sharedArray, DataType.VDX, currentFrame);
-                Atomics.store(sharedArray, DataType.VDO, MediaEvent.START_STREAM);
+                notifyAll("post", {
+                    media: "video",
+                    type: MediaEventType.START_STREAM,
+                    index: currentFrame,
+                });
             }
             notifyAll("play");
         });
         player.addEventListener("timeupdate", (e: Event) => {
             if (notifyTime) {
-                Atomics.store(sharedArray, DataType.VPS, Math.round(player.currentTime));
+                notifyAll("post", {
+                    media: "video",
+                    type: MediaEventType.POSITION,
+                    index: Math.round(player.currentTime),
+                });
             }
         });
         player.addEventListener("error", (e: Event) => {
@@ -268,13 +279,13 @@ function startProgress(e: Event) {
         }
     }
     loadProgress += 200;
-    Atomics.store(sharedArray, DataType.VLP, loadProgress);
+    notifyAll("post", { media: "video", type: MediaEventType.LOADING, index: loadProgress });
 }
 
 function setDuration(e: Event) {
     if (!isNaN(player.duration)) {
         videoDuration = Math.round(player.duration);
-        Atomics.store(sharedArray, DataType.VDR, videoDuration);
+        notifyAll("post", { media: "video", type: MediaEventType.DURATION, index: videoDuration });
     }
     if (playerState !== "play") {
         startProgress(e);
@@ -291,7 +302,13 @@ function loadAudioTracks() {
             playList[playIndex].audioTrack = hls.audioTrack;
         }
     }
-    saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
+    notifyAll("post", {
+        media: "video",
+        type: MediaEventType.TRACKS,
+        index: audioTracks.length,
+        tracks: audioTracks,
+    });
+    // saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
 }
 
 function setAudioTrack(index: number) {
@@ -402,8 +419,7 @@ function nextVideo() {
             return;
         }
     } else {
-        Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.FULL);
+        notifyAll("post", { media: "video", type: MediaEventType.FULL, index: playIndex });
         playIndex = 0;
         playNext = -1;
         canPlay = false;
@@ -415,7 +431,7 @@ function nextVideo() {
     playNext = -1;
     playerState = "stop";
     canPlay = false;
-    Atomics.store(sharedArray, DataType.VSE, playIndex);
+    notifyAll("post", { media: "video", type: MediaEventType.SELECTED, index: playIndex });
     loadVideo();
 }
 
@@ -425,8 +441,7 @@ function stopVideo() {
         player.removeAttribute("src"); // empty source
         player.load();
         notifyAll("stop");
-        Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
+        notifyAll("post", { media: "video", type: MediaEventType.PARTIAL, index: playIndex });
         clearVideoTracking();
         startPosition = 0;
         canPlay = false;
@@ -437,7 +452,7 @@ function pauseVideo() {
     if (player) {
         player.pause();
         notifyAll("pause");
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.PAUSED);
+        notifyAll("post", { media: "video", type: MediaEventType.PAUSED, index: playIndex });
     }
 }
 
@@ -446,7 +461,7 @@ function resumeVideo(notify = true) {
         player.play();
         player.muted = uiMuted || videoMuted;
         if (notify) {
-            Atomics.store(sharedArray, DataType.VDO, MediaEvent.RESUMED);
+            notifyAll("post", { media: "video", type: MediaEventType.RESUMED, index: playIndex });
         }
     }
 }

@@ -4,7 +4,7 @@ import { BrsType } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { MediaEvent } from "../../common";
+import { MediaEventType } from "../../common";
 
 export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -17,10 +17,10 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         this.flags = flags;
         this.index = index;
         switch (this.flags) {
-            case MediaEvent.SELECTED:
+            case MediaEventType.SELECTED:
                 this.message = "start of play";
                 break;
-            case MediaEvent.FULL:
+            case MediaEventType.FULL:
                 this.message = "end of playlist";
                 break;
             default:
@@ -38,10 +38,14 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 this.isPartialResult,
                 this.isRequestSucceeded,
                 this.isRequestFailed,
+                this.isFormatDetected,
                 this.isPaused,
                 this.isResumed,
                 this.isStatusMessage,
                 this.isTimedMetadata,
+                this.isSegmentDownloadStarted,
+                this.isStreamSegmentInfo,
+                this.isDownloadSegmentInfo,
             ],
         });
     }
@@ -105,7 +109,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.SELECTED);
+            return BrsBoolean.from(this.flags === MediaEventType.SELECTED);
         },
     });
 
@@ -116,7 +120,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FULL);
+            return BrsBoolean.from(this.flags === MediaEventType.FULL);
         },
     });
 
@@ -127,7 +131,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FULL);
+            return BrsBoolean.from(this.flags === MediaEventType.FULL);
         },
     });
 
@@ -138,7 +142,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FAILED);
+            return BrsBoolean.from(this.flags === MediaEventType.FAILED);
         },
     });
 
@@ -149,7 +153,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.PARTIAL);
+            return BrsBoolean.from(this.flags === MediaEventType.PARTIAL);
         },
     });
 
@@ -160,7 +164,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.PAUSED);
+            return BrsBoolean.from(this.flags === MediaEventType.PAUSED);
         },
     });
 
@@ -171,7 +175,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.RESUMED);
+            return BrsBoolean.from(this.flags === MediaEventType.RESUMED);
         },
     });
 
@@ -187,7 +191,48 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
     });
 
     /** Not Implemented just a placeholder. */
+    private readonly isFormatDetected = new Callable("isFormatDetected", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Not Implemented just a placeholder. */
     private readonly isTimedMetadata = new Callable("isTimedMetadata", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.False;
+        },
+    });
+    /** Not Implemented just a placeholder. */
+    private readonly isSegmentDownloadStarted = new Callable("isSegmentDownloadStarted", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.False;
+        },
+    });
+    /** Not Implemented just a placeholder. */
+    private readonly isStreamSegmentInfo = new Callable("isStreamSegmentInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.False;
+        },
+    });
+    /** Not Implemented just a placeholder. */
+    private readonly isDownloadSegmentInfo = new Callable("isDownloadSegmentInfo", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
