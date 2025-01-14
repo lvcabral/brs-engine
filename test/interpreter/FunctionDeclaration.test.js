@@ -23,7 +23,7 @@ describe("interpreter function declarations", () => {
         stdout = outputStreams.stdout;
     });
 
-    it("creates function callables", () => {
+    it("creates function callables", async () => {
         let statements = [
             new Stmt.Function(
                 identifier("foo"),
@@ -31,14 +31,14 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         let storedValue = interpreter.environment.get(identifier("foo"));
         expect(storedValue).not.toBe(BrsInvalid.Instance);
         expect(storedValue).toBeInstanceOf(Callable);
     });
 
-    it("can call functions after definition", () => {
+    it("can call functions after definition", async () => {
         let mainBody = new Stmt.Block([
             new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
         ]);
@@ -57,12 +57,12 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         expect(allArgs(stdout.write).join("")).toEqual("foo\r\n");
     });
 
-    it("returns values", () => {
+    it("returns values", async () => {
         let statements = [
             new Stmt.Function(
                 identifier("foo"),
@@ -93,13 +93,13 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         let storedResult = interpreter.environment.get(identifier("result"));
         expect(storedResult).toEqual(new BrsString("hello, world"));
     });
 
-    it("evaluates default arguments", () => {
+    it("evaluates default arguments", async () => {
         let statements = [
             new Stmt.Function(
                 identifier("ident"),
@@ -127,7 +127,7 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         let storedResult = interpreter.environment.get(identifier("result"));
         expect(storedResult).toEqual(new Int32(-32));
@@ -135,7 +135,7 @@ describe("interpreter function declarations", () => {
         expect(interpreter.environment.has(identifier("input"))).toBe(false);
     });
 
-    it("enforces return value type checking", () => {
+    it("enforces return value type checking", async () => {
         let statements = [
             new Stmt.Function(
                 identifier("foo"),
@@ -166,10 +166,10 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(statements)).toThrow("Type Mismatch.");
+        await expect(() => interpreter.exec(statements)).rejects.toThrow("Type Mismatch.");
     });
 
-    it("evaluates default arguments", () => {
+    it("evaluates default arguments", async () => {
         let statements = [
             new Stmt.Function(
                 identifier("ident"),
@@ -200,7 +200,7 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
 
         let storedResult = interpreter.environment.get(identifier("result"));
         expect(storedResult).toEqual(new Int32(-32));
@@ -208,7 +208,7 @@ describe("interpreter function declarations", () => {
         expect(interpreter.environment.has(identifier("input"))).toBe(false);
     });
 
-    it("disallows functions named after reserved words", () => {
+    it("disallows functions named after reserved words", async () => {
         let statements = [
             new Stmt.Function(
                 identifier("type"),
@@ -216,10 +216,10 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(statements)).toThrow(/reserved name/);
+        await expect(() => interpreter.exec(statements)).rejects.toThrow(/reserved name/);
     });
 
-    it("allows functions to override global stdlib functions", () => {
+    test("allows functions to override global stdlib functions", async () => {
         let statements = [
             new Stmt.Function(
                 identifier("UCase"),
@@ -233,10 +233,10 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(statements)).not.toThrow();
+        await expect(() => interpreter.exec(statements)).not.rejects;
     });
 
-    it("automatically calls main()", () => {
+    it("automatically calls main()", async () => {
         let mainBody = new Stmt.Block([
             new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
         ]);
@@ -254,7 +254,7 @@ describe("interpreter function declarations", () => {
             ),
         ];
 
-        expect(() => interpreter.exec(statements)).not.toThrow();
+        await interpreter.exec(statements);
         expect(allArgs(stdout.write).join("")).toEqual("foo\r\n");
     });
 });

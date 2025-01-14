@@ -11,7 +11,7 @@ describe("interpreter boolean algebra", () => {
         interpreter = new Interpreter();
     });
 
-    it("ANDs booleans", () => {
+    it("ANDs booleans", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.True),
@@ -20,11 +20,11 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        let [result] = interpreter.exec([ast]);
+        let [result] = await interpreter.exec([ast]);
         expect(result).toEqual(brs.types.BrsBoolean.False);
     });
 
-    it("ORs booleans", () => {
+    it("ORs booleans", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.True),
@@ -33,11 +33,11 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        let [result] = interpreter.exec([ast]);
+        let [result] = await interpreter.exec([ast]);
         expect(result).toEqual(brs.types.BrsBoolean.True);
     });
 
-    it("mixed-type ANDs with Number non-zero", () => {
+    it("mixed-type ANDs with Number non-zero", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.True),
@@ -46,11 +46,11 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        let result = interpreter.exec([ast]);
+        let result = await interpreter.exec([ast]);
         expect(result).toEqual([brs.types.BrsBoolean.True]);
     });
 
-    it("mixed-type ANDs with Number zero", () => {
+    it("mixed-type ANDs with Number zero", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.True),
@@ -58,11 +58,11 @@ describe("interpreter boolean algebra", () => {
                 new Expr.Literal(new brs.types.Int32(0))
             )
         );
-        let result = interpreter.exec([ast]);
+        let result = await interpreter.exec([ast]);
         expect(result).toEqual([brs.types.BrsBoolean.False]);
     });
 
-    it("doesn't allow mixed-type ANDs", () => {
+    it("doesn't allow mixed-type ANDs", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.True),
@@ -71,10 +71,10 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow("Type Mismatch.");
+        await expect(() => interpreter.exec([ast])).rejects.toThrow("Type Mismatch.");
     });
 
-    it("mixed-type ORs with Number non-zero", () => {
+    it("mixed-type ORs with Number non-zero", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.False),
@@ -83,11 +83,11 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        let result = interpreter.exec([ast]);
+        let result = await interpreter.exec([ast]);
         expect(result).toEqual([brs.types.BrsBoolean.True]);
     });
 
-    it("mixed-type ORs with Number zero", () => {
+    it("mixed-type ORs with Number zero", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.False),
@@ -96,11 +96,11 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        let result = interpreter.exec([ast]);
+        let result = await interpreter.exec([ast]);
         expect(result).toEqual([brs.types.BrsBoolean.False]);
     });
 
-    it("doesn't allow mixed-type ORs", () => {
+    it("doesn't allow mixed-type ORs", async () => {
         let ast = new Stmt.Expression(
             new Expr.Binary(
                 new Expr.Literal(brs.types.BrsBoolean.False),
@@ -109,6 +109,6 @@ describe("interpreter boolean algebra", () => {
             )
         );
 
-        expect(() => interpreter.exec([ast])).toThrow("Type Mismatch.");
+        await expect(() => interpreter.exec([ast])).rejects.toThrow("Type Mismatch.");
     });
 });
