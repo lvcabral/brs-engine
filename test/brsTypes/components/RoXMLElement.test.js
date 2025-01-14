@@ -19,31 +19,31 @@ describe("RoXMLElement", () => {
             parse.call(interpreter, new BrsString(getXmlString()));
         });
 
-        it("getName", () => {
+        it("getName", async () => {
             let getName = xmlParser.getMethod("getName");
-            expect(getName.call(interpreter)).toEqual(new BrsString("tag1"));
+            expect(await getName.call(interpreter)).toEqual(new BrsString("tag1"));
         });
 
-        it("getNamedElementsCi", () => {
+        it("getNamedElementsCi", async () => {
             let getNamedElementsCi = xmlParser.getMethod("getNamedElementsCi");
             expect(
-                getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()
+                (await getNamedElementsCi.call(interpreter, new BrsString("any"))).getElements()
             ).toEqual([]);
 
-            let children = getNamedElementsCi.call(interpreter, new BrsString("CHiLd1"));
+            let children = await getNamedElementsCi.call(interpreter, new BrsString("CHiLd1"));
             expect(children.getElements().length).toEqual(2);
 
             let getName = children.getElements()[0].getMethod("getName");
-            expect(getName.call(interpreter)).toEqual(new BrsString("Child1"));
+            expect(await getName.call(interpreter)).toEqual(new BrsString("Child1"));
 
             getName = children.getElements()[1].getMethod("getName");
-            expect(getName.call(interpreter)).toEqual(new BrsString("CHILD1"));
+            expect(await getName.call(interpreter)).toEqual(new BrsString("CHILD1"));
         });
 
-        it("getAttributes", () => {
+        it("getAttributes", async () => {
             let getAttributes = xmlParser.getMethod("getAttributes");
-            expect(getAttributes.call(interpreter).elements).not.toEqual(new Map());
-            expect(getAttributes.call(interpreter).elements).toEqual(
+            expect((await getAttributes.call(interpreter)).elements).not.toEqual(new Map());
+            expect((await getAttributes.call(interpreter)).elements).toEqual(
                 new Map([
                     ["id", new BrsString("someId")],
                     ["attr1", new BrsString("0")],
@@ -56,9 +56,12 @@ describe("RoXMLElement", () => {
         ["test methods for object with no parsed xml", () => {}],
         [
             "test methods for object with failed parsing of xml",
-            () => {
+            async () => {
                 let parse = xmlParser.getMethod("parse");
-                parse.call(interpreter, new BrsString('>bad_tag id="12" <  some text >/bad_tag<'));
+                await parse.call(
+                    interpreter,
+                    new BrsString('>bad_tag id="12" <  some text >/bad_tag<')
+                );
             },
         ],
     ])("%s", (name, tryParse) => {
@@ -66,24 +69,24 @@ describe("RoXMLElement", () => {
             tryParse();
         });
 
-        it("getName", () => {
+        it("getName", async () => {
             let getName = xmlParser.getMethod("getName");
             expect(getName).toBeTruthy();
-            expect(getName.call(interpreter)).toEqual(new BrsString(""));
+            expect(await getName.call(interpreter)).toEqual(new BrsString(""));
         });
 
-        it("getNamedElementsCi", () => {
+        it("getNamedElementsCi", async () => {
             let getNamedElementsCi = xmlParser.getMethod("getNamedElementsCi");
             expect(getNamedElementsCi).toBeTruthy();
             expect(
-                getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()
+                (await getNamedElementsCi.call(interpreter, new BrsString("any"))).getElements()
             ).toEqual([]);
         });
 
-        it("getAttributes", () => {
+        it("getAttributes", async () => {
             let getAttributes = xmlParser.getMethod("getAttributes");
             expect(getAttributes).toBeTruthy();
-            expect(getAttributes.call(interpreter).elements).toEqual(new Map());
+            expect((await getAttributes.call(interpreter)).elements).toEqual(new Map());
         });
     });
 
@@ -95,9 +98,9 @@ describe("RoXMLElement", () => {
             [getXmlString(), true],
             ['>bad_tag id="12" <  some text >/bad_tag<', false],
             ["", false],
-        ])("test parse with string %s", (xmlString, expected) => {
+        ])("test parse with string %s", async (xmlString, expected) => {
             let parse = xmlParser.getMethod("parse");
-            expect(parse.call(interpreter, new BrsString(xmlString)).value).toBe(expected);
+            expect((await parse.call(interpreter, new BrsString(xmlString))).value).toBe(expected);
         });
     });
     it.todo("add tests for all remaining methods");

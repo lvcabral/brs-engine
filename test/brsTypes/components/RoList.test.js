@@ -83,7 +83,7 @@ describe("RoList", () => {
         });
 
         describe("peek", () => {
-            it("returns the value at the highest index", () => {
+            it("returns the value at the highest index", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -92,20 +92,20 @@ describe("RoList", () => {
 
                 let peek = list.getMethod("peek");
                 expect(peek).toBeTruthy();
-                expect(peek.call(interpreter)).toBe(c);
+                expect(await peek.call(interpreter)).toBe(c);
             });
 
-            it("returns `invalid` when empty", () => {
+            it("returns `invalid` when empty", async () => {
                 let list = new RoList([]);
 
                 let peek = list.getMethod("peek");
                 expect(peek).toBeTruthy();
-                expect(peek.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(await peek.call(interpreter)).toBe(BrsInvalid.Instance);
             });
         });
 
         describe("pop", () => {
-            it("returns and removes the value at the highest index", () => {
+            it("returns and removes the value at the highest index", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -114,24 +114,24 @@ describe("RoList", () => {
 
                 let pop = list.getMethod("pop");
                 expect(pop).toBeTruthy();
-                expect(pop.call(interpreter)).toBe(c);
+                expect(await pop.call(interpreter)).toBe(c);
                 expect(list.elements).toEqual([a, b]);
             });
 
-            it("returns `invalid` and doesn't modify when empty", () => {
+            it("returns `invalid` and doesn't modify when empty", async () => {
                 let list = new RoList([]);
 
                 let pop = list.getMethod("pop");
                 expect(pop).toBeTruthy();
 
                 let before = list.getElements();
-                expect(pop.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(await pop.call(interpreter)).toBe(BrsInvalid.Instance);
                 expect(list.getElements()).toEqual(before);
             });
         });
 
         describe("push", () => {
-            it("appends a value to the end of the array", () => {
+            it("appends a value to the end of the array", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -140,13 +140,13 @@ describe("RoList", () => {
 
                 let push = list.getMethod("push");
                 expect(push).toBeTruthy();
-                expect(push.call(interpreter, c)).toBe(BrsInvalid.Instance);
+                expect(await push.call(interpreter, c)).toBe(BrsInvalid.Instance);
                 expect(list.elements).toEqual([a, b, c]);
             });
         });
 
         describe("shift", () => {
-            it("returns and removes the value at the lowest index", () => {
+            it("returns and removes the value at the lowest index", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -155,24 +155,24 @@ describe("RoList", () => {
 
                 let shift = list.getMethod("shift");
                 expect(shift).toBeTruthy();
-                expect(shift.call(interpreter)).toBe(a);
+                expect(await shift.call(interpreter)).toBe(a);
                 expect(list.elements).toEqual([b, c]);
             });
 
-            it("returns `invalid` and doesn't modify when empty", () => {
+            it("returns `invalid` and doesn't modify when empty", async () => {
                 let list = new RoList([]);
 
                 let shift = list.getMethod("shift");
                 expect(shift).toBeTruthy();
 
                 let before = list.getElements();
-                expect(shift.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(await shift.call(interpreter)).toBe(BrsInvalid.Instance);
                 expect(list.getElements()).toEqual(before);
             });
         });
 
         describe("unshift", () => {
-            it("inserts a value at the beginning of the array", () => {
+            it("inserts a value at the beginning of the array", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -181,13 +181,13 @@ describe("RoList", () => {
 
                 let unshift = list.getMethod("unshift");
                 expect(unshift).toBeTruthy();
-                expect(unshift.call(interpreter, a)).toBe(BrsInvalid.Instance);
+                expect(await unshift.call(interpreter, a)).toBe(BrsInvalid.Instance);
                 expect(list.elements).toEqual([a, b, c]);
             });
         });
 
         describe("delete", () => {
-            it("removes elements from in-bounds indices", () => {
+            it("removes elements from in-bounds indices", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -196,11 +196,11 @@ describe("RoList", () => {
 
                 let deleteMethod = list.getMethod("delete");
                 expect(deleteMethod).toBeTruthy();
-                expect(deleteMethod.call(interpreter, new Int32(1))).toBe(BrsBoolean.True);
+                expect(await deleteMethod.call(interpreter, new Int32(1))).toBe(BrsBoolean.True);
                 expect(list.elements).toEqual([a, c]);
             });
 
-            it("doesn't remove elements from out-of-bounds indices", () => {
+            it("doesn't remove elements from out-of-bounds indices", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -209,14 +209,16 @@ describe("RoList", () => {
 
                 let deleteMethod = list.getMethod("delete");
                 expect(deleteMethod).toBeTruthy();
-                expect(deleteMethod.call(interpreter, new Int32(1111))).toBe(BrsBoolean.False);
-                expect(deleteMethod.call(interpreter, new Int32(-1))).toBe(BrsBoolean.False);
+                expect(await deleteMethod.call(interpreter, new Int32(1111))).toBe(
+                    BrsBoolean.False
+                );
+                expect(await deleteMethod.call(interpreter, new Int32(-1))).toBe(BrsBoolean.False);
                 expect(list.elements).toEqual([a, b, c]);
             });
         });
 
         describe("count", () => {
-            it("returns the length of the array", () => {
+            it("returns the length of the array", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -225,12 +227,12 @@ describe("RoList", () => {
 
                 let count = list.getMethod("count");
                 expect(count).toBeTruthy();
-                expect(count.call(interpreter)).toEqual(new Int32(3));
+                expect(await count.call(interpreter)).toEqual(new Int32(3));
             });
         });
 
         describe("clear", () => {
-            it("empties the array", () => {
+            it("empties the array", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -239,13 +241,13 @@ describe("RoList", () => {
 
                 let clear = list.getMethod("clear");
                 expect(clear).toBeTruthy();
-                expect(clear.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(await clear.call(interpreter)).toBe(BrsInvalid.Instance);
                 expect(list.elements).toEqual([]);
             });
         });
 
         describe("append", () => {
-            it("adds non-empty elements to the current array", () => {
+            it("adds non-empty elements to the current array", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let src = new RoList([a, b]);
@@ -258,13 +260,13 @@ describe("RoList", () => {
 
                 let append = src.getMethod("append");
                 expect(append).toBeTruthy();
-                expect(append.call(interpreter, other)).toBe(BrsInvalid.Instance);
+                expect(await append.call(interpreter, other)).toBe(BrsInvalid.Instance);
                 expect(src.elements).toEqual([a, b, c, d, e, f]);
             });
         });
 
         describe("ifList", () => {
-            it("addHead() - adds a value to the beginning of the list", () => {
+            it("addHead() - adds a value to the beginning of the list", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -273,10 +275,10 @@ describe("RoList", () => {
 
                 let addHead = list.getMethod("addHead");
                 expect(addHead).toBeTruthy();
-                expect(addHead.call(interpreter, a)).toBe(BrsInvalid.Instance);
+                expect(await addHead.call(interpreter, a)).toBe(BrsInvalid.Instance);
                 expect(list.elements).toEqual([a, b, c]);
             });
-            it("addTail() - adds a value to the end of the list", () => {
+            it("addTail() - adds a value to the end of the list", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
@@ -285,84 +287,84 @@ describe("RoList", () => {
 
                 let addTail = list.getMethod("addTail");
                 expect(addTail).toBeTruthy();
-                expect(addTail.call(interpreter, c)).toBe(BrsInvalid.Instance);
+                expect(await addTail.call(interpreter, c)).toBe(BrsInvalid.Instance);
                 expect(list.elements).toEqual([a, b, c]);
             });
-            it("getHead() - returns the first element of the list", () => {
+            it("getHead() - returns the first element of the list", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
                 let list = new RoList([a, b, c]);
                 let getHead = list.getMethod("getHead");
                 expect(getHead).toBeTruthy();
-                expect(getHead.call(interpreter)).toBe(a);
+                expect(await getHead.call(interpreter)).toBe(a);
             });
-            it("getTail() - returns the last element of the list", () => {
+            it("getTail() - returns the last element of the list", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
                 let list = new RoList([a, b, c]);
                 let getTail = list.getMethod("getTail");
                 expect(getTail).toBeTruthy();
-                expect(getTail.call(interpreter)).toBe(c);
+                expect(await getTail.call(interpreter)).toBe(c);
             });
-            it("removeHead() - removes the first element of the list", () => {
+            it("removeHead() - removes the first element of the list", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
                 let list = new RoList([a, b, c]);
                 let removeHead = list.getMethod("removeHead");
                 expect(removeHead).toBeTruthy();
-                expect(removeHead.call(interpreter)).toBe(a);
+                expect(await removeHead.call(interpreter)).toBe(a);
                 expect(list.elements).toEqual([b, c]);
             });
-            it("removeTail() - removes the last element of the list", () => {
+            it("removeTail() - removes the last element of the list", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
                 let list = new RoList([a, b, c]);
                 let removeTail = list.getMethod("removeTail");
                 expect(removeTail).toBeTruthy();
-                expect(removeTail.call(interpreter)).toBe(c);
+                expect(await removeTail.call(interpreter)).toBe(c);
                 expect(list.elements).toEqual([a, b]);
             });
-            it("getIndex() - returns invalid when the index was not reset yet", () => {
+            it("getIndex() - returns invalid when the index was not reset yet", async () => {
                 let a = new BrsString("a");
                 let b = new BrsString("b");
                 let c = new BrsString("c");
                 let list = new RoList([a, b, c]);
                 let getIndex = list.getMethod("getIndex");
                 expect(getIndex).toBeTruthy();
-                expect(getIndex.call(interpreter)).toBe(BrsInvalid.Instance);
+                expect(await getIndex.call(interpreter)).toBe(BrsInvalid.Instance);
             });
             if (
                 ("resetIndex() - resets the current index of the linked list and get first item",
-                () => {
+                async () => {
                     let a = new BrsString("a");
                     let b = new BrsString("b");
                     let c = new BrsString("c");
                     let list = new RoList([a, b, c]);
                     let resetIndex = list.getMethod("resetIndex");
                     expect(resetIndex).toBeTruthy();
-                    expect(resetIndex.call(interpreter)).toEqual(BrsBoolean.True);
+                    expect(await resetIndex.call(interpreter)).toEqual(BrsBoolean.True);
                     let getIndex = list.getMethod("getIndex");
                     expect(getIndex).toBeTruthy();
-                    expect(getIndex.call(interpreter)).toEqual(a);
+                    expect(await getIndex.call(interpreter)).toEqual(a);
                 })
             );
             if (
                 ("removeIndex() - removes the current index of the linked list",
-                () => {
+                async () => {
                     let a = new BrsString("a");
                     let b = new BrsString("b");
                     let c = new BrsString("c");
                     let list = new RoList([a, b, c]);
                     let resetIndex = list.getMethod("resetIndex");
                     expect(resetIndex).toBeTruthy();
-                    expect(resetIndex.call(interpreter)).toEqual(BrsBoolean.True);
+                    expect(await resetIndex.call(interpreter)).toEqual(BrsBoolean.True);
                     let removeIndex = list.getMethod("removeIndex");
                     expect(removeIndex).toBeTruthy();
-                    expect(removeIndex.call(interpreter)).toEqual(a);
+                    expect(await removeIndex.call(interpreter)).toEqual(a);
                 })
             );
         });
