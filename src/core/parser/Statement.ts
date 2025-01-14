@@ -554,7 +554,7 @@ export class TryCatch implements Statement {
         }
     ) {}
 
-    accept<R>(visitor: Visitor<R>): Promise<BrsType> {
+    async accept<R>(visitor: Visitor<R>): Promise<BrsType> {
         return visitor.visitTryCatch(this);
     }
 
