@@ -87,41 +87,6 @@ export const defaultDeviceInfo: DeviceInfo = {
     platform: platform,
 };
 
-export function isDeviceInfo(value: any): value is DeviceInfo {
-    return (
-        value &&
-        typeof value.developerId === "string" &&
-        typeof value.friendlyName === "string" &&
-        typeof value.deviceModel === "string" &&
-        typeof value.firmwareVersion === "string" &&
-        typeof value.clientId === "string" &&
-        typeof value.RIDA === "string" &&
-        typeof value.countryCode === "string" &&
-        typeof value.timeZone === "string" &&
-        typeof value.locale === "string" &&
-        typeof value.captionLanguage === "string" &&
-        typeof value.clockFormat === "string" &&
-        typeof value.displayMode === "string" &&
-        typeof value.defaultFont === "string" &&
-        typeof value.fontPath === "string" &&
-        (value.fonts instanceof Map || value.fonts === undefined) &&
-        typeof value.maxSimulStreams === "number" &&
-        Array.isArray(value.customFeatures) &&
-        isConnectionInfo(value.connectionInfo) &&
-        Array.isArray(value.localIps) &&
-        typeof value.startTime === "number" &&
-        typeof value.audioVolume === "number" &&
-        typeof value.maxFps === "number" &&
-        (value.registry instanceof Map || value.registry === undefined) &&
-        (value.audioCodecs instanceof Array || value.audioCodecs === undefined) &&
-        (value.videoFormats instanceof Map || value.videoFormats === undefined) &&
-        (value.appList instanceof Array || value.appList === undefined) &&
-        (typeof value.entryPoint === "boolean" || value.entryPoint === undefined) &&
-        (typeof value.stopOnCrash === "boolean" || value.stopOnCrash === undefined) &&
-        (value.runContext instanceof Object || value.runContext === undefined)
-    );
-}
-
 /* Execution Payload Interface
  *
  * This interface is used to provide information to the interpreter about the
@@ -147,7 +112,7 @@ export type AppPayload = {
 export function isAppPayload(value: any): value is AppPayload {
     return (
         value &&
-        isDeviceInfo(value.device) &&
+        typeof value.device === "object" &&
         typeof value.launchTime === "number" &&
         value.manifest instanceof Map &&
         value.deepLink instanceof Map &&
@@ -316,21 +281,6 @@ export type ConnectionInfo = {
     protocol?: string;
     ssid?: string;
 };
-// Function to check if a value is a ConnectionInfo object
-export function isConnectionInfo(value: any): value is ConnectionInfo {
-    return (
-        value &&
-        typeof value.type === "string" &&
-        ["WiFiConnection", "WiredConnection", ""].includes(value.type) &&
-        typeof value.name === "string" &&
-        typeof value.ip === "string" &&
-        typeof value.gateway === "string" &&
-        ["Excellent", "Good", "Fair", "Poor"].includes(value.quality) &&
-        (value.dns instanceof Array || value.dns === undefined) &&
-        (typeof value.protocol === "string" || value.protocol === undefined) &&
-        (typeof value.ssid === "string" || value.ssid === undefined)
-    );
-}
 
 // Shared array data types enumerator
 export enum DataType {
