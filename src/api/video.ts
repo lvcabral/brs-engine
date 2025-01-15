@@ -306,7 +306,6 @@ function loadAudioTracks() {
         index: audioTracks.length,
         tracks: audioTracks,
     });
-    // saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
 }
 
 function setAudioTrack(index: number) {
