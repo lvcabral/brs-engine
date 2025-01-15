@@ -14,6 +14,7 @@ import {
     DebugCommand,
     DeviceInfo,
     RemoteType,
+    SysLogEvent,
     dataBufferIndex,
     dataBufferSize,
     getExitReason,
@@ -228,13 +229,22 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         } else if (event === "bandwidth") {
             latestBandwidth = data;
         } else if (event === "http.connect" && httpConnectLog) {
-            const sysLog = {
+            const sysLogEvent: SysLogEvent = {
                 type: event,
-                url: data.responseURL,
-                status: data.statusText,
-                httpCode: data.status,
+                sysLog: {
+                    Url: data.responseURL,
+                    OrigUrl: data.responseURL,
+                    Status: data.statusText,
+                    HttpCode: data.status,
+                    Method: "GET",
+                    TargetIp: "",
+                    BytesDownloaded: 0,
+                    DownloadSpeed: 0,
+                    BytesUploaded: 0,
+                    UploadSpeed: 0,
+                },
             };
-            saveDataBuffer(sharedArray, JSON.stringify(sysLog), BufferType.SYS_LOG);
+            brsWorker.postMessage(sysLogEvent);
         }
     });
     subscribePackage("api", (event: string, data: any) => {
@@ -633,7 +643,11 @@ function workerCallback(event: MessageEvent) {
 // Update Bandwidth Measurement
 function updateBandwidth() {
     if (currentApp.running && bandwidthMinute && latestBandwidth >= 0) {
-        Atomics.store(sharedArray, DataType.MBWD, latestBandwidth);
+        const sysLogEvent: SysLogEvent = {
+            type: "bandwidth.minute",
+            sysLog: { bandwidth: latestBandwidth },
+        };
+        brsWorker.postMessage(sysLogEvent);
     }
     bandwidthTimeout = setTimeout(updateBandwidth, 60000);
 }

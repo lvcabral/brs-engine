@@ -46,6 +46,7 @@ import {
     videoEvents,
     inputEvents,
     wavPlaying,
+    sysLogEvents,
 } from "..";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
@@ -137,6 +138,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly sharedArray = shared.get("buffer") || new Int32Array([]);
     readonly keysBuffer = controlEvents;
     readonly inputBuffer = inputEvents;
+    readonly sysLogBuffer = sysLogEvents;
     readonly audioBuffer = audioEvents;
     readonly videoBuffer = videoEvents;
     readonly wavState = wavPlaying;

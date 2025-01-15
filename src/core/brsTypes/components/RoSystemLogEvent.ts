@@ -6,13 +6,15 @@ import { Interpreter } from "../../interpreter";
 
 export class RoSystemLogEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly logType: string;
-    private readonly data: any;
+    private readonly log: FlexObject;
 
     constructor(logType: string, data: any) {
         super("roSystemLogEvent");
-        this.data = data;
-        this.logType = logType;
+        this.log = {
+            LogType: logType,
+            Datetime: new RoDateTime(),
+            ...data,
+        };
         this.registerMethods({ ifroSystemLogEvent: [this.getInfo] });
     }
 
@@ -31,18 +33,7 @@ export class RoSystemLogEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            const info: FlexObject = { logType: this.logType, DateTime: new RoDateTime() };
-            if (this.logType === "bandwidth.minute" && typeof this.data === "number") {
-                info.bandwidth = this.data;
-            } else if (this.logType === "http.connect") {
-                info.HttpCode = this.data.httpCode;
-                info.Status = this.data.status;
-                info.OrigUrl = this.data.url;
-                info.Url = this.data.url;
-                info.Method = "GET";
-                info.TargetIp = "";
-            }
-            return toAssociativeArray(info);
+            return toAssociativeArray(this.log);
         },
     });
 }

@@ -315,21 +315,6 @@ export const dataBufferSize = 1024;
 export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
 export const keyArraySpots = 3;
 
-// Key Event Interface
-export interface ControlEvent {
-    remote: string; // Remote Id (Remote Type:Remote Index)
-    key: number; // Key Code
-    mod: number; // Modifier (0 = press, 100 = release)
-}
-
-export function isControlEvent(value: any): value is ControlEvent {
-    return (
-        value &&
-        typeof value.remote === "string" &&
-        typeof value.key === "number" &&
-        typeof value.mod === "number"
-    );
-}
 
 // Remote control type
 export enum RemoteType {
@@ -344,16 +329,6 @@ export enum RemoteType {
 // CEC - Consumer Electronics Control
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on-device controls)
-
-// Input Event Interface
-export interface InputEvent {
-    [key: string]: string;
-    source_ip_addr: string;
-}
-
-export function isInputEvent(value: any): value is InputEvent {
-    return value && typeof value.source_ip_addr === "string";
-}
 
 // Debug prompt
 export const debugPrompt = "Brightscript Debugger> ";
@@ -377,6 +352,42 @@ export enum DebugCommand {
     VAR,
     BREAK,
     PAUSE,
+}
+
+// Key Event Interface
+export interface ControlEvent {
+    remote: string; // Remote Id (Remote Type:Remote Index)
+    key: number; // Key Code
+    mod: number; // Modifier (0 = press, 100 = release)
+}
+
+export function isControlEvent(value: any): value is ControlEvent {
+    return (
+        value &&
+        typeof value.remote === "string" &&
+        typeof value.key === "number" &&
+        typeof value.mod === "number"
+    );
+}
+
+// Input Event Interface
+export interface InputEvent {
+    [key: string]: string;
+    source_ip_addr: string;
+}
+
+export function isInputEvent(value: any): value is InputEvent {
+    return value && typeof value.source_ip_addr === "string";
+}
+
+// System Log Event Interface
+export interface SysLogEvent {
+    type: "bandwidth.minute" | "http.connect" | "http.complete" | "http.error";
+    sysLog: object;
+}
+
+export function isSysLogEvent(value: any): value is SysLogEvent {
+    return value && typeof value.type === "string" && typeof value.sysLog === "object";
 }
 
 // Media Event Interface
