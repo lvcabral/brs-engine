@@ -38,7 +38,15 @@ import {
     AAMember,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
-import { shared, stats, controlEvents, audioEvents, videoEvents, inputEvents } from "..";
+import {
+    shared,
+    stats,
+    controlEvents,
+    audioEvents,
+    videoEvents,
+    inputEvents,
+    wavPlaying,
+} from "..";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -131,6 +139,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly inputBuffer = inputEvents;
     readonly audioBuffer = audioEvents;
     readonly videoBuffer = videoEvents;
+    readonly wavState = wavPlaying;
     readonly isDevMode = process.env.NODE_ENV === "development";
 
     readonly stdout: OutputProxy;
