@@ -27,6 +27,8 @@ import {
     isSysLogEvent,
     isCECStatusEvent,
     CECStatusEvent,
+    MemoryInfoEvent,
+    isMemoryInfoEvent,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -64,6 +66,7 @@ export const audioEvents = new Array<MediaEvent>();
 export const videoEvents = new Array<MediaEvent>();
 export const wavStatus = new Set<number>();
 export const cecStatus: CECStatusEvent = { activeSource: true };
+export const memoryInfo: MemoryInfoEvent = { usedHeapSize: 0, heapSizeLimit: 0 };
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 
@@ -82,6 +85,9 @@ if (typeof onmessage !== "undefined") {
             sysLogEvents.push(event.data);
         } else if (isCECStatusEvent(event.data)) {
             cecStatus.activeSource = event.data.activeSource;
+        } else if (isMemoryInfoEvent(event.data)) {
+            memoryInfo.usedHeapSize = event.data.usedHeapSize;
+            memoryInfo.heapSizeLimit = event.data.heapSizeLimit;
         } else if (isMediaEvent(event.data)) {
             if (event.data.media === "audio") {
                 audioEvents.push(event.data);
