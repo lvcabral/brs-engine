@@ -172,7 +172,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
-    initVideoModule(sharedArray, false);
+    initVideoModule(false);
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
@@ -293,14 +293,14 @@ export function execute(
     } else if (typeof options.debugOnCrash === "boolean") {
         deviceData.debugOnCrash = options.debugOnCrash;
     }
+    initSoundModule(deviceData.maxSimulStreams, options.muteSound);
+    muteVideo(options.muteSound);
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
     if (debugToConsole) {
         console.info(`Loading ${filePath}...`);
     }
-    initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
-    muteVideo(options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
         loadAppZip(fileName, fileData, runApp);
