@@ -21,7 +21,6 @@ let playList = new Array();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
-let sharedArray: Int32Array;
 let notifyTime = false;
 let bufferOnly = false;
 let canPlay = false;
@@ -37,7 +36,7 @@ let previousTime = Date.now();
 if (typeof document !== "undefined") {
     player = document.getElementById("player") as HTMLVideoElement;
 }
-export function initVideoModule(array: Int32Array, mute: boolean = false) {
+export function initVideoModule(mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
@@ -85,7 +84,6 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.defaultMuted = true;
         uiMuted = mute;
     }
-    sharedArray = array;
     resetVideo();
 }
 function calculateBandwidth(e: Event) {

@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { DataType, MediaEventType } from "../core/common";
+import { MediaEventType } from "../core/common";
 import { Howl, Howler } from "howler";
 
 // Sound Objects
@@ -17,14 +17,13 @@ let playList = new Array();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
-let sharedArray: Int32Array;
-let wavStreams: Howl[];
+const wavStreams: Howl[] = new Array();
+const wavSlots: number[] = new Array();
 let maxStreams: number;
 let muted: boolean;
 
 // Initialize Sound Module
-export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
-    sharedArray = array;
+export function initSoundModule(streams: number, mute: boolean = false) {
     maxStreams = Math.min(streams, 3) || 2;
     resetSounds();
     muteSound(mute);
@@ -173,9 +172,10 @@ export function resetSounds() {
             sound.unload();
         });
     }
+    wavStreams.length = maxStreams;
+    wavSlots.length = maxStreams;
     soundsIdx = new Map();
     soundsDat = new Array();
-    wavStreams = new Array(maxStreams);
     soundsIdx.set("select", 0);
     soundsDat.push(new Howl({ src: ["./audio/select.wav"] }));
     soundsIdx.set("navsingle", 1);
@@ -322,10 +322,12 @@ function triggerWav(wav: string, volume: number, index: number) {
             }
             wavStreams[index] = sound;
             sound.on("end", function () {
-                Atomics.store(sharedArray, DataType.WAV + index, -1);
+                wavSlots[index] = -1;
+                notifyAll("post", { media: "wav", type: MediaEventType.STOP_PLAY, index: soundId });
             });
             sound.play();
-            Atomics.store(sharedArray, DataType.WAV + index, soundId);
+            wavSlots[index] = soundId;
+            notifyAll("post", { media: "wav", type: MediaEventType.START_PLAY, index: soundId });
         }
     }
 }
@@ -335,9 +337,9 @@ function stopWav(wav: string) {
     if (soundId) {
         const sound = soundsDat[soundId];
         for (let index = 0; index < maxStreams; index++) {
-            const wavId = Atomics.load(sharedArray, DataType.WAV + index);
+            const wavId = wavSlots[index];
             if (wavId === soundId) {
-                Atomics.store(sharedArray, DataType.WAV + index, -1);
+                notifyAll("post", { media: "wav", type: MediaEventType.STOP_PLAY, index: soundId });
                 break;
             }
         }

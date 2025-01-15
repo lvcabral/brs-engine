@@ -381,7 +381,7 @@ export enum DebugCommand {
 
 // Media Event Interface
 export type MediaEvent = {
-    media: "audio" | "video";
+    media: "audio" | "video" | "wav";
     type: MediaEventType;
     index: number;
     tracks?: Array<any>;
@@ -408,6 +408,7 @@ export enum MediaEventType {
     LOADING,
     START_STREAM,
     START_PLAY,
+    STOP_PLAY,
     POSITION,
     DURATION,
     TRACKS,

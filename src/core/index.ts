@@ -23,6 +23,7 @@ import {
     MediaEvent,
     InputEvent,
     isInputEvent,
+    MediaEventType,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -57,6 +58,7 @@ export const controlEvents = new Array<ControlEvent>();
 export const inputEvents = new Array<InputEvent>();
 export const audioEvents = new Array<MediaEvent>();
 export const videoEvents = new Array<MediaEvent>();
+export const wavPlaying = new Set<number>();
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 
@@ -74,8 +76,14 @@ if (typeof onmessage !== "undefined") {
         } else if (isMediaEvent(event.data)) {
             if (event.data.media === "audio") {
                 audioEvents.push(event.data);
-            } else {
+            } else if (event.data.media === "video") {
                 videoEvents.push(event.data);
+            } else if (event.data.media === "wav") {
+                if (event.data.type === MediaEventType.START_PLAY) {
+                    wavPlaying.add(event.data.index);
+                } else if (event.data.type === MediaEventType.STOP_PLAY) {
+                    wavPlaying.delete(event.data.index);
+                }
             }
         } else if (isAppPayload(event.data)) {
             executeFile(event.data);
@@ -907,6 +915,7 @@ function clearEventBuffers() {
     inputEvents.length = 0;
     audioEvents.length = 0;
     videoEvents.length = 0;
+    wavPlaying.clear();
 }
 
 /**
