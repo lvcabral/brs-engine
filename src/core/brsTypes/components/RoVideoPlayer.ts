@@ -13,7 +13,7 @@ import {
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { BufferType, DataType, MediaEventType } from "../../common";
+import { MediaEventType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue {
@@ -26,6 +26,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     private videoIndex: number;
     private videoPosition: number;
     private videoProgress: number;
+    private videoDuration: number;
     private audioTracks: any[];
 
     constructor(interpreter: Interpreter) {
@@ -37,6 +38,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         this.videoIndex = -1;
         this.videoPosition = 0;
         this.videoProgress = -1;
+        this.videoDuration = 0;
         this.audioTracks = [];
         postMessage(new Array<string>());
         postMessage("video,loop,false");
@@ -118,6 +120,9 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             return events;
         } else if (event.type === MediaEventType.TRACKS) {
             this.audioTracks = event.tracks ?? [];
+            return events;
+        } else if (event.type === MediaEventType.DURATION) {
+            this.videoDuration = event.index;
             return events;
         } else if (event.type === MediaEventType.LOADING) {
             this.videoProgress = event.index;
@@ -382,9 +387,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
-            const duration = Atomics.load(interpreter.sharedArray, DataType.VDR);
-            return duration > 0 ? new Int32(duration) : new Int32(0);
+        impl: (_: Interpreter) => {
+            return new Int32(this.videoDuration);
         },
     });
 
