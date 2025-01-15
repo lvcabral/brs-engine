@@ -2021,11 +2021,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         /// #if BROWSER
         // Only Chromium based browsers support process.memory API, web workers do not have it yet,
         // This information comes from the main thread and does not include the worker thread memory.
-        const limit = Atomics.load(this.sharedArray, DataType.MHSL);
-        const used = Atomics.load(this.sharedArray, DataType.MUHS);
-        if (limit > 0 && used > 0) {
-            heapSizeLimit = limit;
-            usedHeapSize = used;
+        if (core.memoryInfo.heapSizeLimit > 0 && core.memoryInfo.usedHeapSize > 0) {
+            heapSizeLimit = core.memoryInfo.heapSizeLimit;
+            usedHeapSize = core.memoryInfo.usedHeapSize;
         }
         /// #else
         // More accurate information from the V8 engine in Node.js

@@ -11,6 +11,7 @@ import {
     AppPayload,
     BufferType,
     CECStatusEvent,
+    MemoryInfoEvent,
     DataType,
     DebugCommand,
     DeviceInfo,
@@ -496,17 +497,16 @@ export function updateAppList() {
 
 // Update Memory Usage on Shared Array
 export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
-    if (currentApp.running && usedMemory && totalMemory) {
-        Atomics.store(sharedArray, DataType.MUHS, usedMemory);
-        Atomics.store(sharedArray, DataType.MHSL, totalMemory);
-        return;
-    }
     const performance = window.performance as ChromiumPerformance;
     if (currentApp.running && platform.inChromium && performance.memory) {
         // Only Chromium based browsers support process.memory API
         const memory = performance.memory;
-        Atomics.store(sharedArray, DataType.MUHS, Math.floor(memory.usedJSHeapSize / 1024));
-        Atomics.store(sharedArray, DataType.MHSL, Math.floor(memory.jsHeapSizeLimit / 1024));
+        usedMemory = Math.floor(memory.usedJSHeapSize / 1024);
+        totalMemory = Math.floor(memory.jsHeapSizeLimit / 1024);
+    }
+    if (currentApp.running && usedMemory && totalMemory) {
+        const event: MemoryInfoEvent = { heapSizeLimit: totalMemory, usedHeapSize: usedMemory };
+        brsWorker.postMessage(event);
     }
 }
 

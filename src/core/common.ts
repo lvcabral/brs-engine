@@ -398,6 +398,18 @@ export function isCECStatusEvent(value: any): value is CECStatusEvent {
     return value && typeof value.activeSource === "boolean";
 }
 
+// Memory Info Event Interface
+export interface MemoryInfoEvent {
+    heapSizeLimit: number;
+    usedHeapSize: number;
+}
+
+export function isMemoryInfoEvent(value: any): value is MemoryInfoEvent {
+    return (
+        value && typeof value.heapSizeLimit === "number" && typeof value.usedHeapSize === "number"
+    );
+}
+
 // Media Event Interface
 export type MediaEvent = {
     media: "audio" | "video" | "wav";
