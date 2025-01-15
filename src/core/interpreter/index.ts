@@ -1,5 +1,5 @@
+import * as core from "..";
 import { EventEmitter } from "events";
-
 import {
     BrsType,
     BrsBoolean,
@@ -38,16 +38,6 @@ import {
     AAMember,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
-import {
-    shared,
-    stats,
-    controlEvents,
-    audioEvents,
-    videoEvents,
-    inputEvents,
-    wavPlaying,
-    sysLogEvents,
-} from "..";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -57,7 +47,6 @@ import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
-
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
@@ -135,13 +124,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly sharedArray = shared.get("buffer") || new Int32Array([]);
-    readonly keysBuffer = controlEvents;
-    readonly inputBuffer = inputEvents;
-    readonly sysLogBuffer = sysLogEvents;
-    readonly audioBuffer = audioEvents;
-    readonly videoBuffer = videoEvents;
-    readonly wavState = wavPlaying;
+    readonly sharedArray = core.shared.get("buffer") || new Int32Array([]);
+    readonly keysBuffer = core.controlEvents;
+    readonly inputBuffer = core.inputEvents;
+    readonly sysLogBuffer = core.sysLogEvents;
+    readonly audioBuffer = core.audioEvents;
+    readonly videoBuffer = core.videoEvents;
+    readonly wavStatus = core.wavStatus;
+    readonly cecStatus = core.cecStatus;
     readonly isDevMode = process.env.NODE_ENV === "development";
 
     readonly stdout: OutputProxy;
@@ -2160,7 +2150,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         });
         debugMsg += "Module Constant Table Sizes:\r\n";
         debugMsg += `  Source Lns:     ${lineCount}\r\n`;
-        stats.forEach((count, lexeme) => {
+        core.stats.forEach((count, lexeme) => {
             const name = Lexeme[lexeme] + ":";
             debugMsg += `  ${name.padEnd(15)} ${count}\r\n`;
         });

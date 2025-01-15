@@ -4,7 +4,6 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../common";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -85,7 +84,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter) => {
-            this.playing = interpreter.wavState.has(this.audioId ?? -1);
+            this.playing = interpreter.wavStatus.has(this.audioId ?? -1);
             return BrsBoolean.from(this.playing);
         },
     });

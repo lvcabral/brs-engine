@@ -6,7 +6,6 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
-import { RoAssociativeArray, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import {
     AppExitReason,
     PkgFilePath,
@@ -26,6 +25,8 @@ import {
     MediaEventType,
     SysLogEvent,
     isSysLogEvent,
+    isCECStatusEvent,
+    CECStatusEvent,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -61,7 +62,8 @@ export const inputEvents = new Array<InputEvent>();
 export const sysLogEvents = new Array<SysLogEvent>();
 export const audioEvents = new Array<MediaEvent>();
 export const videoEvents = new Array<MediaEvent>();
-export const wavPlaying = new Set<number>();
+export const wavStatus = new Set<number>();
+export const cecStatus: CECStatusEvent = { activeSource: true };
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 
@@ -76,6 +78,10 @@ if (typeof onmessage !== "undefined") {
             controlEvents.push(event.data);
         } else if (isInputEvent(event.data)) {
             inputEvents.push(event.data);
+        } else if (isSysLogEvent(event.data)) {
+            sysLogEvents.push(event.data);
+        } else if (isCECStatusEvent(event.data)) {
+            cecStatus.activeSource = event.data.activeSource;
         } else if (isMediaEvent(event.data)) {
             if (event.data.media === "audio") {
                 audioEvents.push(event.data);
@@ -83,13 +89,11 @@ if (typeof onmessage !== "undefined") {
                 videoEvents.push(event.data);
             } else if (event.data.media === "wav") {
                 if (event.data.type === MediaEventType.START_PLAY) {
-                    wavPlaying.add(event.data.index);
+                    wavStatus.add(event.data.index);
                 } else if (event.data.type === MediaEventType.STOP_PLAY) {
-                    wavPlaying.delete(event.data.index);
+                    wavStatus.delete(event.data.index);
                 }
             }
-        } else if (isSysLogEvent(event.data)) {
-            sysLogEvents.push(event.data);
         } else if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
@@ -196,7 +200,7 @@ export async function executeLine(contents: string, interpreter: Interpreter) {
         return;
     }
     try {
-        clearEventBuffers();
+        resetEvents();
         const results = await interpreter.exec(parseResults.statements);
         results.forEach((result) => {
             if (result !== BrsTypes.BrsInvalid.Instance) {
@@ -430,7 +434,7 @@ interface SerializedPCode {
 function setupInputParams(
     deepLinkMap: Map<string, string>,
     splashTime: number
-): RoAssociativeArray {
+): BrsTypes.RoAssociativeArray {
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
@@ -789,19 +793,19 @@ function parseDecodedTokens(interpreter: Interpreter, decodedTokens: Map<string,
         if (token.literal) {
             if (token.kind === "Integer") {
                 const literal: number = token.literal.value;
-                token.literal = new Int32(literal);
+                token.literal = new BrsTypes.Int32(literal);
             } else if (token.kind === "LongInteger") {
                 const literal: number = token.literal.value;
-                token.literal = new Int64(literal);
+                token.literal = new BrsTypes.Int64(literal);
             } else if (token.kind === "Double") {
                 const literal: number = token.literal.value;
-                token.literal = new Double(literal);
+                token.literal = new BrsTypes.Double(literal);
             } else if (token.kind === "Float") {
                 const literal: number = token.literal.value;
-                token.literal = new Float(literal);
+                token.literal = new BrsTypes.Float(literal);
             } else if (token.kind === "String") {
                 const literal: string = token.literal.value;
-                token.literal = new BrsString(literal);
+                token.literal = new BrsTypes.BrsString(literal);
             }
         }
         tokens.push(token);
@@ -851,7 +855,7 @@ async function executeApp(
             await new Promise((r) => setTimeout(r, splashMinTime - splashTime));
             splashTime = splashMinTime;
         }
-        clearEventBuffers();
+        resetEvents();
         const inputParams = setupInputParams(payload.deepLink, splashTime);
         await interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
@@ -915,13 +919,14 @@ function parseLibraries(
     }
 }
 
-function clearEventBuffers() {
+function resetEvents() {
     controlEvents.length = 0;
     inputEvents.length = 0;
     sysLogEvents.length = 0;
     audioEvents.length = 0;
     videoEvents.length = 0;
-    wavPlaying.clear();
+    cecStatus.activeSource = true;
+    wavStatus.clear();
 }
 
 /**

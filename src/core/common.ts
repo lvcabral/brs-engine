@@ -315,7 +315,6 @@ export const dataBufferSize = 1024;
 export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
 export const keyArraySpots = 3;
 
-
 // Remote control type
 export enum RemoteType {
     IR = 10, // Infra Red (default)
@@ -388,6 +387,15 @@ export interface SysLogEvent {
 
 export function isSysLogEvent(value: any): value is SysLogEvent {
     return value && typeof value.type === "string" && typeof value.sysLog === "object";
+}
+
+// CEC Status Event Interface
+export interface CECStatusEvent {
+    activeSource: boolean;
+}
+
+export function isCECStatusEvent(value: any): value is CECStatusEvent {
+    return value && typeof value.activeSource === "boolean";
 }
 
 // Media Event Interface

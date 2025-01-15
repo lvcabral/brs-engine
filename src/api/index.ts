@@ -10,6 +10,7 @@ import {
     AppExitReason,
     AppPayload,
     BufferType,
+    CECStatusEvent,
     DataType,
     DebugCommand,
     DeviceInfo,
@@ -719,12 +720,14 @@ function apiException(level: string, message: string) {
 // CEC Status Update
 window.onfocus = function () {
     if (currentApp.running) {
-        Atomics.store(sharedArray, DataType.CEC, 1);
+        const event: CECStatusEvent = { activeSource: true };
+        brsWorker.postMessage(event);
     }
 };
 
 window.onblur = function () {
     if (currentApp.running) {
-        Atomics.store(sharedArray, DataType.CEC, 0);
+        const event: CECStatusEvent = { activeSource: false };
+        brsWorker.postMessage(event);
     }
 };
