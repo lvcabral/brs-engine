@@ -111,7 +111,7 @@ if (typeof onmessage !== "undefined") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
             shared.array = new Int32Array(event.data);
-            shared.isShared = (event.data instanceof SharedArrayBuffer);
+            shared.isShared = event.data instanceof SharedArrayBuffer;
         } else {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }

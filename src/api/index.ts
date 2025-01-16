@@ -441,7 +441,10 @@ export function debug(command: string): boolean {
                 Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
                 handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
             } else {
-                const event: DebugEvent = { command: DebugCommand.EXPR, expression: command.trim() };
+                const event: DebugEvent = {
+                    command: DebugCommand.EXPR,
+                    expression: command.trim(),
+                };
                 brsWorker.postMessage(event);
                 handled = true;
             }

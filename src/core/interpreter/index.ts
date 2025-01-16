@@ -1254,7 +1254,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             if (err instanceof RuntimeError) {
                                 errNumber = err.errorDetail.errno;
                             }
-                            await runDebugger(this, this.location, this.location, err.message, errNumber);
+                            await runDebugger(
+                                this,
+                                this.location,
+                                this.location,
+                                err.message,
+                                errNumber
+                            );
                             this.options.stopOnCrash = false;
                         }
                         throw err;
