@@ -5,14 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    enableSendKeys,
-    initControlModule,
-    sendInput,
-    sendKey,
-    subscribeControl,
-} from "../api/control";
-import { DataType, DebugCommand, getRokuOSVersion } from "../core/common";
+import { getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
 import xmlbuilder from "xmlbuilder";
@@ -32,7 +25,6 @@ const UDN = "138aedd0-d6ad-11eb-b8bc-" + MAC.replace(/:\s*/g, "");
 let ecp: restana.Service<restana.Protocol.HTTP>;
 let ssdp: any;
 let device: any;
-let sharedArray: Int32Array;
 let isECPEnabled = false;
 let cliRegistry = new Map<string, string>();
 
@@ -42,11 +34,14 @@ if (!isMainThread && parentPort) {
         cliRegistry = device.registry;
     }
     parentPort.on("message", (data) => {
-        if (data instanceof SharedArrayBuffer) {
-            sharedArray = new Int32Array(data);
-            initControlModule();
-            enableECP();
-        } else if (data instanceof Map) {
+        if (typeof data?.service === "string") {
+            if (data.service === "enable") {
+                enableECP();
+            } else if (data.service === "disable") {
+                disableECP();
+            }
+        }
+        if (data instanceof Map) {
             cliRegistry = data;
         }
     });
@@ -113,14 +108,6 @@ function enableECP() {
                     });
                 })
                 .then(() => {
-                    subscribeControl("ecp", (event: string, data: any) => {
-                        if (event === "home" || event === "poweroff") {
-                            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
-                        } else if (event === "post") {
-                            parentPort?.postMessage(data);
-                        }
-                    });
-                    enableSendKeys(true);
                     isECPEnabled = true;
                     parentPort?.postMessage({
                         ready: true,
@@ -195,10 +182,10 @@ function processRequest(ws: WebSocket, message: RawData) {
         } else if (msg["request"]?.startsWith("query")) {
             reply = queryReply(msg, statusOK);
         } else if (msg["request"] === "launch") {
-            launchApp(msg["param-channel-id"]);
+            parentPort?.postMessage({ appID: msg["param-channel-id"], params: {} });
             reply = `{${statusOK}}`;
         } else if (msg["request"] === "key-press") {
-            sendKeyPress(msg["param-key"], null);
+            postKeyPress(msg["param-key"]);
             reply = `{${statusOK}}`;
         } else {
             // Reply OK to any other request, including "request-events"
@@ -258,7 +245,7 @@ function sendInputQuery(req: any, res: any) {
     } else if (isValidIP(sourceIp)) {
         params.source_ip_addr = sourceIp;
     }
-    sendInput(params);
+    parentPort?.postMessage(params);
     res?.end();
 }
 
@@ -300,31 +287,35 @@ function sendRegistry(req: any, res: any) {
 }
 
 function sendLaunchApp(req: any, res: any) {
-    launchApp(req.params.appID);
+    parentPort?.postMessage({ appID: req.params.appID, params: req.query });
     res?.end();
 }
 
 function sendExitApp(req: any, res: any) {
-    Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
+    parentPort?.postMessage({ key: "home", mod: 0 });
     res?.end();
 }
 
 function sendKeyDown(req: any, res: any) {
-    sendKey(req.params.key, 0);
+    parentPort?.postMessage({ key: req.params.key, mod: 0 });
     res?.end();
 }
 
 function sendKeyUp(req: any, res: any) {
-    sendKey(req.params.key, 100);
+    parentPort?.postMessage({ key: req.params.key, mod: 100 });
     res?.end();
 }
 
 function sendKeyPress(req: any, res: any) {
-    setTimeout(() => {
-        sendKey(req.params.key, 100);
-    }, 300);
-    sendKey(req.params.key, 0);
+    postKeyPress(req.params.key);
     res?.end();
+}
+
+function postKeyPress(key: any) {
+    setTimeout(() => {
+        parentPort?.postMessage({ key: key, mod: 100 });
+    }, 300);
+    parentPort?.postMessage({ key: key, mod: 0 });
 }
 
 // Content Generation Functions
@@ -449,9 +440,20 @@ function genAppsXml(encrypt: boolean) {
             id: "dev",
             subtype: "sdka",
             type: "appl",
-            version: "0.0.0",
+            version: "1.0.0",
         },
         "Side Loaded App via CLI"
+    );
+    // Added a fake app as Roku Deep Linking Tester requires at least 2 apps
+    xml.ele(
+        "app",
+        {
+            id: "home",
+            subtype: "sdka",
+            type: "appl",
+            version: "1.0.0",
+        },
+        "Home Screen"
     );
     const strXml = xml.end({ pretty: true });
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
@@ -512,10 +514,6 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
 }
 
 // Helper Functions
-
-function launchApp(appID: string) {
-    // Not supported on CLI
-}
 
 function getMacAddress() {
     const ifaces = os.networkInterfaces();

@@ -27,6 +27,14 @@ import {
     mountExt,
     setupDeepLink,
 } from "../api/package";
+import {
+    enableSendKeys,
+    handleKeypressEvent,
+    initControlModule,
+    sendInput,
+    sendKey,
+    subscribeControl,
+} from "../api/control";
 import { isNumber } from "../api/util";
 import {
     debugPrompt,
@@ -36,6 +44,10 @@ import {
     AppExitReason,
     AppData,
     isControlEvent,
+    DataType,
+    DebugCommand,
+    isInputEvent,
+    DebugEvent,
 } from "../core/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
@@ -50,7 +62,7 @@ const length = dataBufferIndex + dataBufferSize;
 
 // Variables
 let appFileName = "";
-let brsWorker: Worker;
+let ecpWorker: Worker;
 let workerReady = false;
 let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 let sharedArray = new Int32Array(sharedBuffer);
@@ -252,29 +264,60 @@ async function runApp(payload: AppPayload) {
         // Load ECP service as Worker
         const workerPath = path.join(__dirname, "brs.ecp.js");
         const workerData = { device: { ...payload.device, serialNumber: getSerialNumber() } };
-        brsWorker = new Worker(workerPath, { workerData: workerData });
-        brsWorker.on("message", (value: any) => {
-            if (typeof value === "object" && typeof value.ready === "boolean") {
-                if (value.ready) {
-                    console.log(chalk.blueBright(value.msg));
+        ecpWorker = new Worker(workerPath, { workerData: workerData });
+        ecpWorker.on("message", (event: any) => {
+            if (typeof event === "object" && typeof event.ready === "boolean") {
+                if (event.ready) {
+                    console.log(chalk.blueBright(event.msg));
                     workerReady = true;
                     runApp(payload);
                 } else {
-                    brsWorker?.terminate();
-                    console.error(chalk.red(value.msg));
+                    ecpWorker?.terminate();
+                    console.error(chalk.red(event.msg));
                     process.exitCode = 1;
                 }
-            } else if (isControlEvent(value)) {
-                brs.controlEvents.push(value);
+            } else if (typeof event?.key === "string" && typeof event?.mod === "number") {
+                sendKey(event.key, event.mod);
+            } else if (isInputEvent(event)) {
+                sendInput(event);
+            } else {
+                console.log(chalk.blueBright("unhandled event:", JSON.stringify(event)));
             }
         });
-        brsWorker.postMessage(sharedBuffer);
+        ecpWorker.postMessage({ service: "enable" });
         return;
     }
     try {
+        initControlModule();
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        readline.emitKeypressEvents(process.stdin);
+        process.stdin.setRawMode(true);
+        process.stdin.on("keypress", handleKeypressEvent);
+        subscribeControl("cli", (event: string, data: any) => {
+            if (event === "home" || event === "poweroff") {
+                Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
+            } else if (event === "break") {
+                if (brs.shared.isShared) {
+                    Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+                } else {
+                    const event: DebugEvent = { command: DebugCommand.BREAK };
+                    brs.debugEvents.push(event);
+                }
+            } else if (event === "post") {
+                if (isControlEvent(data)) {
+                    brs.controlEvents.push(data);
+                } else if (isInputEvent(data)) {
+                    brs.inputEvents.push(data);
+                }
+            }
+        });
+        enableSendKeys(true);
         const pkg = await brs.executeFile(payload);
         if (program.ecp) {
-            brsWorker?.terminate();
+            ecpWorker?.terminate();
         }
         if (pkg.exitReason === AppExitReason.PACKAGED) {
             // Generate the Encrypted App Package
@@ -306,6 +349,7 @@ async function runApp(payload: AppPayload) {
         console.error(chalk.red(`Error executing app: ${err.message}`));
         process.exitCode = 1;
     }
+    process.exit();
 }
 
 /** Get the computer local Ips
@@ -442,7 +486,7 @@ function messageCallback(message: any, _?: any) {
         printAsciiScreen(program.ascii, canvas);
     } else if (message instanceof Map) {
         if (program.ecp) {
-            brsWorker?.postMessage(message);
+            ecpWorker?.postMessage(message);
         }
         if (program.registry) {
             const strRegistry = JSON.stringify([...message]);

@@ -49,6 +49,7 @@ const rokuKeys: Map<string, number> = new Map([
 
 // Initialize Control Module
 const controls = { keyboard: true, gamePads: true };
+const keysMap: Map<string, string> = new Map();
 let sendKeysEnabled = false;
 let disableDebug: boolean = false;
 
@@ -160,8 +161,7 @@ export function sendInput(data: object) {
 
 /// #if BROWSER
 
-// Keyboard Mapping
-const keysMap: Map<string, string> = new Map();
+// Keyboard Mapping (Browser)
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
 keysMap.set("ArrowLeft", "left");
@@ -310,5 +310,40 @@ function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: numbe
 }
 function gamePadOffHandler(id: number) {
     console.info(`GamePad ${id} disconnected!`);
+}
+/// #else
+
+// Keyboard Mapping (TTY)
+keysMap.set("\x1B[A", "up");
+keysMap.set("\x1B[B", "down");
+keysMap.set("\x1B[D", "left");
+keysMap.set("\x1B[C", "right");
+keysMap.set("\r", "select");
+keysMap.set("\x1B", "back");
+keysMap.set("\x1B[3~", "back");
+keysMap.set("\x1B[H", "home");
+keysMap.set("\x7F", "instantreplay");
+keysMap.set("\x1B[F", "play");
+keysMap.set("\x03", "break");
+keysMap.set("\b", "backspace");
+keysMap.set(" ", "play");
+keysMap.set(",", "rev");
+keysMap.set(".", "fwd");
+keysMap.set("*", "info");
+keysMap.set("\x1B[2~", "info");
+keysMap.set("a", "a");
+keysMap.set("z", "b");
+
+export function handleKeypressEvent(str: string, keyData: any) {
+    if (!controls.keyboard) {
+        return;
+    }
+    const key = keysMap.get(keyData.sequence);
+    if (key && key.toLowerCase() !== "ignore") {
+        setTimeout(function () {
+            sendKey(key, 100);
+        }, 300);
+        sendKey(key, 0);
+    }
 }
 /// #endif
