@@ -6,12 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import {
-    RemoteType,
-    platform,
-    ControlEvent,
-    InputEvent,
-} from "../core/common";
+import { RemoteType, platform, ControlEvent, InputEvent } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
