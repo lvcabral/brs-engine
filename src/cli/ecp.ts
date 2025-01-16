@@ -44,7 +44,7 @@ if (!isMainThread && parentPort) {
     parentPort.on("message", (data) => {
         if (data instanceof SharedArrayBuffer) {
             sharedArray = new Int32Array(data);
-            initControlModule(sharedArray);
+            initControlModule();
             enableECP();
         } else if (data instanceof Map) {
             cliRegistry = data;
@@ -113,9 +113,11 @@ function enableECP() {
                     });
                 })
                 .then(() => {
-                    subscribeControl("ecp", (event: string) => {
+                    subscribeControl("ecp", (event: string, data: any) => {
                         if (event === "home" || event === "poweroff") {
                             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
+                        } else if (event === "post") {
+                            parentPort?.postMessage(data);
                         }
                     });
                     enableSendKeys(true);
