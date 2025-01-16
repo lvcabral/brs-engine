@@ -35,6 +35,7 @@ import {
     AppPayload,
     AppExitReason,
     AppData,
+    isControlEvent,
 } from "../core/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
@@ -252,15 +253,19 @@ async function runApp(payload: AppPayload) {
         const workerPath = path.join(__dirname, "brs.ecp.js");
         const workerData = { device: { ...payload.device, serialNumber: getSerialNumber() } };
         brsWorker = new Worker(workerPath, { workerData: workerData });
-        brsWorker.once("message", (value: any) => {
-            if (value?.ready) {
-                console.log(chalk.blueBright(value?.msg));
-                workerReady = true;
-                runApp(payload);
-            } else {
-                brsWorker?.terminate();
-                console.error(chalk.red(value?.msg));
-                process.exitCode = 1;
+        brsWorker.on("message", (value: any) => {
+            if (typeof value === "object" && typeof value.ready === "boolean") {
+                if (value.ready) {
+                    console.log(chalk.blueBright(value.msg));
+                    workerReady = true;
+                    runApp(payload);
+                } else {
+                    brsWorker?.terminate();
+                    console.error(chalk.red(value.msg));
+                    process.exitCode = 1;
+                }
+            } else if (isControlEvent(value)) {
+                brs.controlEvents.push(value);
             }
         });
         brsWorker.postMessage(sharedBuffer);
