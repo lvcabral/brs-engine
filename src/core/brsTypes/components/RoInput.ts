@@ -3,7 +3,6 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, RoInputEvent, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BufferType, DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoInput extends BrsComponent implements BrsValue {

@@ -7,9 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
 import {
-    DataType,
     RemoteType,
-    DebugCommand,
     platform,
     ControlEvent,
     InputEvent,
@@ -56,12 +54,10 @@ const rokuKeys: Map<string, number> = new Map([
 
 // Initialize Control Module
 const controls = { keyboard: true, gamePads: true };
-let sharedArray: Int32Array;
 let sendKeysEnabled = false;
 let disableDebug: boolean = false;
 
-export function initControlModule(array: Int32Array, options: any = {}) {
-    sharedArray = array;
+export function initControlModule(options: any = {}) {
     if (typeof options.disableDebug === "boolean") {
         disableDebug = options.disableDebug;
     }
@@ -136,8 +132,8 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
     } else if (!sendKeysEnabled) {
         return;
     } else if (key === "break") {
-        if (!disableDebug) {
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+        if (!disableDebug && mod === 0) {
+            notifyAll("break");
             handled = true;
         }
     } else if (rokuKeys.has(key)) {

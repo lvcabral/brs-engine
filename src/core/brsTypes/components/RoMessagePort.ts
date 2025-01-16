@@ -4,7 +4,7 @@ import { BrsEvent, BrsType, isBrsEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DebugCommand } from "../../common";
+import { DebugCommand, threadYield } from "../../common";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -62,7 +62,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             if (msg !== BrsInvalid.Instance) {
                 return msg;
             }
-            const cmd = interpreter.checkBreakCommand();
+            let cmd = await interpreter.checkBreakCommand();
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                 return BrsInvalid.Instance;
             }
@@ -71,8 +71,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     private async updateMessageQueue() {
-        // yield to allow other threads to run and get their messages
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await threadYield();
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
                 const events = callback();

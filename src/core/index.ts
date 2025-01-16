@@ -18,8 +18,10 @@ import {
     isAppPayload,
     ControlEvent,
     isControlEvent,
-    isMediaEvent,
+    DebugEvent,
+    isDebugEvent,
     MediaEvent,
+    isMediaEvent,
     InputEvent,
     isInputEvent,
     MediaEventType,
@@ -58,8 +60,9 @@ export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
-export const shared = new Map<string, Int32Array>();
+export const shared = { array: new Int32Array(0), isShared: false };
 export const controlEvents = new Array<ControlEvent>();
+export const debugEvents = new Array<DebugEvent>();
 export const inputEvents = new Array<InputEvent>();
 export const sysLogEvents = new Array<SysLogEvent>();
 export const audioEvents = new Array<MediaEvent>();
@@ -79,6 +82,8 @@ if (typeof onmessage !== "undefined") {
     onmessage = function (event: MessageEvent) {
         if (isControlEvent(event.data)) {
             controlEvents.push(event.data);
+        } else if (isDebugEvent(event.data)) {
+            debugEvents.push(event.data);
         } else if (isInputEvent(event.data)) {
             inputEvents.push(event.data);
         } else if (isSysLogEvent(event.data)) {
@@ -105,7 +110,8 @@ if (typeof onmessage !== "undefined") {
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
-            shared.set("buffer", new Int32Array(event.data));
+            shared.array = new Int32Array(event.data);
+            shared.isShared = (event.data instanceof SharedArrayBuffer);
         } else {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
@@ -129,7 +135,8 @@ const arrayLength = dataBufferIndex + dataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
 const sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
-shared.set("buffer", sharedArray);
+shared.array = sharedArray;
+shared.isShared = true;
 
 globalThis.postMessage = (message: any) => {
     if (typeof message === "string") {
@@ -152,7 +159,10 @@ globalThis.postMessage = (message: any) => {
 export function registerCallback(messageCallback: any, sharedBuffer?: SharedArrayBuffer) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;
-        if (sharedBuffer) shared.set("buffer", new Int32Array(sharedBuffer));
+        if (sharedBuffer) {
+            shared.array = new Int32Array(sharedBuffer);
+            shared.isShared = true;
+        }
     }
 }
 

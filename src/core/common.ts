@@ -282,38 +282,20 @@ export type ConnectionInfo = {
     ssid?: string;
 };
 
+// Function to yield, allowing other threads to run and get their messages
+export async function threadYield() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 // Shared array data types enumerator
 export enum DataType {
     DBG, // Debug Command
     BUF, // Buffer flag
-    VDO, // Video State
-    VDX, // Video Index
-    VSE, // Video Selected
-    VLP, // Video Load Progress
-    VPS, // Video Position
-    VDR, // Video Duration
-    SND, // Sound State
-    IDX, // Sound Index
-    WAV, // Wave Audio
-    WAV1, // Reserved for second stream
-    WAV2, // Reserved for third stream
-    MUHS, // Memory Used Heap Size
-    MHSL, // Memory Heap Size Limit
-    MBWD, // Measured Bandwidth
-    CEC, // Consumer Electronics Control
-    // Key Buffer starts here: KeyBufferSize * KeyArraySpots
-    RID, // Remote Id
-    KEY, // Key Code
-    MOD, // Key State (down/up)
 }
 
 // Debug constants
-export const dataBufferIndex = 32;
+export const dataBufferIndex = 2;
 export const dataBufferSize = 1024;
-
-// Key Buffer Constants
-export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
-export const keyArraySpots = 3;
 
 // Remote control type
 export enum RemoteType {
@@ -351,6 +333,20 @@ export enum DebugCommand {
     VAR,
     BREAK,
     PAUSE,
+}
+
+// Debug Event
+export interface DebugEvent {
+    command: DebugCommand;
+    expression?: string;
+}
+
+export function isDebugEvent(value: any): value is DebugEvent {
+    return (
+        value &&
+        typeof value.command === "number" &&
+        (typeof value.expression === "string" || value.expression === undefined)
+    );
 }
 
 // Key Event Interface
@@ -443,14 +439,6 @@ export enum MediaEventType {
     POSITION,
     DURATION,
     TRACKS,
-}
-
-// Buffer Data Types enumerator
-export enum BufferType {
-    DEBUG_EXPR,
-    AUDIO_TRACKS,
-    SYS_LOG,
-    INPUT,
 }
 
 // Media Files Extensions

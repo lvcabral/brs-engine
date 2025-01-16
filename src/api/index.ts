@@ -9,10 +9,8 @@ import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./u
 import {
     AppExitReason,
     AppPayload,
-    BufferType,
     CECStatusEvent,
     MemoryInfoEvent,
-    DataType,
     DebugCommand,
     DeviceInfo,
     RemoteType,
@@ -23,6 +21,8 @@ import {
     isAppData,
     isNDKStart,
     platform,
+    DebugEvent,
+    DataType,
 } from "../core/common";
 import {
     source,
@@ -107,6 +107,7 @@ export {
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
+let debugWithArray: boolean = false;
 let showStats: boolean = false;
 
 // roSystemLog Event support
@@ -157,25 +158,27 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         showStats = options.showStats;
     }
     loadRegistry();
-    // Shared buffer (Keys, Sounds and Debug Commands)
+    // Shared buffer for Debug Commands
     const length = dataBufferIndex + dataBufferSize;
     try {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+        debugWithArray = true;
     } catch (error) {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-        apiException(
-            "warning",
-            `[api] Remote control simulation will not work as SharedArrayBuffer is not enabled, ` +
-                `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
-        );
+        if (!disableDebug) {
+            apiException(
+                "warning",
+                `[api] SharedArrayBuffer is not available, so "break" and "pause" debug commands will only trigger when using "roMessagePort".`
+            );
+        }
     }
     sharedArray = new Int32Array(sharedBuffer);
     resetArray();
 
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
-    initControlModule(sharedArray, options);
-    initVideoModule(false);
+    initControlModule(options);
+    initVideoModule();
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
@@ -192,7 +195,18 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     });
     subscribeControl("api", (event: string, data: any) => {
         if (event === "post") {
-            brsWorker.postMessage(data);
+            if (currentApp.running) {
+                brsWorker.postMessage(data);
+            }
+        } else if (event === "break") {
+            if (currentApp.running) {
+                if (debugWithArray) {
+                    Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+                } else {
+                    const event: DebugEvent = { command: DebugCommand.BREAK };
+                    brsWorker.postMessage(event);
+                }
+            }
         } else if (event === "home") {
             if (currentApp.running) {
                 if (!home) {
@@ -218,14 +232,18 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     });
     subscribeSound("api", (event: string, data: any) => {
         if (event === "post") {
-            brsWorker.postMessage(data);
+            if (currentApp.running) {
+                brsWorker.postMessage(data);
+            }
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         }
     });
     subscribeVideo("api", (event: string, data: any) => {
         if (event === "post") {
-            brsWorker.postMessage(data);
+            if (currentApp.running) {
+                brsWorker.postMessage(data);
+            }
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         } else if (event === "bandwidth") {
@@ -409,13 +427,24 @@ export function debug(command: string): boolean {
         const exprs = command.trim().split(/(?<=^\S+)\s/);
         if (exprs.length === 1 && ["break", "pause"].includes(exprs[0].toLowerCase())) {
             const cmd = exprs[0].toUpperCase() as keyof typeof DebugCommand;
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand[cmd]);
-            Atomics.notify(sharedArray, DataType.DBG);
+            if (debugWithArray) {
+                Atomics.store(sharedArray, DataType.DBG, DebugCommand[cmd]);
+                Atomics.notify(sharedArray, DataType.DBG);
+            } else {
+                const event: DebugEvent = { command: DebugCommand[cmd] };
+                brsWorker.postMessage(event);
+            }
             handled = true;
         } else {
-            saveDataBuffer(sharedArray, command.trim(), BufferType.DEBUG_EXPR);
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
-            handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
+            if (debugWithArray) {
+                saveDataBuffer(sharedArray, command.trim());
+                Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
+                handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
+            } else {
+                const event: DebugEvent = { command: DebugCommand.EXPR, expression: command.trim() };
+                brsWorker.postMessage(event);
+                handled = true;
+            }
         }
     }
     return handled;

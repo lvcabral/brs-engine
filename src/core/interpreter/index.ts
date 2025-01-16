@@ -56,9 +56,11 @@ import {
     DataType,
     DebugCommand,
     dataBufferIndex,
+    debugPrompt,
     defaultDeviceInfo,
     numberToHex,
     parseTextFile,
+    threadYield,
 } from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
@@ -124,8 +126,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly sharedArray = core.shared.get("buffer") || new Int32Array([]);
+    readonly sharedArray = core.shared.array ?? new Int32Array([]);
+    readonly isShared = core.shared.isShared;
     readonly keysBuffer = core.controlEvents;
+    readonly debugBuffer = core.debugEvents;
     readonly inputBuffer = core.inputEvents;
     readonly sysLogBuffer = core.sysLogEvents;
     readonly audioBuffer = core.audioEvents;
@@ -1250,7 +1254,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             if (err instanceof RuntimeError) {
                                 errNumber = err.errorDetail.errno;
                             }
-                            runDebugger(this, this.location, this.location, err.message, errNumber);
+                            await runDebugger(this, this.location, this.location, err.message, errNumber);
                             this.options.stopOnCrash = false;
                         }
                         throw err;
@@ -1933,14 +1937,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return expression.accept<BrsType>(this);
     }
 
-    execute(this: Interpreter, statement: Stmt.Statement): BrsType | Promise<BrsType> {
+    async execute(this: Interpreter, statement: Stmt.Statement): Promise<BrsType> {
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
-        const cmd = this.checkBreakCommand();
+        const cmd = await this.checkBreakCommand();
         if (cmd === DebugCommand.BREAK) {
             if (!(statement instanceof Stmt.Block)) {
-                if (!runDebugger(this, statement.location, this.location)) {
+                const proceed = await runDebugger(this, statement.location, this.location);
+                if (!proceed) {
                     this.options.stopOnCrash = false;
                     throw new BlockEnd("debug-exit", statement.location);
                 }
@@ -2167,25 +2172,69 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to check if the Break Command is set in the sharedArray
+     * Method to check if the Break Command was sent
      * @returns the last debug command
      */
-    checkBreakCommand(): number {
+    async checkBreakCommand(): Promise<number> {
         let cmd = this.debugMode ? DebugCommand.BREAK : -1;
         if (!this.debugMode) {
-            cmd = Atomics.load(this.sharedArray, DataType.DBG);
-            if (cmd === DebugCommand.BREAK) {
-                Atomics.store(this.sharedArray, DataType.DBG, -1);
-                this.debugMode = true;
-            } else if (cmd === DebugCommand.PAUSE) {
-                postMessage("debug,pause");
-                Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
-                Atomics.store(this.sharedArray, DataType.DBG, -1);
-                cmd = -1;
-                postMessage("debug,continue");
+            if (this.isShared) {
+                cmd = Atomics.load(this.sharedArray, DataType.DBG);
+                if (cmd === DebugCommand.BREAK) {
+                    Atomics.store(this.sharedArray, DataType.DBG, -1);
+                    this.debugMode = true;
+                } else if (cmd === DebugCommand.PAUSE) {
+                    postMessage("debug,pause");
+                    Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
+                    Atomics.store(this.sharedArray, DataType.DBG, -1);
+                    cmd = -1;
+                    postMessage("debug,continue");
+                }
+            } else if (this.debugBuffer.length > 0) {
+                let cmd = this.debugBuffer.shift()?.command ?? -1;
+                if (cmd === DebugCommand.BREAK) {
+                    this.debugMode = true;
+                } else if (cmd === DebugCommand.PAUSE) {
+                    postMessage("debug,pause");
+                    while (cmd === DebugCommand.PAUSE) {
+                        await threadYield();
+                        if (this.debugBuffer.length > 0) {
+                            cmd = this.debugBuffer.shift()?.command ?? -1;
+                        }
+                    }
+                    postMessage("debug,continue");
+                }
             }
         }
         return cmd;
+    }
+
+    /**
+     * Method to wait for the next debug command
+     * @returns a string with the debug expression
+     */
+    async waitDebugCommand(): Promise<string> {
+        let line = "";
+        this.stdout.write(`print,\r\n${debugPrompt}`);
+        if (this.isShared) {
+            Atomics.wait(this.sharedArray, DataType.DBG, -1);
+            const cmd = Atomics.load(this.sharedArray, DataType.DBG);
+            Atomics.store(this.sharedArray, DataType.DBG, -1);
+            if (cmd === DebugCommand.EXPR) {
+                line = this.readDataBuffer();
+            }
+        } else {
+            while (line === "") {
+                await threadYield();
+                if (this.debugBuffer.length > 0) {
+                    let cmd = this.debugBuffer.shift();
+                    if (cmd?.command === DebugCommand.EXPR) {
+                        line = cmd.expression ?? "";
+                    }
+                }
+            }
+        }
+        return line;
     }
 
     /**
