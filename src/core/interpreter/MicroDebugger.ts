@@ -19,7 +19,7 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
+import { DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
@@ -28,7 +28,7 @@ readline.setDefaultOptions({ prompt: debugPrompt });
 // Debug Constants
 let stepMode = false;
 
-export function runDebugger(
+export async function runDebugger(
     interpreter: Interpreter,
     nextLoc: Location,
     lastLoc: Location,
@@ -70,20 +70,14 @@ export function runDebugger(
     while (true) {
         let line = "";
         /// #if BROWSER
-        interpreter.stdout.write(`print,\r\n${debugPrompt}`);
-        Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
-        const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
-        Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
-        if (cmd === DebugCommand.EXPR) {
-            line = interpreter.readDataBuffer();
-        }
+        line = await interpreter.waitDebugCommand();
         /// #else
         interpreter.stdout.write(`print,\r\n`);
         line = readline.prompt();
         /// #endif
         const command = parseCommand(line);
         if (command.cmd === DebugCommand.EXPR) {
-            debugHandleExpr(interpreter, command.expr);
+            await debugHandleExpr(interpreter, command.expr);
             continue;
         }
         switch (command.cmd) {
@@ -107,11 +101,11 @@ export function runDebugger(
             case DebugCommand.EXIT:
                 return false;
         }
-        debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
+        await debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
     }
 }
 
-function debugHandleExpr(interpreter: Interpreter, expr: string) {
+async function debugHandleExpr(interpreter: Interpreter, expr: string) {
     const lexer = new Lexer();
     const parser = new Parser();
     interpreter.debugMode = false;
@@ -129,32 +123,32 @@ function debugHandleExpr(interpreter: Interpreter, expr: string) {
         return;
     }
     if (exprParse.statements.length > 0) {
-        runStatement(interpreter, exprParse.statements[0]);
+        await runStatement(interpreter, exprParse.statements[0]);
     }
 }
 
-function runStatement(interpreter: Interpreter, exprStmt: Statement) {
+async function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     try {
         if (exprStmt instanceof Assignment) {
-            interpreter.visitAssignment(exprStmt);
+            await interpreter.visitAssignment(exprStmt);
         } else if (exprStmt instanceof DottedSet) {
-            interpreter.visitDottedSet(exprStmt);
+            await interpreter.visitDottedSet(exprStmt);
         } else if (exprStmt instanceof IndexedSet) {
-            interpreter.visitIndexedSet(exprStmt);
+            await interpreter.visitIndexedSet(exprStmt);
         } else if (exprStmt instanceof Print) {
-            interpreter.visitPrint(exprStmt);
+            await interpreter.visitPrint(exprStmt);
         } else if (exprStmt instanceof Expression) {
-            interpreter.visitExpression(exprStmt);
+            await interpreter.visitExpression(exprStmt);
         } else if (exprStmt instanceof Increment) {
-            interpreter.visitIncrement(exprStmt);
+            await interpreter.visitIncrement(exprStmt);
         } else if (exprStmt instanceof If) {
-            interpreter.visitIf(exprStmt);
+            await interpreter.visitIf(exprStmt);
         } else if (exprStmt instanceof For) {
-            interpreter.visitFor(exprStmt);
+            await interpreter.visitFor(exprStmt);
         } else if (exprStmt instanceof ForEach) {
-            interpreter.visitForEach(exprStmt);
+            await interpreter.visitForEach(exprStmt);
         } else if (exprStmt instanceof While) {
-            interpreter.visitWhile(exprStmt);
+            await interpreter.visitWhile(exprStmt);
         } else if (exprStmt instanceof Function) {
             interpreter.visitNamedFunction(exprStmt);
         } else {
@@ -169,7 +163,7 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     }
 }
 
-function debugHandleCommand(
+async function debugHandleCommand(
     interpreter: Interpreter,
     currLoc: Location,
     lastLoc: Location,
