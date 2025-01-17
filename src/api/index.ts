@@ -194,33 +194,25 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         }
     });
     subscribeControl("api", (event: string, data: any) => {
-        if (event === "post") {
-            if (currentApp.running) {
-                brsWorker.postMessage(data);
+        if (event === "post" && currentApp.running) {
+            brsWorker.postMessage(data);
+        } else if (event === "break" && currentApp.running) {
+            if (debugWithArray) {
+                Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+            } else {
+                const event: DebugEvent = { command: DebugCommand.BREAK };
+                brsWorker.postMessage(event);
             }
-        } else if (event === "break") {
-            if (currentApp.running) {
-                if (debugWithArray) {
-                    Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
-                } else {
-                    const event: DebugEvent = { command: DebugCommand.BREAK };
-                    brsWorker.postMessage(event);
-                }
+        } else if (event === "home" && currentApp.running) {
+            if (!home) {
+                home = new Howl({ src: ["./audio/select.wav"] });
+                home.on("play", function () {
+                    terminate(AppExitReason.FINISHED);
+                });
             }
-        } else if (event === "home") {
-            if (currentApp.running) {
-                if (!home) {
-                    home = new Howl({ src: ["./audio/select.wav"] });
-                    home.on("play", function () {
-                        terminate(AppExitReason.FINISHED);
-                    });
-                }
-                home.play();
-            }
-        } else if (event === "poweroff") {
-            if (currentApp.running) {
-                terminate(AppExitReason.POWER);
-            }
+            home.play();
+        } else if (event === "poweroff" && currentApp.running) {
+            terminate(AppExitReason.POWER);
         } else if (event === "volumemute") {
             setAudioMute(!getAudioMute());
         } else if (event === "control") {
