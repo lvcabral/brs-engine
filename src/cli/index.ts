@@ -289,10 +289,6 @@ async function runApp(payload: AppPayload) {
     }
     try {
         initControlModule();
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-        });
         readline.emitKeypressEvents(process.stdin);
         process.stdin.setRawMode(true);
         process.stdin.on("keypress", handleKeypressEvent);
@@ -526,8 +522,15 @@ function handleStringMessage(message: string) {
         if (msg !== AppExitReason.FINISHED) {
             process.exitCode = 1;
         }
-    } else if (!["start", "debug", "reset", "video", "audio", "syslog"].includes(mType)) {
-        console.info(chalk.blueBright(message.trimEnd()));
+    } else if (mType === "debug") {
+        if (message.split(",")[1] === "stop") {
+            process.stdin.setRawMode(false);
+        } else if (message.split(",")[1] === "continue") {
+            process.stdin.setRawMode(true);
+            process.stdin.resume();
+        }
+    } else if (!["start", "reset", "video", "audio", "syslog"].includes(mType)) {
+        console.info(chalk.blueBright(`unhandled message: ${message.trimEnd()}`));
     }
 }
 
