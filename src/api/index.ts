@@ -435,19 +435,17 @@ export function debug(command: string): boolean {
                 brsWorker.postMessage(event);
             }
             handled = true;
+        } else if (debugWithArray) {
+            saveDataBuffer(sharedArray, command.trim());
+            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
+            handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
         } else {
-            if (debugWithArray) {
-                saveDataBuffer(sharedArray, command.trim());
-                Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
-                handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
-            } else {
-                const event: DebugEvent = {
-                    command: DebugCommand.EXPR,
-                    expression: command.trim(),
-                };
-                brsWorker.postMessage(event);
-                handled = true;
-            }
+            const event: DebugEvent = {
+                command: DebugCommand.EXPR,
+                expression: command.trim(),
+            };
+            brsWorker.postMessage(event);
+            handled = true;
         }
     }
     return handled;

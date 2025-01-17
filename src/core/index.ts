@@ -94,18 +94,7 @@ if (typeof onmessage !== "undefined") {
             memoryInfo.usedHeapSize = event.data.usedHeapSize;
             memoryInfo.heapSizeLimit = event.data.heapSizeLimit;
         } else if (isMediaEvent(event.data)) {
-            if (event.data.media === "audio") {
-                audioEvents.push(event.data);
-            } else if (event.data.media === "video") {
-                videoEvents.push(event.data);
-            } else if (event.data.media === "wav") {
-                console.log(`WAV Event: ${MediaEventType[event.data.type]} - ${event.data.name}`);
-                if (event.data.type === MediaEventType.START_PLAY && event.data.name) {
-                    wavStatus.add(event.data.name);
-                } else if (event.data.type === MediaEventType.STOP_PLAY && event.data.name) {
-                    wavStatus.delete(event.data.name);
-                }
-            }
+            handleMediaEvent(event);
         } else if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
@@ -117,6 +106,22 @@ if (typeof onmessage !== "undefined") {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
     };
+
+    function handleMediaEvent(event: MessageEvent) {
+        if (event.data.media === "audio") {
+            audioEvents.push(event.data);
+        } else if (event.data.media === "video") {
+            videoEvents.push(event.data);
+        } else if (event.data.media === "wav") {
+            if (event.data.type === MediaEventType.START_PLAY && event.data.name) {
+                wavStatus.add(event.data.name);
+            } else if (event.data.type === MediaEventType.STOP_PLAY && event.data.name) {
+                wavStatus.delete(event.data.name);
+            }
+        } else {
+            postMessage(`warning,[worker] Invalid media event received: ${event.data}`);
+        }
+    }
 }
 /// #else
 /**

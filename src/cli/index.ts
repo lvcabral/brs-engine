@@ -509,33 +509,28 @@ function messageCallback(message: any, _?: any) {
  */
 function handleStringMessage(message: string) {
     const mType = message.split(",")[0];
-    if (mType === "print") {
-        let log = message.slice(6);
-        if (log.endsWith(DebugPrompt)) {
-            process.stdout.write(log);
-        } else {
-            process.stdout.write(colorize(log));
-        }
+    const msg = message.slice(mType.length + 1);
+    if (mType === "print" && msg.endsWith(DebugPrompt)) {
+        process.stdout.write(msg);
+    } else if (mType === "print") {
+        process.stdout.write(colorize(msg));
     } else if (mType === "warning") {
         console.warn(chalk.yellow(message.slice(8).trimEnd()));
     } else if (mType === "error") {
         console.error(chalk.red(message.slice(6).trimEnd()));
         process.exitCode = 1;
-    } else if (mType === "end") {
-        const msg = message.slice(mType.length + 1).trimEnd();
-        if (msg !== AppExitReason.FINISHED) {
-            process.exitCode = 1;
-        }
+    } else if (mType === "end" && msg.trim() !== AppExitReason.FINISHED) {
+        process.exitCode = 1;
     } else if (mType === "debug") {
-        if (message.split(",")[1] === "stop") {
+        if (msg.trim() === "stop") {
             process.stdin.setRawMode(false);
-        } else if (message.split(",")[1] === "continue") {
+        } else if (msg.trim() === "continue") {
             if (program.tty) {
                 process.stdin.setRawMode(true);
             }
             process.stdin.resume();
         }
-    } else if (!["start", "reset", "video", "audio", "syslog"].includes(mType)) {
+    } else if (!["start", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
         console.info(chalk.blueBright(`unhandled message: ${message.trimEnd()}`));
     }
 }
