@@ -412,7 +412,7 @@ export type MediaEvent = {
     type: MediaEventType;
     index: number;
     name?: string;
-    tracks?: Array<any>;
+    tracks?: any[];
 };
 
 export function isMediaEvent(value: any): value is MediaEvent {
