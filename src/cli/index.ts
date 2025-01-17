@@ -314,7 +314,7 @@ async function runApp(payload: AppPayload) {
                 }
             }
         });
-        enableSendKeys(true);
+        enableSendKeys(program.ecp || program.tty);
         const pkg = await brs.executeFile(payload);
         if (program.ecp) {
             ecpWorker?.terminate();
