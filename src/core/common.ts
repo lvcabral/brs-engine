@@ -51,7 +51,7 @@ export interface DeviceInfo {
 
 // Default Device Information
 export const platform = getPlatform();
-export const defaultDeviceInfo: DeviceInfo = {
+export const DefaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
@@ -294,8 +294,8 @@ export enum DataType {
 }
 
 // Debug constants
-export const dataBufferIndex = 2;
-export const dataBufferSize = 1024;
+export const DataBufferIndex = 2;
+export const DataBufferSize = 1024;
 
 // Remote control type
 export enum RemoteType {
@@ -312,7 +312,7 @@ export enum RemoteType {
 // FP - Front Panel (for on-device controls)
 
 // Debug prompt
-export const debugPrompt = "Brightscript Debugger> ";
+export const DebugPrompt = "Brightscript Debugger> ";
 
 // Debug commands enumerator
 export enum DebugCommand {
@@ -411,6 +411,7 @@ export type MediaEvent = {
     media: "audio" | "video" | "wav";
     type: MediaEventType;
     index: number;
+    name?: string;
     tracks?: Array<any>;
 };
 
@@ -420,6 +421,7 @@ export function isMediaEvent(value: any): value is MediaEvent {
         typeof value.media === "string" &&
         typeof value.type === "number" &&
         typeof value.index === "number" &&
+        (typeof value.name === "string" || value.name === undefined) &&
         (Array.isArray(value.tracks) || value.tracks === undefined)
     );
 }
@@ -441,8 +443,11 @@ export enum MediaEventType {
     TRACKS,
 }
 
+// Default Roku Sounds
+export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
+
 // Media Files Extensions
-export const audioExt = new Set<string>([
+export const AudioExt = new Set<string>([
     "wav",
     "mp2",
     "mp3",
@@ -455,7 +460,7 @@ export const audioExt = new Set<string>([
     "flac",
 ]);
 
-export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
+export const VideoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
 // Check the platform where the library is running
 export function getPlatform(): Platform {

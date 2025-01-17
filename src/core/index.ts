@@ -11,9 +11,9 @@ import {
     PkgFilePath,
     AppPayload,
     DeviceInfo,
-    dataBufferIndex,
-    dataBufferSize,
-    defaultDeviceInfo,
+    DataBufferIndex,
+    DataBufferSize,
+    DefaultDeviceInfo,
     parseManifest,
     isAppPayload,
     ControlEvent,
@@ -67,7 +67,7 @@ export const inputEvents = new Array<InputEvent>();
 export const sysLogEvents = new Array<SysLogEvent>();
 export const audioEvents = new Array<MediaEvent>();
 export const videoEvents = new Array<MediaEvent>();
-export const wavStatus = new Set<number>();
+export const wavStatus = new Set<string>();
 export const cecStatus: CECStatusEvent = { activeSource: true };
 export const memoryInfo: MemoryInfoEvent = { usedHeapSize: 0, heapSizeLimit: 0 };
 export const bscs = new Map<string, number>();
@@ -99,10 +99,11 @@ if (typeof onmessage !== "undefined") {
             } else if (event.data.media === "video") {
                 videoEvents.push(event.data);
             } else if (event.data.media === "wav") {
-                if (event.data.type === MediaEventType.START_PLAY) {
-                    wavStatus.add(event.data.index);
-                } else if (event.data.type === MediaEventType.STOP_PLAY) {
-                    wavStatus.delete(event.data.index);
+                console.log(`WAV Event: ${MediaEventType[event.data.type]} - ${event.data.name}`);
+                if (event.data.type === MediaEventType.START_PLAY && event.data.name) {
+                    wavStatus.add(event.data.name);
+                } else if (event.data.type === MediaEventType.STOP_PLAY && event.data.name) {
+                    wavStatus.delete(event.data.name);
                 }
             }
         } else if (isAppPayload(event.data)) {
@@ -131,7 +132,7 @@ declare global {
  * Default implementation of the callback, only handles console messages
  * @param message the message to front-end
  */
-const arrayLength = dataBufferIndex + dataBufferSize;
+const arrayLength = DataBufferIndex + DataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
 const sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
@@ -274,8 +275,8 @@ export function createPayloadFromFiles(
         throw new Error("Invalid or inexistent file(s)!");
     }
     const deviceData = customDeviceData
-        ? Object.assign(defaultDeviceInfo, customDeviceData)
-        : defaultDeviceInfo;
+        ? Object.assign(DefaultDeviceInfo, customDeviceData)
+        : DefaultDeviceInfo;
     if (!deviceData.fonts || deviceData.fonts.size === 0) {
         deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
     }

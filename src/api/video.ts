@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { MediaEventType, platform } from "../core/common";
+import { MediaEvent, MediaEventType, platform } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -40,11 +40,12 @@ export function initVideoModule(mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
-            notifyAll("post", {
+            const event: MediaEvent = {
                 media: "video",
                 type: MediaEventType.LOADING,
                 index: loadProgress,
-            });
+            };
+            notifyAll("post", event);
             canPlay = true;
             if (playerState !== "play" && !bufferOnly) {
                 playVideo();
@@ -53,21 +54,23 @@ export function initVideoModule(mute: boolean = false) {
         player.addEventListener("playing", (e: Event) => {
             if (playerState !== "pause") {
                 setAudioTrack(playList[playIndex]?.audioTrack ?? -1);
-                notifyAll("post", {
+                const event: MediaEvent = {
                     media: "video",
                     type: MediaEventType.START_STREAM,
                     index: currentFrame,
-                });
+                };
+                notifyAll("post", event);
             }
             notifyAll("play");
         });
         player.addEventListener("timeupdate", (e: Event) => {
             if (notifyTime) {
-                notifyAll("post", {
+                const event: MediaEvent = {
                     media: "video",
                     type: MediaEventType.POSITION,
                     index: Math.round(player.currentTime),
-                });
+                };
+                notifyAll("post", event);
             }
         });
         player.addEventListener("error", (e: Event) => {
@@ -277,13 +280,19 @@ function startProgress(e: Event) {
         }
     }
     loadProgress += 200;
-    notifyAll("post", { media: "video", type: MediaEventType.LOADING, index: loadProgress });
+    const event: MediaEvent = { media: "video", type: MediaEventType.LOADING, index: loadProgress };
+    notifyAll("post", event);
 }
 
 function setDuration(e: Event) {
     if (!isNaN(player.duration)) {
         videoDuration = Math.round(player.duration);
-        notifyAll("post", { media: "video", type: MediaEventType.DURATION, index: videoDuration });
+        const event: MediaEvent = {
+            media: "video",
+            type: MediaEventType.DURATION,
+            index: videoDuration,
+        };
+        notifyAll("post", event);
     }
     if (playerState !== "play") {
         startProgress(e);
@@ -300,12 +309,13 @@ function loadAudioTracks() {
             playList[playIndex].audioTrack = hls.audioTrack;
         }
     }
-    notifyAll("post", {
+    const event: MediaEvent = {
         media: "video",
         type: MediaEventType.TRACKS,
         index: audioTracks.length,
         tracks: audioTracks,
-    });
+    };
+    notifyAll("post", event);
 }
 
 function setAudioTrack(index: number) {
@@ -416,7 +426,8 @@ function nextVideo() {
             return;
         }
     } else {
-        notifyAll("post", { media: "video", type: MediaEventType.FULL, index: playIndex });
+        const event: MediaEvent = { media: "video", type: MediaEventType.FULL, index: playIndex };
+        notifyAll("post", event);
         playIndex = 0;
         playNext = -1;
         canPlay = false;
@@ -428,7 +439,8 @@ function nextVideo() {
     playNext = -1;
     playerState = "stop";
     canPlay = false;
-    notifyAll("post", { media: "video", type: MediaEventType.SELECTED, index: playIndex });
+    const event: MediaEvent = { media: "video", type: MediaEventType.SELECTED, index: playIndex };
+    notifyAll("post", event);
     loadVideo();
 }
 
@@ -438,7 +450,12 @@ function stopVideo() {
         player.removeAttribute("src"); // empty source
         player.load();
         notifyAll("stop");
-        notifyAll("post", { media: "video", type: MediaEventType.PARTIAL, index: playIndex });
+        const event: MediaEvent = {
+            media: "video",
+            type: MediaEventType.PARTIAL,
+            index: playIndex,
+        };
+        notifyAll("post", event);
         clearVideoTracking();
         startPosition = 0;
         canPlay = false;
@@ -449,7 +466,8 @@ function pauseVideo() {
     if (player) {
         player.pause();
         notifyAll("pause");
-        notifyAll("post", { media: "video", type: MediaEventType.PAUSED, index: playIndex });
+        const event: MediaEvent = { media: "video", type: MediaEventType.PAUSED, index: playIndex };
+        notifyAll("post", event);
     }
 }
 
@@ -458,7 +476,12 @@ function resumeVideo(notify = true) {
         player.play();
         player.muted = uiMuted || videoMuted;
         if (notify) {
-            notifyAll("post", { media: "video", type: MediaEventType.RESUMED, index: playIndex });
+            const event: MediaEvent = {
+                media: "video",
+                type: MediaEventType.RESUMED,
+                index: playIndex,
+            };
+            notifyAll("post", event);
         }
     }
 }

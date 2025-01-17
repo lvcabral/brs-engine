@@ -19,10 +19,17 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    DebugPrompt,
+    numberToHex,
+    parseTextFile,
+    threadYield,
+} from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
-readline.setDefaultOptions({ prompt: debugPrompt });
+readline.setDefaultOptions({ prompt: DebugPrompt });
 /// #endif
 
 // Debug Constants
@@ -70,7 +77,7 @@ export async function runDebugger(
     while (true) {
         let line = "";
         /// #if BROWSER
-        line = await interpreter.waitDebugCommand();
+        line = await nextDebugCommand(interpreter);
         /// #else
         interpreter.stdout.write(`print,\r\n`);
         line = readline.prompt();
@@ -103,6 +110,34 @@ export async function runDebugger(
         }
         await debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
     }
+}
+
+/**
+ * Method to wait for the next debug command
+ * @returns a string with the debug expression
+ */
+async function nextDebugCommand(interpreter: Interpreter): Promise<string> {
+    let line = "";
+    interpreter.stdout.write(`print,\r\n${DebugPrompt}`);
+    if (interpreter.isShared) {
+        Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
+        const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
+        Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
+        if (cmd === DebugCommand.EXPR) {
+            line = interpreter.readDataBuffer();
+        }
+    } else {
+        while (line === "") {
+            await threadYield();
+            if (interpreter.debugBuffer.length > 0) {
+                let cmd = interpreter.debugBuffer.shift();
+                if (cmd?.command === DebugCommand.EXPR) {
+                    line = cmd.expression ?? "";
+                }
+            }
+        }
+    }
+    return line;
 }
 
 async function debugHandleExpr(interpreter: Interpreter, expr: string) {

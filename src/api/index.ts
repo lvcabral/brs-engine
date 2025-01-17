@@ -15,8 +15,8 @@ import {
     DeviceInfo,
     RemoteType,
     SysLogEvent,
-    dataBufferIndex,
-    dataBufferSize,
+    DataBufferIndex,
+    DataBufferSize,
     getExitReason,
     isAppData,
     isNDKStart,
@@ -159,7 +159,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     loadRegistry();
     // Shared buffer for Debug Commands
-    const length = dataBufferIndex + dataBufferSize;
+    const length = DataBufferIndex + DataBufferSize;
     try {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
         debugWithArray = true;
@@ -465,7 +465,7 @@ function resetWorker() {
 function resetArray() {
     sharedArray.some((_, index: number) => {
         Atomics.store(sharedArray, index, -1);
-        return index === dataBufferIndex - 1;
+        return index === DataBufferIndex - 1;
     });
 }
 

@@ -55,9 +55,8 @@ import { runDebugger } from "./MicroDebugger";
 import {
     DataType,
     DebugCommand,
-    dataBufferIndex,
-    debugPrompt,
-    defaultDeviceInfo,
+    DataBufferIndex,
+    DefaultDeviceInfo,
     numberToHex,
     parseTextFile,
     threadYield,
@@ -237,7 +236,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
         this.fileSystem = new FileSystem(this.options.root, this.options.ext);
-        for (const [key, value] of Object.entries(defaultDeviceInfo)) {
+        for (const [key, value] of Object.entries(DefaultDeviceInfo)) {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, value);
             }
@@ -2216,40 +2215,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to wait for the next debug command
-     * @returns a string with the debug expression
-     */
-    async waitDebugCommand(): Promise<string> {
-        let line = "";
-        this.stdout.write(`print,\r\n${debugPrompt}`);
-        if (this.isShared) {
-            Atomics.wait(this.sharedArray, DataType.DBG, -1);
-            const cmd = Atomics.load(this.sharedArray, DataType.DBG);
-            Atomics.store(this.sharedArray, DataType.DBG, -1);
-            if (cmd === DebugCommand.EXPR) {
-                line = this.readDataBuffer();
-            }
-        } else {
-            while (line === "") {
-                await threadYield();
-                if (this.debugBuffer.length > 0) {
-                    let cmd = this.debugBuffer.shift();
-                    if (cmd?.command === DebugCommand.EXPR) {
-                        line = cmd.expression ?? "";
-                    }
-                }
-            }
-        }
-        return line;
-    }
-
-    /**
      * Method to extract the data buffer from the sharedArray
      * @returns the data buffer as a string
      */
     readDataBuffer(): string {
         let data = "";
-        this.sharedArray.slice(dataBufferIndex).every((char) => {
+        this.sharedArray.slice(DataBufferIndex).every((char) => {
             if (char > 0) {
                 data += String.fromCharCode(char);
             }

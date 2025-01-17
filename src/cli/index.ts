@@ -37,9 +37,9 @@ import {
 } from "../api/control";
 import { isNumber } from "../api/util";
 import {
-    debugPrompt,
-    dataBufferIndex,
-    dataBufferSize,
+    DebugPrompt,
+    DataBufferIndex,
+    DataBufferSize,
     AppPayload,
     AppExitReason,
     AppData,
@@ -58,7 +58,7 @@ const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
 const maxColumns = Math.max(process.stdout.columns, 32);
-const length = dataBufferIndex + dataBufferSize;
+const length = DataBufferIndex + DataBufferSize;
 
 // Variables
 let appFileName = "";
@@ -511,7 +511,7 @@ function handleStringMessage(message: string) {
     const mType = message.split(",")[0];
     if (mType === "print") {
         let log = message.slice(6);
-        if (log.endsWith(debugPrompt)) {
+        if (log.endsWith(DebugPrompt)) {
             process.stdout.write(log);
         } else {
             process.stdout.write(colorize(log));

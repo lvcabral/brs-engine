@@ -6,19 +6,19 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { MediaEventType } from "../core/common";
+import { DefaultSounds, MediaEvent, MediaEventType } from "../core/common";
 import { Howl, Howler } from "howler";
 
 // Sound Objects
-let soundsIdx: Map<string, number> = new Map();
-let soundsDat: Howl[] = new Array();
-let soundState: number[] = new Array();
-let playList = new Array();
+const soundsIdx: Map<string, number> = new Map();
+const soundsDat: Howl[] = new Array();
+const soundState = new Array<number>();
+const playList = new Array<string>();
+const wavStreams: Howl[] = new Array();
+const wavSlots = new Array<number>();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
-const wavStreams: Howl[] = new Array();
-const wavSlots: number[] = new Array();
 let maxStreams: number;
 let muted: boolean;
 
@@ -140,11 +140,12 @@ export function audioCodecs() {
     });
 }
 
-export function addSoundPlaylist(newList: any[]) {
+export function addSoundPlaylist(newList: string[]) {
     if (playList.length > 0) {
         stopSound();
     }
-    playList = newList;
+    playList.length = 0;
+    playList.push(...newList);
     playIndex = 0;
     playNext = -1;
 }
@@ -174,17 +175,13 @@ export function resetSounds() {
     }
     wavStreams.length = maxStreams;
     wavSlots.length = maxStreams;
-    soundsIdx = new Map();
-    soundsDat = new Array();
-    soundsIdx.set("select", 0);
-    soundsDat.push(new Howl({ src: ["./audio/select.wav"] }));
-    soundsIdx.set("navsingle", 1);
-    soundsDat.push(new Howl({ src: ["./audio/navsingle.wav"] }));
-    soundsIdx.set("navmulti", 2);
-    soundsDat.push(new Howl({ src: ["./audio/navmulti.wav"] }));
-    soundsIdx.set("deadend", 3);
-    soundsDat.push(new Howl({ src: ["./audio/deadend.wav"] }));
-    playList = new Array();
+    soundsIdx.clear();
+    soundsDat.length = 0;
+    DefaultSounds.forEach((sound, index) => {
+        soundsIdx.set(sound.toLowerCase(), index);
+        soundsDat.push(new Howl({ src: [`./audio/${sound}.wav`] }));
+    });
+    playList.length = 0;
     playIndex = 0;
     playLoop = false;
     playNext = -1;
@@ -197,7 +194,7 @@ function playSound() {
         let idx = soundsIdx.get(audio.toLowerCase());
         if (idx) {
             sound = soundsDat[idx];
-        } else if (audio.slice(0, 4).toLowerCase() === "http") {
+        } else if (audio.startsWith("http")) {
             sound = addWebSound(audio);
         } else {
             notifyAll("warning", `[sound] Can't find audio to play: ${audio}`);
@@ -213,7 +210,12 @@ function playSound() {
         } else {
             sound.play();
         }
-        notifyAll("post", { media: "audio", type: MediaEventType.SELECTED, index: playIndex });
+        const event: MediaEvent = {
+            media: "audio",
+            type: MediaEventType.SELECTED,
+            index: playIndex,
+        };
+        notifyAll("post", event);
     } else {
         notifyAll("warning", `[sound] Can't find audio index: ${playIndex}`);
     }
@@ -234,7 +236,12 @@ function nextSound() {
         playSound();
     } else {
         playIndex = 0;
-        notifyAll("post", { media: "audio", type: MediaEventType.FULL, index: currentIndex });
+        const event: MediaEvent = {
+            media: "audio",
+            type: MediaEventType.FULL,
+            index: currentIndex,
+        };
+        notifyAll("post", event);
     }
 }
 
@@ -249,7 +256,12 @@ function stopSound() {
                 soundsDat[idx].unload();
             }
         }
-        notifyAll("post", { media: "audio", type: MediaEventType.PARTIAL, index: playIndex });
+        const event: MediaEvent = {
+            media: "audio",
+            type: MediaEventType.PARTIAL,
+            index: playIndex,
+        };
+        notifyAll("post", event);
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to stop: ${playIndex} - ${audio}`);
     }
@@ -263,7 +275,12 @@ function pauseSound(notify = true) {
             soundsDat[idx].pause();
         }
         if (notify) {
-            notifyAll("post", { media: "audio", type: MediaEventType.PAUSED, index: playIndex });
+            const event: MediaEvent = {
+                media: "audio",
+                type: MediaEventType.PAUSED,
+                index: playIndex,
+            };
+            notifyAll("post", event);
         }
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to pause: ${playIndex} - ${audio}`);
@@ -278,7 +295,12 @@ function resumeSound(notify = true) {
             soundsDat[idx].play();
         }
         if (notify) {
-            notifyAll("post", { media: "audio", type: MediaEventType.RESUMED, index: playIndex });
+            const event: MediaEvent = {
+                media: "audio",
+                type: MediaEventType.RESUMED,
+                index: playIndex,
+            };
+            notifyAll("post", event);
         }
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to resume: ${playIndex} - ${audio}`);
@@ -309,8 +331,10 @@ function setNext(index: number) {
     }
 }
 
+// WAV Sound Functions
 function triggerWav(wav: string, volume: number, index: number) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
+    wav = wav.toLowerCase();
+    const soundId = soundsIdx.get(wav);
     if (soundId !== undefined) {
         const sound = soundsDat[soundId];
         if (volume && !isNaN(volume)) {
@@ -321,25 +345,44 @@ function triggerWav(wav: string, volume: number, index: number) {
                 wavStreams[index].stop();
             }
             wavStreams[index] = sound;
-            sound.on("end", function () {
+            sound.once("end", function () {
                 wavSlots[index] = -1;
-                notifyAll("post", { media: "wav", type: MediaEventType.STOP_PLAY, index: soundId });
+                const event: MediaEvent = {
+                    media: "wav",
+                    type: MediaEventType.STOP_PLAY,
+                    index: soundId,
+                    name: wav,
+                };
+                notifyAll("post", event);
             });
             sound.play();
             wavSlots[index] = soundId;
-            notifyAll("post", { media: "wav", type: MediaEventType.START_PLAY, index: soundId });
+            const event: MediaEvent = {
+                media: "wav",
+                type: MediaEventType.START_PLAY,
+                index: soundId,
+                name: wav,
+            };
+            notifyAll("post", event);
         }
     }
 }
 
 function stopWav(wav: string) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
+    wav = wav.toLowerCase();
+    const soundId = soundsIdx.get(wav);
     if (soundId) {
         const sound = soundsDat[soundId];
         for (let index = 0; index < maxStreams; index++) {
             const wavId = wavSlots[index];
             if (wavId === soundId) {
-                notifyAll("post", { media: "wav", type: MediaEventType.STOP_PLAY, index: soundId });
+                const event: MediaEvent = {
+                    media: "wav",
+                    type: MediaEventType.STOP_PLAY,
+                    index: soundId,
+                    name: wav,
+                };
+                notifyAll("post", event);
                 break;
             }
         }
@@ -350,7 +393,6 @@ function stopWav(wav: string) {
 }
 
 function addWebSound(url: string) {
-    // TODO: Fix the WAV index if a roAudioResource is created after this call
     soundsIdx.set(url.toLowerCase(), soundsDat.length);
     let sound = new Howl({
         src: [url],
