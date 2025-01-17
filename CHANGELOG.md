@@ -1,5 +1,14 @@
 # Changelog
 
+<a name="v1.8.2"></a>
+
+## [v1.8.2 - Fixed `ifToStr()` for `roInvalid`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.2) - 17 January 2025
+
+* Fixed `IfToStr` to properly handle `roInvalid` component by [@lvcabral](https://github.com/lvcabral) in [#451](https://github.com/lvcabral/brs-engine/pull/451)
+* Simplified `AppPayload` type checking by [@lvcabral](https://github.com/lvcabral) in [#452](https://github.com/lvcabral/brs-engine/pull/452)
+
+[Full Changelog][v1.8.2]
+
 <a name="v1.8.1"></a>
 
 ## [v1.8.1 - New interface modules and fixes on number parsing](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.1) - 10 January 2025
@@ -876,6 +885,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.2]: https://github.com/lvcabral/brs-engine/compare/v1.8.1...v1.8.2
 [v1.8.1]: https://github.com/lvcabral/brs-engine/compare/v1.8.0...v1.8.1
 [v1.8.0]: https://github.com/lvcabral/brs-engine/compare/v1.7.2...v1.8.0
 [v1.7.3]: https://github.com/lvcabral/brs-engine/compare/v1.7.0...v1.7.3
