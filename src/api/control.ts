@@ -120,30 +120,28 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
         mod: mod,
         remote: `${RemoteType[type]}:${index}`,
     };
-    if (["home", "volumemute", "poweroff"].includes(key)) {
-        if (mod === 0) {
-            notifyAll(key);
-        }
+    if (["home", "volumemute", "poweroff"].includes(key) && mod === 0) {
+        notifyAll(key);
         handled = true;
     } else if (!sendKeysEnabled) {
         return;
-    } else if (key === "break") {
-        if (!disableDebug && mod === 0) {
-            notifyAll("break");
-            handled = true;
-        }
+    } else if (key === "break" && !disableDebug && mod === 0) {
+        notifyAll("break");
+        handled = true;
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
             controlEvent.key = code + mod;
             handled = true;
         }
-    } else if (key.slice(0, 4).toLowerCase() === "lit_") {
-        // TODO: Check Carabiner code for how to better handle literals
-        if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            controlEvent.key = key.charCodeAt(4) + mod;
-            handled = true;
-        }
+    } else if (
+        key.toLowerCase().startsWith("lit_") &&
+        key.slice(4).length === 1 &&
+        key.charCodeAt(4) >= 32 &&
+        key.charCodeAt(4) < 255
+    ) {
+        controlEvent.key = key.charCodeAt(4) + mod;
+        handled = true;
     }
     if (controlEvent.key >= 0) {
         notifyAll("post", controlEvent);
