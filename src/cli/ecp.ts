@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { getRokuOSVersion } from "../core/common";
+import { AppData, DeviceInfo, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
 import xmlbuilder from "xmlbuilder";
@@ -24,7 +24,7 @@ const MAC = getMacAddress();
 const UDN = "138aedd0-d6ad-11eb-b8bc-" + MAC.replace(/:\s*/g, "");
 let ecp: restana.Service<restana.Protocol.HTTP>;
 let ssdp: any;
-let device: any;
+let device: DeviceInfo;
 let isECPEnabled = false;
 let cliRegistry = new Map<string, string>();
 
@@ -40,8 +40,7 @@ if (!isMainThread && parentPort) {
             } else if (data.service === "disable") {
                 disableECP();
             }
-        }
-        if (data instanceof Map) {
+        } else if (data instanceof Map) {
             cliRegistry = data;
         }
     });
@@ -213,7 +212,7 @@ function queryReply(msg: any, statusOK: string) {
     } else if (request === "query-apps") {
         reply = template.replace("$data", genAppsXml(true));
     } else if (request === "query-icon") {
-        reply = template.replace("$data", genAppIcon(true) as string);
+        reply = template.replace("$data", genAppIcon(msg["param-channel-id"], true) as string);
         reply = reply.replace("text/xml", "image/png");
     } else if (request === "query-tv-active-channel") {
         reply = template.replace("$data", genActiveApp(true));
@@ -278,7 +277,7 @@ function sendScpdXML(req: any, res: any) {
 
 function sendAppIcon(req: any, res: any) {
     res.setHeader("content-type", "image/png");
-    res.send(genAppIcon(false));
+    res.send(genAppIcon(req.params.appID, false));
 }
 
 function sendRegistry(req: any, res: any) {
@@ -434,35 +433,24 @@ function genScrsvXml(encrypt: boolean) {
 
 function genAppsXml(encrypt: boolean) {
     const xml = xmlbuilder.create("apps");
-    xml.ele(
-        "app",
-        {
-            id: "dev",
-            subtype: "sdka",
-            type: "appl",
-            version: "1.0.0",
-        },
-        "Side Loaded App via CLI"
-    );
-    // Added a fake app as Roku Deep Linking Tester requires at least 2 apps
-    xml.ele(
-        "app",
-        {
-            id: "home",
-            subtype: "sdka",
-            type: "appl",
-            version: "1.0.0",
-        },
-        "Home Screen"
-    );
+    if (device.appList === undefined || device.appList.length < 2) {
+        // Dummy app as Roku Deep Linking Tester requires at least 2 apps
+        xml.ele("app", { id: "home", type: "appl", version: "1.0.0" }, "Home Screen");
+    }
+    device.appList?.forEach((app: AppData) => {
+        xml.ele("app", { id: app.id, type: "appl", version: app.version }, app.title);
+    });
     const strXml = xml.end({ pretty: true });
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
 
-function genAppIcon(encrypt: boolean) {
-    const image = fs.readFileSync(
-        path.join(__dirname, "../browser/images/icons", "channel-icon.png")
-    );
+function genAppIcon(appID: string, encrypt: boolean) {
+    let iconPath = path.join(__dirname, "../browser/images/icons", "channel-icon.png");
+    const app = device.appList?.find((app) => app.id === appID);
+    if (typeof app?.icon === "string" && fs.existsSync(app.icon)) {
+        iconPath = app.icon;
+    }
+    const image = fs.readFileSync(iconPath);
     return encrypt ? image.toString("base64") : image;
 }
 
