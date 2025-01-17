@@ -79,6 +79,7 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
+    .option("-t, --tty", "Enable the keyboard (TTY) for control simulation.", false)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option(
@@ -290,9 +291,11 @@ async function runApp(payload: AppPayload) {
     }
     try {
         initControlModule();
-        readline.emitKeypressEvents(process.stdin);
-        process.stdin.setRawMode(true);
-        process.stdin.on("keypress", handleKeypressEvent);
+        if (program.tty) {
+            readline.emitKeypressEvents(process.stdin);
+            process.stdin.setRawMode(true);
+            process.stdin.on("keypress", handleKeypressEvent);
+        }
         subscribeControl("cli", (event: string, data: any) => {
             if (event === "home" || event === "poweroff") {
                 Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
@@ -527,7 +530,9 @@ function handleStringMessage(message: string) {
         if (message.split(",")[1] === "stop") {
             process.stdin.setRawMode(false);
         } else if (message.split(",")[1] === "continue") {
-            process.stdin.setRawMode(true);
+            if (program.tty) {
+                process.stdin.setRawMode(true);
+            }
             process.stdin.resume();
         }
     } else if (!["start", "reset", "video", "audio", "syslog"].includes(mType)) {
