@@ -153,7 +153,7 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
 
 // Input API
 export function sendInput(data: object) {
-    const inputEvent: InputEvent = Object.assign({ source_ip_addr: "" }, data);
+    const inputEvent: InputEvent = { source_ip_addr: "", ...data };
     notifyAll("post", inputEvent);
 }
 
