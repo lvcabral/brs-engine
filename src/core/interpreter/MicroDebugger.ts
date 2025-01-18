@@ -4,7 +4,6 @@ import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { BrsError } from "../Error";
 import { BrsObjects } from "../brsTypes";
-
 import {
     Statement,
     Assignment,
@@ -35,6 +34,15 @@ readline.setDefaultOptions({ prompt: DebugPrompt });
 // Debug Constants
 let stepMode = false;
 
+/**
+ * Main Debugger function
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param nextLoc (Location) - The next location to execute
+ * @param lastLoc (Location) - The last location executed
+ * @param errMessage (string) - The error message
+ * @param errNumber (number) - The error number
+ * @returns (boolean) - True if the execution should continue, false if it should exit
+ */
 export async function runDebugger(
     interpreter: Interpreter,
     nextLoc: Location,
@@ -42,37 +50,8 @@ export async function runDebugger(
     errMessage?: string,
     errNumber?: number
 ) {
-    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
-    let debugMsg = "BrightScript Micro Debugger.\r\n";
-    let lastLine: number = lastLoc.start.line;
-    if (stepMode) {
-        const line = lastLines[lastLine - 1].trimEnd();
-        interpreter.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
-    } else {
-        postMessage("debug,stop");
-        debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
-
-        debugMsg += "\r\nCurrent Function:\r\n";
-        let start = Math.max(lastLine - 8, 1);
-        let end = Math.min(lastLine + 5, lastLines.length);
-        for (let index = start; index < end; index++) {
-            const flag = index === lastLine ? "*" : " ";
-            const line = lastLines[index - 1].trimEnd();
-            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`;
-        }
-        debugMsg += "Source Digest(s):\r\n";
-        debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
-        debugMsg += `${interpreter.manifest.get("title") || "brs"}\r\n\r\n`;
-        debugMsg += `${errMessage ?? "STOP"} (runtime error &h${
-            errNumber ? numberToHex(errNumber) : "f7"
-        }) in ${interpreter.formatLocation()}`;
-        debugMsg += "\r\nBacktrace: \r\n";
-        interpreter.stdout.write(`print,${debugMsg}`);
-        interpreter.stdout.write(`print,${interpreter.formatBacktrace(nextLoc)}`);
-        interpreter.stdout.write(`print,Local variables:\r\n`);
-        interpreter.stdout.write(`print,${interpreter.formatLocalVariables()}`);
-    }
-
+    // Debugger Introduction Message
+    debuggerIntro(interpreter, lastLoc, nextLoc, errMessage, errNumber);
     // Debugger Loop
     while (true) {
         let line = "";
@@ -113,7 +92,54 @@ export async function runDebugger(
 }
 
 /**
- * Method to wait for the next debug command
+ * Function to print the debugger introduction message
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param nextLoc (Location) - The next location to execute
+ * @param lastLoc (Location) - The last location executed
+ * @param errMessage (string) - The error message
+ * @param errNumber (number) - The error number
+ */
+function debuggerIntro(
+    interpreter: Interpreter,
+    lastLoc: Location,
+    nextLoc: Location,
+    errMessage?: string,
+    errNumber?: number
+) {
+    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
+    let debugMsg = "BrightScript Micro Debugger.\r\n";
+    let lastLine: number = lastLoc.start.line;
+    if (stepMode) {
+        const line = lastLines[lastLine - 1].trimEnd();
+        interpreter.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
+    } else {
+        postMessage("debug,stop");
+        debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
+
+        debugMsg += "\r\nCurrent Function:\r\n";
+        let start = Math.max(lastLine - 8, 1);
+        let end = Math.min(lastLine + 5, lastLines.length);
+        for (let index = start; index < end; index++) {
+            const flag = index === lastLine ? "*" : " ";
+            const line = lastLines[index - 1].trimEnd();
+            debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`;
+        }
+        debugMsg += "Source Digest(s):\r\n";
+        debugMsg += `pkg: dev ${interpreter.getChannelVersion()} 5c04534a `;
+        debugMsg += `${interpreter.manifest.get("title") || "brs"}\r\n\r\n`;
+        debugMsg += `${errMessage ?? "STOP"} (runtime error &h${
+            errNumber ? numberToHex(errNumber) : "f7"
+        }) in ${interpreter.formatLocation()}`;
+        debugMsg += "\r\nBacktrace: \r\n";
+        interpreter.stdout.write(`print,${debugMsg}`);
+        interpreter.stdout.write(`print,${interpreter.formatBacktrace(nextLoc)}`);
+        interpreter.stdout.write(`print,Local variables:\r\n`);
+        interpreter.stdout.write(`print,${interpreter.formatLocalVariables()}`);
+    }
+}
+
+/**
+ * Function to wait for the next debug command
  * @returns a string with the debug expression
  */
 async function nextDebugCommand(interpreter: Interpreter): Promise<string> {
@@ -140,6 +166,11 @@ async function nextDebugCommand(interpreter: Interpreter): Promise<string> {
     return line;
 }
 
+/**
+ * Function to Handle a Debug Expression
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param expr (string) - The expression to evaluate
+ */
 async function debugHandleExpr(interpreter: Interpreter, expr: string) {
     const lexer = new Lexer();
     const parser = new Parser();
@@ -162,6 +193,11 @@ async function debugHandleExpr(interpreter: Interpreter, expr: string) {
     }
 }
 
+/**
+ * Function to run a debug statement
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param exprStmt  (Statement) - The statement to run
+ */
 async function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     try {
         if (exprStmt instanceof Assignment) {
@@ -198,6 +234,13 @@ async function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     }
 }
 
+/**
+ * Function to Handle a Debug Command
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param currLoc (Location) - The current location
+ * @param lastLoc (Location) - The last location
+ * @param cmd (number) - The debug command to execute
+ */
 async function debugHandleCommand(
     interpreter: Interpreter,
     currLoc: Location,
@@ -283,6 +326,13 @@ async function debugHandleCommand(
     }
 }
 
+/**
+ * Function to list the current function
+ * @param backTrace (TracePoint[]) - The backtrace of the current function
+ * @param currLines (string[]) - The current lines of the function
+ * @param flagLine  (number) - The line to flag
+ * @returns (string) - The formatted list of the current function
+ */
 function debugList(backTrace: TracePoint[], currLines: string[], flagLine: number): string {
     let list = "";
     if (backTrace.length > 0) {
@@ -298,6 +348,10 @@ function debugList(backTrace: TracePoint[], currLines: string[], flagLine: numbe
     return list;
 }
 
+/**
+ * Function to list the Help message with the valid commands
+ * @returns (string) - The help message
+ */
 function debugHelp(): string {
     let debugMsg = "";
 
@@ -330,6 +384,11 @@ function debugHelp(): string {
     return debugMsg;
 }
 
+/**
+ * Function to parse a debug command
+ * @param command (string) - The command to parse
+ * @returns (any) - The parsed command
+ */
 function parseCommand(command: string): any {
     let result = { cmd: DebugCommand.EXPR, expr: "" };
     if (command?.length) {
