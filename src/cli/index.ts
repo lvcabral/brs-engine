@@ -195,6 +195,7 @@ function runAppFiles(files: string[]) {
             return;
         }
         // Run BrightScript files
+        deviceData.appList?.push({ id: "dev", title: fileName, version: "1.0.0" });
         const payload = brs.createPayloadFromFiles(
             files,
             deviceData,
