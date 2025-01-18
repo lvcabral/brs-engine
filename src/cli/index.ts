@@ -23,7 +23,6 @@ import {
     loadAppZip,
     updateAppZip,
     subscribePackage,
-    getSerialNumber,
     mountExt,
     setupDeepLink,
 } from "../api/package";
@@ -265,7 +264,7 @@ async function runApp(payload: AppPayload) {
     if (program.ecp && !workerReady) {
         // Load ECP service as Worker
         const workerPath = path.join(__dirname, "brs.ecp.js");
-        const workerData = { device: { ...payload.device, serialNumber: getSerialNumber() } };
+        const workerData = { device: payload.device };
         ecpWorker = new Worker(workerPath, { workerData: workerData });
         ecpWorker.on("message", (event: any) => {
             if (typeof event === "object" && typeof event.ready === "boolean") {
