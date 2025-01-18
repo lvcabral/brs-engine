@@ -2,7 +2,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -23,7 +23,6 @@ import {
     loadAppZip,
     updateAppZip,
     subscribePackage,
-    getSerialNumber,
     mountExt,
     setupDeepLink,
 } from "../api/package";
@@ -251,7 +250,7 @@ async function runApp(payload: AppPayload) {
     if (program.ecp && !workerReady) {
         // Load ECP service as Worker
         const workerPath = path.join(__dirname, "brs.ecp.js");
-        const workerData = { device: { ...payload.device, serialNumber: getSerialNumber() } };
+        const workerData = { device: payload.device };
         brsWorker = new Worker(workerPath, { workerData: workerData });
         brsWorker.once("message", (value: any) => {
             if (value?.ready) {

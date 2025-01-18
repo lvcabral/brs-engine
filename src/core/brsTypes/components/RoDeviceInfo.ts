@@ -200,12 +200,13 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             return toAssociativeArray({
                 Manufacturer: "",
                 ModelNumber: this.deviceModel,
                 VendorName: "Roku",
                 VendorUSBName: "Roku",
+                SerialNumber: interpreter.deviceInfo?.get("serialNumber"),
             });
         },
     });
