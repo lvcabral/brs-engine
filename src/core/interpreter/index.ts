@@ -35,6 +35,7 @@ import {
     Signature,
     BrsInterface,
     toAssociativeArray,
+    AAMember,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -46,7 +47,6 @@ import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
-
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
@@ -55,10 +55,11 @@ import { runDebugger } from "./MicroDebugger";
 import {
     DataType,
     DebugCommand,
-    dataBufferIndex,
-    defaultDeviceInfo,
+    DataBufferIndex,
+    DefaultDeviceInfo,
     numberToHex,
     parseTextFile,
+    threadYield,
 } from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
@@ -124,7 +125,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly sharedArray = core.shared.get("buffer") || new Int32Array([]);
+    readonly sharedArray = core.shared.array ?? new Int32Array([]);
+    readonly isShared = core.shared.isShared;
+    readonly keysBuffer = core.controlEvents;
+    readonly debugBuffer = core.debugEvents;
+    readonly inputBuffer = core.inputEvents;
+    readonly sysLogBuffer = core.sysLogEvents;
+    readonly audioBuffer = core.audioEvents;
+    readonly videoBuffer = core.videoEvents;
+    readonly wavStatus = core.wavStatus;
+    readonly cecStatus = core.cecStatus;
     readonly isDevMode = process.env.NODE_ENV === "development";
 
     readonly stdout: OutputProxy;
@@ -226,7 +236,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
         this.fileSystem = new FileSystem(this.options.root, this.options.ext);
-        for (const [key, value] of Object.entries(defaultDeviceInfo)) {
+        for (const [key, value] of Object.entries(DefaultDeviceInfo)) {
             if (!["registry", "fonts"].includes(key)) {
                 this.deviceInfo.set(key, value);
             }
@@ -258,13 +268,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param func the JavaScript function to execute with the sub interpreter.
      * @param environment (Optional) the environment to run the interpreter in.
      */
-    inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
+    async inSubEnv(
+        func: (interpreter: Interpreter) => Promise<BrsType>,
+        environment?: Environment
+    ): Promise<BrsType> {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
         let retValue: BrsComponent | undefined = undefined;
         try {
             this._environment = newEnv;
-            const returnValue = func(this);
+            const returnValue = await func(this);
             this._environment = originalEnvironment;
             return returnValue;
         } catch (err: any) {
@@ -283,7 +296,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    exec(
+    async exec(
         statements: readonly Stmt.Statement[],
         sourceMap?: Map<string, string>,
         ...args: BrsType[]
@@ -291,14 +304,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (sourceMap) {
             this._sourceMap = sourceMap;
         }
-        let results = statements.map((statement) => this.execute(statement));
+        let results: BrsType[] = [];
+        // resolve statement promises in a loop to ensure statements are executed in order.
+        for (let statement of statements) {
+            results.push(await this.execute(statement));
+        }
         try {
             let mainName = "RunUserInterface";
-            let maybeMain = this.getCallableFunction(mainName.toLowerCase());
+            let maybeMain = await this.getCallableFunction(mainName.toLowerCase());
 
             if (maybeMain.kind !== ValueKind.Callable) {
                 mainName = "Main";
-                maybeMain = this.getCallableFunction(mainName.toLowerCase());
+                maybeMain = await this.getCallableFunction(mainName.toLowerCase());
             }
             if (maybeMain.kind === ValueKind.Callable) {
                 let mainVariable = new Expr.Variable({
@@ -315,7 +332,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
                 postMessage(`start,${mainVariable.name.text}`);
                 results = [
-                    this.visitCall(
+                    await this.visitCall(
                         new Expr.Call(
                             mainVariable,
                             mainVariable.name,
@@ -348,7 +365,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
-    getCallableFunction(functionName: string): Callable | BrsInvalid {
+    async getCallableFunction(functionName: string): Promise<Callable | BrsInvalid> {
         let callbackVariable = new Expr.Variable({
             kind: Lexeme.Identifier,
             text: functionName,
@@ -356,7 +373,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             location: Interpreter.InternalLocation,
         });
         let maybeCallback = this.evaluate(callbackVariable);
-        if (maybeCallback.kind === ValueKind.Callable) {
+        if (maybeCallback instanceof Callable) {
             return maybeCallback;
         }
 
@@ -398,24 +415,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitReturn(statement: Stmt.Return): never {
+    async visitReturn(statement: Stmt.Return) {
         if (!statement.value) {
             throw new Stmt.ReturnValue(statement.tokens.return.location);
         }
 
-        const toReturn = this.evaluate(statement.value);
+        const toReturn = await this.evaluate(statement.value);
         throw new Stmt.ReturnValue(statement.tokens.return.location, toReturn);
+        return BrsInvalid.Instance;
     }
 
-    visitExpression(statement: Stmt.Expression): BrsType {
-        return this.evaluate(statement.expression);
+    async visitExpression(statement: Stmt.Expression): Promise<BrsType> {
+        return await this.evaluate(statement.expression);
     }
 
-    visitPrint(statement: Stmt.Print): BrsType {
+    async visitPrint(statement: Stmt.Print): Promise<BrsType> {
         // the `tab` function is only in-scope while executing print statements
         this.environment.define(Scope.Function, "Tab", StdLib.Tab);
         let printStream = "";
-        statement.expressions.forEach((printable, index) => {
+        for (let printable of statement.expressions) {
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma: {
@@ -435,7 +453,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                 }
             } else {
-                const obj = this.evaluate(printable);
+                const obj = await this.evaluate(printable);
                 const str =
                     isNumberComp(obj) && this.isPositive(obj.getValue())
                         ? " " + obj.toString()
@@ -443,7 +461,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 printStream += str;
                 this.stdout.position(str);
             }
-        });
+        }
         let lastExpression = statement.expressions[statement.expressions.length - 1];
         if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
             printStream += "\r\n";
@@ -462,7 +480,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitAssignment(statement: Stmt.Assignment): BrsType {
+    async visitAssignment(statement: Stmt.Assignment): Promise<BrsType> {
         if (statement.name.isReserved) {
             this.addError(
                 new BrsError(
@@ -472,7 +490,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             );
         }
 
-        let value = this.evaluate(statement.value);
+        let value = await this.evaluate(statement.value);
 
         let name = statement.name.text;
 
@@ -519,7 +537,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitDim(statement: Stmt.Dim): BrsType {
+    async visitDim(statement: Stmt.Dim): Promise<BrsType> {
         if (statement.name.isReserved) {
             this.addError(
                 new BrsError(
@@ -527,12 +545,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     statement.name.location
                 )
             );
-            return BrsInvalid.Instance;
         }
 
         let dimensionValues: number[] = [];
-        statement.dimensions.forEach((expr) => {
-            let val = this.evaluate(expr);
+        for (let expr of statement.dimensions) {
+            let val = await this.evaluate(expr);
             if (val.kind !== ValueKind.Int32 && val.kind !== ValueKind.Float) {
                 this.addError(
                     new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, expr.location)
@@ -540,7 +557,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             // dim takes max-index, so +1 to get the actual array size
             dimensionValues.push(val.getValue() + 1);
-        });
+        }
 
         let createArrayTree = (dimIndex: number = 0): RoArray => {
             let children: RoArray[] = [];
@@ -572,16 +589,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitBinary(expression: Expr.Binary) {
+    async visitBinary(expression: Expr.Binary) {
         let lexeme = expression.token.kind;
-        let left = this.evaluate(expression.left);
+        let left = await this.evaluate(expression.left);
         let right: BrsType = BrsInvalid.Instance;
 
         if (lexeme !== Lexeme.And && lexeme !== Lexeme.Or) {
             // don't evaluate right-hand-side of boolean expressions, to preserve short-circuiting
             // behavior found in other languages. e.g. `foo() && bar()` won't execute `bar()` if
             // `foo()` returns `false`.
-            right = this.evaluate(expression.right);
+            right = await this.evaluate(expression.right);
         }
 
         // Unbox Numeric components to intrinsic types
@@ -929,7 +946,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     // short-circuit ANDs - don't evaluate RHS if LHS is false
                     return BrsBoolean.False;
                 } else if (isBrsBoolean(left)) {
-                    right = this.evaluate(expression.right);
+                    right = await this.evaluate(expression.right);
                     if (isBrsBoolean(right) || isBrsNumber(right)) {
                         return (left as BrsBoolean).and(right);
                     }
@@ -948,7 +965,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         })
                     );
                 } else if (isBrsNumber(left)) {
-                    right = this.evaluate(expression.right);
+                    right = await this.evaluate(expression.right);
 
                     if (isBrsNumber(right) || isBrsBoolean(right)) {
                         return left.and(right);
@@ -987,7 +1004,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     // short-circuit ORs - don't evaluate RHS if LHS is true
                     return BrsBoolean.True;
                 } else if (isBrsBoolean(left)) {
-                    right = this.evaluate(expression.right);
+                    right = await this.evaluate(expression.right);
                     if (isBrsBoolean(right) || isBrsNumber(right)) {
                         return (left as BrsBoolean).or(right);
                     } else {
@@ -1006,7 +1023,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         );
                     }
                 } else if (isBrsNumber(left)) {
-                    right = this.evaluate(expression.right);
+                    right = await this.evaluate(expression.right);
                     if (isBrsNumber(right) || isBrsBoolean(right)) {
                         return left.or(right);
                     }
@@ -1049,11 +1066,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitTryCatch(statement: Stmt.TryCatch): BrsInvalid {
+    async visitTryCatch(statement: Stmt.TryCatch): Promise<BrsInvalid> {
         let tryMode = this._tryMode;
         try {
             this._tryMode = true;
-            this.visitBlock(statement.tryBlock);
+            await this.visitBlock(statement.tryBlock);
             this._tryMode = tryMode;
         } catch (err: any) {
             this._tryMode = tryMode;
@@ -1065,15 +1082,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 statement.errorBinding.name.text,
                 this.formatErrorVariable(err)
             );
-            this.visitBlock(statement.catchBlock);
+            await this.visitBlock(statement.catchBlock);
         }
         return BrsInvalid.Instance;
     }
 
-    visitThrow(statement: Stmt.Throw): never {
+    async visitThrow(statement: Stmt.Throw) {
         let errDetail = RuntimeErrorDetail.UserDefined;
         errDetail.message = "";
-        let toThrow = this.evaluate(statement.value);
+        let toThrow = await this.evaluate(statement.value);
         if (isStringComp(toThrow)) {
             errDetail.message = toThrow.getValue();
             throw new RuntimeError(errDetail, statement.location, this._stack.slice());
@@ -1106,6 +1123,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         }
         throw new RuntimeError(errDetail, statement.location, this._stack.slice(), extraFields);
+        return BrsInvalid.Instance;
         // Validation Functions
         function validateErrorNumber(element: BrsType, errDetail: ErrorDetail): ErrorDetail {
             if (element instanceof Int32) {
@@ -1135,8 +1153,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitBlock(block: Stmt.Block): BrsType {
-        block.statements.forEach((statement) => this.execute(statement));
+    async visitBlock(block: Stmt.Block): Promise<BrsType> {
+        for (let statement of block.statements) {
+            await this.execute(statement);
+        }
         return BrsInvalid.Instance;
     }
 
@@ -1160,7 +1180,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         throw new Stmt.ExitWhileReason(statement.location);
     }
 
-    visitCall(expression: Expr.Call) {
+    async visitCall(expression: Expr.Call) {
         let functionName = "[anonymous function]";
         // TODO: auto-box
         if (
@@ -1171,10 +1191,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         // evaluate the function to call (it could be the result of another function call)
-        const evaluated = this.evaluate(expression.callee);
+        const evaluated = await this.evaluate(expression.callee);
         const callee = evaluated instanceof RoFunction ? evaluated.unbox() : evaluated;
         // evaluate all of the arguments as well (they could also be function calls)
-        let args = expression.args.map(this.evaluate, this);
+        let args = new Array<BrsType>();
+        for (let arg of expression.args) {
+            args.push(await this.evaluate(arg));
+        }
 
         if (!isBrsCallable(callee)) {
             if (callee instanceof BrsInvalid && expression.optional) {
@@ -1206,7 +1229,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (expression.callee instanceof Expr.DottedGet) {
                     mPointer = callee.getContext() ?? mPointer;
                 }
-                return this.inSubEnv((subInterpreter) => {
+                return await this.inSubEnv(async (subInterpreter) => {
                     subInterpreter.environment.setM(mPointer);
                     this._stack.push({
                         functionName: functionName,
@@ -1215,7 +1238,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         signature: signature,
                     });
                     try {
-                        const returnValue = callee.call(this, ...args);
+                        const returnValue = await callee.call(this, ...args);
                         this._stack.pop();
                         return returnValue;
                     } catch (err: any) {
@@ -1231,7 +1254,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             if (err instanceof RuntimeError) {
                                 errNumber = err.errorDetail.errno;
                             }
-                            runDebugger(this, this.location, this.location, err.message, errNumber);
+                            await runDebugger(
+                                this,
+                                this.location,
+                                this.location,
+                                err.message,
+                                errNumber
+                            );
                             this.options.stopOnCrash = false;
                         }
                         throw err;
@@ -1306,8 +1335,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitAtSignGet(expression: Expr.AtSignGet) {
-        let source = this.evaluate(expression.obj);
+    async visitAtSignGet(expression: Expr.AtSignGet) {
+        let source = await this.evaluate(expression.obj);
         if (source instanceof BrsInvalid && expression.optional) {
             return source;
         }
@@ -1330,11 +1359,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitDottedGet(expression: Expr.DottedGet) {
+    async visitDottedGet(expression: Expr.DottedGet) {
         if (expression.obj instanceof Expr.DottedGet) {
             this._dotLevel++;
         }
-        let source = this.evaluate(expression.obj);
+        let source = await this.evaluate(expression.obj);
         let boxedSource = isBoxable(source) ? source.box() : source;
 
         if (boxedSource instanceof BrsComponent) {
@@ -1398,8 +1427,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.addError(new RuntimeError(errorDetail, expression.name.location));
     }
 
-    visitIndexedGet(expression: Expr.IndexedGet): BrsType {
-        let source = this.evaluate(expression.obj);
+    async visitIndexedGet(expression: Expr.IndexedGet): Promise<BrsType> {
+        let source = await this.evaluate(expression.obj);
         if (!isIterable(source)) {
             if (source instanceof BrsInvalid && expression.optional) {
                 return source;
@@ -1416,7 +1445,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     )
                 );
             }
-            let index = this.evaluate(expression.indexes[0]);
+            let index = await this.evaluate(expression.indexes[0]);
             if (!isBrsString(index)) {
                 this.addError(
                     new TypeMismatch({
@@ -1446,7 +1475,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         let current: BrsType = source;
         for (let index of expression.indexes) {
-            let dimIndex = this.evaluate(index);
+            let dimIndex = await this.evaluate(index);
             if (!isBrsNumber(dimIndex)) {
                 this.addError(
                     new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, index.location)
@@ -1472,14 +1501,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return current;
     }
 
-    visitGrouping(expr: Expr.Grouping) {
-        return this.evaluate(expr.expression);
+    async visitGrouping(expr: Expr.Grouping) {
+        return await this.evaluate(expr.expression);
     }
 
-    visitFor(statement: Stmt.For): BrsType {
+    async visitFor(statement: Stmt.For): Promise<BrsType> {
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
-        let increment = this.evaluate(statement.increment) as Int32 | Float;
+        let increment = (await this.evaluate(statement.increment)) as Int32 | Float;
         if (increment instanceof Float) {
             increment = new Int32(Math.trunc(increment.getValue()));
         }
@@ -1500,14 +1529,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         );
         let startValue: BrsType;
         if (this.environment.continueFor) {
-            this.execute(step);
-            startValue = this.evaluate(new Expr.Variable(counterName)) as Int32 | Float;
+            await this.execute(step);
+            startValue = (await this.evaluate(new Expr.Variable(counterName))) as Int32 | Float;
             this.environment.continueFor = false;
         } else {
-            this.execute(statement.counterDeclaration);
-            startValue = this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
+            await this.execute(statement.counterDeclaration);
+            startValue = (await this.evaluate(statement.counterDeclaration.value)) as Int32 | Float;
         }
-        const finalValue = this.evaluate(statement.finalValue) as Int32 | Float;
+        const finalValue = (await this.evaluate(statement.finalValue)) as Int32 | Float;
         if (
             (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
             (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
@@ -1518,14 +1547,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (increment.getValue() > 0) {
             while (
-                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
+                ((await this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
                     .greaterThan(finalValue)
                     .not()
                     .toBoolean()
             ) {
                 // execute the block
                 try {
-                    this.execute(statement.body);
+                    await this.execute(statement.body);
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
@@ -1538,18 +1567,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
 
                 // then increment the counter
-                this.execute(step);
+                await this.execute(step);
             }
         } else {
             while (
-                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
+                ((await this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
                     .lessThan(finalValue)
                     .not()
                     .toBoolean()
             ) {
                 // execute the block
                 try {
-                    this.execute(statement.body);
+                    await this.execute(statement.body);
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
@@ -1562,15 +1591,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
 
                 // then increment the counter
-                this.execute(step);
+                await this.execute(step);
             }
         }
 
         return BrsInvalid.Instance;
     }
 
-    visitForEach(statement: Stmt.ForEach): BrsType {
-        let target = this.evaluate(statement.target);
+    async visitForEach(statement: Stmt.ForEach): Promise<BrsType> {
+        let target = await this.evaluate(statement.target);
         if (!isIterable(target)) {
             // Roku device does not crash if the value is not iterable, just send a console message
             const message = `BRIGHTSCRIPT: ERROR: Runtime: FOR EACH value is ${ValueKind.toString(
@@ -1596,7 +1625,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             // execute the block
             try {
                 if (continueAt <= index) {
-                    this.execute(statement.body);
+                    await this.execute(statement.body);
                 }
             } catch (reason) {
                 if (reason instanceof Stmt.ExitForReason) {
@@ -1620,10 +1649,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitWhile(statement: Stmt.While): BrsType {
-        while (this.evaluate(statement.condition).equalTo(BrsBoolean.True).toBoolean()) {
+    async visitWhile(statement: Stmt.While): Promise<BrsType> {
+        while ((await this.evaluate(statement.condition)).equalTo(BrsBoolean.True).toBoolean()) {
             try {
-                this.execute(statement.body);
+                await this.execute(statement.body);
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     break;
@@ -1639,20 +1668,20 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitIf(statement: Stmt.If): BrsType {
-        if (this.evaluate(statement.condition).equalTo(BrsBoolean.True).toBoolean()) {
-            this.execute(statement.thenBranch);
+    async visitIf(statement: Stmt.If): Promise<BrsType> {
+        if ((await this.evaluate(statement.condition)).equalTo(BrsBoolean.True).toBoolean()) {
+            await this.execute(statement.thenBranch);
             return BrsInvalid.Instance;
         } else {
             for (const elseIf of statement.elseIfs || []) {
-                if (this.evaluate(elseIf.condition).equalTo(BrsBoolean.True).toBoolean()) {
-                    this.execute(elseIf.thenBranch);
+                if ((await this.evaluate(elseIf.condition)).equalTo(BrsBoolean.True).toBoolean()) {
+                    await this.execute(elseIf.thenBranch);
                     return BrsInvalid.Instance;
                 }
             }
 
             if (statement.elseBranch) {
-                this.execute(statement.elseBranch);
+                await this.execute(statement.elseBranch);
             }
 
             return BrsInvalid.Instance;
@@ -1667,22 +1696,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return expression.value;
     }
 
-    visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
-        return new RoArray(expression.elements.map((expr) => this.evaluate(expr)));
+    async visitArrayLiteral(expression: Expr.ArrayLiteral): Promise<RoArray> {
+        const array = new Array<BrsType>();
+        for (let expr of expression.elements) {
+            array.push(await this.evaluate(expr));
+        }
+        return new RoArray(array);
     }
 
-    visitAALiteral(expression: Expr.AALiteral): BrsType {
-        return new RoAssociativeArray(
-            expression.elements.map((member) => ({
+    async visitAALiteral(expression: Expr.AALiteral): Promise<BrsType> {
+        const aaMembers = new Array<AAMember>();
+        for (let member of expression.elements) {
+            aaMembers.push({
                 name: member.name,
-                value: this.evaluate(member.value),
-            }))
-        );
+                value: await this.evaluate(member.value),
+            });
+        }
+        return new RoAssociativeArray(aaMembers);
     }
 
-    visitDottedSet(statement: Stmt.DottedSet) {
-        let value = this.evaluate(statement.value);
-        let source = this.evaluate(statement.obj);
+    async visitDottedSet(statement: Stmt.DottedSet) {
+        let value = await this.evaluate(statement.value);
+        let source = await this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
             this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.name.location));
@@ -1697,9 +1732,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitIndexedSet(statement: Stmt.IndexedSet) {
-        let value = this.evaluate(statement.value);
-        let source = this.evaluate(statement.obj);
+    async visitIndexedSet(statement: Stmt.IndexedSet) {
+        let value = await this.evaluate(statement.value);
+        let source = await this.evaluate(statement.obj);
 
         if (!isIterable(source)) {
             this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.obj.location));
@@ -1714,7 +1749,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     )
                 );
             }
-            let index = this.evaluate(statement.indexes[0]);
+            let index = await this.evaluate(statement.indexes[0]);
             if (!isBrsString(index)) {
                 this.addError(
                     new TypeMismatch({
@@ -1746,7 +1781,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         let current: BrsType = source;
         for (let i = 0; i < statement.indexes.length; i++) {
-            let index = this.evaluate(statement.indexes[i]);
+            let index = await this.evaluate(statement.indexes[i]);
             if (!isBrsNumber(index)) {
                 this.addError(
                     new RuntimeError(
@@ -1794,8 +1829,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitIncrement(statement: Stmt.Increment) {
-        let target = this.evaluate(statement.value);
+    async visitIncrement(statement: Stmt.Increment) {
+        let target = await this.evaluate(statement.value);
         if (isBoxedNumber(target)) {
             target = target.unbox();
         }
@@ -1825,7 +1860,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.environment.define(Scope.Function, statement.value.name.text, result);
         } else if (statement.value instanceof Expr.DottedGet) {
             // immediately execute a dotted "set" statement
-            this.execute(
+            await this.execute(
                 new Stmt.DottedSet(
                     statement.value.obj,
                     statement.value.name,
@@ -1834,7 +1869,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             );
         } else if (statement.value instanceof Expr.IndexedGet) {
             // immediately execute an indexed "set" statement
-            this.execute(
+            await this.execute(
                 new Stmt.IndexedSet(
                     statement.value.obj,
                     statement.value.indexes,
@@ -1848,8 +1883,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitUnary(expression: Expr.Unary) {
-        let right = this.evaluate(expression.right);
+    async visitUnary(expression: Expr.Unary) {
+        let right = await this.evaluate(expression.right);
         if (isBoxedNumber(right)) {
             right = right.unbox();
         }
@@ -1903,19 +1938,20 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    evaluate(this: Interpreter, expression: Expr.Expression): BrsType {
+    evaluate(this: Interpreter, expression: Expr.Expression): BrsType | Promise<BrsType> {
         if (expression.location.start.line !== -1) this.location = expression.location;
         return expression.accept<BrsType>(this);
     }
 
-    execute(this: Interpreter, statement: Stmt.Statement): BrsType {
+    async execute(this: Interpreter, statement: Stmt.Statement): Promise<BrsType> {
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
-        const cmd = this.checkBreakCommand();
+        const cmd = await this.checkBreakCommand();
         if (cmd === DebugCommand.BREAK) {
             if (!(statement instanceof Stmt.Block)) {
-                if (!runDebugger(this, statement.location, this.location)) {
+                const proceed = await runDebugger(this, statement.location, this.location);
+                if (!proceed) {
                     this.options.stopOnCrash = false;
                     throw new BlockEnd("debug-exit", statement.location);
                 }
@@ -1934,25 +1970,25 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      *
      * @returns Invalid if no exception is thrown
      */
-    private searchLabel(this: Interpreter, statement: Stmt.Statement) {
+    private async searchLabel(this: Interpreter, statement: Stmt.Statement) {
         if (statement instanceof Stmt.Label) {
             if (statement.tokens.identifier.text.toLowerCase() === this.environment.gotoLabel) {
                 this.environment.gotoLabel = "";
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.If) {
-            this.visitBlock(statement.thenBranch);
+            await this.visitBlock(statement.thenBranch);
             if (this.environment.gotoLabel !== "" && statement.elseBranch) {
-                this.visitBlock(statement.elseBranch);
+                await this.visitBlock(statement.elseBranch);
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.TryCatch) {
             // Only search on Catch block, as labels are illegal inside Try block
-            this.visitBlock(statement.catchBlock);
+            await this.visitBlock(statement.catchBlock);
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
-                this.visitBlock(statement.body);
+                await this.visitBlock(statement.body);
                 this.environment.continueFor = this.environment.gotoLabel === "";
             } catch (reason) {
                 this.environment.continueFor = false;
@@ -1966,7 +2002,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else if (statement instanceof Stmt.While) {
             try {
-                this.visitBlock(statement.body);
+                await this.visitBlock(statement.body);
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     return BrsInvalid.Instance;
@@ -1996,11 +2032,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         /// #if BROWSER
         // Only Chromium based browsers support process.memory API, web workers do not have it yet,
         // This information comes from the main thread and does not include the worker thread memory.
-        const limit = Atomics.load(this.sharedArray, DataType.MHSL);
-        const used = Atomics.load(this.sharedArray, DataType.MUHS);
-        if (limit > 0 && used > 0) {
-            heapSizeLimit = limit;
-            usedHeapSize = used;
+        if (core.memoryInfo.heapSizeLimit > 0 && core.memoryInfo.usedHeapSize > 0) {
+            heapSizeLimit = core.memoryInfo.heapSizeLimit;
+            usedHeapSize = core.memoryInfo.usedHeapSize;
         }
         /// #else
         // More accurate information from the V8 engine in Node.js
@@ -2142,22 +2176,38 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to check if the Break Command is set in the sharedArray
+     * Method to check if the Break Command was sent
      * @returns the last debug command
      */
-    checkBreakCommand(): number {
+    async checkBreakCommand(): Promise<number> {
         let cmd = this.debugMode ? DebugCommand.BREAK : -1;
         if (!this.debugMode) {
-            cmd = Atomics.load(this.sharedArray, DataType.DBG);
-            if (cmd === DebugCommand.BREAK) {
-                Atomics.store(this.sharedArray, DataType.DBG, -1);
-                this.debugMode = true;
-            } else if (cmd === DebugCommand.PAUSE) {
-                postMessage("debug,pause");
-                Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
-                Atomics.store(this.sharedArray, DataType.DBG, -1);
-                cmd = -1;
-                postMessage("debug,continue");
+            if (this.isShared) {
+                cmd = Atomics.load(this.sharedArray, DataType.DBG);
+                if (cmd === DebugCommand.BREAK) {
+                    Atomics.store(this.sharedArray, DataType.DBG, -1);
+                    this.debugMode = true;
+                } else if (cmd === DebugCommand.PAUSE) {
+                    postMessage("debug,pause");
+                    Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
+                    Atomics.store(this.sharedArray, DataType.DBG, -1);
+                    cmd = -1;
+                    postMessage("debug,continue");
+                }
+            } else if (this.debugBuffer.length > 0) {
+                let cmd = this.debugBuffer.shift()?.command ?? -1;
+                if (cmd === DebugCommand.BREAK) {
+                    this.debugMode = true;
+                } else if (cmd === DebugCommand.PAUSE) {
+                    postMessage("debug,pause");
+                    while (cmd === DebugCommand.PAUSE) {
+                        await threadYield();
+                        if (this.debugBuffer.length > 0) {
+                            cmd = this.debugBuffer.shift()?.command ?? -1;
+                        }
+                    }
+                    postMessage("debug,continue");
+                }
             }
         }
         return cmd;
@@ -2169,7 +2219,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     readDataBuffer(): string {
         let data = "";
-        this.sharedArray.slice(dataBufferIndex).every((char) => {
+        this.sharedArray.slice(DataBufferIndex).every((char) => {
             if (char > 0) {
                 data += String.fromCharCode(char);
             }

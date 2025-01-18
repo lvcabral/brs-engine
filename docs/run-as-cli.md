@@ -22,6 +22,7 @@ Options:
   -c, --colors <level>        Define the console color level (0 to disable). (default: 3)
   -d, --debug                 Open the micro debugger if the app crashes.
   -e, --ecp                   Enable the ECP server for control simulation.
+  -t, --tty                   Enable the keyboard (TTY) for control simulation.
   -p, --pack <password>       The password to generate the encrypted package. (default: "")
   -o, --out <directory>       The directory to save the encrypted package file. (default: "./")
   -r, --root <directory>      The root directory from which `pkg:` paths will be resolved.
@@ -107,7 +108,11 @@ The `<columns>` defines the width in number of character columns, the height wil
 
 ### Controlling the App
 
-The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
+If you need to use remote control simulation, you have two options:
+
+1. Enable the option `--tty` that will allow the usage of the keyboard to control the app or start the **Micro Debugger** with `Ctrl+C`. Check the [keyboard mapping](./remote-control.md) to learn all the keyboard shortcuts available.
+1. Enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
+
 
 ### Creating an encrypted App package file
 

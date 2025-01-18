@@ -3,20 +3,19 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, RoMessagePort } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoCECStatusEvent } from "../events/RoCECStatusEvent";
-import { DataType } from "../../common";
+import { RoCECStatusEvent } from "./RoCECStatusEvent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoCECStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
-    private active: number;
+    private active: boolean;
 
     constructor(interpreter: Interpreter) {
         super("roCECStatus");
         this.interpreter = interpreter;
-        this.active = 1; // Default to active
+        this.active = true; // Default to active
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -44,10 +43,10 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const cecActive = Atomics.load(this.interpreter.sharedArray, DataType.CEC);
-        if (cecActive >= 0 && cecActive !== this.active) {
+        const cecActive = this.interpreter.cecStatus.activeSource;
+        if (cecActive !== this.active) {
             this.active = cecActive;
-            events.push(new RoCECStatusEvent(this.active !== 0));
+            events.push(new RoCECStatusEvent(cecActive));
         }
         return events;
     }
@@ -61,8 +60,7 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter) => {
-            const cecActive = Atomics.load(interpreter.sharedArray, DataType.CEC);
-            return BrsBoolean.from(cecActive !== 0);
+            return BrsBoolean.from(interpreter.cecStatus.activeSource);
         },
     });
 }

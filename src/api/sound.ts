@@ -6,25 +6,24 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { DataType, DefaultSounds, MediaEvent } from "../core/common";
+import { DefaultSounds, MediaEvent, MediaEventType } from "../core/common";
 import { Howl, Howler } from "howler";
 
 // Sound Objects
 const soundsIdx: Map<string, number> = new Map();
 const soundsDat: Howl[] = new Array();
-const soundState: number[] = new Array();
-const playList: string[] = new Array();
+const soundState = new Array<number>();
+const playList = new Array<string>();
 const wavStreams: Howl[] = new Array();
+const wavSlots = new Array<number>();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
-let sharedArray: Int32Array;
-let maxStreams: number = 2;
+let maxStreams: number;
 let muted: boolean;
 
 // Initialize Sound Module
-export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
-    sharedArray = array;
+export function initSoundModule(streams: number, mute: boolean = false) {
     maxStreams = Math.min(streams, 3) || 2;
     resetSounds();
     muteSound(mute);
@@ -175,6 +174,7 @@ export function resetSounds() {
         });
     }
     wavStreams.length = maxStreams;
+    wavSlots.length = maxStreams;
     soundsIdx.clear();
     soundsDat.length = 0;
     DefaultSounds.forEach((sound, index) => {
@@ -210,14 +210,19 @@ function playSound() {
         } else {
             sound.play();
         }
-        Atomics.store(sharedArray, DataType.IDX, playIndex);
-        Atomics.store(sharedArray, DataType.SND, MediaEvent.SELECTED);
+        const event: MediaEvent = {
+            media: "audio",
+            type: MediaEventType.SELECTED,
+            index: playIndex,
+        };
+        notifyAll("post", event);
     } else {
         notifyAll("warning", `[sound] Can't find audio index: ${playIndex}`);
     }
 }
 
 function nextSound() {
+    const currentIndex = playIndex;
     if (playNext >= 0 && playNext < playList.length) {
         playIndex = playNext;
     } else {
@@ -231,7 +236,12 @@ function nextSound() {
         playSound();
     } else {
         playIndex = 0;
-        Atomics.store(sharedArray, DataType.SND, MediaEvent.FULL);
+        const event: MediaEvent = {
+            media: "audio",
+            type: MediaEventType.FULL,
+            index: currentIndex,
+        };
+        notifyAll("post", event);
     }
 }
 
@@ -246,7 +256,12 @@ function stopSound() {
                 soundsDat[idx].unload();
             }
         }
-        Atomics.store(sharedArray, DataType.SND, MediaEvent.PARTIAL);
+        const event: MediaEvent = {
+            media: "audio",
+            type: MediaEventType.PARTIAL,
+            index: playIndex,
+        };
+        notifyAll("post", event);
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to stop: ${playIndex} - ${audio}`);
     }
@@ -260,7 +275,12 @@ function pauseSound(notify = true) {
             soundsDat[idx].pause();
         }
         if (notify) {
-            Atomics.store(sharedArray, DataType.SND, MediaEvent.PAUSED);
+            const event: MediaEvent = {
+                media: "audio",
+                type: MediaEventType.PAUSED,
+                index: playIndex,
+            };
+            notifyAll("post", event);
         }
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to pause: ${playIndex} - ${audio}`);
@@ -275,7 +295,12 @@ function resumeSound(notify = true) {
             soundsDat[idx].play();
         }
         if (notify) {
-            Atomics.store(sharedArray, DataType.SND, MediaEvent.RESUMED);
+            const event: MediaEvent = {
+                media: "audio",
+                type: MediaEventType.RESUMED,
+                index: playIndex,
+            };
+            notifyAll("post", event);
         }
     } else if (audio) {
         notifyAll("warning", `[sound] Can't find audio to resume: ${playIndex} - ${audio}`);
@@ -308,7 +333,8 @@ function setNext(index: number) {
 
 // WAV Sound Functions
 function triggerWav(wav: string, volume: number, index: number) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
+    wav = wav.toLowerCase();
+    const soundId = soundsIdx.get(wav);
     if (soundId !== undefined) {
         const sound = soundsDat[soundId];
         if (volume && !isNaN(volume)) {
@@ -320,22 +346,43 @@ function triggerWav(wav: string, volume: number, index: number) {
             }
             wavStreams[index] = sound;
             sound.once("end", function () {
-                Atomics.store(sharedArray, DataType.WAV + index, -1);
+                wavSlots[index] = -1;
+                const event: MediaEvent = {
+                    media: "wav",
+                    type: MediaEventType.STOP_PLAY,
+                    index: soundId,
+                    name: wav,
+                };
+                notifyAll("post", event);
             });
             sound.play();
-            Atomics.store(sharedArray, DataType.WAV + index, soundId);
+            wavSlots[index] = soundId;
+            const event: MediaEvent = {
+                media: "wav",
+                type: MediaEventType.START_PLAY,
+                index: soundId,
+                name: wav,
+            };
+            notifyAll("post", event);
         }
     }
 }
 
 function stopWav(wav: string) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
+    wav = wav.toLowerCase();
+    const soundId = soundsIdx.get(wav);
     if (soundId) {
         const sound = soundsDat[soundId];
         for (let index = 0; index < maxStreams; index++) {
-            const wavId = Atomics.load(sharedArray, DataType.WAV + index);
+            const wavId = wavSlots[index];
             if (wavId === soundId) {
-                Atomics.store(sharedArray, DataType.WAV + index, -1);
+                const event: MediaEvent = {
+                    media: "wav",
+                    type: MediaEventType.STOP_PLAY,
+                    index: soundId,
+                    name: wav,
+                };
+                notifyAll("post", event);
                 break;
             }
         }
@@ -346,7 +393,6 @@ function stopWav(wav: string) {
 }
 
 function addWebSound(url: string) {
-    // TODO: Fix the WAV index if a roAudioResource is created after this call
     soundsIdx.set(url.toLowerCase(), soundsDat.length);
     let sound = new Howl({
         src: [url],

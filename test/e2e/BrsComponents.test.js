@@ -568,7 +568,10 @@ describe("end to end brightscript functions", () => {
     });
 
     test("components/roEvents.brs", async () => {
-        await execute([resourceFile("components", "roEvents.brs")], outputStreams);
+        jest.useFakeTimers();
+        const resultPromise = execute([resourceFile("components", "roEvents.brs")], outputStreams);
+        await jest.advanceTimersByTimeAsync(1000);
+        await resultPromise;
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "roCECStatus.isActiveSource() = true",
             "roHdmiStatus.isConnected() = true",

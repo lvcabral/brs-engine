@@ -13,8 +13,7 @@ import {
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { BufferType, DataType, MediaEvent } from "../../common";
-import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
+import { MediaEventType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
@@ -24,10 +23,11 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
-    private videoFlags: number;
+    private videoFlags: MediaEventType | -1;
     private videoIndex: number;
     private videoPosition: number;
     private videoProgress: number;
+    private videoDuration: number;
     private audioTracks: any[];
     cookiesEnabled: boolean;
 
@@ -40,6 +40,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.videoIndex = -1;
         this.videoPosition = 0;
         this.videoProgress = -1;
+        this.videoDuration = 0;
         this.audioTracks = [];
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
@@ -130,45 +131,34 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     getNewEvents() {
         const events: BrsEvent[] = [];
-        const selected = Atomics.load(this.interpreter.sharedArray, DataType.VSE);
-        if (selected >= 0) {
-            events.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
-            Atomics.store(this.interpreter.sharedArray, DataType.VSE, -1);
-        }
-        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
-        if (bufferFlag === BufferType.AUDIO_TRACKS) {
-            const strTracks = this.interpreter.readDataBuffer();
-            try {
-                this.audioTracks = JSON.parse(strTracks);
-            } catch (e) {
-                this.audioTracks = [];
+        const event = this.interpreter.videoBuffer.shift();
+        if (event === undefined) {
+            return events;
+        } else if (event.type === MediaEventType.TRACKS) {
+            this.audioTracks = event.tracks ?? [];
+            return events;
+        } else if (event.type === MediaEventType.DURATION) {
+            this.videoDuration = event.index;
+            return events;
+        } else if (event.type === MediaEventType.LOADING) {
+            this.videoProgress = event.index;
+            events.push(new RoVideoPlayerEvent(event.type, event.index));
+            if (event.index === 1000) {
+                events.push(new RoVideoPlayerEvent(MediaEventType.START_PLAY, 0));
+            }
+            return events;
+        } else if (event.type === MediaEventType.POSITION) {
+            const elapsed = Math.abs(this.videoPosition - event.index);
+            if (this.notificationPeriod >= 1 && elapsed >= this.notificationPeriod) {
+                this.videoPosition = event.index;
+            } else {
+                return events;
             }
         }
-        const flags = Atomics.load(this.interpreter.sharedArray, DataType.VDO);
-        const index = Atomics.load(this.interpreter.sharedArray, DataType.VDX);
-        if (flags !== this.videoFlags || index !== this.videoIndex) {
-            this.videoFlags = flags;
-            this.videoIndex = index;
-            if (this.videoFlags >= 0) {
-                events.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
-                Atomics.store(this.interpreter.sharedArray, DataType.VDO, -1);
-                Atomics.store(this.interpreter.sharedArray, DataType.VDX, -1);
-            }
-        }
-        const progress = Atomics.load(this.interpreter.sharedArray, DataType.VLP);
-        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
-            this.videoProgress = progress;
-            events.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
-            if (progress === 1000) {
-                events.push(new RoVideoPlayerEvent(MediaEvent.START_PLAY, 0));
-            }
-        }
-        if (this.notificationPeriod >= 1) {
-            const position = Atomics.load(this.interpreter.sharedArray, DataType.VPS);
-            if (Math.abs(this.videoPosition - position) >= this.notificationPeriod) {
-                this.videoPosition = position;
-                events.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position));
-            }
+        if (event.type !== this.videoFlags || event.index !== this.videoIndex) {
+            this.videoFlags = event.type;
+            this.videoIndex = event.index;
+            events.push(new RoVideoPlayerEvent(event.type, event.index));
         }
         return events;
     }
@@ -413,9 +403,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
-            const duration = Atomics.load(interpreter.sharedArray, DataType.VDR);
-            return duration > 0 ? new Int32(duration) : new Int32(0);
+        impl: (_: Interpreter) => {
+            return new Int32(this.videoDuration);
         },
     });
 

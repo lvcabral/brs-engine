@@ -25,7 +25,7 @@ describe("interpreter try-catch blocks", () => {
         jest.restoreAllMocks();
     });
 
-    it("executes the try block when no errors are thrown", () => {
+    it("executes the try block when no errors are thrown", async () => {
         const varAssignment = new Stmt.Assignment(
             { equals: token(Lexeme.Equals, "=") },
             identifier("a"),
@@ -47,12 +47,12 @@ describe("interpreter try-catch blocks", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
         expect(trySpy).toHaveBeenCalledTimes(1);
         expect(catchSpy).not.toHaveBeenCalled();
     });
 
-    it("executes the catch block when an error is thrown", () => {
+    it("executes the catch block when an error is thrown", async () => {
         const badComparison = new Expr.Binary(
             new Expr.Literal(new Int32(2)),
             token(Lexeme.Less),
@@ -74,7 +74,7 @@ describe("interpreter try-catch blocks", () => {
             ),
         ];
 
-        interpreter.exec(statements);
+        await interpreter.exec(statements);
         expect(trySpy).toHaveBeenCalledTimes(1);
         expect(catchSpy).toHaveBeenCalledTimes(1);
         const output = allArgs(stdout.write).filter((arg) => arg !== "\n");

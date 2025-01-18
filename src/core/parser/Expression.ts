@@ -3,17 +3,17 @@ import { BrsType, Argument, ValueKind, BrsString } from "../brsTypes";
 import { Block } from "./Statement";
 
 export interface Visitor<T> {
-    visitBinary(expression: Binary): T;
-    visitCall(expression: Call): T;
+    visitBinary(expression: Binary): Promise<T>;
+    visitCall(expression: Call): T | Promise<T>;
     visitAnonymousFunction(func: Function): T;
-    visitAtSignGet(expression: AtSignGet): T;
-    visitDottedGet(expression: DottedGet): T;
-    visitIndexedGet(expression: IndexedGet): T;
-    visitGrouping(expression: Grouping): T;
+    visitAtSignGet(expression: AtSignGet): Promise<T>;
+    visitDottedGet(expression: DottedGet): Promise<T>;
+    visitIndexedGet(expression: IndexedGet): Promise<T>;
+    visitGrouping(expression: Grouping): Promise<T>;
     visitLiteral(expression: Literal): T;
-    visitArrayLiteral(expression: ArrayLiteral): T;
-    visitAALiteral(expression: AALiteral): T;
-    visitUnary(expression: Unary): T;
+    visitArrayLiteral(expression: ArrayLiteral): Promise<T>;
+    visitAALiteral(expression: AALiteral): Promise<T>;
+    visitUnary(expression: Unary): Promise<T>;
     visitVariable(expression: Variable): T;
 }
 
@@ -24,7 +24,7 @@ export interface Expression {
      * @param visitor the `Visitor` that will handle the enclosing `Expression`
      * @returns the BrightScript value resulting from evaluating the expression
      */
-    accept<R>(visitor: Visitor<R>): R;
+    accept<R>(visitor: Visitor<R>): R | Promise<R>;
 
     /** The starting and ending location of the expression. */
     location: Location;
@@ -33,7 +33,7 @@ export interface Expression {
 export class Binary implements Expression {
     constructor(readonly left: Expression, readonly token: Token, readonly right: Expression) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitBinary(this);
     }
 
@@ -56,7 +56,7 @@ export class Call implements Expression {
         readonly optional: boolean = false
     ) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    accept<R>(visitor: Visitor<R>): R | Promise<R> {
         return visitor.visitCall(this);
     }
 
@@ -98,7 +98,7 @@ export class AtSignGet implements Expression {
         readonly optional: boolean = false
     ) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitAtSignGet(this);
     }
 
@@ -118,7 +118,7 @@ export class DottedGet implements Expression {
         readonly optional: boolean = false
     ) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitDottedGet(this);
     }
 
@@ -139,7 +139,7 @@ export class IndexedGet implements Expression {
         readonly optional: boolean = false
     ) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitIndexedGet(this);
     }
 
@@ -161,7 +161,7 @@ export class Grouping implements Expression {
         readonly expression: Expression
     ) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitGrouping(this);
     }
 
@@ -201,7 +201,7 @@ export class Literal implements Expression {
 export class ArrayLiteral implements Expression {
     constructor(readonly elements: Expression[], readonly open: Token, readonly close: Token) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitArrayLiteral(this);
     }
 
@@ -225,7 +225,7 @@ export interface AAMember {
 export class AALiteral implements Expression {
     constructor(readonly elements: AAMember[], readonly open: Token, readonly close: Token) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitAALiteral(this);
     }
 
@@ -241,7 +241,7 @@ export class AALiteral implements Expression {
 export class Unary implements Expression {
     constructor(readonly operator: Token, readonly right: Expression) {}
 
-    accept<R>(visitor: Visitor<R>): R {
+    async accept<R>(visitor: Visitor<R>): Promise<R> {
         return visitor.visitUnary(this);
     }
 

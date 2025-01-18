@@ -59,7 +59,7 @@ export function initDisplayModule(mode: string, perfStats = false) {
         if (event === "rect") {
             videoRect = data;
             return;
-        } else if (event === "bandwidth") {
+        } else if (["bandwidth", "post"].includes(event)) {
             return;
         }
         videoState = event;

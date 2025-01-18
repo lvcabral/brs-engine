@@ -12,11 +12,26 @@ import {
     PkgFilePath,
     AppPayload,
     DeviceInfo,
-    dataBufferIndex,
-    dataBufferSize,
-    defaultDeviceInfo,
+    DataBufferIndex,
+    DataBufferSize,
+    DefaultDeviceInfo,
     parseManifest,
     isAppPayload,
+    ControlEvent,
+    isControlEvent,
+    DebugEvent,
+    isDebugEvent,
+    MediaEvent,
+    isMediaEvent,
+    InputEvent,
+    isInputEvent,
+    MediaEventType,
+    SysLogEvent,
+    isSysLogEvent,
+    isCECStatusEvent,
+    CECStatusEvent,
+    MemoryInfoEvent,
+    isMemoryInfoEvent,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -47,7 +62,16 @@ export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
-export const shared = new Map<string, Int32Array>();
+export const shared = { array: new Int32Array(0), isShared: false };
+export const controlEvents = new Array<ControlEvent>();
+export const debugEvents = new Array<DebugEvent>();
+export const inputEvents = new Array<InputEvent>();
+export const sysLogEvents = new Array<SysLogEvent>();
+export const audioEvents = new Array<MediaEvent>();
+export const videoEvents = new Array<MediaEvent>();
+export const wavStatus = new Set<string>();
+export const cecStatus: CECStatusEvent = { activeSource: true };
+export const memoryInfo: MemoryInfoEvent = { usedHeapSize: 0, heapSizeLimit: 0 };
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 export const terminateReasons = ["debug-exit", "end-statement"];
@@ -55,20 +79,52 @@ export const terminateReasons = ["debug-exit", "end-statement"];
 const algorithm = "aes-256-ctr";
 
 /// #if BROWSER
+
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
-        if (isAppPayload(event.data)) {
+        if (isControlEvent(event.data)) {
+            controlEvents.push(event.data);
+        } else if (isDebugEvent(event.data)) {
+            debugEvents.push(event.data);
+        } else if (isInputEvent(event.data)) {
+            inputEvents.push(event.data);
+        } else if (isSysLogEvent(event.data)) {
+            sysLogEvents.push(event.data);
+        } else if (isCECStatusEvent(event.data)) {
+            cecStatus.activeSource = event.data.activeSource;
+        } else if (isMemoryInfoEvent(event.data)) {
+            memoryInfo.usedHeapSize = event.data.usedHeapSize;
+            memoryInfo.heapSizeLimit = event.data.heapSizeLimit;
+        } else if (isMediaEvent(event.data)) {
+            handleMediaEvent(event);
+        } else if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
-            // Setup Control Shared Array
-            shared.set("buffer", new Int32Array(event.data));
+            shared.array = new Int32Array(event.data);
+            shared.isShared = event.data instanceof SharedArrayBuffer;
         } else {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
     };
+
+    function handleMediaEvent(event: MessageEvent) {
+        if (event.data.media === "audio") {
+            audioEvents.push(event.data);
+        } else if (event.data.media === "video") {
+            videoEvents.push(event.data);
+        } else if (event.data.media === "wav") {
+            if (event.data.type === MediaEventType.START_PLAY && event.data.name) {
+                wavStatus.add(event.data.name);
+            } else if (event.data.type === MediaEventType.STOP_PLAY && event.data.name) {
+                wavStatus.delete(event.data.name);
+            }
+        } else {
+            postMessage(`warning,[worker] Invalid media event received: ${event.data}`);
+        }
+    }
 }
 /// #else
 /**
@@ -84,11 +140,12 @@ declare global {
  * Default implementation of the callback, only handles console messages
  * @param message the message to front-end
  */
-const arrayLength = dataBufferIndex + dataBufferSize;
+const arrayLength = DataBufferIndex + DataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
 const sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
-shared.set("buffer", sharedArray);
+shared.array = sharedArray;
+shared.isShared = true;
 
 globalThis.postMessage = (message: any) => {
     if (typeof message === "string") {
@@ -111,7 +168,10 @@ globalThis.postMessage = (message: any) => {
 export function registerCallback(messageCallback: any, sharedBuffer?: SharedArrayBuffer) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;
-        if (sharedBuffer) shared.set("buffer", new Int32Array(sharedBuffer));
+        if (sharedBuffer) {
+            shared.array = new Int32Array(sharedBuffer);
+            shared.isShared = true;
+        }
     }
 }
 
@@ -147,7 +207,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
  * @param interpreter an interpreter to use when executing `contents`. Required
  *                    for `repl` to have persistent state between user inputs.
  */
-export function executeLine(contents: string, interpreter: Interpreter) {
+export async function executeLine(contents: string, interpreter: Interpreter) {
     const lexer = new Lexer();
     const parser = new Parser();
     lexer.onError(logError);
@@ -165,7 +225,8 @@ export function executeLine(contents: string, interpreter: Interpreter) {
         return;
     }
     try {
-        const results = interpreter.exec(parseResults.statements);
+        resetEvents();
+        const results = await interpreter.exec(parseResults.statements);
         results.forEach((result) => {
             if (result !== BrsTypes.BrsInvalid.Instance) {
                 postMessage(`print,${result.toString()}`);
@@ -222,8 +283,8 @@ export function createPayloadFromFiles(
         throw new Error("Invalid or inexistent file(s)!");
     }
     const deviceData = customDeviceData
-        ? Object.assign(defaultDeviceInfo, customDeviceData)
-        : defaultDeviceInfo;
+        ? Object.assign(DefaultDeviceInfo, customDeviceData)
+        : DefaultDeviceInfo;
     if (!deviceData.fonts || deviceData.fonts.size === 0) {
         deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
     }
@@ -819,8 +880,9 @@ async function executeApp(
             await new Promise((r) => setTimeout(r, splashMinTime - splashTime));
             splashTime = splashMinTime;
         }
+        resetEvents();
         const inputParams = setupInputParams(payload.deepLink, splashTime);
-        interpreter.exec(statements, sourceMap, inputParams);
+        await interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
         exitReason = AppExitReason.FINISHED;
         if (!terminateReasons.includes(err.message)) {
@@ -880,6 +942,16 @@ function parseLibraries(
     ) {
         lib.set("RokuBrowser.brs", RokuBrowser);
     }
+}
+
+function resetEvents() {
+    controlEvents.length = 0;
+    inputEvents.length = 0;
+    sysLogEvents.length = 0;
+    audioEvents.length = 0;
+    videoEvents.length = 0;
+    cecStatus.activeSource = true;
+    wavStatus.clear();
 }
 
 /**

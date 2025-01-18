@@ -18,72 +18,74 @@ describe("global Run function", () => {
         fs.readFileSync.mockRestore();
     });
 
-    it("returns invalid for unrecognized devices", () => {
-        expect(Run.call(interpreter, new BrsString("notADevice:/etc/hosts"))).toBe(
+    it("returns invalid for unrecognized devices", async () => {
+        expect(await Run.call(interpreter, new BrsString("notADevice:/etc/hosts"))).toBe(
             BrsInvalid.Instance
         );
     });
 
-    it("returns invalid for unreadable files", () => {
+    it("returns invalid for unreadable files", async () => {
         fs.readFileSync.mockImplementation(() => {
             throw new Error("file not found");
         });
-        expect(Run.call(interpreter, new BrsString("notADevice:/etc/hosts"))).toBe(
+        expect(await Run.call(interpreter, new BrsString("notADevice:/etc/hosts"))).toBe(
             BrsInvalid.Instance
         );
     });
 
-    it("returns invalid for lexing errors", () => {
+    it("returns invalid for lexing errors", async () => {
         fs.readFileSync.mockImplementation(() => `can't lex this`);
-        expect(Run.call(interpreter, new BrsString("pkg:/errors/lex.brs"))).toBe(
+        expect(await Run.call(interpreter, new BrsString("pkg:/errors/lex.brs"))).toBe(
             BrsInvalid.Instance
         );
     });
 
-    it("returns invalid for parse errors", () => {
+    it("returns invalid for parse errors", async () => {
         fs.readFileSync.mockImplementationOnce(() => `if return "parse error" exit while`);
-        expect(Run.call(interpreter, new BrsString("pkg:/errors/parse.brs"))).toBe(
+        expect(await Run.call(interpreter, new BrsString("pkg:/errors/parse.brs"))).toBe(
             BrsInvalid.Instance
         );
     });
 
-    it("returns invalid for runtime errors", () => {
+    it("returns invalid for runtime errors", async () => {
         fs.readFileSync.mockImplementationOnce(() => `sub main(): _ = {}: _.crash(): end sub`);
-        expect(Run.call(interpreter, new BrsString("pkg:/errors/exec.brs"))).toBe(
+        expect(await Run.call(interpreter, new BrsString("pkg:/errors/exec.brs"))).toBe(
             BrsInvalid.Instance
         );
     });
 
-    it("returns invalid when provided a not-array component", () => {
-        expect(Run.call(interpreter, new RoAssociativeArray([]))).toBe(BrsInvalid.Instance);
+    it("returns invalid when provided a not-array component", async () => {
+        expect(await Run.call(interpreter, new RoAssociativeArray([]))).toBe(BrsInvalid.Instance);
     });
 
-    it("returns invalid when provided an empty array of files", () => {
-        expect(Run.call(interpreter, new RoArray([]))).toBe(BrsInvalid.Instance);
+    it("returns invalid when provided an empty array of files", async () => {
+        expect(await Run.call(interpreter, new RoArray([]))).toBe(BrsInvalid.Instance);
     });
 
-    it("returns invalid when provided an array with non-strings", () => {
-        expect(Run.call(interpreter, new RoArray([BrsInvalid.Instance]))).toBe(BrsInvalid.Instance);
+    it("returns invalid when provided an array with non-strings", async () => {
+        expect(await Run.call(interpreter, new RoArray([BrsInvalid.Instance]))).toBe(
+            BrsInvalid.Instance
+        );
     });
 
-    it("returns whatever the executed file returns", () => {
+    it("returns whatever the executed file returns", async () => {
         fs.existsSync.mockImplementationOnce(() => true);
         fs.readFileSync.mockImplementationOnce(
             () => `function main(): return "I'm a return value!": end function`
         );
-        expect(Run.call(interpreter, new BrsString("pkg:/success/exec.brs"))).toEqual(
+        expect(await Run.call(interpreter, new BrsString("pkg:/success/exec.brs"))).toEqual(
             new BrsString("I'm a return value!")
         );
     });
 
-    it("returns whatever the executed set of files return", () => {
+    it("returns whatever the executed set of files return", async () => {
         fs.existsSync.mockImplementationOnce(() => true).mockImplementationOnce(() => true);
         fs.readFileSync
             .mockImplementationOnce(() => `function main(): return greet(): end function`)
             .mockImplementationOnce(() => `function greet(): return "hello!": end function`);
 
         expect(
-            Run.call(
+            await Run.call(
                 interpreter,
                 new RoArray([
                     new BrsString("pkg:/success/exec.brs"),
@@ -94,23 +96,27 @@ describe("global Run function", () => {
     });
 
     describe("args", () => {
-        it("accepts one argument", () => {
+        it("accepts one argument", async () => {
             fs.existsSync.mockImplementationOnce(() => true);
             fs.readFileSync.mockImplementationOnce(
                 () => `function main(i as integer): return i: end function`
             );
             expect(
-                Run.call(interpreter, new BrsString("pkg:/success/identity.brs"), new Int32(5))
+                await Run.call(
+                    interpreter,
+                    new BrsString("pkg:/success/identity.brs"),
+                    new Int32(5)
+                )
             ).toEqual(new Int32(5));
         });
 
-        it("accepts two arguments", () => {
+        it("accepts two arguments", async () => {
             fs.existsSync.mockImplementationOnce(() => true);
             fs.readFileSync.mockImplementationOnce(
                 () => `function main(a as integer, b as integer): return a + b: end function`
             );
             expect(
-                Run.call(
+                await Run.call(
                     interpreter,
                     new BrsString("pkg:/success/identity.brs"),
                     new Int32(5),
@@ -119,12 +125,12 @@ describe("global Run function", () => {
             ).toEqual(new Int32(8));
         });
 
-        it("returns invalid for type errors", () => {
+        it("returns invalid for type errors", async () => {
             fs.readFileSync.mockImplementationOnce(
                 () => `function main(i as integer): return i: end function`
             );
             expect(
-                Run.call(
+                await Run.call(
                     interpreter,
                     new BrsString("pkg:/success/identity.brs"),
                     new BrsString("not an integer")

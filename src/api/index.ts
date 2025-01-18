@@ -9,17 +9,20 @@ import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./u
 import {
     AppExitReason,
     AppPayload,
-    BufferType,
-    DataType,
+    CECStatusEvent,
+    MemoryInfoEvent,
     DebugCommand,
     DeviceInfo,
     RemoteType,
-    dataBufferIndex,
-    dataBufferSize,
+    SysLogEvent,
+    DataBufferIndex,
+    DataBufferSize,
     getExitReason,
     isAppData,
     isNDKStart,
     platform,
+    DebugEvent,
+    DataType,
 } from "../core/common";
 import {
     source,
@@ -105,6 +108,7 @@ export {
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
+let debugWithArray: boolean = false;
 let showStats: boolean = false;
 
 // roSystemLog Event support
@@ -155,17 +159,19 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         showStats = options.showStats;
     }
     loadRegistry();
-    // Shared buffer (Keys, Sounds and Debug Commands)
-    const length = dataBufferIndex + dataBufferSize;
+    // Shared buffer for Debug Commands
+    const length = DataBufferIndex + DataBufferSize;
     try {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
+        debugWithArray = true;
     } catch (error) {
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
-        apiException(
-            "warning",
-            `[api] Remote control simulation will not work as SharedArrayBuffer is not enabled, ` +
-                `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
-        );
+        if (!disableDebug) {
+            apiException(
+                "warning",
+                `[api] SharedArrayBuffer is not available, so "break" and "pause" debug commands will only trigger when using "roMessagePort".`
+            );
+        }
     }
     sharedArray = new Int32Array(sharedBuffer);
     resetArray();
@@ -178,8 +184,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
-    initControlModule(sharedArray, options);
-    initVideoModule(sharedArray, false);
+    initControlModule(options);
+    initVideoModule();
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
@@ -203,6 +209,10 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             if (currentApp.running) {
                 terminate(AppExitReason.POWER);
             }
+        } else if (event === "home" && currentApp.running) {
+            homeWav.play();
+        } else if (event === "poweroff" && currentApp.running) {
+            terminate(AppExitReason.POWER);
         } else if (event === "volumemute") {
             setAudioMute(!getAudioMute());
         } else if (event === "control") {
@@ -213,23 +223,40 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         }
     });
     subscribeSound("api", (event: string, data: any) => {
-        if (["error", "warning"].includes(event)) {
+        if (event === "post") {
+            if (currentApp.running) {
+                brsWorker.postMessage(data);
+            }
+        } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         }
     });
     subscribeVideo("api", (event: string, data: any) => {
-        if (["error", "warning"].includes(event)) {
+        if (event === "post") {
+            if (currentApp.running) {
+                brsWorker.postMessage(data);
+            }
+        } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         } else if (event === "bandwidth") {
             latestBandwidth = data;
         } else if (event === "http.connect" && httpConnectLog) {
-            const sysLog = {
+            const sysLogEvent: SysLogEvent = {
                 type: event,
-                url: data.responseURL,
-                status: data.statusText,
-                httpCode: data.status,
+                sysLog: {
+                    Url: data.responseURL,
+                    OrigUrl: data.responseURL,
+                    Status: data.statusText,
+                    HttpCode: data.status,
+                    Method: "GET",
+                    TargetIp: "",
+                    BytesDownloaded: 0,
+                    DownloadSpeed: 0,
+                    BytesUploaded: 0,
+                    UploadSpeed: 0,
+                },
             };
-            saveDataBuffer(sharedArray, JSON.stringify(sysLog), BufferType.SYS_LOG);
+            brsWorker.postMessage(sysLogEvent);
         }
     });
     subscribePackage("api", (event: string, data: any) => {
@@ -288,14 +315,14 @@ export function execute(
     } else if (typeof options.debugOnCrash === "boolean") {
         deviceData.debugOnCrash = options.debugOnCrash;
     }
+    initSoundModule(deviceData.maxSimulStreams, options.muteSound);
+    muteVideo(options.muteSound);
     if (typeof brsWorker !== "undefined") {
         resetWorker();
     }
     if (debugToConsole) {
         console.info(`Loading ${filePath}...`);
     }
-    initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
-    muteVideo(options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
         loadAppZip(fileName, fileData, runApp);
@@ -392,13 +419,25 @@ export function debug(command: string): boolean {
         const exprs = command.trim().split(/(?<=^\S+)\s/);
         if (exprs.length === 1 && ["break", "pause"].includes(exprs[0].toLowerCase())) {
             const cmd = exprs[0].toUpperCase() as keyof typeof DebugCommand;
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand[cmd]);
-            Atomics.notify(sharedArray, DataType.DBG);
+            if (debugWithArray) {
+                Atomics.store(sharedArray, DataType.DBG, DebugCommand[cmd]);
+                Atomics.notify(sharedArray, DataType.DBG);
+            } else {
+                const event: DebugEvent = { command: DebugCommand[cmd] };
+                brsWorker.postMessage(event);
+            }
             handled = true;
-        } else {
-            saveDataBuffer(sharedArray, command.trim(), BufferType.DEBUG_EXPR);
+        } else if (debugWithArray) {
+            saveDataBuffer(sharedArray, command.trim());
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXPR);
             handled = Atomics.notify(sharedArray, DataType.DBG) > 0;
+        } else {
+            const event: DebugEvent = {
+                command: DebugCommand.EXPR,
+                expression: command.trim(),
+            };
+            brsWorker.postMessage(event);
+            handled = true;
         }
     }
     return handled;
@@ -416,7 +455,7 @@ function resetWorker() {
 function resetArray() {
     sharedArray.some((_, index: number) => {
         Atomics.store(sharedArray, index, -1);
-        return index === dataBufferIndex - 1;
+        return index === DataBufferIndex - 1;
     });
 }
 
@@ -480,17 +519,16 @@ export function updateAppList() {
 
 // Update Memory Usage on Shared Array
 export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
-    if (currentApp.running && usedMemory && totalMemory) {
-        Atomics.store(sharedArray, DataType.MUHS, usedMemory);
-        Atomics.store(sharedArray, DataType.MHSL, totalMemory);
-        return;
-    }
     const performance = window.performance as ChromiumPerformance;
     if (currentApp.running && platform.inChromium && performance.memory) {
         // Only Chromium based browsers support process.memory API
         const memory = performance.memory;
-        Atomics.store(sharedArray, DataType.MUHS, Math.floor(memory.usedJSHeapSize / 1024));
-        Atomics.store(sharedArray, DataType.MHSL, Math.floor(memory.jsHeapSizeLimit / 1024));
+        usedMemory = Math.floor(memory.usedJSHeapSize / 1024);
+        totalMemory = Math.floor(memory.jsHeapSizeLimit / 1024);
+    }
+    if (currentApp.running && usedMemory && totalMemory) {
+        const event: MemoryInfoEvent = { heapSizeLimit: totalMemory, usedHeapSize: usedMemory };
+        brsWorker.postMessage(event);
     }
 }
 
@@ -628,7 +666,11 @@ function workerCallback(event: MessageEvent) {
 // Update Bandwidth Measurement
 function updateBandwidth() {
     if (currentApp.running && bandwidthMinute && latestBandwidth >= 0) {
-        Atomics.store(sharedArray, DataType.MBWD, latestBandwidth);
+        const sysLogEvent: SysLogEvent = {
+            type: "bandwidth.minute",
+            sysLog: { bandwidth: latestBandwidth },
+        };
+        brsWorker.postMessage(sysLogEvent);
     }
     bandwidthTimeout = setTimeout(updateBandwidth, 60000);
 }
@@ -703,7 +745,8 @@ window.onfocus = function () {
         if (getModelType() !== "TV") {
             Atomics.store(sharedArray, DataType.HDMI, 1);
         }
-        Atomics.store(sharedArray, DataType.CEC, 1);
+        const event: CECStatusEvent = { activeSource: true };
+        brsWorker.postMessage(event);
     }
 };
 
@@ -712,6 +755,7 @@ window.onblur = function () {
         if (getModelType() !== "TV") {
             Atomics.store(sharedArray, DataType.HDMI, 0);
         }
-        Atomics.store(sharedArray, DataType.CEC, 0);
+        const event: CECStatusEvent = { activeSource: false };
+        brsWorker.postMessage(event);
     }
 };

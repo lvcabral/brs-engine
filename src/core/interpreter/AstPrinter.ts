@@ -8,33 +8,37 @@ export class AstPrinter implements Expr.Visitor<string> {
      * Pretty-prints an expression for debugging purposes.
      * @param expression the expression to pretty-print.
      */
-    print(expression: Expr.Expression): string {
+    async print(expression: Expr.Expression): Promise<string> {
         this.indent = 0;
-        return expression.accept(this);
+        return await expression.accept(this);
     }
 
     visitAnonymousFunction(e: Expr.Function): string {
         return JSON.stringify(e, undefined, 2);
     }
 
-    visitBinary(e: Expr.Binary): string {
+    async visitBinary(e: Expr.Binary): Promise<string> {
         return this.parenthesize(e.token.text, e.left, e.right);
     }
     visitCall(e: Expr.Call): string {
         return JSON.stringify(e, undefined, 2);
     }
-    visitAtSignGet(e: Expr.AtSignGet): string {
-        return JSON.stringify(e, undefined, 2);
+    async visitAtSignGet(e: Expr.AtSignGet): Promise<string> {
+        return Promise.resolve(JSON.stringify(e, undefined, 2));
     }
-    visitDottedGet(e: Expr.DottedGet): string {
-        return JSON.stringify(e, undefined, 2);
+
+    async visitDottedGet(e: Expr.DottedGet): Promise<string> {
+        return Promise.resolve(JSON.stringify(e, undefined, 2));
     }
-    visitIndexedGet(e: Expr.IndexedGet): string {
-        return JSON.stringify(e, undefined, 2);
+
+    async visitIndexedGet(e: Expr.IndexedGet): Promise<string> {
+        return Promise.resolve(JSON.stringify(e, undefined, 2));
     }
-    visitGrouping(e: Expr.Grouping): string {
-        return this.parenthesize("group", e.expression);
+
+    async visitGrouping(e: Expr.Grouping): Promise<string> {
+        return await this.parenthesize("group", e.expression);
     }
+
     visitLiteral(e: Expr.Literal): string {
         if (e.value == null) {
             return "invalid";
@@ -42,11 +46,11 @@ export class AstPrinter implements Expr.Visitor<string> {
             return e.value.toString();
         }
     }
-    visitArrayLiteral(e: Expr.ArrayLiteral): string {
-        return JSON.stringify(e, undefined, 2);
+    async visitArrayLiteral(e: Expr.ArrayLiteral): Promise<string> {
+        return Promise.resolve(JSON.stringify(e, undefined, 2));
     }
-    visitAALiteral(e: Expr.AALiteral): string {
-        return JSON.stringify(e, undefined, 2);
+    async visitAALiteral(e: Expr.AALiteral): Promise<string> {
+        return Promise.resolve(JSON.stringify(e, undefined, 2));
     }
     visitDottedSet(e: Stmt.DottedSet): string {
         return JSON.stringify(e, undefined, 2);
@@ -57,7 +61,7 @@ export class AstPrinter implements Expr.Visitor<string> {
     visitIncrement(e: Stmt.Increment): string {
         return JSON.stringify(e, undefined, 2);
     }
-    visitUnary(e: Expr.Unary): string {
+    async visitUnary(e: Expr.Unary): Promise<string> {
         return this.parenthesize(e.operator.text, e.right);
     }
     visitVariable(expression: Expr.Variable): string {
@@ -70,7 +74,10 @@ export class AstPrinter implements Expr.Visitor<string> {
      * @param name The name of the expression type being printed.
      * @param expressions any subexpressions that need to be stringified as well.
      */
-    private parenthesize(name: string = "", ...expressions: Expr.Expression[]): string {
+    private async parenthesize(
+        name: string = "",
+        ...expressions: Expr.Expression[]
+    ): Promise<string> {
         this.indent++;
         let out = [
             `(${name}\n`,

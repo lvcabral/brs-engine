@@ -134,7 +134,10 @@ export type SignatureAndMismatches = SignatureAndImplementation & {
  * description of why.
  */
 /** The function type required for all concrete Callables to provide. */
-export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) => Brs.BrsType;
+export type CallableImplementation = (
+    interpreter: Interpreter,
+    ...args: any[]
+) => Brs.BrsType | Promise<Brs.BrsType>;
 
 /** A `function` or `sub` (either "native" or implemented in BrightScript) that can be called in a BrightScript file. */
 export class Callable implements Brs.BrsValue, Brs.Boxable {
@@ -161,7 +164,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
      *
      * @returns the return value of the function, or `invalid` if nothing is explicitly returned.
      */
-    call(interpreter: Interpreter, ...args: Brs.BrsType[]) {
+    async call(interpreter: Interpreter, ...args: Brs.BrsType[]) {
         let satisfiedSignature = this.getFirstSatisfiedSignature(args);
         if (satisfiedSignature == null) {
             interpreter.addError(generateArgumentMismatchError(this, args, interpreter.location));
@@ -171,24 +174,24 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
 
         let mutableArgs = [...satisfiedSignature.coercedArgs];
 
-        return interpreter.inSubEnv((subInterpreter) => {
+        return interpreter.inSubEnv(async (subInterpreter) => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
-            signature.args.forEach((param, index) => {
-                if (param.defaultValue && mutableArgs[index] == null) {
-                    mutableArgs[index] = subInterpreter.evaluate(param.defaultValue);
+            for (let i = 0; i < signature.args.length; i++) {
+                const param = signature.args[i];
+                if (param.defaultValue && mutableArgs[i] == null) {
+                    mutableArgs[i] = await subInterpreter.evaluate(param.defaultValue);
                 }
 
                 subInterpreter.environment.define(
                     Scope.Function,
                     param.name.text,
-                    mutableArgs[index],
+                    mutableArgs[i],
                     interpreter.location
                 );
-            });
-
+            }
             // then return whatever the selected implementation would return
-            return impl(subInterpreter, ...mutableArgs);
+            return await impl(subInterpreter, ...mutableArgs);
         });
     }
 

@@ -11,7 +11,7 @@ import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "ffla
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
 import {
-    defaultDeviceInfo,
+    DefaultDeviceInfo,
     AudioExt,
     VideoExt,
     parseManifest,
@@ -26,7 +26,7 @@ import models from "../core/libraries/common/models.csv";
 import packageInfo from "../../package.json";
 
 // Device Data Object
-export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {
+export const deviceData: DeviceInfo = Object.assign(DefaultDeviceInfo, {
     models: parseCSV(models),
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),

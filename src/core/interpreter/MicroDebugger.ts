@@ -18,10 +18,17 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    DebugPrompt,
+    numberToHex,
+    parseTextFile,
+    threadYield,
+} from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
-readline.setDefaultOptions({ prompt: debugPrompt });
+readline.setDefaultOptions({ prompt: DebugPrompt });
 /// #endif
 
 // Debug Constants
@@ -36,7 +43,7 @@ let stepMode = false;
  * @param errNumber (number) - The error number
  * @returns (boolean) - True if the execution should continue, false if it should exit
  */
-export function runDebugger(
+export async function runDebugger(
     interpreter: Interpreter,
     nextLoc: Location,
     lastLoc: Location,
@@ -49,14 +56,14 @@ export function runDebugger(
     while (true) {
         let line = "";
         /// #if BROWSER
-        line = nextDebugCommand(interpreter);
+        line = await nextDebugCommand(interpreter);
         /// #else
         interpreter.stdout.write(`print,\r\n`);
         line = readline.prompt();
         /// #endif
         const command = parseCommand(line);
         if (command.cmd === DebugCommand.EXPR) {
-            debugHandleExpr(interpreter, command.expr);
+            await debugHandleExpr(interpreter, command.expr);
             continue;
         }
         switch (command.cmd) {
@@ -80,7 +87,7 @@ export function runDebugger(
             case DebugCommand.EXIT:
                 return false;
         }
-        debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
+        await debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
     }
 }
 
@@ -135,14 +142,26 @@ function debuggerIntro(
  * Function to wait for the next debug command
  * @returns a string with the debug expression
  */
-function nextDebugCommand(interpreter: Interpreter): string {
+async function nextDebugCommand(interpreter: Interpreter): Promise<string> {
     let line = "";
-    interpreter.stdout.write(`print,\r\n${debugPrompt}`);
-    Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
-    const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
-    Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
-    if (cmd === DebugCommand.EXPR) {
-        line = interpreter.readDataBuffer();
+    interpreter.stdout.write(`print,\r\n${DebugPrompt}`);
+    if (interpreter.isShared) {
+        Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
+        const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
+        Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
+        if (cmd === DebugCommand.EXPR) {
+            line = interpreter.readDataBuffer();
+        }
+    } else {
+        while (line === "") {
+            await threadYield();
+            if (interpreter.debugBuffer.length > 0) {
+                let cmd = interpreter.debugBuffer.shift();
+                if (cmd?.command === DebugCommand.EXPR) {
+                    line = cmd.expression ?? "";
+                }
+            }
+        }
     }
     return line;
 }
@@ -170,7 +189,7 @@ async function debugHandleExpr(interpreter: Interpreter, expr: string) {
         return;
     }
     if (exprParse.statements.length > 0) {
-        runStatement(interpreter, exprParse.statements[0]);
+        await runStatement(interpreter, exprParse.statements[0]);
     }
 }
 
@@ -179,28 +198,28 @@ async function debugHandleExpr(interpreter: Interpreter, expr: string) {
  * @param interpreter (Interpreter) - The interpreter instance
  * @param exprStmt  (Statement) - The statement to run
  */
-function runStatement(interpreter: Interpreter, exprStmt: Statement) {
+async function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     try {
         if (exprStmt instanceof Assignment) {
-            interpreter.visitAssignment(exprStmt);
+            await interpreter.visitAssignment(exprStmt);
         } else if (exprStmt instanceof DottedSet) {
-            interpreter.visitDottedSet(exprStmt);
+            await interpreter.visitDottedSet(exprStmt);
         } else if (exprStmt instanceof IndexedSet) {
-            interpreter.visitIndexedSet(exprStmt);
+            await interpreter.visitIndexedSet(exprStmt);
         } else if (exprStmt instanceof Print) {
-            interpreter.visitPrint(exprStmt);
+            await interpreter.visitPrint(exprStmt);
         } else if (exprStmt instanceof Expression) {
-            interpreter.visitExpression(exprStmt);
+            await interpreter.visitExpression(exprStmt);
         } else if (exprStmt instanceof Increment) {
-            interpreter.visitIncrement(exprStmt);
+            await interpreter.visitIncrement(exprStmt);
         } else if (exprStmt instanceof If) {
-            interpreter.visitIf(exprStmt);
+            await interpreter.visitIf(exprStmt);
         } else if (exprStmt instanceof For) {
-            interpreter.visitFor(exprStmt);
+            await interpreter.visitFor(exprStmt);
         } else if (exprStmt instanceof ForEach) {
-            interpreter.visitForEach(exprStmt);
+            await interpreter.visitForEach(exprStmt);
         } else if (exprStmt instanceof While) {
-            interpreter.visitWhile(exprStmt);
+            await interpreter.visitWhile(exprStmt);
         } else if (exprStmt instanceof Function) {
             interpreter.visitNamedFunction(exprStmt);
         } else {
@@ -222,7 +241,7 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
  * @param lastLoc (Location) - The last location
  * @param cmd (number) - The debug command to execute
  */
-function debugHandleCommand(
+async function debugHandleCommand(
     interpreter: Interpreter,
     currLoc: Location,
     lastLoc: Location,

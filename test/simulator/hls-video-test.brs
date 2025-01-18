@@ -48,7 +48,7 @@ sub main()
                 print position
             else if type(msg) = "roVideoPlayerEvent" and msg.isStreamStarted()
                 tracks = player.getAudioTracks()
-                print tracks.count(); " audio tracks available.", tracks[currAudioTrack]
+                print tracks.count(); " audio tracks available.", tracks[0]
             else if type(msg) = "roSystemLogEvent"
                 logEvent = msg.getInfo()
                 if logEvent.logType = "bandwidth.minute"

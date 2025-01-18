@@ -25,55 +25,57 @@ describe("RoAppManager", () => {
     });
 
     describe("stringification", () => {
-        it("lists stringified value", () => {
+        it("lists stringified value", async () => {
             let appManager = new RoAppManager();
-            expect(appManager.toString()).toEqual(`<Component: roAppManager>`);
+            expect(await appManager.toString()).toEqual(`<Component: roAppManager>`);
         });
     });
 
     describe("getUpTime", () => {
-        it("returns the uptime", () => {
+        it("returns the uptime", async () => {
             let appManager = new RoAppManager();
             let getUpTime = appManager.getMethod("getUpTime");
             let totalMilliseconds = ts.getMethod("totalMilliseconds");
-            let upTime = getUpTime.call(interpreter).getMethod("totalMilliseconds");
+            let upTime = (await getUpTime.call(interpreter)).getMethod("totalMilliseconds");
             expect(getUpTime).toBeTruthy();
             expect(totalMilliseconds).toBeTruthy();
             expect(upTime).toBeTruthy();
-            expect(upTime.call(interpreter)).toEqual(totalMilliseconds.call(interpreter));
+            expect(await upTime.call(interpreter)).toEqual(
+                await totalMilliseconds.call(interpreter)
+            );
         });
     });
 
     describe("getScreensaverTimeout", () => {
-        it("should return the screen saver timeout (0=disabled)", () => {
+        it("should return the screen saver timeout (0=disabled)", async () => {
             let appManager = new RoAppManager();
             let method = appManager.getMethod("getScreensaverTimeout");
 
             expect(method).toBeTruthy();
-            expect(method.call(interpreter)).toEqual(new Int32(0));
+            expect(await method.call(interpreter)).toEqual(new Int32(0));
         });
     });
 
     describe("isAppInstalled", () => {
-        it("returns false if passed channel id is not on deviceInfo.appList", () => {
+        it("returns false if passed channel id is not on deviceInfo.appList", async () => {
             let appManager = new RoAppManager();
             let isAppInstalled = appManager.getMethod("isAppInstalled");
 
             expect(isAppInstalled).toBeTruthy();
             expect(
-                isAppInstalled.call(interpreter, new BrsString("dev"), new BrsString(""))
+                await isAppInstalled.call(interpreter, new BrsString("dev"), new BrsString(""))
             ).toEqual(BrsBoolean.False);
         });
     });
 
     describe("launchApp", () => {
-        it("returns false if could not launch the app (not in appList)", () => {
+        it("returns false if could not launch the app (not in appList)", async () => {
             let appManager = new RoAppManager();
             let method = appManager.getMethod("launchApp");
 
             expect(method).toBeTruthy();
             expect(
-                method.call(
+                await method.call(
                     interpreter,
                     new BrsString("dev"),
                     new BrsString(""),
@@ -84,11 +86,11 @@ describe("RoAppManager", () => {
     });
 
     describe("getAppList", () => {
-        it("returns a list of apps", () => {
+        it("returns a list of apps", async () => {
             let appManager = new RoAppManager();
             let getAppList = appManager.getMethod("getAppList");
 
-            let list = getAppList.call(interpreter);
+            let list = await getAppList.call(interpreter);
             expect(getAppList).toBeTruthy();
             expect(list).toBeTruthy();
             expect(list.elements).toEqual(new RoArray([]).elements);
@@ -96,11 +98,11 @@ describe("RoAppManager", () => {
     });
 
     describe("getRunParams", () => {
-        it("returns a list of parameters passed to the app", () => {
+        it("returns a list of parameters passed to the app", async () => {
             let appManager = new RoAppManager();
             let getRunParams = appManager.getMethod("getRunParams");
 
-            let params = getRunParams.call(interpreter);
+            let params = await getRunParams.call(interpreter);
             expect(getRunParams).toBeTruthy();
             expect(params).toBeTruthy();
             expect(params.elements).toEqual(new RoAssociativeArray([]).elements);
@@ -108,11 +110,11 @@ describe("RoAppManager", () => {
     });
 
     describe("getLastExitInfo", () => {
-        it("Returns an AA that includes an exit reason and other stats.", () => {
+        it("Returns an AA that includes an exit reason and other stats.", async () => {
             let appManager = new RoAppManager();
             let getLastExitInfo = appManager.getMethod("getLastExitInfo");
 
-            let exitInfo = getLastExitInfo.call(interpreter);
+            let exitInfo = await getLastExitInfo.call(interpreter);
             expect(getLastExitInfo).toBeTruthy();
             expect(exitInfo).toBeTruthy();
             expect(exitInfo.elements.size).toEqual(4);
@@ -127,7 +129,7 @@ describe("compareVersions", () => {
         appManager = new RoAppManager();
     });
 
-    test("should return 0 for equal versions", () => {
+    test("should return 0 for equal versions", async () => {
         expect(compareVersions("1.0.0", "1.0.0")).toBe(0);
         expect(compareVersions("1.0.0", "1.0")).toBe(0);
         expect(compareVersions("1.0.0", "1")).toBe(0);
@@ -136,7 +138,7 @@ describe("compareVersions", () => {
         expect(compareVersions("2.3.4", "0002.03.004")).toBe(0);
     });
 
-    test("should return 1 when the first version is greater", () => {
+    test("should return 1 when the first version is greater", async () => {
         expect(compareVersions("1.0.1", "1.0.0")).toBe(1);
         expect(compareVersions("1.1.0", "1.0.0")).toBe(1);
         expect(compareVersions("2.0.0", "1.0.0")).toBe(1);
@@ -145,7 +147,7 @@ describe("compareVersions", () => {
         expect(compareVersions("02.003", "2.2.9")).toBe(1);
     });
 
-    test("should return -1 when the first version is lesser", () => {
+    test("should return -1 when the first version is lesser", async () => {
         expect(compareVersions("1.0.0", "1.0.1")).toBe(-1);
         expect(compareVersions("1.0.0", "1.1.0")).toBe(-1);
         expect(compareVersions("1.0.0", "2.0.0")).toBe(-1);
@@ -154,14 +156,14 @@ describe("compareVersions", () => {
         expect(compareVersions("1.0", "1.0.1")).toBe(-1);
     });
 
-    test("should handle versions with different lengths", () => {
+    test("should handle versions with different lengths", async () => {
         expect(compareVersions("1.0", "1.0.0")).toBe(0);
         expect(compareVersions("1", "1.0.0")).toBe(0);
         expect(compareVersions("1.0.0", "1")).toBe(0);
         expect(compareVersions("1.0.0", "1.0")).toBe(0);
     });
 
-    test("should handle empty strings", () => {
+    test("should handle empty strings", async () => {
         expect(compareVersions("", "")).toBe(0);
         expect(compareVersions("1.0.0", "")).toBe(1);
         expect(compareVersions("", "0.0.0")).toBe(0);
@@ -171,7 +173,7 @@ describe("compareVersions", () => {
         expect(compareVersions("2", ".1..")).toBe(1);
     });
 
-    test("should handle alpha strings", () => {
+    test("should handle alpha strings", async () => {
         expect(compareVersions("1.0.0", "alpha")).toBe(-1);
         expect(compareVersions("alpha", "1.0.0")).toBe(-1);
         expect(compareVersions("alpha", "0.0.0")).toBe(0);
@@ -179,7 +181,7 @@ describe("compareVersions", () => {
         expect(compareVersions("beta", "0")).toBe(0);
     });
 
-    test("should handle mixed numeric and alpha strings", () => {
+    test("should handle mixed numeric and alpha strings", async () => {
         expect(compareVersions("1.0.0", "1.0.0-alpha")).toBe(-1);
         expect(compareVersions("1.0.1", "1.0.0-alpha")).toBe(-1);
         expect(compareVersions("1.1.0", "1.0.0-alpha")).toBe(1);
