@@ -31,6 +31,7 @@ export const deviceData: DeviceInfo = Object.assign(DefaultDeviceInfo, {
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
 });
+deviceData.serialNumber = getSerialNumber();
 
 // App Data
 const inputParams: Map<string, string> = new Map();
