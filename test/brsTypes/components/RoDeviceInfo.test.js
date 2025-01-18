@@ -113,7 +113,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getVersion");
 
                 expect(method).toBeTruthy();
-                expect(await method.call(interpreter)).toEqual(new BrsString("48F.04E12221A"));
+                expect(await method.call(interpreter)).toEqual(new BrsString("48F.14E07709A"));
             });
         });
         describe("getRIDA", () => {
