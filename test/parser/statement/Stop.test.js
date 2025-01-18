@@ -1,6 +1,5 @@
 const brs = require("../../../bin/brs.node");
 const { Lexeme } = brs.lexer;
-const { Int32 } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
 

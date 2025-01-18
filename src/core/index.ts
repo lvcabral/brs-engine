@@ -72,6 +72,7 @@ export const cecStatus: CECStatusEvent = { activeSource: true };
 export const memoryInfo: MemoryInfoEvent = { usedHeapSize: 0, heapSizeLimit: 0 };
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
+export const terminateReasons = ["debug-exit", "end-statement"];
 
 const algorithm = "aes-256-ctr";
 
@@ -882,7 +883,7 @@ async function executeApp(
         await interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
         exitReason = AppExitReason.FINISHED;
-        if (err.message !== "debug-exit") {
+        if (!terminateReasons.includes(err.message)) {
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {

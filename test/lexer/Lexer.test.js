@@ -23,6 +23,11 @@ describe("lexer", () => {
         ]);
     });
 
+    it("gives the `end` keyword its own Lexeme", () => {
+        let { tokens } = Lexer.scan("end");
+        expect(tokens.map((t) => t.kind)).toEqual([Lexeme.End, Lexeme.Eof]);
+    });
+
     it("gives the `stop` keyword its own Lexeme", () => {
         let { tokens } = Lexer.scan("stop");
         expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Stop, Lexeme.Eof]);

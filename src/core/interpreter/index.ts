@@ -1267,7 +1267,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 });
             } catch (reason: any) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
-                    if (reason.message === "debug-exit") {
+                    if (core.terminateReasons.includes(reason.message)) {
                         throw new Error(reason.message);
                     } else if (reason instanceof BrsError) {
                         throw reason;
@@ -1277,7 +1277,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         throw new Error("");
                     }
                     throw new Error(reason.message);
-                } else if (reason.message === "debug-exit") {
+                } else if (core.terminateReasons.includes(reason.message)) {
                     throw new Error(reason.message);
                 }
 

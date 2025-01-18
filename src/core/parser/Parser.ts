@@ -289,16 +289,6 @@ export class Parser {
             };
         }
 
-        /**
-         * A simple wrapper around `check` to make tests for a `end` identifier.
-         * `end` is a keyword, but not reserved, so associative arrays can have properties
-         * called `end`; the parser takes on this task.
-         * @returns `true` if the next token is an identifier with text `end`, otherwise `false`
-         */
-        function checkEnd() {
-            return check(Lexeme.Identifier) && peek().text.toLowerCase() === "end";
-        }
-
         function declaration(...additionalTerminators: BlockTerminator[]): Statement | undefined {
             try {
                 let statementSeparators = [Lexeme.Colon];
@@ -658,7 +648,7 @@ export class Parser {
                 return exitFor();
             }
 
-            if (checkEnd()) {
+            if (check(Lexeme.End)) {
                 return endStatement();
             }
 
@@ -1335,7 +1325,7 @@ export class Parser {
         function endStatement() {
             let tokens = { end: advance() };
 
-            while (match(Lexeme.Newline));
+            while (match(Lexeme.Newline, Lexeme.Colon));
 
             return new Stmt.End(tokens);
         }
