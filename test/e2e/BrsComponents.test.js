@@ -453,7 +453,7 @@ describe("end to end brightscript functions", () => {
             " 5",
             "BrightScript Engine Library",
             " 4",
-            "48F.04E12221A",
+            "48F.14E07709A",
             "f51ac698-bc60-4409-aae3-8fc3abc025c4",
             "true",
             "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
