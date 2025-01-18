@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, platform } from "../core/common";
+import { SubscribeCallback } from "./util";
+import { MediaEvent, MediaEventType, platform } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -21,7 +21,6 @@ let playList = new Array();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
-let sharedArray: Int32Array;
 let notifyTime = false;
 let bufferOnly = false;
 let canPlay = false;
@@ -37,11 +36,16 @@ let previousTime = Date.now();
 if (typeof document !== "undefined") {
     player = document.getElementById("player") as HTMLVideoElement;
 }
-export function initVideoModule(array: Int32Array, mute: boolean = false) {
+export function initVideoModule(mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
-            Atomics.store(sharedArray, DataType.VLP, loadProgress);
+            const event: MediaEvent = {
+                media: "video",
+                type: MediaEventType.LOADING,
+                index: loadProgress,
+            };
+            notifyAll("post", event);
             canPlay = true;
             if (playerState !== "play" && !bufferOnly) {
                 playVideo();
@@ -50,14 +54,23 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.addEventListener("playing", (e: Event) => {
             if (playerState !== "pause") {
                 setAudioTrack(playList[playIndex]?.audioTrack ?? -1);
-                Atomics.store(sharedArray, DataType.VDX, currentFrame);
-                Atomics.store(sharedArray, DataType.VDO, MediaEvent.START_STREAM);
+                const event: MediaEvent = {
+                    media: "video",
+                    type: MediaEventType.START_STREAM,
+                    index: currentFrame,
+                };
+                notifyAll("post", event);
             }
             notifyAll("play");
         });
         player.addEventListener("timeupdate", (e: Event) => {
             if (notifyTime) {
-                Atomics.store(sharedArray, DataType.VPS, Math.round(player.currentTime));
+                const event: MediaEvent = {
+                    media: "video",
+                    type: MediaEventType.POSITION,
+                    index: Math.round(player.currentTime),
+                };
+                notifyAll("post", event);
             }
         });
         player.addEventListener("error", (e: Event) => {
@@ -74,7 +87,6 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.defaultMuted = true;
         uiMuted = mute;
     }
-    sharedArray = array;
     resetVideo();
 }
 function calculateBandwidth(e: Event) {
@@ -268,13 +280,19 @@ function startProgress(e: Event) {
         }
     }
     loadProgress += 200;
-    Atomics.store(sharedArray, DataType.VLP, loadProgress);
+    const event: MediaEvent = { media: "video", type: MediaEventType.LOADING, index: loadProgress };
+    notifyAll("post", event);
 }
 
 function setDuration(e: Event) {
     if (!isNaN(player.duration)) {
         videoDuration = Math.round(player.duration);
-        Atomics.store(sharedArray, DataType.VDR, videoDuration);
+        const event: MediaEvent = {
+            media: "video",
+            type: MediaEventType.DURATION,
+            index: videoDuration,
+        };
+        notifyAll("post", event);
     }
     if (playerState !== "play") {
         startProgress(e);
@@ -291,7 +309,13 @@ function loadAudioTracks() {
             playList[playIndex].audioTrack = hls.audioTrack;
         }
     }
-    saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
+    const event: MediaEvent = {
+        media: "video",
+        type: MediaEventType.TRACKS,
+        index: audioTracks.length,
+        tracks: audioTracks,
+    };
+    notifyAll("post", event);
 }
 
 function setAudioTrack(index: number) {
@@ -402,8 +426,8 @@ function nextVideo() {
             return;
         }
     } else {
-        Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.FULL);
+        const event: MediaEvent = { media: "video", type: MediaEventType.FULL, index: playIndex };
+        notifyAll("post", event);
         playIndex = 0;
         playNext = -1;
         canPlay = false;
@@ -415,7 +439,8 @@ function nextVideo() {
     playNext = -1;
     playerState = "stop";
     canPlay = false;
-    Atomics.store(sharedArray, DataType.VSE, playIndex);
+    const event: MediaEvent = { media: "video", type: MediaEventType.SELECTED, index: playIndex };
+    notifyAll("post", event);
     loadVideo();
 }
 
@@ -425,8 +450,12 @@ function stopVideo() {
         player.removeAttribute("src"); // empty source
         player.load();
         notifyAll("stop");
-        Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
+        const event: MediaEvent = {
+            media: "video",
+            type: MediaEventType.PARTIAL,
+            index: playIndex,
+        };
+        notifyAll("post", event);
         clearVideoTracking();
         startPosition = 0;
         canPlay = false;
@@ -437,7 +466,8 @@ function pauseVideo() {
     if (player) {
         player.pause();
         notifyAll("pause");
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.PAUSED);
+        const event: MediaEvent = { media: "video", type: MediaEventType.PAUSED, index: playIndex };
+        notifyAll("post", event);
     }
 }
 
@@ -446,7 +476,12 @@ function resumeVideo(notify = true) {
         player.play();
         player.muted = uiMuted || videoMuted;
         if (notify) {
-            Atomics.store(sharedArray, DataType.VDO, MediaEvent.RESUMED);
+            const event: MediaEvent = {
+                media: "video",
+                type: MediaEventType.RESUMED,
+                index: playIndex,
+            };
+            notifyAll("post", event);
         }
     }
 }

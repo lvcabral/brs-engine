@@ -19,7 +19,7 @@ describe("property setting", () => {
     });
 
     describe("arrays", () => {
-        test("one-dimensional", () => {
+        test("one-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -51,14 +51,14 @@ describe("property setting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
                 new BrsString("new index0")
             );
         });
 
-        test("multi-dimensional", () => {
+        test("multi-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -122,7 +122,7 @@ describe("property setting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
                 new BrsString("new (2,1)")
@@ -131,7 +131,7 @@ describe("property setting", () => {
     });
 
     describe("associative arrays", () => {
-        test("one-dimensional", () => {
+        test("one-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -170,7 +170,7 @@ describe("property setting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("fooResult"))).toEqual(
                 new BrsString("new foo")
@@ -180,7 +180,7 @@ describe("property setting", () => {
             );
         });
 
-        test("multi-dimensional", () => {
+        test("multi-dimensional", async () => {
             let ast = [
                 new Stmt.Assignment(
                     { equals: token(Lexeme.Equals, "=") },
@@ -241,7 +241,7 @@ describe("property setting", () => {
                 ),
             ];
 
-            interpreter.exec(ast);
+            await interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("barResult"))).toEqual(
                 new BrsString("new aa.foo.bar")

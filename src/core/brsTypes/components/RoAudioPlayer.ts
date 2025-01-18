@@ -11,7 +11,7 @@ import {
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../common";
+import { MediaEventType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoAudioPlayer extends BrsComponent implements BrsValue {
@@ -19,7 +19,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
     private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
-    private audioFlags: number;
+    private audioFlags: MediaEventType | -1;
 
     constructor(interpreter: Interpreter) {
         super("roAudioPlayer");
@@ -69,16 +69,11 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const flags = Atomics.load(this.interpreter.sharedArray, DataType.SND);
-        if (flags !== this.audioFlags) {
-            this.audioFlags = flags;
+        const event = this.interpreter.audioBuffer.shift();
+        if (event && event.type !== this.audioFlags) {
+            this.audioFlags = event.type;
             if (this.audioFlags >= 0) {
-                events.push(
-                    new RoAudioPlayerEvent(
-                        this.audioFlags,
-                        Atomics.load(this.interpreter.sharedArray, DataType.IDX)
-                    )
-                );
+                events.push(new RoAudioPlayerEvent(event.type, event.index));
             }
         }
         return events;

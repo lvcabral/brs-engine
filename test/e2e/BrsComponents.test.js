@@ -545,6 +545,7 @@ describe("end to end brightscript functions", () => {
             "true",
         ]);
     });
+
     test("components/roRemoteInfo.brs", async () => {
         await execute([resourceFile("components", "roRemoteInfo.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
@@ -565,8 +566,12 @@ describe("end to end brightscript functions", () => {
             "GamePad? false",
         ]);
     });
+
     test("components/roEvents.brs", async () => {
-        await execute([resourceFile("components", "roEvents.brs")], outputStreams);
+        jest.useFakeTimers();
+        const resultPromise = execute([resourceFile("components", "roEvents.brs")], outputStreams);
+        await jest.advanceTimersByTimeAsync(1000);
+        await resultPromise;
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "roCECStatus.isActiveSource() = true",
             "roChannelStoreEvent",

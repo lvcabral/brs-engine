@@ -5,16 +5,8 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, saveDataBuffer } from "./util";
-import {
-    DataType,
-    RemoteType,
-    DebugCommand,
-    keyBufferSize,
-    keyArraySpots,
-    platform,
-    BufferType,
-} from "../core/common";
+import { SubscribeCallback } from "./util";
+import { RemoteType, platform, ControlEvent, InputEvent } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
@@ -57,12 +49,11 @@ const rokuKeys: Map<string, number> = new Map([
 
 // Initialize Control Module
 const controls = { keyboard: true, gamePads: true };
-let sharedArray: Int32Array;
+const keysMap: Map<string, string> = new Map();
 let sendKeysEnabled = false;
 let disableDebug: boolean = false;
 
-export function initControlModule(array: Int32Array, options: any = {}) {
-    sharedArray = array;
+export function initControlModule(options: any = {}) {
     if (typeof options.disableDebug === "boolean") {
         disableDebug = options.disableDebug;
     }
@@ -123,67 +114,52 @@ export function enableSendKeys(enable: boolean) {
 
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
     key = key.toLowerCase();
-    if (["home", "volumemute", "poweroff"].includes(key)) {
-        if (mod === 0) {
-            notifyAll(key);
-        }
-        notifyAll("control", { key: key, mod: mod });
+    let handled = false;
+    const controlEvent: ControlEvent = {
+        key: -1,
+        mod: mod,
+        remote: `${RemoteType[type]}:${index}`,
+    };
+    if (["home", "volumemute", "poweroff"].includes(key) && mod === 0) {
+        notifyAll(key);
+        handled = true;
     } else if (!sendKeysEnabled) {
         return;
-    } else if (key === "break") {
-        if (!disableDebug && mod === 0) {
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
-            notifyAll("control", { key: key, mod: mod });
-        }
+    } else if (key === "break" && !disableDebug && mod === 0) {
+        notifyAll("break");
+        handled = true;
     } else if (rokuKeys.has(key)) {
         const code = rokuKeys.get(key);
         if (typeof code !== "undefined") {
-            const next = getNext();
-            Atomics.store(sharedArray, DataType.RID + next, type + index);
-            Atomics.store(sharedArray, DataType.MOD + next, mod);
-            Atomics.store(sharedArray, DataType.KEY + next, code + mod);
-            notifyAll("control", { key: key, mod: mod });
+            controlEvent.key = code + mod;
+            handled = true;
         }
-    } else if (key.slice(0, 4).toLowerCase() === "lit_") {
-        if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
-            const next = getNext();
-            Atomics.store(sharedArray, DataType.RID + next, type + index);
-            Atomics.store(sharedArray, DataType.MOD + next, mod);
-            Atomics.store(sharedArray, DataType.KEY + next, key.charCodeAt(4) + mod);
-            notifyAll("control", { key: key, mod: mod });
-        }
+    } else if (
+        key.toLowerCase().startsWith("lit_") &&
+        key.slice(4).length === 1 &&
+        key.charCodeAt(4) >= 32 &&
+        key.charCodeAt(4) < 255
+    ) {
+        controlEvent.key = key.charCodeAt(4) + mod;
+        handled = true;
     }
-}
-
-function getNext() {
-    for (let i = 0; i < keyBufferSize; i++) {
-        const next = i * keyArraySpots;
-        if (Atomics.load(sharedArray, DataType.KEY + next) < 0) {
-            return next;
-        }
+    if (controlEvent.key >= 0) {
+        notifyAll("post", controlEvent);
     }
-    // buffer full
-    for (let i = 1; i < keyBufferSize; i++) {
-        const prev = (i - 1) * keyArraySpots;
-        const next = i * keyArraySpots;
-        Atomics.store(
-            sharedArray,
-            DataType.KEY + prev,
-            Atomics.load(sharedArray, DataType.KEY + next)
-        );
+    if (handled) {
+        notifyAll("control", { key: key, mod: mod });
     }
-    return (keyBufferSize - 1) * keyArraySpots;
 }
 
 // Input API
 export function sendInput(data: object) {
-    saveDataBuffer(sharedArray, JSON.stringify(data), BufferType.INPUT);
+    const inputEvent: InputEvent = { source_ip_addr: "", ...data };
+    notifyAll("post", inputEvent);
 }
 
 /// #if BROWSER
 
-// Keyboard Mapping
-const keysMap: Map<string, string> = new Map();
+// Keyboard Mapping (Browser)
 keysMap.set("ArrowUp", "up");
 keysMap.set("ArrowDown", "down");
 keysMap.set("ArrowLeft", "left");
@@ -332,5 +308,46 @@ function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: numbe
 }
 function gamePadOffHandler(id: number) {
     console.info(`GamePad ${id} disconnected!`);
+}
+/// #else
+
+// Keyboard Mapping (TTY)
+keysMap.set("\x1B[A", "up");
+keysMap.set("\x1B[B", "down");
+keysMap.set("\x1B[D", "left");
+keysMap.set("\x1B[C", "right");
+keysMap.set("\r", "select");
+keysMap.set("\x1B", "back");
+keysMap.set("\x1B[3~", "back");
+keysMap.set("\x1B[H", "home");
+keysMap.set("\x1B[1~", "home");
+keysMap.set("\x7F", "instantreplay");
+keysMap.set("\x1B[F", "play");
+keysMap.set("\x1B[4~", "play");
+keysMap.set("\x1B[6~", "rev");
+keysMap.set("\x1B[5~", "fwd");
+keysMap.set("\x03", "break");
+keysMap.set("\x04", "home");
+keysMap.set("\x18", "exit");
+keysMap.set("\b", "backspace");
+keysMap.set(" ", "play");
+keysMap.set(",", "rev");
+keysMap.set(".", "fwd");
+keysMap.set("*", "info");
+keysMap.set("\x1B[2~", "info");
+keysMap.set("a", "a");
+keysMap.set("z", "b");
+
+export function handleKeypressEvent(str: string, keyData: any) {
+    if (!controls.keyboard) {
+        return;
+    }
+    const key = keysMap.get(keyData.sequence);
+    if (key && key.toLowerCase() !== "ignore") {
+        setTimeout(function () {
+            sendKey(key, 100);
+        }, 300);
+        sendKey(key, 0);
+    }
 }
 /// #endif

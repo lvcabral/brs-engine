@@ -76,7 +76,6 @@ sub someTests()
     print "%f %s".format(-12.34, "xxx")
 end sub
 
-
 sub otherTests()
     obj = CreateObject("roBoolean")
     print obj

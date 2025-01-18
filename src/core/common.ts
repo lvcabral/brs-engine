@@ -51,7 +51,7 @@ export interface DeviceInfo {
 
 // Default Device Information
 export const platform = getPlatform();
-export const defaultDeviceInfo: DeviceInfo = {
+export const DefaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
@@ -282,38 +282,20 @@ export type ConnectionInfo = {
     ssid?: string;
 };
 
+// Function to yield, allowing other threads to run and get their messages
+export async function threadYield() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 // Shared array data types enumerator
 export enum DataType {
     DBG, // Debug Command
     BUF, // Buffer flag
-    VDO, // Video State
-    VDX, // Video Index
-    VSE, // Video Selected
-    VLP, // Video Load Progress
-    VPS, // Video Position
-    VDR, // Video Duration
-    SND, // Sound State
-    IDX, // Sound Index
-    WAV, // Wave Audio
-    WAV1, // Reserved for second stream
-    WAV2, // Reserved for third stream
-    MUHS, // Memory Used Heap Size
-    MHSL, // Memory Heap Size Limit
-    MBWD, // Measured Bandwidth
-    CEC, // Consumer Electronics Control
-    // Key Buffer starts here: KeyBufferSize * KeyArraySpots
-    RID, // Remote Id
-    KEY, // Key Code
-    MOD, // Key State (down/up)
 }
 
 // Debug constants
-export const dataBufferIndex = 32;
-export const dataBufferSize = 1024;
-
-// Key Buffer Constants
-export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
-export const keyArraySpots = 3;
+export const DataBufferIndex = 2;
+export const DataBufferSize = 1024;
 
 // Remote control type
 export enum RemoteType {
@@ -330,7 +312,7 @@ export enum RemoteType {
 // FP - Front Panel (for on-device controls)
 
 // Debug prompt
-export const debugPrompt = "Brightscript Debugger> ";
+export const DebugPrompt = "Brightscript Debugger> ";
 
 // Debug commands enumerator
 export enum DebugCommand {
@@ -353,8 +335,99 @@ export enum DebugCommand {
     PAUSE,
 }
 
+// Debug Event
+export interface DebugEvent {
+    command: DebugCommand;
+    expression?: string;
+}
+
+export function isDebugEvent(value: any): value is DebugEvent {
+    return (
+        value &&
+        typeof value.command === "number" &&
+        (typeof value.expression === "string" || value.expression === undefined)
+    );
+}
+
+// Key Event Interface
+export interface ControlEvent {
+    remote: string; // Remote Id (Remote Type:Remote Index)
+    key: number; // Key Code
+    mod: number; // Modifier (0 = press, 100 = release)
+}
+
+export function isControlEvent(value: any): value is ControlEvent {
+    return (
+        value &&
+        typeof value.remote === "string" &&
+        typeof value.key === "number" &&
+        typeof value.mod === "number"
+    );
+}
+
+// Input Event Interface
+export interface InputEvent {
+    [key: string]: string;
+    source_ip_addr: string;
+}
+
+export function isInputEvent(value: any): value is InputEvent {
+    return value && typeof value.source_ip_addr === "string";
+}
+
+// System Log Event Interface
+export interface SysLogEvent {
+    type: "bandwidth.minute" | "http.connect" | "http.complete" | "http.error";
+    sysLog: object;
+}
+
+export function isSysLogEvent(value: any): value is SysLogEvent {
+    return value && typeof value.type === "string" && typeof value.sysLog === "object";
+}
+
+// CEC Status Event Interface
+export interface CECStatusEvent {
+    activeSource: boolean;
+}
+
+export function isCECStatusEvent(value: any): value is CECStatusEvent {
+    return value && typeof value.activeSource === "boolean";
+}
+
+// Memory Info Event Interface
+export interface MemoryInfoEvent {
+    heapSizeLimit: number;
+    usedHeapSize: number;
+}
+
+export function isMemoryInfoEvent(value: any): value is MemoryInfoEvent {
+    return (
+        value && typeof value.heapSizeLimit === "number" && typeof value.usedHeapSize === "number"
+    );
+}
+
+// Media Event Interface
+export type MediaEvent = {
+    media: "audio" | "video" | "wav";
+    type: MediaEventType;
+    index: number;
+    name?: string;
+    tracks?: any[];
+};
+
+export function isMediaEvent(value: any): value is MediaEvent {
+    return (
+        value &&
+        typeof value.media === "string" &&
+        typeof value.type === "number" &&
+        typeof value.index === "number" &&
+        (typeof value.name === "string" || value.name === undefined) &&
+        (Array.isArray(value.tracks) || value.tracks === undefined)
+    );
+}
+
 // Media events enumerator
-export enum MediaEvent {
+export enum MediaEventType {
     SELECTED,
     FULL,
     PARTIAL,
@@ -364,16 +437,14 @@ export enum MediaEvent {
     LOADING,
     START_STREAM,
     START_PLAY,
+    STOP_PLAY,
     POSITION,
+    DURATION,
+    TRACKS,
 }
 
-// Buffer Data Types enumerator
-export enum BufferType {
-    DEBUG_EXPR,
-    AUDIO_TRACKS,
-    SYS_LOG,
-    INPUT,
-}
+// Default Roku Sounds
+export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
 
 // Default Roku Sounds
 export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];

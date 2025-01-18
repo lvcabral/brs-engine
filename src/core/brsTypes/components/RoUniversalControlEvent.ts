@@ -11,18 +11,14 @@ import {
 } from "..";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
-export interface KeyEvent {
-    remote: string; // Remote Id (Remote Type:Remote Index)
-    key: number; // Key Code
-    mod: number; // Modifier (0 = press, 100 = release)
-}
+import { ControlEvent } from "../../common";
 
 export class RoUniversalControlEvent extends BrsComponent implements BrsValue, Comparable {
     readonly kind = ValueKind.Object;
-    private readonly event: KeyEvent;
-    constructor(keyEvent: KeyEvent) {
+    private readonly event: ControlEvent;
+    constructor(controlEvent: ControlEvent) {
         super("roUniversalControlEvent");
-        this.event = keyEvent;
+        this.event = controlEvent;
 
         this.registerMethods({
             ifUniversalControlEvent: [

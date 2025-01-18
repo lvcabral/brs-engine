@@ -3,7 +3,6 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, RoMessagePort, RoSystemLogEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BufferType, DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoSystemLog extends BrsComponent implements BrsValue {
@@ -15,7 +14,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         "http.complete",
         "http.error",
     ];
-    private readonly enabledEvents: string[] = [];
+    private readonly enabledEvents: Set<string> = new Set();
     private port?: RoMessagePort;
 
     constructor(interpreter: Interpreter) {
@@ -48,28 +47,9 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        if (this.enabledEvents.includes("bandwidth.minute")) {
-            const bandwidth = Atomics.load(this.interpreter.sharedArray, DataType.MBWD);
-            if (bandwidth > 0) {
-                Atomics.store(this.interpreter.sharedArray, DataType.MBWD, -1);
-                events.push(new RoSystemLogEvent("bandwidth.minute", bandwidth));
-            }
-        }
-        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
-        if (bufferFlag === BufferType.SYS_LOG) {
-            const strSysLog = this.interpreter.readDataBuffer();
-            try {
-                const sysLog = JSON.parse(strSysLog);
-                if (typeof sysLog.type === "string" && this.enabledEvents.includes(sysLog.type)) {
-                    events.push(new RoSystemLogEvent(sysLog.type, sysLog));
-                }
-            } catch (e: any) {
-                if (this.interpreter.isDevMode) {
-                    this.interpreter.stdout.write(
-                        `warning,[roSystemLog] Error parsing System Log buffer: ${e.message}`
-                    );
-                }
-            }
+        const event = this.interpreter.sysLogBuffer.shift();
+        if (event && this.enabledEvents.has(event.type)) {
+            events.push(new RoSystemLogEvent(event.type, event.sysLog));
         }
         return events;
     }
@@ -82,11 +62,8 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, logType: BrsString) => {
-            if (
-                this.validEvents.includes(logType.value) &&
-                !this.enabledEvents.includes(logType.value)
-            ) {
-                this.enabledEvents.push(logType.value);
+            if (this.validEvents.includes(logType.value)) {
+                this.enabledEvents.add(logType.value);
                 postMessage(`syslog,${logType.value}`);
             }
             return BrsInvalid.Instance;
