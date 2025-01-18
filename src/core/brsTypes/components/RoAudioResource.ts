@@ -1,47 +1,33 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../common";
+import { DefaultSounds } from "../../common";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly audioName: string;
-    private readonly audioId?: number;
     private readonly maxStreams: number;
     private readonly valid: boolean;
-    private currentIndex: number;
     private playing: boolean;
 
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource");
         this.maxStreams = Math.min(interpreter.deviceInfo.get("maxSimulStreams"), 3) || 2;
-        this.valid = true;
-        const systemwav = ["select", "navsingle", "navmulti", "deadend"];
-        const sysIndex = systemwav.findIndex((wav) => wav === name.value.toLowerCase());
-        if (sysIndex > -1) {
-            this.audioId = sysIndex;
-        } else {
+        this.valid = DefaultSounds.includes(name.value.toLowerCase());
+        if (!this.valid) {
             try {
                 const fsys = interpreter.fileSystem;
-                this.valid = fsys !== undefined;
-                if (fsys) {
-                    const id = parseInt(fsys.readFileSync(name.value, "utf8"));
-                    if (id && id >= 0) {
-                        this.audioId = id + systemwav.length;
-                    }
-                }
+                this.valid = fsys.existsSync(name.value);
             } catch (err: any) {
                 interpreter.stderr.write(
                     `error,Error loading audio file: ${name.value} - ${err.message}`
                 );
-                this.valid = false;
             }
         }
         this.audioName = name.value;
-        this.currentIndex = 0;
         this.playing = false;
         this.registerMethods({
             ifAudioResource: [this.trigger, this.isPlaying, this.stop, this.maxSimulStreams],
@@ -70,11 +56,13 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, volume: Int32, index: Int32) => {
-            // TODO: Check behavior when index > maxSimulStreams
-            postMessage(`audio,trigger,${this.audioName},${volume.toString()},${index.toString()}`);
-            this.currentIndex = index.getValue();
-            this.playing = true;
-            return BrsInvalid.Instance;
+            if (index.getValue() >= 0 && index.getValue() < this.maxStreams) {
+                postMessage(
+                    `audio,trigger,${this.audioName},${volume.toString()},${index.toString()}`
+                );
+                this.playing = true;
+            }
+            return Uninitialized.Instance;
         },
     });
 
@@ -85,13 +73,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter) => {
-            if (this.audioId) {
-                const currentWav = Atomics.load(
-                    interpreter.sharedArray,
-                    DataType.WAV + this.currentIndex
-                );
-                this.playing = currentWav === this.audioId;
-            }
+            this.playing = interpreter.wavStatus.has(this.audioName);
             return BrsBoolean.from(this.playing);
         },
     });
@@ -105,7 +87,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             postMessage(`audio,stop,${this.audioName}`);
             this.playing = false;
-            return BrsInvalid.Instance;
+            return Uninitialized.Instance;
         },
     });
 

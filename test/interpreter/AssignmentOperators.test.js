@@ -27,8 +27,8 @@ describe("interpreter assignment operators", () => {
         );
     }
 
-    it("adds numbers", () => {
-        interpreter.exec([
+    it("adds numbers", async () => {
+        await interpreter.exec([
             initializeFoo(new Int32(3)),
             fooAssignmentOperator(token(Lexeme.PlusEqual, "+="), new Int32(2)),
         ]);
@@ -36,8 +36,8 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(5));
     });
 
-    it("concatenates strings", () => {
-        interpreter.exec([
+    it("concatenates strings", async () => {
+        await interpreter.exec([
             initializeFoo(new BrsString("lorem")),
             fooAssignmentOperator(token(Lexeme.PlusEqual, "+="), new BrsString(" ipsum")),
         ]);
@@ -47,8 +47,8 @@ describe("interpreter assignment operators", () => {
         );
     });
 
-    it("subtracts numbers", () => {
-        interpreter.exec([
+    it("subtracts numbers", async () => {
+        await interpreter.exec([
             initializeFoo(new Int32(3)),
             fooAssignmentOperator(token(Lexeme.MinusEqual, "-="), new Int32(2)),
         ]);
@@ -56,8 +56,8 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(1));
     });
 
-    it("multiplies numbers", () => {
-        interpreter.exec([
+    it("multiplies numbers", async () => {
+        await interpreter.exec([
             initializeFoo(new Int32(3)),
             fooAssignmentOperator(token(Lexeme.StarEqual, "*="), new Int32(2)),
         ]);
@@ -65,8 +65,8 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(6));
     });
 
-    it("divides numbers", () => {
-        interpreter.exec([
+    it("divides numbers", async () => {
+        await interpreter.exec([
             initializeFoo(new Int32(6)),
             fooAssignmentOperator(token(Lexeme.SlashEqual, "/="), new Int32(2)),
         ]);
@@ -74,8 +74,8 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Float(3));
     });
 
-    it("integer-divides numbers", () => {
-        interpreter.exec([
+    it("integer-divides numbers", async () => {
+        await interpreter.exec([
             initializeFoo(new Int32(3)),
             fooAssignmentOperator(token(Lexeme.BackslashEqual, "\\="), new Int32(2)),
         ]);
@@ -83,8 +83,8 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(1));
     });
 
-    it("left-shifts numbers", () => {
-        interpreter.exec([
+    it("left-shifts numbers", async () => {
+        await interpreter.exec([
             initializeFoo(new Int32(4)),
             fooAssignmentOperator(token(Lexeme.LeftShiftEqual, "<<="), new Int32(2)),
         ]);
@@ -92,8 +92,8 @@ describe("interpreter assignment operators", () => {
         expect(interpreter.environment.get(identifier("foo"))).toEqual(new Int32(16));
     });
 
-    it("right-shifts numbers", () => {
-        interpreter.exec([
+    it("right-shifts numbers", async () => {
+        await interpreter.exec([
             initializeFoo(new Int32(16)),
             fooAssignmentOperator(token(Lexeme.RightShiftEqual, ">>="), new Int32(2)),
         ]);

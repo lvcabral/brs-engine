@@ -2,7 +2,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -27,14 +27,27 @@ import {
     mountExt,
     setupDeepLink,
 } from "../api/package";
+import {
+    enableSendKeys,
+    handleKeypressEvent,
+    initControlModule,
+    sendInput,
+    sendKey,
+    subscribeControl,
+} from "../api/control";
 import { isNumber } from "../api/util";
 import {
-    debugPrompt,
-    dataBufferIndex,
-    dataBufferSize,
+    DebugPrompt,
+    DataBufferIndex,
+    DataBufferSize,
     AppPayload,
     AppExitReason,
     AppData,
+    isControlEvent,
+    DataType,
+    DebugCommand,
+    isInputEvent,
+    DebugEvent,
 } from "../core/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
@@ -45,11 +58,11 @@ const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
 const maxColumns = Math.max(process.stdout.columns, 32);
-const length = dataBufferIndex + dataBufferSize;
+const length = DataBufferIndex + DataBufferSize;
 
 // Variables
 let appFileName = "";
-let brsWorker: Worker;
+let ecpWorker: Worker;
 let workerReady = false;
 let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 let sharedArray = new Int32Array(sharedBuffer);
@@ -66,6 +79,7 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
+    .option("-t, --tty", "Enable the keyboard (TTY) for control simulation.", false)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option(
@@ -195,6 +209,7 @@ function runAppFiles(files: string[]) {
             return;
         }
         // Run BrightScript files
+        deviceData.appList?.push({ id: "dev", title: fileName, version: "1.0.0" });
         const payload = brs.createPayloadFromFiles(
             files,
             deviceData,
@@ -251,25 +266,58 @@ async function runApp(payload: AppPayload) {
         // Load ECP service as Worker
         const workerPath = path.join(__dirname, "brs.ecp.js");
         const workerData = { device: { ...payload.device, serialNumber: getSerialNumber() } };
-        brsWorker = new Worker(workerPath, { workerData: workerData });
-        brsWorker.once("message", (value: any) => {
-            if (value?.ready) {
-                console.log(chalk.blueBright(value?.msg));
-                workerReady = true;
-                runApp(payload);
+        ecpWorker = new Worker(workerPath, { workerData: workerData });
+        ecpWorker.on("message", (event: any) => {
+            if (typeof event === "object" && typeof event.ready === "boolean") {
+                if (event.ready) {
+                    console.log(chalk.blueBright(event.msg));
+                    workerReady = true;
+                    runApp(payload);
+                } else {
+                    ecpWorker?.terminate();
+                    console.error(chalk.red(event.msg));
+                    process.exitCode = 1;
+                }
+            } else if (typeof event?.key === "string" && typeof event?.mod === "number") {
+                sendKey(event.key, event.mod);
+            } else if (isInputEvent(event)) {
+                sendInput(event);
             } else {
-                brsWorker?.terminate();
-                console.error(chalk.red(value?.msg));
-                process.exitCode = 1;
+                console.log(chalk.blueBright("unhandled event:", JSON.stringify(event)));
             }
         });
-        brsWorker.postMessage(sharedBuffer);
+        ecpWorker.postMessage({ service: "enable" });
         return;
     }
     try {
+        initControlModule();
+        if (program.tty) {
+            readline.emitKeypressEvents(process.stdin);
+            process.stdin.setRawMode(true);
+            process.stdin.on("keypress", handleKeypressEvent);
+        }
+        subscribeControl("cli", (event: string, data: any) => {
+            if (event === "home" || event === "poweroff") {
+                Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
+            } else if (event === "break") {
+                if (brs.shared.isShared) {
+                    Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+                } else {
+                    const event: DebugEvent = { command: DebugCommand.BREAK };
+                    brs.debugEvents.push(event);
+                }
+            } else if (event === "post") {
+                if (isControlEvent(data)) {
+                    brs.controlEvents.push(data);
+                } else if (isInputEvent(data)) {
+                    brs.inputEvents.push(data);
+                }
+            }
+        });
+        enableSendKeys(program.ecp || program.tty);
         const pkg = await brs.executeFile(payload);
         if (program.ecp) {
-            brsWorker?.terminate();
+            ecpWorker?.terminate();
         }
         if (pkg.exitReason === AppExitReason.PACKAGED) {
             // Generate the Encrypted App Package
@@ -301,6 +349,7 @@ async function runApp(payload: AppPayload) {
         console.error(chalk.red(`Error executing app: ${err.message}`));
         process.exitCode = 1;
     }
+    process.exit();
 }
 
 /** Get the computer local Ips
@@ -377,7 +426,7 @@ async function repl() {
         output: process.stdout,
     });
     rl.setPrompt(`\n${chalk.magenta("brs")}> `);
-    rl.on("line", (line) => {
+    rl.on("line", async (line) => {
         if (["exit", "quit", "q"].includes(line.toLowerCase().trim())) {
             process.exit();
         } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
@@ -399,7 +448,7 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(localVars));
             process.stdout.write("\n");
         } else {
-            brs.executeLine(line, replInterpreter);
+            await brs.executeLine(line, replInterpreter);
         }
         rl.prompt();
     });
@@ -437,7 +486,7 @@ function messageCallback(message: any, _?: any) {
         printAsciiScreen(program.ascii, canvas);
     } else if (message instanceof Map) {
         if (program.ecp) {
-            brsWorker?.postMessage(message);
+            ecpWorker?.postMessage(message);
         }
         if (program.registry) {
             const strRegistry = JSON.stringify([...message]);
@@ -460,25 +509,29 @@ function messageCallback(message: any, _?: any) {
  */
 function handleStringMessage(message: string) {
     const mType = message.split(",")[0];
-    if (mType === "print") {
-        let log = message.slice(6);
-        if (log.endsWith(debugPrompt)) {
-            process.stdout.write(log);
-        } else {
-            process.stdout.write(colorize(log));
-        }
+    const msg = message.slice(mType.length + 1);
+    if (mType === "print" && msg.endsWith(DebugPrompt)) {
+        process.stdout.write(msg);
+    } else if (mType === "print") {
+        process.stdout.write(colorize(msg));
     } else if (mType === "warning") {
         console.warn(chalk.yellow(message.slice(8).trimEnd()));
     } else if (mType === "error") {
         console.error(chalk.red(message.slice(6).trimEnd()));
         process.exitCode = 1;
-    } else if (mType === "end") {
-        const msg = message.slice(mType.length + 1).trimEnd();
-        if (msg !== AppExitReason.FINISHED) {
-            process.exitCode = 1;
+    } else if (mType === "end" && msg.trim() !== AppExitReason.FINISHED) {
+        process.exitCode = 1;
+    } else if (mType === "debug") {
+        if (msg.trim() === "stop") {
+            process.stdin.setRawMode(false);
+        } else if (msg.trim() === "continue") {
+            if (program.tty) {
+                process.stdin.setRawMode(true);
+            }
+            process.stdin.resume();
         }
-    } else if (!["start", "debug", "reset", "video", "audio", "syslog"].includes(mType)) {
-        console.info(chalk.blueBright(message.trimEnd()));
+    } else if (!["start", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
+        console.info(chalk.blueBright(`unhandled message: ${message.trimEnd()}`));
     }
 }
 

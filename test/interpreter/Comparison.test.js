@@ -23,51 +23,51 @@ let interpreter;
  * @param {*} large the larger of the two values, i.e. `large > small`.
  */
 function verifyComparisons(small, large) {
-    test("<", () => {
+    test("<", async () => {
         let smallLarge = binary(small, Lexeme.Less, large);
         let smallSmall = binary(small, Lexeme.Less, small);
         let largeSmall = binary(large, Lexeme.Less, small);
-        let results = interpreter.exec([smallLarge, smallSmall, largeSmall]);
+        let results = await interpreter.exec([smallLarge, smallSmall, largeSmall]);
         expect(results).toEqual([BrsBoolean.True, BrsBoolean.False, BrsBoolean.False]);
     });
 
-    test("<=", () => {
+    test("<=", async () => {
         let smallLarge = binary(small, Lexeme.LessEqual, large);
         let smallSmall = binary(small, Lexeme.LessEqual, small);
         let largeSmall = binary(large, Lexeme.LessEqual, small);
-        let results = interpreter.exec([smallLarge, smallSmall, largeSmall]);
+        let results = await interpreter.exec([smallLarge, smallSmall, largeSmall]);
         expect(results).toEqual([BrsBoolean.True, BrsBoolean.True, BrsBoolean.False]);
     });
 
-    test(">", () => {
+    test(">", async () => {
         let smallLarge = binary(small, Lexeme.Greater, large);
         let smallSmall = binary(small, Lexeme.Greater, small);
         let largeSmall = binary(large, Lexeme.Greater, small);
-        let results = interpreter.exec([smallLarge, smallSmall, largeSmall]);
+        let results = await interpreter.exec([smallLarge, smallSmall, largeSmall]);
         expect(results).toEqual([BrsBoolean.False, BrsBoolean.False, BrsBoolean.True]);
     });
 
-    test(">=", () => {
+    test(">=", async () => {
         let smallLarge = binary(small, Lexeme.GreaterEqual, large);
         let smallSmall = binary(small, Lexeme.GreaterEqual, small);
         let largeSmall = binary(large, Lexeme.GreaterEqual, small);
-        let results = interpreter.exec([smallLarge, smallSmall, largeSmall]);
+        let results = await interpreter.exec([smallLarge, smallSmall, largeSmall]);
         expect(results).toEqual([BrsBoolean.False, BrsBoolean.True, BrsBoolean.True]);
     });
 
-    test("=", () => {
+    test("=", async () => {
         let smallLarge = binary(small, Lexeme.Equal, large);
         let smallSmall = binary(small, Lexeme.Equal, small);
         let largeSmall = binary(large, Lexeme.Equal, small);
-        let results = interpreter.exec([smallLarge, smallSmall, largeSmall]);
+        let results = await interpreter.exec([smallLarge, smallSmall, largeSmall]);
         expect(results).toEqual([BrsBoolean.False, BrsBoolean.True, BrsBoolean.False]);
     });
 
-    test("<>", () => {
+    test("<>", async () => {
         let smallLarge = binary(small, Lexeme.LessGreater, large);
         let smallSmall = binary(small, Lexeme.LessGreater, small);
         let largeSmall = binary(large, Lexeme.LessGreater, small);
-        let results = interpreter.exec([smallLarge, smallSmall, largeSmall]);
+        let results = await interpreter.exec([smallLarge, smallSmall, largeSmall]);
         expect(results).toEqual([BrsBoolean.True, BrsBoolean.False, BrsBoolean.True]);
     });
 }
@@ -106,10 +106,10 @@ describe("interpreter comparisons", () => {
             { name: "=", operator: Lexeme.Equal },
             { name: "<>", operator: Lexeme.LessGreater },
         ].forEach(({ name, operator }) => {
-            test(name, () => {
+            test(name, async () => {
                 let arr = new RoArray([]);
 
-                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow(
+                await expect(() => interpreter.exec([binary(arr, operator, arr)])).rejects.toThrow(
                     "Type Mismatch."
                 );
             });
@@ -129,9 +129,9 @@ describe("interpreter comparisons", () => {
             { name: "array", value: new RoArray([]) },
             { name: "associative array", value: new RoAssociativeArray([]) },
         ].forEach(({ name, value }) => {
-            test(name, () => {
+            test(name, async () => {
                 expect(
-                    interpreter.exec([
+                    await interpreter.exec([
                         binary(value, Lexeme.Equal, invalid),
                         binary(invalid, Lexeme.Equal, value),
                         binary(value, Lexeme.LessGreater, invalid),
@@ -140,22 +140,22 @@ describe("interpreter comparisons", () => {
                 ).toEqual([BrsBoolean.False, BrsBoolean.False, BrsBoolean.True, BrsBoolean.True]);
 
                 [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach(
-                    (operator) => {
-                        expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow(
-                            "Type Mismatch."
-                        );
+                    async (operator) => {
+                        await expect(() =>
+                            interpreter.exec([binary(value, operator, invalid)])
+                        ).rejects.toThrow("Type Mismatch.");
 
-                        expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow(
-                            "Type Mismatch."
-                        );
+                        await expect(() =>
+                            interpreter.exec([binary(invalid, operator, value)])
+                        ).rejects.toThrow("Type Mismatch.");
                     }
                 );
             });
         });
 
-        test("invalid", () =>
+        test("invalid", async () =>
             expect(
-                interpreter.exec([
+                await interpreter.exec([
                     binary(invalid, Lexeme.Equal, invalid),
                     binary(invalid, Lexeme.LessGreater, invalid),
                 ])
@@ -170,28 +170,28 @@ describe("interpreter comparisons", () => {
 
         // due to a combinatoric explosion of LHS-RHS-operator pairs, just test a representative
         // sample of pairings
-        test("32-bit integer and string", () => {
+        test("32-bit integer and string", async () => {
             let less = binary(int32, Lexeme.Less, str);
             let lessEqual = binary(int32, Lexeme.LessEqual, str);
             let greater = binary(int32, Lexeme.Greater, str);
             let greaterEqual = binary(int32, Lexeme.GreaterEqual, str);
             let equal = binary(int32, Lexeme.Equal, str);
             let notEqual = binary(int32, Lexeme.LessGreater, str);
-            expect(() =>
+            await expect(() =>
                 interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
-            ).toThrow("Type Mismatch.");
+            ).rejects.toThrow("Type Mismatch.");
         });
 
-        test("roString and 64-bit int", () => {
+        test("roString and 64-bit int", async () => {
             let less = binary(rostr, Lexeme.Less, int64);
             let lessEqual = binary(rostr, Lexeme.LessEqual, int64);
             let greater = binary(rostr, Lexeme.Greater, int64);
             let greaterEqual = binary(rostr, Lexeme.GreaterEqual, int64);
             let equal = binary(rostr, Lexeme.Equal, int64);
             let notEqual = binary(rostr, Lexeme.LessGreater, int64);
-            expect(() =>
+            await expect(() =>
                 interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
-            ).toThrow("Type Mismatch.");
+            ).rejects.toThrow("Type Mismatch.");
         });
     });
 });

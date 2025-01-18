@@ -1,11 +1,11 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BufferType, dataBufferIndex, dataBufferSize, DataType } from "../core/common";
+import { DataBufferIndex, DataBufferSize, DataType } from "../core/common";
 import packageInfo from "../../package.json";
 
 // Module callback function definition
@@ -37,19 +37,19 @@ export function getWorkerLibPath(): string {
     return libPath;
 }
 
-export function saveDataBuffer(sharedArray: Int32Array, data: string, type: BufferType) {
+export function saveDataBuffer(sharedArray: Int32Array, data: string) {
     // Store string on SharedArrayBuffer
     data = data.trim();
-    let len = Math.min(data.length, dataBufferSize);
+    let len = Math.min(data.length, DataBufferSize);
     for (let i = 0; i < len; i++) {
-        Atomics.store(sharedArray, dataBufferIndex + i, data.charCodeAt(i));
+        Atomics.store(sharedArray, DataBufferIndex + i, data.charCodeAt(i));
     }
     // String terminator
-    if (len < dataBufferSize) {
-        Atomics.store(sharedArray, dataBufferIndex + len, 0);
+    if (len < DataBufferSize) {
+        Atomics.store(sharedArray, DataBufferIndex + len, 0);
     }
-    // Set the type information
-    Atomics.store(sharedArray, DataType.BUF, type);
+    // Set the Buffer flag
+    Atomics.store(sharedArray, DataType.BUF, 1);
 }
 
 // Convert Buffer to Base 64 string

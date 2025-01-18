@@ -5,14 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    enableSendKeys,
-    initControlModule,
-    sendInput,
-    sendKey,
-    subscribeControl,
-} from "../api/control";
-import { DataType, DebugCommand, getRokuOSVersion } from "../core/common";
+import { AppData, DeviceInfo, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
 import xmlbuilder from "xmlbuilder";
@@ -31,8 +24,7 @@ const MAC = getMacAddress();
 const UDN = "138aedd0-d6ad-11eb-b8bc-" + MAC.replace(/:\s*/g, "");
 let ecp: restana.Service<restana.Protocol.HTTP>;
 let ssdp: any;
-let device: any;
-let sharedArray: Int32Array;
+let device: DeviceInfo;
 let isECPEnabled = false;
 let cliRegistry = new Map<string, string>();
 
@@ -42,10 +34,12 @@ if (!isMainThread && parentPort) {
         cliRegistry = device.registry;
     }
     parentPort.on("message", (data) => {
-        if (data instanceof SharedArrayBuffer) {
-            sharedArray = new Int32Array(data);
-            initControlModule(sharedArray);
-            enableECP();
+        if (typeof data?.service === "string") {
+            if (data.service === "enable") {
+                enableECP();
+            } else if (data.service === "disable") {
+                disableECP();
+            }
         } else if (data instanceof Map) {
             cliRegistry = data;
         }
@@ -74,6 +68,7 @@ function enableECP() {
     ecp.get("/query/icon/:appID", sendAppIcon);
     ecp.get("/query/registry/:appID", sendRegistry);
     ecp.post("/input", sendInputQuery);
+    ecp.post("/input/:appID", sendInputQuery);
     ecp.post("/launch/:appID", sendLaunchApp);
     ecp.post("/exit-app/:appID", sendExitApp);
     ecp.post("/keypress/:key", sendKeyPress);
@@ -112,12 +107,6 @@ function enableECP() {
                     });
                 })
                 .then(() => {
-                    subscribeControl("ecp", (event: string) => {
-                        if (event === "home" || event === "poweroff") {
-                            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
-                        }
-                    });
-                    enableSendKeys(true);
                     isECPEnabled = true;
                     parentPort?.postMessage({
                         ready: true,
@@ -192,10 +181,10 @@ function processRequest(ws: WebSocket, message: RawData) {
         } else if (msg["request"]?.startsWith("query")) {
             reply = queryReply(msg, statusOK);
         } else if (msg["request"] === "launch") {
-            launchApp(msg["param-channel-id"]);
+            parentPort?.postMessage({ appID: msg["param-channel-id"], params: {} });
             reply = `{${statusOK}}`;
         } else if (msg["request"] === "key-press") {
-            sendKeyPress(msg["param-key"], null);
+            postKeyPress(msg["param-key"]);
             reply = `{${statusOK}}`;
         } else {
             // Reply OK to any other request, including "request-events"
@@ -223,7 +212,7 @@ function queryReply(msg: any, statusOK: string) {
     } else if (request === "query-apps") {
         reply = template.replace("$data", genAppsXml(true));
     } else if (request === "query-icon") {
-        reply = template.replace("$data", genAppIcon(true) as string);
+        reply = template.replace("$data", genAppIcon(msg["param-channel-id"], true) as string);
         reply = reply.replace("text/xml", "image/png");
     } else if (request === "query-tv-active-channel") {
         reply = template.replace("$data", genActiveApp(true));
@@ -255,7 +244,7 @@ function sendInputQuery(req: any, res: any) {
     } else if (isValidIP(sourceIp)) {
         params.source_ip_addr = sourceIp;
     }
-    sendInput(params);
+    parentPort?.postMessage(params);
     res?.end();
 }
 
@@ -288,7 +277,7 @@ function sendScpdXML(req: any, res: any) {
 
 function sendAppIcon(req: any, res: any) {
     res.setHeader("content-type", "image/png");
-    res.send(genAppIcon(false));
+    res.send(genAppIcon(req.params.appID, false));
 }
 
 function sendRegistry(req: any, res: any) {
@@ -297,31 +286,35 @@ function sendRegistry(req: any, res: any) {
 }
 
 function sendLaunchApp(req: any, res: any) {
-    launchApp(req.params.appID);
+    parentPort?.postMessage({ appID: req.params.appID, params: req.query });
     res?.end();
 }
 
 function sendExitApp(req: any, res: any) {
-    Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
+    parentPort?.postMessage({ key: "home", mod: 0 });
     res?.end();
 }
 
 function sendKeyDown(req: any, res: any) {
-    sendKey(req.params.key, 0);
+    parentPort?.postMessage({ key: req.params.key, mod: 0 });
     res?.end();
 }
 
 function sendKeyUp(req: any, res: any) {
-    sendKey(req.params.key, 100);
+    parentPort?.postMessage({ key: req.params.key, mod: 100 });
     res?.end();
 }
 
 function sendKeyPress(req: any, res: any) {
-    setTimeout(() => {
-        sendKey(req.params.key, 100);
-    }, 300);
-    sendKey(req.params.key, 0);
+    postKeyPress(req.params.key);
     res?.end();
+}
+
+function postKeyPress(key: any) {
+    setTimeout(() => {
+        parentPort?.postMessage({ key: key, mod: 100 });
+    }, 300);
+    parentPort?.postMessage({ key: key, mod: 0 });
 }
 
 // Content Generation Functions
@@ -440,24 +433,24 @@ function genScrsvXml(encrypt: boolean) {
 
 function genAppsXml(encrypt: boolean) {
     const xml = xmlbuilder.create("apps");
-    xml.ele(
-        "app",
-        {
-            id: "dev",
-            subtype: "sdka",
-            type: "appl",
-            version: "0.0.0",
-        },
-        "Side Loaded App via CLI"
-    );
+    if (device.appList === undefined || device.appList.length < 2) {
+        // Dummy app as Roku Deep Linking Tester requires at least 2 apps
+        xml.ele("app", { id: "home", type: "appl", version: "1.0.0" }, "Home Screen");
+    }
+    device.appList?.forEach((app: AppData) => {
+        xml.ele("app", { id: app.id, type: "appl", version: app.version }, app.title);
+    });
     const strXml = xml.end({ pretty: true });
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
 
-function genAppIcon(encrypt: boolean) {
-    const image = fs.readFileSync(
-        path.join(__dirname, "../browser/images/icons", "channel-icon.png")
-    );
+function genAppIcon(appID: string, encrypt: boolean) {
+    let iconPath = path.join(__dirname, "../browser/images/icons", "channel-icon.png");
+    const app = device.appList?.find((app) => app.id === appID);
+    if (typeof app?.icon === "string" && fs.existsSync(app.icon)) {
+        iconPath = app.icon;
+    }
+    const image = fs.readFileSync(iconPath);
     return encrypt ? image.toString("base64") : image;
 }
 
@@ -509,10 +502,6 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
 }
 
 // Helper Functions
-
-function launchApp(appID: string) {
-    // Not supported on CLI
-}
 
 function getMacAddress() {
     const ifaces = os.networkInterfaces();

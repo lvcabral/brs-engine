@@ -4,7 +4,7 @@ import { BrsEvent, BrsType, isBrsEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DebugCommand } from "../../common";
+import { DebugCommand, threadYield } from "../../common";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -52,17 +52,17 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    wait(interpreter: Interpreter, ms: number) {
+    async wait(interpreter: Interpreter, ms: number): Promise<BrsEvent | BrsInvalid> {
         const loop = ms === 0;
         ms += performance.now();
 
         while (loop || performance.now() < ms) {
-            this.updateMessageQueue();
+            await this.updateMessageQueue();
             const msg = this.getNextMessage();
             if (msg !== BrsInvalid.Instance) {
                 return msg;
             }
-            const cmd = interpreter.checkBreakCommand();
+            let cmd = await interpreter.checkBreakCommand();
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                 return BrsInvalid.Instance;
             }
@@ -70,7 +70,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    private updateMessageQueue() {
+    private async updateMessageQueue() {
+        await threadYield();
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
                 const events = callback();
@@ -102,7 +103,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("timeout", ValueKind.Int32)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, timeout: Int32) => {
+        impl: async (interpreter: Interpreter, timeout: Int32) => {
             return this.wait(interpreter, timeout.getValue());
         },
     });
@@ -113,8 +114,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            this.updateMessageQueue();
+        impl: async (_: Interpreter) => {
+            await this.updateMessageQueue();
             return this.getNextMessage();
         },
     });
@@ -125,8 +126,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            this.updateMessageQueue();
+        impl: async (_: Interpreter) => {
+            await this.updateMessageQueue();
             if (this.messageQueue.length > 0) {
                 return this.messageQueue[0];
             }

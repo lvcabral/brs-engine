@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -11,9 +11,9 @@ import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "ffla
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
 import {
-    defaultDeviceInfo,
-    audioExt,
-    videoExt,
+    DefaultDeviceInfo,
+    AudioExt,
+    VideoExt,
     parseManifest,
     AppPayload,
     PkgFilePath,
@@ -26,7 +26,7 @@ import models from "../core/libraries/common/models.csv";
 import packageInfo from "../../package.json";
 
 // Device Data Object
-export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {
+export const deviceData: DeviceInfo = Object.assign(DefaultDeviceInfo, {
     models: parseCSV(models),
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
@@ -114,9 +114,9 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ id: 0, url: relativePath, type: "pcode" });
     } else if (lcasePath === "source/var") {
         paths.push({ id: 1, url: relativePath, type: "pcode" });
-    } else if (platform.inBrowser && audioExt.has(ext)) {
+    } else if (platform.inBrowser && AudioExt.has(ext)) {
         addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
-    } else if (platform.inBrowser && videoExt.has(ext)) {
+    } else if (platform.inBrowser && VideoExt.has(ext)) {
         addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
     }
 }

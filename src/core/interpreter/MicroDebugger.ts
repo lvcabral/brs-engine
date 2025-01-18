@@ -4,7 +4,6 @@ import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { BrsError } from "../Error";
 import { BrsObjects } from "../brsTypes";
-
 import {
     Statement,
     Assignment,
@@ -19,19 +18,91 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    DebugPrompt,
+    numberToHex,
+    parseTextFile,
+    threadYield,
+} from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
-readline.setDefaultOptions({ prompt: debugPrompt });
+readline.setDefaultOptions({ prompt: DebugPrompt });
 /// #endif
 
 // Debug Constants
 let stepMode = false;
 
-export function runDebugger(
+/**
+ * Main Debugger function
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param nextLoc (Location) - The next location to execute
+ * @param lastLoc (Location) - The last location executed
+ * @param errMessage (string) - The error message
+ * @param errNumber (number) - The error number
+ * @returns (boolean) - True if the execution should continue, false if it should exit
+ */
+export async function runDebugger(
     interpreter: Interpreter,
     nextLoc: Location,
     lastLoc: Location,
+    errMessage?: string,
+    errNumber?: number
+) {
+    // Debugger Introduction Message
+    debuggerIntro(interpreter, lastLoc, nextLoc, errMessage, errNumber);
+    // Debugger Loop
+    while (true) {
+        let line = "";
+        /// #if BROWSER
+        line = await nextDebugCommand(interpreter);
+        /// #else
+        interpreter.stdout.write(`print,\r\n`);
+        line = readline.prompt();
+        /// #endif
+        const command = parseCommand(line);
+        if (command.cmd === DebugCommand.EXPR) {
+            await debugHandleExpr(interpreter, command.expr);
+            continue;
+        }
+        switch (command.cmd) {
+            case DebugCommand.CONT:
+                if (errMessage) {
+                    interpreter.stdout.write("print,Can't continue");
+                    continue;
+                }
+                stepMode = false;
+                interpreter.debugMode = false;
+                postMessage("debug,continue");
+                return true;
+            case DebugCommand.STEP:
+                if (errMessage) {
+                    interpreter.stdout.write("print,Can't continue");
+                    continue;
+                }
+                stepMode = true;
+                interpreter.debugMode = true;
+                return true;
+            case DebugCommand.EXIT:
+                return false;
+        }
+        await debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
+    }
+}
+
+/**
+ * Function to print the debugger introduction message
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param nextLoc (Location) - The next location to execute
+ * @param lastLoc (Location) - The last location executed
+ * @param errMessage (string) - The error message
+ * @param errNumber (number) - The error number
+ */
+function debuggerIntro(
+    interpreter: Interpreter,
+    lastLoc: Location,
+    nextLoc: Location,
     errMessage?: string,
     errNumber?: number
 ) {
@@ -65,53 +136,42 @@ export function runDebugger(
         interpreter.stdout.write(`print,Local variables:\r\n`);
         interpreter.stdout.write(`print,${interpreter.formatLocalVariables()}`);
     }
+}
 
-    // Debugger Loop
-    while (true) {
-        let line = "";
-        /// #if BROWSER
-        interpreter.stdout.write(`print,\r\n${debugPrompt}`);
+/**
+ * Function to wait for the next debug command
+ * @returns a string with the debug expression
+ */
+async function nextDebugCommand(interpreter: Interpreter): Promise<string> {
+    let line = "";
+    interpreter.stdout.write(`print,\r\n${DebugPrompt}`);
+    if (interpreter.isShared) {
         Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
         const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
         Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
         if (cmd === DebugCommand.EXPR) {
             line = interpreter.readDataBuffer();
         }
-        /// #else
-        interpreter.stdout.write(`print,\r\n`);
-        line = readline.prompt();
-        /// #endif
-        const command = parseCommand(line);
-        if (command.cmd === DebugCommand.EXPR) {
-            debugHandleExpr(interpreter, command.expr);
-            continue;
-        }
-        switch (command.cmd) {
-            case DebugCommand.CONT:
-                if (errMessage) {
-                    interpreter.stdout.write("print,Can't continue");
-                    continue;
+    } else {
+        while (line === "") {
+            await threadYield();
+            if (interpreter.debugBuffer.length > 0) {
+                let cmd = interpreter.debugBuffer.shift();
+                if (cmd?.command === DebugCommand.EXPR) {
+                    line = cmd.expression ?? "";
                 }
-                stepMode = false;
-                interpreter.debugMode = false;
-                postMessage("debug,continue");
-                return true;
-            case DebugCommand.STEP:
-                if (errMessage) {
-                    interpreter.stdout.write("print,Can't continue");
-                    continue;
-                }
-                stepMode = true;
-                interpreter.debugMode = true;
-                return true;
-            case DebugCommand.EXIT:
-                return false;
+            }
         }
-        debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
     }
+    return line;
 }
 
-function debugHandleExpr(interpreter: Interpreter, expr: string) {
+/**
+ * Function to Handle a Debug Expression
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param expr (string) - The expression to evaluate
+ */
+async function debugHandleExpr(interpreter: Interpreter, expr: string) {
     const lexer = new Lexer();
     const parser = new Parser();
     interpreter.debugMode = false;
@@ -129,32 +189,37 @@ function debugHandleExpr(interpreter: Interpreter, expr: string) {
         return;
     }
     if (exprParse.statements.length > 0) {
-        runStatement(interpreter, exprParse.statements[0]);
+        await runStatement(interpreter, exprParse.statements[0]);
     }
 }
 
-function runStatement(interpreter: Interpreter, exprStmt: Statement) {
+/**
+ * Function to run a debug statement
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param exprStmt  (Statement) - The statement to run
+ */
+async function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     try {
         if (exprStmt instanceof Assignment) {
-            interpreter.visitAssignment(exprStmt);
+            await interpreter.visitAssignment(exprStmt);
         } else if (exprStmt instanceof DottedSet) {
-            interpreter.visitDottedSet(exprStmt);
+            await interpreter.visitDottedSet(exprStmt);
         } else if (exprStmt instanceof IndexedSet) {
-            interpreter.visitIndexedSet(exprStmt);
+            await interpreter.visitIndexedSet(exprStmt);
         } else if (exprStmt instanceof Print) {
-            interpreter.visitPrint(exprStmt);
+            await interpreter.visitPrint(exprStmt);
         } else if (exprStmt instanceof Expression) {
-            interpreter.visitExpression(exprStmt);
+            await interpreter.visitExpression(exprStmt);
         } else if (exprStmt instanceof Increment) {
-            interpreter.visitIncrement(exprStmt);
+            await interpreter.visitIncrement(exprStmt);
         } else if (exprStmt instanceof If) {
-            interpreter.visitIf(exprStmt);
+            await interpreter.visitIf(exprStmt);
         } else if (exprStmt instanceof For) {
-            interpreter.visitFor(exprStmt);
+            await interpreter.visitFor(exprStmt);
         } else if (exprStmt instanceof ForEach) {
-            interpreter.visitForEach(exprStmt);
+            await interpreter.visitForEach(exprStmt);
         } else if (exprStmt instanceof While) {
-            interpreter.visitWhile(exprStmt);
+            await interpreter.visitWhile(exprStmt);
         } else if (exprStmt instanceof Function) {
             interpreter.visitNamedFunction(exprStmt);
         } else {
@@ -169,7 +234,14 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
     }
 }
 
-function debugHandleCommand(
+/**
+ * Function to Handle a Debug Command
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param currLoc (Location) - The current location
+ * @param lastLoc (Location) - The last location
+ * @param cmd (number) - The debug command to execute
+ */
+async function debugHandleCommand(
     interpreter: Interpreter,
     currLoc: Location,
     lastLoc: Location,
@@ -254,6 +326,13 @@ function debugHandleCommand(
     }
 }
 
+/**
+ * Function to list the current function
+ * @param backTrace (TracePoint[]) - The backtrace of the current function
+ * @param currLines (string[]) - The current lines of the function
+ * @param flagLine  (number) - The line to flag
+ * @returns (string) - The formatted list of the current function
+ */
 function debugList(backTrace: TracePoint[], currLines: string[], flagLine: number): string {
     let list = "";
     if (backTrace.length > 0) {
@@ -269,6 +348,10 @@ function debugList(backTrace: TracePoint[], currLines: string[], flagLine: numbe
     return list;
 }
 
+/**
+ * Function to list the Help message with the valid commands
+ * @returns (string) - The help message
+ */
 function debugHelp(): string {
     let debugMsg = "";
 
@@ -301,6 +384,11 @@ function debugHelp(): string {
     return debugMsg;
 }
 
+/**
+ * Function to parse a debug command
+ * @param command (string) - The command to parse
+ * @returns (any) - The parsed command
+ */
 function parseCommand(command: string): any {
     let result = { cmd: DebugCommand.EXPR, expr: "" };
     if (command?.length) {

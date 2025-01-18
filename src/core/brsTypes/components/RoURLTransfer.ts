@@ -7,7 +7,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { audioExt, videoExt, getRokuOSVersion } from "../../common";
+import { AudioExt, VideoExt, getRokuOSVersion } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import fileType from "file-type";
 /// #if !BROWSER
@@ -285,7 +285,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         }
         const bytes = data.slice(0, fileType.minimumBytes);
         const type = fileType(bytes);
-        if (type && audioExt.has(type.ext)) {
+        if (type && AudioExt.has(type.ext)) {
             if (this.interpreter.manifest.get("requires_audiometadata") === "1") {
                 fsys.writeFileSync(filePath, Buffer.from(data));
             } else {
@@ -296,7 +296,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 audioFormat: type.ext,
                 audioData: data,
             });
-        } else if (type && videoExt.has(type.ext)) {
+        } else if (type && VideoExt.has(type.ext)) {
             fsys.writeFileSync(filePath, "video");
             postMessage({
                 videoPath: filePath,
