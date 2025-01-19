@@ -1,12 +1,11 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
-import { RoAssociativeArray, BrsString, Int32, Int64, Double, Float } from "./brsTypes";
 import {
     AppExitReason,
     PkgFilePath,
@@ -396,7 +395,7 @@ interface SerializedPCode {
 function setupInputParams(
     deepLinkMap: Map<string, string>,
     splashTime: number
-): RoAssociativeArray {
+): BrsTypes.RoAssociativeArray {
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
@@ -755,19 +754,19 @@ function parseDecodedTokens(interpreter: Interpreter, decodedTokens: Map<string,
         if (token.literal) {
             if (token.kind === "Integer") {
                 const literal: number = token.literal.value;
-                token.literal = new Int32(literal);
+                token.literal = new BrsTypes.Int32(literal);
             } else if (token.kind === "LongInteger") {
                 const literal: number = token.literal.value;
-                token.literal = new Int64(literal);
+                token.literal = new BrsTypes.Int64(literal);
             } else if (token.kind === "Double") {
                 const literal: number = token.literal.value;
-                token.literal = new Double(literal);
+                token.literal = new BrsTypes.Double(literal);
             } else if (token.kind === "Float") {
                 const literal: number = token.literal.value;
-                token.literal = new Float(literal);
+                token.literal = new BrsTypes.Float(literal);
             } else if (token.kind === "String") {
                 const literal: string = token.literal.value;
-                token.literal = new BrsString(literal);
+                token.literal = new BrsTypes.BrsString(literal);
             }
         }
         tokens.push(token);

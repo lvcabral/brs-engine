@@ -461,24 +461,19 @@ function messageCallback(message: any, _?: any) {
  */
 function handleStringMessage(message: string) {
     const mType = message.split(",")[0];
-    if (mType === "print") {
-        let log = message.slice(6);
-        if (log.endsWith(debugPrompt)) {
-            process.stdout.write(log);
-        } else {
-            process.stdout.write(colorize(log));
-        }
+    const msg = message.slice(mType.length + 1);
+    if (mType === "print" && msg.endsWith(debugPrompt)) {
+        process.stdout.write(msg);
+    } else if (mType === "print") {
+        process.stdout.write(colorize(msg));
     } else if (mType === "warning") {
-        console.warn(chalk.yellow(message.slice(8).trimEnd()));
+        console.warn(chalk.yellow(msg.trimEnd()));
     } else if (mType === "error") {
-        console.error(chalk.red(message.slice(6).trimEnd()));
+        console.error(chalk.red(msg.trimEnd()));
         process.exitCode = 1;
-    } else if (mType === "end") {
-        const msg = message.slice(mType.length + 1).trimEnd();
-        if (msg !== AppExitReason.FINISHED) {
-            process.exitCode = 1;
-        }
-    } else if (!["start", "debug", "reset", "video", "audio", "syslog"].includes(mType)) {
+    } else if (mType === "end" && msg.trimEnd() !== AppExitReason.FINISHED) {
+        process.exitCode = 1;
+    } else if (!["start", "debug", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
         console.info(chalk.blueBright(message.trimEnd()));
     }
 }
