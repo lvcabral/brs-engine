@@ -1,5 +1,5 @@
+import * as core from "..";
 import { EventEmitter } from "events";
-
 import {
     BrsType,
     BrsBoolean,
@@ -37,7 +37,6 @@ import {
     toAssociativeArray,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
-import { shared, stats } from "..";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -125,7 +124,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly deviceInfo: Map<string, any> = new Map<string, any>();
     readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly sharedArray = shared.get("buffer") || new Int32Array([]);
+    readonly sharedArray = core.shared.get("buffer") || new Int32Array([]);
     readonly isDevMode = process.env.NODE_ENV === "development";
 
     readonly stdout: OutputProxy;
@@ -2125,7 +2124,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         });
         debugMsg += "Module Constant Table Sizes:\r\n";
         debugMsg += `  Source Lns:     ${lineCount}\r\n`;
-        stats.forEach((count, lexeme) => {
+        core.stats.forEach((count, lexeme) => {
             const name = Lexeme[lexeme] + ":";
             debugMsg += `  ${name.padEnd(15)} ${count}\r\n`;
         });
