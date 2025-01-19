@@ -205,4 +205,12 @@ describe("end to end standard libary", () => {
             " 245",
         ]);
     });
+    test("stdlib/end.brs", async () => {
+        await execute([resourceFile("stdlib", "end.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "test the test",
+            "testing end...",
+        ]);
+    });
 });

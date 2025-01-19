@@ -1,0 +1,398 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`\`end\` statement can be used as a property name on objects 1`] = `
+[
+  Function {
+    "func": Function {
+      "body": Block {
+        "location": {
+          "end": {
+            "column": 16,
+            "line": 6,
+          },
+          "file": "",
+          "start": {
+            "column": 26,
+            "line": 2,
+          },
+        },
+        "statements": [
+          Assignment {
+            "name": {
+              "isReserved": false,
+              "kind": "Identifier",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": 26,
+                  "line": 3,
+                },
+                "file": "",
+                "start": {
+                  "column": 20,
+                  "line": 3,
+                },
+              },
+              "text": "person",
+            },
+            "tokens": {
+              "equals": {
+                "isReserved": false,
+                "kind": "Equal",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": 28,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": {
+                    "column": 27,
+                    "line": 3,
+                  },
+                },
+                "text": "=",
+              },
+            },
+            "value": AALiteral {
+              "close": {
+                "isReserved": false,
+                "kind": "RightBrace",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": 21,
+                    "line": 5,
+                  },
+                  "file": "",
+                  "start": {
+                    "column": 20,
+                    "line": 5,
+                  },
+                },
+                "text": "}",
+              },
+              "elements": [
+                {
+                  "name": BrsString {
+                    "kind": 3,
+                    "value": "end",
+                  },
+                  "value": Literal {
+                    "_location": {
+                      "end": {
+                        "column": 33,
+                        "line": 4,
+                      },
+                      "file": "",
+                      "start": {
+                        "column": 29,
+                        "line": 4,
+                      },
+                    },
+                    "value": BrsBoolean {
+                      "kind": 2,
+                      "value": true,
+                    },
+                  },
+                },
+              ],
+              "open": {
+                "isReserved": false,
+                "kind": "LeftBrace",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": 30,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": {
+                    "column": 29,
+                    "line": 3,
+                  },
+                },
+                "text": "{",
+              },
+            },
+          },
+        ],
+      },
+      "end": {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": 23,
+            "line": 6,
+          },
+          "file": "",
+          "start": {
+            "column": 16,
+            "line": 6,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": 19,
+            "line": 2,
+          },
+          "file": "",
+          "start": {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": [],
+      "returns": 11,
+    },
+    "name": {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": {
+        "end": {
+          "column": 24,
+          "line": 2,
+        },
+        "file": "",
+        "start": {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`\`end\` statement does not produce errors 1`] = `
+[
+  Function {
+    "func": Function {
+      "body": Block {
+        "location": {
+          "end": {
+            "column": 16,
+            "line": 4,
+          },
+          "file": "",
+          "start": {
+            "column": 26,
+            "line": 2,
+          },
+        },
+        "statements": [
+          End {
+            "tokens": {
+              "end": {
+                "isReserved": false,
+                "kind": "End",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": 23,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": {
+                    "column": 20,
+                    "line": 3,
+                  },
+                },
+                "text": "end",
+              },
+            },
+          },
+        ],
+      },
+      "end": {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": 23,
+            "line": 4,
+          },
+          "file": "",
+          "start": {
+            "column": 16,
+            "line": 4,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": 19,
+            "line": 2,
+          },
+          "file": "",
+          "start": {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": [],
+      "returns": 11,
+    },
+    "name": {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": {
+        "end": {
+          "column": 24,
+          "line": 2,
+        },
+        "file": "",
+        "start": {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`\`end\` statement is not allowed as a standalone variable 1`] = `
+[
+  Function {
+    "func": Function {
+      "body": Block {
+        "location": {
+          "end": {
+            "column": 16,
+            "line": 4,
+          },
+          "file": "",
+          "start": {
+            "column": 26,
+            "line": 2,
+          },
+        },
+        "statements": [
+          End {
+            "tokens": {
+              "end": {
+                "isReserved": false,
+                "kind": "End",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": 23,
+                    "line": 3,
+                  },
+                  "file": "",
+                  "start": {
+                    "column": 20,
+                    "line": 3,
+                  },
+                },
+                "text": "end",
+              },
+            },
+          },
+        ],
+      },
+      "end": {
+        "isReserved": false,
+        "kind": "EndSub",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": 23,
+            "line": 4,
+          },
+          "file": "",
+          "start": {
+            "column": 16,
+            "line": 4,
+          },
+        },
+        "text": "end sub",
+      },
+      "keyword": {
+        "isReserved": true,
+        "kind": "Sub",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": 19,
+            "line": 2,
+          },
+          "file": "",
+          "start": {
+            "column": 16,
+            "line": 2,
+          },
+        },
+        "text": "sub",
+      },
+      "parameters": [],
+      "returns": 11,
+    },
+    "name": {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": {
+        "end": {
+          "column": 24,
+          "line": 2,
+        },
+        "file": "",
+        "start": {
+          "column": 20,
+          "line": 2,
+        },
+      },
+      "text": "Main",
+    },
+  },
+]
+`;
+
+exports[`\`end\` statement is valid as a statement 1`] = `
+[
+  End {
+    "tokens": {
+      "end": {
+        "isReserved": false,
+        "kind": "End",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "end",
+      },
+    },
+  },
+]
+`;
