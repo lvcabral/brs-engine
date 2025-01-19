@@ -131,7 +131,7 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
     } else if (!sendKeysEnabled) {
         return;
     } else if (key === "break") {
-        if (!disableDebug) {
+        if (!disableDebug && mod === 0) {
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
             notifyAll("control", { key: key, mod: mod });
         }
