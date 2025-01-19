@@ -71,7 +71,7 @@ import packageInfo from "../../package.json";
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
-let home: Howl;
+let homeWav: Howl;
 
 // Package API
 export {
@@ -168,7 +168,13 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     sharedArray = new Int32Array(sharedBuffer);
     resetArray();
-
+    // Setup Home Sound Effect
+    if (homeWav === undefined) {
+        homeWav = new Howl({ src: ["./audio/select.wav"] });
+        homeWav.on("play", function () {
+            terminate(AppExitReason.FINISHED);
+        });
+    }
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
@@ -190,13 +196,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribeControl("api", (event: string, data: any) => {
         if (event === "home") {
             if (currentApp.running) {
-                if (!home) {
-                    home = new Howl({ src: ["./audio/select.wav"] });
-                    home.on("play", function () {
-                        terminate(AppExitReason.FINISHED);
-                    });
-                }
-                home.play();
+                homeWav.play();
             }
         } else if (event === "poweroff") {
             if (currentApp.running) {
