@@ -375,8 +375,11 @@ export enum BufferType {
     INPUT,
 }
 
+// Default Roku Sounds
+export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
+
 // Media Files Extensions
-export const audioExt = new Set<string>([
+export const AudioExt = new Set<string>([
     "wav",
     "mp2",
     "mp3",
@@ -389,7 +392,7 @@ export const audioExt = new Set<string>([
     "flac",
 ]);
 
-export const videoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
+export const VideoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
 // Check the platform where the library is running
 export function getPlatform(): Platform {
