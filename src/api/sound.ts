@@ -1,25 +1,25 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback } from "./util";
-import { DataType, MediaEvent } from "../core/common";
+import { DataType, DefaultSounds, MediaEvent } from "../core/common";
 import { Howl, Howler } from "howler";
 
 // Sound Objects
-let soundsIdx: Map<string, number> = new Map();
-let soundsDat: Howl[] = new Array();
-let soundState: number[] = new Array();
-let playList = new Array();
+const soundsIdx: Map<string, number> = new Map();
+const soundsDat: Howl[] = new Array();
+const soundState: number[] = new Array();
+const playList: string[] = new Array();
+const wavStreams: Howl[] = new Array();
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
 let sharedArray: Int32Array;
-let wavStreams: Howl[];
-let maxStreams: number;
+let maxStreams: number = 2;
 let muted: boolean;
 
 // Initialize Sound Module
@@ -141,11 +141,12 @@ export function audioCodecs() {
     });
 }
 
-export function addSoundPlaylist(newList: any[]) {
+export function addSoundPlaylist(newList: string[]) {
     if (playList.length > 0) {
         stopSound();
     }
-    playList = newList;
+    playList.length = 0;
+    playList.push(...newList);
     playIndex = 0;
     playNext = -1;
 }
@@ -173,18 +174,14 @@ export function resetSounds() {
             sound.unload();
         });
     }
-    soundsIdx = new Map();
-    soundsDat = new Array();
-    wavStreams = new Array(maxStreams);
-    soundsIdx.set("select", 0);
-    soundsDat.push(new Howl({ src: ["./audio/select.wav"] }));
-    soundsIdx.set("navsingle", 1);
-    soundsDat.push(new Howl({ src: ["./audio/navsingle.wav"] }));
-    soundsIdx.set("navmulti", 2);
-    soundsDat.push(new Howl({ src: ["./audio/navmulti.wav"] }));
-    soundsIdx.set("deadend", 3);
-    soundsDat.push(new Howl({ src: ["./audio/deadend.wav"] }));
-    playList = new Array();
+    wavStreams.length = maxStreams;
+    soundsIdx.clear();
+    soundsDat.length = 0;
+    DefaultSounds.forEach((sound, index) => {
+        soundsIdx.set(sound.toLowerCase(), index);
+        soundsDat.push(new Howl({ src: [`./audio/${sound}.wav`] }));
+    });
+    playList.length = 0;
     playIndex = 0;
     playLoop = false;
     playNext = -1;
@@ -197,7 +194,7 @@ function playSound() {
         let idx = soundsIdx.get(audio.toLowerCase());
         if (idx) {
             sound = soundsDat[idx];
-        } else if (audio.slice(0, 4).toLowerCase() === "http") {
+        } else if (audio.startsWith("http")) {
             sound = addWebSound(audio);
         } else {
             notifyAll("warning", `[sound] Can't find audio to play: ${audio}`);
@@ -309,6 +306,7 @@ function setNext(index: number) {
     }
 }
 
+// WAV Sound Functions
 function triggerWav(wav: string, volume: number, index: number) {
     const soundId = soundsIdx.get(wav.toLowerCase());
     if (soundId !== undefined) {
@@ -321,7 +319,7 @@ function triggerWav(wav: string, volume: number, index: number) {
                 wavStreams[index].stop();
             }
             wavStreams[index] = sound;
-            sound.on("end", function () {
+            sound.once("end", function () {
                 Atomics.store(sharedArray, DataType.WAV + index, -1);
             });
             sound.play();

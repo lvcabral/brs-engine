@@ -12,8 +12,8 @@ import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
 import {
     defaultDeviceInfo,
-    audioExt,
-    videoExt,
+    AudioExt,
+    VideoExt,
     parseManifest,
     AppPayload,
     PkgFilePath,
@@ -114,9 +114,9 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ id: 0, url: relativePath, type: "pcode" });
     } else if (lcasePath === "source/var") {
         paths.push({ id: 1, url: relativePath, type: "pcode" });
-    } else if (platform.inBrowser && audioExt.has(ext)) {
+    } else if (platform.inBrowser && AudioExt.has(ext)) {
         addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
-    } else if (platform.inBrowser && videoExt.has(ext)) {
+    } else if (platform.inBrowser && VideoExt.has(ext)) {
         addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
     }
 }
