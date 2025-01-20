@@ -393,10 +393,20 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`common:   [In Memory]\n`));
-        } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
-            const localVars = replInterpreter.formatLocalVariables().trimEnd();
-            process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
-            process.stdout.write(chalk.cyanBright(localVars));
+        } else if (["var", "vars"].includes(line.split(" ")[0]?.toLowerCase().trim())) {
+            const scopeName = line.split(" ")[1]?.toLowerCase().trim() ?? "function";
+            let scope = 2; // Function scope
+            if (scopeName === "global") {
+                scope = 0; // Global scope
+                process.stdout.write(chalk.cyanBright(`\nGlobal variables:\n\n`));
+            } else if (scopeName === "module") {
+                scope = 1; // Module scope
+                process.stdout.write(chalk.cyanBright(`\nModule variables:\n\n`));
+            } else {
+                process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
+            }
+            const variables = replInterpreter.formatVariables(scope).trimEnd();
+            process.stdout.write(chalk.cyanBright(variables));
             process.stdout.write("\n");
         } else {
             brs.executeLine(line, replInterpreter);
