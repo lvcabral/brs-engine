@@ -2052,36 +2052,34 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Method to return the current scope of the interpreter for the REPL and Micro Debugger
      * @returns a string representation of the local variables in the current scope
      */
-    formatLocalVariables(): string {
-        let debugMsg = `${"global".padEnd(16)} Interface:ifGlobal\r\n`;
-        let fnc = this.environment.getList(Scope.Function);
+    formatVariables(scope: Scope = Scope.Function): string {
+        let vars = scope === Scope.Function ? `${"global".padEnd(16)} Interface:ifGlobal\r\n` : "";
+        let fnc = this.environment.getList(scope);
         fnc.forEach((value, key) => {
             const varName = key.padEnd(17);
             if (value.kind === ValueKind.Uninitialized) {
-                debugMsg += `${varName}${ValueKind.toString(value.kind)}\r\n`;
+                vars += `${varName}${ValueKind.toString(value.kind)}\r\n`;
             } else if (PrimitiveKinds.has(value.kind)) {
-                debugMsg += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(
+                vars += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(
                     value
                 )}`;
             } else if (isIterable(value)) {
                 const count = value.getElements().length;
-                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;
+                vars += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {
                 const unboxed = value.unbox();
-                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} val:${this.formatValue(
+                vars += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} val:${this.formatValue(
                     unboxed
                 )}`;
             } else if (value.kind === ValueKind.Object) {
-                debugMsg += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()}\r\n`;
+                vars += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()}\r\n`;
             } else if (value.kind === ValueKind.Callable) {
-                debugMsg += `${varName}${ValueKind.toString(
-                    value.kind
-                )} val:${value.getName()}\r\n`;
+                vars += `${varName}${ValueKind.toString(value.kind)} val:${value.getName()}\r\n`;
             } else {
-                debugMsg += `${varName}${value.toString().substring(0, 94)}\r\n`;
+                vars += `${varName}${value.toString().substring(0, 94)}\r\n`;
             }
         });
-        return debugMsg;
+        return vars;
     }
 
     formatValue(value: BrsType) {
