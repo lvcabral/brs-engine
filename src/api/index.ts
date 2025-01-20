@@ -200,13 +200,14 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         }
     });
     subscribeControl("api", (event: string, data: any) => {
-        if (event === "home") {
-            if (currentApp.running) {
-                homeWav.play();
-            }
-        } else if (event === "poweroff") {
-            if (currentApp.running) {
-                terminate(AppExitReason.POWER);
+        if (event === "post" && currentApp.running) {
+            brsWorker.postMessage(data);
+        } else if (event === "break" && currentApp.running) {
+            if (debugWithArray) {
+                Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
+            } else {
+                const event: DebugEvent = { command: DebugCommand.BREAK };
+                brsWorker.postMessage(event);
             }
         } else if (event === "home" && currentApp.running) {
             homeWav.play();

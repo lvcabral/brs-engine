@@ -446,9 +446,6 @@ export enum MediaEventType {
 // Default Roku Sounds
 export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
 
-// Default Roku Sounds
-export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
-
 // Media Files Extensions
 export const AudioExt = new Set<string>([
     "wav",
