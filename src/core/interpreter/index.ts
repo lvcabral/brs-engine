@@ -1223,7 +1223,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         if (
                             !this._tryMode &&
                             this.options.stopOnCrash &&
-                            !(err instanceof Stmt.BlockEnd)
+                            !(err instanceof Stmt.BlockEnd) &&
+                            !core.terminateReasons.includes(err.message)
                         ) {
                             // Enable Micro Debugger on app crash
                             let errNumber = RuntimeErrorDetail.Internal.errno;
