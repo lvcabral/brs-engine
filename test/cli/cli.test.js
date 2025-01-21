@@ -128,5 +128,33 @@ describe("cli", () => {
             expect(errors.length).toEqual(2);
         }
     }, 10000);
+
+    it("SceneGraph App Test", async () => {
+        let command = [
+            "node",
+            path.join(process.cwd(), "bin", "brs.cli.js"),
+            "-r scenegraph",
+            "source/Poster.brs",
+            "-c 0",
+        ].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "poster node type:Node",
+            "poster node subtype:Poster",
+            "poster node width: 0",
+            "poster node height: 0",
+            "BaseWidget init",
+            "poster as child audioGuideText:fake text",
+            "poster as child uri:/fake/uri",
+            "poster as child bitmapWidth: 10.4",
+            "------ Finished 'Poster.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it.todo("add tests for the remaining CLI options");
 });
