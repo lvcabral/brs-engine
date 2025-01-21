@@ -37,6 +37,8 @@ import { RoChannelStoreEvent } from "./events/RoChannelStoreEvent";
 import { RoDeviceInfoEvent } from "./events/RoDeviceInfoEvent";
 import { RoCECStatusEvent } from "./events/RoCECStatusEvent";
 import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
+import { RoSGNodeEvent } from "./components/RoSGNodeEvent";
+import { RoSGScreenEvent } from "./components/RoSGScreenEvent";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -252,7 +254,9 @@ export function isBrsEvent(value: BrsType): value is BrsEvent {
         value instanceof RoChannelStoreEvent ||
         value instanceof RoDeviceInfoEvent ||
         value instanceof RoCECStatusEvent ||
-        value instanceof RoHdmiStatusEvent
+        value instanceof RoHdmiStatusEvent ||
+        value instanceof RoSGNodeEvent ||
+        value instanceof RoSGScreenEvent
     );
 }
 
@@ -268,7 +272,9 @@ export type BrsEvent =
     | RoChannelStoreEvent
     | RoDeviceInfoEvent
     | RoCECStatusEvent
-    | RoHdmiStatusEvent;
+    | RoHdmiStatusEvent
+    | RoSGNodeEvent
+    | RoSGScreenEvent;
 
 /**
  * The set of all comparable BrightScript types. Only primitive (i.e. intrinsic * and unboxed)
