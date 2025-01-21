@@ -110,7 +110,7 @@ program
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
         if (brsFiles.length > 0) {
-            runAppFiles(brsFiles);
+            await runAppFiles(brsFiles);
         } else {
             displayTitle();
             repl();
@@ -170,7 +170,7 @@ function checkParameters() {
  * Run the BrightScript files or the App package file.
  * @param files the list of files to run.
  */
-function runAppFiles(files: string[]) {
+async function runAppFiles(files: string[]) {
     try {
         const filePath = files[0];
         const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
@@ -195,7 +195,7 @@ function runAppFiles(files: string[]) {
         }
         // Run BrightScript files
         deviceData.appList?.push({ id: "dev", title: fileName, version: "1.0.0" });
-        const payload = brs.createPayloadFromFiles(
+        const payload = await brs.createPayloadFromFiles(
             files,
             deviceData,
             processDeepLink(),

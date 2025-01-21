@@ -50,6 +50,16 @@ export class BrsComponent {
         });
     }
 
+    /** Appends a method to the component. */
+    appendMethod(index: string, method: Callable) {
+        this.methods.set(index.toLowerCase(), method);
+    }
+
+    /** Given a list of methods, appends all of them to the component. */
+    appendMethods(methods: Callable[]) {
+        methods.forEach((m) => this.methods.set((m.name || "").toLowerCase(), m));
+    }
+
     getMethod(index: string): Callable | undefined {
         const method = index.toLowerCase();
         if (this.filter !== "") {
