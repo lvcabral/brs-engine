@@ -1,8 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { promisify } from "util";
 import pSettle from "p-settle";
-const readFile = promisify(fs.readFile);
 
 import { Lexer } from "./lexer";
 import { Parser, Stmt } from "./parser/";
@@ -29,7 +27,7 @@ export function getLexerParserFn(
             filename = filename.replace(/[\/\\]+/g, path.posix.sep);
             let contents;
             try {
-                contents = await readFile(filename, "utf-8");
+                contents = fs.readFileSync(filename, "utf-8");
             } catch (err) {
                 let errno = (err as NodeJS.ErrnoException)?.errno || -4858;
                 return Promise.reject({

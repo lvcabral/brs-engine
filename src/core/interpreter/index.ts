@@ -42,6 +42,7 @@ import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
+import { getLexerParserFn } from "../LexerParser";
 import {
     BrsError,
     RuntimeError,
@@ -244,15 +245,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     public static async withSubEnvsFromComponents(
         componentMap: Map<string, ComponentDefinition>,
-        parseFn: (filenames: string[]) => Promise<Stmt.Statement[]>,
+        manifest: Map<string, string>,
         options: Partial<ExecutionOptions>
     ) {
-        let interpreter = new Interpreter(options);
+        const interpreter = new Interpreter(options);
+        const lexerParserFn = getLexerParserFn(manifest, options);
         let entryPoint = options.entryPoint ?? false;
 
         interpreter.environment.nodeDefMap = componentMap;
 
-        let componentScopeResolver = new ComponentScopeResolver(componentMap, parseFn);
+        let componentScopeResolver = new ComponentScopeResolver(componentMap, lexerParserFn);
         await pSettle(
             Array.from(componentMap).map(async (componentKV) => {
                 let [_, component] = componentKV;

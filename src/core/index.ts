@@ -334,9 +334,8 @@ export async function executeFile(
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
-    let lexerParserFn = getLexerParserFn(payload.manifest, options);
     const interpreter = payload.components
-        ? await Interpreter.withSubEnvsFromComponents(payload.components, lexerParserFn, options)
+        ? await Interpreter.withSubEnvsFromComponents(payload.components, payload.manifest, options)
         : new Interpreter(options);
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
