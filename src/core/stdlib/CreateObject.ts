@@ -23,9 +23,6 @@ export const CreateObject = new Callable("CreateObject", {
             let msg = `BRIGHTSCRIPT: ERROR: Runtime: unknown classname "${
                 objName.value
             }": ${interpreter.formatLocation()}`;
-            if (["rosgscreen", "rosgnode"].includes(objName.value.toLowerCase())) {
-                msg = `WARNING: Attempt to create object "${objName.value}". SceneGraph components are still not supported!`;
-            }
             interpreter.stderr.write(`warning,${msg}`);
         } else {
             const minParams = BrsObjects.params(objName.value.toLowerCase());

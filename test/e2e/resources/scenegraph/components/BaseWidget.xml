@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="BaseWidget">
+    <script type="text/brightscript" uri="pkg:/components/BaseWidget.brs" />
+    <interface>
+        <field id="baseStringField" type="string" />
+        <field id="baseIntField" type="integer" />
+        <field id="baseBoolField" type="boolean" />
+    </interface>
+    <children>
+        <Group id="group" rotation="0.2" >
+            <Rectangle id="rectangle"
+                height="50"
+                width="500" />
+            <Label id="label"
+                numLines="10"
+                wrap="true"
+                lineSpacing="5.5" />
+            <Font id="font"
+                size="56"
+                uri="font/as/child/uri" />
+            <Poster id="poster"
+                audioGuideText="fake text"
+                bitmapWidth="10.4"
+                uri="/fake/uri"
+            />
+            <LayoutGroup id="layoutGroup"
+                layoutDirection="horiz"
+                horizAlignment="right" />
+            <ArrayGrid id="arraygrid" 
+                wrapDividerWidth="1.23"
+                numRows="5" />
+            <MarkupGrid id="markupgrid" 
+                numColumns="10"
+                fixedLayout="true"
+            />
+            <ContentNode id="contentnode" 
+                episodeNumber="10"
+                subtitleUrl="subtitle.example.com"
+            />
+        </Group>
+    </children>
+</component>

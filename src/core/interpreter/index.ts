@@ -36,12 +36,20 @@ import {
     BrsInterface,
     toAssociativeArray,
     AAMember,
+    RoSGNode,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
-import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../Error";
+import {
+    BrsError,
+    RuntimeError,
+    RuntimeErrorDetail,
+    findErrorDetail,
+    ErrorDetail,
+    getLoggerUsing,
+} from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
@@ -50,6 +58,8 @@ import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
+import { ComponentDefinition } from "../scenegraph";
+import { ComponentScopeResolver } from "../parser/ComponentScopeResolver";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
 import {
@@ -61,6 +71,7 @@ import {
     parseTextFile,
     threadYield,
 } from "../common";
+import pSettle from "p-settle";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -182,6 +193,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     public debugMode: boolean = false;
 
     /**
+     * Adds a TracePoint to the call stack
+     * @param tracePoint the TracePoint to add to the stack
+     */
+    addToStack(tracePoint: TracePoint) {
+        this._stack.push(tracePoint);
+    }
+
+    /**
      * Updates the interpreter manifest with the provided data
      * @param manifest Map with manifest content.
      */
@@ -225,6 +244,43 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     public onErrorOnce(errorHandler: (err: BrsError | RuntimeError) => void) {
         this.events.once("err", errorHandler);
+    }
+
+    /**
+     * Builds out all the sub-environments for the given components. Components are saved into the calling interpreter
+     * instance. This function will mutate the state of the calling interpreter.
+     * @param componentMap Map of all components to be assigned to this interpreter
+     * @param parseFn Function used to parse components into interpretable statements
+     * @param options
+     */
+    public static async withSubEnvsFromComponents(
+        componentMap: Map<string, ComponentDefinition>,
+        parseFn: (filenames: string[]) => Promise<Stmt.Statement[]>,
+        options: Partial<ExecutionOptions>
+    ) {
+        let interpreter = new Interpreter(options);
+        interpreter.onError(getLoggerUsing(interpreter.options.stderr));
+
+        interpreter.environment.nodeDefMap = componentMap;
+
+        let componentScopeResolver = new ComponentScopeResolver(componentMap, parseFn);
+        let promises: Promise<BrsType>[] = [];
+        for (const componentKV of componentMap) {
+            let [_, component] = componentKV;
+            component.environment = interpreter.environment.createSubEnvironment(
+                /* includeModuleScope */ false
+            );
+            let statements = await componentScopeResolver.resolve(component);
+            promises.push(interpreter.inSubEnv(async (subInterpreter) => {
+                let componentMPointer = new RoAssociativeArray([]);
+                subInterpreter.environment.setM(componentMPointer);
+                subInterpreter.environment.setRootM(componentMPointer);
+                await subInterpreter.exec(statements);
+                return BrsInvalid.Instance;
+            }, component.environment));
+        }
+        await pSettle(promises);
+        return interpreter;
     }
 
     /**
@@ -312,11 +368,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         try {
             let mainName = "RunUserInterface";
-            let maybeMain = await this.getCallableFunction(mainName.toLowerCase());
+            let maybeMain = this.getCallableFunction(mainName.toLowerCase());
 
             if (maybeMain.kind !== ValueKind.Callable) {
                 mainName = "Main";
-                maybeMain = await this.getCallableFunction(mainName.toLowerCase());
+                maybeMain = this.getCallableFunction(mainName.toLowerCase());
             }
             if (maybeMain.kind === ValueKind.Callable) {
                 let mainVariable = new Expr.Variable({
@@ -366,7 +422,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
-    async getCallableFunction(functionName: string): Promise<Callable | BrsInvalid> {
+    getCallableFunction(functionName: string): Callable | BrsInvalid {
         let callbackVariable = new Expr.Variable({
             kind: Lexeme.Identifier,
             text: functionName,
@@ -379,6 +435,30 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         return BrsInvalid.Instance;
+    }
+
+    /**
+     * Returns the init method (if any) in the current environment as a Callable
+     */
+    getInitMethod(): BrsType | Promise<BrsType> {
+        let initVariable = new Expr.Variable({
+            kind: Lexeme.Identifier,
+            text: "init",
+            isReserved: false,
+            location: {
+                start: {
+                    line: -1,
+                    column: -1,
+                },
+                end: {
+                    line: -1,
+                    column: -1,
+                },
+                file: "(internal)",
+            },
+        });
+
+        return this.evaluate(initVariable);
     }
 
     visitLibrary(statement: Stmt.Library): BrsInvalid {
@@ -1437,7 +1517,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.addError(new RuntimeError(RuntimeErrorDetail.UndimmedArray, expression.location));
         }
 
-        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
+        if (
+            source instanceof RoAssociativeArray ||
+            source instanceof RoXMLElement ||
+            source instanceof RoSGNode
+        ) {
             if (expression.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(
@@ -1741,7 +1825,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.obj.location));
         }
 
-        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement) {
+        if (
+            source instanceof RoAssociativeArray ||
+            source instanceof RoXMLElement ||
+            source instanceof RoSGNode
+        ) {
             if (statement.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(
