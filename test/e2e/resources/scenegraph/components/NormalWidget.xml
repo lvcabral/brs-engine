@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="NormalWidget" extends="BaseWidget">
+    <interface>
+        <field id="normalStringField" type="string" value="initial value" onChange="onNormalStringFieldChange" />
+        <field id="normalIntField" type="integer" value="-321" />
+        <field id="normalBoolField" type="boolean" value="true" />
+    </interface>
+    <children>
+        <Label id="normalLabel" />
+        <SimpleLabel id="normalSimpleLabel" />
+    </children>
+</component>

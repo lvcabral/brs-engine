@@ -1,7 +1,16 @@
 import { Identifier } from "../lexer";
 import { Location } from "../lexer/Token";
-import { BrsComponent, BrsType, Int32, RoAssociativeArray, ValueKind } from "../brsTypes";
+import {
+    BrsComponent,
+    BrsInvalid,
+    BrsType,
+    Int32,
+    RoAssociativeArray,
+    RoSGNode,
+    ValueKind,
+} from "../brsTypes";
 import { TypeMismatch } from "./TypeMismatch";
+import { ComponentDefinition } from "../scenegraph";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -50,6 +59,20 @@ export class Environment {
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer: RoAssociativeArray;
     private rootM: RoAssociativeArray;
+
+    /**
+     * The one true focus of the scenegraph app, only one component can have focus at a time.
+     * Note: this focus is only meaningful if the node being set focus to
+     * is a child of the main scene graph tree.  Otherwise, it will not follow the rule
+     * of stealing focus away from another node if a new node got focus.
+     */
+    private focusedNode: RoSGNode | BrsInvalid = BrsInvalid.Instance;
+
+    /** Map holding component definitions of all parsed xml component files */
+    public nodeDefMap = new Map<string, ComponentDefinition>();
+
+    /** The node in which field-change observers are registered. */
+    public hostNode: RoSGNode | undefined;
 
     /** Properties to support GOTO statement */
     gotoLabel: string = "";
@@ -251,11 +274,32 @@ export class Environment {
      *
      * @returns a copy of this environment but with no function-scoped values.
      */
-    public createSubEnvironment(): Environment {
+    public createSubEnvironment(includeModuleScope: boolean = true): Environment {
         let newEnvironment = new Environment(this.mPointer, this.rootM);
         newEnvironment.global = this.global;
-        newEnvironment.module = this.module;
-
+        newEnvironment.focusedNode = this.focusedNode;
+        newEnvironment.nodeDefMap = this.nodeDefMap;
+        newEnvironment.hostNode = this.hostNode;
+        if (includeModuleScope) {
+            newEnvironment.module = new Map(this.module);
+        } else {
+            newEnvironment.module = new Map<string, BrsType>();
+        }
         return newEnvironment;
+    }
+    /**
+     * Sets the currently focused node, which reacts to onKey button presses
+     * @param node either node object or invalid
+     */
+    public setFocusedNode(node: RoSGNode | BrsInvalid) {
+        this.focusedNode = node;
+    }
+
+    /**
+     * Gets the currently focused node, which reacts to onKey button presses
+     * @returns currently focused node
+     */
+    public getFocusedNode(): RoSGNode | BrsInvalid {
+        return this.focusedNode;
     }
 }

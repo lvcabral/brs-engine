@@ -84,6 +84,7 @@
     "nanomatch": "^1.2.13",
     "node-ssdp": "^4.0.1",
     "opentype.js": "^1.3.4",
+    "p-settle": "^2.1.0",
     "path-browserify": "^1.0.1",
     "path-parse": "^1.0.6",
     "readable-stream": "^4.3.0",
@@ -98,7 +99,8 @@
     "uuid": "^9.0.1",
     "ws": "^8.17.1",
     "xml2js": "^0.6.2",
-    "xmlbuilder": "^13.0.2"
+    "xmlbuilder": "^13.0.2",
+    "xmldoc": "^1.1.2"
   },
   "devDependencies": {
     "@types/crc": "^3.4.0",
@@ -110,6 +112,7 @@
     "@types/node-ssdp": "^4.0.4",
     "@types/opentype.js": "^0.7.2",
     "@types/path-parse": "^1.0.19",
+    "@types/p-settle": "^2.0.1",
     "@types/readline-sync": "^1.4.8",
     "@types/sprintf-js": "^1.1.2",
     "@types/stats.js": "^0.17.0",
@@ -118,6 +121,7 @@
     "@types/uuid": "^9.0.7",
     "@types/xml2js": "^0.4.8",
     "@types/xmlbuilder": "^11.0.1",
+    "@types/xmldoc": "^1.1.4",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",
     "buffer": "^6.0.3",

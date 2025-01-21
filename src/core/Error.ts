@@ -449,3 +449,12 @@ export const RuntimeErrorDetail = {
         errno: 255,
     },
 };
+
+/**
+ * Produces a function that writes errors to the given error stream.
+ * @param errorStream write stream to write errors to.
+ * @returns function that writes to given write stream.
+ */
+export function getLoggerUsing(errorStream: NodeJS.WriteStream): (err: BrsError) => boolean {
+    return (err) => errorStream.write(err.format());
+}

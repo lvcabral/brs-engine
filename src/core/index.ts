@@ -37,6 +37,8 @@ import bslDefender from "./libraries/common/v30/bslDefender.brs";
 import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
 import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
+import { ComponentDefinition, ComponentScript, getComponentDefinitionMap } from "./scenegraph";
+import { getLexerParserFn } from "./LexerParser";
 
 export * as lexer from "./lexer";
 export * as parser from "./parser";
@@ -186,13 +188,13 @@ export function executeLine(contents: string, interpreter: Interpreter) {
  *
  * @returns object with the payload to run the app.
  */
-export function createPayloadFromFiles(
+export async function createPayloadFromFiles(
     files: string[],
     customDeviceData?: Partial<DeviceInfo>,
     deepLink?: Map<string, string>,
     root?: string,
     ext?: string
-): AppPayload {
+): Promise<AppPayload> {
     const paths: PkgFilePath[] = [];
     const source: string[] = [];
     let manifest: Map<string, string> | undefined;
@@ -251,6 +253,25 @@ export function createPayloadFromFiles(
         source: source,
         root: root,
     };
+
+    if (root) {
+        let componentDefinitions = await getComponentDefinitionMap(root, []);
+
+        componentDefinitions.forEach((component: ComponentDefinition) => {
+            if (component.scripts.length < 1) return;
+            try {
+                component.scripts = component.scripts.map((script: ComponentScript) => {
+                    script.uri = path.join(root, new URL(script.uri).pathname);
+                    return script;
+                });
+            } catch (error) {
+                throw new Error(
+                    `Encountered an error when parsing component ${component.name}: ${error}`
+                );
+            }
+        });
+        payload.components = componentDefinitions;
+    }
     if (ext && fs.existsSync(ext)) {
         if (fs.statSync(ext).isDirectory()) {
             payload.ext = ext;
@@ -313,10 +334,14 @@ export async function executeFile(
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
-    const interpreter = new Interpreter(options);
+    let lexerParserFn = getLexerParserFn(payload.manifest, options);
+    const interpreter = payload.components
+        ? await Interpreter.withSubEnvsFromComponents(payload.components, lexerParserFn, options)
+        : new Interpreter(options);
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
     // Run App
+    console.log("Running App...");
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
         result = await runEncrypted(interpreter, sourceResult, payload);

@@ -975,6 +975,11 @@
   resolved "https://registry.yarnpkg.com/@types/opentype.js/-/opentype.js-0.7.2.tgz#ced5b117a5736578c6b9d835e35b0204c6ef2e8f"
   integrity sha512-Riz6WyBUBEFs7YqSsJya3SbDHJZ6BmMkY7bzNoue6rtwj+RNilLc+mgOX/eJ0Y0asq16FSU6DatBeOg8ZMy2UQ==
 
+"@types/p-settle@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@types/p-settle/-/p-settle-2.0.1.tgz#06f4f681e8504c54789e0d3397a75b4d4d8a3692"
+  integrity sha512-crogdVDPNzlhnNFsQ9EOpjq8SezX7p3kKfs/O6fYUyh7orIOYjt3iBi/pF/plyVJmxSxWyQNFRhzvRA6dP+w2g==
+
 "@types/path-parse@^1.0.19":
   version "1.0.22"
   resolved "https://registry.yarnpkg.com/@types/path-parse/-/path-parse-1.0.22.tgz#3681b6b937210c1927a4fcb28f3f78fc38ac58fb"
@@ -1096,6 +1101,11 @@
   integrity sha512-ScJDpWPSAyO7s2BO5eUQTqyhO7i8c4r7Waj5eEwQYGApaNXW6E0pb9l1llDZ1VKGiBdGLMtLmqAi4eaKbzJ0dQ==
   dependencies:
     xmlbuilder "*"
+
+"@types/xmldoc@^1.1.4":
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/@types/xmldoc/-/xmldoc-1.1.9.tgz#d6609d823c8f15f913b9d5274324dc1014a53b53"
+  integrity sha512-HLwIAudQ9xedPOK9rKd7gSHYzM5qtWOzae9z5tM7dRDR1hWeNlFSejfnxFMIv06mm2LmtX+pzVQ4GN86vf/b3g==
 
 "@types/yargs-parser@*":
   version "21.0.3"
@@ -5697,6 +5707,13 @@ own-keys@^1.0.1:
     object-keys "^1.1.1"
     safe-push-apply "^1.0.0"
 
+p-limit@^1.2.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-1.3.0.tgz#b86bd5f0c25690911c7590fcbfc2010d54b3ccb8"
+  integrity sha512-vvcXsLAJ9Dr5rQOPk7toZQZJApBl2K4J6dANSsEuh6QI41JYcsS/qhTGa9ErIUUgK3WNQoJYvylxvjqmiqEA9Q==
+  dependencies:
+    p-try "^1.0.0"
+
 p-limit@^2.2.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-2.3.0.tgz#3dd33c647a214fdfffd835933eb086da0dc21db1"
@@ -5732,6 +5749,11 @@ p-map@^4.0.0:
   dependencies:
     aggregate-error "^3.0.0"
 
+p-reflect@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/p-reflect/-/p-reflect-1.0.0.tgz#f4fa1ee1bb546d8eb3ec0321148dfe0a79137bb8"
+  integrity sha512-rlngKS+EX3nvI7xIzA0xKNVEAguWdIqAZVbn02z1m73ehXBdX66aTdD0bCvIu0cDwbU3TK9w3RYrppKpO3EnKQ==
+
 p-retry@^4.5.0:
   version "4.6.2"
   resolved "https://registry.yarnpkg.com/p-retry/-/p-retry-4.6.2.tgz#9baae7184057edd4e17231cee04264106e092a16"
@@ -5739,6 +5761,19 @@ p-retry@^4.5.0:
   dependencies:
     "@types/retry" "0.12.0"
     retry "^0.13.1"
+
+p-settle@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/p-settle/-/p-settle-2.1.0.tgz#5b7161f45f92a3d2e17098dca8ce6bb0d51099ea"
+  integrity sha512-NHFIUYc+fQTFRrzzAugq0l1drwi57PB522smetcY8C/EoTYs6cU/fC6TJj0N3rq5NhhJJbhf0VGWziL3jZDnjA==
+  dependencies:
+    p-limit "^1.2.0"
+    p-reflect "^1.0.0"
+
+p-try@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/p-try/-/p-try-1.0.0.tgz#cbc79cdbaf8fd4228e13f621f2b1a237c1b207b3"
+  integrity sha512-U1etNYuMJoIz3ZXSrrySFjsXQTWOx2/jdi86L+2pRvph/qMKL6sbcCYdH23fqsbm8TH2Gn0OybpT4eSFlCVHww==
 
 p-try@^2.0.0:
   version "2.2.0"
@@ -6331,7 +6366,7 @@ safe-regex@^1.1.0:
   resolved "https://registry.yarnpkg.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
 
-sax@>=0.6.0:
+sax@>=0.6.0, sax@^1.2.4:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.4.1.tgz#44cc8988377f126304d3b3fc1010c733b929ef0f"
   integrity sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg==
@@ -7784,6 +7819,13 @@ xmlbuilder@~11.0.0:
   version "11.0.1"
   resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-11.0.1.tgz#be9bae1c8a046e76b31127726347d0ad7002beb3"
   integrity sha512-fDlsI/kFEx7gLvbecc0/ohLG50fugQp8ryHzMTuW9vSa1GJ0XYWKnhsUx7oie3G98+r56aTQIUB4kht42R3JvA==
+
+xmldoc@^1.1.2:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/xmldoc/-/xmldoc-1.3.0.tgz#7823225b096c74036347c9ec5924d06b6a3cebab"
+  integrity sha512-y7IRWW6PvEnYQZNZFMRLNJw+p3pezM4nKYPfr15g4OOW9i8VpeydycFuipE2297OvZnh3jSb2pxOt9QpkZUVng==
+  dependencies:
+    sax "^1.2.4"
 
 y18n@^5.0.5:
   version "5.0.8"
