@@ -48,7 +48,6 @@ import {
     RuntimeErrorDetail,
     findErrorDetail,
     ErrorDetail,
-    getLoggerUsing,
 } from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
@@ -249,7 +248,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         options: Partial<ExecutionOptions>
     ) {
         let interpreter = new Interpreter(options);
-        interpreter.onError(getLoggerUsing(interpreter.options.stderr));
+        let entryPoint = options.entryPoint ?? false;
 
         interpreter.environment.nodeDefMap = componentMap;
 
@@ -270,6 +269,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }, component.environment);
             })
         );
+        interpreter.options.entryPoint = entryPoint;
         return interpreter;
     }
 
