@@ -48,7 +48,6 @@ import {
     RuntimeErrorDetail,
     findErrorDetail,
     ErrorDetail,
-    getLoggerUsing,
 } from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
@@ -259,7 +258,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         options: Partial<ExecutionOptions>
     ) {
         let interpreter = new Interpreter(options);
-        interpreter.onError(getLoggerUsing(interpreter.options.stderr));
+        let entryPoint = options.entryPoint ?? false;
 
         interpreter.environment.nodeDefMap = componentMap;
 
@@ -275,11 +274,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 let componentMPointer = new RoAssociativeArray([]);
                 subInterpreter.environment.setM(componentMPointer);
                 subInterpreter.environment.setRootM(componentMPointer);
+                subInterpreter.options.entryPoint = false
                 await subInterpreter.exec(statements);
                 return BrsInvalid.Instance;
             }, component.environment));
         }
-        await pSettle(promises);
+        const result = await pSettle(promises);
+        interpreter.options.entryPoint = entryPoint;
         return interpreter;
     }
 

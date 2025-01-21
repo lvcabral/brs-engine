@@ -407,7 +407,6 @@ export async function executeFile(
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
     // Run App
-    console.log("Running App...");
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
         result = await runEncrypted(interpreter, sourceResult, payload);
