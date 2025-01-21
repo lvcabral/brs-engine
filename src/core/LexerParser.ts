@@ -11,6 +11,7 @@ export { BrsTypes as types };
 export { PP as preprocessor };
 import * as BrsError from "./Error";
 import { defaultExecutionOptions, ExecutionOptions } from "./interpreter";
+import { ComponentScript } from "./scenegraph";
 
 export function getLexerParserFn(
     manifest: Map<string, string>,
@@ -18,23 +19,30 @@ export function getLexerParserFn(
 ) {
     const executionOptions = { ...defaultExecutionOptions, ...options };
     /**
-     * Map file URIs to promises. The promises resolve to an array of that file's statements.
-     * This allows us to only parse each file once.
+     * Map file URIs or Source Content to promises. The promises resolve to an array of that script's statements.
+     * This allows us to only parse each shared file once.
      */
     let memoizedStatements = new Map<string, Promise<Stmt.Statement[]>>();
-    return async function parse(filenames: string[]): Promise<Stmt.Statement[]> {
-        async function lexAndParseFile(filename: string) {
-            filename = filename.replace(/[\/\\]+/g, path.posix.sep);
+    return async function parse(scripts: ComponentScript[]): Promise<Stmt.Statement[]> {
+        async function lexAndParseScript(script: ComponentScript) {
             let contents;
-            try {
-                contents = fs.readFileSync(filename, "utf-8");
-            } catch (err) {
-                let errno = (err as NodeJS.ErrnoException)?.errno || -4858;
-                return Promise.reject({
-                    message: `brs: can't open file '${filename}': [Errno ${errno}]`,
-                });
+            let filename;
+            if (script.uri !== undefined) {
+                filename = script.uri.replace(/[\/\\]+/g, path.posix.sep);
+                try {
+                    contents = fs.readFileSync(filename, "utf-8");
+                } catch (err) {
+                    let errno = (err as NodeJS.ErrnoException)?.errno || -4858;
+                    return Promise.reject({
+                        message: `brs: can't open file '${filename}': [Errno ${errno}]`,
+                    });
+                }
+            } else if (script.content !== undefined) {
+                contents = script.content;
+                filename = "internal-source";
+            } else {
+                return Promise.reject({ message: "brs: invalid script object" });
             }
-
             let lexer = new Lexer();
             let preprocessor = new PP.Preprocessor();
             let parser = new Parser();
@@ -66,35 +74,37 @@ export function getLexerParserFn(
             return Promise.resolve(parseResults.statements);
         }
 
-        let parsedFiles = await pSettle(
-            filenames.map(async (filename) => {
-                let maybeStatements = memoizedStatements.get(filename);
+        let promises: Promise<Stmt.Statement[]>[] = [];
+        for (let script of scripts) {
+            if (script.uri !== undefined) {
+                let maybeStatements = memoizedStatements.get(script.uri);
                 if (maybeStatements) {
                     return maybeStatements;
                 } else {
-                    let statementsPromise = lexAndParseFile(filename);
-                    if (!memoizedStatements.has(filename)) {
-                        memoizedStatements.set(filename, statementsPromise);
+                    let statementsPromise = lexAndParseScript(script);
+                    if (!memoizedStatements.has(script.uri)) {
+                        memoizedStatements.set(script.uri, statementsPromise);
                     }
-
-                    return statementsPromise;
+                    promises.push(statementsPromise);
                 }
-            })
-        );
+            } else if (script.content !== undefined) {
+                promises.push(lexAndParseScript(script));
+            }
+        }
+        let parsedScripts = await pSettle(promises);
 
         // don't execute anything if there were reading, lexing, or parsing errors
-        if (parsedFiles.some((file) => file.isRejected)) {
+        if (parsedScripts.some((script) => script.isRejected)) {
             return Promise.reject({
-                messages: parsedFiles
-                    .filter((file) => file.isRejected)
+                messages: parsedScripts
+                    .filter((script) => script.isRejected)
                     .map((rejection) => rejection.reason.message),
             });
         }
 
-        // combine statements from all files into one array
-        const result = parsedFiles
-            .map((file) => file.value || [])
+        // combine statements from all scripts into one array
+        return parsedScripts
+            .map((script) => script.value || [])
             .reduce((allStatements, fileStatements) => [...allStatements, ...fileStatements], []);
-        return result;
     };
 }

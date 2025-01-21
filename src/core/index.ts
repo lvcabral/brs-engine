@@ -261,7 +261,9 @@ export async function createPayloadFromFiles(
             if (component.scripts.length < 1) return;
             try {
                 component.scripts = component.scripts.map((script: ComponentScript) => {
-                    script.uri = path.join(root, new URL(script.uri).pathname);
+                    if (script.uri) {
+                        script.uri = path.join(root, new URL(script.uri).pathname);
+                    }
                     return script;
                 });
             } catch (error) {
