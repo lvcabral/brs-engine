@@ -1,4 +1,4 @@
-import { ComponentDefinition } from "../scenegraph";
+import { ComponentDefinition, ComponentScript } from "../scenegraph";
 import * as Stmt from "./Statement";
 import pSettle from "p-settle";
 import { NodeFactory } from "../brsTypes";
@@ -12,7 +12,7 @@ export class ComponentScopeResolver {
      */
     constructor(
         readonly componentMap: Map<string, ComponentDefinition>,
-        readonly parserLexerFn: (filenames: string[]) => Promise<Stmt.Statement[]> // TODO: Remove and just build here?
+        readonly parserLexerFn: (scripts: ComponentScript[]) => Promise<Stmt.Statement[]> // TODO: Remove and just build here?
     ) {}
 
     /**
@@ -72,7 +72,7 @@ export class ComponentScopeResolver {
      * @returns An ordered array of component statement arrays.
      */
     private *getStatements(component: ComponentDefinition) {
-        yield this.parserLexerFn(component.scripts.map((c) => c.uri));
+        yield this.parserLexerFn(component.scripts);
 
         let currentComponent: ComponentDefinition | undefined = component;
         while (currentComponent.extends) {
@@ -92,7 +92,7 @@ export class ComponentScopeResolver {
                 );
                 return Promise.resolve();
             }
-            yield this.parserLexerFn(currentComponent.scripts.map((c) => c.uri));
+            yield this.parserLexerFn(currentComponent.scripts);
         }
 
         return Promise.resolve();
