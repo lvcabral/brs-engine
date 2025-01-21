@@ -2,15 +2,15 @@ import { BrsComponent } from "./BrsComponent";
 import { ValueKind, BrsString, BrsValue, BrsBoolean, Uninitialized, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoSGNode } from "./RoSGNode";
-import { BrsType } from "..";
+import { BrsType, RoMessagePort, RoSGNode } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
+import { RoSGScreenEvent } from "./RoSGScreenEvent";
 
 export class roSGScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly globalNode?: RoSGNode;
-
-    constructor(interpreter: Interpreter, globalNode?: RoSGNode) {
+    private port?: RoMessagePort;
+    constructor(_: Interpreter, globalNode?: RoSGNode) {
         super("roSGScreen");
         this.globalNode = globalNode;
         const setPortIface = new IfSetMessagePort(this);
@@ -67,7 +67,7 @@ export class roSGScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            // TODO: Implement close
+            this.port?.pushMessage( new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },
     });
