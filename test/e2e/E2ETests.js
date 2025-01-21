@@ -44,11 +44,15 @@ exports.createMockStreams = function () {
 
 /** Executes the specified BrightScript files, capturing their output in the provided streams. */
 exports.execute = async function (filenames, options, deepLink) {
-    const payload = createPayloadFromFiles(filenames, deviceData);
+    const payload = await createPayloadFromFiles(filenames, deviceData);
     if (deepLink) {
         payload.deepLink = deepLink;
     }
-    await executeFile(payload, options);
+    try{
+        await executeFile(payload, options);
+    } catch (error) {
+        console.error(error);
+    }
 };
 
 function audioCodecs() {
