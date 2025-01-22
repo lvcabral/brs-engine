@@ -299,10 +299,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     private parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
 
     readonly defaultFields: FieldModel[] = [
-        { name: "change", type: "roAssociativeArray" },
-        { name: "focusable", type: "boolean" },
-        { name: "focusedchild", type: "node", alwaysNotify: true },
         { name: "id", type: "string" },
+        { name: "focusedchild", type: "node", alwaysNotify: true },
+        { name: "focusable", type: "boolean" },
+        { name: "change", type: "roAssociativeArray" },
     ];
     m: RoAssociativeArray = new RoAssociativeArray([]);
 
@@ -398,7 +398,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return [
             `<Component: ${componentName}> =`,
             "{",
-            ...Array.from(this.fields.entries()).map(
+            ...Array.from(this.fields.entries()).reverse().map(
                 ([key, value]) => `    ${key}: ${value.toString(this)}`
             ),
             "}",
@@ -632,9 +632,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 // Only allow public functions (defined in the interface) to be called.
                 if (componentDef && functionName.value in componentDef.functions) {
                     return await interpreter.inSubEnv(async (subInterpreter) => {
-                        let functionToCall = subInterpreter.getCallableFunction(
-                            functionName.value
-                        );
+                        let functionToCall = subInterpreter.getCallableFunction(functionName.value);
                         if (!(functionToCall instanceof Callable)) {
                             interpreter.stderr.write(
                                 `Ignoring attempt to call non-implemented function ${functionName}`
@@ -1364,7 +1362,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Dynamic,
         },
-        impl:  async (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
+        impl: async (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
             let numChildrenValue = num_children.getValue();
             let addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
@@ -1721,8 +1719,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Takes a list of models and creates fields with default values, and adds them to this.fields. */
     protected registerDefaultFields(fields: FieldModel[]) {
         fields.forEach((field) => {
-            let value = getBrsValueFromFieldType(field.type, field.value);
-            let fieldType = FieldKind.fromString(field.type);
+            let fieldType: FieldKind | undefined;
+            let value: BrsType | undefined;
+            if (field.name === "change") {
+                value = toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" });
+                fieldType = FieldKind.AssocArray;
+            } else if (field.name === "font") {
+                value = NodeFactory.createNode(BrsNodeType.Font) ?? BrsInvalid.Instance;
+                fieldType = FieldKind.Node;
+            } else {
+                value = getBrsValueFromFieldType(field.type, field.value);
+                fieldType = FieldKind.fromString(field.type);
+            }
             if (fieldType) {
                 this.fields.set(
                     field.name.toLowerCase(),
@@ -1754,9 +1762,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 // A node that represents the m.global, referenced by all other nodes
 export const mGlobal = new RoSGNode([]);
 
-export async function createNodeByType(interpreter: Interpreter, type: BrsString): Promise<RoSGNode | BrsInvalid> {
+export async function createNodeByType(
+    interpreter: Interpreter,
+    type: BrsString
+): Promise<RoSGNode | BrsInvalid> {
     // If this is a built-in node component, then return it.
-    let node = NodeFactory.createComponent(type.value as BrsNodeType);
+    let node = NodeFactory.createNode(type.value as BrsNodeType);
     if (node) {
         return node;
     }
@@ -1782,7 +1793,7 @@ export async function createNodeByType(interpreter: Interpreter, type: BrsString
         typeDef = typeDefStack.pop();
 
         // If this extends a built-in node component, create it.
-        let node = NodeFactory.createComponent(typeDef!.extends as BrsNodeType, type.value);
+        let node = NodeFactory.createNode(typeDef!.extends as BrsNodeType, type.value);
 
         // Default to Node as parent.
         if (!node) {
@@ -1888,7 +1899,6 @@ async function addChildren(
     let appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-    // children.forEach((child) => {
         let newChild = await createNodeByType(interpreter, new BrsString(child.name));
         if (newChild instanceof RoSGNode) {
             if (appendChild) {
@@ -1915,5 +1925,5 @@ async function addChildren(
                 await addChildren(interpreter, newChild, child);
             }
         }
-    };
+    }
 }
