@@ -40,6 +40,7 @@ export interface ComponentNode {
 export interface ComponentScript {
     type: string;
     uri?: string;
+    xmlPath?: string;
     content?: string;
 }
 
@@ -255,7 +256,7 @@ function parseChildren(element: XmlElement, children: ComponentNode[]): void {
 async function getScripts(
     node: XmlDocument,
     nodeDef: ComponentDefinition,
-    rootDir: string
+    rootDir: string,
 ): Promise<ComponentScript[]> {
     let scripts = node.childrenNamed("script");
     let componentScripts: ComponentScript[] = [];
@@ -278,6 +279,7 @@ async function getScripts(
             componentScripts.push({
                 type: script.attr.type,
                 content: script.val,
+                xmlPath: nodeDef.xmlPath,
             });
         }
     }
