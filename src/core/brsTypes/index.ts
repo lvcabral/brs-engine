@@ -109,6 +109,8 @@ export * from "./events/RoChannelStoreEvent";
 export * from "./events/RoUniversalControlEvent";
 export * from "./components/RoSGNode";
 export * from "./components/RoSGNodeEvent";
+export * from "./components/RoSGScreen";
+export * from "./components/RoSGScreenEvent";
 export * from "./nodes/NodeFactory";
 export * from "./nodes/Group";
 export * from "./nodes/Scene";
