@@ -320,7 +320,8 @@ export async function createPayloadFromFiles(
         root: root,
     };
 
-    if (root) {
+    // Look for SceneGraph components if root is provided
+    if (root && fs.existsSync(root)) {
         let componentDefinitions = await getComponentDefinitionMap(root, []);
 
         componentDefinitions.forEach((component: ComponentDefinition) => {
@@ -340,6 +341,7 @@ export async function createPayloadFromFiles(
         });
         payload.components = componentDefinitions;
     }
+    // Load the external storage if provided
     if (ext && fs.existsSync(ext)) {
         if (fs.statSync(ext).isDirectory()) {
             payload.ext = ext;
