@@ -39,7 +39,7 @@ export function getLexerParserFn(
                 }
             } else if (script.content !== undefined) {
                 contents = script.content;
-                filename = "internal-source";
+                filename = script.xmlPath || "xml";
             } else {
                 return Promise.reject({ message: "brs: invalid script object" });
             }
