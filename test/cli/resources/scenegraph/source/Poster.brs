@@ -1,4 +1,11 @@
 sub Main()
+    screen = CreateObject("roSGScreen")
+    glb = screen.getGlobalNode()
+    glb.addFields({
+        uri: "http://www.example.com/image.jpg",
+        bitmapWidth: 100,
+        bitmapHeight: 200
+    })
     poster = createObject("roSGNode", "Poster")
     print "poster node type:" type(poster)
     print "poster node subtype:" poster.subtype()

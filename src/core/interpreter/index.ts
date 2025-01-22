@@ -43,13 +43,7 @@ import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
 import { getLexerParserFn } from "../LexerParser";
-import {
-    BrsError,
-    RuntimeError,
-    RuntimeErrorDetail,
-    findErrorDetail,
-    ErrorDetail,
-} from "../Error";
+import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
