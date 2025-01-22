@@ -2,17 +2,24 @@ import { BrsComponent } from "./BrsComponent";
 import { ValueKind, BrsString, BrsValue, BrsBoolean, Uninitialized, BrsInvalid } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BrsType, RoMessagePort, RoSGNode } from "..";
+import {
+    BrsNodeType,
+    BrsType,
+    createNodeByType,
+    mGlobal,
+    NodeFactory,
+    RoMessagePort,
+    RoSGNode,
+} from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "./RoSGScreenEvent";
 
 export class roSGScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly globalNode?: RoSGNode;
     private port?: RoMessagePort;
-    constructor(_: Interpreter, globalNode?: RoSGNode) {
+    private sceneNode?: RoSGNode;
+    constructor(_: Interpreter) {
         super("roSGScreen");
-        this.globalNode = globalNode;
         const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -44,7 +51,7 @@ export class roSGScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.globalNode ?? BrsInvalid.Instance;
+            return mGlobal ?? BrsInvalid.Instance;
         },
     });
 
@@ -67,7 +74,7 @@ export class roSGScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.port?.pushMessage( new RoSGScreenEvent(BrsBoolean.True));
+            this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },
     });
@@ -78,9 +85,20 @@ export class roSGScreen extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("sceneType", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, sceneType: BrsString) => {
-            // TODO: Implement createScene
-            return BrsInvalid.Instance;
+        impl: async (interpreter: Interpreter, sceneType: BrsString) => {
+            let returnValue: BrsType = BrsInvalid.Instance;
+            if (sceneType.value === "Scene") {
+                returnValue = NodeFactory.createNode(BrsNodeType.Scene) ?? BrsInvalid.Instance;
+            } else {
+                const typeDef = interpreter.environment.nodeDefMap.get(sceneType.value.toLowerCase());
+                if (typeDef && typeDef.extends === "Scene") {
+                    returnValue = await createNodeByType(interpreter, sceneType);
+                }
+            }
+            if (returnValue instanceof RoSGNode) {
+                this.sceneNode = returnValue;
+            }
+            return returnValue;
         },
     });
 
@@ -91,8 +109,7 @@ export class roSGScreen extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            // TODO: Implement getScene
-            return BrsInvalid.Instance;
+            return this.sceneNode ?? BrsInvalid.Instance;
         },
     });
 }

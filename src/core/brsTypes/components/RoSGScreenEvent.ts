@@ -7,9 +7,7 @@ import { BrsType } from "..";
 export class RoSGScreenEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
-    constructor(
-        readonly closed: BrsBoolean,
-    ) {
+    constructor(readonly closed: BrsBoolean) {
         super("roSGScreenEvent");
         this.appendMethods([this.isScreenClosed]);
     }
