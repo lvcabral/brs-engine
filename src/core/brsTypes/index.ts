@@ -106,6 +106,8 @@ export * from "./components/RoUniversalControlEvent";
 export * from "./components/RoSocketAddress";
 export * from "./components/RoSGNode";
 export * from "./components/RoSGNodeEvent";
+export * from "./components/RoSGScreen";
+export * from "./components/RoSGScreenEvent";
 export * from "./nodes/NodeFactory";
 export * from "./nodes/Group";
 export * from "./nodes/Scene";
