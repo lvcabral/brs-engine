@@ -142,12 +142,14 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
     let returnValue: BrsType;
 
     switch (type.toLowerCase()) {
+        case "bool":
         case "boolean":
             returnValue = value ? BrsBoolean.from(value === "true") : BrsBoolean.False;
             break;
         case "node":
             returnValue = new RoInvalid();
             break;
+        case "int":
         case "integer":
             returnValue = value ? new Int32(Number.parseInt(value)) : new Int32(0);
             break;
@@ -162,8 +164,9 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "assocarray":
             returnValue = BrsInvalid.Instance;
             break;
-        case "string":
         case "uri":
+        case "str":
+        case "string":
             returnValue = new BrsString(value ?? "");
             break;
         default:
