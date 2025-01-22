@@ -43,13 +43,7 @@ import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
 import { getLexerParserFn } from "../LexerParser";
-import {
-    BrsError,
-    RuntimeError,
-    RuntimeErrorDetail,
-    findErrorDetail,
-    ErrorDetail,
-} from "../Error";
+import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
@@ -272,14 +266,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 /* includeModuleScope */ false
             );
             let statements = await componentScopeResolver.resolve(component);
-            promises.push(interpreter.inSubEnv(async (subInterpreter) => {
-                let componentMPointer = new RoAssociativeArray([]);
-                subInterpreter.environment.setM(componentMPointer);
-                subInterpreter.environment.setRootM(componentMPointer);
-                subInterpreter.options.entryPoint = false
-                await subInterpreter.exec(statements);
-                return BrsInvalid.Instance;
-            }, component.environment));
+            promises.push(
+                interpreter.inSubEnv(async (subInterpreter) => {
+                    let componentMPointer = new RoAssociativeArray([]);
+                    subInterpreter.environment.setM(componentMPointer);
+                    subInterpreter.environment.setRootM(componentMPointer);
+                    subInterpreter.options.entryPoint = false;
+                    await subInterpreter.exec(statements);
+                    return BrsInvalid.Instance;
+                }, component.environment)
+            );
         }
         await pSettle(promises);
         interpreter.options.entryPoint = entryPoint;
