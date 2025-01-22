@@ -4,7 +4,7 @@ import { AAMember } from "../components/RoAssociativeArray";
 export class Font extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
         { name: "uri", type: "uri" },
-        { name: "size", type: "integer", value: "1" },
+        { name: "size", type: "integer", value: "24" },
         { name: "fallbackGlyph", type: "string" },
     ];
 
