@@ -519,12 +519,12 @@ function colorize(log: string) {
 function printHelp() {
     let helpMsg = "\r\n";
     helpMsg += "REPL Command List:\r\n";
-    helpMsg += "   print|?         Print variable value or expression\r\n";
-    helpMsg += "   var|vars        Display variables and their types/values\r\n";
-    helpMsg += "   vol|vols        Display file system mounted volumes\r\n";
-    helpMsg += "   help|hint       Show this REPL command list\r\n";
-    helpMsg += "   clear|cls       Clear terminal screen\r\n";
-    helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";
+    helpMsg += "   print|?           Print variable value or expression\r\n";
+    helpMsg += "   var|vars [scope]  Display variables and their types/values\r\n";
+    helpMsg += "   vol|vols          Display file system mounted volumes\r\n";
+    helpMsg += "   help|hint         Show this REPL command list\r\n";
+    helpMsg += "   clear|cls         Clear terminal screen\r\n";
+    helpMsg += "   exit|quit|q       Terminate REPL session\r\n\r\n";
     helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
     process.stdout.write(chalk.cyanBright(helpMsg));
 }
