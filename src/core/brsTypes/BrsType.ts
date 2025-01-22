@@ -146,7 +146,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             returnValue = value ? BrsBoolean.from(value === "true") : BrsBoolean.False;
             break;
         case "node":
-            returnValue = BrsInvalid.Instance;
+            returnValue = new RoInvalid();
             break;
         case "integer":
             returnValue = value ? new Int32(Number.parseInt(value)) : new Int32(0);
@@ -154,16 +154,17 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "float":
             returnValue = value ? new Float(Number.parseFloat(value)) : new Float(0);
             break;
-        case "roArray":
+        case "roarray":
         case "array":
             returnValue = BrsInvalid.Instance;
             break;
-        case "roAssociativeArray":
+        case "roassociativearray":
         case "assocarray":
             returnValue = BrsInvalid.Instance;
             break;
         case "string":
-            returnValue = value ? new BrsString(value) : new BrsString("");
+        case "uri":
+            returnValue = new BrsString(value ?? "");
             break;
         default:
             returnValue = Uninitialized.Instance;
