@@ -48,11 +48,7 @@ exports.execute = async function (filenames, options, deepLink) {
     if (deepLink) {
         payload.deepLink = deepLink;
     }
-    try {
-        await executeFile(payload, options);
-    } catch (error) {
-        console.error(error);
-    }
+    await executeFile(payload, options);
 };
 
 function audioCodecs() {
