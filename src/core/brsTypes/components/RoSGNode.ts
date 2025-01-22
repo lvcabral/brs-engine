@@ -299,10 +299,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     private parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
 
     readonly defaultFields: FieldModel[] = [
-        { name: "change", type: "roAssociativeArray" },
-        { name: "focusable", type: "boolean" },
-        { name: "focusedchild", type: "node", alwaysNotify: true },
         { name: "id", type: "string" },
+        { name: "focusedchild", type: "node", alwaysNotify: true },
+        { name: "focusable", type: "boolean" },
+        { name: "change", type: "roAssociativeArray" },
     ];
     m: RoAssociativeArray = new RoAssociativeArray([]);
 
@@ -398,7 +398,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return [
             `<Component: ${componentName}> =`,
             "{",
-            ...Array.from(this.fields.entries()).map(
+            ...Array.from(this.fields.entries()).reverse().map(
                 ([key, value]) => `    ${key}: ${value.toString(this)}`
             ),
             "}",
@@ -1721,8 +1721,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Takes a list of models and creates fields with default values, and adds them to this.fields. */
     protected registerDefaultFields(fields: FieldModel[]) {
         fields.forEach((field) => {
-            let value = getBrsValueFromFieldType(field.type, field.value);
-            let fieldType = FieldKind.fromString(field.type);
+            let fieldType: FieldKind | undefined;
+            let value: BrsType | undefined;
+            if (field.name === "change") {
+                value = toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" });
+                fieldType = FieldKind.AssocArray;
+            } else if (field.name === "font") {
+                value = NodeFactory.createNode(BrsNodeType.Font) ?? BrsInvalid.Instance;
+                fieldType = FieldKind.Node;
+            } else {
+                value = getBrsValueFromFieldType(field.type, field.value);
+                fieldType = FieldKind.fromString(field.type);
+            }
             if (fieldType) {
                 this.fields.set(
                     field.name.toLowerCase(),
@@ -1756,7 +1766,7 @@ export const mGlobal = new RoSGNode([]);
 
 export function createNodeByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
     // If this is a built-in node component, then return it.
-    let node = NodeFactory.createComponent(type.value as BrsNodeType);
+    let node = NodeFactory.createNode(type.value as BrsNodeType);
     if (node) {
         return node;
     }
@@ -1782,7 +1792,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         typeDef = typeDefStack.pop();
 
         // If this extends a built-in node component, create it.
-        let node = NodeFactory.createComponent(typeDef!.extends as BrsNodeType, type.value);
+        let node = NodeFactory.createNode(typeDef!.extends as BrsNodeType, type.value);
 
         // Default to Node as parent.
         if (!node) {
@@ -1915,5 +1925,5 @@ function addChildren(
                 addChildren(interpreter, newChild, child);
             }
         }
-    };
+    }
 }

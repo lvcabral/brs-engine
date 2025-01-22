@@ -32,7 +32,6 @@ export enum BrsNodeType {
     TextEditBox = "TextEditBox",
 }
 
-// TODO: update with more components as they're implemented.
 export class NodeFactory {
     private static additionalNodes = new Map<string, (name: string) => RoSGNode>();
 
@@ -51,7 +50,7 @@ export class NodeFactory {
         });
     }
 
-    public static createComponent(
+    public static createNode(
         nodeType: BrsNodeType | string,
         nodeName?: string
     ): RoSGNode | undefined {
