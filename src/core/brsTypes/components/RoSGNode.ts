@@ -640,7 +640,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 args: [new StdlibArgument("functionname", ValueKind.String)],
                 returns: ValueKind.Dynamic,
             },
-            impl: (
+            impl: async (
                 interpreter: Interpreter,
                 functionName: BrsString,
                 ...functionArgs: BrsType[]
@@ -652,7 +652,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
                 // Only allow public functions (defined in the interface) to be called.
                 if (componentDef && functionName.value in componentDef.functions) {
-                    return interpreter.inSubEnvSync((subInterpreter) => {
+                    return await interpreter.inSubEnv(async (subInterpreter) => {
                         let functionToCall = subInterpreter.getCallableFunction(functionName.value);
                         if (!(functionToCall instanceof Callable)) {
                             interpreter.stderr.write(
@@ -683,9 +683,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                                     signature: satisfiedSignature.signature,
                                 });
                                 try {
-                                    const returnValue = functionToCall.callSync(
+                                    const returnValue = await functionToCall.call(
                                         subInterpreter,
-                                        false,
                                         ...args
                                     );
                                     interpreter.stack.pop();
@@ -1274,10 +1273,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("nodetype", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, nodetype: BrsString) => {
+        impl: async (interpreter: Interpreter, nodetype: BrsString) => {
             // currently we can't create a custom subclass object of roSGNode,
             // so we'll always create generic RoSGNode object as child
-            let child = createNodeByType(interpreter, nodetype);
+            let child = await createNodeByType(interpreter, nodetype);
             if (child instanceof RoSGNode) {
                 this.children.push(child);
                 child.setParent(this);
@@ -1411,11 +1410,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
+        impl: async (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
             let numChildrenValue = num_children.getValue();
             let addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                let child = createNodeByType(interpreter, subtype);
+                let child = await createNodeByType(interpreter, subtype);
                 if (child instanceof RoSGNode) {
                     this.children.push(child);
                     addedChildren.push(child);
@@ -1811,10 +1810,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 // A node that represents the m.global, referenced by all other nodes
 export const mGlobal = new RoSGNode([]);
 
-export function createNodeByType(
+export async function createNodeByType(
     interpreter: Interpreter,
     type: BrsString
-): RoSGNode | BrsInvalid {
+): Promise<RoSGNode | BrsInvalid> {
     // If this is a built-in node component, then return it.
     let node = NodeFactory.createNode(type.value as BrsNodeType);
     if (node) {
@@ -1856,21 +1855,18 @@ export function createNodeByType(
         while (typeDef) {
             let init: BrsType;
 
-            interpreter.inSubEnvSync(async (subInterpreter) => {
-                addChildren(subInterpreter, node!, typeDef!);
+            await interpreter.inSubEnv(async (subInterpreter) => {
+                await addChildren(subInterpreter, node!, typeDef!);
                 addFields(subInterpreter, node!, typeDef!);
                 return BrsInvalid.Instance;
             }, currentEnv);
 
-            interpreter.inSubEnvSync(async (subInterpreter) => {
-                const maybeInit = subInterpreter.getInitMethod();
-                if (maybeInit instanceof Callable) {
-                    init = maybeInit;
-                }
+            await interpreter.inSubEnv(async (subInterpreter) => {
+                init = await subInterpreter.getInitMethod();
                 return BrsInvalid.Instance;
             }, typeDef.environment);
 
-            interpreter.inSubEnvSync(async (subInterpreter) => {
+            await interpreter.inSubEnv(async (subInterpreter) => {
                 subInterpreter.environment.hostNode = node;
 
                 mPointer.set(new BrsString("top"), node!);
@@ -1879,7 +1875,7 @@ export function createNodeByType(
                 subInterpreter.environment.setRootM(mPointer);
                 node!.m = mPointer;
                 if (init instanceof Callable) {
-                    init.callSync(subInterpreter, true);
+                    await init.call(subInterpreter);
                 }
                 return BrsInvalid.Instance;
             }, currentEnv);
@@ -1949,7 +1945,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
     }
 }
 
-function addChildren(
+async function addChildren(
     interpreter: Interpreter,
     node: RoSGNode,
     typeDef: ComponentDefinition | ComponentNode
@@ -1958,10 +1954,10 @@ function addChildren(
     let appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-        let newChild = createNodeByType(interpreter, new BrsString(child.name));
+        let newChild = await createNodeByType(interpreter, new BrsString(child.name));
         if (newChild instanceof RoSGNode) {
             if (appendChild) {
-                appendChild.callSync(interpreter, true, newChild);
+                await appendChild.call(interpreter, newChild);
                 let setField = newChild.getMethod("setfield");
                 if (setField) {
                     let nodeFields = newChild.getFields();
@@ -1982,7 +1978,7 @@ function addChildren(
 
             if (child.children.length > 0) {
                 // we need to add the child's own children
-                addChildren(interpreter, newChild, child);
+                await addChildren(interpreter, newChild, child);
             }
         }
     }
