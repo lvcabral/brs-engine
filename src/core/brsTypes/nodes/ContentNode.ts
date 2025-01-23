@@ -121,12 +121,12 @@ export class ContentNode extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerMethods({
             ifAssociativeArray: [this.count, this.keys, this.items],
-            ifSGNodeField: [this.hasfield],
+            ifSGNodeField: [this.hasField],
         });
     }
 
     private getVisibleFields() {
-        let fields = this.getFields();
+        let fields = this.getNodeFields();
         return Array.from(fields).filter(([key, value]) => !value.isHidden());
     }
 
@@ -217,13 +217,13 @@ export class ContentNode extends RoSGNode {
      * @override
      * Returns true if the field exists. Marks the field as not hidden.
      */
-    protected hasfield = new Callable("hasfield", {
+    protected hasField = new Callable("hasfield", {
         signature: {
             args: [new StdlibArgument("fieldname", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldname: BrsString) => {
-            let field = this.getFields().get(fieldname.value.toLowerCase());
+            let field = this.getNodeFields().get(fieldname.value.toLowerCase());
             if (field) {
                 field.setHidden(false);
                 return BrsBoolean.True;
