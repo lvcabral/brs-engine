@@ -79,7 +79,7 @@ export function getLexerParserFn(
             if (script.uri !== undefined) {
                 let maybeStatements = memoizedStatements.get(script.uri);
                 if (maybeStatements) {
-                    return maybeStatements;
+                    promises.push(maybeStatements);
                 } else {
                     let statementsPromise = lexAndParseScript(script);
                     if (!memoizedStatements.has(script.uri)) {
