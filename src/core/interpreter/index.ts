@@ -308,17 +308,24 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Temporarily sets an interpreter's environment to the provided one, then
      * passes the sub-interpreter to the provided JavaScript function. Always
      * reverts the current interpreter's environment to its original value.
+     *
+     * Note: There are two versions of this function, one that is asynchronous
+     * and one that is synchronous. Use the sync version carefully, only when
+     * you control the arguments and the expected return value.
+     *
      * @param func the JavaScript function to execute with the sub interpreter.
      * @param environment (Optional) the environment to run the interpreter in.
      */
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
+        newEnv.setFocusedNode(this._environment.getFocusedNode());
         let retValue: BrsComponent | undefined = undefined;
         try {
             this._environment = newEnv;
             const returnValue = func(this);
             this._environment = originalEnvironment;
+            this._environment.setFocusedNode(newEnv.getFocusedNode());
             return returnValue;
         } catch (err: any) {
             if (!this._tryMode && this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
@@ -329,6 +336,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 retValue.setReturn(true);
             }
             this._environment = originalEnvironment;
+            this._environment.setFocusedNode(newEnv.getFocusedNode());
             throw err;
         } finally {
             newEnv.removeReferences();
@@ -336,6 +344,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
+    /**
+     * Executes the provided statements in the current environment.
+     * @param statements Array of statements to execute.
+     * @param sourceMap Source code map.
+     * @param args run parameters for main/runuserinterface functions.
+     * @returns the result of the last statement executed.
+     */
     exec(
         statements: readonly Stmt.Statement[],
         sourceMap?: Map<string, string>,
@@ -401,6 +416,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
+    /**
+     * Retrieve the Callable function from the environment.
+     * @param functionName the name of the function to retrieve.
+     * @returns the Callable function or BrsInvalid if not found.
+     */
     getCallableFunction(functionName: string): Callable | BrsInvalid {
         let callbackVariable = new Expr.Variable({
             kind: Lexeme.Identifier,

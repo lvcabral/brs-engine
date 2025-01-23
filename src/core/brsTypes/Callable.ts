@@ -193,6 +193,62 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
     }
 
     /**
+     * Calls the function this `Callable` represents with the provided `arg`uments using the
+     * provided `Interpreter` instance.
+     *
+     * @param interpreter the interpreter to execute this callable in.
+     * @param ignoreReturn if true, do not print a warning if the return is a Promise.
+     * @param args the arguments to pass to the callable routine.
+     *
+     * @returns the return value of the function, or `invalid` if nothing is explicitly returned.
+     */
+    callSync(interpreter: Interpreter, ignoreReturn = false, ...args: Brs.BrsType[]) {
+        let satisfiedSignature = this.getFirstSatisfiedSignature(args);
+        if (satisfiedSignature == null) {
+            interpreter.addError(generateArgumentMismatchError(this, args, interpreter.location));
+        }
+
+        let { signature, impl } = satisfiedSignature;
+
+        let mutableArgs = [...satisfiedSignature.coercedArgs];
+
+        return interpreter.inSubEnvSync((subInterpreter): Brs.BrsType | Promise<Brs.BrsType> => {
+            // first, we need to evaluate all of the parameter default values
+            // and define them in a new environment
+            for (let i = 0; i < signature.args.length; i++) {
+                const param = signature.args[i];
+                if (param.defaultValue && mutableArgs[i] == null) {
+                    const result = subInterpreter.evaluate(param.defaultValue);
+                    if (result instanceof Promise) {
+                        const message =
+                            "WARNING: Unexpected promise in callSync argument evaluation";
+                        interpreter.stderr.write(
+                            `warning,${message}: ${interpreter.formatLocation()}`
+                        );
+                        return Brs.BrsInvalid.Instance;
+                    }
+                    mutableArgs[i] = result;
+                }
+
+                subInterpreter.environment.define(
+                    Scope.Function,
+                    param.name.text,
+                    mutableArgs[i],
+                    interpreter.location
+                );
+            }
+            // then return whatever the selected implementation would return
+            const result = impl(subInterpreter, ...mutableArgs);
+            if (result instanceof Promise && !ignoreReturn) {
+                const message = `WARNING: Unexpected promise in callSync return value`;
+                interpreter.stderr.write(`warning,${message}: ${interpreter.formatLocation()}`);
+                return Brs.BrsInvalid.Instance;
+            }
+            return result;
+        });
+    }
+
+    /**
      * Creates a new BrightScript `function` or `sub`.
      * @param name the name this callable should have within the BrightScript runtime.
      * @param signatures the signatures and associated (JavaScript) implementations this callable should
