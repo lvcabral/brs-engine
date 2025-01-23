@@ -3,7 +3,7 @@ import { ValueKind, BrsString, BrsValue, BrsBoolean } from "../BrsType";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoSGNode } from "./RoSGNode";
-import { BrsType } from "..";
+import { BrsType, RoAssociativeArray } from "..";
 
 export class RoSGNodeEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -11,10 +11,11 @@ export class RoSGNodeEvent extends BrsComponent implements BrsValue {
     constructor(
         readonly node: RoSGNode,
         readonly fieldName: BrsString,
-        readonly fieldValue: BrsType
+        readonly fieldValue: BrsType,
+        readonly infoFields?: RoAssociativeArray
     ) {
         super("roSGNodeEvent");
-        this.appendMethods([this.getData, this.getField, this.getRoSGNode, this.getNode]);
+        this.appendMethods([this.getData, this.getField, this.getRoSGNode, this.getNode, this.getInfo]);
     }
 
     equalTo(other: BrsType) {
@@ -67,6 +68,17 @@ export class RoSGNodeEvent extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return this.node.get(new BrsString("id"));
+        },
+    });
+
+    /** Retrieves an AA that contains the values of selected "context" fields. */
+    private getInfo = new Callable("getinfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.infoFields ?? new RoAssociativeArray([]);
         },
     });
 }
