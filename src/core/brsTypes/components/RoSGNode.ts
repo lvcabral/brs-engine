@@ -1274,10 +1274,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("nodetype", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: async (interpreter: Interpreter, nodetype: BrsString) => {
+        impl: (interpreter: Interpreter, nodetype: BrsString) => {
             // currently we can't create a custom subclass object of roSGNode,
             // so we'll always create generic RoSGNode object as child
-            let child = await createNodeByType(interpreter, nodetype);
+            let child = createNodeByType(interpreter, nodetype);
             if (child instanceof RoSGNode) {
                 this.children.push(child);
                 child.setParent(this);
@@ -1411,11 +1411,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Dynamic,
         },
-        impl: async (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
+        impl: (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
             let numChildrenValue = num_children.getValue();
             let addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                let child = await createNodeByType(interpreter, subtype);
+                let child = createNodeByType(interpreter, subtype);
                 if (child instanceof RoSGNode) {
                     this.children.push(child);
                     addedChildren.push(child);
