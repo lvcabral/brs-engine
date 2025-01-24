@@ -15,7 +15,13 @@ export class RoSGNodeEvent extends BrsComponent implements BrsValue {
         readonly infoFields?: RoAssociativeArray
     ) {
         super("roSGNodeEvent");
-        this.appendMethods([this.getData, this.getField, this.getRoSGNode, this.getNode, this.getInfo]);
+        this.appendMethods([
+            this.getData,
+            this.getField,
+            this.getRoSGNode,
+            this.getNode,
+            this.getInfo,
+        ]);
     }
 
     equalTo(other: BrsType) {

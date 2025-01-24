@@ -24,12 +24,12 @@ export class ComponentScopeResolver {
         let statementResults = await pSettle(Array.from(this.getStatements(component)));
         let rejected = statementResults.filter((res) => res.isRejected);
         if (rejected.length > 0) {
-            rejected.forEach((rejection) =>
+            rejected.forEach((rejection: PromiseRejectedResult) =>
                 rejection.reason.messages.forEach((msg: string) => console.error(msg))
             );
             return Promise.reject(`Unable to resolve scope for component ${component.name}`);
         }
-        return this.flatten(statementResults.map((res) => res.value!));
+        return this.flatten(statementResults.map((res) => res.isFulfilled ? res.value : []));
     }
 
     /**
