@@ -90,7 +90,9 @@ export class roSGScreen extends BrsComponent implements BrsValue {
             if (sceneType.value === "Scene") {
                 returnValue = NodeFactory.createNode(BrsNodeType.Scene) ?? BrsInvalid.Instance;
             } else {
-                const typeDef = interpreter.environment.nodeDefMap.get(sceneType.value.toLowerCase());
+                const typeDef = interpreter.environment.nodeDefMap.get(
+                    sceneType.value.toLowerCase()
+                );
                 if (typeDef && typeDef.extends === "Scene") {
                     returnValue = await createNodeByType(interpreter, sceneType);
                 }

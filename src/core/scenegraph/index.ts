@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { XmlDocument, XmlElement } from "xmldoc";
-import pSettle from "p-settle";
+import pSettle, { PromiseResult } from "p-settle";
 import * as fg from "fast-glob";
 import { Environment } from "../interpreter/Environment";
 import { BrsError } from "../Error";
@@ -101,7 +101,7 @@ export async function getComponentDefinitionMap(
 }
 
 async function processXmlTree(
-    settledPromises: Promise<pSettle.SettledResult<ComponentDefinition>[]>,
+    settledPromises: Promise<PromiseResult<ComponentDefinition>[]>,
     rootDir: string,
     libraryName?: string
 ) {

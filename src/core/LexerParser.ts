@@ -98,13 +98,13 @@ export function getLexerParserFn(
             return Promise.reject({
                 messages: parsedScripts
                     .filter((script) => script.isRejected)
-                    .map((rejection) => rejection.reason.message),
+                    .map((rejection) => (rejection as PromiseRejectedResult).reason.message),
             });
         }
 
         // combine statements from all scripts into one array
         return parsedScripts
-            .map((script) => script.value || [])
+            .map((script) => script.isFulfilled ? script.value : [])
             .reduce((allStatements, fileStatements) => [...allStatements, ...fileStatements], []);
     };
 }

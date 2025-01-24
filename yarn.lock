@@ -975,11 +975,6 @@
   resolved "https://registry.yarnpkg.com/@types/opentype.js/-/opentype.js-0.7.2.tgz#ced5b117a5736578c6b9d835e35b0204c6ef2e8f"
   integrity sha512-Riz6WyBUBEFs7YqSsJya3SbDHJZ6BmMkY7bzNoue6rtwj+RNilLc+mgOX/eJ0Y0asq16FSU6DatBeOg8ZMy2UQ==
 
-"@types/p-settle@^2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@types/p-settle/-/p-settle-2.0.1.tgz#06f4f681e8504c54789e0d3397a75b4d4d8a3692"
-  integrity sha512-crogdVDPNzlhnNFsQ9EOpjq8SezX7p3kKfs/O6fYUyh7orIOYjt3iBi/pF/plyVJmxSxWyQNFRhzvRA6dP+w2g==
-
 "@types/path-parse@^1.0.19":
   version "1.0.22"
   resolved "https://registry.yarnpkg.com/@types/path-parse/-/path-parse-1.0.22.tgz#3681b6b937210c1927a4fcb28f3f78fc38ac58fb"
@@ -5707,13 +5702,6 @@ own-keys@^1.0.1:
     object-keys "^1.1.1"
     safe-push-apply "^1.0.0"
 
-p-limit@^1.2.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-1.3.0.tgz#b86bd5f0c25690911c7590fcbfc2010d54b3ccb8"
-  integrity sha512-vvcXsLAJ9Dr5rQOPk7toZQZJApBl2K4J6dANSsEuh6QI41JYcsS/qhTGa9ErIUUgK3WNQoJYvylxvjqmiqEA9Q==
-  dependencies:
-    p-try "^1.0.0"
-
 p-limit@^2.2.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-2.3.0.tgz#3dd33c647a214fdfffd835933eb086da0dc21db1"
@@ -5727,6 +5715,13 @@ p-limit@^3.0.2, p-limit@^3.1.0:
   integrity sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==
   dependencies:
     yocto-queue "^0.1.0"
+
+p-limit@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-4.0.0.tgz#914af6544ed32bfa54670b061cafcbd04984b644"
+  integrity sha512-5b0R4txpzjPWVw/cXXUResoD4hb6U/x9BH08L7nw+GN1sezDzPdxeRvpc9c433fZhBan/wusjbCsqwqm4EIBIQ==
+  dependencies:
+    yocto-queue "^1.0.0"
 
 p-locate@^4.1.0:
   version "4.1.0"
@@ -5749,10 +5744,10 @@ p-map@^4.0.0:
   dependencies:
     aggregate-error "^3.0.0"
 
-p-reflect@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/p-reflect/-/p-reflect-1.0.0.tgz#f4fa1ee1bb546d8eb3ec0321148dfe0a79137bb8"
-  integrity sha512-rlngKS+EX3nvI7xIzA0xKNVEAguWdIqAZVbn02z1m73ehXBdX66aTdD0bCvIu0cDwbU3TK9w3RYrppKpO3EnKQ==
+p-reflect@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/p-reflect/-/p-reflect-3.1.0.tgz#bba22747439b5fc50a7f626e8e909dc9b888218d"
+  integrity sha512-3sG3UlpisPSaX+o7u2q01hIQmrpkvdl5GSO1ZwL7pfc5kHB2bPF0eFNCfYTrW1/LTUdgmPwBAvmT0Zr8eSmaAQ==
 
 p-retry@^4.5.0:
   version "4.6.2"
@@ -5762,18 +5757,13 @@ p-retry@^4.5.0:
     "@types/retry" "0.12.0"
     retry "^0.13.1"
 
-p-settle@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/p-settle/-/p-settle-2.1.0.tgz#5b7161f45f92a3d2e17098dca8ce6bb0d51099ea"
-  integrity sha512-NHFIUYc+fQTFRrzzAugq0l1drwi57PB522smetcY8C/EoTYs6cU/fC6TJj0N3rq5NhhJJbhf0VGWziL3jZDnjA==
+p-settle@^5.1.1:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/p-settle/-/p-settle-5.1.1.tgz#9300778f896d5c01e4361b8ab45d003548574c3e"
+  integrity sha512-VLgSBpA71aMncPVP5Es4nhQYxcxN0lit8hGlobJke8YTAhtwdRDu/s4KePP5gCT5LFfZty3qosBFYMgD5rFpCg==
   dependencies:
-    p-limit "^1.2.0"
-    p-reflect "^1.0.0"
-
-p-try@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/p-try/-/p-try-1.0.0.tgz#cbc79cdbaf8fd4228e13f621f2b1a237c1b207b3"
-  integrity sha512-U1etNYuMJoIz3ZXSrrySFjsXQTWOx2/jdi86L+2pRvph/qMKL6sbcCYdH23fqsbm8TH2Gn0OybpT4eSFlCVHww==
+    p-limit "^4.0.0"
+    p-reflect "^3.1.0"
 
 p-try@^2.0.0:
   version "2.2.0"
@@ -7869,6 +7859,11 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
+
+yocto-queue@^1.0.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-1.1.1.tgz#fef65ce3ac9f8a32ceac5a634f74e17e5b232110"
+  integrity sha512-b4JR1PFR10y1mKjhHY9LaGo6tmrgjit7hxVIeAmyMw3jegXR4dhYqLaQF5zMXZxY7tLpMyJeLjr1C4rLmkVe8g==
 
 yoctocolors@^2.0.0:
   version "2.1.1"
