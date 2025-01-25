@@ -15,7 +15,14 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     private readonly headers: string;
     private readonly host: string;
 
-    constructor(id: number, host: string, response: string, status: number, statusText: string, headers: string) {
+    constructor(
+        id: number,
+        host: string,
+        response: string,
+        status: number,
+        statusText: string,
+        headers: string
+    ) {
         super("roUrlEvent");
         this.id = id;
         this.responseCode = status;
@@ -209,7 +216,6 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-
             return new BrsString(resolveHostToIP(this.host) ?? "");
         },
     });

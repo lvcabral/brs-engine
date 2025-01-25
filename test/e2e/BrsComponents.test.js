@@ -595,7 +595,7 @@ describe("end to end brightscript functions", () => {
             "Website:    https://lvcabral.com/brs/",
             "The status was:  201",
             "The target IP was: Valid",
-            "The response was: Employee is SW Engineer"
+            "The response was: Employee is SW Engineer",
         ]);
     });
 
