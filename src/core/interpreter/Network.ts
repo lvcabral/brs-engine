@@ -61,7 +61,7 @@ export function resolveHostToIP(host: string): string | null {
     if (DNSCache.has(host)) {
         return DNSCache.get(host) as string;
     }
-    const servers = ["https://cloudflare-dns.com/dns-query", "https://dns.google/resolve"];
+    const servers = ["https://dns.google/resolve", "https://cloudflare-dns.com/dns-query"];
     const errors: string[] = [];
     for (const server of servers) {
         const url = `${server}?name=${host}&type=A`;
@@ -130,4 +130,18 @@ export function isValidHostname(hostname: string): boolean {
         }
     }
     return true;
+}
+
+/**
+ * Function to get the host from a URL
+ * @param url the URL to parse
+ * @returns the host or an empty string if the URL is invalid
+ */
+export function getHost(url: string): string {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.host;
+    } catch (err: any) {
+        return "";
+    }
 }

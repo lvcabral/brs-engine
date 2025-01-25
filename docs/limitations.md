@@ -37,7 +37,6 @@ There are several features from the **BrightScript** language and components tha
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
-  * The method `GetTargetIpAddress` from `roUrlEvent` always returns an empty string.
 * The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not.
 * The `roFileSystem` events are not yet implemented.

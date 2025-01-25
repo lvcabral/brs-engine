@@ -9,6 +9,7 @@ import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AudioExt, VideoExt, getRokuOSVersion } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { getHost } from "../../interpreter/Network";
 import fileType from "file-type";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
@@ -18,6 +19,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private readonly interpreter: Interpreter;
     private identity: number;
     private url: string;
+    private host: string;
     private reqMethod: string;
     private failureReason: string;
     private cookiesEnabled: boolean;
@@ -36,6 +38,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.interpreter = interpreter;
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
+        this.host = "";
         this.reqMethod = "";
         this.failureReason = "";
         this.cookiesEnabled = false;
@@ -111,51 +114,63 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         return this.xhr;
     }
 
-    getToStringSync(): BrsType {
+    getToStringEvent(): RoURLEvent {
+        let response = "";
+        let status = -1;
+        let headers = "";
         try {
             const xhr = this.getConnection("GET", "text");
             xhr.send();
+            response = xhr.responseText;
+            status = xhr.status;
+            headers = xhr.getAllResponseHeaders();
             this.failureReason = xhr.statusText;
-            return new RoURLEvent(
-                this.identity,
-                xhr.responseText,
-                xhr.status,
-                xhr.statusText,
-                xhr.getAllResponseHeaders()
-            );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
                 this.interpreter.stderr.write(
-                    `warning,[getToStringSync] Error getting ${this.url}: ${e.message}`
+                    `warning,[getToStringEvent] Error getting ${this.url}: ${e.message}`
                 );
             }
-            return BrsInvalid.Instance;
+            this.failureReason = e.message;
         }
+        return new RoURLEvent(
+            this.identity,
+            this.host,
+            response ?? "",
+            status ?? -1,
+            this.failureReason ?? "Unknown error",
+            headers
+        );
     }
 
-    getToFileSync(filePath: string): BrsType {
+    getToFileEvent(filePath: string): RoURLEvent {
+        let status = -1;
+        let headers = "";
         try {
             const xhr = this.getConnection("GET", "arraybuffer");
             xhr.send();
+            status = xhr.status;
+            headers = xhr.getAllResponseHeaders();
             this.failureReason = xhr.statusText;
             if (xhr.status === 200) {
                 this.saveDownloadedFile(filePath, xhr.response);
             }
-            return new RoURLEvent(
-                this.identity,
-                "",
-                xhr.status,
-                xhr.statusText,
-                xhr.getAllResponseHeaders()
-            );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
                 this.interpreter.stderr.write(
-                    `warning,[getToFileSync] Error getting ${this.url}: ${e.message}`
+                    `warning,[getToFileEvent] Error getting ${this.url}: ${e.message}`
                 );
             }
-            return BrsInvalid.Instance;
+            this.failureReason = e.message;
         }
+        return new RoURLEvent(
+            this.identity,
+            this.host,
+            "",
+            status ?? -1,
+            this.failureReason ?? "Unknown error",
+            headers
+        );
     }
 
     getToFileAsync(): BrsType {
@@ -163,29 +178,36 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         if (!filePath) {
             return BrsInvalid.Instance;
         }
-        return this.getToFileSync(filePath);
+        return this.getToFileEvent(filePath);
     }
 
-    postFromStringSync(body: string): BrsType {
+    postFromStringEvent(body: string): RoURLEvent {
+        let status = -1;
+        let response = "";
+        let headers = "";
         try {
             const xhr = this.getConnection("POST", "text");
             xhr.send(body);
+            response = xhr.responseText;
+            status = xhr.status;
+            headers = xhr.getAllResponseHeaders();
             this.failureReason = xhr.statusText;
-            return new RoURLEvent(
-                this.identity,
-                xhr.responseText || "",
-                xhr.status,
-                xhr.statusText,
-                xhr.getAllResponseHeaders()
-            );
         } catch (e: any) {
             if (this.interpreter.isDevMode) {
                 this.interpreter.stdout.write(
-                    `warning,[postFromStringSync] Error posting to ${this.url}: ${e.message}`
+                    `warning,[postFromStringEvent] Error posting to ${this.url}: ${e.message}`
                 );
             }
-            return BrsInvalid.Instance;
+            this.failureReason = e.message;
         }
+        return new RoURLEvent(
+            this.identity,
+            this.host,
+            response ?? "",
+            status ?? -1,
+            this.failureReason ?? "Unknown error",
+            headers
+        );
     }
 
     postFromStringAsync(): BrsType {
@@ -193,80 +215,48 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         if (!request) {
             return BrsInvalid.Instance;
         }
-        return this.postFromStringSync(request);
+        return this.postFromStringEvent(request);
     }
 
-    postFromFileSync(filePath: string): BrsType {
-        try {
-            const xhr = this.getConnection("POST", "text");
-            const fsys = this.interpreter.fileSystem;
-            if (fsys) {
-                const body = fsys.readFileSync(filePath);
-                xhr.send(body);
-                this.failureReason = xhr.statusText;
-            } else {
-                this.interpreter.stderr.write(
-                    `warning,[postFromFileSync] Invalid path: ${filePath}`
-                );
-                return BrsInvalid.Instance;
-            }
-            return new RoURLEvent(
-                this.identity,
-                xhr.responseText || "",
-                xhr.status,
-                xhr.statusText,
-                xhr.getAllResponseHeaders()
-            );
-        } catch (e: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
-                    `warning,[postFromFileSync] Error posting to ${this.url}: ${e.message}`
-                );
-            }
-            return BrsInvalid.Instance;
-        }
-    }
-
-    postFromFileAsync(): BrsType {
-        const filePath = this.inFile.shift();
-        if (!filePath) {
-            return BrsInvalid.Instance;
-        }
-        return this.postFromFileSync(filePath);
-    }
-
-    postFromFileToFileSync(inputPath: string, outputPath: string): BrsType {
+    postFromFileToFileEvent(inputPath: string, outputPath: string): RoURLEvent {
+        let status = -1;
+        let response = "";
+        let headers = "";
+        let error = "";
         try {
             const xhr = this.getConnection("POST", "arraybuffer");
             const fsys = this.interpreter.fileSystem;
-            if (fsys) {
+            if (fsys.existsSync(inputPath)) {
                 const body = fsys.readFileSync(inputPath);
                 xhr.send(body);
                 if (xhr.status === 200) {
                     this.saveDownloadedFile(outputPath, xhr.response);
                 }
+                response = xhr.responseText;
+                status = xhr.status;
+                headers = xhr.getAllResponseHeaders();
                 this.failureReason = xhr.statusText;
             } else {
-                this.interpreter.stderr.write(
-                    `warning,[postFromFileToFileSync] Invalid path: ${inputPath}`
-                );
-                return BrsInvalid.Instance;
+                error = `Invalid path: ${inputPath}`;
+                status = -26;
+                this.failureReason = error;
             }
-            return new RoURLEvent(
-                this.identity,
-                "",
-                xhr.status,
-                xhr.statusText,
-                xhr.getAllResponseHeaders()
-            );
         } catch (e: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
-                    `warning,[postFromFileToFileSync] Error posting to ${this.url}: ${e.message}`
-                );
-            }
-            return BrsInvalid.Instance;
+            error = e.message;
         }
+        if (error !== "" && this.interpreter.isDevMode) {
+            this.interpreter.stderr.write(
+                `warning,[postFromFileToFileEvent] Error posting to ${this.url}: ${error}`
+            );
+        }
+        return new RoURLEvent(
+            this.identity,
+            this.host,
+            response ?? "",
+            status ?? -1,
+            this.failureReason ?? "Unknown error",
+            headers
+        );
     }
 
     postFromFileToFileAsync(): BrsType {
@@ -275,7 +265,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         if (!inPath || !outPath) {
             return BrsInvalid.Instance;
         }
-        return this.postFromFileToFileSync(inPath, outPath);
+        return this.postFromFileToFileEvent(inPath, outPath);
     }
 
     saveDownloadedFile(filePath: string, data: any) {
@@ -314,6 +304,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.failureReason = xhr.statusText;
             return new RoURLEvent(
                 this.identity,
+                this.host,
                 xhr.responseText,
                 xhr.status,
                 xhr.statusText,
@@ -362,6 +353,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, url: BrsString) => {
             this.url = url.value;
+            this.host = getHost(url.value);
             return BrsInvalid.Instance;
         },
     });
@@ -407,11 +399,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            const reply = this.getToStringSync();
-            if (reply instanceof RoURLEvent) {
-                return new BrsString(reply.toString());
-            }
-            return new BrsString("");
+            const reply = this.getToStringEvent();
+            return new BrsString(reply.toString());
         },
     });
 
@@ -422,11 +411,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, filePath: BrsString) => {
-            const reply = this.getToFileSync(filePath.value);
-            if (reply instanceof RoURLEvent) {
-                return new Int32(reply.getStatus());
-            }
-            return new Int32(400); // Bad Request;
+            const reply = this.getToFileEvent(filePath.value);
+            return new Int32(reply.getStatus());
         },
     });
 
@@ -439,14 +425,13 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             if (this.port) {
                 this.failureReason = "";
-                this.port.pushCallback(this.getToStringSync.bind(this));
-                return BrsBoolean.True;
-            } else {
+                this.port.pushCallback(this.getToStringEvent.bind(this));
+            } else if (this.interpreter.isDevMode) {
                 this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
-                return BrsBoolean.False;
             }
+            return BrsBoolean.True;
         },
     });
 
@@ -463,13 +448,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.outFile.push(filePath.value);
                 this.port.pushCallback(this.getToFileAsync.bind(this));
-                return BrsBoolean.True;
-            } else {
+            } else if (this.interpreter.isDevMode) {
                 this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
-                return BrsBoolean.False;
             }
+            return BrsBoolean.True;
         },
     });
 
@@ -511,13 +495,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             if (this.port) {
                 this.failureReason = "";
                 this.port.pushCallback(this.requestHead.bind(this));
-                return BrsBoolean.True;
-            } else {
+            } else if (this.interpreter.isDevMode) {
                 this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
-                return BrsBoolean.False;
             }
+            return BrsBoolean.True;
         },
     });
 
@@ -528,11 +511,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, request: BrsString) => {
-            const reply = this.postFromStringSync(request.value);
-            if (reply instanceof RoURLEvent) {
-                return new Int32(reply.getStatus());
-            }
-            return new Int32(400); // Bad Request;
+            const reply = this.postFromStringEvent(request.value);
+            return new Int32(reply.getStatus());
         },
     });
 
@@ -548,13 +528,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.failureReason = "";
                 this.postBody.push(request.value);
                 this.port.pushCallback(this.postFromStringAsync.bind(this));
-                return BrsBoolean.True;
-            } else {
+            } else if (this.interpreter.isDevMode) {
                 this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
-                return BrsBoolean.False;
             }
+            return BrsBoolean.True;
         },
     });
 
@@ -566,11 +545,17 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, filePath: BrsString) => {
-            const reply = this.postFromFileSync(filePath.value);
-            if (reply instanceof RoURLEvent) {
+            const fsys = this.interpreter.fileSystem;
+            if (fsys.existsSync(filePath.value)) {
+                const body = fsys.readFileSync(filePath.value);
+                const reply = this.postFromStringEvent(body);
                 return new Int32(reply.getStatus());
+            } else if (this.interpreter.isDevMode) {
+                this.interpreter.stderr.write(
+                    `warning,[postFromFile] Invalid path: ${filePath.value}`
+                );
             }
-            return new Int32(400); // Bad Request;
+            return new Int32(-26);
         },
     });
 
@@ -581,17 +566,20 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, filePath: BrsString) => {
+            const fsys = this.interpreter.fileSystem;
+            if (!fsys.existsSync(filePath.value)) {
+                return BrsBoolean.False;
+            }
             if (this.port) {
                 this.failureReason = "";
-                this.inFile.push(filePath.value);
-                this.port.pushCallback(this.postFromFileAsync.bind(this));
-                return BrsBoolean.True;
-            } else {
+                this.postBody.push(fsys.readFileSync(filePath.value, "utf8"));
+                this.port.pushCallback(this.postFromStringAsync.bind(this));
+            } else if (this.interpreter.isDevMode) {
                 this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
-                return BrsBoolean.False;
             }
+            return BrsBoolean.True;
         },
     });
 
@@ -605,18 +593,21 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fromFile: BrsString, toFile: BrsString) => {
+            const fsys = this.interpreter.fileSystem;
+            if (!fsys.existsSync(fromFile.value)) {
+                return BrsBoolean.False;
+            }
             if (this.port) {
                 this.failureReason = "";
                 this.inFile.push(fromFile.value);
                 this.outFile.push(toFile.value);
                 this.port.pushCallback(this.postFromFileToFileAsync.bind(this));
-                return BrsBoolean.True;
             } else {
                 this.interpreter.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
-                return BrsBoolean.False;
             }
+            return BrsBoolean.True;
         },
     });
 
@@ -627,6 +618,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, retain: BrsBoolean) => {
+            // This method is mocked for compatibility
             return BrsBoolean.True;
         },
     });
@@ -715,6 +707,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, enable: BrsBoolean) => {
+            // This method is mocked for compatibility
             return BrsBoolean.True;
         },
     });
