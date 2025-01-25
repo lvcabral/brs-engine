@@ -100,6 +100,7 @@ export * from "./components/RoFileSystem";
 export * from "./components/RoChannelStore";
 export * from "./components/RoChannelStoreEvent";
 export * from "./components/RoUniversalControlEvent";
+export * from "./components/RoSocketAddress";
 export * from "./Boxing";
 export * from "./Callable";
 export * from "./Coercion";
