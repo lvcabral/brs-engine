@@ -6,6 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
+import { download } from "./interpreter/Network";
 import {
     AppExitReason,
     PkgFilePath,
@@ -40,6 +41,7 @@ import packageInfo from "../../package.json";
 export * as lexer from "./lexer";
 export * as parser from "./parser";
 export * as stdlib from "./stdlib";
+export * as netlib from "./interpreter/Network";
 export { BrsTypes as types };
 export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
@@ -886,25 +888,4 @@ function parseLibraries(
  */
 function logError(err: BrsError) {
     postMessage(`error,${err.format()}`);
-}
-
-/**
- * Download helper function
- * @param url url of the file to be downloaded
- * @param type return type (eg. arraybuffer)
- */
-function download(url: string, type: XMLHttpRequestResponseType) {
-    try {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, false); // Note: synchronous
-        xhr.responseType = type;
-        xhr.send();
-        if (xhr.status !== 200) {
-            postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText}`);
-            return undefined;
-        }
-        return xhr.response;
-    } catch (err: any) {
-        postMessage(`error,Error downloading ${url}: ${err.message}`);
-    }
 }

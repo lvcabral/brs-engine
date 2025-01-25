@@ -545,6 +545,7 @@ describe("end to end brightscript functions", () => {
             "true",
         ]);
     });
+
     test("components/roRemoteInfo.brs", async () => {
         await execute([resourceFile("components", "roRemoteInfo.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
@@ -565,6 +566,7 @@ describe("end to end brightscript functions", () => {
             "GamePad? false",
         ]);
     });
+
     test("components/roEvents.brs", async () => {
         await execute([resourceFile("components", "roEvents.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
@@ -582,6 +584,65 @@ describe("end to end brightscript functions", () => {
                 `}`,
             "<Interface: ifroDeviceInfoEvent>",
             "Invalid",
+        ]);
+    });
+
+    test("components/roSocketAddress.brs", async () => {
+        await execute([resourceFile("components", "roSocketAddress.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "stream socket test",
+            "------ no address ------",
+            "socket address - getHostName()   --> 0.0.0.0",
+            "socket address - getPort()       -->  0",
+            "socket address - isAddressValid()--> true",
+            "------ invalid IP with valid port ------",
+            "socket address - getHostName()   --> 192.168.1.256",
+            "socket address - getPort()       -->  8080",
+            "socket address - isAddressValid()--> false",
+            "------ invalid address with valid port ------",
+            "socket address - getHostName()   --> @#$$%",
+            "socket address - getPort()       -->  999",
+            "socket address - isAddressValid()--> false",
+            "------ invalid address with invalid port ------",
+            "socket address - getHostName()   --> @#$$%",
+            "socket address - getPort()       -->  777",
+            "socket address - isAddressValid()--> false",
+            "------ host address no port ------",
+            "socket address - getHostName()   --> roku.com",
+            "socket address - getPort()       -->  777",
+            "socket address - isAddressValid()--> true",
+            "------ host address with port ------",
+            "socket address - getHostName()   --> lvcabral.com",
+            "socket address - getPort()       -->  3070",
+            "socket address - isAddressValid()--> true",
+            "------ IP address no port ------",
+            "socket address - getHostName()   --> 192.168.1.70",
+            "socket address - getPort()       -->  3070",
+            "socket address - isAddressValid()--> true",
+            "------ IP address with port ------",
+            "socket address - getHostName()   --> 192.168.1.30",
+            "socket address - getPort()       -->  6502",
+            "socket address - isAddressValid()--> true",
+            "------ Set valid port ------",
+            "socket address - getHostName()   --> 192.168.1.30",
+            "socket address - getPort()       -->  8080",
+            "socket address - isAddressValid()--> true",
+            "------ Set negative port ------",
+            "socket address - getHostName()   --> 192.168.1.30",
+            "socket address - getPort()       -->  65535",
+            "socket address - isAddressValid()--> true",
+            "------ Set huge port ------",
+            "socket address - getHostName()   --> 192.168.1.30",
+            "socket address - getPort()       -->  25398",
+            "socket address - isAddressValid()--> true",
+            "------ Set valid host name ------",
+            "socket address - getHostName()   --> github.com",
+            "socket address - getPort()       -->  25398",
+            "socket address - isAddressValid()--> true",
+            "------ Set invalid host name ------",
+            "socket address - getHostName()   --> github.com:8080",
+            "socket address - getPort()       -->  25398",
+            "socket address - isAddressValid()--> false",
         ]);
     });
 });
