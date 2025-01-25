@@ -9,6 +9,7 @@ import { RoURLEvent } from "./RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AudioExt, VideoExt, getRokuOSVersion } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { getHost } from "../../interpreter/Network";
 import fileType from "file-type";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
@@ -18,6 +19,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
     private readonly interpreter: Interpreter;
     private identity: number;
     private url: string;
+    private host: string;
     private reqMethod: string;
     private failureReason: string;
     private cookiesEnabled: boolean;
@@ -36,6 +38,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.interpreter = interpreter;
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
+        this.host = "";
         this.reqMethod = "";
         this.failureReason = "";
         this.cookiesEnabled = false;
@@ -132,6 +135,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         }
         return new RoURLEvent(
             this.identity,
+            this.host,
             response ?? "",
             status ?? -1,
             this.failureReason ?? "Unknown error",
@@ -161,6 +165,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         }
         return new RoURLEvent(
             this.identity,
+            this.host,
             "",
             status ?? -1,
             this.failureReason ?? "Unknown error",
@@ -197,6 +202,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         }
         return new RoURLEvent(
             this.identity,
+            this.host,
             response ?? "",
             status ?? -1,
             this.failureReason ?? "Unknown error",
@@ -245,6 +251,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         }
         return new RoURLEvent(
             this.identity,
+            this.host,
             response ?? "",
             status ?? -1,
             this.failureReason ?? "Unknown error",
@@ -297,6 +304,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             this.failureReason = xhr.statusText;
             return new RoURLEvent(
                 this.identity,
+                this.host,
                 xhr.responseText,
                 xhr.status,
                 xhr.statusText,
@@ -345,6 +353,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, url: BrsString) => {
             this.url = url.value;
+            this.host = getHost(url.value);
             return BrsInvalid.Instance;
         },
     });

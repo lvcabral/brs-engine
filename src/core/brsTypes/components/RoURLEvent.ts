@@ -4,6 +4,7 @@ import { BrsType, RoArray, RoAssociativeArray, isStringComp } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { resolveHostToIP } from "../../interpreter/Network";
 
 export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     readonly kind = ValueKind.Object;
@@ -12,16 +13,16 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
     private readonly responseString: string;
     private readonly failureReason: string;
     private readonly headers: string;
-    private readonly targetIp: string;
+    private readonly host: string;
 
-    constructor(id: number, response: string, status: number, statusText: string, headers: string) {
+    constructor(id: number, host: string, response: string, status: number, statusText: string, headers: string) {
         super("roUrlEvent");
         this.id = id;
         this.responseCode = status;
         this.failureReason = statusText;
         this.responseString = response;
         this.headers = headers;
-        this.targetIp = "";
+        this.host = host;
 
         this.registerMethods({
             ifUrlEvent: [
@@ -208,7 +209,8 @@ export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.targetIp);
+
+            return new BrsString(resolveHostToIP(this.host) ?? "");
         },
     });
 }
