@@ -616,8 +616,8 @@ export class XMLHttpRequest {
      */
     handleError(error: any, status?: number) {
         this.status = status ?? 0;
-        this.statusText = error;
-        this.responseText = error.stack;
+        this.statusText = typeof error === "string" ? error : error.message ?? error.code ?? "";
+        this.responseText = error.stack ?? "";
         this._errorFlag = true;
         this.setState(this.DONE);
     }

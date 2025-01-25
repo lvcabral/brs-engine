@@ -204,6 +204,9 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
                     `warning,*** ERROR: Reading '${filePath.value}': ${err.message}`
                 );
             }
+            interpreter.stderr.write(
+                `warning,BRIGHTSCRIPT: ERROR: ReadAsciiFile: file open for read failed: ${interpreter.formatLocation()}`
+            );
             return new BrsString("");
         }
     },
