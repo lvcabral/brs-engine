@@ -587,8 +587,8 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
-    test("components/roUrlTransfer.brs", async () => {
-        await execute([resourceFile("components", "roUrlTransfer.brs")], outputStreams);
+    test("components/roURLTransfer.brs", async () => {
+        await execute([resourceFile("components", "roURLTransfer.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
             "Repository: https://github.com/lvcabral/brs-engine",
