@@ -68,17 +68,17 @@ export function resolveHostToIP(host: string): string | null {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Synchronous request
         xhr.setRequestHeader("Accept", "application/dns-json");
-
         try {
             xhr.send();
-            if (xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.Answer && response.Answer.length > 0) {
-                    const answer = response.Answer.find((ans: any) => ans.type === 1); // Type 1 is A record
-                    if (answer && isValidIP(answer.data)) {
-                        DNSCache.set(host, answer.data);
-                        return answer.data;
-                    }
+            if (xhr.status !== 200) {
+                return null;
+            }
+            const response = JSON.parse(xhr.responseText);
+            if (response.Answer && response.Answer.length > 0) {
+                const answer = response.Answer.find((ans: any) => ans.type === 1); // Type 1 is A record
+                if (answer && isValidIP(answer.data)) {
+                    DNSCache.set(host, answer.data);
+                    return answer.data;
                 }
             }
         } catch (err: any) {

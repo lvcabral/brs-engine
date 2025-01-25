@@ -12,16 +12,16 @@ import {
 import { Interpreter } from "../../interpreter";
 import { isValidHostname, isValidIP, resolveHostToIP } from "../../interpreter/Network";
 
-export class RoSocketAddress extends BrsComponent implements BrsValue {
+export class RoStreamSocket extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
+    private interpreter: Interpreter;
     private hostName: string;
     private hostIP: string;
     private port: number;
     private valid: boolean;
 
     constructor(interpreter: Interpreter) {
-        super("roSocketAddress");
+        super("roStreamSocket");
         this.interpreter = interpreter;
         this.hostName = "0.0.0.0";
         this.hostIP = "0.0.0.0";
@@ -43,33 +43,35 @@ export class RoSocketAddress extends BrsComponent implements BrsValue {
     validateAddress(address: string): boolean {
         // regex pattern for a valid quad address with port
         const quadAddressPattern = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::(\d{1,5}))?$/;
-        let match = quadAddressPattern.exec(address);
+        let match = address.match(quadAddressPattern);
         if (match) {
             this.hostName = match[1];
             this.hostIP = match[1];
             this.port = match[2] ? this.safeParsePort(match[2]) : this.port;
-            return isValidIP(this.hostName);
-        }
-        const splitAddress = address.split(":");
-        if (splitAddress.length > 1) {
-            this.hostName = splitAddress[0];
-            this.port = this.safeParsePort(splitAddress[1]);
-        } else {
-            this.hostName = address;
-        }
-        if (this.hostName.trim() === "") {
-            return false;
-        }
-        // If the address does not match the pattern, try to resolve it as a hostname
-        try {
-            const ip = resolveHostToIP(this.hostName);
-            if (ip && isValidIP(ip)) {
-                this.hostIP = ip;
+            if (isValidIP(this.hostName)) {
                 return true;
             }
-        } catch (err: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(`warning,${err.message}`);
+        } else {
+            const splitAddress = address.split(":");
+            if (splitAddress.length > 1) {
+                this.hostName = splitAddress[0];
+                this.port = this.safeParsePort(splitAddress[1]);
+            } else {
+                this.hostName = address;
+            }
+            // If the address does not match the pattern, try to resolve it as a hostname
+            if (this.hostName.trim() !== "") {
+                try {
+                    const ip = resolveHostToIP(this.hostName);
+                    if (ip && isValidIP(ip)) {
+                        this.hostIP = ip;
+                        return true;
+                    }
+                } catch (err: any) {
+                    if (this.interpreter.isDevMode) {
+                        this.interpreter.stderr.write(`warning,${err.message}`);
+                    }
+                }
             }
         }
         return false;
@@ -82,7 +84,7 @@ export class RoSocketAddress extends BrsComponent implements BrsValue {
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roSocketAddress>";
+        return "<Component: roStreamSocket>";
     }
 
     equalTo(other: BrsType): BrsBoolean {
