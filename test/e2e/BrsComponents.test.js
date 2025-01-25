@@ -587,6 +587,18 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
+    test("components/roUrlTransfer.brs", async () => {
+        await execute([resourceFile("components", "roUrlTransfer.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
+            "Repository: https://github.com/lvcabral/brs-engine",
+            "Website:    https://lvcabral.com/brs/",
+            "The status was:  201",
+            "The target IP was: Valid",
+            "The response was: Employee is SW Engineer"
+        ]);
+    });
+
     test("components/roSocketAddress.brs", async () => {
         await execute([resourceFile("components", "roSocketAddress.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
