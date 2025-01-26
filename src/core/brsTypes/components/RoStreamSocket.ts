@@ -20,8 +20,8 @@ import * as net from "net";
 export class RoStreamSocket extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly interpreter: Interpreter;
-    private identity: number;
-    private socket?: net.Socket;
+    private readonly identity: number;
+    private readonly socket?: net.Socket;
     private address?: RoSocketAddress;
     private sendToAddress?: RoSocketAddress;
     private errorCode: number;
@@ -112,7 +112,8 @@ export class RoStreamSocket extends BrsComponent implements BrsValue {
             try {
                 const sent = this.socket?.write(data.getByteArray());
                 return new Int32(sent ? data.getElements().length : 0);
-            } catch (err) {
+            } catch (err: any) {
+                this.errorCode = err.code;
                 return new Int32(0);
             }
         },
@@ -128,7 +129,8 @@ export class RoStreamSocket extends BrsComponent implements BrsValue {
             try {
                 const sent = this.socket?.write(data.value);
                 return new Int32(sent ? data.value.length : 0);
-            } catch (err) {
+            } catch (err: any) {
+                this.errorCode = err.code ?? 3474;
                 return new Int32(0);
             }
         },
@@ -149,7 +151,8 @@ export class RoStreamSocket extends BrsComponent implements BrsValue {
             try {
                 buffer = this.socket?.read(length.getValue()) ?? Buffer.alloc(0);
                 return new Int32(buffer.length);
-            } catch (err) {
+            } catch (err: any) {
+                this.errorCode = err.code ?? 3474;
                 return new Int32(0);
             }
         },
@@ -162,8 +165,13 @@ export class RoStreamSocket extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, length: Int32) => {
-            const str = this.socket?.read(length.getValue()) ?? "";
-            return new Int32(str.length);
+            try {
+                const str = this.socket?.read(length.getValue()) ?? "";
+                return new Int32(str.length);
+            } catch (err: any) {
+                this.errorCode = err.code ?? 3474;
+                return new Int32(0);
+            }
         },
     });
 
