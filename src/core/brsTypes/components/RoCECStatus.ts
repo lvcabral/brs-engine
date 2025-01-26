@@ -60,8 +60,8 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
-            const cecActive = Atomics.load(this.interpreter.sharedArray, DataType.CEC);
+        impl: (interpreter: Interpreter) => {
+            const cecActive = Atomics.load(interpreter.sharedArray, DataType.CEC);
             return BrsBoolean.from(cecActive !== 0);
         },
     });

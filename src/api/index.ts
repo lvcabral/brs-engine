@@ -32,6 +32,7 @@ import {
     deviceData,
     subscribePackage,
     setupDeepLink,
+    getModelType,
 } from "./package";
 import {
     subscribeDisplay,
@@ -696,15 +697,21 @@ function apiException(level: string, message: string) {
     }
 }
 
-// CEC Status Update
+// HDMI/CEC Status Update
 window.onfocus = function () {
     if (currentApp.running) {
+        if (getModelType() !== "TV") {
+            Atomics.store(sharedArray, DataType.HDMI, 1);
+        }
         Atomics.store(sharedArray, DataType.CEC, 1);
     }
 };
 
 window.onblur = function () {
     if (currentApp.running) {
+        if (getModelType() !== "TV") {
+            Atomics.store(sharedArray, DataType.HDMI, 0);
+        }
         Atomics.store(sharedArray, DataType.CEC, 0);
     }
 };
