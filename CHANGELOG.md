@@ -1,10 +1,23 @@
 # Changelog
 
+<a name="v1.8.4"></a>
+
+## [v1.8.4 - Fixed `roVideoPlayer` and `End` Statement](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.4) - 26 January 2025
+
+The `v1.8.x` releases of the `core` library, are the final ones as a fully synchronous interpreter, the next major release will come with an option to support `async/await` and remove the dependency on `SharedArrayBuffer`.
+
+### Release Changes
+
+* Implemented `roSocketAddress` by [@lvcabral](https://github.com/lvcabral) in [#460](https://github.com/lvcabral/brs-engine/pull/460)
+* Improved component `roURLTransfer` by [@lvcabral](https://github.com/lvcabral) in [#461](https://github.com/lvcabral/brs-engine/pull/461)
+* Implemented mocked `roStreamSocket` component by [@lvcabral](https://github.com/lvcabral) in [#462](https://github.com/lvcabral/brs-engine/pull/462)
+* Implemented `roHdmiStatus` and `roHdmiStatusEvent` components by [@lvcabral](https://github.com/lvcabral) in [#463](https://github.com/lvcabral/brs-engine/pull/463)
+
+[Full Changelog][v1.8.4]
+
 <a name="v1.8.3"></a>
 
 ## [v1.8.3 - Fixed `roVideoPlayer` and `End` Statement](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.3) - 18 January 2025
-
-The `v1.8.x` releases of the `core` library, are the final ones as a fully synchronous interpreter, the next release `v1.9.x` will come with support for `async/await` to remove the dependency on `SharedArrayBuffer`.
 
 ### Release Changes
 
@@ -907,6 +920,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.4]: https://github.com/lvcabral/brs-engine/compare/v1.8.3...v1.8.4
 [v1.8.3]: https://github.com/lvcabral/brs-engine/compare/v1.8.2...v1.8.3
 [v1.8.2]: https://github.com/lvcabral/brs-engine/compare/v1.8.1...v1.8.2
 [v1.8.1]: https://github.com/lvcabral/brs-engine/compare/v1.8.0...v1.8.1
