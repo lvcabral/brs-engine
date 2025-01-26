@@ -301,6 +301,7 @@ export enum DataType {
     MHSL, // Memory Heap Size Limit
     MBWD, // Measured Bandwidth
     CEC, // Consumer Electronics Control
+    HDMI, // HDMI Status
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -308,7 +309,7 @@ export enum DataType {
 }
 
 // Debug constants
-export const dataBufferIndex = 32;
+export const dataBufferIndex = 33;
 export const dataBufferSize = 1024;
 
 // Key Buffer Constants
