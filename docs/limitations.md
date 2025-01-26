@@ -9,7 +9,6 @@ There are several features from the **BrightScript** language and components tha
   * `roAudioGuide`
   * `roDataGramSocket`
   * `roDSA`
-  * `roHdmiStatus`
   * `roHttpAgent`
   * `roMicrophone`
   * `roRSA`
