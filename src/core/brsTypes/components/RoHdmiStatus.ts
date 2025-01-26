@@ -10,10 +10,10 @@ import { RoHdmiStatusEvent } from "./RoHdmiStatusEvent";
 export class RoHdmiStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly interpreter: Interpreter;
+    private readonly modelType: string;
+    private readonly displayMode: string;
     private port?: RoMessagePort;
     private active: number;
-    private modelType: string;
-    private displayMode: string;
 
     constructor(interpreter: Interpreter) {
         super("roHdmiStatus");
