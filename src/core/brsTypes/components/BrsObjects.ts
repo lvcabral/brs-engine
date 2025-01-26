@@ -55,6 +55,7 @@ import { RoNDK } from "./RoNDK";
 import { RoCECStatus } from "./RoCECStatus";
 import { RoSocketAddress } from "./RoSocketAddress";
 import { RoStreamSocket } from "./RoStreamSocket";
+import { RoHdmiStatus } from "./RoHdmiStatus";
 
 // Class to define a case-insensitive map of BrightScript objects.
 class BrsObjectsMap {
@@ -198,6 +199,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roInvalid", (_: Interpreter) => new RoInvalid(), -1],
     ["roNDK", (_: Interpreter) => new RoNDK()],
     ["roCECStatus", (interpreter: Interpreter) => new RoCECStatus(interpreter)],
+    ["roHdmiStatus", (interpreter: Interpreter) => new RoHdmiStatus(interpreter)],
     ["roSocketAddress", (interpreter: Interpreter) => new RoSocketAddress(interpreter)],
     ["roStreamSocket", (interpreter: Interpreter) => new RoStreamSocket(interpreter)],
 ]);

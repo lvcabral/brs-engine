@@ -45,9 +45,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     constructor(interpreter: Interpreter) {
         super("roDeviceInfo");
         this.deviceModel = interpreter.deviceInfo.get("deviceModel");
-        const device = interpreter.deviceInfo
-            ?.get("models")
-            ?.get(interpreter.deviceInfo.get("deviceModel"));
+        const device = interpreter.deviceInfo?.get("models")?.get(this.deviceModel);
         this.modelType = device ? device[1] : "STB";
         this.firmware = interpreter.deviceInfo.get("firmwareVersion");
         this.displayMode = interpreter.deviceInfo.get("displayMode") ?? "720p";

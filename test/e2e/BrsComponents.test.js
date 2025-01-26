@@ -571,6 +571,9 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roEvents.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "roCECStatus.isActiveSource() = true",
+            "roHdmiStatus.isConnected() = true",
+            "roHdmiStatus.GetHdcpVersion() = 1.4",
+            "roHdmiStatus.IsHdcpActive() = true",
             "roChannelStoreEvent",
             `<Component: roArray> =\n` + `[\n` + `]`,
             "<Interface: ifChannelStoreEvent>",

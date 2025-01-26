@@ -189,6 +189,12 @@ export function getSerialNumber() {
     return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }
 
+// Returns the Device Model type
+export function getModelType(): string {
+    const device = deviceData.models.get(deviceData.deviceModel);
+    return device ? device[1] : "STB";
+}
+
 // Remove the source code and replace by encrypted pcode returning new zip
 export function updateAppZip(source: Uint8Array, iv: string) {
     let newZip: Zippable = {};
