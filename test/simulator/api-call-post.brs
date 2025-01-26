@@ -1,14 +1,27 @@
 sub main()
-	' Free API endpoints list from: https://apipheny.io/free-api/
 	endpoints = {
-		jokes: "https://official-joke-api.appspot.com/random_joke"
-		myIP: "https://api.ipify.org?format=json"
+		reqres: {
+			url: "https://reqres.in/api/users",
+			body: {name: "Marcelo", job: "sw architect"}
+		},
+		restful: {
+			url:"https://restful-api.dev/objects/1"
+			body: {
+				name: "Roku Ultra", data: {	year: 2024, price: 99.99, type: "stb" }
+			}
+		}
 	}
 	' change the endpoint to test other APIs
-	response = fetch({url: endpoints.jokes, timeout: 5000})
-	? "The status was: "; response?.status
+	api = endpoints.reqres
+	body = FormatJson(api.body)
+    header = {
+        "Content-Type": "application/json"
+    }
+	print body
+	response = fetch({url: api.url, method: "POST", body: body, headers: header, timeout: 5000})
+	? "The status was:"; response?.status
 	if response.ok
-        ? "The response was: "; response.text()
+		? "The response was: "; response.text()
 	end if
 end sub
 
@@ -45,6 +58,7 @@ function fetch(options)
     if options.headers <> invalid
         for each header in options.headers
             val = options.headers[header]
+            print "adding header", header, val
             if val <> invalid then request.addHeader(header, val)
         end for
     end if

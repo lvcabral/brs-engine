@@ -8,11 +8,9 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
-/// #if !BROWSER
-import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
-/// #endif
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -47,9 +45,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     constructor(interpreter: Interpreter) {
         super("roDeviceInfo");
         this.deviceModel = interpreter.deviceInfo.get("deviceModel");
-        const device = interpreter.deviceInfo
-            ?.get("models")
-            ?.get(interpreter.deviceInfo.get("deviceModel"));
+        const device = interpreter.deviceInfo?.get("models")?.get(this.deviceModel);
         this.modelType = device ? device[1] : "STB";
         this.firmware = interpreter.deviceInfo.get("firmwareVersion");
         this.displayMode = interpreter.deviceInfo.get("displayMode") ?? "720p";
@@ -939,32 +935,15 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            const url = "https://api.ipify.org";
+            let ip = "";
             try {
-                const xhr = new XMLHttpRequest();
-                xhr.open("GET", url, false); // Note: synchronous
-                xhr.responseType = "text";
-                xhr.send();
-                if (xhr.status !== 200) {
-                    if (interpreter.isDevMode) {
-                        interpreter.stderr.write(
-                            `warning,[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`
-                        );
-                    }
-                    return new BrsString("");
-                }
-                const ip = xhr.responseText;
-                if (interpreter.isValidIp(ip)) {
-                    return new BrsString(ip);
-                }
+                ip = getExternalIp();
             } catch (err: any) {
                 if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
-                        `warning,[getExternalIp] Error getting ${url}: ${err.message}`
-                    );
+                    interpreter.stderr.write(`warning,${err.message}`);
                 }
             }
-            return new BrsString("");
+            return new BrsString(ip);
         },
     });
 

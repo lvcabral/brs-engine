@@ -9,7 +9,7 @@ global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
     };
 });
 const brs = require("../../../bin/brs.node");
-const { Interpreter } = brs;
+const { Interpreter, netlib } = brs;
 const { RoDeviceInfo, RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32 } = brs.types;
 
 describe("RoDeviceInfo", () => {
@@ -421,7 +421,7 @@ describe("RoDeviceInfo", () => {
                 expect(method).toBeTruthy();
                 let result = await method.call(interpreter);
                 expect(result).toBeInstanceOf(BrsString);
-                expect(interpreter.isValidIp(result.value)).toBe(true);
+                expect(netlib.isValidIP(result.value)).toBe(true);
             });
         });
         describe("getIPAddrs", () => {

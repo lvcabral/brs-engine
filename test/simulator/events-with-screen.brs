@@ -7,6 +7,9 @@ sub main()
     cec = CreateObject("roCECStatus")
     print "roCECStatus.isActiveSource() = "; cec.isActiveSource()
     cec.SetMessagePort(port)
+	hdmi = CreateObject("roHdmiStatus")
+    print "roHdmiStatus.isConnected() = "; hdmi.isConnected()
+	hdmi.SetMessagePort(port)
     syslog = CreateObject("roSystemLog")
     syslog.SetMessagePort(port)
     syslog.EnableType("bandwidth.minute")
@@ -46,6 +49,12 @@ sub main()
             end if
             print FindMemberFunction(msg, "getInfo")
             print FindMemberFunction(syslog, "setMessagePort")
+		else if type(msg) = "roHdmiStatusEvent"
+			' print "HdmiEvent isHdmiStatus() "; msg.isHdmiStatus()
+			print "HdmiEvent getMessage() "; msg.getMessage()
+			print "HdmiEvent getInfo() "; msg.getInfo()
+			print FindMemberFunction(msg, "getInfo")
+			print FindMemberFunction(hdmi, "setMessagePort")
         end if
     end while
 end sub

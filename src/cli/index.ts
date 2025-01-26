@@ -441,10 +441,20 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`common:   [In Memory]\n`));
-        } else if (["var", "vars"].includes(line.toLowerCase().trim())) {
-            const localVars = replInterpreter.formatLocalVariables().trimEnd();
-            process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
-            process.stdout.write(chalk.cyanBright(localVars));
+        } else if (["var", "vars"].includes(line.split(" ")[0]?.toLowerCase().trim())) {
+            const scopeName = line.split(" ")[1]?.toLowerCase().trim() ?? "function";
+            let scope = 2; // Function scope
+            if (scopeName === "global") {
+                scope = 0; // Global scope
+                process.stdout.write(chalk.cyanBright(`\nGlobal variables:\n\n`));
+            } else if (scopeName === "module") {
+                scope = 1; // Module scope
+                process.stdout.write(chalk.cyanBright(`\nModule variables:\n\n`));
+            } else {
+                process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
+            }
+            const variables = replInterpreter.formatVariables(scope).trimEnd();
+            process.stdout.write(chalk.cyanBright(variables));
             process.stdout.write("\n");
         } else {
             await brs.executeLine(line, replInterpreter);
@@ -566,12 +576,12 @@ function colorize(log: string) {
 function printHelp() {
     let helpMsg = "\r\n";
     helpMsg += "REPL Command List:\r\n";
-    helpMsg += "   print|?         Print variable value or expression\r\n";
-    helpMsg += "   var|vars        Display variables and their types/values\r\n";
-    helpMsg += "   vol|vols        Display file system mounted volumes\r\n";
-    helpMsg += "   help|hint       Show this REPL command list\r\n";
-    helpMsg += "   clear|cls       Clear terminal screen\r\n";
-    helpMsg += "   exit|quit|q     Terminate REPL session\r\n\r\n";
+    helpMsg += "   print|?           Print variable value or expression\r\n";
+    helpMsg += "   var|vars [scope]  Display variables and their types/values\r\n";
+    helpMsg += "   vol|vols          Display file system mounted volumes\r\n";
+    helpMsg += "   help|hint         Show this REPL command list\r\n";
+    helpMsg += "   clear|cls         Clear terminal screen\r\n";
+    helpMsg += "   exit|quit|q       Terminate REPL session\r\n\r\n";
     helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
     process.stdout.write(chalk.cyanBright(helpMsg));
 }

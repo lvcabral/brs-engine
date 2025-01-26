@@ -134,7 +134,7 @@ function debuggerIntro(
         interpreter.stdout.write(`print,${debugMsg}`);
         interpreter.stdout.write(`print,${interpreter.formatBacktrace(nextLoc)}`);
         interpreter.stdout.write(`print,Local variables:\r\n`);
-        interpreter.stdout.write(`print,${interpreter.formatLocalVariables()}`);
+        interpreter.stdout.write(`print,${interpreter.formatVariables()}`);
     }
 }
 
@@ -310,7 +310,7 @@ async function debugHandleCommand(
             break;
         }
         case DebugCommand.VAR:
-            debugMsg = `print,${interpreter.formatLocalVariables()}`;
+            debugMsg = `print,${interpreter.formatVariables()}`;
             break;
         case DebugCommand.BREAK:
             debugMsg = `warning,Micro Debugger already running!\r\n`;

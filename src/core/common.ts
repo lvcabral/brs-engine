@@ -385,6 +385,15 @@ export function isSysLogEvent(value: any): value is SysLogEvent {
     return value && typeof value.type === "string" && typeof value.sysLog === "object";
 }
 
+// Hdmi Status Event Interface
+export interface HdmiStatusEvent {
+    connected: boolean;
+}
+
+export function isHdmiStatusEvent(value: any): value is HdmiStatusEvent {
+    return value && typeof value.isConnected === "boolean";
+}
+
 // CEC Status Event Interface
 export interface CECStatusEvent {
     activeSource: boolean;

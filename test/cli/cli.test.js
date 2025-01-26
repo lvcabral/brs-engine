@@ -61,6 +61,30 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("roURLTransfer test", async () => {
+        let command = [
+            "node",
+            path.join(process.cwd(), "bin", "brs.cli.js"),
+            "roURLTransfer.brs",
+            "-c 0",
+        ].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
+            "Repository: https://github.com/lvcabral/brs-engine",
+            "Website:    https://lvcabral.com/brs/",
+            "The status was:  201",
+            "The target IP was: Valid",
+            "The response was: Employee is SW Engineer",
+            "------ Finished 'roURLTransfer.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("prints syntax errors once", async () => {
         let folder = "errors";
         let filename = "uninitialized-object.brs";

@@ -23,6 +23,7 @@ import {
     platform,
     DebugEvent,
     DataType,
+    HdmiStatusEvent,
 } from "../core/common";
 import {
     source,
@@ -35,6 +36,7 @@ import {
     deviceData,
     subscribePackage,
     setupDeepLink,
+    getModelType,
 } from "./package";
 import {
     subscribeDisplay,
@@ -739,17 +741,25 @@ function apiException(level: string, message: string) {
     }
 }
 
-// CEC Status Update
+// HDMI/CEC Status Update
 window.onfocus = function () {
     if (currentApp.running) {
-        const event: CECStatusEvent = { activeSource: true };
-        brsWorker.postMessage(event);
+        const cecEvent: CECStatusEvent = { activeSource: true };
+        brsWorker.postMessage(cecEvent);
+        if (getModelType() !== "TV") {
+            const hdmiEvent: HdmiStatusEvent = { connected: true };
+            brsWorker.postMessage(hdmiEvent);
+        }
     }
 };
 
 window.onblur = function () {
     if (currentApp.running) {
-        const event: CECStatusEvent = { activeSource: false };
-        brsWorker.postMessage(event);
+        const cecEvent: CECStatusEvent = { activeSource: false };
+        brsWorker.postMessage(cecEvent);
+        if (getModelType() !== "TV") {
+            const hdmiEvent: HdmiStatusEvent = { connected: false };
+            brsWorker.postMessage(hdmiEvent);
+        }
     }
 };

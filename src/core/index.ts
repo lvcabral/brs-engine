@@ -6,6 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
+import { download } from "./interpreter/Network";
 import {
     AppExitReason,
     PkgFilePath,
@@ -31,6 +32,8 @@ import {
     CECStatusEvent,
     MemoryInfoEvent,
     isMemoryInfoEvent,
+    HdmiStatusEvent,
+    isHdmiStatusEvent,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -55,6 +58,7 @@ import packageInfo from "../../package.json";
 export * as lexer from "./lexer";
 export * as parser from "./parser";
 export * as stdlib from "./stdlib";
+export * as netlib from "./interpreter/Network";
 export { BrsTypes as types };
 export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
@@ -69,6 +73,7 @@ export const audioEvents = new Array<MediaEvent>();
 export const videoEvents = new Array<MediaEvent>();
 export const wavStatus = new Set<string>();
 export const cecStatus: CECStatusEvent = { activeSource: true };
+export const hdmiStatus: HdmiStatusEvent = { connected: true };
 export const memoryInfo: MemoryInfoEvent = { usedHeapSize: 0, heapSizeLimit: 0 };
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
@@ -91,6 +96,8 @@ if (typeof onmessage !== "undefined") {
             sysLogEvents.push(event.data);
         } else if (isCECStatusEvent(event.data)) {
             cecStatus.activeSource = event.data.activeSource;
+        } else if (isHdmiStatusEvent(event.data)) {
+            hdmiStatus.connected = event.data.connected;
         } else if (isMemoryInfoEvent(event.data)) {
             memoryInfo.usedHeapSize = event.data.usedHeapSize;
             memoryInfo.heapSizeLimit = event.data.heapSizeLimit;
@@ -949,6 +956,7 @@ function resetEvents() {
     audioEvents.length = 0;
     videoEvents.length = 0;
     cecStatus.activeSource = true;
+    hdmiStatus.connected = true;
     wavStatus.clear();
 }
 
@@ -958,25 +966,4 @@ function resetEvents() {
  */
 function logError(err: BrsError) {
     postMessage(`error,${err.format()}`);
-}
-
-/**
- * Download helper function
- * @param url url of the file to be downloaded
- * @param type return type (eg. arraybuffer)
- */
-function download(url: string, type: XMLHttpRequestResponseType) {
-    try {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, false); // Note: synchronous
-        xhr.responseType = type;
-        xhr.send();
-        if (xhr.status !== 200) {
-            postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText}`);
-            return undefined;
-        }
-        return xhr.response;
-    } catch (err: any) {
-        postMessage(`error,Error downloading ${url}: ${err.message}`);
-    }
 }

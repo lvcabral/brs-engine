@@ -27,12 +27,12 @@ export class RoHMAC extends BrsComponent implements BrsValue {
         this.hmacAlgorithm = "";
         this.hmacKey = Buffer.from("");
         this.registerMethods({
-            ifEVPCipher: [this.setup, this.update, this.reinit, this.process, this.final],
+            ifHMAC: [this.setup, this.update, this.reinit, this.process, this.final],
         });
     }
 
-    toString(parent?: BrsType | undefined): string {
-        return "<Component: roEVPCipher>";
+    toString(parent?: BrsType): string {
+        return "<Component: roHMAC>";
     }
 
     equalTo(other: BrsType): BrsBoolean {
