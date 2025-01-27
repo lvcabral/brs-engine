@@ -104,7 +104,7 @@ export function getLexerParserFn(
 
         // combine statements from all scripts into one array
         return parsedScripts
-            .map((script) => script.isFulfilled ? script.value : [])
+            .map((script) => (script.isFulfilled ? script.value : []))
             .reduce((allStatements, fileStatements) => [...allStatements, ...fileStatements], []);
     };
 }

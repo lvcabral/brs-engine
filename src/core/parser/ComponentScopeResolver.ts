@@ -29,7 +29,7 @@ export class ComponentScopeResolver {
             );
             return Promise.reject(`Unable to resolve scope for component ${component.name}`);
         }
-        return this.flatten(statementResults.map((res) => res.isFulfilled ? res.value : []));
+        return this.flatten(statementResults.map((res) => (res.isFulfilled ? res.value : [])));
     }
 
     /**
