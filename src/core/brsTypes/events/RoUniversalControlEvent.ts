@@ -9,7 +9,7 @@ import {
     Comparable,
     isNumberComp,
 } from "..";
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent } from "../components/BrsComponent";
 import { Interpreter } from "../../interpreter";
 export interface KeyEvent {
     remote: string; // Remote Id (Remote Type:Remote Index)

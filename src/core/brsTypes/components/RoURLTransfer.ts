@@ -5,7 +5,7 @@ import { BrsType, RoArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoURLEvent } from "./RoURLEvent";
+import { RoURLEvent } from "../events/RoURLEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AudioExt, VideoExt, getRokuOSVersion } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";

@@ -1,5 +1,5 @@
 import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent } from "../components/BrsComponent";
 import { BrsType, FlexObject, RoDateTime, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";

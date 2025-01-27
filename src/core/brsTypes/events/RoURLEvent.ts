@@ -1,5 +1,5 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, Comparable } from "../BrsType";
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent } from "../components/BrsComponent";
 import { BrsType, RoArray, RoAssociativeArray, isStringComp } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
