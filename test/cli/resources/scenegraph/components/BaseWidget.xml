@@ -3,8 +3,9 @@
     <script type="text/brightscript" uri="pkg:/components/BaseWidget.brs" />
     <interface>
         <field id="baseStringField" type="string" />
-        <field id="baseIntField" type="integer" />
+        <field id="baseIntField" type="integer" value="30" />
         <field id="baseBoolField" type="boolean" />
+        <field id="baseUri" type="string" />
     </interface>
     <children>
         <Group id="group" rotation="0.2" >
