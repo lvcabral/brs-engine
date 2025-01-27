@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { RoHdmiStatusEvent } from "./RoHdmiStatusEvent";
+import { RoHdmiStatusEvent } from "../events/RoHdmiStatusEvent";
 
 export class RoHdmiStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

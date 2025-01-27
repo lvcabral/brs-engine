@@ -1,23 +1,23 @@
 import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent } from "../components/BrsComponent";
 import { BrsType, Int32, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
-export class RoHdmiStatusEvent extends BrsComponent implements BrsValue {
+export class RoCECStatusEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly plugged: boolean;
+    private readonly active: boolean;
 
-    constructor(plugged: boolean) {
-        super("roHdmiStatusEvent");
-        this.plugged = plugged;
+    constructor(active: boolean) {
+        super("roCECStatusEvent");
+        this.active = active;
         this.registerMethods({
-            ifroHdmiStatusEvent: [this.getInfo, this.getIndex, this.getMessage],
+            ifroCECStatusEvent: [this.getInfo, this.getIndex, this.getMessage],
         });
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roHdmiStatusEvent>";
+        return "<Component: roCECStatusEvent>";
     }
 
     equalTo(other: BrsType) {
@@ -35,14 +35,14 @@ export class RoHdmiStatusEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns the string "HdmiHotPlug". */
+    /** Returns the string "CECStatus". */
     private readonly getMessage = new Callable("getMessage", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString("HdmiHotPlug");
+            return new BrsString("CECStatus");
         },
     });
 
@@ -53,12 +53,8 @@ export class RoHdmiStatusEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return toAssociativeArray({
-                ChannelId: "tvinput.hdmi1",
-                Plugged: this.plugged,
-                PortType: "Tx",
-                PortNumber: 1,
-            });
+            const state = this.active ? "ACTIVE" : "INACTIVE";
+            return toAssociativeArray({ Active: this.active, ActiveSourceState: state });
         },
     });
 }

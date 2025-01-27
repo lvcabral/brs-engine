@@ -3,7 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray, BrsEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoDeviceInfoEvent } from "./RoDeviceInfoEvent";
+import { RoDeviceInfoEvent } from "../events/RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";

@@ -4,7 +4,7 @@ import { BrsType, RoList, RoArray, RoMessagePort, toAssociativeArray, FlexObject
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoChannelStoreEvent } from "./RoChannelStoreEvent";
+import { RoChannelStoreEvent } from "../events/RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
 import { parseString, processors } from "xml2js";

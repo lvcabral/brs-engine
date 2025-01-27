@@ -1,23 +1,26 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsComponent } from "../components/BrsComponent";
+import { BrsType, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { MediaEvent } from "../../common";
 
-export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
+export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly flags: number;
     private readonly index: number;
     private readonly message: string;
 
     constructor(flags: number, index: number) {
-        super("roAudioPlayerEvent");
+        super("roVideoPlayerEvent");
         this.flags = flags;
         this.index = index;
         switch (this.flags) {
-            case MediaEvent.SELECTED:
+            case MediaEvent.LOADING:
+                this.message = "startup progress";
+                break;
+            case MediaEvent.START_PLAY:
                 this.message = "start of play";
                 break;
             case MediaEvent.FULL:
@@ -28,11 +31,10 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 break;
         }
         this.registerMethods({
-            ifroAudioPlayerEvent: [
+            ifroVideoPlayerEvent: [
                 this.getIndex,
                 this.getMessage,
                 this.getInfo,
-                this.getData,
                 this.isListItemSelected,
                 this.isFullResult,
                 this.isPartialResult,
@@ -42,12 +44,19 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 this.isResumed,
                 this.isStatusMessage,
                 this.isTimedMetadata,
+                this.isPlaybackPosition,
+                this.isFormatDetected,
+                this.isSegmentDownloadStarted,
+                this.isStreamStarted,
+                this.isCaptionModeChanged,
+                this.isStreamSegmentInfo,
+                this.isDownloadSegmentInfo,
             ],
         });
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roAudioPlayerEvent>";
+        return "<Component: roVideoPlayerEvent>";
     }
 
     equalTo(other: BrsType) {
@@ -72,18 +81,18 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
+            if (this.flags === MediaEvent.START_STREAM) {
+                const info = {
+                    Url: "",
+                    StreamBitrate: 0,
+                    MeasuredBitrate: 0,
+                    IsUnderrun: false,
+                };
+                return toAssociativeArray(info);
+            } else if (this.flags === MediaEvent.POSITION) {
+                return toAssociativeArray({ ClipIdx: 0, ClipPos: this.index * 1000 });
+            }
             return BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns error code when isRequestFailed() is true. */
-    private readonly getData = new Callable("getData", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(0); //TODO: Get error code from rendered thread
         },
     });
 
@@ -109,7 +118,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio is loaded and will start to play. */
+    /** Returns true if video is loaded and will start to play. */
     private readonly isFullResult = new Callable("isFullResult", {
         signature: {
             args: [],
@@ -120,7 +129,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback completed at end of content. */
+    /** Returns true if video playback completed at end of content. */
     private readonly isRequestSucceeded = new Callable("isRequestSucceeded", {
         signature: {
             args: [],
@@ -131,7 +140,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback fails. */
+    /** Returns true if video playback fails. */
     private readonly isRequestFailed = new Callable("isRequestFailed", {
         signature: {
             args: [],
@@ -142,7 +151,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback was interrupted. */
+    /** Returns true if video playback was interrupted. */
     private readonly isPartialResult = new Callable("isPartialResult", {
         signature: {
             args: [],
@@ -153,7 +162,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback was paused. */
+    /** Returns true if video playback was paused. */
     private readonly isPaused = new Callable("isPaused", {
         signature: {
             args: [],
@@ -164,7 +173,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if audio playback was resumed. */
+    /** Returns true if video playback was resumed. */
     private readonly isResumed = new Callable("isResumed", {
         signature: {
             args: [],
@@ -186,13 +195,96 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Not Implemented just a placeholder. */
+    /** Checks whether an ID3 timecode has passed with an event that includes key-value pairs for timed metadata. */
     private readonly isTimedMetadata = new Callable("isTimedMetadata", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Checks whether the current position in the video stream has changed. */
+    private readonly isPlaybackPosition = new Callable("isPlaybackPosition", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.flags === MediaEvent.POSITION);
+        },
+    });
+
+    /** Checks whether the format of all tracks in the media stream have been identified. */
+    private readonly isFormatDetected = new Callable("isFormatDetected", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.from(false);
+        },
+    });
+
+    /** Checks whether the video stream has started downloading a segment. */
+    private readonly isSegmentDownloadStarted = new Callable("isSegmentDownloadStarted", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.from(false);
+        },
+    });
+
+    /** Checks whether the video stream has started playing. */
+    private readonly isStreamStarted = new Callable("isStreamStarted", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.flags === MediaEvent.START_STREAM);
+        },
+    });
+
+    /** Checks whether the caption mode has changed. */
+    private readonly isCaptionModeChanged = new Callable("isCaptionModeChanged", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Checks whether playback has begun of a segment in an HLS, DASH, or smooth stream. */
+    private readonly isStreamSegmentInfo = new Callable("isStreamSegmentInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Checks whether a segment in an adaptive stream (HLS, Smooth, or DASH) has been downloaded. */
+    private readonly isDownloadSegmentInfo = new Callable("isDownloadSegmentInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // Not implemented just a placeholder
             return BrsBoolean.False;
         },
     });

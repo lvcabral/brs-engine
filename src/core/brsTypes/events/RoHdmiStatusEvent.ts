@@ -1,23 +1,23 @@
 import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent } from "../components/BrsComponent";
 import { BrsType, Int32, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
-export class RoCECStatusEvent extends BrsComponent implements BrsValue {
+export class RoHdmiStatusEvent extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly active: boolean;
+    private readonly plugged: boolean;
 
-    constructor(active: boolean) {
-        super("roCECStatusEvent");
-        this.active = active;
+    constructor(plugged: boolean) {
+        super("roHdmiStatusEvent");
+        this.plugged = plugged;
         this.registerMethods({
-            ifroCECStatusEvent: [this.getInfo, this.getIndex, this.getMessage],
+            ifroHdmiStatusEvent: [this.getInfo, this.getIndex, this.getMessage],
         });
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roCECStatusEvent>";
+        return "<Component: roHdmiStatusEvent>";
     }
 
     equalTo(other: BrsType) {
@@ -35,14 +35,14 @@ export class RoCECStatusEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns the string "CECStatus". */
+    /** Returns the string "HdmiHotPlug". */
     private readonly getMessage = new Callable("getMessage", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString("CECStatus");
+            return new BrsString("HdmiHotPlug");
         },
     });
 
@@ -53,8 +53,12 @@ export class RoCECStatusEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            const state = this.active ? "ACTIVE" : "INACTIVE";
-            return toAssociativeArray({ Active: this.active, ActiveSourceState: state });
+            return toAssociativeArray({
+                ChannelId: "tvinput.hdmi1",
+                Plugged: this.plugged,
+                PortType: "Tx",
+                PortNumber: 1,
+            });
         },
     });
 }
