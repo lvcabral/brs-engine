@@ -281,7 +281,7 @@ export class Environment {
         newEnvironment.nodeDefMap = this.nodeDefMap;
         newEnvironment.hostNode = this.hostNode;
         if (includeModuleScope) {
-            newEnvironment.module = new Map(this.module);
+            newEnvironment.module = this.module;
         } else {
             newEnvironment.module = new Map<string, BrsType>();
         }
