@@ -85,7 +85,7 @@ export class roSGScreen extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("sceneType", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: async (interpreter: Interpreter, sceneType: BrsString) => {
+        impl: (interpreter: Interpreter, sceneType: BrsString) => {
             let returnValue: BrsType = BrsInvalid.Instance;
             if (sceneType.value === "Scene") {
                 returnValue = NodeFactory.createNode(BrsNodeType.Scene) ?? BrsInvalid.Instance;
@@ -94,7 +94,7 @@ export class roSGScreen extends BrsComponent implements BrsValue {
                     sceneType.value.toLowerCase()
                 );
                 if (typeDef && typeDef.extends === "Scene") {
-                    returnValue = await createNodeByType(interpreter, sceneType);
+                    returnValue = createNodeByType(interpreter, sceneType);
                 }
             }
             if (returnValue instanceof RoSGNode) {
