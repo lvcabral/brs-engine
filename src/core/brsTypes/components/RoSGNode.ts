@@ -22,7 +22,7 @@ import { RoArray } from "./RoArray";
 import { AAMember } from "./RoAssociativeArray";
 import { ComponentDefinition, ComponentNode } from "../../scenegraph";
 import { NodeFactory, BrsNodeType } from "../nodes/NodeFactory";
-import { Environment } from "../../interpreter/Environment";
+import { Environment, Scope } from "../../interpreter/Environment";
 import { RoInvalid } from "./RoInvalid";
 import { BlockEnd } from "../../parser/Statement";
 import { Stmt } from "../../parser";
@@ -271,14 +271,21 @@ export class Field {
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setRootM(hostNode.m);
 
-            // Check whether the callback is expecting an event parameter.
             try {
-                // We call the `sync` version of `call` as we know the argument and ignore the return value.
-                if (callable.getFirstSatisfiedSignature([event])) {
-                    // m gets lost inside the subinterpreter block in callable.call ?
-                    callable.call(subInterpreter, event);
+                // Check whether the callback is expecting an event parameter.
+                const satisfiedSignature = callable.getFirstSatisfiedSignature([event]);
+                if (satisfiedSignature) {
+                    let { signature, impl } = satisfiedSignature;
+                    subInterpreter.environment.define(
+                        Scope.Function,
+                        signature.args[0].name.text,
+                        event
+                    );
+                    impl(subInterpreter, event);
                 } else {
-                    callable.call(subInterpreter);
+                    // Check whether the callback has a signature without parameters.
+                    // Silently ignore if the callback has no signature that matches.
+                    callable.getFirstSatisfiedSignature([])?.impl(subInterpreter);
                 }
             } catch (err) {
                 if (!(err instanceof BlockEnd)) {
