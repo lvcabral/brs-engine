@@ -1,4 +1,5 @@
 sub Main()
+    m.myName = "Main -----------------------------------------------"
     screen = CreateObject("roSGScreen")
     glb = screen.getGlobalNode()
     glb.addFields({
@@ -6,15 +7,21 @@ sub Main()
         bitmapWidth: 100,
         bitmapHeight: 200
     })
+    print m.myName
     poster = createObject("roSGNode", "Poster")
-    print "poster node type:" type(poster)
-    print "poster node subtype:" poster.subtype()
-    print "poster node width:" poster.width
-    print "poster node height:" poster.height
-
+    print "MAIN: poster node type:" type(poster)
+    print "MAIN: poster node subtype:" poster.subtype()
+    print "MAIN: poster node width:" poster.width
+    print "MAIN: poster node height:" poster.height
+    print m.myName
     parent = createObject("roSGNode", "NormalWidget")
+    print "MAIN: "; glb.bitmapHeight; glb.bitmapWidth
+    parent.setField("normalStringField", "Hello World!")
+    parent.setField("baseUri", "http://www.example.com/again.jpg")
+    print m.myName
     posterAsChild = parent.findNode("poster")
-    print "poster as child audioGuideText:" posterAsChild.audioGuideText
-    print "poster as child uri:" posterAsChild.uri
-    print "poster as child bitmapWidth:" posterAsChild.bitmapWidth
+    print "MAIN: poster as child audioGuideText:" posterAsChild.audioGuideText
+    print "MAIN: poster as child uri:" posterAsChild.uri
+    print "MAIN: poster as child bitmapWidth:"; posterAsChild.bitmapWidth
+    print m.myName
 end sub
