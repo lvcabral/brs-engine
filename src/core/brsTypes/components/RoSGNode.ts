@@ -653,9 +653,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 // Only allow public functions (defined in the interface) to be called.
                 if (componentDef && functionName.value in componentDef.functions) {
                     return interpreter.inSubEnv((subInterpreter) => {
-                        let functionToCall = subInterpreter.getCallableFunction(
-                            functionName.value
-                        );
+                        let functionToCall = subInterpreter.getCallableFunction(functionName.value);
                         if (!(functionToCall instanceof Callable)) {
                             interpreter.stderr.write(
                                 `Ignoring attempt to call non-implemented function ${functionName}`

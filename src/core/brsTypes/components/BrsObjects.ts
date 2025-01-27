@@ -205,8 +205,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roStreamSocket", (interpreter: Interpreter) => new RoStreamSocket(interpreter)],
     [
         "roSGNode",
-        (interpreter: Interpreter, nodeType: BrsString) =>
-            createNodeByType(interpreter, nodeType),
+        (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(interpreter, nodeType),
         1,
     ],
     ["roSGScreen", (interpreter: Interpreter) => new roSGScreen(interpreter)],

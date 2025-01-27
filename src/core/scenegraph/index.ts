@@ -256,7 +256,7 @@ function parseChildren(element: XmlElement, children: ComponentNode[]): void {
 async function getScripts(
     node: XmlDocument,
     nodeDef: ComponentDefinition,
-    rootDir: string,
+    rootDir: string
 ): Promise<ComponentScript[]> {
     let scripts = node.childrenNamed("script");
     let componentScripts: ComponentScript[] = [];
