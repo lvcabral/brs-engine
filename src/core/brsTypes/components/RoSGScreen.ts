@@ -12,7 +12,7 @@ import {
     RoSGNode,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
-import { RoSGScreenEvent } from "./RoSGScreenEvent";
+import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
 
 export class roSGScreen extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

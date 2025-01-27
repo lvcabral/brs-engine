@@ -1,8 +1,8 @@
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent } from "../components/BrsComponent";
 import { ValueKind, BrsString, BrsValue, BrsBoolean } from "../BrsType";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoSGNode } from "./RoSGNode";
+import { RoSGNode } from "../components/RoSGNode";
 import { BrsType, RoAssociativeArray } from "..";
 
 export class RoSGNodeEvent extends BrsComponent implements BrsValue {
