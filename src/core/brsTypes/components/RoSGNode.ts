@@ -8,7 +8,7 @@ import {
     getBrsValueFromFieldType,
     getValueKindFromFieldType,
 } from "../BrsType";
-import { RoSGNodeEvent } from "./RoSGNodeEvent";
+import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType, isBrsNumber, isBrsString, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";

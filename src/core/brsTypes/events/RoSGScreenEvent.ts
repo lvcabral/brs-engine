@@ -1,4 +1,4 @@
-import { BrsComponent } from "./BrsComponent";
+import { BrsComponent } from "../components/BrsComponent";
 import { ValueKind, BrsValue, BrsBoolean } from "../BrsType";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
