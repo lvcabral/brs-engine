@@ -36,6 +36,7 @@ import {
     BrsInterface,
     toAssociativeArray,
     RoSGNode,
+    KeyEvent,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -56,8 +57,11 @@ import { runDebugger } from "./MicroDebugger";
 import {
     DataType,
     DebugCommand,
+    RemoteType,
     dataBufferIndex,
     defaultDeviceInfo,
+    keyArraySpots,
+    keyBufferSize,
     numberToHex,
     parseTextFile,
 } from "../common";
@@ -2200,6 +2204,28 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
         let buildVersion = parseInt(this.manifest.get("build_version")) || 0;
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
+    }
+
+    /**
+     * Method to update the control keys buffer, used by roScreen and roSGScreen
+     */
+    updateKeysBuffer(keysBuffer: KeyEvent[]) {
+        for (let i = 0; i < keyBufferSize; i++) {
+            const idx = i * keyArraySpots;
+            const key = Atomics.load(this.sharedArray, DataType.KEY + idx);
+            if (key === -1) {
+                return;
+            } else if (keysBuffer.length === 0 || key !== keysBuffer.at(-1)?.key) {
+                const remoteId = Atomics.load(this.sharedArray, DataType.RID + idx);
+                const remoteType = Math.trunc(remoteId / 10) * 10;
+                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
+                const remoteIdx = remoteId - remoteType;
+                const mod = Atomics.load(this.sharedArray, DataType.MOD + idx);
+                Atomics.store(this.sharedArray, DataType.KEY + idx, -1);
+                keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+                this.lastRemote = remoteIdx;
+            }
+        }
     }
 
     /**

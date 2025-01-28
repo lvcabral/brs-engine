@@ -216,11 +216,12 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     // Control Key Events
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        this.updateKeysBuffer();
+        this.interpreter.updateKeysBuffer(this.keysBuffer);
         const nextKey = this.keysBuffer.shift();
         if (nextKey && nextKey.key !== this.lastKey) {
             if (this.interpreter.singleKeyEvents) {
                 if (nextKey.mod === 0) {
+                    // TODO: this code does not handle keys that are higher than 100
                     if (this.lastKey >= 0 && this.lastKey < 100) {
                         this.keysBuffer.unshift({ ...nextKey });
                         nextKey.key = this.lastKey + 100;
@@ -236,25 +237,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             events.push(new RoUniversalControlEvent(nextKey));
         }
         return events;
-    }
-
-    private updateKeysBuffer() {
-        for (let i = 0; i < keyBufferSize; i++) {
-            const idx = i * keyArraySpots;
-            const key = Atomics.load(this.interpreter.sharedArray, DataType.KEY + idx);
-            if (key === -1) {
-                return;
-            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
-                const remoteId = Atomics.load(this.interpreter.sharedArray, DataType.RID + idx);
-                const remoteType = Math.trunc(remoteId / 10) * 10;
-                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
-                const remoteIdx = remoteId - remoteType;
-                const mod = Atomics.load(this.interpreter.sharedArray, DataType.MOD + idx);
-                Atomics.store(this.interpreter.sharedArray, DataType.KEY + idx, -1);
-                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
-                this.interpreter.lastRemote = remoteIdx;
-            }
-        }
     }
 
     // ifScreen ------------------------------------------------------------------------------------
