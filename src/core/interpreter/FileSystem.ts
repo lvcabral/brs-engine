@@ -148,6 +148,29 @@ export class FileSystem {
     statSync(uri: string) {
         return this.getFS(uri).statSync(this.getPath(uri));
     }
+
+    findSync(uri: string, ext: string): string[] {
+        let results: string[] = [];
+        const fs = this.getFS(uri);
+
+        function readDirRecursive(currentDir: string) {
+            const files = fs.readdirSync(currentDir);
+
+            for (const file of files) {
+                const fullPath = path.join(currentDir, file);
+                const stat = fs.statSync(fullPath);
+
+                if (stat.isDirectory()) {
+                    readDirRecursive(fullPath);
+                } else if (path.extname(file) === `.${ext}`) {
+                    results.push(fullPath);
+                }
+            }
+        }
+
+        readDirRecursive(this.getPath(uri));
+        return results;
+    }
 }
 
 /*
