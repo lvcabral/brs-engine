@@ -41,7 +41,7 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
             }
         });
         if (sourceMap.size !== 0) {
-            const parseResult = brs.lexParseSync(sourceMap, sandbox.manifest);
+            const parseResult = brs.lexParseSync(sandbox.fileSystem, sandbox.manifest, sourceMap);
             const result = sandbox.exec(parseResult.statements, sourceMap, ...args);
             return result[0] || BrsInvalid.Instance;
         }

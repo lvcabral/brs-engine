@@ -451,10 +451,9 @@ export const RuntimeErrorDetail = {
 };
 
 /**
- * Produces a function that writes errors to the given error stream.
- * @param errorStream write stream to write errors to.
- * @returns function that writes to given write stream.
+ * Logs a detected BRS error to the renderer process.
+ * @param err the error to log
  */
-export function getLoggerUsing(errorStream: NodeJS.WriteStream): (err: BrsError) => boolean {
-    return (err) => errorStream.write(err.format());
+export function logError(err: BrsError) {
+    postMessage(`error,${err.format()}`);
 }

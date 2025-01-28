@@ -35,14 +35,12 @@ import {
     Signature,
     BrsInterface,
     toAssociativeArray,
-    AAMember,
     RoSGNode,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
-import { getLexerParserFn } from "../LexerParser";
 import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../Error";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
@@ -53,8 +51,6 @@ import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
-import { ComponentDefinition } from "../scenegraph";
-import { ComponentScopeResolver } from "../parser/ComponentScopeResolver";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
 import {
@@ -65,7 +61,6 @@ import {
     numberToHex,
     parseTextFile,
 } from "../common";
-import pSettle from "p-settle";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -228,45 +223,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     public onErrorOnce(errorHandler: (err: BrsError | RuntimeError) => void) {
         this.events.once("err", errorHandler);
-    }
-
-    /**
-     * Builds out all the sub-environments for the given components. Components are saved into the calling interpreter
-     * instance. This function will mutate the state of the calling interpreter.
-     * @param componentMap Map of all components to be assigned to this interpreter
-     * @param parseFn Function used to parse components into interpretable statements
-     * @param options
-     */
-    public static async withSubEnvsFromComponents(
-        componentMap: Map<string, ComponentDefinition>,
-        manifest: Map<string, string>,
-        options: Partial<ExecutionOptions>
-    ) {
-        const interpreter = new Interpreter(options);
-        const lexerParserFn = getLexerParserFn(manifest, options);
-        let entryPoint = options.entryPoint ?? false;
-
-        interpreter.environment.nodeDefMap = componentMap;
-
-        let componentScopeResolver = new ComponentScopeResolver(componentMap, lexerParserFn);
-        await pSettle(
-            Array.from(componentMap).map(async (componentKV) => {
-                let [_, component] = componentKV;
-                component.environment = interpreter.environment.createSubEnvironment(
-                    /* includeModuleScope */ false
-                );
-                let statements = await componentScopeResolver.resolve(component);
-                interpreter.inSubEnv((subInterpreter) => {
-                    let componentMPointer = new RoAssociativeArray([]);
-                    subInterpreter.environment.setM(componentMPointer);
-                    subInterpreter.environment.setRootM(componentMPointer);
-                    subInterpreter.exec(statements);
-                    return BrsInvalid.Instance;
-                }, component.environment);
-            })
-        );
-        interpreter.options.entryPoint = entryPoint;
-        return interpreter;
     }
 
     /**
@@ -1304,7 +1260,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     mPointer = callee.getContext() ?? mPointer;
                 }
                 return this.inSubEnv((subInterpreter) => {
-                    subInterpreter.environment.setM(mPointer);
+                    subInterpreter.environment.setM(mPointer, false);
                     this._stack.push({
                         functionName: functionName,
                         functionLocation: callee.getLocation() ?? this.location,

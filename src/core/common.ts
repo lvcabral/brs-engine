@@ -102,7 +102,6 @@ export type AppPayload = {
     deepLink: Map<string, string>;
     paths: PkgFilePath[];
     source: string[];
-    components?: Map<string, any>;
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     password?: string;
@@ -119,7 +118,6 @@ export function isAppPayload(value: any): value is AppPayload {
         value.deepLink instanceof Map &&
         Array.isArray(value.paths) &&
         Array.isArray(value.source) &&
-        (value.components instanceof Map || value.components === undefined) &&
         (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
         (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
         (typeof value.password === "string" || value.password === undefined) &&
