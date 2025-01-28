@@ -1,10 +1,13 @@
-import * as fs from "fs";
 import * as path from "path";
 import { XmlDocument, XmlElement } from "xmldoc";
 import pSettle, { PromiseResult } from "p-settle";
-import * as fg from "fast-glob";
 import { Environment } from "../interpreter/Environment";
 import { BrsError } from "../Error";
+import { FileSystem } from "../interpreter/FileSystem";
+import { ExecutionOptions, Interpreter } from "../interpreter";
+import { getLexerParserFn } from "../LexerParser";
+import { ComponentScopeResolver } from "../parser/ComponentScopeResolver";
+import { BrsInvalid, RoAssociativeArray } from "../brsTypes";
 
 interface FieldAttributes {
     id: string;
@@ -44,6 +47,8 @@ export interface ComponentScript {
     content?: string;
 }
 
+let fs: FileSystem | undefined;
+
 export class ComponentDefinition {
     public contents?: string;
     public xmlNode?: XmlDocument;
@@ -61,8 +66,11 @@ export class ComponentDefinition {
 
     async parse(): Promise<ComponentDefinition> {
         try {
+            if (fs === undefined) {
+                return Promise.reject("FileSystem not set");
+            }
             this.contents = fs.readFileSync(this.xmlPath, "utf-8");
-            this.xmlNode = new XmlDocument(this.contents);
+            this.xmlNode = new XmlDocument(this.contents ?? "");
             this.name = this.xmlNode.attr.name;
 
             return Promise.resolve(this);
@@ -81,32 +89,37 @@ export class ComponentDefinition {
 }
 
 export async function getComponentDefinitionMap(
-    rootDir: string = "",
+    fileSystem: FileSystem,
     additionalDirs: string[] = [],
     libraryName?: string
 ) {
-    let searchString = "{components, }";
-    if (additionalDirs.length) {
-        searchString = `{components,${additionalDirs.join(",")}}`;
-    }
-    const componentsPattern = path
-        .join(rootDir, searchString, "**", "*.xml")
-        .replace(/[\/\\]+/g, path.posix.sep);
-    const xmlFiles: string[] = fg.sync(componentsPattern, {});
+    fs = fileSystem;
 
-    let defs = xmlFiles.map((file) => new ComponentDefinition(file));
-    let parsedPromises = defs.map(async (def) => def.parse());
+    const xmlFiles: string[] = [];
+    ["components", ...additionalDirs].forEach((dir) => {
+        const dirPath = path.join("pkg:/", dir);
+        if (fs?.existsSync(dirPath)) {
+            xmlFiles.push(...fileSystem.findSync(dirPath, "xml"));
+        }
+    });
 
-    return processXmlTree(pSettle(parsedPromises), rootDir, libraryName);
+    const defs = xmlFiles.map((file) => new ComponentDefinition(file));
+    const parsedPromises = defs.map(async (def) => def.parse());
+
+    return processXmlTree(pSettle(parsedPromises), libraryName);
 }
 
 async function processXmlTree(
     settledPromises: Promise<PromiseResult<ComponentDefinition>[]>,
-    rootDir: string,
     libraryName?: string
 ) {
-    let nodeDefs = await settledPromises;
-    let nodeDefMap = new Map<string, ComponentDefinition>();
+    const nodeDefs = await settledPromises;
+    const nodeDefMap = new Map<string, ComponentDefinition>();
+
+    // short circuit if no components are found
+    if (nodeDefs.length === 0) {
+        return nodeDefMap;
+    }
 
     // create map of just ComponentDefinition objects
     nodeDefs.map((item) => {
@@ -166,11 +179,53 @@ async function processXmlTree(
         let xmlNode = nodeDef.xmlNode;
         if (xmlNode) {
             nodeDef.children = getChildren(xmlNode);
-            nodeDef.scripts = await getScripts(xmlNode, nodeDef, rootDir);
+            nodeDef.scripts = await getScripts(xmlNode, nodeDef);
         }
     }
 
     return nodeDefMap;
+}
+
+/**
+ * Builds out all the sub-environments for the given components. Components are saved into the calling interpreter
+ * instance. This function will mutate the state of the calling interpreter.
+ * @param componentMap Map of all components to be assigned to this interpreter
+ * @param parseFn Function used to parse components into interpretable statements
+ * @param options
+ */
+export async function getInterpreterWithSubEnvs(
+    componentMap: Map<string, ComponentDefinition>,
+    manifest: Map<string, string>,
+    options: Partial<ExecutionOptions>
+) {
+    if (!fs) {
+        throw new Error("FileSystem not set");
+    }
+    const interpreter = new Interpreter(options);
+    const lexerParserFn = getLexerParserFn(fs, manifest, options);
+    let entryPoint = options.entryPoint ?? false;
+
+    interpreter.environment.nodeDefMap = componentMap;
+
+    let componentScopeResolver = new ComponentScopeResolver(componentMap, lexerParserFn);
+    await pSettle(
+        Array.from(componentMap).map(async (componentKV) => {
+            let [_, component] = componentKV;
+            component.environment = interpreter.environment.createSubEnvironment(
+                /* includeModuleScope */ false
+            );
+            let statements = await componentScopeResolver.resolve(component);
+            interpreter.inSubEnv((subInterpreter) => {
+                let componentMPointer = new RoAssociativeArray([]);
+                subInterpreter.environment.setM(componentMPointer);
+                subInterpreter.environment.setRootM(componentMPointer);
+                subInterpreter.exec(statements);
+                return BrsInvalid.Instance;
+            }, component.environment);
+        })
+    );
+    interpreter.options.entryPoint = entryPoint;
+    return interpreter;
 }
 
 /**
@@ -255,8 +310,7 @@ function parseChildren(element: XmlElement, children: ComponentNode[]): void {
 
 async function getScripts(
     node: XmlDocument,
-    nodeDef: ComponentDefinition,
-    rootDir: string
+    nodeDef: ComponentDefinition
 ): Promise<ComponentScript[]> {
     let scripts = node.childrenNamed("script");
     let componentScripts: ComponentScript[] = [];
@@ -270,10 +324,10 @@ async function getScripts(
                 ).trim(),
             });
         } else if (script.attr?.uri) {
-            let absoluteUri = await getScriptUri(script, nodeDef, rootDir);
+            let absoluteUri = await getScriptUri(script, nodeDef);
             componentScripts.push({
                 type: script.attr.type,
-                uri: absoluteUri.href,
+                uri: absoluteUri,
             });
         } else if (typeof script.val === "string") {
             componentScripts.push({
@@ -286,21 +340,19 @@ async function getScripts(
     return componentScripts;
 }
 
-async function getScriptUri(
-    script: XmlElement,
-    nodeDef: ComponentDefinition,
-    rootDir: string
-): Promise<URL> {
-    let absoluteUri: URL;
-    let posixRoot = rootDir.replace(/[\/\\]+/g, path.posix.sep);
-    let posixPath = nodeDef.xmlPath.replace(/[\/\\]+/g, path.posix.sep);
+async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): Promise<string> {
+    let absoluteUri: string;
 
     try {
-        if (process.platform === "win32") {
-            posixRoot = posixRoot.replace(/^[a-zA-Z]:/, "");
-            posixPath = posixPath.replace(/^[a-zA-Z]:/, "");
+        if (script.attr.uri.startsWith("pkg:/")) {
+            absoluteUri = script.attr.uri;
+        } else {
+            let posixPath = path.dirname(nodeDef.xmlPath.replace(/[\/\\]+/g, path.posix.sep));
+            if (process.platform === "win32") {
+                posixPath = posixPath.replace(/^[a-zA-Z]:/, "");
+            }
+            absoluteUri = path.join(posixPath, script.attr.uri);
         }
-        absoluteUri = new URL(script.attr.uri, `pkg:/${path.posix.relative(posixRoot, posixPath)}`);
     } catch (err) {
         return Promise.reject({
             message: BrsError.format(

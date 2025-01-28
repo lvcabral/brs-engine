@@ -135,9 +135,11 @@ export class Environment {
      * Sets the value of the special `m` variable, which is analogous to JavaScript's `this`.
      * @param newMPointer the new value to be used for the `m` pointer
      */
-    public setM(newMPointer: RoAssociativeArray): void {
+    public setM(newMPointer: RoAssociativeArray, updateFunction: boolean = true): void {
         this.mPointer = newMPointer;
-        this.function.set("m", this.mPointer);
+        if (updateFunction) {
+            this.function.set("m", this.mPointer);
+        }
     }
 
     /**

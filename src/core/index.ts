@@ -7,6 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { download } from "./interpreter/Network";
+import { FileSystem } from "./interpreter/FileSystem";
 import {
     AppExitReason,
     PkgFilePath,
@@ -18,10 +19,15 @@ import {
     parseManifest,
     isAppPayload,
 } from "./common";
-import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
+import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./Error";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
-import { ParseResults } from "./parser/Parser";
+import {
+    ComponentDefinition,
+    getComponentDefinitionMap,
+    getInterpreterWithSubEnvs,
+} from "./scenegraph";
+import { lexParseSync, parseDecodedTokens } from "./LexerParser";
 import * as PP from "./preprocessor";
 import * as BrsTypes from "./brsTypes";
 import * as path from "path";
@@ -37,8 +43,6 @@ import bslDefender from "./libraries/common/v30/bslDefender.brs";
 import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
 import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
-import { ComponentDefinition, ComponentScript, getComponentDefinitionMap } from "./scenegraph";
-import { getLexerParserFn } from "./LexerParser";
 
 export * as lexer from "./lexer";
 export * as parser from "./parser";
@@ -49,6 +53,7 @@ export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
+export { lexParseSync } from "./LexerParser";
 export const shared = new Map<string, Int32Array>();
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
@@ -254,27 +259,6 @@ export async function createPayloadFromFiles(
         root: root,
     };
 
-    // Look for SceneGraph components if root is provided
-    if (root && fs.existsSync(root)) {
-        let componentDefinitions = await getComponentDefinitionMap(root, []);
-
-        componentDefinitions.forEach((component: ComponentDefinition) => {
-            if (component.scripts.length < 1) return;
-            try {
-                component.scripts = component.scripts.map((script: ComponentScript) => {
-                    if (script.uri) {
-                        script.uri = path.join(root, new URL(script.uri).pathname);
-                    }
-                    return script;
-                });
-            } catch (error) {
-                throw new Error(
-                    `Encountered an error when parsing component ${component.name}: ${error}`
-                );
-            }
-        });
-        payload.components = componentDefinitions;
-    }
     // Load the external storage if provided
     if (ext && fs.existsSync(ext)) {
         if (fs.statSync(ext).isDirectory()) {
@@ -338,12 +322,19 @@ export async function executeFile(
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
-    const interpreter = payload.components
-        ? await Interpreter.withSubEnvsFromComponents(payload.components, payload.manifest, options)
-        : new Interpreter(options);
+    // Look for SceneGraph components
+    const fileSystem = new FileSystem(options.root, options.ext);
+    const components = await getComponentDefinitionMap(fileSystem, []);
+    // Create the interpreter
+    let interpreter: Interpreter;
+    if (components.size > 0) {
+        interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
+    } else {
+        interpreter = new Interpreter(options);
+    }
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
-    // Run App
+    // Run the BrightScript app
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
         result = await runEncrypted(interpreter, sourceResult, payload);
@@ -611,77 +602,6 @@ function setupTranslations(interpreter: Interpreter) {
 }
 
 /**
- * A synchronous version of the lexer-parser flow.
- * @param sourceMap Map with the source code files content.
- * @param manifest Map with the manifest data.
- * @param password string with the encryption password (optional)
- *
- * @returns the ParseResult with the exit reason and the tokens and statements.
- */
-export interface ParseResult {
-    exitReason: AppExitReason;
-    tokens: Token[];
-    statements: Stmt.Statement[];
-}
-
-export function lexParseSync(
-    sourceMap: Map<string, string>,
-    manifest: Map<string, any>,
-    password = ""
-): ParseResult {
-    const lexer = new Lexer();
-    const parser = new Parser();
-    const preprocessor = new PP.Preprocessor();
-    const allStatements = new Array<Stmt.Statement>();
-    const lib = new Map<string, string>();
-    let tokens: Token[] = [];
-    lexer.onError(logError);
-    parser.onError(logError);
-    let exitReason = AppExitReason.FINISHED;
-    for (let [path, code] of sourceMap) {
-        const scanResults = lexer.scan(code, path);
-        if (scanResults.errors.length > 0) {
-            exitReason = AppExitReason.CRASHED;
-            break;
-        }
-        let preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
-        if (preprocessorResults.errors.length > 0) {
-            exitReason = AppExitReason.CRASHED;
-            break;
-        }
-        if (password.length > 0) {
-            tokens = tokens.concat(preprocessorResults.processedTokens);
-            continue;
-        }
-        const parseResults = parser.parse(preprocessorResults.processedTokens);
-        if (parseResults.errors.length > 0) {
-            exitReason = AppExitReason.CRASHED;
-            break;
-        }
-        parseLibraries(parseResults, lib, manifest);
-        allStatements.push(...parseResults.statements);
-    }
-    if (password.length === 0) {
-        lib.forEach((value: string, key: string) => {
-            if (value !== "") {
-                sourceMap.set(key, value);
-                const libScan = lexer.scan(value, key);
-                const libParse = parser.parse(libScan.tokens);
-                allStatements.push(...libParse.statements);
-            }
-        });
-    }
-    parser.stats.forEach((count, lexeme) => {
-        stats.set(lexeme, count.size);
-    });
-    return {
-        exitReason: exitReason,
-        tokens: tokens,
-        statements: allStatements,
-    };
-}
-
-/**
  * Parse and Execute a set of BrightScript source code files.
  * @param interpreter an interpreter to use when executing the source code.
  * @param sourceMap Map with the source code files content.
@@ -700,7 +620,13 @@ async function runSource(
     payload: AppPayload
 ): Promise<RunResult> {
     const password = payload.password ?? "";
-    const parseResult = lexParseSync(sourceMap, interpreter.manifest, password);
+    const parseResult = lexParseSync(
+        interpreter.fileSystem,
+        interpreter.manifest,
+        sourceMap,
+        password,
+        stats
+    );
     let exitReason = parseResult.exitReason;
     if (exitReason !== AppExitReason.CRASHED) {
         if (password.length > 0) {
@@ -712,6 +638,19 @@ async function runSource(
             const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
             return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
         }
+        // Update Source Map with the SceneGraph components (if exists)
+        if (interpreter.environment.nodeDefMap?.size) {
+            const components = interpreter.environment.nodeDefMap;
+            Array.from(components.values()).forEach((component: ComponentDefinition) => {
+                component.scripts.forEach((script) => {
+                    const sourcePath = script.uri ?? script.xmlPath;
+                    if (sourcePath && script.content?.length) {
+                        sourceMap.set(sourcePath, script.content);
+                    }
+                });
+            });
+        }
+        // Execute the BrightScript code
         exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
     }
     return { exitReason: exitReason };
@@ -755,69 +694,17 @@ async function runEncrypted(
     }
     // Execute the decrypted source code
     try {
-        const allStatements = parseDecodedTokens(interpreter, decodedTokens);
+        const allStatements = parseDecodedTokens(
+            interpreter.fileSystem,
+            interpreter.manifest,
+            decodedTokens
+        );
         const exitReason = await executeApp(interpreter, allStatements, payload);
         return { exitReason: exitReason };
     } catch (err: any) {
         postMessage(`error,Error executing the app: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
-}
-
-/**
- * Fun to parse the decoded tokens and return the statements to be executed.
- * @param interpreter an interpreter to use when executing the source code.
- * @param decodedTokens a Map with the decoded tokens to parse.
- *
- * @returns the parsed statements array.
- */
-function parseDecodedTokens(interpreter: Interpreter, decodedTokens: Map<string, any>) {
-    const lexer = new Lexer();
-    const parser = new Parser();
-    const allStatements = new Array<Stmt.Statement>();
-    const lib = new Map<string, string>();
-    lexer.onError(logError);
-    parser.onError(logError);
-    let tokens: Token[] = [];
-    for (let [, value] of decodedTokens) {
-        const token: any = value;
-        if (token.literal) {
-            if (token.kind === "Integer") {
-                const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Int32(literal);
-            } else if (token.kind === "LongInteger") {
-                const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Int64(literal);
-            } else if (token.kind === "Double") {
-                const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Double(literal);
-            } else if (token.kind === "Float") {
-                const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Float(literal);
-            } else if (token.kind === "String") {
-                const literal: string = token.literal.value;
-                token.literal = new BrsTypes.BrsString(literal);
-            }
-        }
-        tokens.push(token);
-        if (token.kind === "Eof") {
-            const parseResults = parser.parse(tokens);
-            if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
-                throw new Error("Error parsing the tokens!");
-            }
-            parseLibraries(parseResults, lib, interpreter.manifest);
-            allStatements.push(...parseResults.statements);
-            tokens = [];
-        }
-    }
-    lib.forEach((value: string, key: string) => {
-        if (value !== "") {
-            const libScan = lexer.scan(value, key);
-            const libParse = parser.parse(libScan.tokens);
-            allStatements.push(...libParse.statements);
-        }
-    });
-    return allStatements;
 }
 
 /**
@@ -868,51 +755,4 @@ async function executeApp(
         }
     }
     return exitReason;
-}
-
-/**
- * Evaluates parsed BrightScript code and add Libraries source
- * @param parseResults ParseResults object with the parsed code
- * @param lib Collection with the libraries source code
- * @param manifest Map with the manifest data
- */
-function parseLibraries(
-    parseResults: ParseResults,
-    lib: Map<string, string>,
-    manifest: Map<string, any>
-) {
-    // Initialize Libraries on first run
-    if (!lib.has("v30/bslDefender.brs")) {
-        lib.set("v30/bslDefender.brs", "");
-        lib.set("v30/bslCore.brs", "");
-        lib.set("Roku_Ads.brs", "");
-        lib.set("RokuBrowser.brs", "");
-    }
-    // Check for Libraries and add to the collection
-    if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-        lib.set("v30/bslDefender.brs", bslDefender);
-        lib.set("v30/bslCore.brs", bslCore);
-    } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-        lib.set("v30/bslCore.brs", bslCore);
-    }
-    if (
-        parseResults.libraries.get("Roku_Ads.brs") === true &&
-        manifest.get("bs_libs_required")?.includes("roku_ads_lib")
-    ) {
-        lib.set("Roku_Ads.brs", Roku_Ads);
-    }
-    if (
-        parseResults.libraries.get("RokuBrowser.brs") === true &&
-        manifest.get("bs_libs_required")?.includes("Roku_Browser")
-    ) {
-        lib.set("RokuBrowser.brs", RokuBrowser);
-    }
-}
-
-/**
- * Logs a detected BRS error to the renderer process.
- * @param err the error to log
- */
-function logError(err: BrsError) {
-    postMessage(`error,${err.format()}`);
 }
