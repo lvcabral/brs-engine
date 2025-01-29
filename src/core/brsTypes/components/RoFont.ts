@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, Float } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -41,6 +41,21 @@ export class RoFont extends BrsComponent implements BrsValue {
         });
     }
 
+    measureTextHeight() {
+        return new Int32(Math.round(this.metrics.lineHeight * this.size));
+    }
+
+    measureTextWidth(text: BrsString, maxWidth: Int32 | Float) {
+        const canvas = createNewCanvas(1280, 720);
+        const ctx = canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
+        ctx.font = this.toFontString();
+        ctx.textBaseline = "top";
+        let measure = ctx.measureText(text.value);
+        let length = Math.min(measure.width, maxWidth.getValue());
+        releaseCanvas(canvas);
+        return new Int32(Math.round(length));
+    }
+
     getTopAdjust(): number {
         const height = this.metrics.lineHeight * this.size;
         const ascent = Math.max(this.metrics.ascent * this.size, this.size);
@@ -70,7 +85,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(Math.round(this.metrics.lineHeight * this.size));
+            return this.measureTextHeight();
         },
     });
 
@@ -84,14 +99,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, text: BrsString, maxWidth: Int32) => {
-            const canvas = createNewCanvas(1280, 720);
-            const ctx = canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
-            ctx.font = this.toFontString();
-            ctx.textBaseline = "top";
-            let measure = ctx.measureText(text.value);
-            let length = Math.min(measure.width, maxWidth.getValue());
-            releaseCanvas(canvas);
-            return new Int32(Math.round(length));
+            return this.measureTextWidth(text, maxWidth);
         },
     });
 

@@ -8,6 +8,19 @@ export class Font extends RoSGNode {
         { name: "fallbackGlyph", type: "string" },
     ];
 
+    /**
+     * Valid System Fonts
+     *
+     * SmallestSystemFont
+     * SmallestBoldSystemFont
+     * SmallSystemFont
+     * SmallBoldSystemFont
+     * MediumSystemFont
+     * MediumBoldSystemFont
+     * LargeSystemFont
+     * LargeBoldSystemFont
+     */
+
     constructor(members: AAMember[] = [], readonly name: string = "Font") {
         super([], name);
 
