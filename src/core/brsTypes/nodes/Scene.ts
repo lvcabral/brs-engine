@@ -38,7 +38,7 @@ export class Scene extends Group {
         if (!this.isVisible()) {
             return;
         }
-        const backColor = this.getColorFieldValue("backgroundColor");
+        const backColor = this.getColorFieldValue("backgroundcolor");
         draw2D.doClearCanvas(backColor);
         const backURI = this.fields.get("backgrounduri")?.getValue();
         if (backURI instanceof BrsString && backURI.value.trim() !== "") {
