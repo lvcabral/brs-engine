@@ -53,6 +53,7 @@ enum FieldKind {
     Boolean = "boolean",
     String = "string",
     Function = "function",
+    // TODO: Handle `color` as a special type that can be string or int defined on default fields
 }
 
 namespace FieldKind {
@@ -66,6 +67,7 @@ namespace FieldKind {
             case "roassociativearray":
             case "assocarray":
                 return FieldKind.AssocArray;
+            case "font":
             case "node":
                 return FieldKind.Node;
             case "bool":
@@ -322,9 +324,9 @@ function isSubtypeCheck(currentNodeType: string, checkType: string): boolean {
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private fields = new Map<string, Field>();
-    private children: RoSGNode[] = [];
-    private parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
+    protected fields = new Map<string, Field>();
+    protected children: RoSGNode[] = [];
+    protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
 
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: "string" },
@@ -1783,11 +1785,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (field.name === "change") {
                 value = toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" });
                 fieldType = FieldKind.AssocArray;
-            } else if (field.name === "font") {
-                value = NodeFactory.createNode(BrsNodeType.Font) ?? BrsInvalid.Instance;
-                fieldType = FieldKind.Node;
             } else {
-                value = getBrsValueFromFieldType(field.type, field.value);
+                value = getBrsValueFromFieldType(field.type, field.value, true);
                 fieldType = FieldKind.fromString(field.type);
             }
             if (fieldType) {
