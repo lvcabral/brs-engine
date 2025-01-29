@@ -1,5 +1,5 @@
 import { RoSGNode, FieldModel } from "../components/RoSGNode";
-import { AAMember } from "../components/RoAssociativeArray";
+import { Int32, Float, RoArray, AAMember } from "..";
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -24,5 +24,18 @@ export class Group extends RoSGNode {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+    }
+
+    protected getTranslation() {
+        const transField = this.fields.get("translation")?.getValue();
+        const translation = [0, 0];
+        if (transField instanceof RoArray && transField.elements.length === 2) {
+            transField.elements.map((element, index) => {
+                if (element instanceof Int32 || element instanceof Float) {
+                    translation[index] = element.getValue();
+                }
+            });
+        }
+        return translation;
     }
 }
