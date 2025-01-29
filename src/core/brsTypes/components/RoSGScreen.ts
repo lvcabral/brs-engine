@@ -32,6 +32,7 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
+import { download } from "../../interpreter/Network";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -62,7 +63,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly disposeCanvas: boolean;
     private readonly fontRegistry: RoFontRegistry;
     private port?: RoMessagePort;
-    private sceneNode?: RoSGNode;
+    private sceneNode?: Scene;
     private lastKey: number;
     private alphaEnable: boolean;
     isDirty: boolean;
@@ -207,9 +208,15 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             const backURI = this.sceneNode.getNodeFields().get("backgrounduri")?.getValue();
             if (backURI instanceof BrsString) {
+                let imageFile: BrsString | ArrayBuffer = backURI;
+                if (backURI.value.startsWith("http")) {
+                    imageFile = download(backURI.value, "arraybuffer") ?? backURI;
+                }
                 try {
-                    const bitmap = new RoBitmap(this.interpreter, backURI);
-                    this.drawImage(bitmap, BrsInvalid.Instance, 0, 0);
+                    const bitmap = new RoBitmap(this.interpreter, imageFile);
+                    const scaleX = this.width / bitmap.width;
+                    const scaleY = this.height / bitmap.height;
+                    this.drawImage(bitmap, BrsInvalid.Instance, 0, 0, scaleX, scaleY);
                 } catch (err: any) {
                     this.interpreter.stderr.write(
                         `error,Error loading bitmap:${backURI.value} - ${err.message}`
@@ -329,6 +336,8 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             if (returnValue instanceof Scene) {
                 this.sceneNode = returnValue;
+                this.sceneNode.width = this.width;
+                this.sceneNode.height = this.height;
             }
             return returnValue;
         },
