@@ -198,29 +198,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         // Handle Scene rendering
         if (this.isDirty && this.sceneNode) {
-            const backColor = Number(
-                this.sceneNode.getNodeFields().get("backgroundcolor")?.getValue().toString()
-            );
-            if (!isNaN(backColor)) {
-                this.clearCanvas(backColor);
-            }
-            const backURI = this.sceneNode.getNodeFields().get("backgrounduri")?.getValue();
-            if (backURI instanceof BrsString && backURI.value.trim() !== "") {
-                let imageFile: BrsString | ArrayBuffer = backURI;
-                if (backURI.value.startsWith("http")) {
-                    imageFile = download(backURI.value, "arraybuffer") ?? backURI;
-                }
-                try {
-                    const bitmap = new RoBitmap(this.interpreter, imageFile);
-                    const scaleX = this.width / bitmap.width;
-                    const scaleY = this.height / bitmap.height;
-                    this.drawImage(bitmap, BrsInvalid.Instance, 0, 0, scaleX, scaleY);
-                } catch (err: any) {
-                    this.interpreter.stderr.write(
-                        `error,Error loading bitmap:${backURI.value} - ${err.message}`
-                    );
-                }
-            }
+            this.sceneNode.renderNode(this.interpreter, this.draw2D, this.fontRegistry);
             // TODO: This needs to be recursive to handle nested nodes.
             this.sceneNode.getNodeChildren().forEach((node) => {
                 node.renderNode(this.interpreter, this.draw2D, this.fontRegistry);

@@ -56,7 +56,7 @@ export class Label extends Group {
 
     renderNode(interpreter: Interpreter, draw2D: IfDraw2D, fontRegistry: RoFontRegistry) {
         const text = this.fields.get("text")?.getValue();
-        if (!(text instanceof BrsString) || text.value.trim() === "") {
+        if (!this.isVisible() || !(text instanceof BrsString) || text.value.trim() === "") {
             return;
         }
         const position = this.getTranslation();

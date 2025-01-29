@@ -85,7 +85,7 @@ export class IfDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, rgba: Int32) => {
-            this.component.clearCanvas(rgba.getValue());
+            this.doClearCanvas(rgba.getValue());
             return BrsInvalid.Instance;
         },
     });
@@ -186,7 +186,6 @@ export class IfDraw2D {
                 scaleY.getValue(),
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1.0;
             return BrsBoolean.from(didDraw);
         },
     });

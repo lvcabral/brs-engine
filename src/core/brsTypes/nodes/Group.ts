@@ -1,5 +1,5 @@
 import { RoSGNode, FieldModel } from "../components/RoSGNode";
-import { Int32, Float, RoArray, AAMember } from "..";
+import { Int32, Float, RoArray, AAMember, BrsBoolean } from "..";
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -24,6 +24,11 @@ export class Group extends RoSGNode {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+    }
+
+    protected isVisible() {
+        const visible = this.fields.get("visible")?.getValue();
+        return visible instanceof BrsBoolean ? visible.toBoolean() : true;
     }
 
     protected getTranslation() {

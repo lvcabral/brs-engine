@@ -39,6 +39,9 @@ export class Rectangle extends Group {
     }
 
     renderNode(_: Interpreter, draw2D: IfDraw2D, _fontRegistry: RoFontRegistry): void {
+        if (!this.isVisible()) {
+            return;
+        }
         const rect = this.getBoundingRect();
         const color = this.getColorFieldValue("color");
         draw2D.doDrawRect(rect.x, rect.y, rect.width, rect.height, color);
