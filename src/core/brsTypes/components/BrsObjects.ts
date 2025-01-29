@@ -22,7 +22,7 @@ import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
 import { createRegion } from "./RoRegion";
-import { createScreen, RoScreen } from "./RoScreen";
+import { createRoScreen, RoScreen } from "./RoScreen";
 import { getTextureManager } from "./RoTextureManager";
 import { RoTextureRequest } from "./RoTextureRequest";
 import { RoImageMetadata } from "./RoImageMetadata";
@@ -192,7 +192,7 @@ export const BrsObjects = new BrsObjectsMap([
     [
         "roScreen",
         (interpreter: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
-            createScreen(interpreter, dblbuffer, width, height),
+            createRoScreen(interpreter, dblbuffer, width, height),
         -2,
     ],
     ["roXMLElement", (_: Interpreter) => new RoXMLElement()],
