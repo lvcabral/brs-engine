@@ -2,7 +2,7 @@ import { FieldModel } from "../components/RoSGNode";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { BrsBoolean, BrsString, Float, Int32, RoArray, RoFont, RoFontRegistry } from "..";
+import { BrsBoolean, BrsString, Float, Int32, RoFont, RoFontRegistry } from "..";
 import { Interpreter } from "../../interpreter";
 
 export class Label extends Group {
@@ -33,20 +33,32 @@ export class Label extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
     }
+
+    protected getBoundingRect() {
+        const translation = this.getTranslation();
+        const dimensions = this.getDimensions();
+        this.rect.x = translation[0];
+        this.rect.y = translation[1];
+        this.rect.width = dimensions.width;
+        this.rect.height = dimensions.height;
+        return this.rect;
+    }
+
+    getDimensions() {
+        const width = this.fields.get("width")?.getValue();
+        const height = this.fields.get("height")?.getValue();
+        return {
+            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
+            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
+        };
+    }
+
     getRenderData(interpreter: Interpreter, fontRegistry: RoFontRegistry) {
         const text = this.fields.get("text")?.getValue();
         if (!(text instanceof BrsString) || text.value.trim() === "") {
             return;
         }
-        const translation = this.fields.get("translation")?.getValue();
-        const pos = [0, 0];
-        if (translation instanceof RoArray && translation.elements.length === 2) {
-            translation.elements.map((element, index) => {
-                if (element instanceof Int32 || element instanceof Float) {
-                    pos[index] = element.getValue();
-                }
-            });
-        }
+        const position = this.getTranslation();
         const color = Number(this.fields.get("color")?.getValue()?.toString());
         const font = this.fields.get("font")?.getValue();
         let fontSize = 24;
@@ -66,34 +78,29 @@ export class Label extends Group {
 
         const horizAlign = this.fields.get("horizalign")?.getValue()?.toString() ?? "left";
         const vertAlign = this.fields.get("vertalign")?.getValue()?.toString() ?? "top";
-        const width = this.fields.get("width")?.getValue();
-        const height = this.fields.get("height")?.getValue();
-        if (
-            drawFont instanceof RoFont &&
-            (width instanceof Int32 || width instanceof Float) &&
-            (height instanceof Int32 || height instanceof Float)
-        ) {
+        const dimensions = this.getDimensions();
+        if (drawFont instanceof RoFont) {
             // Calculate the text position based on the alignment
-            const textWidth = drawFont.measureTextWidth(text as BrsString, width);
+            const textWidth = drawFont.measureTextWidth(text, new Float(dimensions.width));
             const textHeight = drawFont.measureTextHeight();
             if (horizAlign === "center") {
-                pos[0] += (width.getValue() - textWidth.getValue()) / 2;
+                position[0] += (dimensions.width - textWidth.getValue()) / 2;
             } else if (horizAlign === "right") {
-                pos[0] += width.getValue() - textWidth.getValue();
+                position[0] += dimensions.width - textWidth.getValue();
             }
             if (vertAlign === "center") {
-                pos[1] += (height.getValue() - textHeight.getValue()) / 2;
+                position[1] += (dimensions.height - textHeight.getValue()) / 2;
             } else if (vertAlign === "bottom") {
-                pos[1] += height.getValue() - textHeight.getValue();
+                position[1] += dimensions.height - textHeight.getValue();
             }
             return {
                 text: text.value,
-                x: pos[0],
-                y: pos[1],
+                x: position[0],
+                y: position[1],
                 color,
                 font: drawFont,
             };
         }
-        return {};
+        return;
     }
 }

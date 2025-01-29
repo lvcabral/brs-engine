@@ -327,12 +327,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected fields = new Map<string, Field>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
+    protected rect = {x: 0, y: 0, width: 0, height: 0};
 
     readonly defaultFields: FieldModel[] = [
-        { name: "id", type: "string" },
-        { name: "focusedchild", type: "node", alwaysNotify: true },
-        { name: "focusable", type: "boolean" },
-        { name: "change", type: "roAssociativeArray" },
+        { name: "id", type: FieldKind.String },
+        { name: "focusedChild", type: FieldKind.Node, alwaysNotify: true },
+        { name: "focusable", type: FieldKind.Boolean },
+        { name: "change", type: FieldKind.AssocArray },
     ];
     m: RoAssociativeArray = new RoAssociativeArray([]);
 
@@ -403,6 +404,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.parentSubtype,
             ],
             ifSGNodeBoundingRect: [this.boundingRect],
+            // TODO: Implement the remaining `ifSGNodeBoundingRect` methods
         });
     }
     hasNext(): BrsBoolean {
@@ -579,22 +581,22 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return false;
     }
 
-    private replaceChildAtIndex(newchild: BrsType, index: Int32): boolean {
+    private replaceChildAtIndex(newChild: BrsType, index: Int32): boolean {
         let childrenSize = this.children.length;
         let indexValue = index.getValue();
-        if (newchild instanceof RoSGNode && indexValue < childrenSize) {
-            // If newchild is already a child, remove it first.
-            this.removeChildByReference(newchild);
+        if (newChild instanceof RoSGNode && indexValue < childrenSize) {
+            // If newChild is already a child, remove it first.
+            this.removeChildByReference(newChild);
             if (indexValue >= 0) {
                 // The check is done to see if indexValue is inside the
-                // new length of this.children (in case newchild was
+                // new length of this.children (in case newChild was
                 // removed above)
                 if (indexValue < this.children.length) {
                     // Remove the parent of the child at indexValue
                     this.children[indexValue].removeParent();
                 }
-                newchild.setNodeParent(this);
-                this.children.splice(indexValue, 1, newchild);
+                newChild.setNodeParent(this);
+                this.children.splice(indexValue, 1, newChild);
             }
             return true;
         }
@@ -612,6 +614,23 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Starting with a leaf node, traverses upward through the parents until it reaches
+     * a node without a parent (root node).
+     * @param {RoSGNode} node The leaf node to create the tree with
+     * @returns RoSGNode[] The parent chain starting with root-most parent
+     */
+    private createPath(node: RoSGNode): RoSGNode[] {
+        let path: RoSGNode[] = [node];
+
+        while (node.parent instanceof RoSGNode) {
+            path.push(node.parent);
+            node = node.parent;
+        }
+
+        return path.reverse();
     }
 
     /* used for isSubtype */
@@ -643,14 +662,58 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
+    /* Takes a list of models and creates fields with default values, and adds them to this.fields. */
+    protected registerDefaultFields(fields: FieldModel[]) {
+        fields.forEach((field) => {
+            let fieldType: FieldKind | undefined;
+            let value: BrsType | undefined;
+            if (field.name === "change" && field.type === FieldKind.AssocArray) {
+                // Special case for the `change` field, default to all Node types
+                value = toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" });
+                fieldType = FieldKind.AssocArray;
+            } else {
+                value = getBrsValueFromFieldType(field.type, field.value, true);
+                fieldType = FieldKind.fromString(field.type);
+            }
+            if (fieldType) {
+                this.fields.set(
+                    field.name.toLowerCase(),
+                    new Field(value, fieldType, !!field.alwaysNotify, field.hidden)
+                );
+            }
+        });
+    }
+
+    /**
+     * Takes a list of preset fields and creates fields from them.
+     * TODO: filter out any non-allowed members. For example, if we instantiate a Node like this:
+     *      <Node thisisnotanodefield="fakevalue" />
+     * then Roku logs an error, because Node does not have a property called "thisisnotanodefield".
+     */
+    protected registerInitializedFields(fields: AAMember[]) {
+        fields.forEach((field) => {
+            let fieldType = FieldKind.fromBrsType(field.value);
+            if (fieldType) {
+                this.fields.set(
+                    field.name.value.toLowerCase(),
+                    new Field(field.value, fieldType, false)
+                );
+            }
+        });
+    }
+
+    protected getBoundingRect() {
+        return this.rect;
+    }
+
     /**
      * Calls the function specified on this node.
      */
     private callFunc = new Callable(
-        "callfunc",
+        "callFunc",
         ...Callable.variadic({
             signature: {
-                args: [new StdlibArgument("functionname", ValueKind.String)],
+                args: [new StdlibArgument("functionName", ValueKind.String)],
                 returns: ValueKind.Dynamic,
             },
             impl: (
@@ -740,7 +803,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             this.fields.clear();
             return BrsInvalid.Instance;
         },
@@ -753,7 +816,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             this.fields.delete(str.value.toLowerCase());
             return BrsBoolean.True; //RBI always returns true
         },
@@ -762,7 +825,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Given a key and value, adds an item to the node if it doesn't exist
      * Or replaces the value of a key that already exists in the node
      */
-    private addReplace = new Callable("addreplace", {
+    private addReplace = new Callable("addReplace", {
         signature: {
             args: [
                 new StdlibArgument("key", ValueKind.String),
@@ -770,7 +833,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
+        impl: (_: Interpreter, key: BrsString, value: BrsType) => {
             this.set(key, value);
             return BrsInvalid.Instance;
         },
@@ -782,18 +845,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new Int32(this.fields.size);
         },
     });
 
     /** Returns a boolean indicating whether or not a given key exists in the node */
-    private doesExist = new Callable("doesexist", {
+    private doesExist = new Callable("doesExist", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, str: BrsString) => {
+        impl: (_: Interpreter, str: BrsString) => {
             return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
         },
     });
@@ -804,7 +867,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, obj: BrsType) => {
+        impl: (_: Interpreter, obj: BrsType) => {
             if (obj instanceof RoAssociativeArray) {
                 obj.elements.forEach((value, key) => {
                     let fieldType = FieldKind.fromBrsType(value);
@@ -830,7 +893,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new RoArray(this.getElements());
         },
     });
@@ -841,7 +904,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new RoArray(
                 this.getElements().map((key: BrsString) => {
                     return toAssociativeArray({ key: key, value: this.get(key) });
@@ -856,7 +919,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, key: BrsString) => {
+        impl: (_: Interpreter, key: BrsString) => {
             let lKey = key.value.toLowerCase();
             return this.get(new BrsString(lKey));
         },
@@ -866,39 +929,34 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     private lookupCI = new Callable("lookupCI", this.lookup.signatures[0]);
 
     /** Adds a new field to the node, if the field already exists it doesn't change the current value. */
-    private addField = new Callable("addfield", {
+    private addField = new Callable("addField", {
         signature: {
             args: [
-                new StdlibArgument("fieldname", ValueKind.String),
+                new StdlibArgument("fieldName", ValueKind.String),
                 new StdlibArgument("type", ValueKind.String),
-                new StdlibArgument("alwaysnotify", ValueKind.Boolean),
+                new StdlibArgument("alwaysNotify", ValueKind.Boolean),
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (
-            interpreter: Interpreter,
-            fieldname: BrsString,
-            type: BrsString,
-            alwaysnotify: BrsBoolean
-        ) => {
+        impl: (_: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
             let defaultValue = getBrsValueFromFieldType(type.value);
             let fieldKind = FieldKind.fromString(type.value);
 
-            if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldname.value)) {
-                this.set(fieldname, defaultValue, alwaysnotify.toBoolean(), fieldKind);
+            if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.value)) {
+                this.set(fieldName, defaultValue, alwaysNotify.toBoolean(), fieldKind);
             }
 
             return BrsBoolean.True;
         },
     });
 
-    /** Adds one or more fields defined as an associative aray of key values. */
-    private addFields = new Callable("addfields", {
+    /** Adds one or more fields defined as an associative array of key values. */
+    private addFields = new Callable("addFields", {
         signature: {
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+        impl: (_: Interpreter, fields: RoAssociativeArray) => {
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -915,23 +973,23 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the value of the field passed as argument, if the field doesn't exist it returns invalid. */
-    private getField = new Callable("getfield", {
+    private getField = new Callable("getField", {
         signature: {
-            args: [new StdlibArgument("fieldname", ValueKind.String)],
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString) => {
-            return this.get(fieldname);
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            return this.get(fieldName);
         },
     });
 
     /** Returns the names and values of all the fields in the node. */
-    private getFields = new Callable("getfields", {
+    private getFields = new Callable("getFields", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let packagedFields: AAMember[] = [];
 
             this.fields.forEach((field, name) => {
@@ -950,13 +1008,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns true if the field exists */
-    protected hasField = new Callable("hasfield", {
+    protected hasField = new Callable("hasField", {
         signature: {
-            args: [new StdlibArgument("fieldname", ValueKind.String)],
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString) => {
-            return this.fields.has(fieldname.value.toLowerCase())
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            return this.fields.has(fieldName.value.toLowerCase())
                 ? BrsBoolean.True
                 : BrsBoolean.False;
         },
@@ -964,12 +1022,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Registers a callback to be executed when the value of the field changes */
     private observeField = new Callable(
-        "observefield",
+        "observeField",
         {
             signature: {
                 args: [
-                    new StdlibArgument("fieldname", ValueKind.String),
-                    new StdlibArgument("functionname", ValueKind.String),
+                    new StdlibArgument("fieldName", ValueKind.String),
+                    new StdlibArgument("functionName", ValueKind.String),
                     new StdlibArgument("infoFields", ValueKind.Object, BrsInvalid.Instance),
                 ],
                 returns: ValueKind.Boolean,
@@ -1009,7 +1067,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         {
             signature: {
                 args: [
-                    new StdlibArgument("fieldname", ValueKind.String),
+                    new StdlibArgument("fieldName", ValueKind.String),
                     new StdlibArgument("port", ValueKind.Object),
                     new StdlibArgument("infoFields", ValueKind.Object, BrsInvalid.Instance),
                 ],
@@ -1031,12 +1089,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /**
      * Removes all observers of a given field, regardless of whether or not the host node is the subscriber.
      */
-    private unobserveField = new Callable("unobservefield", {
+    private unobserveField = new Callable("unobserveField", {
         signature: {
-            args: [new StdlibArgument("fieldname", ValueKind.String)],
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString, functionname: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
                 interpreter.stderr.write(
@@ -1045,7 +1103,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
 
-            let field = this.fields.get(fieldname.value.toLowerCase());
+            let field = this.fields.get(fieldName.value.toLowerCase());
             if (field instanceof Field) {
                 field.removeUnscopedObservers();
             }
@@ -1057,15 +1115,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     private observeFieldScoped = new Callable("observeFieldSCoped", {
         signature: {
             args: [
-                new StdlibArgument("fieldname", ValueKind.String),
-                new StdlibArgument("functionname", ValueKind.String),
+                new StdlibArgument("fieldName", ValueKind.String),
+                new StdlibArgument("functionName", ValueKind.String),
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString, functionname: BrsString) => {
-            let field = this.fields.get(fieldname.value.toLowerCase());
+        impl: (interpreter: Interpreter, fieldName: BrsString, functionName: BrsString) => {
+            let field = this.fields.get(fieldName.value.toLowerCase());
             if (field instanceof Field) {
-                let callableFunction = interpreter.getCallableFunction(functionname.value);
+                let callableFunction = interpreter.getCallableFunction(functionName.value);
                 let subscriber = interpreter.environment.hostNode;
                 if (!subscriber) {
                     let location = interpreter.formatLocation();
@@ -1082,7 +1140,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                         callableFunction,
                         subscriber,
                         this,
-                        fieldname
+                        fieldName
                     );
                 } else {
                     return BrsBoolean.False;
@@ -1094,10 +1152,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     private unobserveFieldScoped = new Callable("unobserveFieldScoped", {
         signature: {
-            args: [new StdlibArgument("fieldname", ValueKind.String)],
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString, functionname: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
                 interpreter.stderr.write(
@@ -1106,7 +1164,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
 
-            let field = this.fields.get(fieldname.value.toLowerCase());
+            let field = this.fields.get(fieldName.value.toLowerCase());
             if (field instanceof Field) {
                 field.removeScopedObservers(interpreter.environment.hostNode);
             }
@@ -1117,28 +1175,28 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Removes the given field from the node */
     /** TODO: node built-in fields shouldn't be removable (i.e. id, change, focusable,) */
-    private removeField = new Callable("removefield", {
+    private removeField = new Callable("removeField", {
         signature: {
-            args: [new StdlibArgument("fieldname", ValueKind.String)],
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString) => {
-            this.fields.delete(fieldname.value.toLowerCase());
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            this.fields.delete(fieldName.value.toLowerCase());
             return BrsBoolean.True; //RBI always returns true
         },
     });
 
     /** Updates the value of an existing field only if the types match. */
-    private setField = new Callable("setfield", {
+    private setField = new Callable("setField", {
         signature: {
             args: [
-                new StdlibArgument("fieldname", ValueKind.String),
+                new StdlibArgument("fieldName", ValueKind.String),
                 new StdlibArgument("value", ValueKind.Dynamic),
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString, value: BrsType) => {
-            let field = this.fields.get(fieldname.value.toLowerCase());
+        impl: (_: Interpreter, fieldName: BrsString, value: BrsType) => {
+            let field = this.fields.get(fieldName.value.toLowerCase());
             if (!field) {
                 return BrsBoolean.False;
             }
@@ -1147,18 +1205,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
 
-            this.set(fieldname, value);
+            this.set(fieldName, value);
             return BrsBoolean.True;
         },
     });
 
     /** Updates the value of multiple existing field only if the types match. */
-    private setFields = new Callable("setfields", {
+    private setFields = new Callable("setFields", {
         signature: {
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+        impl: (_: Interpreter, fields: RoAssociativeArray) => {
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -1184,7 +1242,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Uninitialized,
         },
-        impl: (interpreter: Interpreter, aa: RoAssociativeArray, createFields: BrsBoolean) => {
+        impl: (_: Interpreter, aa: RoAssociativeArray, createFields: BrsBoolean) => {
             if (!(aa instanceof RoAssociativeArray)) {
                 return Uninitialized.Instance;
             }
@@ -1202,24 +1260,24 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Return the current number of children in the subject node list of children.
     This is always a non-negative number. */
-    private getChildCount = new Callable("getchildcount", {
+    private getChildCount = new Callable("getChildCount", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new Int32(this.children.length);
         },
     });
 
     /* Adds a child node to the end of the subject node list of children so that it is
     traversed last (of those children) during render. */
-    private appendChild = new Callable("appendchild", {
+    private appendChild = new Callable("appendChild", {
         signature: {
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, child: BrsType) => {
+        impl: (_: Interpreter, child: BrsType) => {
             return BrsBoolean.from(this.appendChildToParent(child));
         },
     });
@@ -1227,7 +1285,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Retrieves the number of child nodes specified by num_children from the subject
     node, starting at the position specified by index. Returns an array of the child nodes
     retrieved. If num_children is -1, return all the children. */
-    private getChildren = new Callable("getchildren", {
+    private getChildren = new Callable("getChildren", {
         signature: {
             args: [
                 new StdlibArgument("num_children", ValueKind.Int32),
@@ -1235,7 +1293,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+        impl: (_: Interpreter, num_children: Int32, index: Int32) => {
             let numChildrenValue = num_children.getValue();
             let indexValue = index.getValue();
             let childrenSize = this.children.length;
@@ -1258,38 +1316,38 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     remove it from the list of children. The match is made on the basis of actual
     object identity, that is, the value of the pointer to the child node.
     return false if trying to remove anything that's not a node */
-    private removeChild = new Callable("removechild", {
+    private removeChild = new Callable("removeChild", {
         signature: {
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, child: BrsType) => {
+        impl: (_: Interpreter, child: BrsType) => {
             return BrsBoolean.from(this.removeChildByReference(child));
         },
     });
     /* If the subject node has been added to a parent node list of children,
     return the parent node, otherwise return invalid.*/
-    private getParent = new Callable("getparent", {
+    private getParent = new Callable("getParent", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return this.parent;
         },
     });
 
     /* Creates a child node of type nodeType, and adds the new node to the end of the
     subject node list of children */
-    private createChild = new Callable("createchild", {
+    private createChild = new Callable("createChild", {
         signature: {
-            args: [new StdlibArgument("nodetype", ValueKind.String)],
+            args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, nodetype: BrsString) => {
+        impl: (interpreter: Interpreter, nodeType: BrsString) => {
             // currently we can't create a custom subclass object of roSGNode,
             // so we'll always create generic RoSGNode object as child
-            let child = createNodeByType(interpreter, nodetype);
+            let child = createNodeByType(interpreter, nodeType);
             if (child instanceof RoSGNode) {
                 this.children.push(child);
                 child.setNodeParent(this);
@@ -1303,16 +1361,16 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * node with the newChild node in the subject node list of children, otherwise do nothing.
      */
 
-    private replaceChild = new Callable("replacechild", {
+    private replaceChild = new Callable("replaceChild", {
         signature: {
             args: [
-                new StdlibArgument("newchild", ValueKind.Dynamic),
+                new StdlibArgument("newChild", ValueKind.Dynamic),
                 new StdlibArgument("index", ValueKind.Int32),
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, newchild: BrsType, index: Int32) => {
-            return BrsBoolean.from(this.replaceChildAtIndex(newchild, index));
+        impl: (_: Interpreter, newChild: BrsType, index: Int32) => {
+            return BrsBoolean.from(this.replaceChildAtIndex(newChild, index));
         },
     });
 
@@ -1320,12 +1378,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * Removes the child nodes specified by child_nodes from the subject node. Returns
      * true if the child nodes were successfully removed.
      */
-    private removeChildren = new Callable("removechildren", {
+    private removeChildren = new Callable("removeChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+        impl: (_: Interpreter, child_nodes: BrsType) => {
             if (child_nodes instanceof RoArray) {
                 let childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
@@ -1343,7 +1401,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * Removes the number of child nodes specified by num_children from the subject node
      * starting at the position specified by index.
      */
-    private removeChildrenIndex = new Callable("removechildrenindex", {
+    private removeChildrenIndex = new Callable("removeChildrenIndex", {
         signature: {
             args: [
                 new StdlibArgument("num_children", ValueKind.Int32),
@@ -1351,7 +1409,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+        impl: (_: Interpreter, num_children: Int32, index: Int32) => {
             let numChildrenValue = num_children.getValue();
             let indexValue = index.getValue();
 
@@ -1370,12 +1428,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * If the subject node has a child node at the index position, return it, otherwise
      * return invalid.
      */
-    private getChild = new Callable("getchild", {
+    private getChild = new Callable("getChild", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, index: Int32) => {
+        impl: (_: Interpreter, index: Int32) => {
             let indexValue = index.getValue();
             let childrenSize = this.children.length;
 
@@ -1389,18 +1447,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /**
      * Appends the nodes specified by child_nodes to the subject node.
      */
-    private appendChildren = new Callable("appendchildren", {
+    private appendChildren = new Callable("appendChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+        impl: (_: Interpreter, child_nodes: BrsType) => {
             if (child_nodes instanceof RoArray) {
                 let childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
                     childNodesElements.forEach((childNode) => {
                         if (childNode instanceof RoSGNode) {
-                            // Remove if it exists to reappend
+                            // Remove if it exists to re-append
                             this.removeChildByReference(childNode);
                             this.appendChildToParent(childNode);
                         }
@@ -1415,7 +1473,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Creates the number of children specified by num_children for the subject node,
      *  of the type or extended type specified by subtype.
      */
-    private createChildren = new Callable("createchildren", {
+    private createChildren = new Callable("createChildren", {
         signature: {
             args: [
                 new StdlibArgument("num_children", ValueKind.Int32),
@@ -1441,7 +1499,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Replaces the child nodes in the subject node, starting at the position specified
      *  by index, with new child nodes specified by child_nodes.
      */
-    private replaceChildren = new Callable("replacechildren", {
+    private replaceChildren = new Callable("replaceChildren", {
         signature: {
             args: [
                 new StdlibArgument("child_nodes", ValueKind.Dynamic),
@@ -1449,7 +1507,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+        impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 let childNodesElements = child_nodes.getElements();
@@ -1471,7 +1529,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * Inserts the child nodes specified by child_nodes to the subject node starting
      * at the position specified by index.
      */
-    private insertChildren = new Callable("insertchildren", {
+    private insertChildren = new Callable("insertChildren", {
         signature: {
             args: [
                 new StdlibArgument("child_nodes", ValueKind.Dynamic),
@@ -1479,7 +1537,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+        impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 let childNodesElements = child_nodes.getElements();
@@ -1500,7 +1558,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * node list of children, so that this is the position that the new child node
      * is traversed during render.
      */
-    private insertChild = new Callable("insertchild", {
+    private insertChild = new Callable("insertChild", {
         signature: {
             args: [
                 new StdlibArgument("child", ValueKind.Dynamic),
@@ -1508,7 +1566,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, child: BrsType, index: Int32) => {
+        impl: (_: Interpreter, child: BrsType, index: Int32) => {
             return BrsBoolean.from(this.insertChildAtIndex(child, index));
         },
     });
@@ -1517,12 +1575,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * If the subject node has a child node in the index position, remove that child
      * node from the subject node list of children.
      */
-    private removeChildIndex = new Callable("removechildindex", {
+    private removeChildIndex = new Callable("removeChildIndex", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, index: Int32) => {
+        impl: (_: Interpreter, index: Int32) => {
             let indexValue = index.getValue();
             let childrenSize = this.children.length;
 
@@ -1541,7 +1599,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * If adjustTransform is true, the subject node transformation factor fields (translation/rotation/scale)
      * are adjusted so that the node has the same transformation factors relative to the screen as it previously did.
      * If adjustTransform is false, the subject node is simply parented to the new node without adjusting its
-     * transformation factor fields, in which case, the reparenting operation could cause the node to jump to a
+     * transformation factor fields, in which case, the re-parenting operation could cause the node to jump to a
      * new position on the screen.
      */
     private reparent = new Callable("reparent", {
@@ -1552,7 +1610,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, newParent: BrsType, adjustTransform: BrsBoolean) => {
+        impl: (_: Interpreter, newParent: BrsType, adjustTransform: BrsBoolean) => {
             if (newParent instanceof RoSGNode && newParent !== this) {
                 // TODO: adjustTransform has to be implemented probably by traversing the
                 // entire parent tree to get to the top, calculate the absolute transform
@@ -1571,7 +1629,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /* Returns true if the subject node has the remote control focus, and false otherwise */
-    private hasFocus = new Callable("hasfocus", {
+    private hasFocus = new Callable("hasFocus", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -1581,32 +1639,16 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
+    /* Returns the Node bounding rectangle */
     private boundingRect = new Callable("boundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter) => {
-            return toAssociativeArray({ x: 0, y: 0, width: 0, height: 0 });
+        impl: (_: Interpreter) => {
+            return toAssociativeArray(this.getBoundingRect());
         },
     });
-
-    /**
-     * Starting with a leaf node, traverses upward through the parents until it reaches
-     * a node without a parent (root node).
-     * @param {RoSGNode} node The leaf node to create the tree with
-     * @returns RoSGNode[] The parent chain starting with root-most parent
-     */
-    private createPath(node: RoSGNode): RoSGNode[] {
-        let path: RoSGNode[] = [node];
-
-        while (node.parent instanceof RoSGNode) {
-            path.push(node.parent);
-            node = node.parent;
-        }
-
-        return path.reverse();
-    }
 
     /**
      *  If on is set to true, sets the current remote control focus to the subject node,
@@ -1616,7 +1658,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      *  It also runs through all of the ancestors of the node that was focused prior to this call,
      *  and the newly focused node, and sets the `focusedChild` field of each to reflect the new state.
      */
-    private setFocus = new Callable("setfocus", {
+    private setFocus = new Callable("setFocus", {
         signature: {
             args: [new StdlibArgument("on", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -1684,7 +1726,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      *  Returns true if the subject node or any of its descendants in the SceneGraph node tree
      *  has remote control focus
      */
-    private isInFocusChain = new Callable("isinfocuschain", {
+    private isInFocusChain = new Callable("isInFocusChain", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -1702,12 +1744,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Returns the node that is a descendant of the nearest component ancestor of the subject node whose id field matches the given name,
         otherwise return invalid.
         Implemented as a DFS from the top of parent hierarchy to match the observed behavior as opposed to the BFS mentioned in the docs. */
-    private findNode = new Callable("findnode", {
+    private findNode = new Callable("findNode", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, name: BrsString) => {
+        impl: (_: Interpreter, name: BrsString) => {
             // Roku's implementation returns invalid on empty string
             if (name.value.length === 0) return BrsInvalid.Instance;
 
@@ -1727,12 +1769,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      *
      *
      */
-    private isSubtype = new Callable("issubtype", {
+    private isSubtype = new Callable("isSubtype", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, nodeType: BrsString) => {
+        impl: (_: Interpreter, nodeType: BrsString) => {
             return BrsBoolean.from(isSubtypeCheck(this.nodeSubtype, nodeType.value));
         },
     });
@@ -1740,12 +1782,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Checks whether the subtype of the subject node is a descendant of the subtype nodeType
      * in the SceneGraph node class hierarchy.
      */
-    private parentSubtype = new Callable("parentsubtype", {
+    private parentSubtype = new Callable("parentSubtype", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, nodeType: BrsString) => {
+        impl: (_: Interpreter, nodeType: BrsString) => {
             const parentType = subtypeHierarchy.get(nodeType.value.toLowerCase());
             if (parentType) {
                 return new BrsString(parentType);
@@ -1756,12 +1798,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Returns a Boolean value indicating whether the roSGNode parameter
             refers to the same node object as this node */
-    private isSameNode = new Callable("issamenode", {
+    private isSameNode = new Callable("isSameNode", {
         signature: {
             args: [new StdlibArgument("roSGNode", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, roSGNode: RoSGNode) => {
+        impl: (_: Interpreter, roSGNode: RoSGNode) => {
             return BrsBoolean.from(this === roSGNode);
         },
     });
@@ -1772,49 +1814,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new BrsString(this.nodeSubtype);
         },
     });
-
-    /* Takes a list of models and creates fields with default values, and adds them to this.fields. */
-    protected registerDefaultFields(fields: FieldModel[]) {
-        fields.forEach((field) => {
-            let fieldType: FieldKind | undefined;
-            let value: BrsType | undefined;
-            if (field.name === "change") {
-                value = toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" });
-                fieldType = FieldKind.AssocArray;
-            } else {
-                value = getBrsValueFromFieldType(field.type, field.value, true);
-                fieldType = FieldKind.fromString(field.type);
-            }
-            if (fieldType) {
-                this.fields.set(
-                    field.name.toLowerCase(),
-                    new Field(value, fieldType, !!field.alwaysNotify, field.hidden)
-                );
-            }
-        });
-    }
-
-    /**
-     * Takes a list of preset fields and creates fields from them.
-     * TODO: filter out any non-allowed members. For example, if we instantiate a Node like this:
-     *      <Node thisisnotanodefield="fakevalue" />
-     * then Roku logs an error, because Node does not have a property called "thisisnotanodefield".
-     */
-    protected registerInitializedFields(fields: AAMember[]) {
-        fields.forEach((field) => {
-            let fieldType = FieldKind.fromBrsType(field.value);
-            if (fieldType) {
-                this.fields.set(
-                    field.name.value.toLowerCase(),
-                    new Field(field.value, fieldType, false)
-                );
-            }
-        });
-    }
 }
 
 // A node that represents the m.global, referenced by all other nodes
