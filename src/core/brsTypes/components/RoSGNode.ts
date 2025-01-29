@@ -454,6 +454,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return this.fields;
     }
 
+    getNodeChildren() {
+        return this.children;
+    }
+
     get(index: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
