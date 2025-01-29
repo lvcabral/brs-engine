@@ -53,6 +53,49 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    createFont(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean): BrsType {
+        /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic),
+            but if it's not available returns the first one registered. */
+        const array = this.fontRegistry.get(family.value);
+        const weight = bold.toBoolean() ? "bold" : "normal";
+        const style = italic.toBoolean() ? "italic" : "normal";
+        if (array) {
+            let metrics;
+            array.some((element) => {
+                if (element.weight === weight && element.style === style) {
+                    metrics = element;
+                    return true;
+                }
+                return false;
+            });
+            if (!metrics) {
+                metrics = array[0];
+                return new RoFont(
+                    family,
+                    size,
+                    BrsBoolean.from(metrics.weight === "bold"),
+                    BrsBoolean.from(metrics.style === "italic"),
+                    metrics
+                );
+            }
+            return new RoFont(family, size, bold, italic, metrics);
+        }
+        if (family.value === this.defaultFontFamily) {
+            // Fallback to browser font if default fonts are not available
+            family = new BrsString(this.fallbackFontFamily);
+            let metrics: FontMetrics = {
+                ascent: 1.06884765625,
+                descent: 0.29296875,
+                maxAdvance: 1.208984375,
+                lineHeight: 1.36181640625,
+                style: bold.toBoolean() ? "bold" : "normal",
+                weight: italic.toBoolean() ? "italic" : "normal",
+            };
+            return new RoFont(family, size, bold, italic, metrics);
+        }
+        return BrsInvalid.Instance;
+    }
+
     registerFont(interpreter: Interpreter, fontPath: string) {
         try {
             const fsys = interpreter.fileSystem;
@@ -140,33 +183,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             bold: BrsBoolean,
             italic: BrsBoolean
         ) => {
-            /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic),
-            but if it's not available returns the first one registered. */
-            const array = this.fontRegistry.get(family.value);
-            const weight = bold.toBoolean() ? "bold" : "normal";
-            const style = italic.toBoolean() ? "italic" : "normal";
-            if (array) {
-                let metrics;
-                array.some((element) => {
-                    if (element.weight === weight && element.style === style) {
-                        metrics = element;
-                        return true;
-                    }
-                    return false;
-                });
-                if (!metrics) {
-                    metrics = array[0];
-                    return new RoFont(
-                        family,
-                        size,
-                        BrsBoolean.from(metrics.weight === "bold"),
-                        BrsBoolean.from(metrics.style === "italic"),
-                        metrics
-                    );
-                }
-                return new RoFont(family, size, bold, italic, metrics);
-            }
-            return BrsInvalid.Instance;
+            return this.createFont(family, size, bold, italic);
         },
     });
 
@@ -181,34 +198,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, size: Int32, bold: BrsBoolean, italic: BrsBoolean) => {
-            let family = new BrsString(this.defaultFontFamily);
-            const array = this.fontRegistry.get(family.value);
-            const weight = bold.toBoolean() ? "bold" : "normal";
-            const style = italic.toBoolean() ? "italic" : "normal";
-            if (array) {
-                let metrics;
-                array.some((element) => {
-                    if (element.weight === weight && element.style === style) {
-                        metrics = element;
-                        return true;
-                    }
-                    return false;
-                });
-                if (metrics) {
-                    return new RoFont(family, size, bold, italic, metrics);
-                }
-            }
-            // Falback to browser font if default fonts are not available
-            family = new BrsString(this.fallbackFontFamily);
-            let metrics: FontMetrics = {
-                ascent: 1.06884765625,
-                descent: 0.29296875,
-                maxAdvance: 1.208984375,
-                lineHeight: 1.36181640625,
-                style: bold.toBoolean() ? "bold" : "normal",
-                weight: italic.toBoolean() ? "italic" : "normal",
-            };
-            return new RoFont(family, size, bold, italic, metrics);
+            const family = new BrsString(this.defaultFontFamily);
+            return this.createFont(family, size, bold, italic);
         },
     });
 
