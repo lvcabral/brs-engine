@@ -17,7 +17,6 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
-import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
@@ -272,7 +271,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 }
 
-export function createScreen(
+export function createRoScreen(
     interpreter: Interpreter,
     doubleBuffer?: BrsBoolean,
     width?: Int32,
