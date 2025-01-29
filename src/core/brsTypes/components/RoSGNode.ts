@@ -327,7 +327,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected fields = new Map<string, Field>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
-    protected rect = {x: 0, y: 0, width: 0, height: 0};
+    protected rect = { x: 0, y: 0, width: 0, height: 0 };
 
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: FieldKind.String },
