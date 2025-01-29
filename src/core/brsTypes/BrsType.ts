@@ -152,7 +152,11 @@ export function getValueKindFromFieldType(type: string) {
  *  @param {string} value optional value specified as string
  *  @returns {BrsType} BrsType value representation of the type
  */
-export function getBrsValueFromFieldType(type: string, value?: string, isDefault?: boolean): BrsType {
+export function getBrsValueFromFieldType(
+    type: string,
+    value?: string,
+    isDefault?: boolean
+): BrsType {
     let returnValue: BrsType;
 
     // TODO: Handle `color` as a special type that can be string or int defined on default fields
