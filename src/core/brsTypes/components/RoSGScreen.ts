@@ -7,18 +7,14 @@ import {
     BrsNodeType,
     BrsType,
     createNodeByType,
-    Float,
-    Font,
     Int32,
     KeyEvent,
     Label,
     mGlobal,
-    NodeFactory,
-    RoArray,
-    RoFont,
     RoFontRegistry,
     RoMessagePort,
     RoSGNode,
+    Scene,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -108,7 +104,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     clearCanvas(rgba: number): void {
         if (isNaN(rgba)) {
-            rgba = 0xFF;
+            rgba = 0xff;
         }
         const ctx = this.context;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -170,12 +166,13 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
     }
 
-    /** Message callback to handle control keys */
+    /** Message callback to handle control keys and Scene rendering */
     private getNewEvents() {
         const events: BrsEvent[] = [];
+        // Handle control keys
         this.interpreter.updateKeysBuffer(this.keysBuffer);
         const nextKey = this.keysBuffer.shift();
-        if (nextKey && nextKey.key !== this.lastKey && this.sceneNode) {
+        if (nextKey && nextKey.key !== this.lastKey) {
             if (this.interpreter.singleKeyEvents) {
                 if (nextKey.mod === 0) {
                     if (this.lastKey >= 0 && this.lastKey < 100) {
@@ -193,117 +190,75 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
             const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
             const press = BrsBoolean.from(nextKey.mod === 0);
-            const hostNode = this.sceneNode;
+            const handled = this.handleOnKeyEvent(key, press);
 
-            let handled = this.interpreter.inSubEnv((subInterpreter) => {
-                subInterpreter.environment.hostNode = hostNode;
-                subInterpreter.environment.setRootM(hostNode.m);
-                subInterpreter.environment.setM(hostNode.m);
-                let onKeyEvent = subInterpreter.getCallableFunction("onKeyEvent");
-                if (!(onKeyEvent instanceof Callable) || key.value === "") {
-                    return BrsBoolean.False;
-                }
-                try {
-                    const satisfiedSignature = onKeyEvent?.getFirstSatisfiedSignature([key, press]);
-                    if (satisfiedSignature) {
-                        let { signature, impl } = satisfiedSignature;
-                        subInterpreter.environment.define(
-                            Scope.Function,
-                            signature.args[0].name.text,
-                            key,
-                            this.interpreter.location
-                        );
-                        subInterpreter.environment.define(
-                            Scope.Function,
-                            signature.args[1].name.text,
-                            press,
-                            this.interpreter.location
-                        );
-                        impl(subInterpreter, key, press);
-                    }
-                } catch (err) {
-                    if (!(err instanceof BlockEnd)) {
-                        throw err;
-                    } else if (err instanceof Stmt.ReturnValue) {
-                        return err.value ?? BrsBoolean.False;
-                    }
-                }
-                return BrsBoolean.False;
-            }, this.interpreter.environment);
-            if (key.value === "back" && handled instanceof BrsBoolean && !handled.toBoolean()) {
+            if (key.value === "back" && !handled) {
                 events.push(new RoSGScreenEvent(BrsBoolean.True));
             }
         }
+        // Handle Scene rendering
         if (this.isDirty && this.sceneNode) {
-            const backColor = Number(this.sceneNode.getNodeFields().get("backgroundcolor")?.getValue().toString());
-            if (! isNaN(backColor)) {
-                console.log("Clearing canvas with color: ", backColor);
+            const backColor = Number(
+                this.sceneNode.getNodeFields().get("backgroundcolor")?.getValue().toString()
+            );
+            if (!isNaN(backColor)) {
                 this.clearCanvas(backColor);
             }
+            // TODO: This needs to be recursive to handle nested nodes.
             this.sceneNode.getNodeChildren().forEach((node) => {
                 if (node instanceof Label) {
-                    const text = node.getNodeFields().get("text")?.getValue();
-                    if (text === undefined || text.toString().trim() === "") {
-                        return;
-                    }
-                    const translation = node.getNodeFields().get("translation")?.getValue();
-                    const pos = [0, 0];
-                    if (translation instanceof RoArray && translation.elements.length === 2) {
-                        translation.elements.map((element, index) => {
-                            if (element instanceof Int32 || element instanceof Float) {
-                                pos[index] = element.getValue();
-                            }
-                        });
-                    }
-                    const color = Number(node.getNodeFields().get("color")?.getValue()?.toString());
-                    const font = node.getNodeFields().get("font")?.getValue();
-                    let fontSize = 24;
-                    if (font instanceof Font) {
-                        const value = font.getNodeFields().get("size")?.getValue();
-                        if (value instanceof Int32 || value instanceof Float) {
-                            fontSize = value.getValue();
-                        }
-                    }
-                    const defaultFontFamily = this.interpreter.deviceInfo.get("defaultFont");
-                    const drawFont = this.fontRegistry.createFont(
-                        new BrsString(defaultFontFamily),
-                        new Int32(fontSize),
-                        BrsBoolean.False,
-                        BrsBoolean.False
-                    );
-
-                    const horizAlign =
-                        node.getNodeFields().get("horizalign")?.getValue()?.toString() ?? "left";
-                    const vertAlign =
-                        node.getNodeFields().get("vertalign")?.getValue()?.toString() ?? "top";
-                    const width = node.getNodeFields().get("width")?.getValue();
-                    const height = node.getNodeFields().get("height")?.getValue();
-                    if (
-                        drawFont instanceof RoFont &&
-                        (width instanceof Int32 || width instanceof Float) &&
-                        (height instanceof Int32 || height instanceof Float)
-                    ) {
-                        // Calculate the text position based on the alignment
-                        const textWidth = drawFont.measureTextWidth(text as BrsString, width);
-                        const textHeight = drawFont.measureTextHeight();
-                        if (horizAlign === "center") {
-                            pos[0] += (width.getValue() - textWidth.getValue()) / 2;
-                        } else if (horizAlign === "right") {
-                            pos[0] += width.getValue() - textWidth.getValue();
-                        }
-                        if (vertAlign === "center") {
-                            pos[1] += (height.getValue() - textHeight.getValue()) / 2;
-                        } else if (vertAlign === "bottom") {
-                            pos[1] += (height.getValue() - textHeight.getValue());
-                        }
-                        // Draw the text
-                        this.draw2D.doDrawText(text.toString(), pos[0], pos[1], color, drawFont);
+                    const data = node.getRenderData(this.interpreter, this.fontRegistry);
+                    if (data?.text) {
+                        this.draw2D.doDrawText(data.text, data.x, data.y, data.color, data.font);
                     }
                 }
             });
             this.finishDraw();
         }
         return events;
+    }
+
+    handleOnKeyEvent(key: BrsString, press: BrsBoolean): boolean {
+        const hostNode = this.sceneNode;
+        if (!hostNode) {
+            return false;
+        }
+        const handled = this.interpreter.inSubEnv((subInterpreter) => {
+            subInterpreter.environment.hostNode = hostNode;
+            subInterpreter.environment.setRootM(hostNode.m);
+            subInterpreter.environment.setM(hostNode.m);
+            let onKeyEvent = subInterpreter.getCallableFunction("onKeyEvent");
+            if (!(onKeyEvent instanceof Callable) || key.value === "") {
+                return BrsBoolean.False;
+            }
+            try {
+                const satisfiedSignature = onKeyEvent?.getFirstSatisfiedSignature([key, press]);
+                if (satisfiedSignature) {
+                    let { signature, impl } = satisfiedSignature;
+                    subInterpreter.environment.define(
+                        Scope.Function,
+                        signature.args[0].name.text,
+                        key,
+                        this.interpreter.location
+                    );
+                    subInterpreter.environment.define(
+                        Scope.Function,
+                        signature.args[1].name.text,
+                        press,
+                        this.interpreter.location
+                    );
+                    impl(subInterpreter, key, press);
+                }
+            } catch (err) {
+                if (!(err instanceof BlockEnd)) {
+                    throw err;
+                } else if (err instanceof Stmt.ReturnValue) {
+                    return err.value ?? BrsBoolean.False;
+                }
+            }
+            return BrsBoolean.False;
+        }, this.interpreter.environment);
+        return handled instanceof BrsBoolean && handled.toBoolean();
     }
 
     /** Returns a global reference object for the SceneGraph application. */
@@ -350,17 +305,17 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         },
         impl: (interpreter: Interpreter, sceneType: BrsString) => {
             let returnValue: BrsType = BrsInvalid.Instance;
-            if (sceneType.value === "Scene") {
-                returnValue = NodeFactory.createNode(BrsNodeType.Scene) ?? BrsInvalid.Instance;
+            if (sceneType.value === BrsNodeType.Scene) {
+                returnValue = new Scene([], BrsNodeType.Scene);
             } else {
                 const typeDef = interpreter.environment.nodeDefMap.get(
                     sceneType.value.toLowerCase()
                 );
-                if (typeDef && typeDef.extends === "Scene") {
+                if (typeDef && typeDef.extends === BrsNodeType.Scene) {
                     returnValue = createNodeByType(interpreter, sceneType);
                 }
             }
-            if (returnValue instanceof RoSGNode) {
+            if (returnValue instanceof Scene) {
                 this.sceneNode = returnValue;
             }
             return returnValue;

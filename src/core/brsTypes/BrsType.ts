@@ -1,10 +1,21 @@
-import { BrsComponent, BrsNumber, BrsType, Double, isBrsNumber, isStringComp, RoArray } from ".";
+import {
+    BrsComponent,
+    BrsNumber,
+    BrsType,
+    Double,
+    Font,
+    Int64,
+    isBrsNumber,
+    isStringComp,
+    RoArray,
+} from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
 import { Float } from "./Float";
 import { RoBoolean } from "./components/RoBoolean";
 import { RoInvalid } from "./components/RoInvalid";
+import Long from "long";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
@@ -114,6 +125,8 @@ export function getValueKindFromFieldType(type: string) {
             return ValueKind.Int64;
         case "float":
             return ValueKind.Float;
+        case "double":
+            return ValueKind.Double;
         case "uri":
         case "str":
         case "string":
@@ -121,6 +134,7 @@ export function getValueKindFromFieldType(type: string) {
         case "function":
             return ValueKind.Callable;
         case "node":
+        case "font":
         case "roarray":
         case "array":
         case "roassociativearray":
@@ -138,20 +152,23 @@ export function getValueKindFromFieldType(type: string) {
  *  @param {string} value optional value specified as string
  *  @returns {BrsType} BrsType value representation of the type
  */
-export function getBrsValueFromFieldType(type: string, value?: string): BrsType {
+export function getBrsValueFromFieldType(type: string, value?: string, isDefault?: boolean): BrsType {
     let returnValue: BrsType;
 
+    // TODO: Handle `color` as a special type that can be string or int defined on default fields
     switch (type.toLowerCase()) {
         case "bool":
         case "boolean":
-            returnValue = value ? BrsBoolean.from(value.toLowerCase() === "true") : BrsBoolean.False;
-            break;
-        case "node":
-            returnValue = new RoInvalid();
+            returnValue = value
+                ? BrsBoolean.from(value.toLowerCase() === "true")
+                : BrsBoolean.False;
             break;
         case "int":
         case "integer":
             returnValue = value ? new Int32(Number.parseInt(value)) : new Int32(0);
+            break;
+        case "longinteger":
+            returnValue = value ? new Int64(Long.fromString(value)) : new Int64(0);
             break;
         case "float":
             returnValue = value ? new Float(Number.parseFloat(value)) : new Float(0);
@@ -159,12 +176,20 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "double":
             returnValue = value ? new Double(Number.parseFloat(value)) : new Double(0);
             break;
+        case "node":
+            returnValue = new RoInvalid();
+            break;
+        case "font":
+            returnValue = isDefault ? new Font() : Uninitialized.Instance;
+            break;
         case "roarray":
         case "array":
             if (value?.trim().startsWith("[") && value.trim().endsWith("]")) {
-                // TODO: Handle NaN properly
-                const parsedValue = value.replace(/[\[\]]/g, "").split(",").map(Number);
-                returnValue = new RoArray(parsedValue.map((v) => new Float(v)));
+                const parsedValue = value
+                    .replace(/[\[\]]/g, "")
+                    .split(",")
+                    .map(Number);
+                returnValue = new RoArray(parsedValue.map((v) => new Float(isNaN(v) ? 0 : v)));
             } else {
                 returnValue = BrsInvalid.Instance;
             }
