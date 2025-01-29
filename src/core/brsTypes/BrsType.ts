@@ -1,4 +1,4 @@
-import { BrsComponent, BrsNumber, BrsType, isBrsNumber, isStringComp } from ".";
+import { BrsComponent, BrsNumber, BrsType, Double, isBrsNumber, isStringComp, RoArray } from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
@@ -144,7 +144,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
     switch (type.toLowerCase()) {
         case "bool":
         case "boolean":
-            returnValue = value ? BrsBoolean.from(value === "true") : BrsBoolean.False;
+            returnValue = value ? BrsBoolean.from(value.toLowerCase() === "true") : BrsBoolean.False;
             break;
         case "node":
             returnValue = new RoInvalid();
@@ -156,9 +156,18 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "float":
             returnValue = value ? new Float(Number.parseFloat(value)) : new Float(0);
             break;
+        case "double":
+            returnValue = value ? new Double(Number.parseFloat(value)) : new Double(0);
+            break;
         case "roarray":
         case "array":
-            returnValue = BrsInvalid.Instance;
+            if (value?.trim().startsWith("[") && value.trim().endsWith("]")) {
+                // TODO: Handle NaN properly
+                const parsedValue = value.replace(/[\[\]]/g, "").split(",").map(Number);
+                returnValue = new RoArray(parsedValue.map((v) => new Float(v)));
+            } else {
+                returnValue = BrsInvalid.Instance;
+            }
             break;
         case "roassociativearray":
         case "assocarray":
