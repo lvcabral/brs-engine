@@ -4,6 +4,7 @@ import { Group } from "./Group";
 import { Font } from "./Font";
 import { BrsBoolean, BrsString, Float, Int32, RoFont, RoFontRegistry } from "..";
 import { Interpreter } from "../../interpreter";
+import { IfDraw2D } from "../interfaces/IfDraw2D";
 
 export class Label extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -53,13 +54,13 @@ export class Label extends Group {
         };
     }
 
-    getRenderData(interpreter: Interpreter, fontRegistry: RoFontRegistry) {
+    renderNode(interpreter: Interpreter, draw2D: IfDraw2D, fontRegistry: RoFontRegistry) {
         const text = this.fields.get("text")?.getValue();
         if (!(text instanceof BrsString) || text.value.trim() === "") {
             return;
         }
         const position = this.getTranslation();
-        const color = Number(this.fields.get("color")?.getValue()?.toString());
+        const color = this.getColorFieldValue("color");
         const font = this.fields.get("font")?.getValue();
         let fontSize = 24;
         if (font instanceof Font) {
@@ -75,7 +76,6 @@ export class Label extends Group {
             BrsBoolean.False,
             BrsBoolean.False
         );
-
         const horizAlign = this.fields.get("horizalign")?.getValue()?.toString() ?? "left";
         const vertAlign = this.fields.get("vertalign")?.getValue()?.toString() ?? "top";
         const dimensions = this.getDimensions();
@@ -93,14 +93,7 @@ export class Label extends Group {
             } else if (vertAlign === "bottom") {
                 position[1] += dimensions.height - textHeight.getValue();
             }
-            return {
-                text: text.value,
-                x: position[0],
-                y: position[1],
-                color,
-                font: drawFont,
-            };
+            draw2D.doDrawText(text.value, position[0], position[1], color, drawFont);
         }
-        return;
     }
 }

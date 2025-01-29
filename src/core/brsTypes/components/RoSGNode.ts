@@ -10,7 +10,14 @@ import {
 } from "../BrsType";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType, isBrsNumber, isBrsString, RoMessagePort, toAssociativeArray } from "..";
+import {
+    BrsType,
+    isBrsNumber,
+    isBrsString,
+    RoFontRegistry,
+    RoMessagePort,
+    toAssociativeArray,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -27,6 +34,7 @@ import { RoInvalid } from "./RoInvalid";
 import { BlockEnd } from "../../parser/Statement";
 import { Stmt } from "../../parser";
 import { generateArgumentMismatchError } from "../../interpreter/ArgumentMismatch";
+import { IfDraw2D } from "../interfaces/IfDraw2D";
 
 interface BrsCallback {
     interpreter: Interpreter;
@@ -537,6 +545,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return false;
     }
 
+    renderNode(interpreter: Interpreter, draw2D: IfDraw2D, fontRegistry: RoFontRegistry) {
+        // To be implemented by subclasses
+        return;
+    }
+
     /* searches the node tree for a node with the given id */
     private findNodeById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
         // test current node in tree
@@ -702,6 +715,30 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         });
     }
 
+    /**
+     * Returns a color numeric value from a field value.
+     * @param fieldName name of the field to get the color from
+     * @returns color numeric value
+     */
+    protected getColorFieldValue(fieldName: string) {
+        let color = -1;
+        const maybeColor = this.fields.get(fieldName);
+        if (maybeColor instanceof Field && maybeColor.getValue() instanceof BrsString) {
+            let colorValue = maybeColor.getValue() as BrsString;
+            if (colorValue.value.length) {
+                let hex = colorValue.value;
+                // Remove the '#' if present
+                hex = hex.startsWith("#") ? hex.slice(1) : hex;
+                color = parseInt(hex, 16);
+                color = isNaN(color) ? -1 : color;
+            }
+        }
+        return color;
+    }
+
+    /**
+     * Returns the bounding rectangle of the node.
+     */
     protected getBoundingRect() {
         return this.rect;
     }

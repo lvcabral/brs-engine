@@ -9,12 +9,10 @@ import {
     createNodeByType,
     Int32,
     KeyEvent,
-    Label,
     mGlobal,
     RoBitmap,
     RoFontRegistry,
     RoMessagePort,
-    RoSGNode,
     Scene,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
@@ -207,7 +205,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.clearCanvas(backColor);
             }
             const backURI = this.sceneNode.getNodeFields().get("backgrounduri")?.getValue();
-            if (backURI instanceof BrsString) {
+            if (backURI instanceof BrsString && backURI.value.trim() !== "") {
                 let imageFile: BrsString | ArrayBuffer = backURI;
                 if (backURI.value.startsWith("http")) {
                     imageFile = download(backURI.value, "arraybuffer") ?? backURI;
@@ -225,12 +223,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             // TODO: This needs to be recursive to handle nested nodes.
             this.sceneNode.getNodeChildren().forEach((node) => {
-                if (node instanceof Label) {
-                    const data = node.getRenderData(this.interpreter, this.fontRegistry);
-                    if (data?.text) {
-                        this.draw2D.doDrawText(data.text, data.x, data.y, data.color, data.font);
-                    }
-                }
+                node.renderNode(this.interpreter, this.draw2D, this.fontRegistry);
             });
             this.finishDraw();
         }
