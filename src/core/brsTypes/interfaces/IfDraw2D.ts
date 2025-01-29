@@ -309,22 +309,13 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
-            const ctx = this.component.getContext();
-            if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
-                ctx.clearRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
-                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
-            } else {
-                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            }
-            ctx.fillRect(
-                baseX + x.getValue(),
-                baseY + y.getValue(),
+            this.doDrawRect(
+                x.getValue(),
+                y.getValue(),
                 width.getValue(),
-                height.getValue()
+                height.getValue(),
+                rgba.getValue()
             );
-            this.component.makeDirty();
             return BrsBoolean.True;
         },
     });
@@ -342,18 +333,7 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
-            const ctx = this.component.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.font = font.toFontString();
-            ctx.textBaseline = "top";
-            ctx.fillText(
-                text.value,
-                baseX + x.getValue(),
-                baseY + y.getValue() + font.getTopAdjust()
-            );
-            this.component.makeDirty();
+            this.doDrawText(text.value, x.getValue(), y.getValue(), rgba.getValue(), font);
             return BrsBoolean.True;
         },
     });
