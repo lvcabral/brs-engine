@@ -5,7 +5,7 @@ import { AAMember } from "../components/RoAssociativeArray";
 export class Scene extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "backgroundURI", type: "uri" },
-        { name: "backgroundColor", type: "string", value: "0x000000FF" },
+        { name: "backgroundColor", type: "string", value: "0x2F3140FF" },
         { name: "backExitsScene", type: "boolean", value: "true" },
         { name: "dialog", type: "node" },
         { name: "currentDesignResolution", type: "assocarray" },
