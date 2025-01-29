@@ -11,6 +11,7 @@ import {
     KeyEvent,
     Label,
     mGlobal,
+    RoBitmap,
     RoFontRegistry,
     RoMessagePort,
     RoSGNode,
@@ -203,6 +204,17 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             );
             if (!isNaN(backColor)) {
                 this.clearCanvas(backColor);
+            }
+            const backURI = this.sceneNode.getNodeFields().get("backgrounduri")?.getValue();
+            if (backURI instanceof BrsString) {
+                try {
+                    const bitmap = new RoBitmap(this.interpreter, backURI);
+                    this.drawImage(bitmap, BrsInvalid.Instance, 0, 0);
+                } catch (err: any) {
+                    this.interpreter.stderr.write(
+                        `error,Error loading bitmap:${backURI.value} - ${err.message}`
+                    );
+                }
             }
             // TODO: This needs to be recursive to handle nested nodes.
             this.sceneNode.getNodeChildren().forEach((node) => {
