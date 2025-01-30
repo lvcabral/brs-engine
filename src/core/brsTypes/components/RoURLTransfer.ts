@@ -1,37 +1,37 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { RoMessagePort } from "./RoMessagePort";
-import { BrsType, RoArray } from "..";
+import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoURLEvent } from "../events/RoURLEvent";
-import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AudioExt, VideoExt, getRokuOSVersion } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { getHost } from "../../interpreter/Network";
 import fileType from "file-type";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 /// #endif
-export class RoURLTransfer extends BrsComponent implements BrsValue {
+export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
+    readonly customHeaders: Map<string, string>;
     private readonly interpreter: Interpreter;
     private identity: number;
     private url: string;
     private host: string;
     private reqMethod: string;
     private failureReason: string;
-    private cookiesEnabled: boolean;
     private xhr: XMLHttpRequest;
     private freshConnection: boolean;
-    private customHeaders: Map<string, string>;
     private port?: RoMessagePort;
     private inFile: string[];
     private outFile: string[];
     private postBody: string[];
     private user?: string;
     private password?: string;
+    cookiesEnabled: boolean;
 
     constructor(interpreter: Interpreter) {
         super("roUrlTransfer");
@@ -41,13 +41,14 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
         this.host = "";
         this.reqMethod = "";
         this.failureReason = "";
-        this.cookiesEnabled = false;
         this.xhr = new XMLHttpRequest();
         this.freshConnection = false;
+        this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
         this.inFile = new Array<string>();
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
+        const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -85,15 +86,15 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
                 this.getUserAgent, // Since OS 12.5
             ],
             ifHttpAgent: [
-                this.addHeader,
-                this.setHeaders,
-                this.initClientCertificates,
-                this.setCertificatesFile,
-                this.setCertificatesDepth,
-                this.enableCookies,
-                this.getCookies,
-                this.addCookies,
-                this.clearCookies,
+                ifHttpAgent.addHeader,
+                ifHttpAgent.setHeaders,
+                ifHttpAgent.initClientCertificates,
+                ifHttpAgent.setCertificatesFile,
+                ifHttpAgent.setCertificatesDepth,
+                ifHttpAgent.enableCookies,
+                ifHttpAgent.getCookies,
+                ifHttpAgent.addCookies,
+                ifHttpAgent.clearCookies,
             ],
             ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
             ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],
@@ -787,136 +788,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue {
             const short = `${os.get("major")}.${os.get("minor")}`;
             const long = `${short}.${os.get("revision")}.${os.get("build")}-${os.get("plid")}`;
             return new BrsString(`Roku/DVP-${short} (${long})`);
-        },
-    });
-
-    // ifHttpAgent ---------------------------------------------------------------------------------------
-
-    /** Add the specified HTTP header to the list of headers that will be sent in the HTTP request.
-     *  If "x-roku-reserved-dev-id" is passed as a name, the value parameter is ignored and in its place,
-     *  the devId of the currently running app is used as the value.
-     */
-    private readonly addHeader = new Callable("addHeader", {
-        signature: {
-            args: [
-                new StdlibArgument("name", ValueKind.String),
-                new StdlibArgument("value", ValueKind.String),
-            ],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter, name: BrsString, value: BrsString) => {
-            if (name.value.toLowerCase() === "x-roku-reserved-dev-id") {
-                this.customHeaders.set(name.value, interpreter.deviceInfo.get("developerId"));
-            } else {
-                this.customHeaders.set(name.value, value.value);
-            }
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Each name/value in the passed AA is added as an HTTP header. */
-    private readonly setHeaders = new Callable("setHeaders", {
-        signature: {
-            args: [new StdlibArgument("headers", ValueKind.Dynamic)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter, headers: RoAssociativeArray) => {
-            this.customHeaders = new Map<string, string>();
-            headers.elements.forEach((value: BrsType, key: string) => {
-                if (key.toLowerCase() === "x-roku-reserved-dev-id") {
-                    this.customHeaders.set(key, interpreter.deviceInfo.get("developerId"));
-                } else {
-                    this.customHeaders.set(key, (value as BrsString).value);
-                }
-            });
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Initialize the object to send the Roku client certificate. */
-    private readonly initClientCertificates = new Callable("initClientCertificates", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Set the certificates file used for SSL to the .pem file specified. */
-    private readonly setCertificatesFile = new Callable("setCertificatesFile", {
-        signature: {
-            args: [new StdlibArgument("certificate", ValueKind.String)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, certificate: BrsString) => {
-            // SetCertificatesFile() parameter is ignored, default browser client certificate is be used."
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Sets the maximum depth of the certificate chain that will be accepted. */
-    private readonly setCertificatesDepth = new Callable("setCertificatesDepth", {
-        signature: {
-            args: [new StdlibArgument("depth", ValueKind.Int32)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, depth: Int32) => {
-            // This method is mocked for compatibility
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Causes any Set-Cookie headers returned from the request to be interpreted. */
-    private readonly enableCookies = new Callable("enableCookies", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            this.cookiesEnabled = true;
-            return BrsInvalid.Instance;
-        },
-    });
-
-    /** Returns any cookies from the cookie cache that match the specified domain and path. */
-    private readonly getCookies = new Callable("getCookies", {
-        signature: {
-            args: [
-                new StdlibArgument("domain", ValueKind.String),
-                new StdlibArgument("path", ValueKind.String),
-            ],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter, domain: BrsString, path: BrsString) => {
-            // This method is mocked for compatibility
-            return new RoArray([]);
-        },
-    });
-
-    /** Verifies that the certificate belongs to the host. */
-    private readonly addCookies = new Callable("addCookies", {
-        signature: {
-            args: [new StdlibArgument("cookies", ValueKind.Object)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, cookies: BrsType) => {
-            // This method is mocked for compatibility
-            // returns false to allow proper handling on BrightScript code
-            return BrsBoolean.False;
-        },
-    });
-
-    /** Removes all cookies from the cookie cache. */
-    private readonly clearCookies = new Callable("clearCookies", {
-        signature: {
-            args: [],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter) => {
-            // This method is mocked for compatibility
-            return BrsInvalid.Instance;
         },
     });
 }

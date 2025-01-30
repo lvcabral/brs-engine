@@ -4,7 +4,7 @@ import { BrsComponent } from "../components/BrsComponent";
 import { RoMessagePort } from "../components/RoMessagePort";
 
 /**
- * Interface IfSetMessagePort
+ * BrightScript Interface ffSetMessagePort
  * https://developer.roku.com/docs/references/brightscript/interfaces/ifsetmessageport.md
  */
 export class IfSetMessagePort {
