@@ -51,11 +51,22 @@ export class Poster extends Group {
         };
     }
 
-    renderNode(interpreter: Interpreter, draw2D: IfDraw2D, _fontRegistry: RoFontRegistry): void {
+    renderNode(
+        interpreter: Interpreter,
+        draw2D: IfDraw2D,
+        fontRegistry: RoFontRegistry,
+        origin: number[],
+        angle: number
+    ) {
         if (!this.isVisible()) {
             return;
         }
-        const rect = this.getBoundingRect();
+        const trans = this.getTranslation();
+        trans[0] += origin[0];
+        trans[1] += origin[1];
+        const size = this.getDimensions();
+        const rotation = angle + this.getRotation();
+
         const uri = this.fields.get("uri")?.getValue();
         if (uri instanceof BrsString && uri.value.trim() !== "") {
             let imageFile: BrsString | ArrayBuffer = uri;
@@ -65,9 +76,9 @@ export class Poster extends Group {
             try {
                 const bitmap = new RoBitmap(interpreter, imageFile);
                 if (bitmap.isValid()) {
-                    const scaleX = rect.width / bitmap.width;
-                    const scaleY = rect.height / bitmap.height;
-                    draw2D.doDrawScaledObject(rect.x, rect.y, scaleX, scaleY, bitmap);
+                    const scaleX = size.width / bitmap.width;
+                    const scaleY = size.height / bitmap.height;
+                    draw2D.doDrawScaledObject(trans[0], trans[1], scaleX, scaleY, bitmap);
                 }
             } catch (err: any) {
                 interpreter.stderr.write(
@@ -75,5 +86,8 @@ export class Poster extends Group {
                 );
             }
         }
+        this.children.forEach((node) => {
+            node.renderNode(interpreter, draw2D, fontRegistry, trans, rotation);
+        });
     }
 }

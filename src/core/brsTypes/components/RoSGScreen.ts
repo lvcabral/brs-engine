@@ -7,10 +7,8 @@ import {
     BrsNodeType,
     BrsType,
     createNodeByType,
-    Int32,
     KeyEvent,
     mGlobal,
-    RoBitmap,
     RoFontRegistry,
     RoMessagePort,
     Scene,
@@ -198,11 +196,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         // Handle Scene rendering
         if (this.isDirty && this.sceneNode) {
-            this.sceneNode.renderNode(this.interpreter, this.draw2D, this.fontRegistry);
-            // TODO: This needs to be recursive to handle nested nodes.
-            this.sceneNode.getNodeChildren().forEach((node) => {
-                node.renderNode(this.interpreter, this.draw2D, this.fontRegistry);
-            });
+            this.sceneNode.renderNode(this.interpreter, this.draw2D, this.fontRegistry, [0, 0], 0);
             this.finishDraw();
         }
         return events;

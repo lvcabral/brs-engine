@@ -38,12 +38,29 @@ export class Rectangle extends Group {
         };
     }
 
-    renderNode(_: Interpreter, draw2D: IfDraw2D, _fontRegistry: RoFontRegistry): void {
+    renderNode(
+        interpreter: Interpreter,
+        draw2D: IfDraw2D,
+        fontRegistry: RoFontRegistry,
+        origin: number[],
+        angle: number
+    ) {
         if (!this.isVisible()) {
             return;
         }
-        const rect = this.getBoundingRect();
+        const trans = this.getTranslation();
+        trans[0] += origin[0];
+        trans[1] += origin[1];
+        const size = this.getDimensions();
+        const rotation = angle + this.getRotation();
         const color = this.getColorFieldValue("color");
-        draw2D.doDrawRect(rect.x, rect.y, rect.width, rect.height, color);
+        if (rotation !== 0) {
+            draw2D.doDrawRotatedRect(trans[0], trans[1], size.width, size.height, color, rotation);
+        } else {
+            draw2D.doDrawRect(trans[0], trans[1], size.width, size.height, color);
+        }
+        this.children.forEach((node) => {
+            node.renderNode(interpreter, draw2D, fontRegistry, trans, rotation);
+        });
     }
 }

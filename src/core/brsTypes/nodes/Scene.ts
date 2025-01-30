@@ -34,10 +34,17 @@ export class Scene extends Group {
         return this.rect;
     }
 
-    renderNode(interpreter: Interpreter, draw2D: IfDraw2D, _: RoFontRegistry): void {
+    renderNode(
+        interpreter: Interpreter,
+        draw2D: IfDraw2D,
+        fontRegistry: RoFontRegistry,
+        origin: number[],
+        angle: number
+    ) {
         if (!this.isVisible()) {
             return;
         }
+        const rotation = angle + this.getRotation();
         const backColor = this.getColorFieldValue("backgroundcolor");
         draw2D.doClearCanvas(backColor);
         const backURI = this.fields.get("backgrounduri")?.getValue();
@@ -59,5 +66,8 @@ export class Scene extends Group {
                 );
             }
         }
+        this.children.forEach((node) => {
+            node.renderNode(interpreter, draw2D, fontRegistry, origin, rotation);
+        });
     }
 }
