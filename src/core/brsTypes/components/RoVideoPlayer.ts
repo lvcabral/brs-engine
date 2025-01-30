@@ -14,10 +14,12 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { BufferType, DataType, MediaEvent } from "../../common";
+import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
-export class RoVideoPlayer extends BrsComponent implements BrsValue {
+export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
+    readonly customHeaders: Map<string, string>;
     private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
@@ -27,6 +29,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
     private videoPosition: number;
     private videoProgress: number;
     private audioTracks: any[];
+    cookiesEnabled: boolean;
 
     constructor(interpreter: Interpreter) {
         super("roVideoPlayer");
@@ -38,10 +41,13 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
         this.videoPosition = 0;
         this.videoProgress = -1;
         this.audioTracks = [];
+        this.cookiesEnabled = false;
+        this.customHeaders = new Map<string, string>();
         postMessage(new Array<string>());
         postMessage("video,loop,false");
         postMessage("video,next,-1");
         postMessage("video,mute,false");
+        const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -68,6 +74,17 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue {
                 this.setTimedMetadataForKeys,
                 this.getCaptionRenderer,
                 this.setMacrovisionLevel,
+            ],
+            ifHttpAgent: [
+                ifHttpAgent.addHeader,
+                ifHttpAgent.setHeaders,
+                ifHttpAgent.initClientCertificates,
+                ifHttpAgent.setCertificatesFile,
+                ifHttpAgent.setCertificatesDepth,
+                ifHttpAgent.enableCookies,
+                ifHttpAgent.getCookies,
+                ifHttpAgent.addCookies,
+                ifHttpAgent.clearCookies,
             ],
             ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
             ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],

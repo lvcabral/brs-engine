@@ -4,7 +4,7 @@ import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 
 /**
- * Interface IfArray
+ * BrightScript Interface ifArray
  * https://developer.roku.com/docs/references/brightscript/interfaces/ifarray.md
  */
 export class IfArray {

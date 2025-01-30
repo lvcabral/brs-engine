@@ -16,7 +16,7 @@ import { Interpreter } from "../../interpreter";
 import { vsprintf } from "sprintf-js";
 
 /**
- * Interface IfToStr
+ * BrightScript Interface ifToStr
  * https://developer.roku.com/docs/references/brightscript/interfaces/iftostr.md
  */
 export class IfToStr {
