@@ -25,7 +25,7 @@ export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRende
 export type BrsImageData = ImageData | NodeImageData;
 
 /**
- * Interface IFDraw2D
+ * Interface ifDraw2D
  * https://developer.roku.com/docs/references/brightscript/interfaces/ifdraw2d.md
  */
 export class IfDraw2D {
@@ -33,6 +33,49 @@ export class IfDraw2D {
 
     constructor(component: BrsDraw2D) {
         this.component = component;
+    }
+
+    doClearCanvas(rgba: number) {
+        this.component.clearCanvas(rgba);
+    }
+
+    doDrawScaledObject(
+        x: number,
+        y: number,
+        scaleX: number,
+        scaleY: number,
+        object: BrsComponent,
+        rgba?: number
+    ): boolean {
+        const ctx = this.component.getContext();
+        const didDraw = this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
+        ctx.globalAlpha = 1.0;
+        return didDraw;
+    }
+
+    doDrawRect(x: number, y: number, width: number, height: number, rgba: number) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
+        const ctx = this.component.getContext();
+        if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
+            ctx.clearRect(x, y, width, height);
+            ctx.fillStyle = rgbaIntToHex(rgba, true);
+        } else {
+            ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        }
+        ctx.fillRect(baseX + x, baseY + y, width, height);
+        this.component.makeDirty();
+    }
+
+    doDrawText(text: string, x: number, y: number, rgba: number, font: RoFont) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
+        const ctx = this.component.getContext();
+        ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        ctx.font = font.toFontString();
+        ctx.textBaseline = "top";
+        ctx.fillText(text, baseX + x, baseY + y + font.getTopAdjust());
+        this.component.makeDirty();
     }
 
     /** Clear the bitmap, and fill with the specified RGBA color */
@@ -66,7 +109,14 @@ export class IfDraw2D {
             rgba: Int32 | BrsInvalid
         ) => {
             const ctx = this.component.getContext();
-            const didDraw = this.component.drawImage(object, rgba, x.getValue(), y.getValue());
+            const didDraw = this.component.drawImage(
+                object,
+                x.getValue(),
+                y.getValue(),
+                1,
+                1,
+                rgba instanceof Int32 ? rgba.getValue() : undefined
+            );
             ctx.globalAlpha = 1.0;
             return BrsBoolean.from(didDraw);
         },
@@ -95,10 +145,10 @@ export class IfDraw2D {
             const didDraw = drawRotatedObject(
                 this.component,
                 object,
-                rgba,
                 x.getValue(),
                 y.getValue(),
-                theta.getValue()
+                theta.getValue(),
+                rgba instanceof Int32 ? rgba.getValue() : undefined
             );
             this.component.makeDirty();
             return BrsBoolean.from(didDraw);
@@ -130,11 +180,11 @@ export class IfDraw2D {
             const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
-                rgba,
                 x.getValue(),
                 y.getValue(),
                 scaleX.getValue(),
-                scaleY.getValue()
+                scaleY.getValue(),
+                rgba instanceof Int32 ? rgba.getValue() : undefined
             );
             ctx.globalAlpha = 1.0;
             return BrsBoolean.from(didDraw);
@@ -174,11 +224,11 @@ export class IfDraw2D {
             ctx.rotate(angleInRad);
             const didDraw = this.component.drawImage(
                 object,
-                rgba,
                 0,
                 0,
                 scaleX.getValue(),
-                scaleY.getValue()
+                scaleY.getValue(),
+                rgba instanceof Int32 ? rgba.getValue() : undefined
             );
             ctx.globalAlpha = 1.0;
             ctx.restore();
@@ -439,11 +489,11 @@ export interface BrsDraw2D {
 
     drawImage(
         object: BrsComponent,
-        rgba: Int32 | BrsInvalid,
         x: number,
         y: number,
         scaleX?: number,
-        scaleY?: number
+        scaleY?: number,
+        rgba?: number
     ): boolean;
 
     makeDirty(): void;
@@ -455,19 +505,19 @@ export interface BrsDraw2D {
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
 const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
 
-function setContextAlpha(ctx: BrsCanvasContext2D, rgba: Int32 | BrsInvalid) {
-    if (rgba instanceof Int32) {
-        const alpha = rgba.getValue() & 255;
+function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number) {
+    if (rgba) {
+        const alpha = rgba & 255;
         if (alpha < 255) {
             ctx.globalAlpha = alpha / 255;
         }
     }
 }
 
-function getCanvasFromDraw2d(object: BrsDraw2D, rgba: Int32 | BrsInvalid): BrsCanvas {
+function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
     let cvs: BrsCanvas;
-    if (rgba instanceof Int32 && !(object instanceof RoScreen)) {
-        cvs = object.getRgbaCanvas(rgba.getValue());
+    if (rgba !== undefined && !isNaN(rgba) && !(object instanceof RoScreen)) {
+        cvs = object.getRgbaCanvas(rgba);
     } else {
         cvs = object.getCanvas();
     }
@@ -638,11 +688,11 @@ function getDrawChunks(
 export function drawObjectToComponent(
     component: BrsDraw2D | RoCompositor,
     object: BrsComponent,
-    rgba: Int32 | BrsInvalid,
     x: number,
     y: number,
     scaleX: number = 1,
-    scaleY: number = 1
+    scaleY: number = 1,
+    rgba?: number
 ): boolean {
     const ctx = component.getContext();
     const alphaEnable = component.getCanvasAlpha();
@@ -711,17 +761,17 @@ export function drawImageToContext(
 export function drawRotatedObject(
     component: BrsDraw2D,
     object: BrsComponent,
-    rgba: Int32 | BrsInvalid,
     x: number,
     y: number,
-    angle: number
+    angle: number,
+    rgba?: number
 ): boolean {
     const ctx = component.getContext();
     const angleInRad = (-angle * Math.PI) / 180;
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angleInRad);
-    const didDraw = component.drawImage(object, rgba, 0, 0);
+    const didDraw = component.drawImage(object, 0, 0, 1, 1, rgba);
     ctx.restore();
     return didDraw;
 }

@@ -200,14 +200,14 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
 
     drawImage(
         object: BrsComponent,
-        rgba: Int32 | BrsInvalid,
         x: number,
         y: number,
         scaleX: number = 1,
-        scaleY: number = 1
+        scaleY: number = 1,
+        rgba?: number
     ): boolean {
         this.rgbaRedraw = true;
-        return drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba);
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {

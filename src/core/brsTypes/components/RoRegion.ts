@@ -161,13 +161,13 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
 
     drawImage(
         object: BrsComponent,
-        rgba: Int32 | BrsInvalid,
         x: number,
         y: number,
         scaleX: number = 1,
-        scaleY: number = 1
+        scaleY: number = 1,
+        rgba?: number
     ) {
-        const isDirty = drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        const isDirty = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba);
         if (isDirty) {
             this.bitmap.makeDirty();
         }

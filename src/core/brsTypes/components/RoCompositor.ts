@@ -167,7 +167,6 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                             drawObjectToComponent(
                                 this,
                                 sprite.getRegionObject(),
-                                BrsInvalid.Instance,
                                 sprite.getPosX(),
                                 sprite.getPosY()
                             );
