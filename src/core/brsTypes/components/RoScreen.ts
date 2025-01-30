@@ -159,13 +159,13 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     drawImage(
         object: BrsComponent,
-        rgba: Int32 | BrsInvalid,
         x: number,
         y: number,
         scaleX: number = 1,
-        scaleY: number = 1
+        scaleY: number = 1,
+        rgba?: number
     ): boolean {
-        this.isDirty = drawObjectToComponent(this, object, rgba, x, y, scaleX, scaleY);
+        this.isDirty = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba);
         return this.isDirty;
     }
 
