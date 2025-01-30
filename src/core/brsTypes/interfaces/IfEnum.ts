@@ -4,7 +4,7 @@ import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable } from "../Callable";
 
 /**
- * Interface IfEnum
+ * BrightScript Interface ifEnum
  * https://developer.roku.com/docs/references/brightscript/interfaces/ifenum.md
  */
 export class IfEnum {

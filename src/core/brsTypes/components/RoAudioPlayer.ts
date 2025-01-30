@@ -12,23 +12,29 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { DataType } from "../../common";
+import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
-export class RoAudioPlayer extends BrsComponent implements BrsValue {
+export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
+    readonly customHeaders: Map<string, string>;
     private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private audioFlags: number;
+    cookiesEnabled: boolean;
 
     constructor(interpreter: Interpreter) {
         super("roAudioPlayer");
         this.interpreter = interpreter;
         this.contentList = new Array();
         this.audioFlags = -1;
+        this.cookiesEnabled = false;
+        this.customHeaders = new Map<string, string>();
         postMessage(new Array<string>());
         postMessage("audio,loop,false");
         postMessage("audio,next,-1");
+        const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -44,6 +50,17 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue {
                 this.setNext,
                 this.seek,
                 this.setTimedMetadataForKeys,
+            ],
+            ifHttpAgent: [
+                ifHttpAgent.addHeader,
+                ifHttpAgent.setHeaders,
+                ifHttpAgent.initClientCertificates,
+                ifHttpAgent.setCertificatesFile,
+                ifHttpAgent.setCertificatesDepth,
+                ifHttpAgent.enableCookies,
+                ifHttpAgent.getCookies,
+                ifHttpAgent.addCookies,
+                ifHttpAgent.clearCookies,
             ],
             ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
             ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],
