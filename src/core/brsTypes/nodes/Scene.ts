@@ -4,7 +4,7 @@ import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { RoFontRegistry } from "../components/RoFontRegistry";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BrsInvalid, BrsString, RoBitmap } from "..";
+import { BrsString, RoBitmap } from "..";
 import { download } from "../../interpreter/Network";
 
 export class Scene extends Group {
@@ -48,9 +48,11 @@ export class Scene extends Group {
             }
             try {
                 const bitmap = new RoBitmap(interpreter, imageFile);
-                const scaleX = this.width / bitmap.width;
-                const scaleY = this.height / bitmap.height;
-                draw2D.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap, BrsInvalid.Instance);
+                if (bitmap.isValid()) {
+                    const scaleX = this.width / bitmap.width;
+                    const scaleY = this.height / bitmap.height;
+                    draw2D.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap);
+                }
             } catch (err: any) {
                 interpreter.stderr.write(
                     `error,Error loading bitmap:${backURI.value} - ${err.message}`
