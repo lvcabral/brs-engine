@@ -67,6 +67,26 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
+    doDrawRotatedRect(
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        rgba: number,
+        rotation: number
+    ) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.translate(baseX + x, baseY + y); // Translate to the top-left corner
+        ctx.rotate(-rotation); // Apply the rotation
+        ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        ctx.fillRect(0, 0, width, height); // Draw the rectangle at the origin
+        ctx.restore();
+        this.component.makeDirty();
+    }
+
     doDrawText(text: string, x: number, y: number, rgba: number, font: RoFont) {
         const baseX = this.component.x;
         const baseY = this.component.y;
@@ -75,6 +95,28 @@ export class IfDraw2D {
         ctx.font = font.toFontString();
         ctx.textBaseline = "top";
         ctx.fillText(text, baseX + x, baseY + y + font.getTopAdjust());
+        this.component.makeDirty();
+    }
+
+    doDrawRotatedText(
+        text: string,
+        x: number,
+        y: number,
+        rgba: number,
+        font: RoFont,
+        rotation: number
+    ) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.translate(baseX + x, baseY + y);
+        ctx.rotate(-rotation);
+        ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        ctx.font = font.toFontString();
+        ctx.textBaseline = "top";
+        ctx.fillText(text, 0, font.getTopAdjust());
+        ctx.restore();
         this.component.makeDirty();
     }
 

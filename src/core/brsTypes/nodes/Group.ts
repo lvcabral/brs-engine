@@ -1,5 +1,7 @@
 import { RoSGNode, FieldModel } from "../components/RoSGNode";
-import { Int32, Float, RoArray, AAMember, BrsBoolean } from "..";
+import { Int32, Float, RoArray, AAMember, BrsBoolean, RoFontRegistry } from "..";
+import { Interpreter } from "../../interpreter";
+import { IfDraw2D } from "../interfaces/IfDraw2D";
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -42,5 +44,26 @@ export class Group extends RoSGNode {
             });
         }
         return translation;
+    }
+
+    getRotation() {
+        const rotation = this.fields.get("rotation")?.getValue();
+        return rotation instanceof Float ? rotation.getValue() : 0;
+    }
+
+    renderNode(
+        interpreter: Interpreter,
+        draw2D: IfDraw2D,
+        fontRegistry: RoFontRegistry,
+        origin: number[],
+        angle: number
+    ) {
+        const trans = this.getTranslation();
+        trans[0] += origin[0];
+        trans[1] += origin[1];
+        const rotation = angle + this.getRotation();
+        this.children.forEach((node) => {
+            node.renderNode(interpreter, draw2D, fontRegistry, trans, rotation);
+        });
     }
 }

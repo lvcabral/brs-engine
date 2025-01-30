@@ -411,7 +411,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.isSubtype,
                 this.parentSubtype,
             ],
-            ifSGNodeBoundingRect: [this.boundingRect],
+            ifSGNodeBoundingRect: [
+                this.boundingRect,
+                this.localBoundingRect,
+                this.sceneBoundingRect,
+            ],
             // TODO: Implement the remaining `ifSGNodeBoundingRect` methods
         });
     }
@@ -545,9 +549,16 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return false;
     }
 
-    renderNode(interpreter: Interpreter, draw2D: IfDraw2D, fontRegistry: RoFontRegistry) {
-        // To be implemented by subclasses
-        return;
+    renderNode(
+        interpreter: Interpreter,
+        draw2D: IfDraw2D,
+        fontRegistry: RoFontRegistry,
+        origin: number[],
+        angle: number
+    ) {
+        this.children.forEach((node) => {
+            node.renderNode(interpreter, draw2D, fontRegistry, origin, angle);
+        });
     }
 
     /* searches the node tree for a node with the given id */
@@ -1678,6 +1689,28 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Returns the Node bounding rectangle */
     private boundingRect = new Callable("boundingRect", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return toAssociativeArray(this.getBoundingRect());
+        },
+    });
+
+    /* Returns the Node local bounding rectangle */
+    private localBoundingRect = new Callable("localBoundingRect", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return toAssociativeArray(this.getBoundingRect());
+        },
+    });
+
+    /* Returns the bounding rectangle for scene components. */
+    private sceneBoundingRect = new Callable("sceneBoundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
