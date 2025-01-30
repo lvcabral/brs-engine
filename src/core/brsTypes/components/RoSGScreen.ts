@@ -71,7 +71,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.fontRegistry = new RoFontRegistry(interpreter);
         this.lastKey = -1;
         this.keysBuffer = [];
-        this.alphaEnable = false;
+        this.alphaEnable = true;
         this.isDirty = false;
         const platform = interpreter.deviceInfo.get("platform");
         this.disposeCanvas = platform?.inIOS ?? false;

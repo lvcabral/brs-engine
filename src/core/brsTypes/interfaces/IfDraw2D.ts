@@ -53,6 +53,33 @@ export class IfDraw2D {
         return didDraw;
     }
 
+    doDrawRotatedObject(
+        x: number,
+        y: number,
+        scaleX: number,
+        scaleY: number,
+        angle: number,
+        object: BrsComponent,
+        rgba?: number
+    ) {
+        console.log(
+            "doDrawRotatedObject",
+            x,
+            y,
+            scaleX,
+            scaleY,
+            angle,
+            object.getComponentName(),
+            rgba
+        );
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-angle);
+        this.component.drawImage(object, 0, 0, scaleX, scaleY, rgba);
+        ctx.restore();
+    }
+
     doDrawRect(x: number, y: number, width: number, height: number, rgba: number) {
         const baseX = this.component.x;
         const baseY = this.component.y;

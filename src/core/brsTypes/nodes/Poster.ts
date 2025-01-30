@@ -76,9 +76,22 @@ export class Poster extends Group {
             try {
                 const bitmap = new RoBitmap(interpreter, imageFile);
                 if (bitmap.isValid()) {
-                    const scaleX = size.width / bitmap.width;
-                    const scaleY = size.height / bitmap.height;
-                    draw2D.doDrawScaledObject(trans[0], trans[1], scaleX, scaleY, bitmap);
+                    const scaleX = size.width !== 0 ? size.width / bitmap.width : 1;
+                    const scaleY = size.height !== 0 ? size.height / bitmap.height : 1;
+                    if (rotation !== 0) {
+                        draw2D.doDrawRotatedObject(
+                            trans[0],
+                            trans[1],
+                            scaleX,
+                            scaleY,
+                            rotation,
+                            bitmap
+                        );
+                    } else {
+                        draw2D.doDrawScaledObject(trans[0], trans[1], scaleX, scaleY, bitmap);
+                    }
+                } else {
+                    interpreter.stderr.write(`error,Invalid bitmap:${uri.value}`);
                 }
             } catch (err: any) {
                 interpreter.stderr.write(
