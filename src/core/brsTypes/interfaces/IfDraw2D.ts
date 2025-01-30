@@ -62,16 +62,6 @@ export class IfDraw2D {
         object: BrsComponent,
         rgba?: number
     ) {
-        console.log(
-            "doDrawRotatedObject",
-            x,
-            y,
-            scaleX,
-            scaleY,
-            angle,
-            object.getComponentName(),
-            rgba
-        );
         const ctx = this.component.getContext();
         ctx.save();
         ctx.translate(x, y);
