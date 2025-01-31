@@ -6,15 +6,8 @@ There are several features from the **BrightScript** language and components tha
 
 * RSG (Roku SceneGraph) SDK components are not currently supported.
 * The following components are also not implemented yet:
-  * `roAudioGuide`
-  * `roDataGramSocket`
-  * `roDSA`
-  * `roHttpAgent`
-  * `roMicrophone`
-  * `roRSA`
-  * `roTextToSpeech`
-  * `roTextureManager`
-  * `roTextureRequest`
+  * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
+  * Signing Algorithm components: `roDSA` and `roRSA`
 * Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
   * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
   * If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
@@ -37,7 +30,7 @@ There are several features from the **BrightScript** language and components tha
 * The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not.
 * The `roFileSystem` is fully functional, but the message port events are not yet implemented.
-* The `roStreamSocket` component is mocked, was only implemented to prevent crash on apps that references it.
+* The `roStreamSocket` and `roDataGramSocket` components are mocked, and were only implemented to prevent crash on apps that use those.
 * The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.
 * The string `mod` cannot be used as variable or function parameter name, because it conflicts with remainder operator `Mod` (Roku devices allows that).
 * SDK 1.0 deprecated components are not supported, but will be implemented in the future as a legacy apps preservation initiative.
