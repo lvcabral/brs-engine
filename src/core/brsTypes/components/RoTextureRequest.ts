@@ -37,7 +37,6 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
 
     constructor(uri: BrsString) {
         super("roTextureRequest");
-        //this.identity = genHashCode(uri.value);
         this.identity = nextIdentity++;
         this.uri = uri.value;
         this.async = true;
