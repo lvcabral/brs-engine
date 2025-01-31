@@ -7,11 +7,22 @@ import { XMLHttpRequest } from "../polyfill/XMLHttpRequest";
  * @param url url of the file to be downloaded
  * @param type return type (eg. arraybuffer)
  */
-export function download(url: string, type: XMLHttpRequestResponseType) {
+export function download(
+    url: string,
+    type: XMLHttpRequestResponseType,
+    customHeaders?: Map<string, string>,
+    cookiesEnabled?: boolean
+): any {
     try {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Note: synchronous
         xhr.responseType = type;
+        customHeaders?.forEach((value: string, key: string) => {
+            xhr.setRequestHeader(key, value);
+        });
+        if (cookiesEnabled !== undefined) {
+            xhr.withCredentials = cookiesEnabled;
+        }
         xhr.send();
         if (xhr.status !== 200) {
             postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText}`);

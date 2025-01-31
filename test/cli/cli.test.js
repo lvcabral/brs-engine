@@ -61,6 +61,35 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Texture Manager Test", async () => {
+        let command = [
+            "node",
+            path.join(process.cwd(), "bin", "brs.cli.js"),
+            "roTextureManager.brs",
+            "-c 0",
+        ].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "request id 1",
+            "request state: 0",
+            "requested: 0",
+            "msg id 1",
+            "msg state: 3",
+            "msg URI:https://brsfiddle.net/images/gif-example-file-500x500.gif",
+            "Image downloaded!",
+            "msg id 1",
+            "msg state: 3",
+            "msg URI:https://brsfiddle.net/images/gif-example-file-500x500.gif",
+            "Image resized!",
+            "------ Finished 'roTextureManager.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("prints syntax errors once", async () => {
         let folder = "errors";
         let filename = "uninitialized-object.brs";

@@ -42,7 +42,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private rgbaLast: number;
     rgbaRedraw: boolean;
 
-    constructor(interpreter: Interpreter, param: BrsComponent) {
+    constructor(interpreter: Interpreter, param: BrsType | ArrayBuffer | Buffer) {
         super("roBitmap");
         this.alphaEnable = false;
         this.rgbaLast = 0;
@@ -54,15 +54,19 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.height = 1;
         this.name = "";
         let image;
-        if (param instanceof BrsString) {
+        if (param instanceof ArrayBuffer || param instanceof Buffer) {
+            image = param;
+        } else if (param instanceof BrsString) {
             try {
                 image = interpreter.fileSystem?.readFileSync(param.value);
                 this.alphaEnable = false;
                 this.name = param.value;
             } catch (err: any) {
-                interpreter.stderr.write(
-                    `error,Error loading bitmap:${param.value} - ${err.message}`
-                );
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(
+                        `error,Error loading bitmap:${param.value} - ${err.message}`
+                    );
+                }
                 this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
@@ -91,7 +95,9 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
         } else {
-            interpreter.stderr.write(`warning,Invalid roBitmap param:${param}`);
+            if (interpreter.isDevMode) {
+                interpreter.stderr.write(`warning,Invalid roBitmap param:${typeof param}`);
+            }
             this.valid = false;
         }
         this.canvas = createNewCanvas(this.width, this.height);
@@ -155,11 +161,15 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                     imageData.data.set(new Uint8Array(data));
                     putImageAtPos(imageData, this.context, 0, 0);
                 } else {
-                    interpreter.stderr.write(`warning,Invalid image format: ${type?.mime}`);
+                    if (interpreter.isDevMode) {
+                        interpreter.stderr.write(`warning,Invalid image format: ${type?.mime}`);
+                    }
                     this.valid = false;
                 }
             } catch (err: any) {
-                interpreter.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
+                if (interpreter.isDevMode) {
+                    interpreter.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
+                }
                 this.valid = false;
             }
         }
@@ -303,7 +313,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 }
 
-export function createBitmap(interpreter: Interpreter, param: BrsComponent) {
+export function createBitmap(interpreter: Interpreter, param: BrsType) {
     const bmp = new RoBitmap(interpreter, param);
     return bmp.isValid() ? bmp : BrsInvalid.Instance;
 }

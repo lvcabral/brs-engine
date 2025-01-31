@@ -692,7 +692,8 @@ export function drawObjectToComponent(
     y: number,
     scaleX: number = 1,
     scaleY: number = 1,
-    rgba?: number
+    rgba?: number,
+    scaleMode: number = 0
 ): boolean {
     const ctx = component.getContext();
     const alphaEnable = component.getCanvasAlpha();
@@ -710,7 +711,7 @@ export function drawObjectToComponent(
     if (object instanceof RoRegion) {
         ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
     } else {
-        ctx.imageSmoothingEnabled = false;
+        ctx.imageSmoothingEnabled = scaleMode === 1;
     }
 
     const destOffset = getDrawOffset(component);
