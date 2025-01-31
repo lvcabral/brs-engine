@@ -1,4 +1,4 @@
-import { BrsComponent } from "./BrsComponent";
+import { BrsType } from "..";
 import { RoAppManager } from "./RoAppManager";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
@@ -23,6 +23,8 @@ import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
 import { createRegion } from "./RoRegion";
 import { createScreen, RoScreen } from "./RoScreen";
+import { getTextureManager } from "./RoTextureManager";
+import { RoTextureRequest } from "./RoTextureRequest";
 import { RoImageMetadata } from "./RoImageMetadata";
 import { RoAudioMetadata } from "./RoAudioMetadata";
 import { RoAudioPlayer } from "./RoAudioPlayer";
@@ -132,8 +134,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roTimespan", (_: Interpreter) => new RoTimespan()],
     [
         "roRegex",
-        (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
-            new RoRegex(expression, flags),
+        (_: Interpreter, expression: BrsString, flags: BrsString) => new RoRegex(expression, flags),
         2,
     ],
     ["roString", (_: Interpreter) => new RoString(), -1],
@@ -144,11 +145,9 @@ export const BrsObjects = new BrsObjectsMap([
     ["roLongInteger", (_: Interpreter, literal: Int64) => new RoLongInteger(literal), -1],
     ["roFunction", (_: Interpreter, sub: Callable) => new RoFunction(sub)],
     ["roPath", (_: Interpreter, path: BrsString) => new RoPath(path), 1],
-    [
-        "roBitmap",
-        (interpreter: Interpreter, param: BrsComponent) => createBitmap(interpreter, param),
-        1,
-    ],
+    ["roBitmap", (interpreter: Interpreter, param: BrsType) => createBitmap(interpreter, param), 1],
+    ["roTextureRequest", (_: Interpreter, url: BrsString) => new RoTextureRequest(url), 1],
+    ["roTextureManager", (interpreter: Interpreter) => getTextureManager(interpreter)],
     ["roImageMetadata", (_: Interpreter) => new RoImageMetadata()],
     ["roMessagePort", (_: Interpreter) => new RoMessagePort()],
     ["roInput", (interpreter: Interpreter) => new RoInput(interpreter)],

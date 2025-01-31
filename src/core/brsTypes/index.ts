@@ -32,6 +32,7 @@ import { RoSystemLogEvent } from "./events/RoSystemLogEvent";
 import { RoInputEvent } from "./events/RoInputEvent";
 import { RoAudioPlayerEvent } from "./events/RoAudioPlayerEvent";
 import { RoVideoPlayerEvent } from "./events/RoVideoPlayerEvent";
+import { RoTextureRequestEvent } from "./events/RoTextureRequestEvent";
 import { RoChannelStoreEvent } from "./events/RoChannelStoreEvent";
 import { RoDeviceInfoEvent } from "./events/RoDeviceInfoEvent";
 import { RoCECStatusEvent } from "./events/RoCECStatusEvent";
@@ -94,6 +95,8 @@ export * from "./components/RoAppMemoryMonitor";
 export * from "./components/RoFileSystem";
 export * from "./components/RoChannelStore";
 export * from "./components/RoSocketAddress";
+export * from "./components/RoTextureRequest";
+export * from "./components/RoTextureManager";
 export * from "./events/RoURLEvent";
 export * from "./events/RoInputEvent";
 export * from "./events/RoAudioPlayerEvent";
@@ -229,6 +232,7 @@ export function isBrsEvent(value: BrsType): value is BrsEvent {
         value instanceof RoInputEvent ||
         value instanceof RoAudioPlayerEvent ||
         value instanceof RoVideoPlayerEvent ||
+        value instanceof RoTextureRequestEvent ||
         value instanceof RoChannelStoreEvent ||
         value instanceof RoDeviceInfoEvent ||
         value instanceof RoCECStatusEvent ||
@@ -244,6 +248,7 @@ export type BrsEvent =
     | RoInputEvent
     | RoAudioPlayerEvent
     | RoVideoPlayerEvent
+    | RoTextureRequestEvent
     | RoChannelStoreEvent
     | RoDeviceInfoEvent
     | RoCECStatusEvent
