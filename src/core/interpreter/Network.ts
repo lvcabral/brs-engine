@@ -7,7 +7,12 @@ import { XMLHttpRequest } from "../polyfill/XMLHttpRequest";
  * @param url url of the file to be downloaded
  * @param type return type (eg. arraybuffer)
  */
-export function download(url: string, type: XMLHttpRequestResponseType, customHeaders?: Map<string, string>, cookiesEnabled?: boolean): any {
+export function download(
+    url: string,
+    type: XMLHttpRequestResponseType,
+    customHeaders?: Map<string, string>,
+    cookiesEnabled?: boolean
+): any {
     try {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Note: synchronous
