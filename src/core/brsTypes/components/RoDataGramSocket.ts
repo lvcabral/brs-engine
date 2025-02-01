@@ -21,11 +21,14 @@ import {
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import * as net from "net";
 
-export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket {
+export class RoDataGramSocket extends BrsComponent implements BrsValue, BrsSocket {
     readonly kind = ValueKind.Object;
     readonly socket?: net.Socket;
     readonly identity: number;
     private readonly interpreter: Interpreter;
+    private broadcast: boolean;
+    private multicastLoop: boolean;
+    private multicastTTL: number;
     address?: RoSocketAddress;
     sendToAddress?: RoSocketAddress;
     ttl: number;
@@ -38,8 +41,12 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
     errorCode: number;
 
     constructor(interpreter: Interpreter) {
-        super("roStreamSocket");
+        super("roDataGramSocket");
         this.interpreter = interpreter;
+        this.errorCode = 0;
+        this.broadcast = false;
+        this.multicastLoop = false;
+        this.multicastTTL = 0;
         this.ttl = 0;
         this.reuseAddr = false;
         this.inline = false;
@@ -49,10 +56,9 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
         this.recvTimeout = 0;
         try {
             this.socket = new net.Socket();
-            this.errorCode = 0;
         } catch (err: any) {
             interpreter.stderr.write(
-                `warning,[roStreamSocket] Sockets are not supported in this environment.`
+                `warning,[roDataGramSocket] Sockets are not supported in this environment.`
             );
             this.errorCode = 3474;
         }
@@ -64,12 +70,15 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
         const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
-            ifSocketConnection: [
-                this.listen,
-                this.isListening,
-                this.connect,
-                this.accept,
-                this.isConnected,
+            ifSocketCastOption: [
+                this.getBroadcast,
+                this.setBroadcast,
+                this.joinGroup,
+                this.dropGroup,
+                this.getMulticastLoop,
+                this.setMulticastLoop,
+                this.getMulticastTTL,
+                this.setMulticastTTL,
             ],
             ifSocket: [
                 ifSocket.send,
@@ -129,70 +138,100 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
     }
 
     toString(parent?: BrsType): string {
-        return "<Component: roStreamSocket>";
+        return "<Component: roDataGramSocket>";
     }
 
     equalTo(other: BrsType): BrsBoolean {
         return BrsBoolean.False;
     }
 
-    /** Puts the socket into the listen state. */
-    private readonly listen = new Callable("listen", {
-        signature: {
-            args: [new StdlibArgument("backlog", ValueKind.Int32)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter, backlog: Int32) => {
-            // Implementation of listen method
-            return BrsBoolean.True;
-        },
-    });
-
-    /** Checks whether if the listen() method has been successfully called on this socket. */
-    private readonly isListening = new Callable("isListening", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
+    /** Checks whether broadcast messages may be sent or received. */
+    private readonly getBroadcast = new Callable("getBroadcast", {
+        signature: { args: [], returns: ValueKind.Boolean },
         impl: (_: Interpreter) => {
-            // Implementation of isListening method
-            return BrsBoolean.False;
+            return BrsBoolean.from(this.broadcast);
         },
     });
 
-    /** Establishes a connection. */
-    private readonly connect = new Callable("connect", {
+    /** Enables broadcast messages to be sent or received. */
+    private readonly setBroadcast = new Callable("setBroadcast", {
         signature: {
-            args: [new StdlibArgument("address", ValueKind.Object)],
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, address: RoSocketAddress) => {
-            this.address = address;
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            this.broadcast = enable.toBoolean();
             return BrsBoolean.True;
         },
     });
 
-    /** Accepts an incoming connection */
-    private readonly accept = new Callable("accept", {
+    /** Joins a specific multicast group. */
+    private readonly joinGroup = new Callable("joinGroup", {
         signature: {
-            args: [],
+            args: [new StdlibArgument("ipAddress", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, ipAddress: RoSocketAddress) => {
+            this.address = ipAddress;
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Drops out of a specific multicast group. */
+    private readonly dropGroup = new Callable("dropGroup", {
+        signature: {
+            args: [new StdlibArgument("ipAddress", ValueKind.Object)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
-            // Implementation of accept method
+        impl: (_: Interpreter, ipAddress: RoSocketAddress) => {
+            // Implementation of dropGroup method
             return BrsInvalid.Instance;
         },
     });
 
-    /** Checks if the socket is connected */
-    private readonly isConnected = new Callable("isConnected", {
+    /** Checks whether multicast messages are enabled for local loopback. */
+    private readonly getMulticastLoop = new Callable("getMulticastLoop", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            const connected = !this.socket?.connecting && !this.socket?.destroyed;
-            return BrsBoolean.from(connected);
+            return BrsBoolean.from(this.multicastLoop);
+        },
+    });
+
+    /** Enables local loopback of multicast messages. */
+    private readonly setMulticastLoop = new Callable("setMulticastLoop", {
+        signature: {
+            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, enable: BrsBoolean) => {
+            this.multicastLoop = enable.toBoolean();
+            return BrsBoolean.True;
+        },
+    });
+
+    /** Returns the TTL integer value for multicast messages. */
+    private readonly getMulticastTTL = new Callable("getMulticastTTL", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(this.multicastTTL);
+        },
+    });
+
+    /** Enables local loopback of multicast messages. */
+    private readonly setMulticastTTL = new Callable("setMulticastTTL", {
+        signature: {
+            args: [new StdlibArgument("ttl", ValueKind.Int32)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, ttl: Int32) => {
+            this.multicastTTL = ttl.getValue();
+            return BrsBoolean.True;
         },
     });
 }
