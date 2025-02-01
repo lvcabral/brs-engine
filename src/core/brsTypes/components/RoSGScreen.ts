@@ -193,6 +193,8 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (key.value === "back" && !handled) {
                 events.push(new RoSGScreenEvent(BrsBoolean.True));
             }
+            // TODO: Make the scene dirty only if changes were made in Nodes
+            this.isDirty = true;
         }
         // Handle Scene rendering
         if (this.isDirty && this.sceneNode) {
