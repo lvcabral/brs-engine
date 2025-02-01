@@ -1,10 +1,25 @@
 # Changelog
 
+<a name="v1.8.5"></a>
+
+## [v1.8.5 - Implemented `roTextureManager`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.5) - 31 January 2025
+
+This release brings more refactoring, with the Event components being moved to a separate folder, and the implementation of `roTextureManager`. As the development of the next major version already started, with support for SceneGraph, some changes were done in `ifDraw2D` to allow the reuse of its graphical capabilities on the Nodes rendering. 
+I believe this is a stable state of the `core` library, and any Roku app developed using the Draw 2D API should be able to perform well in multiple platforms.
+
+### Release Changes
+
+* Implemented `ifHttpAgent` as a separate interface module by [@lvcabral](https://github.com/lvcabral) in [#464](https://github.com/lvcabral/brs-engine/pull/464)
+* Implemented `roTextureRequest` and `roTextureManager` by [@lvcabral](https://github.com/lvcabral) in [#465](https://github.com/lvcabral/brs-engine/pull/465)
+* Implemented mocked `roDataGramSocket` and extracted common interfaces into `ifSocket` by [@lvcabral](https://github.com/lvcabral) in [#466](https://github.com/lvcabral/brs-engine/pull/466)
+* Moved events to a separate folder
+* Adjusted `rgba` parameter in `ifDraw2D` to be `number`
+
+[Full Changelog][v1.8.5]
+
 <a name="v1.8.4"></a>
 
 ## [v1.8.4 - Fixed `roVideoPlayer` and `End` Statement](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.4) - 26 January 2025
-
-The `v1.8.x` releases of the `core` library, are the final ones as a fully synchronous interpreter, the next major release will come with an option to support `async/await` and remove the dependency on `SharedArrayBuffer`.
 
 ### Release Changes
 
@@ -920,6 +935,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.5]: https://github.com/lvcabral/brs-engine/compare/v1.8.4...v1.8.5
 [v1.8.4]: https://github.com/lvcabral/brs-engine/compare/v1.8.3...v1.8.4
 [v1.8.3]: https://github.com/lvcabral/brs-engine/compare/v1.8.2...v1.8.3
 [v1.8.2]: https://github.com/lvcabral/brs-engine/compare/v1.8.1...v1.8.2
