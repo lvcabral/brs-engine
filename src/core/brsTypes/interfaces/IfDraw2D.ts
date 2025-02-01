@@ -53,21 +53,23 @@ export class IfDraw2D {
         return didDraw;
     }
 
-    doDrawRotatedObject(
+    doDrawRotatedBitmap(
         x: number,
         y: number,
         scaleX: number,
         scaleY: number,
-        angle: number,
-        object: BrsComponent,
+        rotation: number,
+        object: RoBitmap,
         rgba?: number
     ) {
         const ctx = this.component.getContext();
         ctx.save();
         ctx.translate(x, y);
-        ctx.rotate(-angle);
+        ctx.rotate(-rotation);
         this.component.drawImage(object, 0, 0, scaleX, scaleY, rgba);
         ctx.restore();
+        this.component.makeDirty();
+        return this.calculateBoundingBox(x, y, object.width, object.height, rotation);
     }
 
     doDrawRect(x: number, y: number, width: number, height: number, rgba: number) {
@@ -102,6 +104,8 @@ export class IfDraw2D {
         ctx.fillRect(0, 0, width, height); // Draw the rectangle at the origin
         ctx.restore();
         this.component.makeDirty();
+
+        return this.calculateBoundingBox(x, y, width, height, rotation);
     }
 
     doDrawText(text: string, x: number, y: number, rgba: number, font: RoFont) {
@@ -135,6 +139,43 @@ export class IfDraw2D {
         ctx.fillText(text, 0, font.getTopAdjust());
         ctx.restore();
         this.component.makeDirty();
+    }
+
+    calculateBoundingBox(x: number, y: number, width: number, height: number, rotation: number) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
+
+        // Calculate the bounding box of the rotated rectangle
+        const cos = Math.cos(-rotation);
+        const sin = Math.sin(-rotation);
+
+        // Original corners of the rectangle
+        const corners = [
+            { x: 0, y: 0 },
+            { x: width, y: 0 },
+            { x: width, y: height },
+            { x: 0, y: height },
+        ];
+
+        // Rotated corners
+        const rotatedCorners = corners.map((corner) => ({
+            x: corner.x * cos - corner.y * sin,
+            y: corner.x * sin + corner.y * cos,
+        }));
+
+        // Find the bounding box
+        const minX = Math.min(...rotatedCorners.map((corner) => corner.x));
+        const maxX = Math.max(...rotatedCorners.map((corner) => corner.x));
+        const minY = Math.min(...rotatedCorners.map((corner) => corner.y));
+        const maxY = Math.max(...rotatedCorners.map((corner) => corner.y));
+
+        const boundingBox = {
+            x: baseX + x + minX,
+            y: baseY + y + minY,
+            width: maxX - minX,
+            height: maxY - minY,
+        };
+        return boundingBox;
     }
 
     /** Clear the bitmap, and fill with the specified RGBA color */

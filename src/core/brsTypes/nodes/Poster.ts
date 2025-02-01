@@ -79,7 +79,7 @@ export class Poster extends Group {
                     const scaleX = size.width !== 0 ? size.width / bitmap.width : 1;
                     const scaleY = size.height !== 0 ? size.height / bitmap.height : 1;
                     if (rotation !== 0) {
-                        draw2D.doDrawRotatedObject(
+                        draw2D.doDrawRotatedBitmap(
                             trans[0],
                             trans[1],
                             scaleX,
