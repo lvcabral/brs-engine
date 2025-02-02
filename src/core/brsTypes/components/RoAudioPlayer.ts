@@ -13,6 +13,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { MediaEventType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 
 export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
@@ -21,6 +22,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private audioFlags: MediaEventType | -1;
+    cookiesEnabled: boolean;
 
     constructor(interpreter: Interpreter) {
         super("roAudioPlayer");

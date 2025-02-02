@@ -15,6 +15,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { MediaEventType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;

@@ -3,7 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, RoMessagePort } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoCECStatusEvent } from "./RoCECStatusEvent";
+import { RoCECStatusEvent } from "../events/RoCECStatusEvent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 
 export class RoCECStatus extends BrsComponent implements BrsValue {
