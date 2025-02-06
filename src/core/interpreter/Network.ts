@@ -25,12 +25,12 @@ export function download(
         }
         xhr.send();
         if (xhr.status !== 200) {
-            postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText}`);
+            postMessage(`warning,HTTP Error downloading ${url}: ${xhr.statusText}`);
             return undefined;
         }
         return xhr.response;
     } catch (err: any) {
-        postMessage(`error,Error downloading ${url}: ${err.message}`);
+        postMessage(`warning,Error downloading ${url}: ${err.message}`);
     }
     return undefined;
 }

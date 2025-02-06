@@ -1,7 +1,7 @@
 import { ComponentDefinition, ComponentScript } from "../scenegraph";
 import * as Stmt from "./Statement";
 import pSettle from "p-settle";
-import { NodeFactory } from "../brsTypes";
+import { SGNodeFactory } from "../brsTypes";
 
 export class ComponentScopeResolver {
     private readonly excludedNames: string[] = ["init"];
@@ -77,7 +77,7 @@ export class ComponentScopeResolver {
         let currentComponent: ComponentDefinition | undefined = component;
         while (currentComponent.extends) {
             // If this is a built-in node component, then no work is needed and we can return.
-            if (NodeFactory.canResolveComponentType(currentComponent.extends)) {
+            if (SGNodeFactory.canResolveNodeType(currentComponent.extends)) {
                 return Promise.resolve();
             }
 

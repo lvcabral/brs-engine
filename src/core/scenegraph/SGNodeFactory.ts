@@ -13,9 +13,9 @@ import {
     Scene,
     MiniKeyboard,
     TextEditBox,
-} from "..";
+} from "../brsTypes";
 
-export enum BrsNodeType {
+export enum SGNodeType {
     Node = "Node",
     Group = "Group",
     LayoutGroup = "LayoutGroup",
@@ -32,7 +32,7 @@ export enum BrsNodeType {
     TextEditBox = "TextEditBox",
 }
 
-export class NodeFactory {
+export class SGNodeFactory {
     private static additionalNodes = new Map<string, (name: string) => RoSGNode>();
 
     /**
@@ -51,7 +51,7 @@ export class NodeFactory {
     }
 
     public static createNode(
-        nodeType: BrsNodeType | string,
+        nodeType: SGNodeType | string,
         nodeName?: string
     ): RoSGNode | undefined {
         let name = nodeName || nodeType;
@@ -60,33 +60,33 @@ export class NodeFactory {
             return additionalCtor(name);
         }
         switch (nodeType) {
-            case BrsNodeType.Group:
+            case SGNodeType.Group:
                 return new Group([], name);
-            case BrsNodeType.LayoutGroup:
+            case SGNodeType.LayoutGroup:
                 return new LayoutGroup([], name);
-            case BrsNodeType.Node:
+            case SGNodeType.Node:
                 return new RoSGNode([], name);
-            case BrsNodeType.Rectangle:
+            case SGNodeType.Rectangle:
                 return new Rectangle([], name);
-            case BrsNodeType.Label:
+            case SGNodeType.Label:
                 return new Label([], name);
-            case BrsNodeType.Font:
+            case SGNodeType.Font:
                 return new Font([], name);
-            case BrsNodeType.Poster:
+            case SGNodeType.Poster:
                 return new Poster([], name);
-            case BrsNodeType.ArrayGrid:
+            case SGNodeType.ArrayGrid:
                 return new ArrayGrid([], name);
-            case BrsNodeType.MarkupGrid:
+            case SGNodeType.MarkupGrid:
                 return new MarkupGrid([], name);
-            case BrsNodeType.ContentNode:
+            case SGNodeType.ContentNode:
                 return new ContentNode(name);
-            case BrsNodeType.Timer:
+            case SGNodeType.Timer:
                 return new Timer([], name);
-            case BrsNodeType.Scene:
+            case SGNodeType.Scene:
                 return new Scene([], name);
-            case BrsNodeType.MiniKeyboard:
+            case SGNodeType.MiniKeyboard:
                 return new MiniKeyboard([], name);
-            case BrsNodeType.TextEditBox:
+            case SGNodeType.TextEditBox:
                 return new TextEditBox([], name);
             default:
                 return;
@@ -101,7 +101,7 @@ export class NodeFactory {
      * @param nodeType The name of node to resolve
      * @returns {boolean} true if that type is resolvable/constructable, false otherwise
      */
-    public static canResolveComponentType(nodeType: BrsNodeType | string): boolean {
-        return this.additionalNodes.has(nodeType?.toLowerCase()) || nodeType in BrsNodeType;
+    public static canResolveNodeType(nodeType: SGNodeType | string): boolean {
+        return this.additionalNodes.has(nodeType?.toLowerCase()) || nodeType in SGNodeType;
     }
 }

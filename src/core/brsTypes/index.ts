@@ -119,7 +119,7 @@ export * from "./events/RoChannelStoreEvent";
 export * from "./events/RoUniversalControlEvent";
 export * from "./events/RoSGNodeEvent";
 export * from "./events/RoSGScreenEvent";
-export * from "./nodes/NodeFactory";
+export * from "../scenegraph/SGNodeFactory";
 export * from "./nodes/Group";
 export * from "./nodes/Scene";
 export * from "./nodes/MiniKeyboard";

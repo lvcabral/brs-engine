@@ -1,8 +1,9 @@
 import { FieldModel } from "../components/RoSGNode";
-import { AAMember, Float, Int32, RoFontRegistry } from "..";
+import { AAMember, Float, Int32 } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { rotatedRect } from "../../scenegraph/SGUtil";
 
 export class Rectangle extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -19,48 +20,61 @@ export class Rectangle extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    getBoundingRect() {
-        const translation = this.getTranslation();
-        const dimensions = this.getDimensions();
-        this.rect.x = translation[0];
-        this.rect.y = translation[1];
-        this.rect.width = dimensions.width;
-        this.rect.height = dimensions.height;
-        return this.rect;
-    }
-
-    getDimensions() {
-        const width = this.fields.get("width")?.getValue();
-        const height = this.fields.get("height")?.getValue();
-        return {
-            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
-            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
-        };
-    }
-
-    renderNode(
-        interpreter: Interpreter,
-        draw2D: IfDraw2D,
-        fontRegistry: RoFontRegistry,
-        origin: number[],
-        angle: number
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }
-        const trans = this.getTranslation();
-        trans[0] += origin[0];
-        trans[1] += origin[1];
+        const translation = this.getTranslation();
+        const transScene = translation.slice();
+        transScene[0] += origin[0];
+        transScene[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         const color = this.getColorFieldValue("color");
+        this.rectLocal = { x: 0, y: 0, width: size.width, height: size.height };
         if (rotation !== 0) {
-            draw2D.doDrawRotatedRect(trans[0], trans[1], size.width, size.height, color, rotation);
+            const rotateCenter = this.getScaleRotateCenter();
+            draw2D?.doDrawRotatedRect(
+                transScene[0],
+                transScene[1],
+                size.width,
+                size.height,
+                color,
+                rotation,
+                rotateCenter[0],
+                rotateCenter[1]
+            );
+            this.rectToScene = rotatedRect(
+                transScene[0],
+                transScene[1],
+                size.width,
+                size.height,
+                rotation,
+                rotateCenter[0],
+                rotateCenter[1]
+            );
+            this.rectToParent = {
+                x: this.rectToScene.x - origin[0],
+                y: this.rectToScene.y - origin[1],
+                width: this.rectToScene.width,
+                height: this.rectToScene.height,
+            };
         } else {
-            draw2D.doDrawRect(trans[0], trans[1], size.width, size.height, color);
+            draw2D?.doDrawRect(transScene[0], transScene[1], size.width, size.height, color);
+            this.rectToScene = {
+                x: transScene[0],
+                y: transScene[1],
+                width: size.width,
+                height: size.height,
+            };
+            this.rectToParent = {
+                x: translation[0],
+                y: translation[1],
+                width: size.width,
+                height: size.height,
+            };
         }
-        this.children.forEach((node) => {
-            node.renderNode(interpreter, draw2D, fontRegistry, trans, rotation);
-        });
+        this.renderChildren(interpreter, transScene, rotation, draw2D);
+        this.updateParentRects();
     }
 }

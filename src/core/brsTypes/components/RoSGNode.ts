@@ -10,14 +10,7 @@ import {
 } from "../BrsType";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import {
-    BrsType,
-    isBrsNumber,
-    isBrsString,
-    RoFontRegistry,
-    RoMessagePort,
-    toAssociativeArray,
-} from "..";
+import { BrsType, isBrsNumber, isBrsString, RoMessagePort, Scene, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -28,13 +21,14 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
 import { AAMember } from "./RoAssociativeArray";
 import { ComponentDefinition, ComponentNode } from "../../scenegraph";
-import { NodeFactory, BrsNodeType } from "../nodes/NodeFactory";
+import { SGNodeFactory, SGNodeType } from "../../scenegraph/SGNodeFactory";
 import { Environment, Scope } from "../../interpreter/Environment";
 import { RoInvalid } from "./RoInvalid";
 import { BlockEnd } from "../../parser/Statement";
 import { Stmt } from "../../parser";
 import { generateArgumentMismatchError } from "../../interpreter/ArgumentMismatch";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { BoundingRect } from "../../scenegraph/SGUtil";
 
 interface BrsCallback {
     interpreter: Interpreter;
@@ -335,7 +329,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected fields = new Map<string, Field>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
-    protected rect = { x: 0, y: 0, width: 0, height: 0 };
+    rectLocal: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
+    rectToParent: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
+    rectToScene: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
 
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: FieldKind.String },
@@ -401,6 +397,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.createChildren,
                 this.replaceChildren,
                 this.insertChildren,
+                this.getScene,
             ],
             ifSGNodeFocus: [this.hasFocus, this.setFocus, this.isInFocusChain],
             ifSGNodeDict: [
@@ -549,15 +546,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return false;
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        draw2D: IfDraw2D,
-        fontRegistry: RoFontRegistry,
-        origin: number[],
-        angle: number
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+        this.renderChildren(interpreter, origin, angle, draw2D);
+    }
+
+    renderChildren(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         this.children.forEach((node) => {
-            node.renderNode(interpreter, draw2D, fontRegistry, origin, angle);
+            node.renderNode(interpreter, origin, angle, draw2D);
         });
     }
 
@@ -745,13 +740,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
         return color;
-    }
-
-    /**
-     * Returns the bounding rectangle of the node.
-     */
-    protected getBoundingRect() {
-        return this.rect;
     }
 
     /**
@@ -1693,8 +1681,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            return toAssociativeArray(this.getBoundingRect());
+        impl: (interpreter: Interpreter) => {
+            const root = this.createPath(this)[0];
+            root.renderNode(interpreter, [0, 0], 0);
+            return toAssociativeArray(this.rectToParent);
         },
     });
 
@@ -1704,8 +1694,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            return toAssociativeArray(this.getBoundingRect());
+        impl: (interpreter: Interpreter) => {
+            const root = this.createPath(this)[0];
+            root.renderNode(interpreter, [0, 0], 0);
+            return toAssociativeArray(this.rectLocal);
         },
     });
 
@@ -1715,8 +1707,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            return toAssociativeArray(this.getBoundingRect());
+        impl: (interpreter: Interpreter) => {
+            const root = this.createPath(this)[0];
+            root.renderNode(interpreter, [0, 0], 0);
+            return toAssociativeArray(this.rectToScene);
         },
     });
 
@@ -1888,19 +1882,54 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             return new BrsString(this.nodeSubtype);
         },
     });
+
+    /* Returns the node's root Scene. This returns a valid Scene even if the node is not parented. */
+    private getScene = new Callable("getScene", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return rootObjects.rootScene || BrsInvalid.Instance;
+        },
+    });
 }
 
-// A node that represents the m.global, referenced by all other nodes
-export const mGlobal = new RoSGNode([]);
+// An object that holds the Node that represents the m.global, referenced by all other nodes and the root Scene.
+interface RootObjects {
+    mGlobal: RoSGNode;
+    rootScene?: Scene;
+}
+export const rootObjects: RootObjects = { mGlobal: new RoSGNode([]) };
 
 export function createNodeByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
     // If this is a built-in node component, then return it.
-    let node = NodeFactory.createNode(type.value as BrsNodeType);
+    let node = SGNodeFactory.createNode(type.value as SGNodeType);
     if (node) {
         return node;
     }
-
     let typeDef = interpreter.environment.nodeDefMap.get(type.value.toLowerCase());
+    if (typeDef) {
+        if (typeDef.extends === SGNodeType.Scene) {
+            return new Scene([], type.value);
+        }
+        return initializeNode(interpreter, type, typeDef);
+    } else {
+        interpreter.stderr.write(
+            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
+                type.value
+            }: ${interpreter.formatLocation()}`
+        );
+        return BrsInvalid.Instance;
+    }
+}
+
+export function initializeNode(
+    interpreter: Interpreter,
+    type: BrsString,
+    typeDef?: ComponentDefinition,
+    node?: RoSGNode
+) {
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
         let typeDefStack: ComponentDefinition[] = [];
@@ -1911,7 +1940,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         typeDefStack.push(typeDef);
         while (typeDef) {
             // Add the current typedef to the subtypeHierarchy
-            subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || "Node");
+            subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
 
             typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
             if (typeDef) typeDefStack.push(typeDef);
@@ -1920,9 +1949,11 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
 
-        // If this extends a built-in node component, create it.
-        let node = NodeFactory.createNode(typeDef!.extends as BrsNodeType, type.value);
-
+        // If not already created, create the node.
+        if (!node) {
+            // If this extends a built-in node component, create it.
+            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value);
+        }
         // Default to Node as parent.
         if (!node) {
             node = new RoSGNode([], type.value);
@@ -1941,6 +1972,11 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
                 return BrsInvalid.Instance;
             }, currentEnv);
 
+            // Pre-render default state of the tree.
+            if (node instanceof Scene) {
+                node.renderNode(interpreter, [0, 0], 0);
+            }
+
             interpreter.inSubEnv((subInterpreter) => {
                 init = subInterpreter.getInitMethod();
                 return BrsInvalid.Instance;
@@ -1950,7 +1986,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
                 subInterpreter.environment.hostNode = node;
 
                 mPointer.set(new BrsString("top"), node!);
-                mPointer.set(new BrsString("global"), mGlobal);
+                mPointer.set(new BrsString("global"), rootObjects.mGlobal);
                 subInterpreter.environment.setM(mPointer);
                 subInterpreter.environment.setRootM(mPointer);
                 node!.m = mPointer;
@@ -1966,7 +2002,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         return node;
     } else {
         interpreter.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
+            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize roSGNode with type ${
                 type.value
             }: ${interpreter.formatLocation()}`
         );

@@ -1,9 +1,9 @@
 import { FieldModel } from "../components/RoSGNode";
-import { AAMember, BrsString, Float, Int32, RoBitmap, RoFontRegistry } from "..";
+import { AAMember, BrsString, Float, getTextureManager, Int32, RoBitmap } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { download } from "../../interpreter/Network";
+import { rotatedRect } from "../../scenegraph/SGUtil";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -32,75 +32,75 @@ export class Poster extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
     }
-    getBoundingRect() {
-        const translation = this.getTranslation();
-        const dimensions = this.getDimensions();
-        this.rect.x = translation[0];
-        this.rect.y = translation[1];
-        this.rect.width = dimensions.width;
-        this.rect.height = dimensions.height;
-        return this.rect;
-    }
 
-    getDimensions() {
-        const width = this.fields.get("width")?.getValue();
-        const height = this.fields.get("height")?.getValue();
-        return {
-            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
-            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
-        };
-    }
-
-    renderNode(
-        interpreter: Interpreter,
-        draw2D: IfDraw2D,
-        fontRegistry: RoFontRegistry,
-        origin: number[],
-        angle: number
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }
-        const trans = this.getTranslation();
-        trans[0] += origin[0];
-        trans[1] += origin[1];
+        const translation = this.getTranslation();
+        const transScene = translation.slice();
+        transScene[0] += origin[0];
+        transScene[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
 
         const uri = this.fields.get("uri")?.getValue();
         if (uri instanceof BrsString && uri.value.trim() !== "") {
-            let imageFile: BrsString | ArrayBuffer = uri;
-            if (uri.value.startsWith("http")) {
-                imageFile = download(uri.value, "arraybuffer") ?? uri;
-            }
-            try {
-                const bitmap = new RoBitmap(interpreter, imageFile);
-                if (bitmap.isValid()) {
-                    const scaleX = size.width !== 0 ? size.width / bitmap.width : 1;
-                    const scaleY = size.height !== 0 ? size.height / bitmap.height : 1;
-                    if (rotation !== 0) {
-                        draw2D.doDrawRotatedBitmap(
-                            trans[0],
-                            trans[1],
-                            scaleX,
-                            scaleY,
-                            rotation,
-                            bitmap
-                        );
-                    } else {
-                        draw2D.doDrawScaledObject(trans[0], trans[1], scaleX, scaleY, bitmap);
-                    }
+            const textureManager = getTextureManager(interpreter);
+            const bitmap = textureManager.loadTexture(uri.value);
+            if (bitmap instanceof RoBitmap && bitmap.isValid()) {
+                const scaleX = size.width !== 0 ? size.width / bitmap.width : 1;
+                const scaleY = size.height !== 0 ? size.height / bitmap.height : 1;
+                const width = scaleX * bitmap.width;
+                const height = scaleY * bitmap.height;
+                this.rectLocal = { x: 0, y: 0, width: width, height: height };
+                if (rotation !== 0) {
+                    draw2D?.doDrawRotatedBitmap(
+                        transScene[0],
+                        transScene[1],
+                        scaleX,
+                        scaleY,
+                        rotation,
+                        bitmap
+                    );
+                    this.rectToScene = rotatedRect(
+                        transScene[0],
+                        transScene[1],
+                        width,
+                        height,
+                        rotation
+                    );
+                    this.rectToParent = {
+                        x: this.rectToScene.x - origin[0],
+                        y: this.rectToScene.y - origin[1],
+                        width: this.rectToScene.width,
+                        height: this.rectToScene.height,
+                    };
                 } else {
-                    interpreter.stderr.write(`error,Invalid bitmap:${uri.value}`);
+                    draw2D?.doDrawScaledObject(
+                        transScene[0],
+                        transScene[1],
+                        scaleX,
+                        scaleY,
+                        bitmap
+                    );
+                    this.rectToScene = {
+                        x: transScene[0],
+                        y: transScene[1],
+                        width: width,
+                        height: height,
+                    };
+                    this.rectToParent = {
+                        x: translation[0],
+                        y: translation[1],
+                        width: width,
+                        height: height,
+                    };
                 }
-            } catch (err: any) {
-                interpreter.stderr.write(
-                    `error,Error loading bitmap:${uri.value} - ${err.message}`
-                );
+            } else {
+                interpreter.stderr.write(`error,Invalid bitmap:${uri.value}`);
             }
         }
-        this.children.forEach((node) => {
-            node.renderNode(interpreter, draw2D, fontRegistry, trans, rotation);
-        });
+        this.renderChildren(interpreter, transScene, rotation, draw2D);
     }
 }
