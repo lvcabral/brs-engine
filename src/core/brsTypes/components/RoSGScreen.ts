@@ -46,7 +46,7 @@ const rokuKeys: Map<number, string> = new Map([
     [13, "play"],
 ]);
 
-export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
+export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
     readonly y: number = 0;

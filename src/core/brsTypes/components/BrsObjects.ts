@@ -22,7 +22,7 @@ import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
 import { createRegion } from "./RoRegion";
-import { createRoScreen, RoScreen } from "./RoScreen";
+import { createScreen, RoScreen } from "./RoScreen";
 import { getTextureManager } from "./RoTextureManager";
 import { RoTextureRequest } from "./RoTextureRequest";
 import { RoImageMetadata } from "./RoImageMetadata";
@@ -59,7 +59,7 @@ import { RoSocketAddress } from "./RoSocketAddress";
 import { RoStreamSocket } from "./RoStreamSocket";
 import { RoHdmiStatus } from "./RoHdmiStatus";
 import { createNodeByType } from "./RoSGNode";
-import { roSGScreen } from "./RoSGScreen";
+import { RoSGScreen } from "./RoSGScreen";
 
 // Class to define a case-insensitive map of BrightScript objects.
 class BrsObjectsMap {
@@ -192,7 +192,7 @@ export const BrsObjects = new BrsObjectsMap([
     [
         "roScreen",
         (interpreter: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
-            createRoScreen(interpreter, dblbuffer, width, height),
+            createScreen(interpreter, dblbuffer, width, height),
         -2,
     ],
     ["roXMLElement", (_: Interpreter) => new RoXMLElement()],
@@ -208,5 +208,5 @@ export const BrsObjects = new BrsObjectsMap([
         (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(interpreter, nodeType),
         1,
     ],
-    ["roSGScreen", (interpreter: Interpreter) => new roSGScreen(interpreter)],
+    ["roSGScreen", (interpreter: Interpreter) => new RoSGScreen(interpreter)],
 ]);

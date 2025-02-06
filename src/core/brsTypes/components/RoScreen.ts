@@ -271,7 +271,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 }
 
-export function createRoScreen(
+export function createScreen(
     interpreter: Interpreter,
     doubleBuffer?: BrsBoolean,
     width?: Int32,
