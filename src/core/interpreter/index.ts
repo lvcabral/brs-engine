@@ -269,10 +269,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * passes the sub-interpreter to the provided JavaScript function. Always
      * reverts the current interpreter's environment to its original value.
      *
-     * Note: There are two versions of this function, one that is asynchronous
-     * and one that is synchronous. Use the sync version carefully, only when
-     * you control the arguments and the expected return value.
-     *
      * @param func the JavaScript function to execute with the sub interpreter.
      * @param environment (Optional) the environment to run the interpreter in.
      */
