@@ -29,8 +29,8 @@ let textureManager: RoTextureManager;
 export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     private readonly interpreter: Interpreter;
+    private readonly textures: Map<string, RoBitmap>;
     readonly requests: Map<number, RoTextureRequest>;
-    readonly textures: Map<string, ArrayBuffer>;
     readonly customHeaders: Map<string, string>;
     private port?: RoMessagePort;
     cookiesEnabled: boolean;
@@ -40,7 +40,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         this.interpreter = interpreter;
         this.cookiesEnabled = false;
         this.requests = new Map<number, RoTextureRequest>();
-        this.textures = new Map<string, ArrayBuffer>();
+        this.textures = new Map<string, RoBitmap>();
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
@@ -76,6 +76,10 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         return BrsBoolean.False;
     }
 
+    count() {
+        return this.textures.size;
+    }
+
     private getNewEvents() {
         const events: RoTextureRequestEvent[] = [];
         for (let request of this.requests.values()) {
@@ -86,8 +90,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     }
 
     private createEvent(request: RoTextureRequest) {
-        const texture = this.loadTexture(request);
-        let bitmap = texture ? new RoBitmap(this.interpreter, texture) : BrsInvalid.Instance;
+        let bitmap = this.loadTexture(request.uri) ?? BrsInvalid.Instance;
         if (bitmap instanceof RoBitmap && bitmap.isValid()) {
             if (
                 request.size &&
@@ -117,31 +120,30 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         return new RoTextureRequestEvent(request, bitmap);
     }
 
-    private loadTexture(request: RoTextureRequest): ArrayBuffer | undefined {
-        const cached = this.textures.get(request.uri);
-        if (cached) {
-            return cached;
+    loadTexture(uri: string): RoBitmap | undefined {
+        const bitmap = this.textures.get(uri);
+        if (bitmap) {
+            return bitmap;
         }
-        if (request.uri.startsWith("http")) {
-            const data = download(
-                request.uri,
-                "arraybuffer",
-                this.customHeaders,
-                this.cookiesEnabled
-            );
-            if (data) {
-                this.textures.set(request.uri, data);
-                return data;
-            }
+        let data: ArrayBuffer | undefined;
+        if (uri.startsWith("http")) {
+            data = download(uri, "arraybuffer", this.customHeaders, this.cookiesEnabled);
         } else {
             try {
-                return this.interpreter.fileSystem.readFileSync(request.uri);
+                data = this.interpreter.fileSystem.readFileSync(uri);
             } catch (err: any) {
                 if (this.interpreter.isDevMode) {
                     this.interpreter.stderr.write(
-                        `warning,[roTextureManager] Error requesting texture ${request.uri}: ${err.message}`
+                        `warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`
                     );
                 }
+            }
+        }
+        if (data) {
+            const bitmap = new RoBitmap(this.interpreter, data);
+            if (bitmap instanceof RoBitmap && bitmap.isValid()) {
+                this.textures.set(uri, bitmap);
+                return bitmap;
             }
         }
         return undefined;
