@@ -18,6 +18,9 @@ export interface FontMetrics {
     weight: string;
 }
 
+// Singleton instance of Font Registry
+let fontRegistry: RoFontRegistry;
+
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly defaultFontSize = 40;
@@ -213,4 +216,12 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             return new Int32(this.defaultFontSize);
         },
     });
+}
+
+// Function to get the singleton instance of Font Registry
+export function getFontRegistry(interpreter: Interpreter): RoFontRegistry {
+    if (!fontRegistry) {
+        fontRegistry = new RoFontRegistry(interpreter);
+    }
+    return fontRegistry;
 }
