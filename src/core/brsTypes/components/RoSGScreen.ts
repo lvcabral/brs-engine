@@ -4,14 +4,16 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import {
     BrsEvent,
-    BrsNodeType,
+    SGNodeType,
     BrsType,
     createNodeByType,
     KeyEvent,
-    mGlobal,
+    rootObjects,
     RoFontRegistry,
     RoMessagePort,
     Scene,
+    initializeNode,
+    RoTextureManager,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -28,7 +30,6 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
-import { download } from "../../interpreter/Network";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -54,20 +55,24 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly interpreter: Interpreter;
     private readonly draw2D: IfDraw2D;
     private readonly keysBuffer: KeyEvent[];
+    private readonly maxMs: number;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
     private readonly disposeCanvas: boolean;
+    private readonly textureManager: RoTextureManager;
     private readonly fontRegistry: RoFontRegistry;
     private port?: RoMessagePort;
-    private sceneNode?: Scene;
+    private sceneType?: BrsString;
     private lastKey: number;
     private alphaEnable: boolean;
+    private lastMessage: number;
     isDirty: boolean;
 
     constructor(interpreter: Interpreter) {
         super("roSGScreen");
         this.interpreter = interpreter;
         this.draw2D = new IfDraw2D(this);
+        this.textureManager = new RoTextureManager(interpreter);
         this.fontRegistry = new RoFontRegistry(interpreter);
         this.lastKey = -1;
         this.keysBuffer = [];
@@ -75,6 +80,9 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.isDirty = false;
         const platform = interpreter.deviceInfo.get("platform");
         this.disposeCanvas = platform?.inIOS ?? false;
+        this.lastMessage = performance.now();
+        const maxFps = interpreter.deviceInfo.get("maxFps") ?? 60;
+        this.maxMs = Math.trunc((1 / maxFps) * 1000);
         this.width = 1280;
         this.height = 720;
         const displayMode = interpreter.deviceInfo.get("displayMode") ?? "720p";
@@ -164,6 +172,13 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
     }
 
+    getDebugData() {
+        return {
+            textures: this.textureManager.count(),
+            fonts: this.fontRegistry.count(),
+        };
+    }
+
     /** Message callback to handle control keys and Scene rendering */
     private getNewEvents() {
         const events: BrsEvent[] = [];
@@ -190,22 +205,26 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             const press = BrsBoolean.from(nextKey.mod === 0);
             const handled = this.handleOnKeyEvent(key, press);
 
-            if (key.value === "back" && !handled) {
+            if (key.value === "back" && press.toBoolean() && !handled) {
                 events.push(new RoSGScreenEvent(BrsBoolean.True));
             }
-            // TODO: Make the scene dirty only if changes were made in Nodes
-            this.isDirty = true;
         }
         // Handle Scene rendering
-        if (this.isDirty && this.sceneNode) {
-            this.sceneNode.renderNode(this.interpreter, this.draw2D, this.fontRegistry, [0, 0], 0);
+        if (rootObjects.rootScene) {
+            // TODO: Optimize rendering by only rendering dirty nodes
+            rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+            let timeStamp = performance.now();
+            while (timeStamp - this.lastMessage < this.maxMs) {
+                timeStamp = performance.now();
+            }
             this.finishDraw();
+            this.lastMessage = timeStamp;
         }
         return events;
     }
 
     handleOnKeyEvent(key: BrsString, press: BrsBoolean): boolean {
-        const hostNode = this.sceneNode;
+        const hostNode = rootObjects.rootScene;
         if (!hostNode) {
             return false;
         }
@@ -254,7 +273,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return mGlobal ?? BrsInvalid.Instance;
+            return rootObjects.mGlobal;
         },
     });
 
@@ -264,8 +283,14 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
-            // TODO: Implement show: Only start Scene rendering if the SceneGraph scene is valid.
+        impl: (interpreter: Interpreter) => {
+            if (this.sceneType && rootObjects.rootScene) {
+                console.log("showing screen - Initializing Scene");
+                const typeDef = interpreter.environment.nodeDefMap.get(
+                    this.sceneType.value.toLowerCase()
+                );
+                initializeNode(interpreter, this.sceneType, typeDef, rootObjects.rootScene);
+            }
             this.isDirty = true;
             return BrsBoolean.False;
         },
@@ -291,20 +316,20 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         },
         impl: (interpreter: Interpreter, sceneType: BrsString) => {
             let returnValue: BrsType = BrsInvalid.Instance;
-            if (sceneType.value === BrsNodeType.Scene) {
-                returnValue = new Scene([], BrsNodeType.Scene);
+            if (sceneType.value === SGNodeType.Scene) {
+                returnValue = new Scene([], SGNodeType.Scene);
             } else {
                 const typeDef = interpreter.environment.nodeDefMap.get(
                     sceneType.value.toLowerCase()
                 );
-                if (typeDef && typeDef.extends === BrsNodeType.Scene) {
+                if (typeDef && typeDef.extends === SGNodeType.Scene) {
                     returnValue = createNodeByType(interpreter, sceneType);
                 }
             }
             if (returnValue instanceof Scene) {
-                this.sceneNode = returnValue;
-                this.sceneNode.width = this.width;
-                this.sceneNode.height = this.height;
+                this.sceneType = sceneType;
+                returnValue.setDimensions(this.width, this.height);
+                rootObjects.rootScene = returnValue;
             }
             return returnValue;
         },
@@ -317,7 +342,7 @@ export class roSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return this.sceneNode ?? BrsInvalid.Instance;
+            return rootObjects.rootScene ?? BrsInvalid.Instance;
         },
     });
 }

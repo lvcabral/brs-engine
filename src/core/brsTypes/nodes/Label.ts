@@ -2,9 +2,10 @@ import { FieldModel } from "../components/RoSGNode";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { BrsBoolean, BrsString, Float, Int32, RoFont, RoFontRegistry } from "..";
+import { BrsBoolean, BrsString, Float, getFontRegistry, Int32, RoFont } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { rotatedRect } from "../../scenegraph/SGUtil";
 
 export class Label extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -35,39 +36,17 @@ export class Label extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    protected getBoundingRect() {
-        const translation = this.getTranslation();
-        const dimensions = this.getDimensions();
-        this.rect.x = translation[0];
-        this.rect.y = translation[1];
-        this.rect.width = dimensions.width;
-        this.rect.height = dimensions.height;
-        return this.rect;
-    }
-
-    getDimensions() {
-        const width = this.fields.get("width")?.getValue();
-        const height = this.fields.get("height")?.getValue();
-        return {
-            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
-            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
-        };
-    }
-
-    renderNode(
-        interpreter: Interpreter,
-        draw2D: IfDraw2D,
-        fontRegistry: RoFontRegistry,
-        origin: number[],
-        angle: number
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         const text = this.fields.get("text")?.getValue();
+        // TODO: Check if the label is visible but no text if the space should be considered for bounding rect.
         if (!this.isVisible() || !(text instanceof BrsString) || text.value.trim() === "") {
             return;
         }
-        const trans = this.getTranslation();
-        trans[0] += origin[0];
-        trans[1] += origin[1];
+        const translation = this.getTranslation();
+        const transScene = translation.slice();
+
+        transScene[0] += origin[0];
+        transScene[1] += origin[1];
 
         const color = this.getColorFieldValue("color");
         const font = this.fields.get("font")?.getValue();
@@ -79,6 +58,7 @@ export class Label extends Group {
             }
         }
         const defaultFontFamily = interpreter.deviceInfo.get("defaultFont");
+        const fontRegistry = getFontRegistry(interpreter);
         const drawFont = fontRegistry.createFont(
             new BrsString(defaultFontFamily),
             new Int32(fontSize),
@@ -94,23 +74,55 @@ export class Label extends Group {
             const textWidth = drawFont.measureTextWidth(text, new Float(dimensions.width));
             const textHeight = drawFont.measureTextHeight();
             if (horizAlign === "center") {
-                trans[0] += (dimensions.width - textWidth.getValue()) / 2;
+                transScene[0] += (dimensions.width - textWidth.getValue()) / 2;
             } else if (horizAlign === "right") {
-                trans[0] += dimensions.width - textWidth.getValue();
+                transScene[0] += dimensions.width - textWidth.getValue();
             }
             if (vertAlign === "center") {
-                trans[1] += (dimensions.height - textHeight.getValue()) / 2;
+                transScene[1] += (dimensions.height - textHeight.getValue()) / 2;
             } else if (vertAlign === "bottom") {
-                trans[1] += dimensions.height - textHeight.getValue();
+                transScene[1] += dimensions.height - textHeight.getValue();
             }
+            this.rectLocal = { x: 0, y: 0, width: dimensions.width, height: dimensions.height };
             if (rotation !== 0) {
-                draw2D.doDrawRotatedText(text.value, trans[0], trans[1], color, drawFont, rotation);
+                draw2D?.doDrawRotatedText(
+                    text.value,
+                    transScene[0],
+                    transScene[1],
+                    color,
+                    drawFont,
+                    rotation
+                );
+                this.rectToScene = rotatedRect(
+                    transScene[0],
+                    transScene[1],
+                    dimensions.width,
+                    dimensions.height,
+                    rotation
+                );
+                this.rectToParent = {
+                    x: this.rectToScene.x - origin[0],
+                    y: this.rectToScene.y - origin[1],
+                    width: this.rectToScene.width,
+                    height: this.rectToScene.height,
+                };
             } else {
-                draw2D.doDrawText(text.value, trans[0], trans[1], color, drawFont);
+                draw2D?.doDrawText(text.value, transScene[0], transScene[1], color, drawFont);
+                this.rectToScene = {
+                    x: transScene[0],
+                    y: transScene[1],
+                    width: dimensions.width,
+                    height: dimensions.height,
+                };
+                this.rectToParent = {
+                    x: translation[0],
+                    y: translation[1],
+                    width: dimensions.width,
+                    height: dimensions.height,
+                };
             }
         }
-        this.children.forEach((node) => {
-            node.renderNode(interpreter, draw2D, fontRegistry, trans, rotation);
-        });
+        this.renderChildren(interpreter, transScene, rotation, draw2D);
+        this.updateParentRects();
     }
 }

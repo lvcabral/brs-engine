@@ -96,7 +96,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.context = new Array<BrsCanvasContext2D>(this.doubleBuffer ? 2 : 1);
         this.createDisplayBuffer();
         this.alphaEnable = false;
-        const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
+        const maxFps = interpreter.deviceInfo.get("maxFps") ?? 60;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
         const ifDraw2D = new IfDraw2D(this);
         const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));

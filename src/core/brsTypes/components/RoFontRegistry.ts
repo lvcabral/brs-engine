@@ -56,6 +56,10 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    count() {
+        return this.fontRegistry.size;
+    }
+
     createFont(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean): BrsType {
         /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic),
             but if it's not available returns the first one registered. */

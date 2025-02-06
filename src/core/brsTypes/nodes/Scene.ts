@@ -2,10 +2,8 @@ import { FieldModel } from "../components/RoSGNode";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
-import { RoFontRegistry } from "../components/RoFontRegistry";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BrsString, RoBitmap } from "..";
-import { download } from "../../interpreter/Network";
+import { BrsString, getTextureManager, RoBitmap } from "..";
 
 export class Scene extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -15,8 +13,8 @@ export class Scene extends Group {
         { name: "dialog", type: "node" },
         { name: "currentDesignResolution", type: "assocarray" },
     ];
-    width = 1280;
-    height = 720;
+    private width = 1280;
+    private height = 720;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Scene") {
         super([], name);
@@ -25,49 +23,35 @@ export class Scene extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    protected getBoundingRect() {
-        const translation = this.getTranslation();
-        this.rect.x = translation[0];
-        this.rect.y = translation[1];
-        this.rect.width = this.width;
-        this.rect.height = this.height;
-        return this.rect;
+    protected getDimensions() {
+        return { width: this.width, height: this.height };
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        draw2D: IfDraw2D,
-        fontRegistry: RoFontRegistry,
-        origin: number[],
-        angle: number
-    ) {
+    setDimensions(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+        this.rectLocal = { x: 0, y: 0, width: this.width, height: this.height };
+        this.rectToParent = { x: 0, y: 0, width: this.width, height: this.height };
+        this.rectToScene = { x: 0, y: 0, width: this.width, height: this.height };
+    }
+
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }
         const rotation = angle + this.getRotation();
         const backColor = this.getColorFieldValue("backgroundcolor");
-        draw2D.doClearCanvas(backColor);
+        draw2D?.doClearCanvas(backColor);
         const backURI = this.fields.get("backgrounduri")?.getValue();
-        if (backURI instanceof BrsString && backURI.value.trim() !== "") {
-            let imageFile: BrsString | ArrayBuffer = backURI;
-            if (backURI.value.startsWith("http")) {
-                imageFile = download(backURI.value, "arraybuffer") ?? backURI;
-            }
-            try {
-                const bitmap = new RoBitmap(interpreter, imageFile);
-                if (bitmap.isValid()) {
-                    const scaleX = this.width / bitmap.width;
-                    const scaleY = this.height / bitmap.height;
-                    draw2D.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap);
-                }
-            } catch (err: any) {
-                interpreter.stderr.write(
-                    `error,Error loading bitmap:${backURI.value} - ${err.message}`
-                );
+        if (draw2D && backURI instanceof BrsString && backURI.value.trim() !== "") {
+            const textureManager = getTextureManager(interpreter);
+            const bitmap = textureManager.loadTexture(backURI.value);
+            if (bitmap instanceof RoBitmap && bitmap.isValid()) {
+                const scaleX = this.width / bitmap.width;
+                const scaleY = this.height / bitmap.height;
+                draw2D?.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap);
             }
         }
-        this.children.forEach((node) => {
-            node.renderNode(interpreter, draw2D, fontRegistry, origin, rotation);
-        });
+        this.renderChildren(interpreter, origin, rotation, draw2D);
     }
 }
