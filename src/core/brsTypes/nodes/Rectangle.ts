@@ -24,8 +24,8 @@ export class Rectangle extends Group {
         if (!this.isVisible()) {
             return;
         }
-        const nodeTrans = this.getTranslation().slice();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans;
+        const nodeTrans = this.getTranslation();
+        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
@@ -49,6 +49,6 @@ export class Rectangle extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
-        this.updateParentRects(angle);
+        this.updateParentRects(origin, angle);
     }
 }

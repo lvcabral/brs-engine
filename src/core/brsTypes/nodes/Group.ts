@@ -114,22 +114,25 @@ export class Group extends RoSGNode {
         }
     }
 
-    protected updateParentRects(angle: number) {
+    protected updateParentRects(origin: number[], angle: number) {
         if (this.parent instanceof Group) {
             this.parent.rectLocal = unionRect(this.parent.rectLocal, this.rectToParent);
-            let x = this.parent.rectToParent.x + this.parent.rectLocal.x;
-            let y = this.parent.rectToParent.y + this.parent.rectLocal.y;
+            const parentTrans = this.parent.getTranslation();
+            let x = parentTrans[0] + this.parent.rectLocal.x;
+            let y = parentTrans[1] + this.parent.rectLocal.y;
             let width = this.parent.rectLocal.width;
             let height = this.parent.rectLocal.height;
             if (angle !== 0) {
                 const center = this.parent.getScaleRotateCenter();
-                const rotatedRect = rotateRect(x, y, width, height, angle, center[0], center[1]);
+                const rotatedRect = rotateRect(0, 0, width, height, angle, center[0], center[1]);
+                x += rotatedRect.x;
+                y += rotatedRect.y;
                 width = rotatedRect.width;
                 height = rotatedRect.height;
             }
             this.parent.rectToParent = unionRect(this.parent.rectToParent, { x, y, width, height });
-            x = this.parent.rectToScene.x + this.parent.rectLocal.x;
-            y = this.parent.rectToScene.y + this.parent.rectLocal.y;
+            x += origin[0] - parentTrans[0];
+            y += origin[1] - parentTrans[1];
             this.parent.rectToScene = unionRect(this.parent.rectToScene, { x, y, width, height });
         }
     }
@@ -138,24 +141,24 @@ export class Group extends RoSGNode {
         if (!this.isVisible()) {
             return;
         }
-        const translation = this.getTranslation();
-        const transScene = translation.slice();
-        transScene[0] += origin[0];
-        transScene[1] += origin[1];
+        const nodeTrans = this.getTranslation();
+        const drawTrans = nodeTrans.slice();
+        drawTrans[0] += origin[0];
+        drawTrans[1] += origin[1];
         const rotation = angle + this.getRotation();
         this.rectToScene = {
-            x: transScene[0],
-            y: transScene[1],
+            x: drawTrans[0],
+            y: drawTrans[1],
             width: 0,
             height: 0,
         };
         this.rectToParent = {
-            x: translation[0],
-            y: translation[1],
+            x: nodeTrans[0],
+            y: nodeTrans[1],
             width: 0,
             height: 0,
         };
-        this.renderChildren(interpreter, transScene, rotation, draw2D);
-        this.updateParentRects(angle);
+        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.updateParentRects(origin, angle);
     }
 }
