@@ -1,7 +1,7 @@
 export type BoundingRect = { x: number; y: number; width: number; height: number };
 
 /* Function to calculate the bounding box of a rotated rectangle */
-export function rotatedRect(
+export function rotateRect(
     x: number,
     y: number,
     width: number,
@@ -44,6 +44,20 @@ export function rotatedRect(
         width: maxX - minX,
         height: maxY - minY,
     };
+}
+
+export function rotateTranslation(
+    translation: number[],
+    rotation: number,
+    centerX: number = 0,
+    centerY: number = 0
+) {
+    const cos = Math.cos(-rotation);
+    const sin = Math.sin(-rotation);
+    return [
+        translation[0] * cos - translation[1] * sin + centerX,
+        translation[0] * sin + translation[1] * cos + centerY,
+    ];
 }
 
 /* Function to merge two bounding rectangles */
