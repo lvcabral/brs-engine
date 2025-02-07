@@ -42,8 +42,8 @@ export class Label extends Group {
         if (!this.isVisible() || !(text instanceof BrsString) || text.value.trim() === "") {
             return;
         }
-        const nodeTrans = this.getTranslation().slice();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans;
+        const nodeTrans = this.getTranslation();
+        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
 
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
@@ -108,6 +108,6 @@ export class Label extends Group {
         };
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
-        this.updateParentRects(angle);
+        this.updateParentRects(origin, angle);
     }
 }
