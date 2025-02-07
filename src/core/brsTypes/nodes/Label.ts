@@ -5,7 +5,7 @@ import { Font } from "./Font";
 import { BrsBoolean, BrsString, Float, getFontRegistry, Int32, RoFont } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { rotatedRect } from "../../scenegraph/SGUtil";
+import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class Label extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -42,11 +42,11 @@ export class Label extends Group {
         if (!this.isVisible() || !(text instanceof BrsString) || text.value.trim() === "") {
             return;
         }
-        const translation = this.getTranslation();
-        const transScene = translation.slice();
+        const nodeTrans = this.getTranslation().slice();
+        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans;
 
-        transScene[0] += origin[0];
-        transScene[1] += origin[1];
+        drawTrans[0] += origin[0];
+        drawTrans[1] += origin[1];
 
         const color = this.getColorFieldValue("color");
         const font = this.fields.get("font")?.getValue();
@@ -67,62 +67,47 @@ export class Label extends Group {
         );
         const horizAlign = this.fields.get("horizalign")?.getValue()?.toString() ?? "left";
         const vertAlign = this.fields.get("vertalign")?.getValue()?.toString() ?? "top";
-        const dimensions = this.getDimensions();
+        const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         if (drawFont instanceof RoFont) {
             // Calculate the text position based on the alignment
-            const textWidth = drawFont.measureTextWidth(text, new Float(dimensions.width));
-            const textHeight = drawFont.measureTextHeight();
+            const textWidth = drawFont
+                .measureTextWidth(text, new Float(size.width || 1280))
+                .getValue();
+            const textHeight = drawFont.measureTextHeight().getValue();
             if (horizAlign === "center") {
-                transScene[0] += (dimensions.width - textWidth.getValue()) / 2;
+                drawTrans[0] += (size.width - textWidth) / 2;
             } else if (horizAlign === "right") {
-                transScene[0] += dimensions.width - textWidth.getValue();
+                drawTrans[0] += size.width - textWidth;
             }
             if (vertAlign === "center") {
-                transScene[1] += (dimensions.height - textHeight.getValue()) / 2;
+                drawTrans[1] += (size.height - textHeight) / 2;
             } else if (vertAlign === "bottom") {
-                transScene[1] += dimensions.height - textHeight.getValue();
+                drawTrans[1] += size.height - textHeight;
             }
-            this.rectLocal = { x: 0, y: 0, width: dimensions.width, height: dimensions.height };
             if (rotation !== 0) {
                 draw2D?.doDrawRotatedText(
                     text.value,
-                    transScene[0],
-                    transScene[1],
+                    drawTrans[0],
+                    drawTrans[1],
                     color,
                     drawFont,
                     rotation
                 );
-                this.rectToScene = rotatedRect(
-                    transScene[0],
-                    transScene[1],
-                    dimensions.width,
-                    dimensions.height,
-                    rotation
-                );
-                this.rectToParent = {
-                    x: this.rectToScene.x - origin[0],
-                    y: this.rectToScene.y - origin[1],
-                    width: this.rectToScene.width,
-                    height: this.rectToScene.height,
-                };
             } else {
-                draw2D?.doDrawText(text.value, transScene[0], transScene[1], color, drawFont);
-                this.rectToScene = {
-                    x: transScene[0],
-                    y: transScene[1],
-                    width: dimensions.width,
-                    height: dimensions.height,
-                };
-                this.rectToParent = {
-                    x: translation[0],
-                    y: translation[1],
-                    width: dimensions.width,
-                    height: dimensions.height,
-                };
+                draw2D?.doDrawText(text.value, drawTrans[0], drawTrans[1], color, drawFont);
             }
+            size.width = textWidth;
+            size.height = textHeight;
         }
-        this.renderChildren(interpreter, transScene, rotation, draw2D);
-        this.updateParentRects();
+        const rect = {
+            x: drawTrans[0],
+            y: drawTrans[1],
+            width: size.width,
+            height: size.height,
+        };
+        this.updateBoundingRects(rect, origin, rotation);
+        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.updateParentRects(angle);
     }
 }

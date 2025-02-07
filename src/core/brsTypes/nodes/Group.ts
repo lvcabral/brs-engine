@@ -2,7 +2,7 @@ import { RoSGNode, FieldModel } from "../components/RoSGNode";
 import { Int32, Float, RoArray, AAMember, BrsBoolean } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { unionRect } from "../../scenegraph/SGUtil";
+import { BoundingRect, rotateRect, unionRect } from "../../scenegraph/SGUtil";
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -74,16 +74,63 @@ export class Group extends RoSGNode {
         return center;
     }
 
-    protected updateParentRects() {
-        if (this.parent instanceof RoSGNode) {
+    protected updateBoundingRects(drawRect: BoundingRect, origin: number[], rotation: number) {
+        const nodeTrans = this.getTranslation();
+        this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
+        if (rotation !== 0) {
+            const rotateCenter = this.getScaleRotateCenter();
+            this.rectToScene = rotateRect(
+                nodeTrans[0] + origin[0],
+                nodeTrans[1] + origin[1],
+                drawRect.width,
+                drawRect.height,
+                rotation,
+                rotateCenter[0],
+                rotateCenter[1]
+            );
+            if (this.getRotation() !== 0) {
+                this.rectToParent = {
+                    x: this.rectToScene.x - origin[0],
+                    y: this.rectToScene.y - origin[1],
+                    width: this.rectToScene.width,
+                    height: this.rectToScene.height,
+                };
+            } else {
+                this.rectToParent = {
+                    x: nodeTrans[0],
+                    y: nodeTrans[1],
+                    width: drawRect.width,
+                    height: drawRect.height,
+                };
+            }
+        } else {
+            this.rectToScene = drawRect;
+            this.rectToParent = {
+                x: nodeTrans[0],
+                y: nodeTrans[1],
+                width: drawRect.width,
+                height: drawRect.height,
+            };
+        }
+    }
+
+    protected updateParentRects(angle: number) {
+        if (this.parent instanceof Group) {
             this.parent.rectLocal = unionRect(this.parent.rectLocal, this.rectToParent);
-            this.parent.rectToParent = unionRect(this.parent.rectToParent, {
-                x: this.parent.rectToParent.x + this.rectToParent.x,
-                y: this.parent.rectToParent.y + this.rectToParent.y,
-                width: this.rectToParent.width,
-                height: this.rectToParent.height,
-            });
-            this.parent.rectToScene = unionRect(this.parent.rectToScene, this.rectToScene);
+            let x = this.parent.rectToParent.x + this.parent.rectLocal.x;
+            let y = this.parent.rectToParent.y + this.parent.rectLocal.y;
+            let width = this.parent.rectLocal.width;
+            let height = this.parent.rectLocal.height;
+            if (angle !== 0) {
+                const center = this.parent.getScaleRotateCenter();
+                const rotatedRect = rotateRect(x, y, width, height, angle, center[0], center[1]);
+                width = rotatedRect.width;
+                height = rotatedRect.height;
+            }
+            this.parent.rectToParent = unionRect(this.parent.rectToParent, { x, y, width, height });
+            x = this.parent.rectToScene.x + this.parent.rectLocal.x;
+            y = this.parent.rectToScene.y + this.parent.rectLocal.y;
+            this.parent.rectToScene = unionRect(this.parent.rectToScene, { x, y, width, height });
         }
     }
 
@@ -109,6 +156,6 @@ export class Group extends RoSGNode {
             height: 0,
         };
         this.renderChildren(interpreter, transScene, rotation, draw2D);
-        this.updateParentRects();
+        this.updateParentRects(angle);
     }
 }

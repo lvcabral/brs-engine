@@ -1,9 +1,9 @@
 import { FieldModel } from "../components/RoSGNode";
-import { AAMember, BrsString, Float, getTextureManager, Int32, RoBitmap } from "..";
+import { AAMember, BrsString, getTextureManager, RoBitmap } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { rotatedRect } from "../../scenegraph/SGUtil";
+import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -37,13 +37,12 @@ export class Poster extends Group {
         if (!this.isVisible()) {
             return;
         }
-        const translation = this.getTranslation();
-        const transScene = translation.slice();
-        transScene[0] += origin[0];
-        transScene[1] += origin[1];
+        const nodeTrans = this.getTranslation().slice();
+        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans;
+        drawTrans[0] += origin[0];
+        drawTrans[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
-
         const uri = this.fields.get("uri")?.getValue();
         if (uri instanceof BrsString && uri.value.trim() !== "") {
             const textureManager = getTextureManager(interpreter);
@@ -51,56 +50,28 @@ export class Poster extends Group {
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
                 const scaleX = size.width !== 0 ? size.width / bitmap.width : 1;
                 const scaleY = size.height !== 0 ? size.height / bitmap.height : 1;
-                const width = scaleX * bitmap.width;
-                const height = scaleY * bitmap.height;
-                this.rectLocal = { x: 0, y: 0, width: width, height: height };
+                size.width = scaleX * bitmap.width;
+                size.height = scaleY * bitmap.height;
                 if (rotation !== 0) {
                     draw2D?.doDrawRotatedBitmap(
-                        transScene[0],
-                        transScene[1],
+                        drawTrans[0],
+                        drawTrans[1],
                         scaleX,
                         scaleY,
                         rotation,
                         bitmap
                     );
-                    this.rectToScene = rotatedRect(
-                        transScene[0],
-                        transScene[1],
-                        width,
-                        height,
-                        rotation
-                    );
-                    this.rectToParent = {
-                        x: this.rectToScene.x - origin[0],
-                        y: this.rectToScene.y - origin[1],
-                        width: this.rectToScene.width,
-                        height: this.rectToScene.height,
-                    };
+                    // TODO: Add support for center of rotation
                 } else {
-                    draw2D?.doDrawScaledObject(
-                        transScene[0],
-                        transScene[1],
-                        scaleX,
-                        scaleY,
-                        bitmap
-                    );
-                    this.rectToScene = {
-                        x: transScene[0],
-                        y: transScene[1],
-                        width: width,
-                        height: height,
-                    };
-                    this.rectToParent = {
-                        x: translation[0],
-                        y: translation[1],
-                        width: width,
-                        height: height,
-                    };
+                    draw2D?.doDrawScaledObject(drawTrans[0], drawTrans[1], scaleX, scaleY, bitmap);
                 }
             } else {
                 interpreter.stderr.write(`error,Invalid bitmap:${uri.value}`);
             }
         }
-        this.renderChildren(interpreter, transScene, rotation, draw2D);
+        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
+        this.updateBoundingRects(rect, origin, rotation);
+        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.updateParentRects(angle);
     }
 }
