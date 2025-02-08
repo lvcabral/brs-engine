@@ -532,6 +532,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
+    getId() {
+        const maybeID = this.fields.get("id")?.getValue();
+        return maybeID instanceof BrsString ? maybeID.value : this.subtype;
+    }
+
     getNodeParent() {
         return this.parent;
     }
@@ -2092,7 +2097,6 @@ function addChildren(
                     for (let [key, value] of Object.entries(child.fields)) {
                         let field = nodeFields.get(key.toLowerCase());
                         if (field) {
-                            console.log("addChildren - adding field", key, field.getType(), value);
                             setField.call(
                                 interpreter,
                                 new BrsString(key),

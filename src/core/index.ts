@@ -285,9 +285,9 @@ export function getFonts(fontPath: string, fontFamily: string) {
     const sgFontsPath = path.join(__dirname, fontPath, sgFamily);
     try {
         fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Regular.ttf`));
-        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Bold.ttf`));
-        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Italic.ttf`));
-        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
+        fonts.set(`${fontFamily}-Bold`, fs.readFileSync(`${fontsPath}-Bold.ttf`));
+        fonts.set(`${fontFamily}-Italic`, fs.readFileSync(`${fontsPath}-Italic.ttf`));
+        fonts.set(`${fontFamily}-BoldItalic`, fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
         fonts.set(`${sgFamily}-Regular`, fs.readFileSync(`${sgFontsPath}-Regular.ttf`));
         fonts.set(`${sgFamily}-SemiBold`, fs.readFileSync(`${sgFontsPath}-SemiBold.ttf`));
     } catch (err: any) {
