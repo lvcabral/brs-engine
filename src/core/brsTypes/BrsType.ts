@@ -184,7 +184,14 @@ export function getBrsValueFromFieldType(
             returnValue = new RoInvalid();
             break;
         case "font":
-            returnValue = isDefault ? new Font() : Uninitialized.Instance;
+            returnValue = new Font();
+            if (returnValue instanceof Font && value?.startsWith("font:")) {
+                if (Font.SystemFonts.has(value.slice(5).toLowerCase())) {
+                    returnValue.setSystemFont(value.slice(5).toLowerCase());
+                } else {
+                    returnValue = BrsInvalid.Instance;
+                }
+            }
             break;
         case "roarray":
         case "array":

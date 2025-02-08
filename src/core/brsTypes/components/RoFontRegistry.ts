@@ -46,6 +46,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
         this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
         this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
+        this.registerFont(interpreter, `common:/Fonts/OpenSans-Regular.ttf`);
+        this.registerFont(interpreter, `common:/Fonts/OpenSans-SemiBold.ttf`);
     }
 
     toString(parent?: BrsType): string {

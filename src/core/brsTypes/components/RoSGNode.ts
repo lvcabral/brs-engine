@@ -10,7 +10,15 @@ import {
 } from "../BrsType";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType, isBrsNumber, isBrsString, RoMessagePort, Scene, toAssociativeArray } from "..";
+import {
+    BrsType,
+    Font,
+    isBrsNumber,
+    isBrsString,
+    RoMessagePort,
+    Scene,
+    toAssociativeArray,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -51,6 +59,7 @@ enum FieldKind {
     Int64 = "longinteger",
     Double = "double",
     Float = "float",
+    Font = "font",
     Node = "node",
     Boolean = "boolean",
     String = "string",
@@ -70,6 +79,7 @@ namespace FieldKind {
             case "assocarray":
                 return FieldKind.AssocArray;
             case "font":
+                return FieldKind.Font;
             case "node":
                 return FieldKind.Node;
             case "bool":
@@ -108,7 +118,7 @@ namespace FieldKind {
             case "roassociativearray":
                 return FieldKind.AssocArray;
             case "node":
-                return FieldKind.Node;
+                return brsType instanceof Font ? FieldKind.Font : FieldKind.Node;
             default:
                 return undefined;
         }
@@ -203,7 +213,11 @@ export class Field {
             return true;
         }
 
-        return this.type === FieldKind.fromBrsType(value);
+        const result = this.type === FieldKind.fromBrsType(value);
+        if (!result) {
+            console.warn(`type = ${this.type} other type = ${FieldKind.fromBrsType(value)}`);
+        }
+        return result;
     }
 
     addObserver(
@@ -2078,6 +2092,7 @@ function addChildren(
                     for (let [key, value] of Object.entries(child.fields)) {
                         let field = nodeFields.get(key.toLowerCase());
                         if (field) {
+                            console.log("addChildren - adding field", key, field.getType(), value);
                             setField.call(
                                 interpreter,
                                 new BrsString(key),

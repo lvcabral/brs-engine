@@ -30,7 +30,6 @@ export interface DeviceInfo {
     displayMode: "480p" | "720p" | "1080p";
     captionsMode: "Off" | "On" | "Instant replay" | "When mute";
     defaultFont: string;
-    sgFont: string;
     fontPath: string;
     fonts?: Map<string, any>;
     maxSimulStreams: 1 | 2 | 3;
@@ -67,7 +66,6 @@ export const defaultDeviceInfo: DeviceInfo = {
     displayMode: "720p",
     captionsMode: "Off",
     defaultFont: "Asap",
-    sgFont: "OpenSans",
     fontPath: "../fonts/",
     fonts: new Map(),
     maxSimulStreams: 2,

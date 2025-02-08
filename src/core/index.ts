@@ -232,7 +232,7 @@ export async function createPayloadFromFiles(
         ? Object.assign(defaultDeviceInfo, customDeviceData)
         : defaultDeviceInfo;
     if (!deviceData.fonts || deviceData.fonts.size === 0) {
-        deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont, deviceData.sgFont);
+        deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
     }
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
         const fileData = fs.readFileSync(path.join(root, "manifest"));
@@ -274,23 +274,22 @@ export async function createPayloadFromFiles(
  * Get the fonts map for the device.
  * @param fontPath a string with the font path.
  * @param fontFamily a string with the font family name.
- * @param sgFont a string with the SceneGraph font family name.
  *
  * @returns a Map with the fonts.
  */
 
-export function getFonts(fontPath: string, fontFamily: string, sgFont: string) {
+export function getFonts(fontPath: string, fontFamily: string) {
     const fonts = new Map();
-    const fontsPath = path.join(__dirname, fontPath, `${fontFamily}`);
-    const sgFontsPath = path.join(__dirname, fontPath, `${sgFont}`);
+    const fontsPath = path.join(__dirname, fontPath, fontFamily);
+    const sgFamily = "OpenSans";
+    const sgFontsPath = path.join(__dirname, fontPath, sgFamily);
     try {
-        fonts.set("regular", fs.readFileSync(`${fontsPath}-Regular.ttf`));
-        fonts.set("bold", fs.readFileSync(`${fontsPath}-Bold.ttf`));
-        fonts.set("italic", fs.readFileSync(`${fontsPath}-Italic.ttf`));
-        fonts.set("bold-italic", fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
-        fonts.set("bold-italic", fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
-        fonts.set("sg-regular", fs.readFileSync(`${sgFontsPath}-Regular.ttf`));
-        fonts.set("sg-semi-bold", fs.readFileSync(`${sgFontsPath}-SemiBold.ttf`));
+        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Regular.ttf`));
+        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Bold.ttf`));
+        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Italic.ttf`));
+        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
+        fonts.set(`${sgFamily}-Regular`, fs.readFileSync(`${sgFontsPath}-Regular.ttf`));
+        fonts.set(`${sgFamily}-SemiBold`, fs.readFileSync(`${sgFontsPath}-SemiBold.ttf`));
     } catch (err: any) {
         postMessage(`error,Error loading fonts: ${err.message}`);
     }
@@ -470,8 +469,8 @@ function setupDeviceData(interpreter: Interpreter, device: DeviceInfo) {
  * @param device object with device info data
  */
 function setupDeviceFonts(interpreter: Interpreter, device: DeviceInfo) {
-    const fontFamily = device.defaultFont ?? "Asap";
-    const sgFontFamily = device.sgFont ?? "OpenSans";
+    const family = device.defaultFont ?? "Asap";
+    const sgFamily = "OpenSans";
     const fontPath = device.fontPath ?? "../fonts/";
 
     const fsys = interpreter.fileSystem;
@@ -480,57 +479,25 @@ function setupDeviceFonts(interpreter: Interpreter, device: DeviceInfo) {
         return;
     }
     fsys.mkdirSync("common:/Fonts");
-    let fontRegular, fontBold, fontItalic, fontBoldIt, fontSGRegular, fontSGSemiBold;
     if (typeof XMLHttpRequest !== "undefined") {
-        // Running as a Worker in the browser
-        fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
-        fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
-        fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
-        fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
-        fontSGRegular = download(`${fontPath}${sgFontFamily}-Regular.ttf`, "arraybuffer");
-        fontSGSemiBold = download(`${fontPath}${sgFontFamily}-SemiBold.ttf`, "arraybuffer");
-    } else if (device.fonts) {
-        // Running locally in NodeJS
-        fontRegular = device.fonts.get("regular");
-        fontBold = device.fonts.get("bold");
-        fontItalic = device.fonts.get("italic");
-        fontBoldIt = device.fonts.get("bold-italic");
-        fontSGRegular = device.fonts.get("sg-regular");
-        fontSGSemiBold = device.fonts.get("sg-semi-bold");
+        // Running as a Worker in the browser, download the fonts
+        const fonts = new Map();
+        const rType = "arraybuffer";
+        fonts.set(`${family}-Regular`, download(`${fontPath}${family}-Regular.ttf`, rType));
+        fonts.set(`${family}-Bold`, download(`${fontPath}${family}-Bold.ttf`, rType));
+        fonts.set(`${family}-Italic`, download(`${fontPath}${family}-Italic.ttf`, rType));
+        fonts.set(`${family}-BoldItalic`, download(`${fontPath}${family}-BoldItalic.ttf`, rType));
+        fonts.set(`${sgFamily}-Regular`, download(`${fontPath}${sgFamily}-Regular.ttf`, rType));
+        fonts.set(`${sgFamily}-SemiBold`, download(`${fontPath}${sgFamily}-SemiBold.ttf`, rType));
+        device.fonts = fonts;
     }
-    if (fontRegular) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Regular.ttf`, Buffer.from(fontRegular));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Regular.ttf`);
-    }
-    if (fontBold) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Bold.ttf`, Buffer.from(fontBold));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Bold.ttf`);
-    }
-    if (fontItalic) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Italic.ttf`, Buffer.from(fontItalic));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Italic.ttf`);
-    }
-    if (fontBoldIt) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-BoldItalic.ttf`, Buffer.from(fontBoldIt));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-BoldItalic.ttf`);
-    }
-    if (fontSGRegular) {
-        fsys.writeFileSync(`common:/Fonts/${sgFontFamily}-Regular.ttf`, Buffer.from(fontSGRegular));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${sgFontFamily}-Regular.ttf`);
-    }
-    if (fontSGSemiBold) {
-        fsys.writeFileSync(
-            `common:/Fonts/${sgFontFamily}-SemiBold.ttf`,
-            Buffer.from(fontSGSemiBold)
-        );
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${sgFontFamily}-SemiBold.ttf`);
-    }
+    device.fonts?.forEach((value, key) => {
+        if (value) {
+            fsys.writeFileSync(`common:/Fonts/${key}.ttf`, Buffer.from(value));
+        } else {
+            postMessage(`warning,Font file not found: ${key}.ttf`);
+        }
+    });
 }
 
 /**

@@ -94,7 +94,6 @@ program
             deviceData.fonts = brs.getFonts(
                 deviceData.fontPath,
                 deviceData.defaultFont,
-                deviceData.sgFont
             );
             deviceData.localIps = getLocalIps();
             try {
