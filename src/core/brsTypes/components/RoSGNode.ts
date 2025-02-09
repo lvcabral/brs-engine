@@ -2083,34 +2083,42 @@ function addChildren(
     node: RoSGNode,
     typeDef: ComponentDefinition | ComponentNode
 ) {
-    let children = typeDef.children;
-    let appendChild = node.getMethod("appendchild");
+    const children = typeDef.children;
+    const appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-        let newChild = createNodeByType(interpreter, new BrsString(child.name));
+        const newChild = createNodeByType(interpreter, new BrsString(child.name));
         if (newChild instanceof RoSGNode) {
-            if (appendChild) {
-                appendChild.call(interpreter, newChild);
-                let setField = newChild.getMethod("setfield");
-                if (setField) {
-                    let nodeFields = newChild.getNodeFields();
-                    for (let [key, value] of Object.entries(child.fields)) {
-                        let field = nodeFields.get(key.toLowerCase());
-                        if (field) {
-                            setField.call(
-                                interpreter,
-                                new BrsString(key),
-                                // use the field type to construct the field value
-                                getBrsValueFromFieldType(field.getType(), value)
-                            );
-                        }
+            const setField = newChild.getMethod("setfield");
+            if (setField) {
+                const nodeFields = newChild.getNodeFields();
+                for (let [key, value] of Object.entries(child.fields)) {
+                    const field = nodeFields.get(key.toLowerCase());
+                    if (field) {
+                        setField.call(
+                            interpreter,
+                            new BrsString(key),
+                            // use the field type to construct the field value
+                            getBrsValueFromFieldType(field.getType(), value)
+                        );
                     }
                 }
             }
-
-            if (child.children.length > 0) {
-                // we need to add the child's own children
-                addChildren(interpreter, newChild, child);
+            if (child.fields?.role) {
+                const targetField = child.fields.role;
+                if (node.getNodeFields().get(targetField)) {
+                    node.set(new BrsString(targetField), newChild);
+                } else {
+                    throw new Error(
+                        `Role/Field ${targetField} does not exist in ${node.getId()} node`
+                    );
+                }
+            } else if (appendChild) {
+                appendChild.call(interpreter, newChild);
+                if (child.children.length > 0) {
+                    // we need to add the child's own children
+                    addChildren(interpreter, newChild, child);
+                }
             }
         }
     }
