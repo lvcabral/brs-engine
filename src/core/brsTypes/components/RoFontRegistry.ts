@@ -28,6 +28,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamily: string;
     private readonly fontRegistry: Map<string, FontMetrics[]>;
+    private readonly fontPaths: Map<string, string> = new Map();
 
     constructor(interpreter: Interpreter) {
         super("roFontRegistry");
@@ -105,11 +106,18 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
+    getFontFamily(uri: string) {
+        const family = this.fontPaths.get(uri);
+        return family ?? this.registerFont(uri);
+    }
+
     registerFont(fontPath: string) {
         try {
             const fsys = this.interpreter.fileSystem;
             if (!fsys || !validUri(fontPath)) {
                 return "";
+            } else if (this.fontPaths.has(fontPath)) {
+                return this.fontPaths.get(fontPath) ?? "";
             }
             const fontData = this.interpreter.fileSystem.readFileSync(fontPath);
             const fontObj = opentype.parse(fontData.buffer);
@@ -141,6 +149,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             } else {
                 this.fontRegistry.set(fontFamily, [fontMetrics]);
             }
+            this.fontPaths.set(fontPath, fontFamily);
             return fontFamily;
         } catch (err: any) {
             if (this.interpreter.isDevMode) {
@@ -229,8 +238,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
 }
 
 // Function to get the singleton instance of Font Registry
-export function getFontRegistry(interpreter: Interpreter): RoFontRegistry {
-    if (!fontRegistry) {
+export function getFontRegistry(interpreter?: Interpreter): RoFontRegistry {
+    if (!fontRegistry && interpreter) {
         fontRegistry = new RoFontRegistry(interpreter);
     }
     return fontRegistry;
