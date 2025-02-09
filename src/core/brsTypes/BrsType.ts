@@ -185,10 +185,12 @@ export function getBrsValueFromFieldType(
             break;
         case "font":
             returnValue = new Font();
-            if (returnValue instanceof Font && value?.startsWith("font:")) {
-                if (!returnValue.setSystemFont(value.slice(5).toLowerCase())) {
-                    returnValue = BrsInvalid.Instance;
-                }
+            if (
+                returnValue instanceof Font &&
+                value?.startsWith("font:") &&
+                !returnValue.setSystemFont(value.slice(5).toLowerCase())
+            ) {
+                returnValue = BrsInvalid.Instance;
             }
             break;
         case "roarray":

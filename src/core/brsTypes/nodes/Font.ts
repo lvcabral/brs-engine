@@ -50,7 +50,7 @@ export class Font extends RoSGNode {
     }
 
     getSystemFontFamily(font: string) {
-        return Font.SystemFonts.get(font.toLowerCase())?.family || "";
+        return Font.SystemFonts.get(font.toLowerCase())?.family ?? "";
     }
 
     setSystemFont(font: string) {

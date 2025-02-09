@@ -197,35 +197,13 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         const events: BrsEvent[] = [];
         // Handle control keys
         this.interpreter.updateKeysBuffer(this.keysBuffer);
-        const nextKey = this.keysBuffer.shift();
-        if (nextKey && nextKey.key !== this.lastKey) {
-            if (this.interpreter.singleKeyEvents) {
-                if (nextKey.mod === 0) {
-                    if (this.lastKey >= 0 && this.lastKey < 100) {
-                        this.keysBuffer.unshift({ ...nextKey });
-                        nextKey.key = this.lastKey + 100;
-                        nextKey.mod = 100;
-                    }
-                } else if (nextKey.key !== this.lastKey + 100) {
-                    return events;
-                }
-            }
-            this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
-            this.interpreter.currKeyTime = performance.now();
-            this.lastKey = nextKey.key;
-
-            const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
-            const press = BrsBoolean.from(nextKey.mod === 0);
-            const handled = this.handleOnKeyEvent(key, press);
-
-            if (key.value === "back" && press.toBoolean() && !handled) {
-                events.push(new RoSGScreenEvent(BrsBoolean.True));
-            }
-            this.isDirty = true;
+        const event = this.handleNextKey(this.keysBuffer.shift());
+        if (event instanceof BrsComponent) {
+            events.push(event);
         }
         // Handle Scene rendering
         if (rootObjects.rootScene && this.isDirty) {
-            // TODO: Optimize rendering by only rendering dirty nodes
+            // TODO: Optimize rendering by only rendering if there are changes
             rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
             let timeStamp = performance.now();
             while (timeStamp - this.lastMessage < this.maxMs) {
@@ -237,7 +215,38 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         return events;
     }
 
-    handleOnKeyEvent(key: BrsString, press: BrsBoolean): boolean {
+    /** Handle control keys */
+    private handleNextKey(nextKey?: KeyEvent) {
+        if (nextKey && nextKey.key !== this.lastKey) {
+            if (this.interpreter.singleKeyEvents) {
+                if (nextKey.mod === 0) {
+                    if (this.lastKey >= 0 && this.lastKey < 100) {
+                        this.keysBuffer.unshift({ ...nextKey });
+                        nextKey.key = this.lastKey + 100;
+                        nextKey.mod = 100;
+                    }
+                } else if (nextKey.key !== this.lastKey + 100) {
+                    return false;
+                }
+            }
+            this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
+            this.interpreter.currKeyTime = performance.now();
+            this.lastKey = nextKey.key;
+
+            const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
+            const press = BrsBoolean.from(nextKey.mod === 0);
+            const handled = this.handleOnKeyEvent(key, press);
+
+            if (key.value === "back" && press.toBoolean() && !handled) {
+                return new RoSGScreenEvent(BrsBoolean.True);
+            }
+            this.isDirty = true;
+        }
+        return false;
+    }
+
+    /** Handle SceneGraph onKeyEvent event */
+    private handleOnKeyEvent(key: BrsString, press: BrsBoolean): boolean {
         const hostNode = rootObjects.rootScene;
         if (!hostNode) {
             return false;
