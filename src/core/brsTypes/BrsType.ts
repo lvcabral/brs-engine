@@ -184,18 +184,24 @@ export function getBrsValueFromFieldType(
             returnValue = new RoInvalid();
             break;
         case "font":
-            returnValue = isDefault ? new Font() : Uninitialized.Instance;
+            returnValue = new Font();
+            if (
+                returnValue instanceof Font &&
+                value?.startsWith("font:") &&
+                !returnValue.setSystemFont(value.slice(5).toLowerCase())
+            ) {
+                returnValue = BrsInvalid.Instance;
+            }
             break;
         case "roarray":
         case "array":
+            returnValue = BrsInvalid.Instance;
             if (value?.trim().startsWith("[") && value.trim().endsWith("]")) {
                 const parsedValue = value
                     .replace(/[\[\]]/g, "")
                     .split(",")
                     .map(Number);
                 returnValue = new RoArray(parsedValue.map((v) => new Float(isNaN(v) ? 0 : v)));
-            } else {
-                returnValue = BrsInvalid.Instance;
             }
             break;
         case "roassociativearray":

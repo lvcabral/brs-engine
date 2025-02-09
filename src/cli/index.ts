@@ -91,7 +91,11 @@ program
         if (typeof deviceData === "object") {
             deviceData.customFeatures.push("ascii_rendering");
             deviceData.fontPath = "../browser/fonts";
-            deviceData.fonts = brs.getFonts(deviceData.fontPath, deviceData.defaultFont);
+            deviceData.fonts = brs.getFonts(
+                deviceData.fontPath,
+                deviceData.defaultFont,
+                deviceData.sgFont
+            );
             deviceData.localIps = getLocalIps();
             try {
                 const { gateway, int } = gateway4sync();

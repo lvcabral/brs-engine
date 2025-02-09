@@ -23,6 +23,7 @@ let fontRegistry: RoFontRegistry;
 
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly interpreter: Interpreter;
     private readonly defaultFontSize = 40;
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamily: string;
@@ -40,12 +41,13 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 // this.get, ---> Deprecated as only needed to roImageCanvas
             ],
         });
+        this.interpreter = interpreter;
         this.fontRegistry = new Map();
         this.defaultFontFamily = interpreter.deviceInfo.get("defaultFont");
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
     }
 
     toString(parent?: BrsType): string {
@@ -103,13 +105,13 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    registerFont(interpreter: Interpreter, fontPath: string) {
+    registerFont(fontPath: string) {
         try {
-            const fsys = interpreter.fileSystem;
+            const fsys = this.interpreter.fileSystem;
             if (!fsys || !validUri(fontPath)) {
-                return BrsBoolean.False;
+                return "";
             }
-            const fontData = interpreter.fileSystem.readFileSync(fontPath);
+            const fontData = this.interpreter.fileSystem.readFileSync(fontPath);
             const fontObj = opentype.parse(fontData.buffer);
             // Get font metrics
             const fontMetrics = {
@@ -139,11 +141,15 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             } else {
                 this.fontRegistry.set(fontFamily, [fontMetrics]);
             }
+            return fontFamily;
         } catch (err: any) {
-            interpreter.stderr.write(`error,Error loading font:${fontPath} - ${err.message}`);
-            return BrsBoolean.False;
+            if (this.interpreter.isDevMode) {
+                this.interpreter.stderr.write(
+                    `warning,Error loading font:${fontPath} - ${err.message}`
+                );
+            }
+            return "";
         }
-        return BrsBoolean.True;
     }
 
     /** Register a font file (.ttf or .otf format). */
@@ -152,8 +158,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("fontPath", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fontPath: BrsString) => {
-            return this.registerFont(interpreter, fontPath.value);
+        impl: (_: Interpreter, fontPath: BrsString) => {
+            return BrsBoolean.from(this.registerFont(fontPath.value) !== "");
         },
     });
 
