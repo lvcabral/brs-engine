@@ -51,7 +51,7 @@ interface BrsCallback {
 }
 
 /** Set of value types that a field could be. */
-enum FieldKind {
+export enum FieldKind {
     Interface = "interface",
     Array = "array",
     AssocArray = "assocarray",
@@ -67,7 +67,7 @@ enum FieldKind {
     // TODO: Handle `color` as a special type that can be string or int defined on default fields
 }
 
-namespace FieldKind {
+export namespace FieldKind {
     export function fromString(type: string): FieldKind | undefined {
         switch (type.toLowerCase()) {
             case "interface":
@@ -523,15 +523,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 field = new Field(value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
             }
-        } else if (field.getType() === FieldKind.Font && value instanceof BrsString) {
-            const strFont = value.value;
-            const font = new Font();
-            if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
-                field.setValue(font);
-            } else {
-                field.setValue(BrsInvalid.Instance);
-            }
-            this.fields.set(mapKey, field);
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
             field.setValue(value);

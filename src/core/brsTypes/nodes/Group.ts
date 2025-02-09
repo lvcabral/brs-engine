@@ -1,5 +1,5 @@
-import { RoSGNode, FieldModel } from "../components/RoSGNode";
-import { Int32, Float, RoArray, AAMember, BrsBoolean } from "..";
+import { RoSGNode, FieldModel, FieldKind } from "../components/RoSGNode";
+import { Int32, Float, RoArray, AAMember, BrsBoolean, BrsType, ValueKind, BrsString, Font, BrsInvalid } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { BoundingRect, rotateRect, unionRect } from "../../scenegraph/SGUtil";
@@ -27,6 +27,28 @@ export class Group extends RoSGNode {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+    }
+
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+
+        const mapKey = index.value.toLowerCase();
+        const field = this.fields.get(mapKey);
+
+        if (field && field.getType() === FieldKind.Font && value instanceof BrsString) {
+            const strFont = value.value;
+            const font = new Font();
+            if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
+                field.setValue(font);
+            } else {
+                field.setValue(BrsInvalid.Instance);
+            }
+            this.fields.set(mapKey, field);
+            return BrsInvalid.Instance;
+        }
+        return super.set(index, value, alwaysNotify, kind);
     }
 
     protected isVisible() {
