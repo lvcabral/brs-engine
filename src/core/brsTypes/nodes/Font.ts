@@ -1,6 +1,15 @@
-import { RoSGNode, FieldModel } from "../components/RoSGNode";
-import { AAMember } from "../components/RoAssociativeArray";
-import { BrsBoolean, BrsString, getFontRegistry, Int32, RoFont } from "..";
+import { RoSGNode, FieldModel, FieldKind } from "../components/RoSGNode";
+import {
+    BrsBoolean,
+    BrsInvalid,
+    BrsString,
+    BrsType,
+    getFontRegistry,
+    Int32,
+    RoFont,
+    ValueKind,
+    AAMember,
+} from "..";
 import { Interpreter } from "../../interpreter";
 
 export type FontDef = {
@@ -39,6 +48,28 @@ export class Font extends RoSGNode {
 
         this.systemFont = "MediumSystemFont";
     }
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+
+        const mapKey = index.value.toLowerCase();
+        const field = this.fields.get(mapKey);
+
+        if (field && mapKey === "uri" && value instanceof BrsString) {
+            const uri = value.value;
+            getFontRegistry().registerFont(uri);
+            field.setValue(value);
+            this.fields.set(mapKey, field);
+            return BrsInvalid.Instance;
+        }
+        return super.set(index, value, alwaysNotify, kind);
+    }
+
+    getUri() {
+        const uri = this.fields.get("uri")?.getValue();
+        return uri instanceof BrsString ? uri.value : "";
+    }
 
     getSize() {
         const size = this.fields.get("size")?.getValue();
@@ -64,14 +95,17 @@ export class Font extends RoSGNode {
     }
 
     createDrawFont(interpreter: Interpreter) {
+        let fontFamily = this.getSystemFontFamily(this.systemFont);
         const fontRegistry = getFontRegistry(interpreter);
-        const fontFamily = this.getSystemFontFamily(this.systemFont);
-        const drawFont = fontRegistry.createFont(
+        const uri = this.getUri();
+        if (uri !== "") {
+            fontFamily = fontRegistry.getFontFamily(uri) ?? fontFamily;
+        }
+        return fontRegistry.createFont(
             new BrsString(fontFamily),
             new Int32(this.getSize()),
             BrsBoolean.False,
             BrsBoolean.False
         ) as RoFont;
-        return drawFont;
     }
 }
