@@ -217,31 +217,32 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     /** Handle control keys */
     private handleNextKey(nextKey?: KeyEvent) {
-        if (nextKey && nextKey.key !== this.lastKey) {
-            if (this.interpreter.singleKeyEvents) {
-                if (nextKey.mod === 0) {
-                    if (this.lastKey >= 0 && this.lastKey < 100) {
-                        this.keysBuffer.unshift({ ...nextKey });
-                        nextKey.key = this.lastKey + 100;
-                        nextKey.mod = 100;
-                    }
-                } else if (nextKey.key !== this.lastKey + 100) {
-                    return false;
-                }
-            }
-            this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
-            this.interpreter.currKeyTime = performance.now();
-            this.lastKey = nextKey.key;
-
-            const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
-            const press = BrsBoolean.from(nextKey.mod === 0);
-            const handled = this.handleOnKeyEvent(key, press);
-
-            if (key.value === "back" && press.toBoolean() && !handled) {
-                return new RoSGScreenEvent(BrsBoolean.True);
-            }
-            this.isDirty = true;
+        if (!nextKey || nextKey.key === this.lastKey) {
+            return false;
         }
+        if (this.interpreter.singleKeyEvents) {
+            if (nextKey.mod === 0) {
+                if (this.lastKey >= 0 && this.lastKey < 100) {
+                    this.keysBuffer.unshift({ ...nextKey });
+                    nextKey.key = this.lastKey + 100;
+                    nextKey.mod = 100;
+                }
+            } else if (nextKey.key !== this.lastKey + 100) {
+                return false;
+            }
+        }
+        this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
+        this.interpreter.currKeyTime = performance.now();
+        this.lastKey = nextKey.key;
+
+        const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
+        const press = BrsBoolean.from(nextKey.mod === 0);
+        const handled = this.handleOnKeyEvent(key, press);
+
+        if (key.value === "back" && press.toBoolean() && !handled) {
+            return new RoSGScreenEvent(BrsBoolean.True);
+        }
+        this.isDirty = true;
         return false;
     }
 

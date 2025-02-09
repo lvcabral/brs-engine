@@ -195,14 +195,13 @@ export function getBrsValueFromFieldType(
             break;
         case "roarray":
         case "array":
+            returnValue = BrsInvalid.Instance;
             if (value?.trim().startsWith("[") && value.trim().endsWith("]")) {
                 const parsedValue = value
                     .replace(/[\[\]]/g, "")
                     .split(",")
                     .map(Number);
                 returnValue = new RoArray(parsedValue.map((v) => new Float(isNaN(v) ? 0 : v)));
-            } else {
-                returnValue = BrsInvalid.Instance;
             }
             break;
         case "roassociativearray":
