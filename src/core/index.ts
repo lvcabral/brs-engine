@@ -232,7 +232,7 @@ export async function createPayloadFromFiles(
         ? Object.assign(defaultDeviceInfo, customDeviceData)
         : defaultDeviceInfo;
     if (!deviceData.fonts || deviceData.fonts.size === 0) {
-        deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
+        deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont, deviceData.sgFont);
     }
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
         const fileData = fs.readFileSync(path.join(root, "manifest"));
@@ -278,10 +278,9 @@ export async function createPayloadFromFiles(
  * @returns a Map with the fonts.
  */
 
-export function getFonts(fontPath: string, fontFamily: string) {
+export function getFonts(fontPath: string, fontFamily: string, sgFamily: string) {
     const fonts = new Map();
     const fontsPath = path.join(__dirname, fontPath, fontFamily);
-    const sgFamily = "OpenSans";
     const sgFontsPath = path.join(__dirname, fontPath, sgFamily);
     try {
         fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Regular.ttf`));
@@ -469,8 +468,8 @@ function setupDeviceData(interpreter: Interpreter, device: DeviceInfo) {
  * @param device object with device info data
  */
 function setupDeviceFonts(interpreter: Interpreter, device: DeviceInfo) {
-    const family = device.defaultFont ?? "Asap";
-    const sgFamily = "OpenSans";
+    const family = device.defaultFont;
+    const sgFamily = device.sgFont;
     const fontPath = device.fontPath ?? "../fonts/";
 
     const fsys = interpreter.fileSystem;

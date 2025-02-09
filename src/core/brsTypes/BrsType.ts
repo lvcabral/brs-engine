@@ -186,9 +186,7 @@ export function getBrsValueFromFieldType(
         case "font":
             returnValue = new Font();
             if (returnValue instanceof Font && value?.startsWith("font:")) {
-                if (Font.SystemFonts.has(value.slice(5).toLowerCase())) {
-                    returnValue.setSystemFont(value.slice(5).toLowerCase());
-                } else {
+                if (!returnValue.setSystemFont(value.slice(5).toLowerCase())) {
                     returnValue = BrsInvalid.Instance;
                 }
             }

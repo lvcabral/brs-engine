@@ -1,6 +1,7 @@
 import { RoSGNode, FieldModel } from "../components/RoSGNode";
 import { AAMember } from "../components/RoAssociativeArray";
-import { Int32 } from "..";
+import { BrsBoolean, BrsString, getFontRegistry, Int32, RoFont } from "..";
+import { Interpreter } from "../../interpreter";
 
 export type FontDef = {
     family: string;
@@ -17,19 +18,18 @@ export class Font extends RoSGNode {
     /**
      * Valid System Fonts
      */
-    readonly defaultFamily = "Open Sans";
     static readonly SystemFonts: Map<string, FontDef> = new Map([
-        ["smallestsystemfont", { family: "Open Sans", fhd: 27, hd: 18 }],
-        ["smallestboldsystemfont", { family: "Open Sans SemiBold", fhd: 27, hd: 18 }],
-        ["smallsystemfont", { family: "Open Sans", fhd: 33, hd: 22 }],
-        ["smallboldsystemfont", { family: "Open Sans SemiBold", fhd: 33, hd: 22 }],
-        ["mediumsystemfont", { family: "Open Sans", fhd: 36, hd: 24 }],
-        ["mediumboldsystemfont", { family: "Open Sans SemiBold", fhd: 36, hd: 24 }],
-        ["largesystemfont", { family: "Open Sans", fhd: 45, hd: 30 }],
-        ["largeboldsystemfont", { family: "Open Sans SemiBold", fhd: 45, hd: 30 }],
+        ["smallestsystemfont", { family: "Regular", fhd: 27, hd: 18 }],
+        ["smallestboldsystemfont", { family: "SemiBold", fhd: 27, hd: 18 }],
+        ["smallsystemfont", { family: "Regular", fhd: 33, hd: 22 }],
+        ["smallboldsystemfont", { family: "SemiBold", fhd: 33, hd: 22 }],
+        ["mediumsystemfont", { family: "Regular", fhd: 36, hd: 24 }],
+        ["mediumboldsystemfont", { family: "SemiBold", fhd: 36, hd: 24 }],
+        ["largesystemfont", { family: "Regular", fhd: 45, hd: 30 }],
+        ["largeboldsystemfont", { family: "SemiBold", fhd: 45, hd: 30 }],
     ]);
 
-    fontFamily: string;
+    private systemFont: string;
 
     constructor(members: AAMember[] = [], readonly name: string = "Font") {
         super([], name);
@@ -37,7 +37,7 @@ export class Font extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
-        this.fontFamily = this.getSystemFontFamily("MediumSystemFont");
+        this.systemFont = "MediumSystemFont";
     }
 
     getSize() {
@@ -50,14 +50,28 @@ export class Font extends RoSGNode {
     }
 
     getSystemFontFamily(font: string) {
-        return Font.SystemFonts.get(font.toLowerCase())?.family || this.defaultFamily;
+        return Font.SystemFonts.get(font.toLowerCase())?.family || "";
     }
 
     setSystemFont(font: string) {
         const systemFont = Font.SystemFonts.get(font.toLowerCase());
         if (systemFont) {
-            this.fontFamily = systemFont.family;
+            this.systemFont = font;
             this.setSize(systemFont.hd); // TODO: get the correct size for the device
+            return true;
         }
+        return false;
+    }
+
+    createDrawFont(interpreter: Interpreter) {
+        const fontRegistry = getFontRegistry(interpreter);
+        const fontFamily = this.getSystemFontFamily(this.systemFont);
+        const drawFont = fontRegistry.createFont(
+            new BrsString(fontFamily),
+            new Int32(this.getSize()),
+            BrsBoolean.False,
+            BrsBoolean.False
+        ) as RoFont;
+        return drawFont;
     }
 }

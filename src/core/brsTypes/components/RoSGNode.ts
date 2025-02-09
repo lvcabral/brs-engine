@@ -514,7 +514,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
 
         let mapKey = index.value.toLowerCase();
-        let fieldType = kind || FieldKind.fromBrsType(value);
+        let fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.fields.get(mapKey);
 
         if (!field) {
@@ -523,6 +523,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 field = new Field(value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
             }
+        } else if (field.getType() === FieldKind.Font && value instanceof BrsString) {
+            const strFont = value.value;
+            const font = new Font();
+            if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
+                field.setValue(font);
+            } else {
+                field.setValue(BrsInvalid.Instance);
+            }
+            this.fields.set(mapKey, field);
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
             field.setValue(value);

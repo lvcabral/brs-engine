@@ -2,7 +2,7 @@ import { FieldModel } from "../components/RoSGNode";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { BrsBoolean, BrsString, Float, getFontRegistry, Int32, RoFont } from "..";
+import { BrsString, Float } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -50,17 +50,11 @@ export class Label extends Group {
         const rotation = angle + this.getRotation();
         const font = this.fields.get("font")?.getValue();
         if (font instanceof Font) {
-            const fontRegistry = getFontRegistry(interpreter);
-            const drawFont = fontRegistry.createFont(
-                new BrsString(font.fontFamily),
-                new Int32(font.getSize()),
-                BrsBoolean.False,
-                BrsBoolean.False
-            ) as RoFont;
             const color = this.getColorFieldValue("color");
             const horizAlign = this.fields.get("horizalign")?.getValue()?.toString() ?? "left";
             const vertAlign = this.fields.get("vertalign")?.getValue()?.toString() ?? "top";
             // Calculate the text position based on the alignment
+            const drawFont = font.createDrawFont(interpreter);
             const textWidth = drawFont
                 .measureTextWidth(text, new Float(size.width || 1280))
                 .getValue();

@@ -14,6 +14,9 @@ import {
     Scene,
     initializeNode,
     RoTextureManager,
+    Font,
+    getFontRegistry,
+    getTextureManager,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -72,8 +75,18 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         super("roSGScreen");
         this.interpreter = interpreter;
         this.draw2D = new IfDraw2D(this);
-        this.textureManager = new RoTextureManager(interpreter);
-        this.fontRegistry = new RoFontRegistry(interpreter);
+        this.textureManager = getTextureManager(interpreter);
+        this.fontRegistry = getFontRegistry(interpreter);
+        const sgFont = interpreter.deviceInfo.get("sgFont");
+        const fontRegular = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-Regular.ttf`);
+        const fontSemiBold = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-SemiBold.ttf`);
+        Font.SystemFonts.forEach((font) => {
+            if (font.family === "Regular") {
+                font.family = fontRegular;
+            } else if (font.family === "SemiBold") {
+                font.family = fontSemiBold;
+            }
+        });
         this.lastKey = -1;
         this.keysBuffer = [];
         this.alphaEnable = true;
@@ -208,9 +221,10 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (key.value === "back" && press.toBoolean() && !handled) {
                 events.push(new RoSGScreenEvent(BrsBoolean.True));
             }
+            this.isDirty = true;
         }
         // Handle Scene rendering
-        if (rootObjects.rootScene) {
+        if (rootObjects.rootScene && this.isDirty) {
             // TODO: Optimize rendering by only rendering dirty nodes
             rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
             let timeStamp = performance.now();
