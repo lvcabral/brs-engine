@@ -10,7 +10,15 @@ import {
 } from "../BrsType";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType, isBrsNumber, isBrsString, RoMessagePort, Scene, toAssociativeArray } from "..";
+import {
+    BrsType,
+    Font,
+    isBrsNumber,
+    isBrsString,
+    RoMessagePort,
+    Scene,
+    toAssociativeArray,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -51,6 +59,7 @@ enum FieldKind {
     Int64 = "longinteger",
     Double = "double",
     Float = "float",
+    Font = "font",
     Node = "node",
     Boolean = "boolean",
     String = "string",
@@ -70,6 +79,7 @@ namespace FieldKind {
             case "assocarray":
                 return FieldKind.AssocArray;
             case "font":
+                return FieldKind.Font;
             case "node":
                 return FieldKind.Node;
             case "bool":
@@ -108,7 +118,7 @@ namespace FieldKind {
             case "roassociativearray":
                 return FieldKind.AssocArray;
             case "node":
-                return FieldKind.Node;
+                return brsType instanceof Font ? FieldKind.Font : FieldKind.Node;
             default:
                 return undefined;
         }
@@ -203,7 +213,11 @@ export class Field {
             return true;
         }
 
-        return this.type === FieldKind.fromBrsType(value);
+        const result = this.type === FieldKind.fromBrsType(value);
+        if (!result) {
+            console.warn(`type = ${this.type} other type = ${FieldKind.fromBrsType(value)}`);
+        }
+        return result;
     }
 
     addObserver(
@@ -500,7 +514,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
 
         let mapKey = index.value.toLowerCase();
-        let fieldType = kind || FieldKind.fromBrsType(value);
+        let fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.fields.get(mapKey);
 
         if (!field) {
@@ -509,6 +523,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 field = new Field(value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
             }
+        } else if (field.getType() === FieldKind.Font && value instanceof BrsString) {
+            const strFont = value.value;
+            const font = new Font();
+            if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
+                field.setValue(font);
+            } else {
+                field.setValue(BrsInvalid.Instance);
+            }
+            this.fields.set(mapKey, field);
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
             field.setValue(value);
@@ -516,6 +539,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
 
         return BrsInvalid.Instance;
+    }
+
+    getId() {
+        const maybeID = this.fields.get("id")?.getValue();
+        return maybeID instanceof BrsString ? maybeID.value : this.subtype;
     }
 
     getNodeParent() {

@@ -2,7 +2,7 @@ import { FieldModel } from "../components/RoSGNode";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { BrsBoolean, BrsString, Float, getFontRegistry, Int32, RoFont } from "..";
+import { BrsString, Float } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -11,7 +11,6 @@ export class Label extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "text", type: "string", value: "" },
         { name: "color", type: "string", value: "0xddddddff" },
-        // TODO: Add support for using a Font node as field value. For now, it will be Invalid.
         { name: "font", type: "font" },
         { name: "horizAlign", type: "string", value: "left" },
         { name: "vertAlign", type: "string", value: "top" },
@@ -47,30 +46,15 @@ export class Label extends Group {
 
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
-
-        const color = this.getColorFieldValue("color");
-        const font = this.fields.get("font")?.getValue();
-        let fontSize = 24;
-        if (font instanceof Font) {
-            const value = font.getNodeFields().get("size")?.getValue();
-            if (value instanceof Int32 || value instanceof Float) {
-                fontSize = value.getValue();
-            }
-        }
-        const defaultFontFamily = interpreter.deviceInfo.get("defaultFont");
-        const fontRegistry = getFontRegistry(interpreter);
-        const drawFont = fontRegistry.createFont(
-            new BrsString(defaultFontFamily),
-            new Int32(fontSize),
-            BrsBoolean.False,
-            BrsBoolean.False
-        );
-        const horizAlign = this.fields.get("horizalign")?.getValue()?.toString() ?? "left";
-        const vertAlign = this.fields.get("vertalign")?.getValue()?.toString() ?? "top";
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
-        if (drawFont instanceof RoFont) {
+        const font = this.fields.get("font")?.getValue();
+        if (font instanceof Font) {
+            const color = this.getColorFieldValue("color");
+            const horizAlign = this.fields.get("horizalign")?.getValue()?.toString() ?? "left";
+            const vertAlign = this.fields.get("vertalign")?.getValue()?.toString() ?? "top";
             // Calculate the text position based on the alignment
+            const drawFont = font.createDrawFont(interpreter);
             const textWidth = drawFont
                 .measureTextWidth(text, new Float(size.width || 1280))
                 .getValue();
