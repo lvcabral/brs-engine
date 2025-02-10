@@ -136,7 +136,6 @@ export type FieldModel = {
     value?: string;
     hidden?: boolean;
     alwaysNotify?: boolean;
-    readonly?: boolean; // TODO: Implement support for readonly fields
 };
 
 export class Field {
