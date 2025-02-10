@@ -17,10 +17,12 @@ Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompos
 
 This repository was originally a fork from [**brs**](https://github.com/rokucommunity/brs), a **BrightScript** _command line interpreter_.
 
-**Important Notes:**
-
-- At this stage, apps based on **SceneGraph** are not yet supported, but this feature is in the backlog to be implemented. Please check the [Current Limitations](docs/limitations.md) document for further details on what else is still missing and what is out of scope.
-- Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**, and also to be used as a framework for running the **BrightScript** language in other platforms.<br /><br />
+> [!NOTE]
+>
+> - This branch has the ongoing development of **SceneGraph** support, as there a lot of challenges ahead, [feel free to help]((docs/contributing.md)).
+> - Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices.
+> - The engine primarily aimed as a development tool for the **Roku Community**.
+> - It can also to be used as a framework for running the **BrightScript** language in other platforms.
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
