@@ -1,8 +1,7 @@
-import { FieldModel } from "../components/RoSGNode";
-import { AAMember } from "../components/RoAssociativeArray";
+import { FieldKind, FieldModel } from "../components/RoSGNode";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { BrsString, Float } from "..";
+import { AAMember, BrsBoolean, BrsString, BrsType, ValueKind } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -25,7 +24,7 @@ export class Label extends Group {
         { name: "truncateOnDelimiter", type: "string" },
         { name: "wordBreakChars", type: "string" },
         { name: "ellipsisText", type: "string" },
-        { name: "isTextEllipsized", type: "boolean", value: "false" },
+        { name: "isTextEllipsized", type: "boolean", value: "false", readonly: true },
     ];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Label") {
@@ -35,15 +34,24 @@ export class Label extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        const resetFields = ["text", "font", "width", "height", "numlines", "maxlines", "wrap"];
+        if (resetFields.includes(index.value.toLowerCase())) {
+            // Reset the flag if any relevant field changed and the label is not re-measured yet
+            this.setEllipsized(false);
+        }
+        return super.set(index, value, alwaysNotify, kind);
+    }
+
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
-        const text = this.fields.get("text")?.getValue();
-        // TODO: Check if the label is visible but no text if the space should be considered for bounding rect.
-        if (!this.isVisible() || !(text instanceof BrsString) || text.value.trim() === "") {
+        if (!this.isVisible()) {
             return;
         }
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
-
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
@@ -51,38 +59,36 @@ export class Label extends Group {
         const font = this.fields.get("font")?.getValue();
         if (font instanceof Font) {
             const color = this.getColorFieldValue("color");
-            const horizAlign = this.fields.get("horizalign")?.getValue()?.toString() ?? "left";
-            const vertAlign = this.fields.get("vertalign")?.getValue()?.toString() ?? "top";
-            // Calculate the text position based on the alignment
+            const textField = this.getFieldValue("text") as BrsString;
+            const horizAlign = this.getFieldValue("horizAlign")?.toString() || "left";
+            const vertAlign = this.getFieldValue("vertAlign")?.toString() || "top";
+            const ellipsis = this.getFieldValue("ellipsisText")?.toString() || "...";
             const drawFont = font.createDrawFont(interpreter);
-            const textWidth = drawFont
-                .measureTextWidth(text, new Float(size.width || 1280))
-                .getValue();
-            const textHeight = drawFont.measureTextHeight().getValue();
-            if (horizAlign === "center") {
-                drawTrans[0] += (size.width - textWidth) / 2;
-            } else if (horizAlign === "right") {
-                drawTrans[0] += size.width - textWidth;
+            const measured = drawFont.measureTextWidth(textField.value, size.width, ellipsis);
+            this.setEllipsized(measured.ellipsized);
+            const text = measured.text;
+            const textWidth = measured.width;
+            const textHeight = drawFont.measureTextHeight();
+            let textX = drawTrans[0];
+            let textY = drawTrans[1];
+
+            if (size.width > textWidth) {
+                if (horizAlign === "center") {
+                    textX += (size.width - textWidth) / 2;
+                } else if (horizAlign === "right") {
+                    textX += size.width - textWidth;
+                }
             }
-            if (vertAlign === "center") {
-                drawTrans[1] += (size.height - textHeight) / 2;
-            } else if (vertAlign === "bottom") {
-                drawTrans[1] += size.height - textHeight;
+            if (size.height > textHeight) {
+                if (vertAlign === "center") {
+                    textY += (size.height - textHeight) / 2;
+                } else if (vertAlign === "bottom") {
+                    textY += size.height - textHeight;
+                }
             }
-            if (rotation !== 0) {
-                draw2D?.doDrawRotatedText(
-                    text.value,
-                    drawTrans[0],
-                    drawTrans[1],
-                    color,
-                    drawFont,
-                    rotation
-                );
-            } else {
-                draw2D?.doDrawText(text.value, drawTrans[0], drawTrans[1], color, drawFont);
-            }
-            size.width = textWidth;
-            size.height = textHeight;
+            draw2D?.doDrawRotatedText(text, textX, textY, color, drawFont, rotation);
+            size.width = Math.max(textWidth, size.width);
+            size.height = Math.max(textHeight, size.height);
         }
         const rect = {
             x: drawTrans[0],
@@ -93,5 +99,9 @@ export class Label extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
+    }
+
+    protected setEllipsized(ellipsized: boolean) {
+        this.fields.get("istextellipsized")?.setValue(BrsBoolean.from(ellipsized));
     }
 }

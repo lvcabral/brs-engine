@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Float } from "..";
+import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -42,18 +42,38 @@ export class RoFont extends BrsComponent implements BrsValue {
     }
 
     measureTextHeight() {
-        return new Int32(Math.round(this.metrics.lineHeight * this.size));
+        return Math.round(this.metrics.lineHeight * this.size);
     }
 
-    measureTextWidth(text: BrsString, maxWidth: Int32 | Float) {
+    measureTextWidth(text: string, maxWidth?: number, ellipsis?: string) {
         const canvas = createNewCanvas(1280, 720);
         const ctx = canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
         ctx.font = this.toFontString();
         ctx.textBaseline = "top";
-        let measure = ctx.measureText(text.value);
-        let length = Math.min(measure.width, maxWidth.getValue());
+        let measure = ctx.measureText(text);
+        let length = maxWidth ? Math.min(measure.width, maxWidth) : measure.width;
+        let ellipsizedText = text;
+        let ellipsized = false;
+
+        if (ellipsis && maxWidth && measure.width > maxWidth) {
+            // Ellipsize the text
+            let ellipsisWidth = ctx.measureText(ellipsis).width;
+            let truncatedText = text;
+
+            while (
+                ctx.measureText(truncatedText).width + ellipsisWidth > maxWidth &&
+                truncatedText.length > 0
+            ) {
+                truncatedText = truncatedText.slice(0, -1);
+            }
+
+            ellipsizedText = truncatedText + ellipsis;
+            length = ctx.measureText(ellipsizedText).width;
+            ellipsized = true;
+        }
+
         releaseCanvas(canvas);
-        return new Int32(Math.round(length));
+        return { width: Math.round(length), text: ellipsizedText, ellipsized };
     }
 
     getTopAdjust(): number {
@@ -85,7 +105,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return this.measureTextHeight();
+            return new Int32(this.measureTextHeight());
         },
     });
 
@@ -99,7 +119,8 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, text: BrsString, maxWidth: Int32) => {
-            return this.measureTextWidth(text, maxWidth);
+            let { width } = this.measureTextWidth(text.value, maxWidth.getValue());
+            return new Int32(width);
         },
     });
 

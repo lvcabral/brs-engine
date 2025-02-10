@@ -50,7 +50,7 @@ export class Timer extends RoSGNode {
         const now = performance.now();
         const duration = this.getFieldValue("duration") as Float;
         const repeat = this.getFieldValue("repeat") as BrsBoolean;
-        if (this.active && (now - this.lastFireTime)/1000 >= duration.getValue()) {
+        if (this.active && (now - this.lastFireTime) / 1000 >= duration.getValue()) {
             this.lastFireTime = now;
             this.active = repeat.toBoolean();
             this.fields.get("fire")?.setValue(BrsInvalid.Instance);
@@ -58,5 +58,4 @@ export class Timer extends RoSGNode {
         }
         return false;
     }
-
 }
