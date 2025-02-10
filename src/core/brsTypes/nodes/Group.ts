@@ -1,5 +1,16 @@
 import { RoSGNode, FieldModel, FieldKind } from "../components/RoSGNode";
-import { Int32, Float, RoArray, AAMember, BrsBoolean, BrsType, ValueKind, BrsString, Font, BrsInvalid } from "..";
+import {
+    Int32,
+    Float,
+    RoArray,
+    AAMember,
+    BrsBoolean,
+    BrsType,
+    ValueKind,
+    BrsString,
+    Font,
+    BrsInvalid,
+} from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { BoundingRect, rotateRect, unionRect } from "../../scenegraph/SGUtil";

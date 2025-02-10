@@ -136,6 +136,7 @@ export type FieldModel = {
     value?: string;
     hidden?: boolean;
     alwaysNotify?: boolean;
+    readonly?: boolean; // TODO: Implement support for readonly fields
 };
 
 export class Field {
@@ -542,7 +543,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     getFieldValue(fieldName: string) {
-        const field = this.fields.get(fieldName);
+        const field = this.fields.get(fieldName.toLowerCase());
         return field ? field.getValue() : BrsInvalid.Instance;
     }
 
@@ -768,7 +769,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      */
     protected getColorFieldValue(fieldName: string) {
         let color = -1;
-        const maybeColor = this.fields.get(fieldName);
+        const maybeColor = this.fields.get(fieldName.toLowerCase());
         if (maybeColor instanceof Field && maybeColor.getValue() instanceof BrsString) {
             let colorValue = maybeColor.getValue() as BrsString;
             if (colorValue.value.length) {
