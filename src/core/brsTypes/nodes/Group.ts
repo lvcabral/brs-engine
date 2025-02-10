@@ -111,22 +111,24 @@ export class Group extends RoSGNode {
         const nodeTrans = this.getTranslation();
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
         if (rotation !== 0) {
-            const rotateCenter = this.getScaleRotateCenter();
-            this.rectToScene = rotateRect(
-                nodeTrans[0] + origin[0],
-                nodeTrans[1] + origin[1],
-                drawRect.width,
-                drawRect.height,
-                rotation,
-                rotateCenter[0],
-                rotateCenter[1]
-            );
-            if (this.getRotation() !== 0) {
+            const center = this.getScaleRotateCenter();
+            this.rectToScene = rotateRect(drawRect, rotation, center);
+            const nodeRotation = this.getRotation();
+            if (nodeRotation !== 0 && nodeRotation === rotation) {
                 this.rectToParent = {
                     x: this.rectToScene.x - origin[0],
                     y: this.rectToScene.y - origin[1],
                     width: this.rectToScene.width,
                     height: this.rectToScene.height,
+                };
+            } else if (nodeRotation !== 0 && nodeRotation !== rotation) {
+                const rect = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
+                const rotatedRect = rotateRect(rect, nodeRotation, center);
+                this.rectToParent = {
+                    x: nodeTrans[0] + rotatedRect.x,
+                    y: nodeTrans[1] + rotatedRect.y,
+                    width: rotatedRect.width,
+                    height: rotatedRect.height,
                 };
             } else {
                 this.rectToParent = {
@@ -157,11 +159,11 @@ export class Group extends RoSGNode {
             let height = this.parent.rectLocal.height;
             if (angle !== 0) {
                 const center = this.parent.getScaleRotateCenter();
-                const rotatedRect = rotateRect(0, 0, width, height, angle, center[0], center[1]);
-                x += rotatedRect.x;
-                y += rotatedRect.y;
-                width = rotatedRect.width;
-                height = rotatedRect.height;
+                const rect = rotateRect({ x: 0, y: 0, width, height }, angle, center);
+                x += rect.x;
+                y += rect.y;
+                width = rect.width;
+                height = rect.height;
             }
             this.parent.rectToParent = unionRect(this.parent.rectToParent, { x, y, width, height });
             x += origin[0] - parentTrans[0];

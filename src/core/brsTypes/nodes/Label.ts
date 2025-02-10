@@ -90,12 +90,7 @@ export class Label extends Group {
             size.width = Math.max(textWidth, size.width);
             size.height = Math.max(textHeight, size.height);
         }
-        const rect = {
-            x: drawTrans[0],
-            y: drawTrans[1],
-            width: size.width,
-            height: size.height,
-        };
+        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
