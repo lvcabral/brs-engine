@@ -196,29 +196,35 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private getNewEvents() {
         const events: BrsEvent[] = [];
         // Handle control keys
-        this.interpreter.updateKeysBuffer(this.keysBuffer);
-        const event = this.handleNextKey(this.keysBuffer.shift());
+        const event = this.handleNextKey();
         if (event instanceof BrsComponent) {
             events.push(event);
         }
-        // Handle Scene rendering
-        if (rootObjects.rootScene && this.isDirty) {
-            // TODO: Optimize rendering by only rendering if there are changes
-            rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
-            let timeStamp = performance.now();
-            while (timeStamp - this.lastMessage < this.maxMs) {
-                timeStamp = performance.now();
+        // Handle Scene Events
+        if (rootObjects.rootScene) {
+            if (rootObjects.rootScene.processTimers()) {
+                this.isDirty = true;
             }
-            this.finishDraw();
-            this.lastMessage = timeStamp;
+            if (this.isDirty) {
+                // TODO: Optimize rendering by only rendering if there are changes
+                rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+                let timeStamp = performance.now();
+                while (timeStamp - this.lastMessage < this.maxMs) {
+                    timeStamp = performance.now();
+                }
+                this.finishDraw();
+                this.lastMessage = timeStamp;
+            }
         }
         return events;
     }
 
     /** Handle control keys */
-    private handleNextKey(nextKey?: KeyEvent) {
+    private handleNextKey() {
+        this.interpreter.updateKeysBuffer(this.keysBuffer);
+        const nextKey = this.keysBuffer.shift();
         if (!nextKey || nextKey.key === this.lastKey) {
-            return false;
+            return BrsInvalid.Instance;
         }
         if (this.interpreter.singleKeyEvents) {
             if (nextKey.mod === 0) {
@@ -228,7 +234,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                     nextKey.mod = 100;
                 }
             } else if (nextKey.key !== this.lastKey + 100) {
-                return false;
+                return BrsInvalid.Instance;
             }
         }
         this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
@@ -243,7 +249,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             return new RoSGScreenEvent(BrsBoolean.True);
         }
         this.isDirty = true;
-        return false;
+        return BrsInvalid.Instance;
     }
 
     /** Handle SceneGraph onKeyEvent event */
