@@ -60,11 +60,17 @@ export class IfDraw2D {
         scaleY: number,
         rotation: number,
         object: RoBitmap,
+        centerX?: number,
+        centerY?: number,
         rgba?: number
     ) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
         const ctx = this.component.getContext();
         ctx.save();
-        ctx.translate(x, y);
+        const rotationCenterX = centerX !== undefined ? centerX : 0;
+        const rotationCenterY = centerY !== undefined ? centerY : 0;
+        ctx.translate(baseX + x + rotationCenterX, baseY + y + rotationCenterY);
         ctx.rotate(-rotation);
         this.component.drawImage(object, 0, 0, scaleX, scaleY, rgba);
         ctx.restore();

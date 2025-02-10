@@ -53,15 +53,17 @@ export class Poster extends Group {
                 size.width = scaleX * bitmap.width;
                 size.height = scaleY * bitmap.height;
                 if (rotation !== 0) {
+                    const center = this.getScaleRotateCenter();
                     draw2D?.doDrawRotatedBitmap(
                         drawTrans[0],
                         drawTrans[1],
                         scaleX,
                         scaleY,
                         rotation,
-                        bitmap
+                        bitmap,
+                        center[0],
+                        center[1]
                     );
-                    // TODO: Add support for center of rotation
                 } else {
                     draw2D?.doDrawScaledObject(drawTrans[0], drawTrans[1], scaleX, scaleY, bitmap);
                 }
