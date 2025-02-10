@@ -24,7 +24,7 @@ export class Label extends Group {
         { name: "truncateOnDelimiter", type: "string" },
         { name: "wordBreakChars", type: "string" },
         { name: "ellipsisText", type: "string" },
-        { name: "isTextEllipsized", type: "boolean", value: "false", readonly: true },
+        { name: "isTextEllipsized", type: "boolean", value: "false" },
     ];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Label") {
