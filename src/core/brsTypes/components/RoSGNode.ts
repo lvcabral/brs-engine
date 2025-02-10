@@ -17,6 +17,7 @@ import {
     isBrsString,
     RoMessagePort,
     Scene,
+    Timer,
     toAssociativeArray,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -64,6 +65,7 @@ export enum FieldKind {
     Boolean = "boolean",
     String = "string",
     Function = "function",
+    Object = "object",
     // TODO: Handle `color` as a special type that can be string or int defined on default fields
 }
 
@@ -101,6 +103,8 @@ export namespace FieldKind {
                 return FieldKind.String;
             case "function":
                 return FieldKind.Function;
+            case "object":
+                return FieldKind.Object;
             default:
                 return undefined;
         }
@@ -537,6 +541,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return maybeID instanceof BrsString ? maybeID.value : this.subtype;
     }
 
+    getFieldValue(fieldName: string) {
+        const field = this.fields.get(fieldName);
+        return field ? field.getValue() : BrsInvalid.Instance;
+    }
+
     getNodeParent() {
         return this.parent;
     }
@@ -563,6 +572,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
         return false;
+    }
+
+    processTimers(fired: boolean = false) {
+        this.children.forEach((child) => {
+            if (child instanceof Timer && child.active && child.checkFire()) {
+                fired = true;
+            }
+            if (child.processTimers(fired)) {
+                fired = true;
+            }
+        });
+        return fired;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
@@ -710,7 +731,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 value = toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" });
                 fieldType = FieldKind.AssocArray;
             } else {
-                value = getBrsValueFromFieldType(field.type, field.value, true);
+                value = getBrsValueFromFieldType(field.type, field.value);
                 fieldType = FieldKind.fromString(field.type);
             }
             if (fieldType) {
