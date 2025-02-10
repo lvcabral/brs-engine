@@ -15,6 +15,7 @@ import { Int32 } from "./Int32";
 import { Float } from "./Float";
 import { RoBoolean } from "./components/RoBoolean";
 import { RoInvalid } from "./components/RoInvalid";
+import { convertHexColor } from "../scenegraph/SGUtil";
 import Long from "long";
 
 /** Set of values supported in BrightScript. */
@@ -209,6 +210,12 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "str":
         case "string":
             returnValue = new BrsString(value ?? "");
+            break;
+        case "color":
+            returnValue = new Int32(-1);
+            if (value?.length) {
+                returnValue = new Int32(convertHexColor(value));
+            }
             break;
         default:
             returnValue = Uninitialized.Instance;

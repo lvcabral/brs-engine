@@ -1,5 +1,5 @@
 import { FieldModel } from "../components/RoSGNode";
-import { AAMember } from "..";
+import { AAMember, Int32 } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -9,7 +9,7 @@ export class Rectangle extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "width", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "0.0" },
-        { name: "color", type: "string", value: "0xFFFFFFFF" },
+        { name: "color", type: "color", value: "0xFFFFFFFF" },
         { name: "blendingEnabled", type: "boolean", value: "true" },
     ];
 
@@ -30,22 +30,18 @@ export class Rectangle extends Group {
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
-        const color = this.getColorFieldValue("color");
-        if (rotation !== 0) {
-            const center = this.getScaleRotateCenter();
-            draw2D?.doDrawRotatedRect(
-                drawTrans[0],
-                drawTrans[1],
-                size.width,
-                size.height,
-                color,
-                rotation,
-                center[0],
-                center[1]
-            );
-        } else {
-            draw2D?.doDrawRect(drawTrans[0], drawTrans[1], size.width, size.height, color);
-        }
+        const color = this.getFieldValue("color") as Int32;
+        const center = this.getScaleRotateCenter();
+        draw2D?.doDrawRotatedRect(
+            drawTrans[0],
+            drawTrans[1],
+            size.width,
+            size.height,
+            color.getValue(),
+            rotation,
+            center[0],
+            center[1]
+        );
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);

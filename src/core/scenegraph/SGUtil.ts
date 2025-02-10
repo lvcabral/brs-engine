@@ -55,3 +55,19 @@ export function unionRect(rectChild: BoundingRect, rectParent: BoundingRect) {
     const height = Math.max(rectChild.y + rectChild.height, rectParent.y + rectParent.height) - y;
     return { x, y, width, height };
 }
+
+/* Function to convert a hex color string to a number */
+export function convertHexColor(strColor: string): number {
+    let color = -1;
+    if (strColor.length) {
+        strColor = strColor.startsWith("#") ? strColor.slice(1) : strColor;
+        strColor = strColor.startsWith("0x") ? strColor.slice(2) : strColor;
+        strColor = strColor.padStart(6, "0");
+        if (strColor.length == 6) {
+            strColor = strColor + "FF";
+        }
+        color = parseInt(strColor, 16);
+        color = isNaN(color) ? -1 : color | 0;
+    }
+    return color;
+}

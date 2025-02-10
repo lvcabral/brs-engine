@@ -13,7 +13,7 @@ import {
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BoundingRect, rotateRect, unionRect } from "../../scenegraph/SGUtil";
+import { BoundingRect, convertHexColor, rotateRect, unionRect } from "../../scenegraph/SGUtil";
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -58,6 +58,14 @@ export class Group extends RoSGNode {
             }
             this.fields.set(mapKey, field);
             return BrsInvalid.Instance;
+        } else if (field && field.getType() === FieldKind.Color && value instanceof BrsString) {
+            let strColor = value.value;
+            if (strColor.length) {
+                const color = convertHexColor(strColor);
+                field.setValue(new Int32(color));
+                this.fields.set(mapKey, field);
+                return BrsInvalid.Instance;
+            }
         }
         return super.set(index, value, alwaysNotify, kind);
     }

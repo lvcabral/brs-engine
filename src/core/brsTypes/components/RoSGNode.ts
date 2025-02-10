@@ -66,7 +66,7 @@ export enum FieldKind {
     String = "string",
     Function = "function",
     Object = "object",
-    // TODO: Handle `color` as a special type that can be string or int defined on default fields
+    Color = "color",
 }
 
 export namespace FieldKind {
@@ -105,6 +105,8 @@ export namespace FieldKind {
                 return FieldKind.Function;
             case "object":
                 return FieldKind.Object;
+            case "color":
+                return FieldKind.Color;
             default:
                 return undefined;
         }
@@ -759,31 +761,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 );
             }
         });
-    }
-
-    /**
-     * Returns a color numeric value from a field value.
-     * @param fieldName name of the field to get the color from
-     * @returns color numeric value
-     */
-    protected getColorFieldValue(fieldName: string) {
-        let color = -1;
-        const maybeColor = this.fields.get(fieldName.toLowerCase());
-        if (maybeColor instanceof Field && maybeColor.getValue() instanceof BrsString) {
-            let colorValue = maybeColor.getValue() as BrsString;
-            if (colorValue.value.length) {
-                let hex = colorValue.value;
-                hex = hex.startsWith("#") ? hex.slice(1) : hex;
-                hex = hex.startsWith("0x") ? hex.slice(2) : hex;
-                hex = hex.padStart(6, "0");
-                if (hex.length == 6) {
-                    hex = hex + "FF";
-                }
-                color = parseInt(hex, 16);
-                color = isNaN(color) ? -1 : color;
-            }
-        }
-        return color;
     }
 
     /**

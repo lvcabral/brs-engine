@@ -10,8 +10,8 @@ export class TextEditBox extends Group {
         { name: "cursorPosition", type: "integer", value: "0" },
         { name: "clearOnDownKey", type: "boolean", value: "true" },
         { name: "active", type: "boolean", value: "false" },
-        { name: "textColor", type: "string", value: "OxFFFFFFFF" },
-        { name: "hintTextColor", type: "string", value: "OxFFFFFFFF" },
+        { name: "textColor", type: "color", value: "0xFFFFFFFF" },
+        { name: "hintTextColor", type: "color", value: "0xFFFFFFFF" },
         { name: "width", type: "float", value: "-1.0" },
         { name: "backgroundUri", type: "string", value: "" },
     ];
