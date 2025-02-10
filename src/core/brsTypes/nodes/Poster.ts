@@ -7,7 +7,7 @@ import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [
-        { name: "uri", type: "string" },
+        { name: "uri", type: "uri" },
         { name: "width", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "0.0" },
         { name: "loadSync", type: "boolean", value: "false" },
@@ -18,10 +18,10 @@ export class Poster extends Group {
         { name: "bitmapWidth", type: "float", value: "0.0" },
         { name: "bitmapHeight", type: "float", value: "0.0" },
         { name: "bitmapMargins", type: "assocarray" },
-        { name: "blendColor", type: "string", value: "0xFFFFFFFF" },
-        { name: "loadingBitmapUri", type: "string" },
+        { name: "blendColor", type: "color", value: "0xFFFFFFFF" },
+        { name: "loadingBitmapUri", type: "uri" },
         { name: "loadingBitmapOpacity", type: "float", value: "1.0" },
-        { name: "failedBitmapUri", type: "string" },
+        { name: "failedBitmapUri", type: "uri" },
         { name: "failedBitmapOpacity", type: "float", value: "1.0" },
         { name: "audioGuideText", type: "string" },
     ];

@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "../components/RoSGNode";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { AAMember, BrsBoolean, BrsString, BrsType, ValueKind } from "..";
+import { AAMember, BrsBoolean, BrsString, BrsType, Int32, ValueKind } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -9,7 +9,7 @@ import { rotateTranslation } from "../../scenegraph/SGUtil";
 export class Label extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "text", type: "string", value: "" },
-        { name: "color", type: "string", value: "0xddddddff" },
+        { name: "color", type: "color", value: "0xddddddff" },
         { name: "font", type: "font" },
         { name: "horizAlign", type: "string", value: "left" },
         { name: "vertAlign", type: "string", value: "top" },
@@ -58,7 +58,7 @@ export class Label extends Group {
         const rotation = angle + this.getRotation();
         const font = this.fields.get("font")?.getValue();
         if (font instanceof Font) {
-            const color = this.getColorFieldValue("color");
+            const color = this.getFieldValue("color") as Int32;
             const textField = this.getFieldValue("text") as BrsString;
             const horizAlign = this.getFieldValue("horizAlign")?.toString() || "left";
             const vertAlign = this.getFieldValue("vertAlign")?.toString() || "top";
@@ -86,7 +86,7 @@ export class Label extends Group {
                     textY += size.height - textHeight;
                 }
             }
-            draw2D?.doDrawRotatedText(text, textX, textY, color, drawFont, rotation);
+            draw2D?.doDrawRotatedText(text, textX, textY, color.getValue(), drawFont, rotation);
             size.width = Math.max(textWidth, size.width);
             size.height = Math.max(textHeight, size.height);
         }
