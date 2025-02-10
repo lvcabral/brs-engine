@@ -774,8 +774,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             let colorValue = maybeColor.getValue() as BrsString;
             if (colorValue.value.length) {
                 let hex = colorValue.value;
-                // Remove the '#' if present
                 hex = hex.startsWith("#") ? hex.slice(1) : hex;
+                hex = hex.startsWith("0x") ? hex.slice(2) : hex;
+                hex = hex.padStart(6, "0");
+                if (hex.length == 6) {
+                    hex = hex + "FF";
+                }
                 color = parseInt(hex, 16);
                 color = isNaN(color) ? -1 : color;
             }
