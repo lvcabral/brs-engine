@@ -155,7 +155,6 @@ export function getValueKindFromFieldType(type: string) {
 export function getBrsValueFromFieldType(
     type: string,
     value?: string,
-    isDefault?: boolean
 ): BrsType {
     let returnValue: BrsType;
 
@@ -206,6 +205,7 @@ export function getBrsValueFromFieldType(
             break;
         case "roassociativearray":
         case "assocarray":
+        case "object":
             returnValue = BrsInvalid.Instance;
             break;
         case "uri":
