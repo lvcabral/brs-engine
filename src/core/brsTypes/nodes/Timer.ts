@@ -1,4 +1,5 @@
-import { RoSGNode, FieldModel, FieldKind } from "../components/RoSGNode";
+import { RoSGNode } from "../components/RoSGNode";
+import { FieldKind, FieldModel } from "./Field";
 import { AAMember, BrsType, BrsBoolean, Float, ValueKind, BrsString, BrsInvalid } from "..";
 
 export class Timer extends RoSGNode {

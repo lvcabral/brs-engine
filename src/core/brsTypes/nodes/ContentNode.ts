@@ -1,4 +1,5 @@
-import { FieldModel, Field, RoSGNode } from "../components/RoSGNode";
+import { RoSGNode } from "../components/RoSGNode";
+import { Field, FieldModel } from "./Field";
 import { BrsType, toAssociativeArray } from "..";
 import { ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { Interpreter } from "../../interpreter";

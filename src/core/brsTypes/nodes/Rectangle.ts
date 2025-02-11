@@ -1,4 +1,4 @@
-import { FieldModel } from "../components/RoSGNode";
+import { FieldModel } from "./Field";
 import { AAMember, Int32 } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
