@@ -9,6 +9,7 @@ import {
     ArrayGrid,
     MarkupGrid,
     ContentNode,
+    Task,
     Timer,
     Scene,
     MiniKeyboard,
@@ -26,6 +27,7 @@ export enum SGNodeType {
     ArrayGrid = "ArrayGrid",
     MarkupGrid = "MarkupGrid",
     ContentNode = "ContentNode",
+    Task = "Task",
     Timer = "Timer",
     Scene = "Scene",
     MiniKeyboard = "MiniKeyboard",
@@ -80,6 +82,8 @@ export class SGNodeFactory {
                 return new MarkupGrid([], name);
             case SGNodeType.ContentNode:
                 return new ContentNode(name);
+            case SGNodeType.Task:
+                return new Task([], name);
             case SGNodeType.Timer:
                 return new Timer([], name);
             case SGNodeType.Scene:

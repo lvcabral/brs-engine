@@ -397,6 +397,30 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this.evaluate(initVariable);
     }
 
+    /**
+     * Returns arbitrary function (if exists) in the current environment as a Callable
+     */
+    getFunction(functionName: string): BrsType {
+        let funcVariable = new Expr.Variable({
+            kind: Lexeme.Identifier,
+            text: functionName,
+            isReserved: false,
+            location: {
+                start: {
+                    line: -1,
+                    column: -1,
+                },
+                end: {
+                    line: -1,
+                    column: -1,
+                },
+                file: "(internal)",
+            },
+        });
+
+        return this.evaluate(funcVariable);
+    }
+
     visitLibrary(statement: Stmt.Library): BrsInvalid {
         // ignore during run time, already handled by lexer/parser
         return BrsInvalid.Instance;

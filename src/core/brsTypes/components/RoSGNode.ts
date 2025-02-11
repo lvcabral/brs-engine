@@ -18,6 +18,7 @@ import {
     RoArray,
     RoAssociativeArray,
     toAssociativeArray,
+    Task,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -259,6 +260,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
         return false;
+    }
+
+    processTasks(interpreter: Interpreter) {
+        rootObjects.tasks.forEach((task) => {
+            if (task.active) {
+                console.log("Processing task:", task.nodeSubtype);
+                task.checkTask(interpreter);
+            }
+        });
     }
 
     processTimers(fired: boolean = false) {
@@ -1605,29 +1615,33 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 interface RootObjects {
     mGlobal: RoSGNode;
     rootScene?: Scene;
+    tasks: Task[];
 }
-export const rootObjects: RootObjects = { mGlobal: new RoSGNode([]) };
+export const rootObjects: RootObjects = { mGlobal: new RoSGNode([]), tasks: [] };
 
 export function createNodeByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
     // If this is a built-in node component, then return it.
-    let node = SGNodeFactory.createNode(type.value as SGNodeType);
-    if (node) {
-        return node;
-    }
-    let typeDef = interpreter.environment.nodeDefMap.get(type.value.toLowerCase());
-    if (typeDef) {
-        if (typeDef.extends === SGNodeType.Scene) {
-            return new Scene([], type.value);
+    let node = SGNodeFactory.createNode(type.value as SGNodeType) ?? BrsInvalid.Instance;
+    if (node instanceof BrsInvalid) {
+        let typeDef = interpreter.environment.nodeDefMap.get(type.value.toLowerCase());
+        if (typeDef) {
+            if (typeDef.extends === SGNodeType.Scene) {
+                node = new Scene([], type.value);
+            } else {
+                node = initializeNode(interpreter, type, typeDef);
+            }
+        } else {
+            interpreter.stderr.write(
+                `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
+                    type.value
+                }: ${interpreter.formatLocation()}`
+            );
         }
-        return initializeNode(interpreter, type, typeDef);
-    } else {
-        interpreter.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
-                type.value
-            }: ${interpreter.formatLocation()}`
-        );
-        return BrsInvalid.Instance;
     }
+    if (node instanceof Task) {
+        rootObjects.tasks.push(node);
+    }
+    return node;
 }
 
 export function initializeNode(
@@ -1811,7 +1825,7 @@ function addChildren(
     }
 }
 
-/* Hierarchy of all node Types. Used to discover is a current node is a subtype of another node */
+/* Hierarchy of all node Types. Used to discover if a current node is a subtype of another node */
 const subtypeHierarchy = new Map<string, string>();
 
 /**

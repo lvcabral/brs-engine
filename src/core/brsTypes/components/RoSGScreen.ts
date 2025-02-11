@@ -216,6 +216,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.finishDraw();
                 this.lastMessage = timeStamp;
             }
+            rootObjects.rootScene.processTasks(this.interpreter);
         }
         return events;
     }
