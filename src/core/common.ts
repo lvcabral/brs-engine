@@ -128,6 +128,55 @@ export function isAppPayload(value: any): value is AppPayload {
     );
 }
 
+export type TaskPayload = {
+    device: DeviceInfo;
+    manifest: Map<string, string>;
+    taskName: string;
+    functionName: string;
+    pkgZip?: ArrayBuffer;
+    extZip?: ArrayBuffer;
+    root?: string;
+    ext?: string;
+};
+
+export function isTaskPayload(value: any): value is TaskPayload {
+    return (
+        value &&
+        typeof value.device === "object" &&
+        value.manifest instanceof Map &&
+        typeof value.taskName === "string" &&
+        typeof value.functionName === "string" &&
+        (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
+        (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
+        (typeof value.root === "string" || value.root === undefined) &&
+        (typeof value.ext === "string" || value.ext === undefined)
+    );
+}
+
+export type TaskData = {
+    name: string;
+    state: TaskState;
+    function?: string;
+    m?: object;
+};
+
+export function isTaskData(value: any): value is TaskData {
+    return (
+        value &&
+        typeof value.name === "string" &&
+        typeof value.state === "number" &&
+        (typeof value.function === "string" || value.function === undefined) &&
+        (typeof value.m === "object" || value.m === undefined)
+    );
+}
+
+export enum TaskState {
+    INIT,
+    RUN,
+    STOP,
+    DONE,
+}
+
 /* Package File Path Interface
  *
  * This interface is used to provide information about the paths to the
@@ -304,6 +353,7 @@ export enum DataType {
     MBWD, // Measured Bandwidth
     CEC, // Consumer Electronics Control
     HDMI, // HDMI Status
+    TASK, // Task State
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -311,7 +361,7 @@ export enum DataType {
 }
 
 // Debug constants
-export const dataBufferIndex = 33;
+export const dataBufferIndex = 34;
 export const dataBufferSize = 1024;
 
 // Key Buffer Constants

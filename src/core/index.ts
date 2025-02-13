@@ -17,6 +17,8 @@ import {
     defaultDeviceInfo,
     parseManifest,
     isAppPayload,
+    TaskPayload,
+    isTaskPayload,
 } from "./common";
 import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./BrsError";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -66,6 +68,9 @@ if (typeof onmessage !== "undefined") {
     onmessage = function (event: MessageEvent) {
         if (isAppPayload(event.data)) {
             executeFile(event.data);
+        } else if (isTaskPayload(event.data)) {
+            console.log("Task payload received: ", event.data.taskName, event.data.functionName);
+            executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
@@ -354,6 +359,50 @@ export async function executeFile(
     if (!result.cipherText) {
         postMessage(`end,${result.exitReason}`);
     }
+    return result;
+}
+
+export async function executeTask(
+    payload: TaskPayload,
+    customOptions?: Partial<ExecutionOptions>
+): Promise<RunResult> {
+    const options = {
+        ...{
+            entryPoint: payload.device.entryPoint ?? true,
+            stopOnCrash: payload.device.debugOnCrash ?? false,
+            root: payload.root,
+            ext: payload.extZip ? undefined : payload.ext,
+        },
+        ...customOptions,
+    };
+    bscs.clear();
+    stats.clear();
+    try {
+        await configureFileSystem(payload.pkgZip, payload.extZip);
+    } catch (err: any) {
+        postMessage(`error,Error mounting File System: ${err.message}`);
+        return { exitReason: AppExitReason.CRASHED };
+    }
+    // Look for SceneGraph components
+    const fileSystem = new FileSystem(options.root, options.ext);
+    const components = await getComponentDefinitionMap(fileSystem, []);
+    // Create the interpreter
+    let interpreter: Interpreter;
+    if (components.size > 0) {
+        interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
+    } else {
+        return { exitReason: AppExitReason.CRASHED };
+    }
+    interpreter.setManifest(payload.manifest);
+    if (payload.device.registry?.size) {
+        interpreter.setRegistry(payload.device.registry);
+    }
+    setupDeviceData(interpreter, payload.device);
+    setupTranslations(interpreter);
+    console.log("Calling Task in new Worker: ", payload.taskName, payload.functionName);
+    interpreter.execTask(payload.taskName, payload.functionName);
+    const result = { exitReason: AppExitReason.FINISHED };
+    postMessage(`end,${result.exitReason}`);
     return result;
 }
 

@@ -14,11 +14,14 @@ import {
     DebugCommand,
     DeviceInfo,
     RemoteType,
+    TaskPayload,
+    TaskState,
     dataBufferIndex,
     dataBufferSize,
     getExitReason,
     isAppData,
     isNDKStart,
+    isTaskData,
     platform,
 } from "../core/common";
 import {
@@ -408,6 +411,11 @@ export function debug(command: string): boolean {
 function resetWorker() {
     brsWorker.removeEventListener("message", workerCallback);
     brsWorker.terminate();
+    tasks.forEach((worker) => {
+        worker?.removeEventListener("message", taskCallback);
+        worker?.terminate();
+    });
+    tasks.clear();
     resetArray();
     resetSounds();
     resetVideo();
@@ -445,6 +453,7 @@ function loadSourceCode(fileName: string, fileData: any) {
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
+let currentPayload: AppPayload;
 // Execute Engine Web Worker
 function runApp(payload: AppPayload) {
     try {
@@ -456,15 +465,54 @@ function runApp(payload: AppPayload) {
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", workerCallback);
         brsWorker.postMessage(sharedBuffer);
-        const transfArray = [];
-        if (!manifestMap.get("bs_libs_required")?.includes("Roku_Browser") && payload.pkgZip) {
-            // Transfer array to prevent cloning the zip data in worker (if not needed on main thread)
-            transfArray.push(payload.pkgZip);
-        }
-        brsWorker.postMessage(payload, transfArray);
+        brsWorker.postMessage(payload);
+        currentPayload = payload;
         enableSendKeys(true);
     } catch (err: any) {
         apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
+    }
+}
+
+const tasks: Map<string, Worker> = new Map();
+
+function runTask(taskName: string, functionName: string) {
+    if (tasks.has(taskName)) {
+        return;
+    } else if (tasks.size === 1) {
+        apiException("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
+        return;
+    }
+    const taskWorker = new Worker(brsWrkLib);
+    taskWorker.addEventListener("message", taskCallback);
+    tasks.set(taskName, taskWorker);
+    const taskPayload: TaskPayload = {
+        device: currentPayload.device,
+        manifest: currentPayload.manifest,
+        taskName: taskName,
+        functionName: functionName,
+        pkgZip: currentPayload.pkgZip,
+        extZip: currentPayload.extZip,
+    };
+    console.log("Task worker started: ", taskPayload.taskName, taskPayload.functionName);
+    taskWorker.postMessage(sharedBuffer);
+    taskWorker.postMessage(taskPayload);
+}
+
+function endTask(taskName: string) {
+    const taskWorker = tasks.get(taskName);
+    if (taskWorker) {
+        taskWorker.removeEventListener("message", taskCallback);
+        taskWorker.terminate();
+        tasks.delete(taskName);
+        console.log("Task worker stopped: ", taskName);
+    }
+}
+
+function taskCallback(event: MessageEvent) {
+    if (typeof event.data === "string") {
+        deviceDebug(event.data);
+    } else {
+        apiException("warning", `[api] Invalid task message: ${typeof event.data}`);
     }
 }
 
@@ -540,6 +588,13 @@ function workerCallback(event: MessageEvent) {
         deviceData.captionsMode = event.data.captionsMode;
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
+    } else if (isTaskData(event.data)) {
+        console.log("Task data received: ", event.data.name);
+        if (event.data.state === TaskState.RUN && event.data.function) {
+            runTask(event.data.name, event.data.function);
+        } else if (event.data.state === TaskState.STOP) {
+            endTask(event.data.name);
+        }
     } else if (isNDKStart(event.data)) {
         if (event.data.app === "roku_browser") {
             const params = event.data.params;

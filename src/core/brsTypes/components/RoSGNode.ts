@@ -265,7 +265,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     processTasks(interpreter: Interpreter) {
         rootObjects.tasks.forEach((task) => {
             if (task.active) {
-                console.log("Processing task:", task.nodeSubtype);
                 task.checkTask(interpreter);
             }
         });
@@ -1718,7 +1717,6 @@ export function initializeNode(
 
             typeDef = typeDefStack.pop();
         }
-
         return node;
     } else {
         interpreter.stderr.write(

@@ -1,7 +1,8 @@
 import { RoSGNode } from "../components/RoSGNode";
-import { AAMember, BrsType, ValueKind, BrsString, BrsInvalid, Callable } from "..";
+import { AAMember, BrsType, ValueKind, BrsString, BrsInvalid } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
+import { DataType, TaskData, TaskState } from "../../common";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -11,10 +12,12 @@ export class Task extends RoSGNode {
     ];
 
     active: boolean;
+    started: boolean;
 
     constructor(members: AAMember[] = [], readonly name: string = "Task") {
         super([], name);
         this.active = false;
+        this.started = false;
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
@@ -36,6 +39,11 @@ export class Task extends RoSGNode {
             } else if (control === "run") {
                 this.active = true;
             } else if (control === "stop" || control === "done") {
+                if (this.started) {
+                    console.log("Posting Task Data to STOP: ", this.nodeSubtype);
+                    postMessage({ name: this.nodeSubtype, state: TaskState.STOP });
+                    this.started = false;
+                }
                 this.active = false;
             }
             field.setValue(new BrsString(control));
@@ -55,27 +63,28 @@ export class Task extends RoSGNode {
 
     checkTask(interpreter: Interpreter) {
         const functionName = this.getFieldValue("functionName") as BrsString;
-        if (!this.active || !functionName || functionName.value.trim() === "") {
+        if (!functionName || functionName.value.trim() === "") {
+            this.set(new BrsString("control"), new BrsString("stop"));
             return;
         }
-
-        const typeDef = interpreter.environment.nodeDefMap.get(this.nodeSubtype.toLowerCase());
-        const taskEnv = typeDef?.environment;
-        if (taskEnv) {
-            const mPointer = this.m;
-            const node = this;
-            interpreter.inSubEnv((subInterpreter) => {
-                const funcToCall = interpreter.getCallableFunction(functionName.value);
-                subInterpreter.environment.hostNode = node;
-                subInterpreter.environment.setM(mPointer);
-                subInterpreter.environment.setRootM(mPointer);
-                if (funcToCall instanceof Callable) {
-                    funcToCall.call(subInterpreter);
-                    node.set(new BrsString("control"), new BrsString("stop"));
-                }
-                return BrsInvalid.Instance;
-            }, taskEnv);
+        if (!this.started) {
+            const taskData = {
+                name: this.nodeSubtype,
+                state: TaskState.RUN,
+                function: functionName.value,
+            };
+            console.log("Posting Task Data to RUN: ", taskData.name, taskData.function);
+            postMessage(taskData);
+            this.started = true;
+        } else {
+            const state = Atomics.load(interpreter.sharedArray, DataType.TASK);
+            if (state === -1) {
+                return;
+            }
+            if (state === TaskState.STOP || state === TaskState.DONE) {
+                this.set(new BrsString("control"), new BrsString(TaskState[state]));
+            }
+            Atomics.store(interpreter.sharedArray, DataType.TASK, -1);
         }
-        this.active = false;
     }
 }
