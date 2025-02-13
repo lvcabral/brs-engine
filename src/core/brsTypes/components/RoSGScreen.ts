@@ -260,6 +260,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (!hostNode) {
             return false;
         }
+        // TODO: Handle onKeyEvent in SceneGraph node tree starting from the focused node down to the scene
+        const typeDef = this.interpreter.environment.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
+        const sceneEnv = typeDef?.environment ?? this.interpreter.environment;
         const handled = this.interpreter.inSubEnv((subInterpreter) => {
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setRootM(hostNode.m);
@@ -294,7 +297,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 }
             }
             return BrsBoolean.False;
-        }, this.interpreter.environment);
+        }, sceneEnv);
         return handled instanceof BrsBoolean && handled.toBoolean();
     }
 

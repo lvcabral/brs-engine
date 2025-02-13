@@ -1698,7 +1698,7 @@ export function initializeNode(
             }
 
             interpreter.inSubEnv((subInterpreter) => {
-                init = subInterpreter.getInitMethod();
+                init = subInterpreter.getCallableFunction("init");
                 return BrsInvalid.Instance;
             }, typeDef.environment);
 

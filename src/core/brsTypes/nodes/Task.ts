@@ -1,6 +1,6 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { AAMember, BrsType, ValueKind, BrsString, BrsInvalid, Callable } from "..";
-import { FieldKind, FieldModel } from "./Field";
+import { Field, FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
 
 export class Task extends RoSGNode {
@@ -24,22 +24,30 @@ export class Task extends RoSGNode {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
         }
-
+        const validStates = ["init", "run", "stop", "done"];
         const mapKey = index.value.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && value instanceof BrsString) {
+            const state = this.fields.get("state") as Field;
             let control = value.value.toLowerCase();
-            if (control === "run") {
-                console.log("Task run");
+            if (!validStates.includes(control)) {
+                control = "";
+            } else if (control === "run") {
                 this.active = true;
-            } else if (control === "stop") {
+            } else if (control === "stop" || control === "done") {
                 this.active = false;
-            } else {
-                control = "done";
             }
             field.setValue(new BrsString(control));
-            this.fields.set(mapKey, field);
+            if (state && control !== "" && control !== "init") {
+                state.setValue(new BrsString(control));
+                this.fields.set("state", state);
+            }
+            return BrsInvalid.Instance;
+        } else if (field && mapKey === "state" && value instanceof BrsString) {
+            if (validStates.includes(value.value.toLowerCase())) {
+                field.setValue(value);
+            }
             return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
@@ -47,19 +55,26 @@ export class Task extends RoSGNode {
 
     checkTask(interpreter: Interpreter) {
         const functionName = this.getFieldValue("functionName") as BrsString;
-        let funcToCall = interpreter.getFunction(functionName.value);
-        let typeDef = interpreter.environment.nodeDefMap.get(this.nodeSubtype.toLowerCase());
-        let currentEnv = typeDef?.environment?.createSubEnvironment();
-        if (currentEnv && funcToCall instanceof Callable) {
+        if (!this.active || !functionName || functionName.value.trim() === "") {
+            return;
+        }
+
+        const typeDef = interpreter.environment.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+        const taskEnv = typeDef?.environment;
+        if (taskEnv) {
             const mPointer = this.m;
             const node = this;
             interpreter.inSubEnv((subInterpreter) => {
+                const funcToCall = interpreter.getCallableFunction(functionName.value);
                 subInterpreter.environment.hostNode = node;
                 subInterpreter.environment.setM(mPointer);
                 subInterpreter.environment.setRootM(mPointer);
-                funcToCall.call(subInterpreter);
+                if (funcToCall instanceof Callable) {
+                    funcToCall.call(subInterpreter);
+                    node.set(new BrsString("control"), new BrsString("stop"));
+                }
                 return BrsInvalid.Instance;
-            }, currentEnv);
+            }, taskEnv);
         }
         this.active = false;
     }

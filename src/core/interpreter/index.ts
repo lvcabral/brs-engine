@@ -356,14 +356,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     /**
      * Retrieve the Callable function from the environment.
      * @param functionName the name of the function to retrieve.
+     * @param location the location from the function will be called (optional).
      * @returns the Callable function or BrsInvalid if not found.
      */
-    getCallableFunction(functionName: string): Callable | BrsInvalid {
+    getCallableFunction(functionName: string, location?: Location): Callable | BrsInvalid {
         let callbackVariable = new Expr.Variable({
             kind: Lexeme.Identifier,
             text: functionName,
             isReserved: false,
-            location: Interpreter.InternalLocation,
+            location: location ?? Interpreter.InternalLocation,
         });
         let maybeCallback = this.evaluate(callbackVariable);
         if (maybeCallback.kind === ValueKind.Callable) {
@@ -371,54 +372,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         return BrsInvalid.Instance;
-    }
-
-    /**
-     * Returns the init method (if any) in the current environment as a Callable
-     */
-    getInitMethod(): BrsType {
-        let initVariable = new Expr.Variable({
-            kind: Lexeme.Identifier,
-            text: "init",
-            isReserved: false,
-            location: {
-                start: {
-                    line: -1,
-                    column: -1,
-                },
-                end: {
-                    line: -1,
-                    column: -1,
-                },
-                file: "(internal)",
-            },
-        });
-
-        return this.evaluate(initVariable);
-    }
-
-    /**
-     * Returns arbitrary function (if exists) in the current environment as a Callable
-     */
-    getFunction(functionName: string): BrsType {
-        let funcVariable = new Expr.Variable({
-            kind: Lexeme.Identifier,
-            text: functionName,
-            isReserved: false,
-            location: {
-                start: {
-                    line: -1,
-                    column: -1,
-                },
-                end: {
-                    line: -1,
-                    column: -1,
-                },
-                file: "(internal)",
-            },
-        });
-
-        return this.evaluate(funcVariable);
     }
 
     visitLibrary(statement: Stmt.Library): BrsInvalid {
