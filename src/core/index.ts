@@ -385,7 +385,7 @@ export async function executeTask(
     }
     // Look for SceneGraph components
     const fileSystem = new FileSystem(options.root, options.ext);
-    const components = await getComponentDefinitionMap(fileSystem, []);
+    const components = await getComponentDefinitionMap(fileSystem);
     // Create the interpreter
     let interpreter: Interpreter;
     if (components.size > 0) {
@@ -422,7 +422,9 @@ interface SourceResult {
 
 function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
-    if (payload.device.registry?.size) {
+    if (payload.device.registryBuffer) {
+        BrsDevice.setRegistry(payload.device.registryBuffer);
+    } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
     setupDeviceData(payload.device);

@@ -23,6 +23,8 @@ import {
     isNDKStart,
     isTaskData,
     platform,
+    registryInitialSize,
+    registryMaxSize,
 } from "../core/common";
 import {
     source,
@@ -70,6 +72,7 @@ import {
     switchVideoState,
 } from "./video";
 import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
+import SharedObjectBuffer from "../core/shared";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
@@ -116,8 +119,9 @@ let bandwidthTimeout: NodeJS.Timeout | null = null;
 let latestBandwidth: number = 0;
 let httpConnectLog: boolean = false;
 
-// App Shared Buffer
-let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
+// App Shared Buffers
+const registryBuffer = new SharedObjectBuffer(registryInitialSize, registryMaxSize);
+let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 
 // API Methods
@@ -510,6 +514,7 @@ function endTask(taskName: string) {
 
 function taskCallback(event: MessageEvent) {
     if (typeof event.data === "string") {
+        // TODO: handle end of task
         deviceDebug(event.data);
     } else {
         apiException("warning", `[api] Invalid task message: ${typeof event.data}`);
@@ -546,17 +551,20 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
 function loadRegistry() {
     const storage: Storage = window.localStorage;
     const transientKeys: string[] = [];
+    const registry: Map<string, string> = new Map();
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
         if (key?.split(".")[0] === deviceData.developerId) {
             if (key.split(".")[1] !== "Transient") {
-                deviceData.registry?.set(key, storage.getItem(key) ?? "");
+                registry.set(key, storage.getItem(key) ?? "");
             } else {
                 transientKeys.push(key);
             }
         }
     }
     transientKeys.forEach((key) => storage.removeItem(key));
+    registryBuffer.store(Object.fromEntries(registry));
+    deviceData.registryBuffer = registryBuffer.getBuffer();
 }
 
 // Receive Messages from the Interpreter (Web Worker)
@@ -564,10 +572,9 @@ function workerCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
-        deviceData.registry = event.data;
         if (platform.inBrowser) {
             const storage: Storage = window.localStorage;
-            deviceData.registry.forEach(function (value: string, key: string) {
+            event.data.forEach(function (value: string, key: string) {
                 storage.setItem(key, value);
             });
         }

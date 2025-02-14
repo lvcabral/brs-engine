@@ -5,9 +5,12 @@ import {
     keyArraySpots,
     keyBufferSize,
     KeyEvent,
+    registryInitialSize,
+    registryMaxSize,
     RemoteType,
 } from "./common";
 import { FileSystem } from "./FileSystem";
+import SharedObjectBuffer from "./shared";
 
 export class BrsDevice {
     static readonly deviceInfo: Map<string, any> = new Map<string, any>();
@@ -20,14 +23,38 @@ export class BrsDevice {
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
 
+    /** Array Buffer to Share the Registry across threads */
+    private static registryVersion: number = 0;
+    static sharedRegistry?: SharedObjectBuffer;
+
     /**
      * Updates the device registry with the provided data
-     * @param registry Map with registry content.
+     * @param data Map or Shared Array Buffer with registry content.
      */
-    static setRegistry(registry: Map<string, string>) {
+    static setRegistry(data: Map<string, string> | SharedArrayBuffer) {
+        let registry: Map<string, string>;
+        if (data instanceof SharedArrayBuffer) {
+            this.sharedRegistry = new SharedObjectBuffer(registryInitialSize, registryMaxSize);
+            this.sharedRegistry.setBuffer(data);
+            this.registryVersion = this.sharedRegistry.getVersion();
+            registry = new Map(Object.entries(this.sharedRegistry.load()));
+        } else {
+            registry = data;
+        }
         registry.forEach((value: string, key: string) => {
             this.registry.set(key, value);
         });
+    }
+
+    static refreshRegistry() {
+        if (this.sharedRegistry && this.sharedRegistry.getVersion() !== this.registryVersion) {
+            this.registryVersion = this.sharedRegistry.getVersion();
+            const registry: Map<string,string> = new Map(Object.entries(this.sharedRegistry.load()));
+            this.registry.clear();
+            registry.forEach((value: string, key: string) => {
+                this.registry.set(key, value);
+            });
+        }
     }
 
     /**

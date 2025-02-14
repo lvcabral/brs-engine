@@ -41,7 +41,7 @@ export interface DeviceInfo {
     startTime: number;
     audioVolume: number;
     maxFps: number;
-    registry?: Map<string, string>;
+    registryBuffer?: SharedArrayBuffer;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
     appList?: AppData[];
@@ -84,7 +84,6 @@ export const defaultDeviceInfo: DeviceInfo = {
     localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
     startTime: Date.now(),
     audioVolume: 40,
-    registry: new Map(),
     maxFps: 60,
     platform: platform,
 };
@@ -360,9 +359,11 @@ export enum DataType {
     MOD, // Key State (down/up)
 }
 
-// Debug constants
+// SharedArrayBuffer constants
 export const dataBufferIndex = 34;
 export const dataBufferSize = 1024;
+export const registryInitialSize = 32 * 1024;
+export const registryMaxSize = 64 * 1024;
 
 // Key Buffer Constants
 export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`

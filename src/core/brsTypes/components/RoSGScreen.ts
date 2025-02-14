@@ -261,7 +261,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             return false;
         }
         // TODO: Handle onKeyEvent in SceneGraph node tree starting from the focused node down to the scene
-        const typeDef = this.interpreter.environment.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
+        const typeDef = this.interpreter.environment.nodeDefMap.get(
+            hostNode.nodeSubtype.toLowerCase()
+        );
         const sceneEnv = typeDef?.environment ?? this.interpreter.environment;
         const handled = this.interpreter.inSubEnv((subInterpreter) => {
             subInterpreter.environment.hostNode = hostNode;

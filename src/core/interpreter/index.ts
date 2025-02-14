@@ -55,6 +55,7 @@ import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
+import SharedObjectBuffer from "../shared";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
@@ -132,6 +133,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /** The set of errors detected from executing an AST. */
     errors: (BrsError | RuntimeError)[] = [];
+
 
     get environment() {
         return this._environment;
