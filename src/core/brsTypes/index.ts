@@ -457,7 +457,6 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray): Flex
     return result;
 }
 
-
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
  * @param {BrsType} x Some BrsType value.
@@ -516,4 +515,3 @@ export function fromSGNode(node: RoSGNode): FlexObject {
 
     return result;
 }
-

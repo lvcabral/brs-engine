@@ -240,7 +240,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         } else {
             const fieldType = FieldKind.fromBrsType(value);
             if (fieldType) {
-                field = new Field(value, fieldType, alwaysNotify)
+                field = new Field(value, fieldType, alwaysNotify);
             }
         }
         if (field) {
