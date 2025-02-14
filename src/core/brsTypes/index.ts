@@ -40,8 +40,9 @@ import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
 import { RoSGNodeEvent } from "./events/RoSGNodeEvent";
 import { RoSGScreenEvent } from "./events/RoSGScreenEvent";
 import { isUnboxable } from "./Boxing";
-import { RoSGNode } from "./components/RoSGNode";
+import { getNodeType, RoSGNode } from "./components/RoSGNode";
 import { Field } from "./nodes/Field";
+import { SGNodeFactory } from "../scenegraph/SGNodeFactory";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -408,11 +409,33 @@ export function brsValueOf(x: any): BrsType {
                 return x;
             } else if (Array.isArray(x)) {
                 return new RoArray(x.map(brsValueOf));
+            } else if (x["_node_"]) {
+                const node = x["_node_"].split(":");
+                if (node.length === 2) {
+                    return toNode(x, node[0], node[1]);
+                }
             }
             return toAssociativeArray(x);
         default:
             throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
     }
+}
+
+/**
+ * Converts a JavaScript object to a RoSGNode, converting each field to the corresponding BrightScript type.
+ * @param x The JavaScript object to convert.
+ * @param type The type of the node.
+ * @param subtype The subtype of the node.
+ * @returns A RoSGNode with the converted fields.
+ */
+export function toNode(x: any, type: string, subtype: string): BrsType {
+    const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
+    for (const key in x) {
+        if (key !== "_node_") {
+            node.setFieldValue(key, brsValueOf(x[key]));
+        }
+    }
+    return node;
 }
 
 /**
@@ -434,25 +457,6 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray): Flex
     return result;
 }
 
-/**
- * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
- * @param node The RoSGNode to convert.
- * @returns A JavaScript object with the converted fields.
- */
-export function fromSGNode(node: RoSGNode): FlexObject {
-    const result: FlexObject = {};
-    const fields = node.getNodeFields();
-
-    fields.forEach((value: Field, key: string) => {
-        let fieldValue = value.getValue();
-        if (isUnboxable(fieldValue)) {
-            fieldValue = fieldValue.unbox();
-        }
-        result[key] = jsValueOf(fieldValue);
-    });
-
-    return result;
-}
 
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
@@ -490,3 +494,26 @@ export function jsValueOf(x: BrsType): any {
             throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
     }
 }
+
+/**
+ * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
+ * @param node The RoSGNode to convert.
+ * @returns A JavaScript object with the converted fields.
+ */
+export function fromSGNode(node: RoSGNode): FlexObject {
+    const result: FlexObject = {};
+    const fields = node.getNodeFields();
+
+    result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
+
+    fields.forEach((value: Field, key: string) => {
+        let fieldValue = value.getValue();
+        if (isUnboxable(fieldValue)) {
+            fieldValue = fieldValue.unbox();
+        }
+        result[key] = jsValueOf(fieldValue);
+    });
+
+    return result;
+}
+

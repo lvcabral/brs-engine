@@ -34,6 +34,10 @@ export enum SGNodeType {
     TextEditBox = "TextEditBox",
 }
 
+export function isSGNodeType(value: string): value is SGNodeType {
+    return Object.values(SGNodeType).includes(value as SGNodeType);
+}
+
 export class SGNodeFactory {
     private static additionalNodes = new Map<string, (name: string) => RoSGNode>();
 

@@ -163,7 +163,7 @@ export class Field {
         return this.value;
     }
 
-    setValue(value: BrsType) {
+    setValue(value: BrsType, notify: boolean = true) {
         // Once a field is set, it is no longer hidden.
         this.hidden = false;
 
@@ -181,7 +181,7 @@ export class Field {
 
         let oldValue = this.value;
         this.value = value;
-        if (this.alwaysNotify || oldValue !== value) {
+        if (notify && (this.alwaysNotify || oldValue !== value)) {
             this.permanentObservers.map(this.executeCallbacks.bind(this));
             this.unscopedObservers.map(this.executeCallbacks.bind(this));
             this.scopedObservers.forEach((callbacks) =>

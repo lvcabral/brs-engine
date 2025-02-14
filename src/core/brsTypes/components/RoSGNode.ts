@@ -27,7 +27,7 @@ import { Interpreter } from "../../interpreter";
 import { generateArgumentMismatchError } from "../../interpreter/ArgumentMismatch";
 import { ComponentDefinition, ComponentNode } from "../../scenegraph";
 import { BoundingRect } from "../../scenegraph/SGUtil";
-import { SGNodeFactory, SGNodeType } from "../../scenegraph/SGNodeFactory";
+import { isSGNodeType, SGNodeFactory, SGNodeType } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { TaskData } from "../../common";
@@ -229,6 +229,23 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     getId() {
         const maybeID = this.fields.get("id")?.getValue();
         return maybeID instanceof BrsString ? maybeID.value : this.subtype;
+    }
+
+    // Used to setup values for the node fields without notifying observers
+    setFieldValue(fieldName: string, value: BrsType, alwaysNotify: boolean = false) {
+        const mapKey = fieldName.toLowerCase();
+        let field = this.fields.get(mapKey);
+        if (field) {
+            field.setValue(value, false);
+        } else {
+            const fieldType = FieldKind.fromBrsType(value);
+            if (fieldType) {
+                field = new Field(value, fieldType, alwaysNotify)
+            }
+        }
+        if (field) {
+            this.fields.set(mapKey, field);
+        }
     }
 
     getFieldValue(fieldName: string) {
@@ -1786,12 +1803,12 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         }
         if (taskData.m?.global) {
             for (let [key, value] of Object.entries(taskData.m.global)) {
-                rootObjects.mGlobal.set(new BrsString(key), brsValueOf(value));
+                rootObjects.mGlobal.setFieldValue(key, brsValueOf(value));
             }
         }
         if (taskData.m?.top) {
             for (let [key, value] of Object.entries(taskData.m.top)) {
-                node.set(new BrsString(key), brsValueOf(value));
+                node.setFieldValue(key, brsValueOf(value));
             }
         }
         if (taskData.m) {
@@ -1927,4 +1944,18 @@ function isSubtypeCheck(currentNodeType: string, checkType: string): boolean {
         return false;
     }
     return isSubtypeCheck(nextNodeType, checkType);
+}
+
+export function getNodeType(subType: string) {
+    if (isSGNodeType(subType)) {
+        return subType;
+    }
+    let nextNodeType = subtypeHierarchy.get(subType.toLowerCase());
+    if (nextNodeType == null) {
+        return SGNodeType.Node;
+    } else if (isSGNodeType(nextNodeType)) {
+        return nextNodeType;
+    } else {
+        return getNodeType(nextNodeType);
+    }
 }
