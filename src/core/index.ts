@@ -69,7 +69,7 @@ if (typeof onmessage !== "undefined") {
         if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (isTaskPayload(event.data)) {
-            console.log("Task payload received: ", event.data.taskName, event.data.functionName);
+            console.log("Task payload received: ", event.data.taskData.name);
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
@@ -368,7 +368,7 @@ export async function executeTask(
 ): Promise<RunResult> {
     const options = {
         ...{
-            entryPoint: payload.device.entryPoint ?? true,
+            entryPoint: false,
             stopOnCrash: payload.device.debugOnCrash ?? false,
             root: payload.root,
             ext: payload.extZip ? undefined : payload.ext,
@@ -399,8 +399,12 @@ export async function executeTask(
     }
     setupDeviceData(interpreter, payload.device);
     setupTranslations(interpreter);
-    console.log("Calling Task in new Worker: ", payload.taskName, payload.functionName);
-    interpreter.execTask(payload.taskName, payload.functionName);
+    console.log(
+        "Calling Task in new Worker: ",
+        payload.taskData.name,
+        payload.taskData.m.top.functionname
+    );
+    interpreter.execTask(payload.taskData);
     const result = { exitReason: AppExitReason.FINISHED };
     postMessage(`end,${result.exitReason}`);
     return result;

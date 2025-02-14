@@ -36,8 +36,8 @@ import {
     BrsInterface,
     toAssociativeArray,
     RoSGNode,
-    createNodeByType,
     Task,
+    initializeTask,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -60,7 +60,7 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile, TaskState } from "../common";
+import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile, TaskData, TaskState } from "../common";
 import { BrsDevice } from "../BrsDevice";
 /// #if !BROWSER
 import * as v8 from "v8";
@@ -357,9 +357,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
-    execTask(taskName: string, functionName: string) {
-        const taskNode = createNodeByType(this, new BrsString(taskName));
-        if (taskNode instanceof Task) {
+    execTask(taskData: TaskData) {
+        const taskNode = initializeTask(this, taskData);
+        const functionName = taskData.m?.top?.functionname;
+        if (taskNode instanceof Task && functionName) {
             const typeDef = this.environment.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
             const taskEnv = typeDef?.environment;
             if (taskEnv) {
@@ -370,12 +371,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     subInterpreter.environment.setM(mPointer);
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
-                        console.log("Task function called: ", taskName, functionName);
+                        console.log("Task function called: ", taskData.name, functionName);
                         funcToCall.call(subInterpreter);
-                        console.log("Task function finished: ", taskName, functionName);
+                        console.log("Task function finished: ", taskData.name, functionName);
                         Atomics.store(BrsDevice.sharedArray, DataType.TASK, TaskState.STOP);
                     } else {
-                        console.log("Task function not found: ", functionName);
+                        this.addError(
+                            new BrsError(
+                                `Cannot found the Task function '${functionName}'`,
+                                this.location
+                            )
+                        );
                     }
                     return BrsInvalid.Instance;
                 }, taskEnv);

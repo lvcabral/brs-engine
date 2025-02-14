@@ -435,12 +435,12 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray): Flex
 }
 
 /**
- * Converts a RoSGNode to a JavaScript Map, converting each field to the corresponding JavaScript type.
+ * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
  * @param node The RoSGNode to convert.
- * @returns A JavaScript Map with the converted fields.
+ * @returns A JavaScript object with the converted fields.
  */
-function fromSGNode(node: RoSGNode): Map<string, any> {
-    const result = new Map<string, any>();
+export function fromSGNode(node: RoSGNode): FlexObject {
+    const result: FlexObject = {};
     const fields = node.getNodeFields();
 
     fields.forEach((value: Field, key: string) => {
@@ -448,7 +448,7 @@ function fromSGNode(node: RoSGNode): Map<string, any> {
         if (isUnboxable(fieldValue)) {
             fieldValue = fieldValue.unbox();
         }
-        result.set(key, jsValueOf(fieldValue));
+        result[key] = jsValueOf(fieldValue);
     });
 
     return result;
@@ -459,7 +459,7 @@ function fromSGNode(node: RoSGNode): Map<string, any> {
  * @param {BrsType} x Some BrsType value.
  * @return {any} The JavaScript representation of `x`.
  */
-function jsValueOf(x: BrsType): any {
+export function jsValueOf(x: BrsType): any {
     switch (x.kind) {
         case ValueKind.Invalid:
             return null;

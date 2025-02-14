@@ -19,6 +19,7 @@ import {
     RoAssociativeArray,
     toAssociativeArray,
     Task,
+    brsValueOf,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -29,6 +30,7 @@ import { BoundingRect } from "../../scenegraph/SGUtil";
 import { SGNodeFactory, SGNodeType } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { TaskData } from "../../common";
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -1638,6 +1640,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         }
     }
     if (node instanceof Task) {
+        node.id = rootObjects.tasks.length;
         rootObjects.tasks.push(node);
     }
     return node;
@@ -1723,6 +1726,86 @@ export function initializeNode(
             `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize roSGNode with type ${
                 type.value
             }: ${interpreter.formatLocation()}`
+        );
+        return BrsInvalid.Instance;
+    }
+}
+
+export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
+    const type = taskData.name;
+    let typeDef = interpreter.environment.nodeDefMap.get(type.toLowerCase());
+    if (typeDef) {
+        //use typeDef object to tack on all the bells & whistles of a custom node
+        let typeDefStack: ComponentDefinition[] = [];
+        let currentEnv = typeDef.environment?.createSubEnvironment();
+
+        // Adding all component extensions to the stack to call init methods
+        // in the correct order.
+        typeDefStack.push(typeDef);
+        while (typeDef) {
+            // Add the current typedef to the subtypeHierarchy
+            subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Task);
+
+            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
+            if (typeDef) typeDefStack.push(typeDef);
+        }
+
+        // Start from the "basemost" component of the tree.
+        typeDef = typeDefStack.pop();
+
+        // Create the node.
+        let node =
+            SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
+        let mPointer = new RoAssociativeArray([]);
+        currentEnv?.setM(new RoAssociativeArray([]));
+
+        // Add children and fields starting from the "basemost" component of the tree.
+        while (typeDef) {
+            interpreter.inSubEnv((subInterpreter) => {
+                addChildren(subInterpreter, node!, typeDef!);
+                addFields(subInterpreter, node!, typeDef!);
+                return BrsInvalid.Instance;
+            }, currentEnv);
+
+            interpreter.inSubEnv((subInterpreter) => {
+                subInterpreter.environment.hostNode = node;
+
+                mPointer.set(new BrsString("top"), node!);
+                mPointer.set(new BrsString("global"), rootObjects.mGlobal);
+                subInterpreter.environment.setM(mPointer);
+                subInterpreter.environment.setRootM(mPointer);
+                node!.m = mPointer;
+                return BrsInvalid.Instance;
+            }, currentEnv);
+
+            typeDef = typeDefStack.pop();
+        }
+        // Load the task data into the node
+        if (node instanceof Task) {
+            node.id = taskData.id;
+        }
+        if (taskData.m?.global) {
+            for (let [key, value] of Object.entries(taskData.m.global)) {
+                rootObjects.mGlobal.set(new BrsString(key), brsValueOf(value));
+            }
+        }
+        if (taskData.m?.top) {
+            for (let [key, value] of Object.entries(taskData.m.top)) {
+                node.set(new BrsString(key), brsValueOf(value));
+            }
+        }
+        if (taskData.m) {
+            for (let [key, value] of Object.entries(taskData.m)) {
+                if (key === "global" || key === "top") {
+                    continue;
+                }
+                node.m.set(new BrsString(key), brsValueOf(value));
+            }
+        }
+        return node;
+    } else {
+        interpreter.stderr.write(
+            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
         );
         return BrsInvalid.Instance;
     }

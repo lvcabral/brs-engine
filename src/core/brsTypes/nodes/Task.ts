@@ -1,5 +1,5 @@
 import { RoSGNode } from "../components/RoSGNode";
-import { AAMember, BrsType, ValueKind, BrsString, BrsInvalid } from "..";
+import { AAMember, BrsType, ValueKind, BrsString, BrsInvalid, fromAssociativeArray } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
 import { DataType, TaskData, TaskState } from "../../common";
@@ -11,11 +11,13 @@ export class Task extends RoSGNode {
         { name: "functionName", type: "string" },
     ];
 
+    id: number;
     active: boolean;
     started: boolean;
 
     constructor(members: AAMember[] = [], readonly name: string = "Task") {
         super([], name);
+        this.id = -1; // Not initialized
         this.active = false;
         this.started = false;
 
@@ -41,7 +43,12 @@ export class Task extends RoSGNode {
             } else if (control === "stop" || control === "done") {
                 if (this.started) {
                     console.log("Posting Task Data to STOP: ", this.nodeSubtype);
-                    postMessage({ name: this.nodeSubtype, state: TaskState.STOP });
+                    const taskData: TaskData = {
+                        id: this.id,
+                        name: this.nodeSubtype,
+                        state: TaskState.STOP,
+                    };
+                    postMessage(taskData);
                     this.started = false;
                 }
                 this.active = false;
@@ -68,12 +75,13 @@ export class Task extends RoSGNode {
             return;
         }
         if (!this.started) {
-            const taskData = {
+            const taskData: TaskData = {
+                id: this.id,
                 name: this.nodeSubtype,
                 state: TaskState.RUN,
-                function: functionName.value,
+                m: fromAssociativeArray(this.m),
             };
-            console.log("Posting Task Data to RUN: ", taskData.name, taskData.function);
+            console.log("Posting Task Data to RUN: ", this.nodeSubtype, functionName.value);
             postMessage(taskData);
             this.started = true;
         } else {

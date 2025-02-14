@@ -88,10 +88,10 @@ export const defaultDeviceInfo: DeviceInfo = {
     platform: platform,
 };
 
-/* Execution Payload Interface
+/* Execution Payload Interfaces
  *
- * This interface is used to provide information to the interpreter about the
- * device and app that will be executed. It contains the DeviceInfo object,
+ * These interfaces are used to provide information to the interpreter about the
+ * device, app/task that will be executed. It may contain the DeviceInfo object,
  * the app manifest, source code, deep link, encryption password, paths,
  * some execution flags and file system paths.
  *
@@ -130,8 +130,7 @@ export function isAppPayload(value: any): value is AppPayload {
 export type TaskPayload = {
     device: DeviceInfo;
     manifest: Map<string, string>;
-    taskName: string;
-    functionName: string;
+    taskData: TaskData;
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     root?: string;
@@ -143,8 +142,7 @@ export function isTaskPayload(value: any): value is TaskPayload {
         value &&
         typeof value.device === "object" &&
         value.manifest instanceof Map &&
-        typeof value.taskName === "string" &&
-        typeof value.functionName === "string" &&
+        isTaskData(value.taskData) &&
         (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
         (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
         (typeof value.root === "string" || value.root === undefined) &&
@@ -153,18 +151,18 @@ export function isTaskPayload(value: any): value is TaskPayload {
 }
 
 export type TaskData = {
+    id: number;
     name: string;
     state: TaskState;
-    function?: string;
-    m?: object;
+    m?: any;
 };
 
 export function isTaskData(value: any): value is TaskData {
     return (
         value &&
+        typeof value.id === "number" &&
         typeof value.name === "string" &&
-        typeof value.state === "number" &&
-        (typeof value.function === "string" || value.function === undefined) &&
+        Object.values(TaskState).includes(value.state as any) &&
         (typeof value.m === "object" || value.m === undefined)
     );
 }

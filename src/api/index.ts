@@ -14,6 +14,7 @@ import {
     DebugCommand,
     DeviceInfo,
     RemoteType,
+    TaskData,
     TaskPayload,
     TaskState,
     dataBufferIndex,
@@ -477,38 +478,37 @@ function runApp(payload: AppPayload) {
     }
 }
 
-const tasks: Map<string, Worker> = new Map();
+const tasks: Map<number, Worker> = new Map();
 
-function runTask(taskName: string, functionName: string) {
-    if (tasks.has(taskName)) {
+function runTask(taskData: TaskData) {
+    if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
         return;
-    } else if (tasks.size === 1) {
+    } else if (tasks.size === 10) {
         apiException("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
         return;
     }
     const taskWorker = new Worker(brsWrkLib);
     taskWorker.addEventListener("message", taskCallback);
-    tasks.set(taskName, taskWorker);
+    tasks.set(taskData.id, taskWorker);
     const taskPayload: TaskPayload = {
         device: currentPayload.device,
         manifest: currentPayload.manifest,
-        taskName: taskName,
-        functionName: functionName,
+        taskData: taskData,
         pkgZip: currentPayload.pkgZip,
         extZip: currentPayload.extZip,
     };
-    console.log("Task worker started: ", taskPayload.taskName, taskPayload.functionName);
+    console.log("Calling Task worker: ", taskData.id, taskData.name);
     taskWorker.postMessage(sharedBuffer);
     taskWorker.postMessage(taskPayload);
 }
 
-function endTask(taskName: string) {
-    const taskWorker = tasks.get(taskName);
+function endTask(taskId: number) {
+    const taskWorker = tasks.get(taskId);
     if (taskWorker) {
         taskWorker.removeEventListener("message", taskCallback);
         taskWorker.terminate();
-        tasks.delete(taskName);
-        console.log("Task worker stopped: ", taskName);
+        tasks.delete(taskId);
+        console.log("Task worker stopped: ", taskId);
     }
 }
 
@@ -597,10 +597,11 @@ function workerCallback(event: MessageEvent) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
         console.log("Task data received: ", event.data.name);
-        if (event.data.state === TaskState.RUN && event.data.function) {
-            runTask(event.data.name, event.data.function);
+        if (event.data.state === TaskState.RUN) {
+            runTask(event.data);
+            console.log("m =", JSON.stringify(event.data.m, null, 2));
         } else if (event.data.state === TaskState.STOP) {
-            endTask(event.data.name);
+            endTask(event.data.id);
         }
     } else if (isNDKStart(event.data)) {
         if (event.data.app === "roku_browser") {
