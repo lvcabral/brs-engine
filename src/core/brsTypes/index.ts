@@ -39,6 +39,9 @@ import { RoCECStatusEvent } from "./events/RoCECStatusEvent";
 import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
 import { RoSGNodeEvent } from "./events/RoSGNodeEvent";
 import { RoSGScreenEvent } from "./events/RoSGScreenEvent";
+import { isUnboxable } from "./Boxing";
+import { RoSGNode } from "./components/RoSGNode";
+import { Field } from "./nodes/Field";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -409,5 +412,81 @@ export function brsValueOf(x: any): BrsType {
             return toAssociativeArray(x);
         default:
             throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
+    }
+}
+
+/**
+ * Converts a RoAssociativeArray to a JavaScript object, converting each property to the corresponding JavaScript type.
+ * @param associativeArray The RoAssociativeArray to convert.
+ * @returns A JavaScript object with the converted properties.
+ */
+export function fromAssociativeArray(associativeArray: RoAssociativeArray): FlexObject {
+    const result: FlexObject = {};
+
+    associativeArray.elements.forEach((value: BrsType, key: string) => {
+        if (isUnboxable(value)) {
+            result[key] = jsValueOf(value.unbox());
+        } else {
+            result[key] = jsValueOf(value);
+        }
+    });
+
+    return result;
+}
+
+/**
+ * Converts a RoSGNode to a JavaScript Map, converting each field to the corresponding JavaScript type.
+ * @param node The RoSGNode to convert.
+ * @returns A JavaScript Map with the converted fields.
+ */
+function fromSGNode(node: RoSGNode): Map<string, any> {
+    const result = new Map<string, any>();
+    const fields = node.getNodeFields();
+
+    fields.forEach((value: Field, key: string) => {
+        let fieldValue = value.getValue();
+        if (isUnboxable(fieldValue)) {
+            fieldValue = fieldValue.unbox();
+        }
+        result.set(key, jsValueOf(fieldValue));
+    });
+
+    return result;
+}
+
+/**
+ * Converts a BrsType value to its representation as a JavaScript type.
+ * @param {BrsType} x Some BrsType value.
+ * @return {any} The JavaScript representation of `x`.
+ */
+function jsValueOf(x: BrsType): any {
+    switch (x.kind) {
+        case ValueKind.Invalid:
+            return null;
+        case ValueKind.Uninitialized:
+            return undefined;
+        case ValueKind.Boolean:
+            return x.toBoolean();
+        case ValueKind.String:
+            return x.value;
+        case ValueKind.Int32:
+        case ValueKind.Float:
+        case ValueKind.Double:
+            return x.getValue();
+        case ValueKind.Int64:
+            return x.getValue().toNumber();
+        case ValueKind.Object:
+            if (x instanceof RoArray || x instanceof RoList) {
+                return x.elements.map(jsValueOf);
+            } else if (x instanceof RoByteArray) {
+                return x.elements;
+            } else if (x instanceof RoSGNode) {
+                return fromSGNode(x);
+            } else if (x instanceof RoAssociativeArray) {
+                return fromAssociativeArray(x);
+            }
+            return x.toString();
+        default:
+            throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
     }
 }
