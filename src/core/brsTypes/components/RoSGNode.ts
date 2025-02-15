@@ -1128,8 +1128,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
-            // currently we can't create a custom subclass object of roSGNode,
-            // so we'll always create generic RoSGNode object as child
             let child = createNodeByType(interpreter, nodeType);
             if (child instanceof RoSGNode) {
                 this.children.push(child);

@@ -120,10 +120,7 @@ export class ContentNode extends RoSGNode {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
-        this.registerMethods({
-            ifAssociativeArray: [this.count, this.keys, this.items],
-            ifSGNodeField: [this.hasField],
-        });
+        this.appendMethods([this.count, this.keys, this.items, this.hasField]);
     }
 
     private getVisibleFields() {
