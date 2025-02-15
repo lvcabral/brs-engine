@@ -1,8 +1,16 @@
 import { RoSGNode } from "../components/RoSGNode";
-import { AAMember, BrsType, ValueKind, BrsString, BrsInvalid, fromAssociativeArray } from "..";
+import {
+    AAMember,
+    BrsType,
+    ValueKind,
+    BrsString,
+    BrsInvalid,
+    fromAssociativeArray,
+    jsValueOf,
+} from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
-import { DataType, TaskData, TaskState } from "../../common";
+import { DataType, TaskData, TaskState, TaskUpdate } from "../../common";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -14,12 +22,14 @@ export class Task extends RoSGNode {
     id: number;
     active: boolean;
     started: boolean;
+    thread: boolean;
 
     constructor(members: AAMember[] = [], readonly name: string = "Task") {
         super([], name);
         this.id = -1; // Not initialized
         this.active = false;
         this.started = false;
+        this.thread = false;
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
@@ -64,6 +74,9 @@ export class Task extends RoSGNode {
                 field.setValue(value);
             }
             return BrsInvalid.Instance;
+        } else if (field && this.thread) {
+            const taskUpdate: TaskUpdate = { id: this.id, field: mapKey, value: jsValueOf(value) };
+            postMessage(taskUpdate);
         }
         return super.set(index, value, alwaysNotify, kind);
     }

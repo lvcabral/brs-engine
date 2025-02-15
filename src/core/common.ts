@@ -108,6 +108,7 @@ export type AppPayload = {
     password?: string;
     root?: string;
     ext?: string;
+    tasksBuffer?: SharedArrayBuffer;
 };
 
 export function isAppPayload(value: any): value is AppPayload {
@@ -164,6 +165,21 @@ export function isTaskData(value: any): value is TaskData {
         typeof value.name === "string" &&
         Object.values(TaskState).includes(value.state as any) &&
         (typeof value.m === "object" || value.m === undefined)
+    );
+}
+
+export type TaskUpdate = {
+    id: number;
+    field: string;
+    value: any;
+};
+
+export function isTaskUpdate(value: any): value is TaskUpdate {
+    return (
+        value &&
+        typeof value.id === "number" &&
+        typeof value.field === "string" &&
+        value.value !== undefined
     );
 }
 

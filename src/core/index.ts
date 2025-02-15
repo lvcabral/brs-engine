@@ -344,6 +344,9 @@ export async function executeFile(
     let interpreter: Interpreter;
     if (components.size > 0) {
         interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
+        if (payload.tasksBuffer) {
+            interpreter.setTasksBuffer(payload.tasksBuffer);
+        }
     } else {
         interpreter = new Interpreter(options);
     }

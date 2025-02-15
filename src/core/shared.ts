@@ -11,7 +11,7 @@ class SharedObjectBuffer {
     private maxSize: number;
     private atomicOffsetView: Int32Array;
 
-    constructor(initialSize: number, maxSize: number) {
+    constructor(initialSize?: number, maxSize?: number) {
         initialSize = initialSize ?? 32 * 1024; // 32KB default
         this.maxSize = maxSize ?? 1024 * 1024; // 1MB default
         this.buffer = new SharedArrayBuffer(initialSize, { maxByteLength: this.maxSize });

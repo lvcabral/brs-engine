@@ -135,6 +135,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     errors: (BrsError | RuntimeError)[] = [];
 
 
+    /** Array Buffer to Share the Tasks field updates across threads */
+    tasksBuffer?: SharedObjectBuffer;
+
     get environment() {
         return this._environment;
     }
@@ -185,6 +188,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this._singleKeyEvents = value.trim() !== "1";
             }
         });
+    }
+
+    public setTasksBuffer(data: SharedArrayBuffer) {
+        this.tasksBuffer = new SharedObjectBuffer();
+        this.tasksBuffer.setBuffer(data);
     }
 
     /**

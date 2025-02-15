@@ -23,6 +23,7 @@ import {
     isAppData,
     isNDKStart,
     isTaskData,
+    isTaskUpdate,
     platform,
     registryInitialSize,
     registryMaxSize,
@@ -122,6 +123,7 @@ let httpConnectLog: boolean = false;
 
 // App Shared Buffers
 const registryBuffer = new SharedObjectBuffer(registryInitialSize, registryMaxSize);
+let tasksBuffer: SharedObjectBuffer;
 let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 
@@ -470,6 +472,8 @@ function runApp(payload: AppPayload) {
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", workerCallback);
         brsWorker.postMessage(sharedBuffer);
+        tasksBuffer = new SharedObjectBuffer();
+        payload.tasksBuffer = tasksBuffer.getBuffer();
         brsWorker.postMessage(payload);
         currentPayload = payload;
         enableSendKeys(true);
@@ -516,6 +520,9 @@ function taskCallback(event: MessageEvent) {
     if (typeof event.data === "string") {
         // TODO: handle end of task
         deviceDebug(event.data);
+    } else if (isTaskUpdate(event.data)) {
+        // TODO: Prevent overwrite updates if not received by main thread (use wait)
+        tasksBuffer.store(event.data);
     } else {
         apiException("warning", `[api] Invalid task message: ${typeof event.data}`);
     }

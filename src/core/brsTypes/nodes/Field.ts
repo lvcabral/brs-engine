@@ -249,6 +249,14 @@ export class Field {
         this.scopedObservers.delete(hostNode);
     }
 
+    isObserved() {
+        return (
+            this.permanentObservers.length > 0 ||
+            this.unscopedObservers.length > 0 ||
+            this.scopedObservers.size > 0
+        );
+    }
+
     private executeCallbacks(callback: BrsCallback) {
         const { interpreter, callable, hostNode, environment, eventParams } = callback;
 

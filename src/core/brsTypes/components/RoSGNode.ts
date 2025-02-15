@@ -30,10 +30,11 @@ import { BoundingRect } from "../../scenegraph/SGUtil";
 import { isSGNodeType, SGNodeFactory, SGNodeType } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { TaskData } from "../../common";
+import { TaskData, TaskUpdate } from "../../common";
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
+    private lastTaskBuffer = -1;
     protected fields = new Map<string, Field>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
@@ -282,11 +283,23 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     processTasks(interpreter: Interpreter) {
+        let updates = false;
+        let taskUpdate: TaskUpdate | null = null;
+        let currentVersion = interpreter.tasksBuffer?.getVersion() ?? -1;
+        if (interpreter.tasksBuffer && currentVersion !== this.lastTaskBuffer) {
+            this.lastTaskBuffer = currentVersion;
+            taskUpdate = interpreter.tasksBuffer?.load();
+        }
         rootObjects.tasks.forEach((task) => {
+            if (taskUpdate && taskUpdate.id === task.id) {
+                task.set(new BrsString(taskUpdate.field), brsValueOf(taskUpdate.value));
+                updates = true;
+            }
             if (task.active) {
                 task.checkTask(interpreter);
             }
         });
+        return updates;
     }
 
     processTimers(fired: boolean = false) {
@@ -1800,6 +1813,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         // Load the task data into the node
         if (node instanceof Task) {
             node.id = taskData.id;
+            node.thread = true;
         }
         if (taskData.m?.global) {
             for (let [key, value] of Object.entries(taskData.m.global)) {
