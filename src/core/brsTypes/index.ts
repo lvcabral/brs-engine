@@ -428,12 +428,20 @@ export function brsValueOf(x: any): BrsType {
  * @param subtype The subtype of the node.
  * @returns A RoSGNode with the converted fields.
  */
-export function toNode(x: any, type: string, subtype: string): BrsType {
+export function toNode(x: any, type: string, subtype: string): RoSGNode {
     const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
     for (const key in x) {
-        if (key !== "_node_") {
+        if (key !== "_node_" && key !== "_children_") {
             node.setFieldValue(key, brsValueOf(x[key]));
         }
+    }
+    if (x["_children_"]) {
+        x["_children_"].forEach((child: any) => {
+            if (child["_node_"]) {
+                const nodeName = x["_node_"].split(":");
+                node.getNodeChildren().push(toNode(child, nodeName[0], nodeName[1]));
+            }
+        });
     }
     return node;
 }
@@ -512,6 +520,11 @@ export function fromSGNode(node: RoSGNode): FlexObject {
         }
         result[key] = jsValueOf(fieldValue);
     });
+
+    const children = node.getNodeChildren();
+    if (children.length > 0) {
+        result["_children_"] = children.map((child: RoSGNode) => fromSGNode(child));
+    }
 
     return result;
 }
