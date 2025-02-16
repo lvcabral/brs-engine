@@ -309,6 +309,7 @@ export async function executeFile(
     };
     bscs.clear();
     stats.clear();
+    BrsDevice.lastKeyTime = Date.now();
     try {
         await configureFileSystem(payload.pkgZip, payload.extZip);
     } catch (err: any) {
