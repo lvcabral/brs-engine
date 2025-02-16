@@ -9,7 +9,7 @@ export { PP as preprocessor };
 import { logError } from "./Error";
 import { defaultExecutionOptions, ExecutionOptions } from "./interpreter";
 import { ComponentScript } from "./scenegraph";
-import { FileSystem } from "./interpreter/FileSystem";
+import { FileSystem } from "./FileSystem";
 import { AppExitReason } from "./common";
 import { ParseResults } from "./parser/Parser";
 
