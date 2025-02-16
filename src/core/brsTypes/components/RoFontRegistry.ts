@@ -3,7 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { validUri } from "../../interpreter/FileSystem";
+import { validUri } from "../../FileSystem";
 import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
@@ -56,11 +56,11 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
 
     registerFont(interpreter: Interpreter, fontPath: string) {
         try {
-            const fsys = interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             if (!fsys || !validUri(fontPath)) {
                 return BrsBoolean.False;
             }
-            const fontData = interpreter.fileSystem.readFileSync(fontPath);
+            const fontData = BrsDevice.fileSystem.readFileSync(fontPath);
             const fontObj = opentype.parse(fontData.buffer);
             // Get font metrics
             const fontMetrics = {
