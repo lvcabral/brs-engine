@@ -1,5 +1,5 @@
 import { BrsType } from "../brsTypes";
-import { BrsError } from "../Error";
+import { BrsError } from "../BrsError";
 import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */

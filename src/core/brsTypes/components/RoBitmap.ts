@@ -25,6 +25,7 @@ import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
 import BMP from "decode-bmp";
 import { WebPRiffParser, WebPDecoder } from "libwebpjs";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
@@ -48,7 +49,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.rgbaLast = 0;
         this.rgbaRedraw = true;
         this.valid = true;
-        const platform = interpreter.deviceInfo.get("platform");
+        const platform = BrsDevice.deviceInfo.get("platform");
         this.disposeCanvas = platform?.inIOS ?? false;
         this.width = 1;
         this.height = 1;

@@ -6,16 +6,15 @@ import { Interpreter } from "../../interpreter";
 import { RoCECStatusEvent } from "../events/RoCECStatusEvent";
 import { DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoCECStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private active: number;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roCECStatus");
-        this.interpreter = interpreter;
         this.active = 1; // Default to active
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
@@ -44,7 +43,7 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const cecActive = Atomics.load(this.interpreter.sharedArray, DataType.CEC);
+        const cecActive = Atomics.load(BrsDevice.sharedArray, DataType.CEC);
         if (cecActive >= 0 && cecActive !== this.active) {
             this.active = cecActive;
             events.push(new RoCECStatusEvent(this.active !== 0));
@@ -60,8 +59,8 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
-            const cecActive = Atomics.load(interpreter.sharedArray, DataType.CEC);
+        impl: (_: Interpreter) => {
+            const cecActive = Atomics.load(BrsDevice.sharedArray, DataType.CEC);
             return BrsBoolean.from(cecActive !== 0);
         },
     });
