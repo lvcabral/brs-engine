@@ -31,10 +31,10 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         });
         const sourceMap = new Map<string, string>();
         filenames.forEach((filename) => {
-            if (interpreter.fileSystem.existsSync(filename.value)) {
+            if (BrsDevice.fileSystem.existsSync(filename.value)) {
                 sourceMap.set(
                     filename.value,
-                    interpreter.fileSystem.readFileSync(filename.value, "utf8")
+                    BrsDevice.fileSystem.readFileSync(filename.value, "utf8")
                 );
             }
         });
