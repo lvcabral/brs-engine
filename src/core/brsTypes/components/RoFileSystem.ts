@@ -3,11 +3,12 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, FlexObject, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { FileSystem, getVolume, validUri, writeUri } from "../../interpreter/FileSystem";
+import { FileSystem, getVolume, validUri, writeUri } from "../../FileSystem";
 import { RoList } from "./RoList";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import * as nanomatch from "nanomatch";
 import * as path from "path";
+import { BrsDevice } from "../../BrsDevice";
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private port?: RoMessagePort;
@@ -75,7 +76,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 const volumes = fsys.volumesSync().map((s) => new BrsString(s));
                 return new RoList(volumes);
             } catch (err: any) {
@@ -93,9 +94,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString) => {
             let result = {};
-            if (interpreter.fileSystem.existsSync(pathArg.value)) {
+            if (BrsDevice.fileSystem.existsSync(pathArg.value)) {
                 result = { blocks: 0, blocksize: 0, freeblocks: 0, usedblocks: 0 };
             }
             return toAssociativeArray(result);
@@ -109,7 +110,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
-            const fsys = interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             try {
                 if (validUri(pathArg.value) && fsys.existsSync(pathArg.value)) {
                     const subPaths = fsys.readdirSync(pathArg.value).map((s) => new BrsString(s));
@@ -135,7 +136,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 if (!writeUri(pathArg.value)) {
                     return BrsBoolean.False;
                 }
@@ -159,7 +160,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
-            const fsys = interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             try {
                 if (!writeUri(pathArg.value)) {
                     return BrsBoolean.False;
@@ -188,7 +189,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fromPath: BrsString, toPath: BrsString) => {
-            const fsys = interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             try {
                 if (!writeUri(toPath.value) || !fsys.existsSync(fromPath.value)) {
                     return BrsBoolean.False;
@@ -215,7 +216,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fromPath: BrsString, toPath: BrsString) => {
-            const fsys = interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             try {
                 if (
                     !writeUri(fromPath.value) ||
@@ -244,7 +245,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, pathArg: BrsString) => {
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 return BrsBoolean.from(fsys.existsSync(pathArg.value));
             } catch (err: any) {
                 if (interpreter.isDevMode) {
@@ -267,7 +268,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString, regEx: BrsString) => {
             const jsRegex = new RegExp(regEx.value);
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
@@ -300,7 +301,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, pathArg: BrsString, regEx: BrsString) => {
             const jsRegex = new RegExp(regEx.value);
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
@@ -328,7 +329,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
-                let knownFiles = interpreter.fileSystem.readdirSync(pathArg.value);
+                let knownFiles = BrsDevice.fileSystem.readdirSync(pathArg.value);
                 let matchedFiles = nanomatch.match(knownFiles, pattern.value, {
                     nocase: true,
                     nodupes: true,
@@ -361,10 +362,10 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 if (!validUri(arg)) {
                     return toAssociativeArray(result);
                 }
-                const pathStat = interpreter.fileSystem.statSync(arg);
+                const pathStat = BrsDevice.fileSystem.statSync(arg);
                 result.hidden = false;
                 if (pathStat.isFile()) {
-                    const content = interpreter.fileSystem.readFileSync(arg);
+                    const content = BrsDevice.fileSystem.readFileSync(arg);
                     result.size = typeof content.length === "number" ? content.length : 0;
                     result.type = "file";
                 } else {

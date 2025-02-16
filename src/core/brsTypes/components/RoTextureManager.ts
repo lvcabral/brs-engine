@@ -16,12 +16,13 @@ import {
     toAssociativeArray,
 } from "..";
 import { Interpreter } from "../../interpreter";
-import { validUri } from "../../interpreter/FileSystem";
+import { validUri } from "../../FileSystem";
 import { download } from "../../interpreter/Network";
 import { RoTextureRequestEvent } from "../events/RoTextureRequestEvent";
 import { drawObjectToComponent } from "../interfaces/IfDraw2D";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 // Singleton instance of RoTextureManager
 let textureManager: RoTextureManager;
@@ -130,7 +131,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             data = download(uri, "arraybuffer", this.customHeaders, this.cookiesEnabled);
         } else {
             try {
-                data = this.interpreter.fileSystem.readFileSync(uri);
+                return BrsDevice.fileSystem.readFileSync(request.uri);
             } catch (err: any) {
                 if (this.interpreter.isDevMode) {
                     this.interpreter.stderr.write(

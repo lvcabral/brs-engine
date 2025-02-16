@@ -1,8 +1,11 @@
 import { dataBufferIndex, DataType, DebugCommand } from "./common";
+import { FileSystem } from "./FileSystem";
 
 export class BrsDevice {
     static readonly deviceInfo: Map<string, any> = new Map<string, any>();
     static readonly registry: Map<string, string> = new Map<string, string>();
+    static readonly fileSystem: FileSystem = new FileSystem();
+
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
     static lastRemote: number = 0;

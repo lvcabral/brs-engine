@@ -26,7 +26,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             this.audioId = sysIndex;
         } else {
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 this.valid = fsys !== undefined;
                 if (fsys) {
                     const id = parseInt(fsys.readFileSync(name.value, "utf8"));

@@ -75,8 +75,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             valueProcessors: [processors.parseNumbers],
         };
         const data: RoAssociativeArray[] = [];
-        if (interpreter.fileSystem.existsSync(`pkg:/csfake/${xml}.xml`)) {
-            const xmlData = interpreter.fileSystem.readFileSync(`pkg:/csfake/${xml}.xml`);
+        if (BrsDevice.fileSystem.existsSync(`pkg:/csfake/${xml}.xml`)) {
+            const xmlData = BrsDevice.fileSystem.readFileSync(`pkg:/csfake/${xml}.xml`);
             parseString(xmlData, options, function (err: any, parsed: any) {
                 let errMessage = "";
                 if (err) {
@@ -129,7 +129,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             ignoreAttrs: true,
             valueProcessors: [processors.parseNumbers],
         };
-        const fs = interpreter.fileSystem;
+        const fs = BrsDevice.fileSystem;
         const data: FlexObject = { id: xml };
         if (fs.existsSync(`pkg:/csfake/${xml}.xml`)) {
             const xmlData = fs.readFileSync(`pkg:/csfake/${xml}.xml`);

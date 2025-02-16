@@ -3,9 +3,10 @@ import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsTy
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { validUri, writeUri } from "../../interpreter/FileSystem";
+import { validUri, writeUri } from "../../FileSystem";
 import { crc32 } from "crc";
 import { IfEnum } from "../interfaces/IfEnum";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -184,9 +185,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
+        impl: (_: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 if (fsys && validUri(filepath.value)) {
                     let array: Uint8Array = fsys.readFileSync(filepath.value);
                     if (index.getValue() > 0 || length.getValue() > 0) {
@@ -218,9 +219,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
+        impl: (_: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 if (fsys && writeUri(filepath.value)) {
                     if (index.getValue() > 0 || length.getValue() > 0) {
                         let start = index.getValue();
@@ -251,9 +252,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
+        impl: (_: Interpreter, filepath: BrsString, index: Int32, length: Int32) => {
             try {
-                const fsys = interpreter.fileSystem;
+                const fsys = BrsDevice.fileSystem;
                 if (fsys && writeUri(filepath.value)) {
                     let file: Uint8Array = fsys.readFileSync(filepath.value);
                     let array: Uint8Array;

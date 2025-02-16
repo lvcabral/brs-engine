@@ -227,7 +227,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         let error = "";
         try {
             const xhr = this.getConnection("POST", "arraybuffer");
-            const fsys = this.interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             if (fsys.existsSync(inputPath)) {
                 const body = fsys.readFileSync(inputPath);
                 xhr.send(body);
@@ -271,7 +271,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     saveDownloadedFile(filePath: string, data: any) {
-        const fsys = this.interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         if (!fsys) {
             return;
         }
@@ -547,7 +547,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, filePath: BrsString) => {
-            const fsys = this.interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             if (fsys.existsSync(filePath.value)) {
                 const body = fsys.readFileSync(filePath.value);
                 const reply = this.postFromStringEvent(body);
@@ -568,7 +568,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, filePath: BrsString) => {
-            const fsys = this.interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             if (!fsys.existsSync(filePath.value)) {
                 return BrsBoolean.False;
             }
@@ -595,7 +595,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fromFile: BrsString, toFile: BrsString) => {
-            const fsys = this.interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             if (!fsys.existsSync(fromFile.value)) {
                 return BrsBoolean.False;
             }

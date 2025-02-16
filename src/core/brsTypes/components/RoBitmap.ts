@@ -59,7 +59,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             image = param;
         } else if (param instanceof BrsString) {
             try {
-                image = interpreter.fileSystem?.readFileSync(param.value);
+                image = BrsDevice.fileSystem?.readFileSync(param.value);
                 this.alphaEnable = false;
                 this.name = param.value;
             } catch (err: any) {
