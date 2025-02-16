@@ -69,7 +69,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter, dirName: BrsString, fileName: BrsString) => {
-            const fsys = interpreter.fileSystem;
+            const fsys = BrsDevice.fileSystem;
             if (!fsys) {
                 return new BrsString("");
             }

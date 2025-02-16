@@ -13,6 +13,7 @@ import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { ExifSections, exifTags, exifTagEnums, ExifTag } from "../ExifTags";
 import * as exifParser from "exif-parser";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoImageMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -44,7 +45,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
     private loadFile(interpreter: Interpreter, file: string) {
         let image: Buffer | undefined;
         try {
-            image = interpreter.fileSystem?.readFileSync(file);
+            image = BrsDevice.fileSystem?.readFileSync(file);
         } catch (err: any) {
             if (interpreter.isDevMode) {
                 interpreter.stderr.write(
