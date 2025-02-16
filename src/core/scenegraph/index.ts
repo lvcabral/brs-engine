@@ -3,7 +3,7 @@ import { XmlDocument, XmlElement } from "xmldoc";
 import pSettle, { PromiseResult } from "p-settle";
 import { Environment } from "../interpreter/Environment";
 import { BrsError } from "../BrsError";
-import { FileSystem } from "../interpreter/FileSystem";
+import { FileSystem } from "../FileSystem";
 import { ExecutionOptions, Interpreter } from "../interpreter";
 import { getLexerParserFn } from "../LexerParser";
 import { ComponentScopeResolver } from "../parser/ComponentScopeResolver";
